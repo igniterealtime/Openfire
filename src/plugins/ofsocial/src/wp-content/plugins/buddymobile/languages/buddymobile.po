@@ -1,0 +1,1927 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: buddymobile\n"
+"POT-Creation-Date: 2013-05-08 12:01-0800\n"
+"PO-Revision-Date: 2013-05-08 12:01-0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.5\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: includes/bp-mobile-admin.php:9
+msgid "Mobile Menu"
+msgstr ""
+
+#: includes/bp-mobile-admin.php:103
+msgid "   Deactivate License"
+msgstr ""
+
+#: includes/bp-mobile-admin.php:108
+msgid "   Activate License"
+msgstr ""
+
+#: includes/bp-mobile-admin.php:183
+msgid "Enable add to homescreen notice on iOS devices."
+msgstr ""
+
+#: includes/bp-mobile-admin.php:228
+msgid "Choose a theme for mobile phones."
+msgstr ""
+
+#: includes/bp-mobile-admin.php:268
+msgid "   image size must be 57 x 57 px"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:15
+#: themes/mobile/iphone/comments.php:15
+msgid "Password Protected"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:16
+#: themes/mobile/iphone/comments.php:16
+msgid "Enter the password to view comments."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:62
+#: themes/mobile/iphone/comments.php:62
+#, php-format
+msgid ""
+"Comments are closed, but <a href=\"%1$s\" title=\"Trackback URL for this post"
+"\">trackbacks</a> and pingbacks are open."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:68
+#: themes/mobile/iphone/comments.php:68
+msgid "Comments are closed."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:87
+#: themes/mobile/iphone/comments.php:87
+msgid "Leave a Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:87
+#: themes/mobile/iphone/comments.php:87
+#, php-format
+msgid "Leave a Reply to %s"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:91
+#: themes/mobile/iphone/comments.php:91
+msgid "Click here to cancel reply."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:97
+#: themes/mobile/iphone/comments.php:97
+#, php-format
+msgid ""
+"You must be <a href=\"%1$s\" title=\"Log in\">logged in</a> to post a "
+"comment."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:109
+#: themes/mobile/iphone/comments.php:109
+#, php-format
+msgid "Logged in as <a href=\"%1$s\" title=\"%2$s\">%2$s</a>."
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:113
+#: themes/mobile/iphone/comments.php:113
+msgid "Log out of this account"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:113
+#: themes/mobile/iphone/comments.php:113
+msgid "Log out &rarr;"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:121
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:15
+#: themes/mobile/iphone/comments.php:121
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:15
+msgid "Name"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:121
+#: themes/mobile/bootpress/comments.php:126
+#: themes/mobile/iphone/comments.php:121 themes/mobile/iphone/comments.php:126
+msgid "*"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:126
+#: themes/mobile/iphone/comments.php:126
+msgid "Email"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:131
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:33
+#: themes/mobile/iphone/comments.php:131
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:33
+msgid "Website"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:138
+#: themes/mobile/iphone/comments.php:138
+msgid "Comment"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:147
+#: themes/mobile/iphone/comments.php:147
+msgid "Submit"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:174
+#: themes/mobile/iphone/comments.php:174
+#, php-format
+msgid "%d Trackback"
+msgstr ""
+
+#: themes/mobile/bootpress/comments.php:176
+#: themes/mobile/iphone/comments.php:176
+#, php-format
+msgid "%d Trackbacks"
+msgstr ""
+
+#: themes/mobile/bootpress/footer.php:3
+msgid "scroll to top"
+msgstr ""
+
+#: themes/mobile/bootpress/footer.php:5 themes/mobile/iphone/footer.php:96
+msgid "View non-mobile site"
+msgstr ""
+
+#: themes/mobile/bootpress/header.php:45 themes/mobile/iphone/footer.php:17
+msgid "Profile"
+msgstr ""
+
+#: themes/mobile/bootpress/header.php:50 themes/mobile/iphone/footer.php:22
+#: themes/mobile/iphone/footer.php:51
+msgid "Log Out"
+msgstr ""
+
+#: themes/mobile/bootpress/header.php:52 themes/mobile/iphone/footer.php:24
+#: themes/mobile/iphone/footer.php:82
+msgid "Log In"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-home.php:26
+#: themes/mobile/bootpress/loop-single.php:13
+#: themes/mobile/bootpress/loop.php:26
+#: themes/mobile/bootpress/page-blog.php:14
+#: themes/mobile/iphone/archive.php:28 themes/mobile/iphone/home.php:44
+#: themes/mobile/iphone/index.php:27 themes/mobile/iphone/page-blog.php:14
+#: themes/mobile/iphone/search.php:41 themes/mobile/iphone/single.php:33
+msgid "Permanent Link to"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-home.php:45
+#: themes/mobile/bootpress/loop-single.php:20
+#: themes/mobile/bootpress/loop.php:45 themes/mobile/iphone/archive.php:35
+#: themes/mobile/iphone/attachment.php:38 themes/mobile/iphone/home.php:58
+#: themes/mobile/iphone/page.php:58 themes/mobile/iphone/single.php:40
+msgid "<p><strong>Pages:</strong> "
+msgstr ""
+
+#: themes/mobile/bootpress/loop-home.php:58
+#: themes/mobile/bootpress/loop.php:58
+msgid "&laquo; Newer Posts"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-home.php:58
+#: themes/mobile/bootpress/loop.php:58
+msgid "Older Posts &raquo;"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:5
+#: themes/mobile/iphone/archive.php:48 themes/mobile/iphone/index.php:51
+#: themes/mobile/iphone/search.php:27 themes/mobile/iphone/search.php:57
+#: themes/mobile/iphone/single.php:25
+msgid "&larr; Previous Entries"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:6
+#: themes/mobile/iphone/archive.php:49 themes/mobile/iphone/index.php:52
+#: themes/mobile/iphone/search.php:28 themes/mobile/iphone/search.php:58
+#: themes/mobile/iphone/single.php:26
+msgid "Next Entries &rarr;"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:15
+#: themes/mobile/bootpress/page-blog.php:16 themes/mobile/iphone/index.php:29
+#: themes/mobile/iphone/page-blog.php:16 themes/mobile/iphone/search.php:43
+#: themes/mobile/iphone/single.php:35
+msgid "in"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:15
+#: themes/mobile/bootpress/page-blog.php:16 themes/mobile/iphone/index.php:29
+#: themes/mobile/iphone/page-blog.php:16 themes/mobile/iphone/search.php:37
+#: themes/mobile/iphone/search.php:43 themes/mobile/iphone/single.php:35
+#, php-format
+msgid "by %s"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:18
+#: themes/mobile/iphone/search.php:46 themes/mobile/iphone/single.php:38
+msgid "Read the rest of this entry &rarr;"
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:24
+#: themes/mobile/bootpress/page-blog.php:27 themes/mobile/iphone/index.php:40
+#: themes/mobile/iphone/page-blog.php:27 themes/mobile/iphone/search.php:49
+#: themes/mobile/iphone/single.php:44
+msgid "Tags: "
+msgstr ""
+
+#: themes/mobile/bootpress/loop-single.php:35
+#: themes/mobile/iphone/single.php:54
+msgid "Sorry, no posts matched your criteria."
+msgstr ""
+
+#: themes/mobile/bootpress/page-blog.php:27 themes/mobile/iphone/home.php:63
+#: themes/mobile/iphone/index.php:40 themes/mobile/iphone/page-blog.php:27
+#: themes/mobile/iphone/search.php:49
+msgid "No Comments &#187;"
+msgstr ""
+
+#: themes/mobile/bootpress/page-blog.php:27 themes/mobile/iphone/home.php:63
+#: themes/mobile/iphone/index.php:40 themes/mobile/iphone/page-blog.php:27
+#: themes/mobile/iphone/search.php:49
+msgid "1 Comment &#187;"
+msgstr ""
+
+#: themes/mobile/bootpress/page-blog.php:27 themes/mobile/iphone/home.php:63
+#: themes/mobile/iphone/index.php:40 themes/mobile/iphone/page-blog.php:27
+#: themes/mobile/iphone/search.php:49
+msgid "% Comments &#187;"
+msgstr ""
+
+#: themes/mobile/bootpress/achievements/loop-achievements.php:17
+#: themes/mobile/iphone/achievements/loop-achievements.php:17
+msgid ""
+"All of the available achievements with the name, avatar, and karma points "
+"for each."
+msgstr ""
+
+#: themes/mobile/bootpress/achievements/loop-progresses.php:15
+#: themes/mobile/iphone/achievements/loop-progresses.php:15
+msgid "Unlocked By:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/activity-loop.php:28
+#: themes/mobile/iphone/buddypress/activity/activity-loop.php:28
+msgid "Load More"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/activity-loop.php:42
+#: themes/mobile/iphone/buddypress/activity/activity-loop.php:42
+msgid "Sorry, there was no activity found. Please try a different filter."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/comment.php:27
+#: themes/mobile/iphone/buddypress/activity/comment.php:27
+#, php-format
+msgid ""
+"<a href=\"%1$s\">%2$s</a> replied <a href=\"%3$s\" class=\"activity-time-"
+"since\"><span class=\"time-since\">%4$s</span></a>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/comment.php:37
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:51
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:25
+#: themes/mobile/iphone/buddypress/activity/comment.php:37
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:51
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:25
+msgid "Delete"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry-permalink.php:51
+#: themes/mobile/bootpress/buddypress/activity/entry.php:50
+#: themes/mobile/iphone/buddypress/activity/entry-permalink.php:51
+#: themes/mobile/iphone/buddypress/activity/entry.php:50
+msgid "View Conversation"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry-permalink.php:59
+#: themes/mobile/bootpress/buddypress/activity/entry.php:58
+#: themes/mobile/iphone/buddypress/activity/entry-permalink.php:59
+#: themes/mobile/iphone/buddypress/activity/entry.php:58
+#, php-format
+msgid "Comment <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry-permalink.php:67
+#: themes/mobile/bootpress/buddypress/activity/entry.php:66
+#: themes/mobile/iphone/buddypress/activity/entry-permalink.php:67
+#: themes/mobile/iphone/buddypress/activity/entry.php:66
+msgid "Favorite"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry-permalink.php:71
+#: themes/mobile/bootpress/buddypress/activity/entry.php:70
+#: themes/mobile/iphone/buddypress/activity/entry-permalink.php:71
+#: themes/mobile/iphone/buddypress/activity/entry.php:70
+msgid "Remove Favorite"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry-permalink.php:101
+#: themes/mobile/bootpress/buddypress/activity/entry.php:101
+#: themes/mobile/iphone/buddypress/activity/entry-permalink.php:101
+msgid "Post"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/entry.php:101
+#: themes/mobile/bootpress/buddypress/forums/index.php:114
+#: themes/mobile/iphone/buddypress/forums/index.php:114
+msgid "Cancel"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:7
+#: themes/mobile/iphone/buddypress/activity/index.php:10
+msgid "The public activity for everyone on this site."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:7
+#: themes/mobile/bootpress/buddypress/members/index.php:6
+#: themes/mobile/iphone/buddypress/activity/index.php:10
+#: themes/mobile/iphone/buddypress/members/index.php:12
+#, php-format
+msgid "All Members <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:15
+#: themes/mobile/iphone/buddypress/activity/index.php:20
+msgid "The activity of my friends only."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:15
+#: themes/mobile/bootpress/buddypress/members/index.php:9
+#: themes/mobile/iphone/buddypress/activity/index.php:20
+#: themes/mobile/iphone/buddypress/members/index.php:15
+#, php-format
+msgid "My Friends <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:26
+#: themes/mobile/iphone/buddypress/activity/index.php:32
+msgid "The activity of groups I am a member of."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:26
+#: themes/mobile/bootpress/buddypress/groups/index.php:14
+#: themes/mobile/iphone/buddypress/activity/index.php:32
+#: themes/mobile/iphone/buddypress/groups/index.php:22
+#, php-format
+msgid "My Groups <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:34
+#: themes/mobile/iphone/buddypress/activity/index.php:42
+msgid "The activity I've marked as a favorite."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:34
+#: themes/mobile/iphone/buddypress/activity/index.php:42
+#, php-format
+msgid "My Favorites <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:38
+#: themes/mobile/iphone/buddypress/activity/index.php:48
+msgid "Activity that I have been mentioned in."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:38
+#: themes/mobile/iphone/buddypress/activity/index.php:48
+msgid "Mentions"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:38
+#: themes/mobile/iphone/buddypress/activity/index.php:48
+#, php-format
+msgid "<span>%s new</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:49
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:8
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:26
+#: themes/mobile/iphone/buddypress/activity/index.php:61
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:7
+#: themes/mobile/iphone/buddypress/members/single/activity.php:26
+msgid "Show:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:51
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:13
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:28
+#: themes/mobile/iphone/buddypress/activity/index.php:63
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:9
+#: themes/mobile/iphone/buddypress/members/single/activity.php:28
+msgid "Everything"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:52
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:14
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:29
+#: themes/mobile/iphone/buddypress/activity/index.php:64
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:10
+#: themes/mobile/iphone/buddypress/members/single/activity.php:29
+msgid "Updates"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:56
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:40
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:35
+#: themes/mobile/iphone/buddypress/activity/index.php:68
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:40
+#: themes/mobile/iphone/buddypress/members/single/activity.php:35
+msgid "Posts"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:57
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:36
+#: themes/mobile/iphone/buddypress/activity/index.php:69
+#: themes/mobile/iphone/buddypress/members/single/activity.php:36
+msgid "Comments"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:63
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:17
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:51
+#: themes/mobile/iphone/buddypress/activity/index.php:75
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:13
+#: themes/mobile/iphone/buddypress/members/single/activity.php:51
+msgid "Forum Topics"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:64
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:18
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:52
+#: themes/mobile/iphone/buddypress/activity/index.php:76
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:14
+#: themes/mobile/iphone/buddypress/members/single/activity.php:52
+msgid "Forum Replies"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:70
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:58
+#: themes/mobile/iphone/buddypress/activity/index.php:82
+#: themes/mobile/iphone/buddypress/members/single/activity.php:58
+msgid "New Groups"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:71
+#: themes/mobile/bootpress/buddypress/groups/single/activity.php:21
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:59
+#: themes/mobile/iphone/buddypress/activity/index.php:83
+#: themes/mobile/iphone/buddypress/groups/single/activity.php:17
+#: themes/mobile/iphone/buddypress/members/single/activity.php:59
+msgid "Group Memberships"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:77
+#: themes/mobile/bootpress/buddypress/members/single/activity.php:43
+#: themes/mobile/iphone/buddypress/activity/index.php:89
+#: themes/mobile/iphone/buddypress/members/single/activity.php:43
+msgid "Friendships"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/index.php:81
+#: themes/mobile/iphone/buddypress/activity/index.php:93
+msgid "New Members"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/activity/post-form.php:23
+#: themes/mobile/iphone/buddypress/activity/post-form.php:23
+msgid "Post Update"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/blogs-loop.php:90
+#: themes/mobile/iphone/buddypress/blogs/blogs-loop.php:90
+msgid "Sorry, there were no sites found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/create.php:14
+#: themes/mobile/iphone/buddypress/blogs/create.php:14
+msgid "Site registration is currently disabled"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:16
+#: themes/mobile/iphone/buddypress/blogs/index.php:16
+#, php-format
+msgid "All Sites <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:20
+#: themes/mobile/iphone/buddypress/blogs/index.php:20
+#, php-format
+msgid "My Sites <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:36
+#: themes/mobile/bootpress/buddypress/forums/index.php:40
+#: themes/mobile/bootpress/buddypress/groups/index.php:28
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:41
+#: themes/mobile/bootpress/buddypress/members/index.php:22
+#: themes/mobile/bootpress/buddypress/members/single/blogs.php:28
+#: themes/mobile/bootpress/buddypress/members/single/forums.php:25
+#: themes/mobile/bootpress/buddypress/members/single/friends.php:25
+#: themes/mobile/bootpress/buddypress/members/single/groups.php:26
+#: themes/mobile/iphone/buddypress/blogs/index.php:36
+#: themes/mobile/iphone/buddypress/forums/index.php:40
+#: themes/mobile/iphone/buddypress/groups/index.php:36
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:36
+#: themes/mobile/iphone/buddypress/members/index.php:28
+#: themes/mobile/iphone/buddypress/members/single/blogs.php:28
+#: themes/mobile/iphone/buddypress/members/single/forums.php:25
+#: themes/mobile/iphone/buddypress/members/single/friends.php:25
+#: themes/mobile/iphone/buddypress/members/single/groups.php:26
+msgid "Order By:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:38
+#: themes/mobile/bootpress/buddypress/forums/index.php:42
+#: themes/mobile/bootpress/buddypress/groups/index.php:31
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:43
+#: themes/mobile/bootpress/buddypress/members/index.php:24
+#: themes/mobile/bootpress/buddypress/members/single/blogs.php:30
+#: themes/mobile/bootpress/buddypress/members/single/forums.php:27
+#: themes/mobile/bootpress/buddypress/members/single/friends.php:27
+#: themes/mobile/bootpress/buddypress/members/single/groups.php:28
+#: themes/mobile/iphone/buddypress/blogs/index.php:38
+#: themes/mobile/iphone/buddypress/forums/index.php:42
+#: themes/mobile/iphone/buddypress/groups/index.php:39
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:38
+#: themes/mobile/iphone/buddypress/members/index.php:30
+#: themes/mobile/iphone/buddypress/members/single/blogs.php:30
+#: themes/mobile/iphone/buddypress/members/single/forums.php:27
+#: themes/mobile/iphone/buddypress/members/single/friends.php:27
+#: themes/mobile/iphone/buddypress/members/single/groups.php:28
+msgid "Last Active"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:39
+#: themes/mobile/bootpress/buddypress/members/single/blogs.php:31
+#: themes/mobile/iphone/buddypress/blogs/index.php:39
+#: themes/mobile/iphone/buddypress/members/single/blogs.php:31
+msgid "Newest"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/blogs/index.php:40
+#: themes/mobile/bootpress/buddypress/groups/index.php:34
+#: themes/mobile/bootpress/buddypress/members/index.php:28
+#: themes/mobile/bootpress/buddypress/members/single/blogs.php:32
+#: themes/mobile/bootpress/buddypress/members/single/friends.php:29
+#: themes/mobile/bootpress/buddypress/members/single/groups.php:31
+#: themes/mobile/iphone/buddypress/blogs/index.php:40
+#: themes/mobile/iphone/buddypress/groups/index.php:42
+#: themes/mobile/iphone/buddypress/members/index.php:34
+#: themes/mobile/iphone/buddypress/members/single/blogs.php:32
+#: themes/mobile/iphone/buddypress/members/single/friends.php:29
+#: themes/mobile/iphone/buddypress/members/single/groups.php:31
+msgid "Alphabetical"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:39
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:39
+msgid "Topic"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:41
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:41
+msgid "Freshness"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:54
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:95
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:54
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:95
+msgid "Permanent link to this post"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:61
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:61
+#, php-format
+msgid "Started by %1$s"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:72
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:72
+#, php-format
+msgid "in %1$s"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/forums-loop.php:122
+#: themes/mobile/iphone/buddypress/forums/forums-loop.php:122
+msgid "Sorry, there were no forum topics found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:20
+#: themes/mobile/iphone/buddypress/forums/index.php:20
+#, php-format
+msgid "All Topics <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:24
+#: themes/mobile/iphone/buddypress/forums/index.php:24
+#, php-format
+msgid "My Topics <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:43
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:44
+#: themes/mobile/bootpress/buddypress/members/single/forums.php:28
+#: themes/mobile/iphone/buddypress/forums/index.php:43
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:39
+#: themes/mobile/iphone/buddypress/members/single/forums.php:28
+msgid "Most Posts"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:44
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:45
+#: themes/mobile/bootpress/buddypress/members/single/forums.php:29
+#: themes/mobile/iphone/buddypress/forums/index.php:44
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:40
+#: themes/mobile/iphone/buddypress/members/single/forums.php:29
+msgid "Unreplied"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:80
+#: themes/mobile/iphone/buddypress/forums/index.php:80
+msgid "Create New Topic:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:84
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:80
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:47
+#: themes/mobile/iphone/buddypress/forums/index.php:84
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:76
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:47
+msgid "Title:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:87
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:83
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:50
+#: themes/mobile/iphone/buddypress/forums/index.php:87
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:79
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:50
+msgid "Content:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:90
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:86
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:53
+#: themes/mobile/iphone/buddypress/forums/index.php:90
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:82
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:53
+msgid "Tags (comma separated):"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:93
+#: themes/mobile/iphone/buddypress/forums/index.php:93
+msgid "Post In Group Forum:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:96
+#: themes/mobile/iphone/buddypress/forums/index.php:96
+msgid "----"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:113
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:92
+#: themes/mobile/iphone/buddypress/forums/index.php:113
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:88
+msgid "Post Topic"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/forums/index.php:125
+#: themes/mobile/iphone/buddypress/forums/index.php:125
+#, php-format
+msgid ""
+"You are not a member of any groups so you don't have any group forums you "
+"can post in. To start posting, first find a group that matches the topic "
+"subject you'd like to start. If this group does not exist, why not <a "
+"href='%s'>create a new group</a>? Once you have joined or created the group "
+"you can post your topic in that group's forum."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:29
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:18
+#: themes/mobile/iphone/buddypress/groups/create.php:29
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:16
+msgid "Group Name (required)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:34
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:21
+#: themes/mobile/iphone/buddypress/groups/create.php:34
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:19
+msgid "Group Description (required)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:51
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:58
+#: themes/mobile/iphone/buddypress/groups/create.php:51
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:56
+msgid "Privacy Options"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:55
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:63
+#: themes/mobile/iphone/buddypress/groups/create.php:55
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:61
+msgid "This is a public group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:57
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:65
+#: themes/mobile/iphone/buddypress/groups/create.php:57
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:63
+msgid "Any site member can join this group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:58
+#: themes/mobile/bootpress/buddypress/groups/create.php:67
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:66
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:76
+#: themes/mobile/iphone/buddypress/groups/create.php:58
+#: themes/mobile/iphone/buddypress/groups/create.php:67
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:64
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:74
+msgid ""
+"This group will be listed in the groups directory and in search results."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:59
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:67
+#: themes/mobile/iphone/buddypress/groups/create.php:59
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:65
+msgid "Group content and activity will be visible to any site member."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:64
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:73
+#: themes/mobile/iphone/buddypress/groups/create.php:64
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:71
+msgid "This is a private group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:66
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:75
+#: themes/mobile/iphone/buddypress/groups/create.php:66
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:73
+msgid "Only users who request membership and are accepted can join the group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:68
+#: themes/mobile/bootpress/buddypress/groups/create.php:77
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:77
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:87
+#: themes/mobile/iphone/buddypress/groups/create.php:68
+#: themes/mobile/iphone/buddypress/groups/create.php:77
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:75
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:85
+msgid ""
+"Group content and activity will only be visible to members of the group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:73
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:83
+#: themes/mobile/iphone/buddypress/groups/create.php:73
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:81
+msgid "This is a hidden group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:75
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:85
+#: themes/mobile/iphone/buddypress/groups/create.php:75
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:83
+msgid "Only users who are invited can join the group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:76
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:86
+#: themes/mobile/iphone/buddypress/groups/create.php:76
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:84
+msgid ""
+"This group will not be listed in the groups directory or search results."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:82
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:94
+#: themes/mobile/iphone/buddypress/groups/create.php:82
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:92
+msgid "Group Invitations"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:84
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:96
+#: themes/mobile/iphone/buddypress/groups/create.php:84
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:94
+msgid "Which members of this group are allowed to invite others?"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:89
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:101
+#: themes/mobile/iphone/buddypress/groups/create.php:89
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:99
+msgid "All group members"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:94
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:106
+#: themes/mobile/iphone/buddypress/groups/create.php:94
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:104
+msgid "Group admins and mods only"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:99
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:111
+#: themes/mobile/iphone/buddypress/groups/create.php:99
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:109
+msgid "Group admins only"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:105
+#: themes/mobile/iphone/buddypress/groups/create.php:105
+msgid "Group Forums"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:109
+#: themes/mobile/iphone/buddypress/groups/create.php:109
+msgid "Should this group have a forum?"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:112
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:49
+#: themes/mobile/iphone/buddypress/groups/create.php:112
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:47
+msgid "Enable discussion forum"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:116
+#: themes/mobile/iphone/buddypress/groups/create.php:116
+#, php-format
+msgid ""
+"<strong>Attention Site Admin:</strong> Group forums require the <a href=\"%s"
+"\">correct setup and configuration</a> of a bbPress installation."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:142
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:129
+#: themes/mobile/iphone/buddypress/groups/create.php:142
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:127
+msgid ""
+"Upload an image to use as an avatar for this group. The image will be shown "
+"on the main group page, and in search results."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:146
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:133
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:18
+#: themes/mobile/iphone/buddypress/groups/create.php:146
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:131
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:18
+#: themes/mobile/iphone/registration/register.php:244
+msgid "Upload Image"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:150
+#: themes/mobile/iphone/buddypress/groups/create.php:150
+msgid "To skip the avatar upload process, hit the \"Next Step\" button."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:157
+#: themes/mobile/iphone/buddypress/groups/create.php:157
+msgid "Crop Group Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:159
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:153
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:33
+#: themes/mobile/iphone/buddypress/groups/create.php:159
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:151
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:33
+#: themes/mobile/iphone/registration/register.php:258
+msgid "Avatar to crop"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:162
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:156
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:36
+#: themes/mobile/iphone/buddypress/groups/create.php:162
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:154
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:36
+#: themes/mobile/iphone/registration/register.php:261
+msgid "Avatar preview"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:165
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:159
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:39
+#: themes/mobile/iphone/buddypress/groups/create.php:165
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:157
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:39
+#: themes/mobile/iphone/registration/register.php:264
+msgid "Crop Image"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:204
+#: themes/mobile/bootpress/buddypress/groups/single/send-invites.php:27
+#: themes/mobile/iphone/buddypress/groups/create.php:204
+#: themes/mobile/iphone/buddypress/groups/single/send-invites.php:22
+msgid "Select people to invite from your friends list."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:222
+#: themes/mobile/bootpress/buddypress/groups/single/send-invites.php:49
+#: themes/mobile/iphone/buddypress/groups/create.php:222
+#: themes/mobile/iphone/buddypress/groups/single/send-invites.php:42
+msgid "Remove Invite"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:239
+#: themes/mobile/bootpress/buddypress/groups/single/send-invites.php:80
+#: themes/mobile/iphone/buddypress/groups/create.php:239
+#: themes/mobile/iphone/buddypress/groups/single/send-invites.php:73
+msgid ""
+"Once you have built up friend connections you will be able to invite others "
+"to your group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:261
+#: themes/mobile/iphone/buddypress/groups/create.php:261
+msgid "Back to Previous Step"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:268
+#: themes/mobile/iphone/buddypress/groups/create.php:268
+msgid "Next Step"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:275
+#: themes/mobile/iphone/buddypress/groups/create.php:275
+msgid "Create Group and Continue"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/create.php:282
+#: themes/mobile/iphone/buddypress/groups/create.php:282
+msgid "Finish"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/groups-loop.php:34
+#: themes/mobile/bootpress/buddypress/groups/single/group-header.php:20
+#: themes/mobile/iphone/buddypress/groups/groups-loop.php:41
+#: themes/mobile/iphone/buddypress/groups/single/group-header.php:18
+#, php-format
+msgid "active %s"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/groups-loop.php:69
+#: themes/mobile/iphone/buddypress/groups/groups-loop.php:83
+msgid "There were no groups found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/index.php:11
+#: themes/mobile/iphone/buddypress/groups/index.php:19
+#, php-format
+msgid "All Groups <span>%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/index.php:32
+#: themes/mobile/bootpress/buddypress/members/single/groups.php:29
+#: themes/mobile/iphone/buddypress/groups/index.php:40
+#: themes/mobile/iphone/buddypress/members/single/groups.php:29
+msgid "Most Members"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/index.php:33
+#: themes/mobile/bootpress/buddypress/members/single/groups.php:30
+#: themes/mobile/iphone/buddypress/groups/index.php:41
+#: themes/mobile/iphone/buddypress/members/single/groups.php:30
+msgid "Newly Created"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:27
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:25
+msgid "Notify group members of changes via email"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:28
+#: themes/mobile/bootpress/buddypress/members/register.php:222
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:26
+#: themes/mobile/iphone/buddypress/members/register.php:222
+#: themes/mobile/iphone/registration/register.php:196
+msgid "Yes"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:29
+#: themes/mobile/bootpress/buddypress/members/register.php:223
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:27
+#: themes/mobile/iphone/buddypress/members/register.php:223
+#: themes/mobile/iphone/registration/register.php:197
+msgid "No"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:34
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:119
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:58
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:74
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:146
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:30
+#: themes/mobile/bootpress/buddypress/members/single/settings/notifications.php:19
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:32
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:117
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:58
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:74
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:146
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:30
+#: themes/mobile/iphone/buddypress/members/single/settings/notifications.php:19
+msgid "Save Changes"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:139
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:137
+msgid ""
+"If you'd like to remove the existing avatar but not upload a new one, please "
+"use the delete avatar button."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:141
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:24
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:139
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:24
+msgid "Delete Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:151
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:149
+msgid "Crop Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:179
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:177
+msgid "Administrators"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:188
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:217
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:186
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:215
+#, php-format
+msgid "Profile picture of %s"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:194
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:223
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:192
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:221
+msgid "Demote to Member"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:209
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:207
+msgid "Moderators"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:222
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:282
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:220
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:280
+msgid "Promote to Admin"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:237
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:235
+msgid "Members"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:270
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:268
+msgid "(banned)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:276
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:274
+msgid "Unban this member"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:276
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:274
+msgid "Remove Ban"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:280
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:278
+msgid "Kick and ban this member"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:280
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:278
+msgid "Kick &amp; Ban"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:281
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:279
+msgid "Promote to Mod"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:286
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:284
+msgid "Remove this member"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:286
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:284
+msgid "Remove from group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:300
+#: themes/mobile/bootpress/buddypress/groups/single/members.php:96
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:298
+#: themes/mobile/iphone/buddypress/groups/single/members.php:87
+msgid "This group has no members."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:330
+#: themes/mobile/bootpress/buddypress/members/single/friends/requests.php:37
+#: themes/mobile/bootpress/buddypress/members/single/groups/invites.php:23
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:328
+#: themes/mobile/iphone/buddypress/members/single/friends/requests.php:37
+#: themes/mobile/iphone/buddypress/members/single/groups/invites.php:23
+msgid "Accept"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:332
+#: themes/mobile/bootpress/buddypress/members/single/friends/requests.php:38
+#: themes/mobile/bootpress/buddypress/members/single/groups/invites.php:24
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:330
+#: themes/mobile/iphone/buddypress/members/single/friends/requests.php:38
+#: themes/mobile/iphone/buddypress/members/single/groups/invites.php:24
+msgid "Reject"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:345
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:343
+msgid "There are no pending membership requests."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:362
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:360
+msgid ""
+"WARNING: Deleting this group will completely remove ALL content associated "
+"with it. There is no way back, please be careful with this option."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:365
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:363
+msgid "I understand the consequences of deleting this group."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/admin.php:370
+#: themes/mobile/iphone/buddypress/groups/single/admin.php:368
+msgid "Delete Group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:24
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:19
+msgid "New Topic"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:32
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:16
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:17
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:27
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:16
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:17
+msgid "Forum Directory"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:74
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:70
+msgid "You will auto join this group when you start a new topic."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum.php:78
+#: themes/mobile/iphone/buddypress/groups/single/forum.php:74
+msgid "Post a New Topic:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/request-membership.php:4
+#: themes/mobile/iphone/buddypress/groups/single/request-membership.php:4
+#, php-format
+msgid "You are requesting to become a member of the group '%s'."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/request-membership.php:7
+#: themes/mobile/iphone/buddypress/groups/single/request-membership.php:7
+msgid "Comments (optional)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/request-membership.php:12
+#: themes/mobile/iphone/buddypress/groups/single/request-membership.php:12
+msgid "Send Request"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/send-invites.php:67
+#: themes/mobile/iphone/buddypress/groups/single/send-invites.php:60
+msgid "Send Invites"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:10
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:10
+msgid "Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:25
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:25
+msgid "Edit:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/edit.php:87
+#: themes/mobile/iphone/buddypress/groups/single/forum/edit.php:87
+msgid "This topic does not exist."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:9
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:9
+msgid "New Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:32
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:32
+msgid "Topic tags:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:81
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:81
+#, php-format
+msgid "%1$s said %2$s:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:119
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:119
+msgid "There are no posts for this topic."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:134
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:134
+msgid "You will auto join this group when you reply to this topic."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:139
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:139
+msgid "Add a reply:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:144
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:144
+msgid "Post Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/groups/single/forum/topic.php:155
+#: themes/mobile/iphone/buddypress/groups/single/forum/topic.php:155
+msgid "This topic is closed, replies are no longer accepted."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/activate.php:14
+#: themes/mobile/iphone/buddypress/members/activate.php:14
+#: themes/mobile/iphone/registration/activate.php:19
+msgid ""
+"Your account was activated successfully! Your account details have been sent "
+"to you in a separate email."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/activate.php:16
+#: themes/mobile/iphone/buddypress/members/activate.php:16
+#: themes/mobile/iphone/registration/activate.php:21
+msgid ""
+"Your account was activated successfully! You can now log in with the "
+"username and password you provided when you signed up."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/activate.php:21
+#: themes/mobile/iphone/buddypress/members/activate.php:21
+#: themes/mobile/iphone/registration/activate.php:30
+msgid "Please provide a valid activation key."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/activate.php:25
+#: themes/mobile/iphone/buddypress/members/activate.php:25
+#: themes/mobile/iphone/registration/activate.php:34
+msgid "Activation Key:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/activate.php:29
+#: themes/mobile/iphone/buddypress/members/activate.php:29
+#: themes/mobile/iphone/registration/activate.php:38
+msgid "Activate"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/index.php:25
+#: themes/mobile/bootpress/buddypress/members/single/friends.php:28
+#: themes/mobile/iphone/buddypress/members/index.php:31
+#: themes/mobile/iphone/buddypress/members/single/friends.php:28
+msgid "Newest Registered"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/members-loop.php:91
+#: themes/mobile/iphone/buddypress/members/members-loop.php:91
+msgid "Sorry, no members were found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:13
+#: themes/mobile/iphone/buddypress/members/register.php:13
+msgid "User registration is currently not allowed."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:22
+#: themes/mobile/iphone/buddypress/members/register.php:22
+#: themes/mobile/iphone/registration/register.php:18
+msgid ""
+"Registering for this site is easy, just fill in the fields below and we'll "
+"get a new account set up for you in no time."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:30
+#: themes/mobile/iphone/buddypress/members/register.php:30
+#: themes/mobile/iphone/registration/register.php:26
+msgid "Account Details"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:32
+#: themes/mobile/iphone/footer.php:73
+#: themes/mobile/iphone/buddypress/members/register.php:32
+#: themes/mobile/iphone/registration/register.php:28
+msgid "Username"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:32
+#: themes/mobile/bootpress/buddypress/members/register.php:36
+#: themes/mobile/bootpress/buddypress/members/register.php:40
+#: themes/mobile/bootpress/buddypress/members/register.php:44
+#: themes/mobile/bootpress/buddypress/members/register.php:71
+#: themes/mobile/bootpress/buddypress/members/register.php:79
+#: themes/mobile/bootpress/buddypress/members/register.php:87
+#: themes/mobile/bootpress/buddypress/members/register.php:97
+#: themes/mobile/bootpress/buddypress/members/register.php:108
+#: themes/mobile/bootpress/buddypress/members/register.php:123
+#: themes/mobile/bootpress/buddypress/members/register.php:134
+#: themes/mobile/bootpress/buddypress/members/register.php:206
+#: themes/mobile/bootpress/buddypress/members/register.php:215
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:26
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:33
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:40
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:49
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:67
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:83
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:93
+#: themes/mobile/iphone/buddypress/members/register.php:32
+#: themes/mobile/iphone/buddypress/members/register.php:36
+#: themes/mobile/iphone/buddypress/members/register.php:40
+#: themes/mobile/iphone/buddypress/members/register.php:44
+#: themes/mobile/iphone/buddypress/members/register.php:71
+#: themes/mobile/iphone/buddypress/members/register.php:79
+#: themes/mobile/iphone/buddypress/members/register.php:87
+#: themes/mobile/iphone/buddypress/members/register.php:97
+#: themes/mobile/iphone/buddypress/members/register.php:108
+#: themes/mobile/iphone/buddypress/members/register.php:123
+#: themes/mobile/iphone/buddypress/members/register.php:134
+#: themes/mobile/iphone/buddypress/members/register.php:206
+#: themes/mobile/iphone/buddypress/members/register.php:215
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:26
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:33
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:40
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:49
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:67
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:83
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:93
+#: themes/mobile/iphone/registration/register.php:28
+#: themes/mobile/iphone/registration/register.php:32
+#: themes/mobile/iphone/registration/register.php:36
+#: themes/mobile/iphone/registration/register.php:40
+#: themes/mobile/iphone/registration/register.php:67
+#: themes/mobile/iphone/registration/register.php:75
+#: themes/mobile/iphone/registration/register.php:83
+#: themes/mobile/iphone/registration/register.php:93
+#: themes/mobile/iphone/registration/register.php:104
+#: themes/mobile/iphone/registration/register.php:119
+#: themes/mobile/iphone/registration/register.php:130
+#: themes/mobile/iphone/registration/register.php:180
+#: themes/mobile/iphone/registration/register.php:189
+msgid "(required)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:36
+#: themes/mobile/iphone/buddypress/members/register.php:36
+#: themes/mobile/iphone/registration/register.php:32
+msgid "Email Address"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:40
+#: themes/mobile/iphone/buddypress/members/register.php:40
+#: themes/mobile/iphone/registration/register.php:36
+msgid "Choose a Password"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:44
+#: themes/mobile/iphone/buddypress/members/register.php:44
+#: themes/mobile/iphone/registration/register.php:40
+msgid "Confirm Password"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:60
+#: themes/mobile/iphone/buddypress/members/register.php:60
+#: themes/mobile/iphone/registration/register.php:56
+msgid "Profile Details"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:114
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:58
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:73
+#: themes/mobile/iphone/buddypress/members/register.php:114
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:58
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:73
+#: themes/mobile/iphone/registration/register.php:110
+msgid "Clear"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:154
+#: themes/mobile/bootpress/buddypress/members/register.php:169
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:118
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:132
+#: themes/mobile/iphone/buddypress/members/register.php:154
+#: themes/mobile/iphone/buddypress/members/register.php:169
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:118
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:132
+#, php-format
+msgid ""
+"This field can be seen by: <span class=\"current-visibility-level\">%s</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:159
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:123
+#: themes/mobile/iphone/buddypress/members/register.php:159
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:123
+msgid "Who can see this field?"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:164
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:128
+#: themes/mobile/iphone/buddypress/members/register.php:164
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:128
+msgid "Close"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:200
+#: themes/mobile/iphone/buddypress/members/register.php:200
+#: themes/mobile/iphone/registration/register.php:174
+msgid "Blog Details"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:202
+#: themes/mobile/iphone/buddypress/members/register.php:202
+msgid "Yes, I'd like to create a new site"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:206
+#: themes/mobile/iphone/buddypress/members/register.php:206
+#: themes/mobile/iphone/registration/register.php:180
+msgid "Blog URL"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:215
+#: themes/mobile/iphone/buddypress/members/register.php:215
+msgid "Site Title"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:219
+#: themes/mobile/iphone/buddypress/members/register.php:219
+msgid ""
+"I would like my site to appear in search engines, and in public listings "
+"around this network."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:236
+#: themes/mobile/iphone/buddypress/members/register.php:236
+#: themes/mobile/iphone/registration/register.php:210
+msgid "Complete Sign Up"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:251
+#: themes/mobile/iphone/buddypress/members/register.php:251
+#: themes/mobile/iphone/registration/register.php:226
+msgid ""
+"You have successfully created your account! To begin using this site you "
+"will need to activate your account via the email we have just sent to your "
+"address."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/register.php:253
+#: themes/mobile/iphone/buddypress/members/register.php:253
+#: themes/mobile/iphone/registration/register.php:228
+msgid ""
+"You have successfully created your account! Please log in using the username "
+"and password you have just created."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/friends/requests.php:68
+#: themes/mobile/iphone/buddypress/members/single/friends/requests.php:68
+msgid "You have no pending friendship requests."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/groups/invites.php:14
+#: themes/mobile/iphone/buddypress/members/single/groups/invites.php:14
+#, php-format
+msgid "%s members"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/groups/invites.php:37
+#: themes/mobile/iphone/buddypress/members/single/groups/invites.php:37
+msgid "You have no outstanding group invites."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/compose.php:5
+#: themes/mobile/iphone/buddypress/members/single/messages/compose.php:5
+msgid "Send To (Username or Friend's Name)"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/compose.php:14
+#: themes/mobile/iphone/buddypress/members/single/messages/compose.php:14
+msgid "This is a notice to all users."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/compose.php:17
+#: themes/mobile/iphone/buddypress/members/single/messages/compose.php:17
+msgid "Subject"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/compose.php:20
+#: themes/mobile/iphone/buddypress/members/single/messages/compose.php:20
+msgid "Message"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/compose.php:28
+#: themes/mobile/iphone/buddypress/members/single/messages/compose.php:28
+msgid "Send Message"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:32
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:32
+msgid "From:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:37
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:37
+msgid "To:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:43
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:43
+msgid "View Message"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:51
+#: themes/mobile/bootpress/buddypress/members/single/messages/notices-loop.php:43
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:25
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:51
+#: themes/mobile/iphone/buddypress/members/single/messages/notices-loop.php:43
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:25
+msgid "Delete Message"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/messages-loop.php:69
+#: themes/mobile/iphone/buddypress/members/single/messages/messages-loop.php:69
+msgid "Sorry, no messages were found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/notices-loop.php:36
+#: themes/mobile/iphone/buddypress/members/single/messages/notices-loop.php:36
+msgid "Sent:"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/notices-loop.php:54
+#: themes/mobile/iphone/buddypress/members/single/messages/notices-loop.php:54
+msgid "Sorry, no notices were found."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:15
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:15
+msgid "You are alone in this conversation."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:19
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:19
+#, php-format
+msgid "Conversation between %s and you."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:87
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:87
+msgid "Send a Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/messages/single.php:103
+#: themes/mobile/iphone/buddypress/members/single/messages/single.php:103
+msgid "Send Reply"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:1
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:1
+msgid "Change Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:7
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:7
+msgid ""
+"Your avatar will be used on your profile and throughout the site. If there "
+"is a <a href=\"http://gravatar.com\">Gravatar</a> associated with your "
+"account email we will use that, or you can upload an image from your "
+"computer."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:14
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:14
+msgid ""
+"Click below to select a JPG, GIF or PNG format photo from your computer and "
+"then click 'Upload Image' to proceed."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:23
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:23
+msgid ""
+"If you'd like to delete your current avatar but not upload a new one, please "
+"use the delete avatar button."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:24
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:24
+msgid "Delete My Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:31
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:31
+#: themes/mobile/iphone/registration/register.php:256
+msgid "Crop Your New Avatar"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/change-avatar.php:55
+#: themes/mobile/iphone/buddypress/members/single/profile/change-avatar.php:55
+msgid ""
+"Your avatar will be used on your profile and throughout the site. To change "
+"your avatar, please create an account with <a href=\"http://gravatar.com"
+"\">Gravatar</a> using the same email address as you used to register with "
+"this site."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:10
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:10
+#, php-format
+msgid "Editing '%s' Profile Group"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/edit.php:118
+#: themes/mobile/iphone/buddypress/members/single/profile/edit.php:118
+msgid "Change"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:8
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:8
+msgid "My Profile"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:8
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:8
+#, php-format
+msgid "%s's Profile"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:24
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:24
+msgid "About Me"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:42
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:42
+msgid "Jabber"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:51
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:51
+msgid "AOL Messenger"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/profile/profile-wp.php:60
+#: themes/mobile/iphone/buddypress/members/single/profile/profile-wp.php:60
+msgid "Yahoo Messenger"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/capabilities.php:15
+#: themes/mobile/iphone/buddypress/members/single/settings/capabilities.php:15
+msgid "This user is a spammer."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/capabilities.php:19
+#: themes/mobile/iphone/buddypress/members/single/settings/capabilities.php:19
+msgid "Save"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/delete-account.php:13
+#: themes/mobile/iphone/buddypress/members/single/settings/delete-account.php:13
+msgid ""
+"Deleting your account will delete all of the content you have created. It "
+"will be completely irrecoverable."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/delete-account.php:17
+#: themes/mobile/iphone/buddypress/members/single/settings/delete-account.php:17
+msgid ""
+"Deleting this account will delete all of the content it has created. It will "
+"be completely irrecoverable."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/delete-account.php:29
+#: themes/mobile/iphone/buddypress/members/single/settings/delete-account.php:29
+msgid "I understand the consequences."
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/delete-account.php:33
+#: themes/mobile/iphone/buddypress/members/single/settings/delete-account.php:33
+msgid "Delete Account"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:15
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:15
+msgid ""
+"Current Password <span>(required to update email or change current password)"
+"</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:16
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:16
+msgid "Password Lost and Found"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:16
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:16
+msgid "Lost your password?"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:20
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:20
+msgid "Account Email"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:23
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:23
+msgid "Change Password <span>(leave blank for no change)</span>"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:24
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:24
+msgid "New Password"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/general.php:25
+#: themes/mobile/iphone/buddypress/members/single/settings/general.php:25
+msgid "Repeat New Password"
+msgstr ""
+
+#: themes/mobile/bootpress/buddypress/members/single/settings/notifications.php:12
+#: themes/mobile/iphone/buddypress/members/single/settings/notifications.php:12
+msgid "Send a notification by email when:"
+msgstr ""
+
+#: themes/mobile/iphone/404.php:20
+msgid "Page Not Found"
+msgstr ""
+
+#: themes/mobile/iphone/404.php:24
+msgid "The page you were looking for was not found."
+msgstr ""
+
+#: themes/mobile/iphone/archive.php:21
+#, php-format
+msgid "You are browsing the archive for %1$s."
+msgstr ""
+
+#: themes/mobile/iphone/archive.php:55 themes/mobile/iphone/index.php:58
+msgid "Not Found"
+msgstr ""
+
+#: themes/mobile/iphone/attachment.php:20 themes/mobile/iphone/search.php:20
+msgid "Blog"
+msgstr ""
+
+#: themes/mobile/iphone/attachment.php:36
+msgid "<p class=\"serif\">Read the rest of this entry &rarr;</p>"
+msgstr ""
+
+#: themes/mobile/iphone/attachment.php:47
+msgid "Sorry, no attachments matched your criteria."
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:19
+msgid "Admin"
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:30
+msgid "Main"
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:66
+msgid "To start connecting please log in first."
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:68
+#, php-format
+msgid ""
+" You can also <a href=\"%s\" title=\"Create an account\">create an account</"
+"a>."
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:76
+msgid "Password"
+msgstr ""
+
+#: themes/mobile/iphone/footer.php:79
+msgid "Remember Me"
+msgstr ""
+
+#: themes/mobile/iphone/header.php:49
+msgid "Logout"
+msgstr ""
+
+#: themes/mobile/iphone/header.php:51
+msgid "Login"
+msgstr ""
+
+#: themes/mobile/iphone/index.php:59
+msgid "Sorry, but you are looking for something that isn't here."
+msgstr ""
+
+#: themes/mobile/iphone/links.php:20
+msgid "Links"
+msgstr ""
+
+#: themes/mobile/iphone/page.php:56
+msgid "<p class=\"serif\">Read the rest of this page &rarr;</p>"
+msgstr ""
+
+#: themes/mobile/iphone/page.php:59
+msgid "Edit this entry."
+msgstr ""
+
+#: themes/mobile/iphone/search.php:24
+msgid "Search Results"
+msgstr ""
+
+#: themes/mobile/iphone/search.php:63
+msgid "No posts found. Try a different search?"
+msgstr ""
+
+#: themes/mobile/iphone/registration/activate.php:14
+msgid "Account Activated"
+msgstr ""
+
+#: themes/mobile/iphone/registration/activate.php:26
+msgid "Activate your Account"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:14
+msgid "Create an Account"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:176
+msgid "Yes, I'd like to create a new blog"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:189
+msgid "Blog Title"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:193
+msgid ""
+"I would like my blog to appear in search engines, and in public listings "
+"around this site"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:221
+msgid "Sign Up Complete!"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:235
+msgid "Your Current Avatar"
+msgstr ""
+
+#: themes/mobile/iphone/registration/register.php:236
+msgid ""
+"We've fetched an avatar for your new account. If you'd like to change this, "
+"why not upload a new one?"
+msgstr ""

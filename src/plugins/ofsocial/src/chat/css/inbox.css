@@ -1,0 +1,202 @@
+/*
+
+Jappix - An open social platform
+This is the inbox CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 28/12/10
+
+*/
+
+#inbox .content {
+	padding: 10px 0 10px 0;
+}
+
+#inbox .content p {
+	margin: 3px 10px;
+	text-align: justify;
+	font-size: 0.9em;
+}
+
+#inbox .inbox-results {
+	height: 310px;
+	width: 620px;
+	margin: -5px 0 0 10px;
+	padding: 6px 0 0 0;
+	overflow: auto;
+}
+
+#inbox .message-unread {
+	background-color: #E9F1FD;
+}
+
+#inbox .one-message {
+	font-size: 0.9em;
+	border-bottom: 1px #b2c7cb solid;
+}
+
+#inbox .message-head {
+	padding: 6px 0 7px 4px;
+	overflow: hidden;
+}
+
+#inbox .message-head:hover {
+	background-color: #e9f1fd;
+	cursor: pointer;
+}
+
+#inbox .message-head:active {
+	background-color: #f1f6fd;
+}
+
+#inbox .one-message.message-reading,
+#inbox .one-message.message-reading .message-head {
+	background-color: #f1f6fd;
+}
+
+#inbox .avatar-container {
+	float: left;
+	width: 40px;
+	height: 40px;
+	margin-right: 7px;
+	text-align: center;
+	background-repeat: no-repeat;
+}
+
+#inbox .avatar {
+	max-width: 40px;
+	max-height: 40px;
+}
+
+#inbox .message-jid,
+#inbox .message-subject {
+	float: left;
+	margin: 0 2px;
+	overflow: hidden;
+}
+
+#inbox .message-jid {
+	width: 165px;
+	font-weight: bold;
+}
+
+#inbox .message-subject {
+	width: 355px;
+}
+
+#inbox .message-truncated {
+	color: #42646b;
+	font-size: 0.8em;
+	margin: 23px 0 0 49px;
+}
+
+#inbox .message-body {
+	padding: 8px 5px 5px 5px;
+}
+
+#inbox .message-body a {
+	text-decoration: underline;
+}
+
+#inbox .message-meta {
+	margin-top: 6px;
+	padding: 3px 4px;
+	border-top: 1px #b2c7cb dotted;
+}
+
+#inbox .message-meta span.date {
+	color: #28474e;
+	font-size: 0.8em;
+	margin: 10px 0 0 4px;
+	float: left;
+}
+
+#inbox .message-meta a {
+	font-size: 0.98em;
+	margin: 5px;
+	float: right;
+	display: block;
+}
+
+#inbox .inbox-noresults {
+	font-weight: bold;
+	display: none;
+}
+
+#inbox .a-show-messages {
+	display: none;
+}
+
+#inbox .inbox-new {
+	display: none;
+	height: 300px;
+	width: 620px;
+	margin: -5px 0 0 10px;
+	padding: 16px 0 0 0;
+}
+
+#inbox .inbox-new-block {
+	border-top: 1px #686868 dotted;
+	padding-top: 9px;
+	min-height: 32px;
+	clear: both;
+}
+
+#inbox .inbox-new-text {
+	float: left;
+	width: 100px;
+}
+
+#inbox .inbox-new-textarea {
+	width: 460px;
+	height: 109px;
+	margin-bottom: 10px;
+	float: left;
+}
+
+#inbox .inbox-new input {
+	float: left;
+}
+
+#inbox .inbox-new-to ul {
+	width: 264px;
+	max-height: 168px;
+	font-size: 0.9em;
+	left: 120px;
+	top: 31px;
+}
+
+#inbox .inbox-new-to-input {
+	width: 260px;
+}
+
+#inbox .inbox-new-subject-input {
+	width: 380px;
+}
+
+#inbox .inbox-new-file a {
+	display: block;
+	float: left;
+}
+
+#inbox .inbox-new-file a.file {
+	font-size: 0.85em;
+	height: 16px;
+	max-width: 320px;
+	margin: 3px 0 15px 013px;
+	overflow: hidden;
+}
+
+#inbox .inbox-new-file a.one-button {
+	font-size: 0.85em;
+	margin: -2px 0 0 25px;
+}
+
+#inbox .inbox-new-send a {
+	font-size: 0.85em;
+	float: right;
+	display: block;
+}

@@ -1,0 +1,494 @@
+/*
+
+Jappix - An open social platform
+This is the home CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 10/06/11
+
+*/
+
+#home {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	min-height: 550px;
+	min-width: 875px;
+}
+
+#home .locale,
+#home .obsolete {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.70);
+	color: white;
+	position: absolute;
+	top: 0;
+	text-shadow: 0 0 1px black;
+	z-index: 100;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+	-moz-border-radius-bottomleft: 3px;
+	-moz-border-radius-bottomright: 3px;
+	-webkit-border-bottom-left-radius: 3px;
+	-webkit-border-bottom-right-radius: 3px;
+}
+
+#home .locale {
+	left: 12px;
+	font-size: 0.8em;
+}
+
+#home .locale .current {
+	padding: 3px 10px 4px 10px;
+	font-weight: bold;
+}
+
+#home .locale .current:hover {
+	cursor: default;
+}
+
+#home .locale .list {
+	margin: 2px 0 2px;
+}
+
+#home .locale .list a {
+	color: white;
+	padding: 3px 10px;
+	text-decoration: none;
+	display: block;
+}
+
+#home .locale .list a:hover,
+#home .locale .list a:focus {
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.1);
+	cursor: pointer;
+}
+
+#home .locale .list a:active {
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.14);
+}
+
+#home .obsolete {
+	height: 60px;
+	padding: 4px 10px;
+	right: 12px;
+	font-size: 0.9em;
+	font-weight: bold;
+	display: none;
+}
+
+#home .obsolete a {
+	height: 33px;
+	width: 33px;
+	margin: 5px 2px 0 0;
+	float: left;
+}
+
+#home .obsolete a:hover,
+#home .obsolete a:focus {
+	opacity: 0.8;
+}
+
+#home .obsolete a:active {
+	opacity: 0.6;
+}
+
+#home .obsolete a.firefox {
+	background-position: 1px 0;
+}
+
+#home .obsolete a.chrome {
+	background-position: -34px 0;
+}
+
+#home .obsolete a.safari {
+	background-position: -68px 0;
+}
+
+#home .obsolete a.opera {
+	background-position: -101px 0;
+}
+
+#home .obsolete a.ie {
+	background-position: -135px 0;
+}
+
+#home .main {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.85);
+	position: absolute;
+	top: 50%;
+	margin-top: -200px;
+	width: 800px;
+	height: 400px;
+	left: 50%;
+	margin-left: -400px;
+	z-index: 50;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	box-shadow: 0 0 35px #5c5c5c;
+	-moz-box-shadow: 0 0 35px #5c5c5c;
+	-webkit-box-shadow: 0 0 35px #5c5c5c;
+}
+
+#home .left {
+	float: left;
+	width: 350px;
+	height: 370px;
+	margin: 15px 0 15px 15px;
+	color: white;
+	text-align: center;
+	text-shadow: 0 1px 1px black;
+}
+
+#home .left .logo {
+	background-position: 0 0;
+	float: left;
+	margin: 30px 20px;
+	width: 311px;
+	height: 113px;
+}
+
+#home .left p.upper {
+	margin: 12px 0 20px 0;
+}
+
+#home .left p.secondary {
+	margin: 8px 0 0 16px;
+	font-size: 0.9em;
+	width: 320px;
+}
+
+#home .right {
+	background: #e4eef9;
+	background: -moz-linear-gradient(top, #e4eef9, #C5E1FF);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e4eef9), to(#C5E1FF));
+	float: right;
+	width: 385px;
+	height: 350px;
+	margin: 15px 15px 15px 0;
+	padding: 10px;
+	font-size: 13px;
+	text-align: justify;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	box-shadow: 0 0 20px black;
+	-moz-box-shadow: 0 0 20px black;
+	-webkit-box-shadow: 0 0 20px black;
+}
+
+#home .right h1 {
+	font-size: 16px;
+	padding-bottom: 4px;
+	border-bottom: 1px black dotted;
+}
+
+#home .right p {
+	margin-bottom: 4px;
+}
+
+#home .right p a {
+	border-width: 0 0 1px 0;
+	border-style: dotted;
+	border-color: black;
+}
+
+#home .right p a:hover,
+#home .right p a:focus {
+	border-style: solid;
+	text-decoration: none;
+}
+
+#home .right button {
+	display: block;
+	margin-left: 22px;
+	width: 342px;
+	height: 64px;
+	text-decoration: none;
+	font-weight: bold;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+}
+
+#home .right button:hover {
+	cursor: pointer;
+}
+
+#home .right button span {
+	float: left;
+}
+
+#home .right button span.home-images {
+	height: 16px;
+	width: 16px;
+	margin: 5px 7px 7px 24px;
+}
+
+#home .right button span.text {
+	padding-left: 20px;
+	font-size: 1.5em;
+}
+
+#home .right .login {
+	background-color: #72d071;
+	background-position: 0 0;
+	border: 1px solid #5cb55c;
+	margin-top: 22px;
+	box-shadow: 0 0 10px #89e389;
+	-moz-box-shadow: 0 0 10px #89e389;
+	-webkit-box-shadow: 0 0 10px #89e389;
+}
+
+#home .right .login:hover,
+#home .right .login:focus {
+	border: 1px solid #419141;
+	box-shadow: 0 0 15px #72d071;
+	-moz-box-shadow: 0 0 15px #72d071;
+	-webkit-box-shadow: 0 0 15px #72d071;
+}
+
+#home .right .login:active {
+	background-color: #97e896;
+	background-position: 0 -80px;
+}
+
+#home .right .login span.text {
+	color: #2d612d;
+	text-shadow: 1px 1px 1px #5cb55c;
+}
+
+#home .right .login span.home-images {
+	background-position: 0 -230px;
+}
+
+#home .right .register {
+	background-color: #f6ef82;
+	background-position: 0 -160px;
+	border: 1px solid #e3db56;
+	margin-top: 15px;
+	box-shadow: 0 0 10px #fff99d;
+	-moz-box-shadow: 0 0 10px #fff99d;
+	-webkit-box-shadow: 0 0 10px #fff99d;
+}
+
+#home .right .register:hover,
+#home .right .register:focus {
+	border: 1px solid #d2c93f;
+	box-shadow: 0 0 15px #f1e968;
+	-moz-box-shadow: 0 0 15px #f1e968;
+	-webkit-box-shadow: 0 0 15px #f1e968;
+}
+
+#home .right .register:active {
+	background-color: #fdf7af;
+	background-position: 0 -240px;
+}
+
+#home .right .register span.text {
+	color: #6d6813;
+	text-shadow: 1px 1px 1px #dbd56e;
+}
+
+#home .right .register span.home-images {
+	background-position: 0 -204px;
+}
+
+#home .right p.notice {
+	margin-top: 24px;
+	font-size: 0.9em;
+}
+
+#home .right .navigation {
+	clear: both;
+	width: 385px;
+	border-top: 1px black dotted;
+	position: absolute;
+	text-align: right;
+	bottom: 25px;
+	right: 25px;
+	padding-top: 6px;
+}
+
+#home .right .navigation a {
+	margin-left: 9px;
+	color: black;
+	text-decoration: none;
+	font-size: 0.9em;
+	height: 12px;
+	padding: 0 0 4px 20px;
+	float: right;
+}
+
+#home .right .navigation a:hover,
+#home .right .navigation a:focus {
+	text-decoration: underline;
+}
+
+#home .right .navigation a.unencrypted {
+	background-position: 0 -256px;
+}
+
+#home .right .navigation a.encrypted {
+	background-position: 0 -282px;
+}
+
+#home .right .navigation a.project {
+	background-position: 0 -126px;
+}
+
+#home .right .navigation a.manager {
+	background-position: 0 -152px;
+}
+
+#home .right .navigation a.mobile {
+	background-position: 0 -178px;
+}
+
+#home a.advanced {
+	background-position: 0 -334px;
+	font-size: 0.9em;
+	height: 16px;
+	margin-bottom: 10px;
+	padding-left: 16px;
+	display: block;
+}
+
+#home fieldset.advanced {
+	display: none;
+}
+
+#home .anonymouser input[type=text] {
+	width: 160px;
+}
+
+#home .homediv.registerer .success a {
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+#home fieldset {
+	border: 1px solid black;
+	margin: 12px 0 12px 0;
+	padding: 5px 0 4px 0;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#home legend {
+	font-size: 0.9em;
+	margin: 0 0 0 15px;
+	padding: 0 2px;
+	text-transform: uppercase;
+}
+
+#home label {
+	width: 110px;
+	display: block;
+	float: left;
+	clear: both;
+	margin: 0 0 5px 12px;
+}
+
+#home input,
+#home select {
+	float: left;
+	margin-bottom: 5px;
+}
+
+#home input[type=text],
+#home input[type=password],
+#home select {
+	width: 140px;
+	margin-top: -2px;
+}
+
+#home input[type=submit] {
+	min-width: 120px;
+	float: right;
+}
+
+#home span.jid {
+	display: block;
+	float: left;
+	margin: 0 4px;
+}
+
+#home input.nick, #home input.server {
+	width: 110px;
+}
+
+#home .info {
+	padding: 6px;
+	position: absolute;
+	bottom: 62px;
+	right: 35px;
+	border-width: 1px;
+	border-style: dotted;
+	clear: both;
+	width: 350px;
+}
+
+#home .info.success {
+	background-color: #aee578;
+	border-color: #85b05c;
+	display: none;
+}
+
+#home .info.fail {
+	background-color: #f19d9d;
+	border-color: #b34f4f;
+}
+
+#home .info.report {
+	background-color: #f3f48b;
+	border-color: #c9c66b;
+	display: none;
+}
+
+#home .info.report span {
+	text-decoration: underline;
+}
+
+#home .notice.simple {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.6);
+	color: white;
+	font-size: 0.9em;
+	text-decoration: none;
+	text-shadow: 0 1px 0 black;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 8px 20px;
+	z-index: 100;
+	box-shadow: 0 0 25px #ababab;
+	-moz-box-shadow: 0 0 25px #ababab;
+	-webkit-box-shadow: 0 0 25px #ababab;
+}
+
+#home .notice.simple .title {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.4);
+	background-position: 8px -299px;
+	border-width: 0 1px 1px 1px;
+	border-style: solid;
+	border-color: #141414;
+	font-weight: bold;
+	padding: 8px 8px 8px 30px;
+}
+
+#home .notice.simple .text {
+	margin-left: 20px;
+}

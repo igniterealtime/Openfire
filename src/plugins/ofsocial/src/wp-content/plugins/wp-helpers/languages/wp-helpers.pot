@@ -1,0 +1,79 @@
+# Copyright (C) 2012 WordPress Helpers
+# This file is distributed under the same license as the WordPress Helpers package.
+msgid ""
+msgstr ""
+"Project-Id-Version: WordPress Helpers 1.4.2\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/wp-helpers\n"
+"POT-Creation-Date: 2012-11-30 17:45:57+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2012-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: includes/class-piklist-checker.php:95
+msgid "Piklist Required"
+msgstr ""
+
+#: includes/class-piklist-checker.php:96
+msgid "for Network Activation"
+msgstr ""
+
+#: includes/class-piklist-checker.php:104
+msgid ""
+"To Network Activate a Piklist plugin, you must first Network Activate "
+"Piklist."
+msgstr ""
+
+#: includes/class-piklist-checker.php:108
+msgid ""
+"The plugin(s) listed below require the Piklist plugin to be installed and "
+"activated."
+msgstr ""
+
+#: includes/class-piklist-checker.php:112
+msgid "You can:"
+msgstr ""
+
+#: includes/class-piklist-checker.php:139
+msgid "The following plugin(s) have been deactivated."
+msgstr ""
+
+#: parts/shared/built-with-piklist.php:16
+msgid ""
+"This settings page was built with Piklist. Learn more at <a href=\"http://"
+"piklist.com/user-guide/tutorials/building-settings-pages/"
+"#utm_source=wpadmin&utm_medium=helperssettingspage&utm_campaign=wphelpersplugin"
+"\">Piklist.com</a>."
+msgstr ""
+
+#: wp-helpers.php:494
+msgid "ID"
+msgstr ""
+
+#: wp-helpers.php:911
+msgid "Disabled"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "WordPress Helpers"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://piklist.com"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Enhanced settings for WordPress. Located under <a href=\"tools.php?"
+"page=piklist_wp_helpers\">TOOLS > HELPERS</a>"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Piklist"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://piklist.com/"
+msgstr ""

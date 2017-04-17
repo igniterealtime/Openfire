@@ -1,0 +1,96 @@
+Ideas.
+-Not neccessarily all of these will be implemented.  There is also no set timeframe :-)  The ones near the top are more likely/sooner, and near the bottom are less likely/farther out. Feel free to email me to vote these up or down.  I can also be commissioned to include any of these or other features you have in mind in a more timely manner.  peter@studio66design.com
+
+
+Categories
+---------------------
+Leave admin or group admin to decide if  categories should by displayed into the documents info 
+
+Misc UI Improvments
+---------------------------
+Find a way to keep Add/Edit form from being buried below long lists, add ajax to "add catagory", few other nitpicks.
+
+
+Activity Stream Tie-In
+----------------------------
+Add something like an "Attach document" checkbox to the "What's New" area.  If checked, a document form would swoop in all jquery-like and save the day.
+
+
+Reporting
+----------------------------
+Show downlaod counts, who's uploading, storage space, etc.  This will likely tie in to Boone George's Group Manamgent plugin.
+
+
+Additional Ajax functionality
+-----------------------------
+Remove page refreshes when doing simple things like deleting.
+
+
+Better client-side validation
+-----------------------------
+A user shouldn't have to wait for the document to be uploaded before they learn that the extension is not allowed.  Include a Javascript check for this.  It would also be great to check the size first with JS, but initial research into this was not fruitful.
+
+
+User verification for Downloads - Done 
+-----------------------------
+Currently, when a document is downloaded, the direct link to the document is used.  Instead, use a redirect page to verify the requestor's credentials for better security.
+
+
+MIME Type Filtering
+---------------------------
+Currently, only the extension is filtered.  This provides weak security at best.  Include a mime type check to make it (somewhat) more rigorous.
+
+
+Quotas
+--------------------------
+Either Site admins or Group Admins can put caps on space for documents.  This may apply to either groups or users
+
+
+Improved Sorting
+--------------------------
+Expand the sorting functionality.  Include more options (such as changing order), and use ajax instead of page refresh.
+
+
+SEARCHING!
+--------------------------
+Yeah, it could use this. I'm worried about the top right section getting cluttered, perhaps this could be put in a widget.  Most searches for other stuff are in widgets.  The problem with using a widget, is that users would likely expect a site-wide document search.  There's currently not a way to view documents from multiple groups at once.
+
+
+Per-group activation option
+---------------------------
+Create a group level option of whether to use documents, similar to the option of whether to use a forum.
+
+
+Document Previewing
+----------------------------
+Generate a preview of the document.  Perhaps using the gview/google doc embedder plugin as a starting point. This would need some UI brainstorming, my current thinking is that a semi-transparent div can appear on hover (and follow the mouse) and have the preview inside.  Either that, or display document previews as large icons themselves and give the whole thing a more visual browsing experience.  The problem with the latter is that it falls apart for media types that can't be previewed.
+
+
+Tags
+---------------------------
+Add a system where users can add tag documents. This would behave like tags everywhere else: entered as a comma seperated list.  Then, documents can be searched/filtered by any tag.  Icanhaztagcloud?  I'm currently researching the best way to do this, whether to create a table just for Group Docs, or to use a custom taxonomy in the current Wordpress blog taxonomy system.
+
+
+Flexible file size limits
+---------------------------
+Give the admin control of the maximum file size that can be uploaded.  Currently the php.ini defaults are used.  After initial research, this seems difficult to implement, as set_ini() is not allowed on many server setups.
+
+
+Smarter Widgets
+---------------------------
+Currently the widgets only shows documents for public groups.  This is to keep documents in private groups from being shown to everyone.  Perhaps have the widget check the current user's group memberships, and show all relevant recent documents to the active user.  Not sure about the performance hit here, as it would either require mulitple joins, or possibly a foreach loop and multiple queries.
+
+
+Comments
+----------------------------
+Add the ability for users to comment on documents.
+
+
+Flash Uploader
+----------------------------
+Use a beefed up uploader, perhaps similar to how wordpress handles media uploads internally.  The main advantage to this would be a progress indicator for large files.
+
+
+Expiration Date
+----------------------------
+Allow entry of an expiration date, after which, the document will no longer be visable.

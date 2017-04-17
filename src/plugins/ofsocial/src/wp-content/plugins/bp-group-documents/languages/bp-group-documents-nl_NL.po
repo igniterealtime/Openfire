@@ -1,0 +1,667 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BP Group Documents v1.2.2\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-group-documents\n"
+"POT-Creation-Date: 2014-12-08 12:06+0200\n"
+"PO-Revision-Date: 2014-12-08 12:06+0200\n"
+"Last-Translator: Lena Stergatu <stergatu@cti.gr>\n"
+"Language-Team: \n"
+"Language: nl_NL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 1.7\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;"
+"_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2\n"
+"X-Poedit-Basepath: ../\n"
+"X-Textdomain-Support: yes\n"
+"X-Poedit-SearchPath-0: .\n"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:33 buddypress-group-documents.php:45
+#: include/activity.php:153 include/admin.php:23 include/admin.php:296
+#: include/bp_group_documents_functions.php:31 include/widgets.php:57
+#: include/widgets.php:186 include/widgets.php:319 include/widgets.php:420
+#: loader.php:126
+msgid "Documents"
+msgstr "Documenten"
+
+# @ buddypress
+#: buddypress-group-documents.php:91
+msgid "There was an error saving, please try again"
+msgstr "Er ging iets mis met opslaan, probeer het nog een keer."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:93
+#, fuzzy
+msgid "Settings Saved."
+msgstr "Instellingen bewaard"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:120
+msgid "Category List for"
+msgstr "Categorielijst voor"
+
+# @ default
+#: buddypress-group-documents.php:131
+msgid "Update"
+msgstr "Toepassen"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:136
+#, php-format
+msgid "Are you sure you want to delete category <b>%s</b>?"
+msgstr "Weet je zeker dat je de categorie <b>%s</b> wilt verwijderen?"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:139
+#, php-format
+msgid "Any %s in the category will be left with no category."
+msgstr "Alle %s in de categorie zullen zonder categorie overblijven."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:143
+msgid "You can later assign them to another  category."
+msgstr "Je kunt ze later aan een andere categorie toewijzen."
+
+# @ buddypress
+# @ bp-group-documents
+#: buddypress-group-documents.php:146 buddypress-group-documents.php:155
+#: include/bp_group_documents_functions.php:163
+msgid "Delete"
+msgstr "Verwijderen"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:154
+#: include/bp_group_documents_functions.php:159
+msgid "Edit"
+msgstr "Bewerken"
+
+# @ default
+# @ bp-group-documents
+#: buddypress-group-documents.php:162 include/cssjs.php:23
+msgid "Add"
+msgstr "Toevoegen"
+
+# @ buddypress
+#: buddypress-group-documents.php:171
+msgid "Save Changes"
+msgstr "Wijzigingen opslaan"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:183
+msgid "Upload Permissions:"
+msgstr "Uploadrechten:"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:192 buddypress-group-documents.php:199
+msgid "All Group Members"
+msgstr "Alle groepsleden"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:196 buddypress-group-documents.php:203
+msgid "Only Group's Administrators and Moderators"
+msgstr "Alleen groepsbeheerders en moderators"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:235
+#, php-format
+msgid "Group %s category deleted successfully"
+msgstr "Groepscategorie %s succesvol verwijderd"
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:241 buddypress-group-documents.php:258
+#, php-format
+msgid "No changes were made. This %s category name is used already"
+msgstr "Er is niets gewijzigd. De categorienaam %s is al in gebruik."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:245
+#, php-format
+msgid "Group %s category renamed successfully"
+msgstr "Groepscategorie %s is van naam veranderd."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:255
+#, php-format
+msgid "New group %s category created"
+msgstr "Nieuwe groepscategorie %s aangemaakt."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:266
+msgid "Upload Permissions changed successfully"
+msgstr "Uploadrechten zijn aangepast."
+
+# @ bp-group-documents
+#: buddypress-group-documents.php:274
+msgid "No changes were made. Either error or you didn't change anything"
+msgstr "Er is niets gewijzigd. Je hebt niets veranderd of er gaat iets mis."
+
+# @ bp-group-documents
+#: include/activity.php:14
+#, php-format
+msgid "%s uploaded the file: %s to %s"
+msgstr "%s uploadde het bestand: %s in %s"
+
+# @ bp-group-documents
+#: include/activity.php:34
+#, php-format
+msgid "%s edited the file: %s in %s"
+msgstr "%s bewerkte het bestand: %s in %s"
+
+# @ bp-group-documents
+#: include/activity.php:53
+#, php-format
+msgid "%s deleted the file: %s from %s"
+msgstr "%s verwijderde het bestand: %s in %s"
+
+# @ bp-group-documents
+#: include/activity.php:155 include/admin.php:307
+#, php-format
+msgid "Show New Group %s"
+msgstr "Toon nieuwe groep %s"
+
+# @ bp-group-documents
+#: include/activity.php:157 include/admin.php:319
+#, php-format
+msgid "Show Group %s Edits"
+msgstr "Toon bewerkingen in groep %s"
+
+# @ default
+# @ bp-group-documents
+#: include/admin.php:88 include/admin.php:216
+msgid "Settings"
+msgstr "Instellingen"
+
+# @ bp-group-documents
+#: include/admin.php:93
+msgid "Settings Updated."
+msgstr "Instellingen aangepast."
+
+# @ bp-group-documents
+#: include/admin.php:99
+msgid "Use this name instead of \"documents\" "
+msgstr "Gebruik deze naam in plaats van \"Documenten\" "
+
+# @ bp-group-documents
+#: include/admin.php:105 include/bp_group_documents_functions.php:221
+msgid "Valid File Formats"
+msgstr "Geldige bestandsformaten"
+
+# @ bp-group-documents
+#: include/admin.php:111
+msgid "Items per Page"
+msgstr "Items per pagina"
+
+# @ bp-group-documents
+#: include/admin.php:116
+msgid "Upload Permission:"
+msgstr "Uploadrechten:"
+
+# @ bp-group-documents
+#: include/admin.php:120
+msgid "Members &amp; Moderators"
+msgstr "Leden &amp; moderators"
+
+# @ bp-group-documents
+#: include/admin.php:124
+msgid "Moderators Only"
+msgstr "Alleen moderators"
+
+# @ bp-group-documents
+#: include/admin.php:128
+msgid "Let individual moderators decide"
+msgstr "Laat individuele moderators zelf beslissen"
+
+# @ bp-group-documents
+#: include/admin.php:131
+msgid "Use Categories"
+msgstr "Gebruik categorieën"
+
+# @ bp-group-documents
+#: include/admin.php:139
+msgid "Display Icons"
+msgstr "Toon iconen"
+
+# @ bp-group-documents
+#: include/admin.php:147
+msgid "Display File Size"
+msgstr "Toon bestandsgrootte"
+
+# @ bp-group-documents
+#: include/admin.php:155
+msgid "Display File Downloads "
+msgstr "Toon aantal downloads "
+
+# @ bp-group-documents
+#: include/admin.php:164
+msgid "Save Settings"
+msgstr "Bewaar instellingen"
+
+# @ bp-group-documents
+#: include/admin.php:216
+msgid "Buddypress Group Documents"
+msgstr "Buddypress Groepsdocumenten"
+
+# @ default
+#: include/bp_group_documents_functions.php:32
+msgid "Group"
+msgstr "Groep"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:36
+#: include/bp_group_documents_functions.php:59
+msgid "List"
+msgstr "Lijst"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:66
+#: include/bp_group_documents_functions.php:260
+msgid "Category:"
+msgstr "Categorie:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:68
+msgid "All"
+msgstr "Alles"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:76
+#: include/bp_group_documents_functions.php:94
+msgid "Go"
+msgstr "Ga"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:82
+msgid "Order by:"
+msgstr "Sorteer op:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:86
+msgid "Newest"
+msgstr "Nieuwste"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:89
+msgid "Alphabetical"
+msgstr "Alfabetisch"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:92
+msgid "Most Popular"
+msgstr "Meest populair"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:144 include/widgets.php:472
+#, php-format
+msgid "Uploaded by %s on %s"
+msgstr "Geüpload door %s op %s"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:149
+msgid " downloads since then."
+msgstr " keer gedownload sindsdien."
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:189
+msgid "There are no documents in the selected category."
+msgstr "Er staan geen documenten in de geselecteerde categorie."
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:191
+msgid "There are no documents uploaded for this group."
+msgstr "Er zijn geen documenten geüpload voor deze groep."
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:216
+#: include/group-forum-attachments.php:16
+msgid "Choose File:"
+msgstr "Kies bestand:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:226
+msgid "Document:"
+msgstr "Document:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:232
+msgid "Featured Document"
+msgstr "Uitgelicht document"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:237
+#: include/group-forum-attachments.php:21
+msgid "Display Name:"
+msgstr "Titel voor weergave:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:240
+#: include/group-forum-attachments.php:25
+msgid "Description:"
+msgstr "Omschrijving:"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:280
+msgid "Save"
+msgstr "Opslaan"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:285 include/templatetags.php:167
+msgid "Upload a New Document"
+msgstr "Een nieuw document uploaden"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:309 include/templatetags.php:83
+#: include/templatetags.php:197
+msgid "There was a security problem"
+msgstr "Er trad een beveligingsprobleem op"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:313 include/templatetags.php:218
+msgid "The item to delete could not be found"
+msgstr "Het te verwijderen item kon niet gevonden worden"
+
+# @ bp-group-documents
+#: include/bp_group_documents_functions.php:422
+msgid "Group Document Categories"
+msgstr "Categorieën voor groepsdocumenten"
+
+# @ bp-group-documents
+#: include/classes.php:181
+msgid "Whoops!  There was no file selected for upload."
+msgstr "Oeps! Er was geen bestand geselecteerd om te uploaden."
+
+# @ bp-group-documents
+#: include/classes.php:186
+msgid "The type of document submitted is not allowed"
+msgstr "Het type bestand dat is geüpload is niet toegestaan."
+
+# @ bp-group-documents
+#: include/classes.php:194
+msgid ""
+"There was a problem; your file is larger than is allowed by the site "
+"administrator."
+msgstr ""
+"Probleem: je bestand is groter dan toegestaan is door de websitebeheerder."
+
+# @ bp-group-documents
+#: include/classes.php:197
+msgid "There was a problem; the file was only partially uploaded."
+msgstr "Probleem: het bestand was slechts gedeeltelijk geüpload."
+
+# @ bp-group-documents
+#: include/classes.php:200
+msgid "There was a problem; no file was found for the upload."
+msgstr "Probleem: er is geen bestand aangetroffen om te uploaden."
+
+# @ bp-group-documents
+#: include/classes.php:203
+msgid "There was a problem; the temporary folder for the file is missing."
+msgstr "Probleem: de tijdelijke map voor het bestand ontbreekt."
+
+# @ bp-group-documents
+#: include/classes.php:206
+msgid "There was a problem; the file could not be saved."
+msgstr "Probleem: het bestand kon niet worden bewaard."
+
+# @ bp-group-documents
+#: include/classes.php:227
+msgid "There was a problem saving your file, please try again."
+msgstr ""
+"Er trad een probleem op tijdens het opslaan van je bestand. Probeer het "
+"alsjeblieft nog een keer."
+
+# @ bp-group-documents
+#: include/classes.php:492
+msgid "In category:"
+msgstr "In categorie:"
+
+# @ bp-group-documents
+#: include/cssjs.php:20
+msgid "New Category...!"
+msgstr "Nieuwe categorie...!"
+
+# @ bp-group-documents
+#: include/cssjs.php:21
+msgid "You must select a file to upload!"
+msgstr "Je moet een bestand selecteren om te uploaden!"
+
+# @ bp-group-documents
+#: include/cssjs.php:22
+msgid "Are you sure you wish to permanently delete this document?"
+msgstr "Weet je zeker dat je dit document permanent wilt verwijderen?"
+
+# @ bp-group-documents
+#: include/filters.php:82
+msgid "That group does not exist."
+msgstr "Die groep bestaat niet."
+
+# @ bp-group-documents
+#: include/filters.php:91
+#, php-format
+msgid ""
+"You must be a logged-in member of the group %s to access this document. If "
+"you are a member of the group, please log into the site and try again."
+msgstr ""
+"Om toegang te krijgen tot dit document moet je lid zijn van de groep %s en "
+"ingelogd zijn. Ben je al lid van deze groep? Log dan in en probeer het nog "
+"een keer."
+
+# @ bp-group-documents
+#: include/filters.php:124
+msgid "The file could not be found."
+msgstr "Het bestand is niet gevonden."
+
+# @ bp-group-documents
+#: include/group-forum-attachments.php:13
+msgid "Upload document (+)"
+msgstr "Upload document (+)"
+
+# @ bp-group-documents
+#: include/group-forum-attachments.php:60 include/templatetags.php:107
+msgid "Document successfully uploaded"
+msgstr "Document succesvol geüpload"
+
+# @ bp-group-documents
+#: include/notifications.php:25
+msgid "A member uploads a document to a group you belong to"
+msgstr "Een lid uploadt een document naar een groep waar je lid van bent."
+
+# @ bp-group-documents
+#: include/notifications.php:31
+msgid ""
+"A member uploads a document to a group for which you are an moderator/admin"
+msgstr ""
+"Een lid uploadt een document naar een groep waar je moderator of beheerder "
+"van bent."
+
+# @ bp-group-documents
+#: include/notifications.php:61
+#, php-format
+msgid "A document was uploaded to %s"
+msgstr "Een document is geüpload naar %s"
+
+# @ bp-group-documents
+#: include/notifications.php:119
+#, php-format
+msgid ""
+"%s uploaded a new file: %s to the group: %s.\n"
+"\n"
+"To see %s's profile: %s\n"
+"\n"
+"To see the group %s's homepage: %s\n"
+"\n"
+"To download the new document directly: %s\n"
+"\n"
+"------------------------\n"
+msgstr ""
+"%s uploadde een nieuw bestand: %s naar de groep: %s.\n"
+"\n"
+"Bekijk %s's profiel: %s\n"
+"\n"
+"Bekijk de pagina van de groep %s: %s\n"
+"\n"
+"Om het nieuwe bestand direct te downloaden: %s\n"
+"\n"
+"------------------------\n"
+
+# @ bp-group-documents
+#: include/notifications.php:132
+#, php-format
+msgid "To disable these notifications please log in and go to: %s"
+msgstr ""
+"Deze notificaties kun je uitschakelen door in te loggen en te gaan naar: %s"
+
+# @ bp-group-documents
+#: include/templatetags.php:121
+msgid "Document successfully edited"
+msgstr "Document bewerkt"
+
+# @ bp-group-documents
+#: include/templatetags.php:191
+msgid "You don't have permission to upload files"
+msgstr "Je hebt onvoldoende rechten om bestanden te uploaden."
+
+# @ bp-group-documents
+#: include/templatetags.php:201
+msgid "The item to edit could not be found"
+msgstr "Het te bewerken item kon niet worden gevonden."
+
+# @ bp-group-documents
+#: include/templatetags.php:212
+msgid "Edit Document"
+msgstr "Document bewerken"
+
+# @ bp-group-documents
+#: include/templatetags.php:222
+msgid "Document successfully deleted"
+msgstr "Document bewerkt"
+
+# @ bp-group-documents
+#: include/templatetags.php:342
+#, php-format
+msgid "Viewing item %s to %s (of %s items)"
+msgstr "Je bekijkt nu item %s t/m %s (van %s items)"
+
+# @ bp-group-documents
+#: include/widgets.php:59 include/widgets.php:73
+#, php-format
+msgid "Recent Group %s"
+msgstr "Recente groep %s"
+
+# @ bp-group-documents
+#: include/widgets.php:60
+#, php-format
+msgid "The most recently uploaded group %s. Only from public groups"
+msgstr "De meest recente groep %s. Alleen van publieke groepen."
+
+# @ bp-group-documents
+#: include/widgets.php:102 include/widgets.php:229 include/widgets.php:364
+#, php-format
+msgid "posted in %s"
+msgstr "geplaatst in %s"
+
+# @ bp-group-documents
+#: include/widgets.php:108 include/widgets.php:240 include/widgets.php:370
+#: include/widgets.php:479
+#, php-format
+msgid "There are no %s to display."
+msgstr "Er zijn geen %s om te tonen."
+
+# @ bp-group-documents
+#: include/widgets.php:147 include/widgets.php:269 include/widgets.php:395
+#: include/widgets.php:507
+msgid "Title:"
+msgstr "Titel:"
+
+# @ bp-group-documents
+#: include/widgets.php:149 include/widgets.php:271
+msgid "Filter by Group:"
+msgstr "Filter op groep:"
+
+# @ bp-group-documents
+#: include/widgets.php:151 include/widgets.php:273
+msgid "Select Group..."
+msgstr "Selecteer groep..."
+
+# @ bp-group-documents
+#: include/widgets.php:167 include/widgets.php:289 include/widgets.php:397
+#: include/widgets.php:510
+#, php-format
+msgid "Show featured %s only"
+msgstr "Toon alleen uitgelichte %s"
+
+# @ bp-group-documents
+#: include/widgets.php:170 include/widgets.php:296 include/widgets.php:403
+#: include/widgets.php:515
+msgid "Number of items to show:"
+msgstr "Aantal items om te tonen:"
+
+# @ bp-group-documents
+#: include/widgets.php:188 include/widgets.php:202
+#, php-format
+msgid "Popular Group %s"
+msgstr "Polulaire groep %s"
+
+# @ bp-group-documents
+#: include/widgets.php:189
+#, php-format
+msgid "The most commonly downloaded group %s. Only for public groups"
+msgstr "De meest gedownloade groep %s. Alleen voor publieke groepen."
+
+# @ bp-group-documents
+#: include/widgets.php:233
+msgid "downloads"
+msgstr "downloads"
+
+# @ bp-group-documents
+#: include/widgets.php:302
+msgid "Show downloads"
+msgstr "Toon downloads"
+
+# @ bp-group-documents
+#: include/widgets.php:321
+#, php-format
+msgid "%s in your groups"
+msgstr "%s in jouw groepen"
+
+# @ bp-group-documents
+#: include/widgets.php:322
+#, php-format
+msgid "%s for a logged in user's groups."
+msgstr "%s voor groepen van een ingelogd lid."
+
+# @ bp-group-documents
+#: include/widgets.php:343
+#, php-format
+msgid "Recent %s from your Groups"
+msgstr "Recente %s van jouw groepen"
+
+# @ bp-group-documents
+#: include/widgets.php:422
+#, fuzzy, php-format
+msgid "%s in this group"
+msgstr "Polulaire groep %s"
+
+# @ bp-group-documents
+#: include/widgets.php:423
+#, fuzzy, php-format
+msgid "%s for the current group."
+msgstr "Groepscategorie %s succesvol verwijderd"
+
+# @ bp-group-documents
+#: include/widgets.php:447
+#, fuzzy, php-format
+msgid "Recent %s for the group"
+msgstr "Recente groep %s"
+
+#: include/widgets.php:481
+#, fuzzy
+msgid "View all"
+msgstr "Alle groepsleden"
+
+# @ buddypress
+#~ msgid "Settings saved successfully"
+#~ msgstr "Instellingen bewaard"

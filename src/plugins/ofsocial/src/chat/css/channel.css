@@ -1,0 +1,544 @@
+/*
+
+Jappix - An open social platform
+This is the channel CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 18/06/11
+
+*/
+
+#channel .top div.update {
+	position: absolute;
+	top: 12px;
+	left: 115px;
+	right: 15px;
+	bottom: 15px;
+	border-radius: 20px;
+	-moz-border-radius: 20px;
+	-webkit-border-radius: 20px;
+}
+
+#channel .top p {
+	font-size: 0.9em;
+	margin-bottom: 10px;
+}
+
+#channel .top h2 {
+	font-size: 1.6em;
+	margin-bottom: 10px;
+	color: #232323;
+}
+
+#channel .top a {
+	font-size: 0.9em;
+	color: #232323;
+}
+
+#channel .top.individual div.update {
+	right: 36px;
+}
+
+#channel .top.individual div.shortcuts,
+#userinfos .main-infos div.shortcuts {
+	width: 16px;
+	float: right;
+}
+
+#channel .top.individual div.shortcuts {
+	margin: 2px 5px 0 0;
+}
+
+#channel .top.individual div.shortcuts a,
+#userinfos .main-infos div.shortcuts a {
+	height: 16px;
+	width: 16px;
+	margin-bottom: 4px;
+	display: block;
+}
+
+#channel .top.individual div.shortcuts a.message,
+#userinfos .main-infos a.message {
+	background-position: 0 -1717px;
+}
+
+#channel .top.individual div.shortcuts a.chat,
+#userinfos .main-infos a.chat {
+	background-position: 0 -1737px;
+}
+
+#channel .top.individual div.shortcuts a.command,
+#userinfos .main-infos a.command {
+	background-position: 0 -1758px;
+}
+
+#channel .microblog-body {
+	height: 20px;
+	margin-right: 50px;
+}
+
+#channel .microblog-body input {
+	width: 100%;
+	height: 100%;
+	padding: 8px;
+}
+
+#channel .one-microblog-icon {
+	position: absolute;
+	top: 38px;
+	right: 0;
+}
+
+#channel div.update .one-microblog-icon,
+#channel div.update .postit {
+	width: 16px;
+	height: 16px;
+	display: block;
+}
+
+#channel div.update .attach {
+	background-position: 0 -79px;
+	display: none;
+}
+
+#attach {
+	position: absolute;
+	width: 263px;
+	margin-left: -227px;
+	color: white;
+	font-size: 0.85em;
+	z-index: 9998;
+	text-align: left;
+	display: none;
+}
+
+#attach p {
+	margin-bottom: 6px !important;
+}
+
+#attach input[type=submit] {
+	margin: 8px 0 6px 0;
+}
+
+#attach .wait {
+	float: right;
+	margin: 7px 5px;
+}
+
+#attach div.one-file {
+	height: 16px;
+	margin-top: 2px;
+}
+
+#attach div.one-file a.link {
+	color: white;
+	width: 215px;
+	height: 14px;
+	margin-left: 2px;
+	overflow: hidden;
+	float: left;
+}
+
+#attach div.one-file a.remove {
+	width: 16px;
+	height: 16px;
+	float: left;
+}
+
+.attach-subarrow {
+	background-position: 0 -241px;
+	opacity: 0.8;
+	height: 10px;
+	width: 18px;
+	margin-left: 226px;
+}
+
+.attach-subitem {
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.8);
+	padding: 10px;
+	text-shadow: 0 1px 1px black;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+
+.attach-p {
+	font-weight: bold;
+	float: left;
+}
+
+#channel .one-update {
+	margin-bottom: 12px;
+	padding: 6px 6px 8px 6px;
+	border-bottom: 1px dotted #d0d0d0;
+	min-height: 50px;
+	color: black;
+	position: relative;
+	display: none;
+}
+
+#channel .one-update .avatar-container {
+	text-align: center;
+	margin-right: 16px;
+	float: left;
+	height: 50px;
+	width: 50px;
+}
+
+#channel .one-update .avatar-container:hover {
+	cursor: pointer;
+}
+
+#channel .one-update img.avatar {
+	max-height: 50px;
+	max-width: 50px;
+}
+
+#channel .one-update div.body {
+	opacity: 0.8;
+}
+
+#channel .one-update:hover div.body {
+	opacity: 1;
+}
+
+#channel .one-update a.repeat {
+	background-position: 0 -1681px;
+	height: 16px;
+	width: 16px;
+	margin-right: 4px;
+	float: left;
+}
+
+#channel .one-update span a {
+	text-decoration: underline;
+}
+
+#channel .one-update p {
+	display: block;
+	margin: 0 12px 5px 0;
+}
+
+#channel .one-update p b.name:hover {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+#channel .one-update p.infos {
+	font-size: 0.9em;
+}
+
+#channel .one-update p.infos a.geoloc {
+	background-position: 0 -1778px;
+	color: #363636;
+	margin-left: 18px;
+	padding-left: 14px;
+}
+
+#channel .one-update p.infos a.geoloc:hover,
+#channel .one-update p.infos a.geoloc:focus,
+#channel .one-update p.infos a.geoloc:active {
+	color: #141414;
+}
+
+#channel .one-update p.file {
+	font-size: 0.9em;
+	margin: 6px 0 5px 75px;
+}
+
+#channel .one-update p.file a.link,
+#inbox .inbox-new-file a.file {
+	min-height: 16px;
+	padding-left: 22px;
+	text-decoration: underline;
+	display: block;
+}
+
+#channel .one-update p.file a.link {
+	margin-top: 4px;
+}
+
+#channel p.file a,
+#inbox .inbox-new-file a.file {
+	background-position: 0 -988px;
+}
+
+#channel p.file a.audio,
+#inbox .inbox-new-file a.file.audio {
+	background-position: 0 -899px;
+}
+
+#channel p.file a.image,
+#inbox .inbox-new-file a.file.image {
+	background-position: 0 -917px;
+}
+
+#channel p.file a.video,
+#inbox .inbox-new-file a.file.video {
+	background-position: 0 -935px;
+}
+
+#channel p.file a.document,
+#inbox .inbox-new-file a.file.document {
+	background-position: 0 -953px;
+}
+
+#channel p.file a.package,
+#inbox .inbox-new-file a.file.package {
+	background-position: 0 -971px;
+}
+
+#channel .one-update p.file a.thumb img {
+	border: 1px solid #a2a2a2;
+	max-width: 140px;
+	max-height: 105px;
+	margin: 4px 10px 2px 0;
+	padding: 1px;
+}
+
+#channel .one-update p.file a.thumb img:hover {
+	border-color: #464646;
+}
+
+#channel .one-update div.comments,
+.popup.large div.comments {
+	width: 410px;
+	margin: 2px 0 2px 76px;
+}
+
+#channel .one-update div.comments div.arrow,
+.popup.large div.comments div.arrow {
+	background-position: 0 -1702px;
+	width: 20px;
+	height: 8px;
+	margin-left: 20px;
+	display: block;
+}
+
+#channel .one-update div.comments div.comments-content,
+.popup.large div.comments div.comments-content {
+	background-color: #e5ebec;
+	color: black;
+	font-size: 0.9em;
+	text-shadow: 0 1px 0 white;
+}
+
+#channel .one-update div.comments input,
+.popup.large div.comments input {
+	width: 356px;
+	margin: 6px 0;
+	padding: 4px 5px;
+}
+
+#channel .one-update div.comments span.icon,
+.popup.large div.comments span.icon {
+	background-position: 0 -1082px;
+	height: 16px;
+	width: 16px;
+	margin: 10px;
+	float: left;
+}
+
+#channel .one-update div.comments .one-comment.loading span.icon,
+.popup.large div.comments .one-comment.loading span.icon {
+	margin: 0 10px 0 0;
+}
+
+#channel .one-update div.comments .one-comment,
+.popup.large div.comments .one-comment {
+	border-bottom: 1px solid #f4f4f4;
+	padding: 4px 8px 0px 8px;
+	position: relative;
+	display: block;
+}
+
+#channel .one-update div.comments .one-comment.compose,
+.popup.large div.comments .one-comment.compose {
+	border-bottom: 2px solid #f4f4f4;
+	height: 36px;
+	padding: 0;
+}
+
+#channel .one-update div.comments .one-comment.new,
+.popup.large div.comments .one-comment.new {
+	display: none;
+}
+
+#channel .one-update div.comments a.one-comment,
+.popup.large div.comments a.one-comment {
+	text-decoration: none;
+}
+
+#channel .one-update div.comments a.one-comment:hover,
+#channel .one-update div.comments a.one-comment:focus,
+.popup.large div.comments a.one-comment:hover,
+.popup.large div.comments a.one-comment:focus {
+	text-decoration: underline;
+}
+
+#channel .one-update div.comments .one-comment.loading,
+.popup.large div.comments .one-comment.loading {
+	padding-bottom: 5px;
+}
+
+#channel .one-update div.comments .one-comment div.marker,
+.popup.large div.comments .one-comment div.marker {
+	background-color: #6d8387;
+	width: 2px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+}
+
+#channel .one-update div.comments .one-comment .avatar-container,
+.popup.large div.comments .one-comment .avatar-container {
+	text-align: center;
+	width: 30px;
+	height: 30px;
+	margin: 2px 8px 0 0;
+	float: left;
+}
+
+#channel .one-update div.comments .one-comment .avatar-container:hover,
+.popup.large div.comments .one-comment .avatar-container:hover {
+	cursor: pointer;
+}
+
+#channel .one-update div.comments .one-comment img.avatar,
+.popup.large div.comments .one-comment img.avatar {
+	max-height: 30px;
+	max-width: 30px;
+}
+
+#channel .one-update div.comments .one-comment .comment-container,
+.popup.large div.comments .one-comment .comment-container {
+	float: left;
+}
+
+#channel .one-update div.comments .one-comment a.name,
+.popup.large div.comments .one-comment a.name {
+	font-weight: bold;
+	text-decoration: none;
+	font-size: 0.95em;
+	padding-bottom: 2px;
+	float: left;
+}
+
+#channel .one-update div.comments .one-comment a.name:hover,
+#channel .one-update div.comments .one-comment a.name:focus,
+.popup.large div.comments .one-comment a.name:hover,
+.popup.large div.comments .one-comment a.name:focus {
+	text-decoration: underline;
+}
+
+#channel .one-update div.comments .one-comment span.date,
+#channel .one-update div.comments .one-comment a.remove,
+.popup.large div.comments .one-comment span.date,
+.popup.large div.comments .one-comment a.remove {
+	font-size: 0.85em;
+	float: right;
+}
+
+#channel .one-update div.comments .one-comment.me:hover span.date,
+.popup.large div.comments .one-comment.me:hover span.date {
+	display: none;
+}
+
+#channel .one-update div.comments .one-comment.me a.remove,
+.popup.large div.comments .one-comment.me a.remove {
+	display: none;
+}
+
+#channel .one-update div.comments .one-comment.me:hover a.remove,
+.popup.large div.comments .one-comment.me:hover a.remove {
+	display: block;
+}
+
+#channel .one-update div.comments .one-comment p.body,
+.popup.large div.comments .one-comment p.body {
+	clear: both;
+}
+
+#channel a.more {
+	background-position: 0 -334px;
+	color: black;
+	height: 16px;
+	text-decoration: none;
+	margin: -2px 0 0 4px;
+	padding: 0 0 14px 20px;
+	display: block;
+	visibility: hidden;
+}
+
+#channel a.more:hover,
+#channel a.more:focus {
+	text-decoration: underline;
+}
+
+#channel a.mbtool {
+	width: 11px;
+	height: 11px;
+	display: none;
+	position: absolute;
+	right: 0;
+}
+
+#channel .one-update:hover a.mbtool {
+	display: block;
+}
+
+#channel a.mbtool:hover,
+#channel a.mbtool:focus {
+	text-decoration: none;
+}
+
+#channel a.mbtool.profile {
+	background-position: -1px -1333px;
+	top: 24px;
+}
+
+#channel a.mbtool.repost {
+	background-position: -1px -1354px;
+}
+
+#channel a.mbtool.remove {
+	background-position: -1px -1312px;
+}
+
+#channel a.mbtool.repost,
+#channel a.mbtool.remove {
+	top: 6px;
+}
+
+#channel .footer {
+	bottom: 0;
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	-moz-border-radius-bottomleft: 4px;
+	-moz-border-radius-bottomright: 4px;
+	-webkit-border-bottom-left-radius: 4px;
+	-webkit-border-bottom-right-radius: 4px;
+}
+
+#channel .footer div {
+	margin-left: 5px;
+	padding-left: 24px;
+	min-height: 16px;
+	font-size: 0.85em;
+	width: auto !important;
+}
+
+#channel .footer .sync {
+	background-position: 0 -804px;
+	display: none;
+}
+
+#channel .footer .unsync {
+	background-position: 0 -830px;
+	display: none;
+}

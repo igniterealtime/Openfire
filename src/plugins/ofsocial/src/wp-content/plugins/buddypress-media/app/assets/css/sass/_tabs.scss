@@ -1,0 +1,67 @@
+.rtm-tabs {
+
+	// Increased specificity with double class to overwrite defualt styles. 2012
+	&.rtm-tabs {
+		border-bottom: 1px solid $light;
+		list-style: none;
+		margin: 0 0 20px;
+		padding: 0;
+	}
+
+	li {
+		border: 1px solid $light;
+		border-bottom: 0;
+		float: left;
+		margin: 0 5px;
+		padding: 0; // 2013
+	}
+
+	a {
+		border: 0;
+		display: block;
+		padding: 5px 15px;
+		text-decoration: none; //2012
+
+		&:hover {
+
+		}
+
+		&:focus {
+			background: transparent;
+			box-shadow: 0 0 0;
+		}
+
+	}
+
+	.active {
+		position: relative;
+
+		&:after {
+			background: $white;
+			bottom: -1px;
+			content: ' ';
+			height: 1px;
+			left: 0;
+			position: absolute;
+			width: 100%;
+		}
+	}
+
+	.dashicons {
+		font-size: 16px;
+		height: auto;
+		line-height: 20px;
+		margin-right: 8px;
+		width: auto;
+	}
+
+}
+
+.rtmedia-edit-media-tabs {
+	.rtm-tabs {
+		a {
+			border-bottom: 0 none;
+
+		}
+	}
+}

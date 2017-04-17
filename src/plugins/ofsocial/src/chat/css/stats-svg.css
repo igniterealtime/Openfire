@@ -1,0 +1,71 @@
+/*
+
+Jappix - An open social platform
+This is the SVG stats CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Erwan Briand, Valérian Saliou
+Last revision: 20/11/10
+
+*/
+
+svg {
+	background-color: #e8f1f3;
+}
+
+.refline {
+    stroke: #596171;
+    stroke-width: 2px;
+}
+
+.refleft {
+    fill: #000000;
+    font-family: "Inconsolata", "DejaVu Serif sans", Verdana, sans-serif;
+    font-size: 8px;
+}
+
+.reftext {
+    fill: #586070;
+    font-family: "Inconsolata", "DejaVu Serif sans", Verdana, sans-serif;
+    font-size: 10px;
+}
+
+.bubbletextblue,
+.bubbletextred {
+    fill: none;
+    font-family: "Inconsolata", "DejaVu Serif sans", Verdana, sans-serif;
+    font-size: 8px;
+    text-anchor: end;
+}
+
+.bluebar {
+    fill: "#6C84C0";
+    fill-opacity: "0.6";
+}
+
+.gbar:hover .bluebar {
+    fill: #2A3F73;
+}
+
+.gbar:hover .redbar {
+    fill: #C70705;
+}
+
+.gbar:hover #bubble {
+    fill: white;
+    stroke: grey;
+}
+
+.gbar:hover .bubbletextblue {
+    fill: #2A3F73;
+}
+
+.gbar:hover .bubbletextred {
+    fill: #C70705;
+}
+
+.gbar:hover .reftext {
+    fill: #000000;
+}

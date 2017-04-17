@@ -1,0 +1,24 @@
+/*!
+Theme Name: Destin Basic
+Theme URI: https://themes.bavotasan.com/themes/destin-wordpress-theme/
+Author: c.bavota
+Author URI: http://bavotasan.com/
+Description: Create a truly unique design with Destin Basic, a lightweight and fully responsive HTML5 theme. Use the Customizer to add your own page layout, site width and more. Distinguish each post with one of the eight supported post formats, such as: Video, Image, Aside, Status, Audio, Quote, Link and Gallery. Install JetPack to display each of your galleries through a tiled view and jQuery carousel. Compatible with bbPress, BuddyPress and Woocommerce. Uses Google Fonts for improved typeface readability. Designed for desktop browsers, tablets and handheld devices.
+Version: 1.0.2
+Text Domain: destin
+Domain Path: /library/languages/
+Tags: black, blue, gray, silver, white, light, one-column, two-columns, three-columns, left-sidebar, right-sidebar, fluid-layout, responsive-layout, buddypress, custom-background, custom-colors, custom-header, custom-menu, editor-style, featured-image-header, featured-images, flexible-header, microformats, post-formats, rtl-language-support, sticky-post, theme-options, threaded-comments, translation-ready
+
+License: GNU General Public License v3.0
+License URI: http://www.gnu.org/licenses/gpl-3.0.html
+
+Destin Basic WordPress Theme, Copyright 2015 c.bavota
+Destin Basic is distributed under the terms of the GNU GPL
+*/
+
+@import "compass/css3";
+
+@import "mixins";
+@import "bootstrap_3.3.1";
+@import "theme";
+@import "wp_new";

@@ -1,0 +1,2227 @@
+# Czech translations for Jappix package.
+# This file is distributed under the same license as the Jappix package.
+# This file was translated from CodingTeam at <http://codingteam.net/>.
+msgid ""
+msgstr ""
+"Project-Id-Version: Jappix\n"
+"PO-Revision-Date: 2011-04-17 19:00:58\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: 
+msgid "JavaScript is missing in your web browser, so that you will not be able to launch Jappix! Please fix this."
+msgstr "Ve vašem prohlížeči chybí JavaScript, takže nebude možné spustit Jappix! Prosím napravte to."
+
+#: 
+msgid "An open social network"
+msgstr "Otevřená sociální síť"
+
+#: 
+msgid "Jappix has been interrupted by a network issue, a bug or bad login (check that you entered the right credentials), sorry for the inconvenience."
+msgstr "Činnost Jappixe byla přerušena buď chybou ve spojenim , programu nebo nesprávnými přihlašovacími údaji (zkontrolujte vaše přihlašovací údaje), omlouváme se za komplikace"
+
+#: 
+msgid "The element list on this server could not be obtained!"
+msgstr "Seznam položek na tomto cloud serveru není možné získat!"
+
+#: 
+msgid "Your password has been changed, now you can connect to your account with your new login data."
+msgstr "Vaše heslo bylo změněno, nyní se můžete přihlásit k vašemu účtu s novými údaji."
+
+#: 
+msgid "Your XMPP account has been removed, bye!"
+msgstr "Váš XMPP účet byl zrušen, nashledanou!"
+
+#: 
+msgid "You have been logged out of your XMPP account, have a nice day!"
+msgstr "Byli jste odhlášeni z vašeho XMPP účtu, přejeme pěkný den!"
+
+#: 
+msgid "The room you joined seems not to exist. You should create it!"
+msgstr "Zdá se, že místnost do které vstoupujete neexistuje. Nejprve jí založte!"
+
+#: 
+msgid "The groupchat has been removed, now someone else will be able to recreate it."
+msgstr "Skupinový rozhovor byl odstraněn, nyí ho může vytvořit někdo jiný."
+
+#: 
+msgid "The user that you want to reach is not present in the room."
+msgstr "Uživatel, kterého chcete zastihnout se v této místnosti nenachází."
+
+#: 
+msgid "Please enter the group chat address to join."
+msgstr "Prosím, vložte adresu skupinového rozhovoru ke kterému se chcete připojit."
+
+#: 
+msgid "Please enter your nickname to join %s."
+msgstr "Prosím, vložte přezdívku pro připojení do %s."
+
+#: 
+msgid "This room (%s) is protected with a password."
+msgstr "Místnost (%s) je chráněna heslem."
+
+#: 
+msgid "Your browser is out of date!"
+msgstr "Váš prohlížeš je zastaralý."
+
+#: 
+msgid "Last %s version is better!"
+msgstr "Poslední %s verze je lepší!"
+
+#: 
+msgid "Login"
+msgstr "Přihlášení"
+
+#: 
+msgid "Register"
+msgstr "Registrace"
+
+#: 
+msgid "Here we go!"
+msgstr "Pojďme na to!"
+
+#: 
+msgid "Server"
+msgstr "Server"
+
+#: 
+msgid "Password"
+msgstr "Heslo"
+
+#: 
+msgid "Remember me"
+msgstr "Zapamatuj si mě"
+
+#: 
+msgid "This tool has been disabled, you cannot use it!"
+msgstr "Tato možnost je zakázána, nelze jí použít!"
+
+#: 
+msgid "Due to a network issue, you were disconnected. What do you want to do now?"
+msgstr "Byli jste odhlášeni, potože se vyskytly potíže se sítí. Co si přejete udělat?"
+
+#: 
+msgid "Reconnect"
+msgstr "Znovu připojit"
+
+#: 
+msgid "Messages"
+msgstr "Zprávy"
+
+#: 
+msgid "Profile"
+msgstr "Profil"
+
+#: 
+msgid "Options"
+msgstr "Nastavení"
+
+#: 
+msgid "Disconnect"
+msgstr "Odpojit se"
+
+#: 
+msgid "Filter"
+msgstr "Filtr"
+
+#: 
+msgid "Add a friend"
+msgstr "Přidat kamaráda"
+
+#: 
+msgid "Your groupchats"
+msgstr "Vaše skupinové rozhovory"
+
+#: 
+msgid "Manage your favorite groupchats"
+msgstr "Spravovat vaše blíbené skupinové rozhovory"
+
+#: 
+msgid "More stuff"
+msgstr "Další možnosti"
+
+#: 
+msgid "Show all friends"
+msgstr "Zobrazit všechny kamarády"
+
+#: 
+msgid "Only show connected friends"
+msgstr "Zobrazit pouze připojené kamarády"
+
+#: 
+msgid "Message archives"
+msgstr "Archiv zpráv"
+
+#: 
+msgid "Date"
+msgstr "Datum"
+
+#: 
+msgid "Please select a friend to view the chat history."
+msgstr "Prosím, vyperte kamaráda pro zobrazení historie rozhovoru."
+
+#: 
+msgid "Nothing found for: %s"
+msgstr "Žádný výsledek pro: %s"
+
+#: 
+msgid "A short message?"
+msgstr "Krátká zpráva?"
+
+#: 
+msgid "How are you?"
+msgstr "Jak se vede ?"
+
+#: 
+msgid "What are you doing?"
+msgstr "Co děláš?"
+
+#: 
+msgid "Join a chat"
+msgstr "Zahájit rozhovor"
+
+#: 
+msgid "Status"
+msgstr "Stav"
+
+#: 
+msgid "Available"
+msgstr "Přítomen"
+
+#: 
+msgid "Talkative"
+msgstr "Hovorný"
+
+#: 
+msgid "Away"
+msgstr "Pryč"
+
+#: 
+msgid "Not available"
+msgstr "Nedostupný"
+
+#: 
+msgid "Busy"
+msgstr "Nerušit"
+
+#: 
+msgid "Mood"
+msgstr "Nálada"
+
+#: 
+msgid "None"
+msgstr "Neuvedena"
+
+#: 
+msgid "Crazy"
+msgstr "Bláznivý"
+
+#: 
+msgid "Excited"
+msgstr "Vzrušený"
+
+#: 
+msgid "Playful"
+msgstr "Hravý"
+
+#: 
+msgid "Happy"
+msgstr "Šťastný"
+
+#: 
+msgid "Shocked"
+msgstr "Šokovaný"
+
+#: 
+msgid "Hot"
+msgstr "Nažhavený"
+
+#: 
+msgid "Sad"
+msgstr "Smutný"
+
+#: 
+msgid "Amorous"
+msgstr "Zamilovaný"
+
+#: 
+msgid "Confident"
+msgstr "Důvěřivý"
+
+#: 
+msgid "Activity"
+msgstr "Činnost"
+
+#: 
+msgid "Chores"
+msgstr "Nakupuje"
+
+#: 
+msgid "Drinking"
+msgstr "Pije"
+
+#: 
+msgid "Eating"
+msgstr "Jí"
+
+#: 
+msgid "Exercising"
+msgstr "Cvíčí"
+
+#: 
+msgid "Grooming"
+msgstr "Pečuje"
+
+#: 
+msgid "Appointment"
+msgstr "Schůzka"
+
+#: 
+msgid "Inactive"
+msgstr "Nečinný"
+
+#: 
+msgid "Relaxing"
+msgstr "Relaxuje"
+
+#: 
+msgid "Talking"
+msgstr "Hovoří"
+
+#: 
+msgid "Traveling"
+msgstr "Cestuje"
+
+#: 
+msgid "Working"
+msgstr "Pracuje"
+
+#: 
+msgid "View profile"
+msgstr "Zobrazit profil"
+
+#: 
+msgid "Repeat this notice"
+msgstr "Opakovat toto upozornění"
+
+#: 
+msgid "Remove this notice"
+msgstr "Odstranit upozornění"
+
+#: 
+msgid "Your profile"
+msgstr "Váš profil"
+
+#: 
+msgid "Identity"
+msgstr "Osobní údaje"
+
+#: 
+msgid "Profile image"
+msgstr "Fotografie k profilu"
+
+#: 
+msgid "Others"
+msgstr "Ostatní"
+
+#: 
+msgid "Personal"
+msgstr "Osobní"
+
+#: 
+msgid "Complete name"
+msgstr "Celé jméno"
+
+#: 
+msgid "Nickname"
+msgstr "Přezdívka"
+
+#: 
+msgid "First name"
+msgstr "Jméno"
+
+#: 
+msgid "Last name"
+msgstr "Příjmení"
+
+#: 
+msgid "Date of birth"
+msgstr "Datum narození"
+
+#: 
+msgid "Contact"
+msgstr "Kontakt"
+
+#: 
+msgid "E-mail"
+msgstr "E-mail"
+
+#: 
+msgid "Phone"
+msgstr "Telefon"
+
+#: 
+msgid "Website"
+msgstr "Webová stránka"
+
+#: 
+msgid "Current"
+msgstr "Současná"
+
+#: 
+msgid "Delete"
+msgstr "Smazat"
+
+#: 
+msgid "What a pity! You have no profile image defined in your identity card!"
+msgstr "Jaká škoda! Nemáte nastavenou fotografii u profilu ve vaší vizitce!"
+
+#: 
+msgid "Address"
+msgstr "Adresa"
+
+#: 
+msgid "Street"
+msgstr "Ulice"
+
+#: 
+msgid "City"
+msgstr "Město"
+
+#: 
+msgid "Postal code"
+msgstr "PSČ"
+
+#: 
+msgid "Country"
+msgstr "Země"
+
+#: 
+msgid "Biography"
+msgstr "O mě"
+
+#: 
+msgid "Important notice"
+msgstr "Důležité upozornění"
+
+#: 
+msgid "Be careful of the information you write into your profile, because it could be accessed by everyone (even someone you don't want to)."
+msgstr "Buďte opatrní, informace, které vyplníte v profilu jsou přístupné každému (i tomu, komu nechcete)."
+
+#: 
+msgid "Not everything is private on XMPP; this is one of those things, your public profile (vCard)."
+msgstr "Není všechno v XMPP jen soukromé; toto je jednou z těch věcí, které nejsou, váš veřejný profil (vCard)."
+
+#: 
+msgid "It is strongly recommended to upload a profile image (%s maximum), like a picture of yourself, because that makes you easily recognizable by your friends."
+msgstr "Vřele doporučujeme nahrát obrázek k profilu (%s maximálně), například vaší fotografii, aby vás kamarádi lépe poznali. "
+
+#: 
+msgid "Save"
+msgstr "Uložit"
+
+#: 
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: 
+msgid "Edit options"
+msgstr "Upravit nastavení"
+
+#: 
+msgid "Channel"
+msgstr "Kanál"
+
+#: 
+msgid "Commands"
+msgstr "Příkazy"
+
+#: 
+msgid "Sounds"
+msgstr "Zvuky"
+
+#: 
+msgid "Privacy"
+msgstr "Soukromí"
+
+#: 
+msgid "Message archiving"
+msgstr "Archivace zpráv"
+
+#: 
+msgid "Store a history of your chats"
+msgstr "Ukládat historii vašich rozhovorů"
+
+#: 
+msgid "Geolocation"
+msgstr "Geologická poloha"
+
+#: 
+msgid "Empty"
+msgstr "Odstranit"
+
+#: 
+msgid "Empty channel"
+msgstr "Vymazat kanál"
+
+#: 
+msgid "Persistent"
+msgstr "Natrvalo"
+
+#: 
+msgid "Maximum notices"
+msgstr "Maximum upozornění"
+
+#: 
+msgid "Account"
+msgstr "Účet"
+
+#: 
+msgid "Change password"
+msgstr "Změnit heslo"
+
+#: 
+msgid "Delete account"
+msgstr "Zrušit účet"
+
+#: 
+msgid "Old"
+msgstr "Staré"
+
+#: 
+msgid "New (2 times)"
+msgstr "Nové (2 krát)"
+
+#: 
+msgid "Continue"
+msgstr "Pokračovat"
+
+#: 
+msgid "To"
+msgstr "Komu"
+
+#: 
+msgid "Close"
+msgstr "Zavřít"
+
+#: 
+msgid "unknown"
+msgstr "neznámá"
+
+#: 
+msgid "Unavailable"
+msgstr "Odpojen"
+
+#: 
+msgid "is now"
+msgstr ""
+
+#: 
+msgid "Please wait while your avatar is uploaded..."
+msgstr "Prosím čekejte, než se váš avatar nahraje ..."
+
+#: 
+msgid "Here it is! A new beautiful profile image!"
+msgstr "Zde je! Nový krásný obrázek profilu!"
+
+#: 
+msgid "The image file is not supported or has a bad size."
+msgstr "Soubor s obrázkem není podporován nebo je příliš velký."
+
+#: 
+msgid "Reply"
+msgstr "Odpovědět"
+
+#: 
+msgid "Error"
+msgstr "Chyba"
+
+#: 
+msgid "Click here to solve the error"
+msgstr "KLikněte zde pro řešení problému"
+
+#: 
+msgid "You"
+msgstr "Ty"
+
+#: 
+msgid "Remove"
+msgstr "Odstranit"
+
+#: 
+msgid "Rename"
+msgstr "Přejmenovat"
+
+#: 
+msgid "Hi, I am %s, I would like to add you as my friend."
+msgstr "Ahoj, Já jsem %s, chci si Tě přidat jako kamaráda."
+
+#: 
+msgid "Smiley insertion"
+msgstr "Vložit smajlíka"
+
+#: 
+msgid "Change style"
+msgstr "Písmo"
+
+#: 
+msgid "Text in bold"
+msgstr "Tučné"
+
+#: 
+msgid "Text in italic"
+msgstr "Kurzíva"
+
+#: 
+msgid "Underlined text"
+msgstr "Podtržené"
+
+#: 
+msgid "Save chat"
+msgstr "Uložit rozhovor"
+
+#: 
+msgid "Click on the following link to get the chat log, and wait. Then click again to get the file."
+msgstr "Klikni na nasledující odkaz pro vytvoření logu rozhovoru, a počkej. Potom klikni znovu ke stažení souboru."
+
+#: 
+msgid "This chat is empty!"
+msgstr "Tento rozhovor je prázdný!"
+
+#: 
+msgid "Generate file!"
+msgstr "Vygeneruj soubor!"
+
+#: 
+msgid "Download file!"
+msgstr "Stažení souboru!"
+
+#: 
+msgid "Clean current chat"
+msgstr "Vyčistit probíhající rozhovor"
+
+#: 
+msgid "View chat history"
+msgstr "Zobrazit historii rozhovoru"
+
+#: 
+msgid "Show user profile"
+msgstr "Zobrazit profil uživatele"
+
+#: 
+msgid "Add this contact to your friends"
+msgstr "Přidej tento kontakt mezi své kamarády"
+
+#: 
+msgid "Add this groupchat to your favorites"
+msgstr "Přidej tento skupinový rozhovor do oblíbených"
+
+#: 
+msgid "All tabs"
+msgstr "Všechny listy"
+
+#: 
+msgid "Close this tab"
+msgstr "Zavřít tento list"
+
+#: 
+msgid "no subject defined for this room."
+msgstr "Není nastaven předmět pro tuto místnost"
+
+#: 
+msgid "Administration panel for this room"
+msgstr "Panel administrace pro tuto místnost"
+
+#: 
+msgid "Moderators"
+msgstr "Moderátoři"
+
+#: 
+msgid "Participants"
+msgstr "Členové"
+
+#: 
+msgid "Visitors"
+msgstr "Návštěvníci"
+
+#: 
+msgid "Manage favorite rooms"
+msgstr "Spravovat oblíbené skupinové rozhovory"
+
+#: 
+msgid "Change favorites"
+msgstr "Změnit oblíbené"
+
+#: 
+msgid "Search a room"
+msgstr "Najít místnost"
+
+#: 
+msgid "Select a favorite"
+msgstr "Vyberte oblíbenou"
+
+#: 
+msgid "Getting the name..."
+msgstr "Získávám jméno ..."
+
+#: 
+msgid "Gateway"
+msgstr "Brána"
+
+#: 
+msgid "Name"
+msgstr "Jméno"
+
+#: 
+msgid "Room"
+msgstr "Místnost"
+
+#: 
+msgid "Add"
+msgstr "Přidat"
+
+#: 
+msgid "Edit"
+msgstr "Upravit"
+
+#: 
+msgid "Search a room on"
+msgstr "Najít místnost na"
+
+#: 
+msgid "No room found on this server."
+msgstr "Na tomto serveru nebyla nalezena žádná místnost."
+
+#: 
+msgid "Service discovery"
+msgstr "Zjištění služeb"
+
+#: 
+msgid "Server to query"
+msgstr "Prohedávaný server"
+
+#: 
+msgid "Sorry, but the entity didn't return any result!"
+msgstr "Promiňte, ale hledaný výraz nebyl nalezen!"
+
+#: 
+msgid "Accounts"
+msgstr "Účty"
+
+#: 
+msgid "Authentications"
+msgstr "Ověřování"
+
+#: 
+msgid "Automation"
+msgstr "Automaticky"
+
+#: 
+msgid "Clients"
+msgstr "Klienti"
+
+#: 
+msgid "Collaboration"
+msgstr "Spolupráce"
+
+#: 
+msgid "Components"
+msgstr "Komponenty"
+
+#: 
+msgid "Rooms"
+msgstr "Místnosti"
+
+#: 
+msgid "Directories"
+msgstr "Adresáře"
+
+#: 
+msgid "Gateways"
+msgstr "Brány"
+
+#: 
+msgid "News"
+msgstr "Novinky"
+
+#: 
+msgid "Hierarchy"
+msgstr "Hierarchie"
+
+#: 
+msgid "Proxies"
+msgstr "Proxy server"
+
+#: 
+msgid "Publication/Subscription"
+msgstr "Publikování/Odebírání"
+
+#: 
+msgid "Storage"
+msgstr "Úložiště"
+
+#: 
+msgid "Service offline or broken"
+msgstr "Služba je vypnutá nebo nedostupná"
+
+#: 
+msgid "Your inbox"
+msgstr "Vaše schránka"
+
+#: 
+msgid "Available actions"
+msgstr "Dostupné akce"
+
+#: 
+msgid "Clean"
+msgstr "Vyčistit"
+
+#: 
+msgid "New"
+msgstr "Nová"
+
+#: 
+msgid "Received"
+msgstr "Přijaté"
+
+#: 
+msgid "Subject"
+msgstr "Předmět"
+
+#: 
+msgid "Content"
+msgstr "Obsah"
+
+#: 
+msgid "Send message"
+msgstr "Odeslat zprávu"
+
+#: 
+msgid "Your inbox is empty."
+msgstr "Vaše schránka je prázdná."
+
+#: 
+msgid "MUC administration"
+msgstr "Administrace MUC"
+
+#: 
+msgid "You administrate this room"
+msgstr "Spravujte tuto místnost"
+
+#: 
+msgid "Enter new subject"
+msgstr "Vložte nový přednět"
+
+#: 
+msgid "Configuration"
+msgstr "Nastavení"
+
+#: 
+msgid "Authorizations"
+msgstr "Povolení"
+
+#: 
+msgid "Member list"
+msgstr "Seznam členů"
+
+#: 
+msgid "Owner list"
+msgstr "Seznam vlastníků"
+
+#: 
+msgid "Administrator list"
+msgstr "Seznam správců"
+
+#: 
+msgid "Outcast list"
+msgstr "Seznam nežádoucích"
+
+#: 
+msgid "Add an input"
+msgstr "Přidej člena"
+
+#: 
+msgid "Destroy this MUC"
+msgstr "Zrušit tento MUC"
+
+#: 
+msgid "Yes, let's do it!"
+msgstr "Ano, pojďme na to!"
+
+#: 
+msgid "Your friend is paying attention to the conversation."
+msgstr "Váš kamarád sleduje rozhovor."
+
+#: 
+msgid "Your friend is writing a message..."
+msgstr "Váš kamarád píše ..."
+
+#: 
+msgid "Your friend stopped writing a message."
+msgstr "Váš kamarád přestal psát."
+
+#: 
+msgid "Your friend is doing something else."
+msgstr "Váš kamarád se věnuje něčemu jinému."
+
+#: 
+msgid "Your friend closed the chat."
+msgstr "Váš kamarád ukončil rozhovor."
+
+#: 
+msgid "Requesting this service..."
+msgstr "Žádám o tuto službu ..."
+
+#: 
+msgid "Loading"
+msgstr "Načítání"
+
+#: 
+msgid "joined the chat room"
+msgstr "Vstoupit do místnosti"
+
+#: 
+msgid "left the chat room"
+msgstr "opustit místnost"
+
+#: 
+msgid "no status"
+msgstr "bez statusu"
+
+#: 
+msgid "has been kicked"
+msgstr "byl vyloučen"
+
+#: 
+msgid "has been banned"
+msgstr "byl zakázán"
+
+#: 
+msgid "no reason"
+msgstr "bez důvodu"
+
+#: 
+msgid "Communicate with the entire world!"
+msgstr "Komunikujte s celým světem!"
+
+#: 
+msgid "Jappix is a non-profit social platform, that you can access wherever you are, whenever you want and communicate with whovever you want."
+msgstr "Jappix je nezisková sociální platforma, ke které máte přístup ať jste kdekoliv, kdykoli budete chtít s někým komunikovat."
+
+#: 
+msgid "It allows you to get in touch with the millions of users who currently use the XMPP network like you do with Jappix. Join the community and stay free!"
+msgstr "Umožní vám být v kontaktu s milióny uživateli, kteří právě využívají XMPP síť stejně jako vy s Jabbixem. Přidpojte se ke komunitě a zůstaňte svobodní."
+
+#: 
+msgid "Hi there!"
+msgstr "Ahoj!"
+
+#: 
+msgid "Welcome on %1s, “%2s”."
+msgstr "Vítejte na %1s, “%2s”."
+
+#: 
+msgid "Login to your existing XMPP account or create a new one for free!"
+msgstr "Přihlaste se ke svému již existujícímu XMPP účtu nebo si zaregistrujte zdarma nový!"
+
+#: 
+msgid "Jappix is an open-source project from PostPro, a non-profit organization which provides us a great help."
+msgstr "Jappix je open-source projekt od PostPro, neziskové organizace, která poskytuje velkou podporu."
+
+#: 
+msgid "Login to your existing XMPP account. You can also use the %s to join a groupchat."
+msgstr "Přihlaš se ke svému již existujícímu XMPP účtu. Také můžeš použít %s pro připojení ke skupinovému rozhovoru."
+
+#: 
+msgid "Previous"
+msgstr "Předchozí"
+
+#: 
+msgid "General"
+msgstr "Obecné"
+
+#: 
+msgid "Advanced"
+msgstr "Rozšířené"
+
+#: 
+msgid "Resource"
+msgstr "Zdroj"
+
+#: 
+msgid "Priority"
+msgstr "Priorita"
+
+#: 
+msgid "Low"
+msgstr "Nízká"
+
+#: 
+msgid "Medium"
+msgstr "Střední"
+
+#: 
+msgid "High"
+msgstr "Vysoká"
+
+#: 
+msgid "Enter the groupchat you want to join and the nick you want to have. You can also go back to the %s."
+msgstr "Zadejte název skupinového rozhovoru ke kterému se chcete připojit a zvolte si přezdívku. Nebo se můžete vrátit na %s."
+
+#: 
+msgid "login page"
+msgstr "přihlašovací stránku"
+
+#: 
+msgid "Share this link with your friends:"
+msgstr "Sdílejte tento odkaz s kamarády:"
+
+#: 
+msgid "Register a new XMPP account to join your friends on your own social cloud. That's simple!"
+msgstr "Zaregistruj si nový XMPP účet a spoj se s kamarády ve vlastní sociální síti. Je to jednoduché!"
+
+#: 
+msgid "Required"
+msgstr "Povinné"
+
+#: 
+msgid "You have been registered, here is your XMPP address:"
+msgstr "Jste zaregistrivání, toto je vaše XMPP adresa:"
+
+#: 
+msgid "Manager"
+msgstr "Správce"
+
+#: 
+msgid "Project"
+msgstr "Projekt"
+
+#: 
+msgid "Encrypted"
+msgstr "Šifrovaně"
+
+#: 
+msgid "Unencrypted"
+msgstr "Bez šifrování"
+
+#: 
+msgid "Where are you?"
+msgstr "Kde jsi?"
+
+#: 
+msgid "What's up with you?"
+msgstr "Co je s tebou?"
+
+#: 
+msgid "Fetching the social channel..."
+msgstr "Stahuji kanál ..."
+
+#: 
+msgid "You are synchronized with your network."
+msgstr "Nyní jste synchronizovaný s vaší sítí."
+
+#: 
+msgid "Cannot send anything: you can only receive notices!"
+msgstr "Nelze nic odesílat: můžete pouze přijímat zprávy!"
+
+#: 
+msgid "Media viewer"
+msgstr "Prohlížeč médií"
+
+#: 
+msgid "Browse"
+msgstr "Prohlížet"
+
+#: 
+msgid "Command"
+msgstr "Příkaz"
+
+#: 
+msgid "Subscribe"
+msgstr "Registrace"
+
+#: 
+msgid "Join"
+msgstr "Připojit"
+
+#: 
+msgid "Automatic"
+msgstr "Automaticky"
+
+#: 
+msgid "Search"
+msgstr "Hledat"
+
+#: 
+msgid "No result!"
+msgstr "Nic nenalezeno!"
+
+#: 
+msgid "No notifications."
+msgstr "Žádné upozornění."
+
+#: 
+msgid "would like to add you as a friend."
+msgstr "si vás chce přidat jako kamaráda."
+
+#: 
+msgid "would like you to join this chatroom:"
+msgstr "žádá vás aby jste vstoupili do místnosti."
+
+#: 
+msgid "Do you accept?"
+msgstr "Souhlasíte?"
+
+#: 
+msgid "Yes"
+msgstr "Ano"
+
+#: 
+msgid "No"
+msgstr "Ne"
+
+#: 
+msgid "would like to get authorization."
+msgstr "žádá o povolení."
+
+#: 
+msgid "Do you want to see the friends %s suggests you?"
+msgstr "Přejete si vidět kamarády, které vám %s navrhuje?"
+
+#: 
+msgid "Submit"
+msgstr "Odeslat"
+
+#: 
+msgid "Client"
+msgstr "Klient"
+
+#: 
+msgid "System"
+msgstr "Systém"
+
+#: 
+msgid "Local time"
+msgstr "Místní čas"
+
+#: 
+msgid "Comments"
+msgstr "Komentáře"
+
+#: 
+msgid "User profile"
+msgstr "Profil uživatele"
+
+#: 
+msgid "See his/her position on the globe"
+msgstr "Zobraz jeho/její polohu na zeměkouli"
+
+#: 
+msgid "Confirm"
+msgstr "Ověřit"
+
+#: 
+msgid "anonymous mode"
+msgstr "anonymní mód"
+
+#: 
+msgid "Groups"
+msgstr "Skupiny"
+
+#: 
+msgid "Unclassified"
+msgstr "Nezařazené"
+
+#: 
+msgid "Authorize"
+msgstr "Oprávnit"
+
+#: 
+msgid "Ask for authorization"
+msgstr "Požádat o oprávnění"
+
+#: 
+msgid "Unblock"
+msgstr "Odblokovat"
+
+#: 
+msgid "Prohibit"
+msgstr "Zakázat"
+
+#: 
+msgid "Block"
+msgstr "Blokovat"
+
+#: 
+msgid "Chat"
+msgstr "Rozhovor"
+
+#: 
+msgid "Groupchat"
+msgstr "Skupinový rozhovor"
+
+#: 
+msgid "Jappix Mobile"
+msgstr "Jabbix pro Mobil"
+
+#: 
+msgid "Desktop"
+msgstr "Počítač"
+
+#: 
+msgid "Mobile"
+msgstr "Mobil"
+
+#: 
+msgid "Please wait..."
+msgstr "Čekejte prosím ..."
+
+#: 
+msgid "Please enable JavaScript"
+msgstr "Prosím povolte JavaScript"
+
+#: 
+msgid "Your channel"
+msgstr "Váš kanál"
+
+#: 
+msgid "Channel of"
+msgstr "Kanál uživatele"
+
+#: 
+msgid "More notices..."
+msgstr "Další upozornění ..."
+
+#: 
+msgid "Attach a file"
+msgstr "Připojit soubor"
+
+#: 
+msgid "Send"
+msgstr "Odeslat"
+
+#: 
+msgid "Unattach the file"
+msgstr "Odebrat soubor"
+
+#: 
+msgid "An error occured while uploading your file: maybe it is too big (%s maximum) or forbidden!"
+msgstr "Nastala chyba během nahrávání souboru: buď je příliš velký (%s maximálně) nebo není povolen!"
+
+#: 
+msgid "Authorization failed"
+msgstr "Autorizace se nezdařila"
+
+#: 
+msgid "Registration failed, please choose a different username"
+msgstr "Registrace se nezdařila, zvolte prosím jiné uživatelské jméno"
+
+#: 
+msgid "Service unavailable"
+msgstr "Služba je nedostupná"
+
+#: 
+msgid "Internal server error, try later"
+msgstr "Vnitřní chyba serveru, zkuste později"
+
+#: 
+msgid "Your form has been sent."
+msgstr "Váš formulář byl odeslán."
+
+#: 
+msgid "Application"
+msgstr "Aplikace"
+
+#: 
+msgid "XMPP links"
+msgstr "XMPP odkaz"
+
+#: 
+msgid "Open XMPP links with Jappix"
+msgstr "Otevřít XMPP odkaz pomocí Jappix"
+
+#: 
+msgid "changed the subject to:"
+msgstr "změnit předmět na:"
+
+#: 
+msgid "Welcome!"
+msgstr "Vítejte!"
+
+#: 
+msgid "Friends"
+msgstr "Kamarádi"
+
+#: 
+msgid "Welcome on Jappix, your own social cloud!"
+msgstr "Vítejte v Jappix, vaší vlastní sociální síti!"
+
+#: 
+msgid "Before you start using it, you will have to change some settings, search for friends and complete your profile."
+msgstr "Dříve než jí začnete používat, měli by jste upravit některá nastavení, vyhledat kamarády a vyplnit svůj profil."
+
+#: 
+msgid "Enable notification sounds"
+msgstr "Povolit upozorňování pomocí zvuků"
+
+#: 
+msgid "Share your position on the globe"
+msgstr "Sdílet svojí polohu na zeměkouli"
+
+#: 
+msgid "Offline friends"
+msgstr "Odpojení kamarádi"
+
+#: 
+msgid "Don't hide offline friends"
+msgstr "Neskrývat odpojené kamarády"
+
+#: 
+msgid "Use this tool to find your friends on the server you are using right now, or add them later."
+msgstr "Použijte tento nástroj na vyhledání kamarádů na tomto serveru. Nebo je můžete přidat později."
+
+#: 
+msgid "Great work! Now, you can share Jappix with your friends!"
+msgstr "Skvěle! Nyní můžete sdílet Jappix se svými kamarády!"
+
+#: 
+msgid "When you will press the save button, the profile editor will be opened. Happy socializing!"
+msgstr "Nyní, když stisknete tlačitko Uložit, následuje otevření editoru vašeho profilu."
+
+#: 
+msgid "Share Jappix on %s"
+msgstr "Sdílejte Jappix na %s"
+
+#: 
+msgid "Using Jappix, an open social platform. I am %s!"
+msgstr "Používám Jappix, otevřenou sociální platformu. Jsem %s!"
+
+#: 
+msgid "Unknown name"
+msgstr "Neznámé jméno"
+
+#: 
+msgid "Unknown country"
+msgstr "Neznámá země"
+
+#: 
+msgid "Click to enable"
+msgstr "Klikni pro povolení"
+
+#: 
+msgid "Click to disable"
+msgstr "Klikni pro zakázání"
+
+#: 
+msgid "Installation"
+msgstr "Instalace"
+
+#: 
+msgid "Jappix installation"
+msgstr "Jappix instalace"
+
+#: 
+msgid "Welcome to the Jappix installation!"
+msgstr "Vítejte v Jappix instalaci!"
+
+#: 
+msgid "This tool will help you fastly install Jappix, the first full-featured XMPP-based social platform, on your server. You don't even need any technical knowledge."
+msgstr "Tento nástroj vám pomůže rychle nainstalovat Jappix, první plnohodnotnou sociální platformu založenou na XMPP, na váš server. Nebudete dokonce potřebovat žádné technické znalosti."
+
+#: 
+msgid "Let's have a look at the installation steps:"
+msgstr "Přejděme k instalačním krokům:"
+
+#: 
+msgid "Welcome"
+msgstr "Vítejte"
+
+#: 
+msgid "Storage configuration"
+msgstr "Nastavení úložiště"
+
+#: 
+msgid "Administrator account"
+msgstr "Účet administrátora"
+
+#: 
+msgid "Main configuration"
+msgstr "Hlavní nastavení"
+
+#: 
+msgid "Hosts configuration"
+msgstr "Nastavení hostitele"
+
+#: 
+msgid "Services installation"
+msgstr "Instalace služeb"
+
+#: 
+msgid "If the current language does not match yours (%1s), you can make Jappix speak %2s it will be saved."
+msgstr "Pokud se tento jazyk (%1s) neshoduje s vaším, můžete nechat Jappix mluvit jiným jazykem %2s. Volba bude uložena."
+
+#: 
+msgid "If you want to get some help about the Jappix installation and configuration, you can use our whole documentation, available at:"
+msgstr "Pokud potřebujete pomoci s instalací a nastavením Jappix, můžete využít dokumentaci, kterou naleznete zde:"
+
+#: 
+msgid "It's time to build your own social cloud: just go to the next step!"
+msgstr "Nastal čas vybudovat vlastní sociální síť: stačí přejít k nasledujícímu kroku!"
+
+#: 
+msgid "Jappix stores persistent data (such as shared files, chat logs, your own music and its configuration) into a single secured storage folder."
+msgstr "Jappix ukládá natrvalo data (sdílené soubory, vaše vlastní hudba a konfigurace) do jediného zabezpečeného adresáře. "
+
+#: 
+msgid "Jappix must be able to write in this folder to create its sub-directories. If not, you must set the rights to %1s or change the folder owner to %2s (depending of your configuration)."
+msgstr "Jappix musí mít oprávnění zapisovat do tohoto adresáře pro vytvoření vlastních podadresářů.Pokud tomu tak není, je třeba nastavit oprávnění na %1s a nebo nastavit vlastníka adresáře na %2s (závisí to na vašem nastavení)."
+
+#: 
+msgid "The folder is writable, you can continue!"
+msgstr "Do adresáře je povolen zápis, můžete pokračovat!"
+
+#: 
+msgid "Jappix offers you the possibility to manage your configuration, install new plugins or search for updates. That's why you must create an administrator account to access the manager."
+msgstr "Jappix vám úmožňuje spravovat vaší konfiguraci, instalovat pluginy nebo vyhledávat aktualizace. Proto je nutné si vytvořit účet administrátora ke vstupu do Správy Jappix."
+
+#: 
+msgid "When Jappix will be installed, just click on the manager link on the home page to access it."
+msgstr "Když je Jappix nainstalován, stačí kliknout na odkaz Správce na výchozí stránce pro vstup do Správy. "
+
+#: 
+msgid "Oops, you missed something or the two passwords do not match!"
+msgstr "Jejda, něco vám uniklo, nebo se hesla neshodují!"
+
+#: 
+msgid "Jappix needs that you specify some values to work. Please correct the following inputs (or keep the default values, which are sufficient for most people)."
+msgstr "Jappix vyžaduje nastavení některých údajů. Prosím upravtel následující údaje (nebo nechte přednastavené, které většině uživatelů vyhovují)."
+
+#: 
+msgid "Note that if you don't specify a value which is compulsory, it will be automatically completed with the default one."
+msgstr "Pokud nenastavíte povinné údaje, budou nastaveny na výchozí."
+
+#: 
+msgid "User"
+msgstr "Uživatel"
+
+#: 
+msgid "Service"
+msgstr "Služba"
+
+#: 
+msgid "Service name"
+msgstr "Název služby"
+
+#: 
+msgid "Service description"
+msgstr "Popis služby"
+
+#: 
+msgid "Connection"
+msgstr "Připojení"
+
+#: 
+msgid "Lock the host"
+msgstr "Uzamknout hostitele"
+
+#: 
+msgid "Anonymous mode"
+msgstr "Anonymní mód"
+
+#: 
+msgid "Registration allowed"
+msgstr "Registrace povolena"
+
+#: 
+msgid "Use a proxy"
+msgstr "Použít proxy"
+
+#: 
+msgid "Encryption"
+msgstr "Šifrování"
+
+#: 
+msgid "HTTPS storage"
+msgstr "HTTPS úložiště"
+
+#: 
+msgid "Force HTTPS"
+msgstr "Vynutit HTTPS"
+
+#: 
+msgid "Compression"
+msgstr "Komprese"
+
+#: 
+msgid "This page helps you specify the default hosts Jappix will connect to. You can leave it as it is and continue if you want to use the official service hosts."
+msgstr "Tato stránka vám pomůže nastavit výchozího hostitele. Použijte přednastavené hodnoty, pokud chcete využívat oficiální službu hostitele."
+
+#: 
+msgid "Maybe you don't know what a BOSH server is? In fact, this is a relay between a Jappix client and a XMPP server, which is necessary because of technical limitations."
+msgstr "BOSH server v podstatě předává informace mezi Jappix klientem a XMPP serverem a je nutný vzhledem k technickému omezení."
+
+#: 
+msgid "Main host"
+msgstr "Hlavní hostitel"
+
+#: 
+msgid "Groupchat host"
+msgstr "Hostitel skupinových rozhovorů (Groupchat host)"
+
+#: 
+msgid "Anonymous host"
+msgstr "Anonymní host"
+
+#: 
+msgid "Directory host"
+msgstr "Directory host"
+
+#: 
+msgid "BOSH host"
+msgstr "BOSH host"
+
+#: 
+msgid "You can install some extra softwares on your server, to extend your Jappix features. Some others might be modified, because of security restrictions which are set by default."
+msgstr "Můžete nainstalovat další software pro rozšíření funkcí vašeho Jappix. Některé jiné funkce můžete upravit, zejména z důvodů bezpečnosti, protože byly nastaveny na vychozí hodnoty."
+
+#: 
+msgid "To perform this, you must be able to access your server's shell and be logged in as root. Remember this is facultative, Jappix will work without these modules, but some of its features will be unavailable."
+msgstr "K tomu je nutný přístup na konzoli serveru a mít oprávnění root uživatele, Jappix bude pracovat i bez těchto dalších modulů, ale některé funkce budou nedostupné."
+
+#: 
+msgid "After you finished the setup, Jappix will generate the cache files. It might be slow, just wait until the application is displayed and do not press any button."
+msgstr "Po ukončení nastavení Jappix vygeneruje cache soubory. Toto může nějaký čas trvat, počkejte až se zobrazí aplikace a do té doby nemačkejte jakoukoli klávesu."
+
+#: 
+msgid "Thanks for using Jappix!"
+msgstr "Děkujeme za používání Jappix!"
+
+#: 
+msgid "Next"
+msgstr "Další"
+
+#: 
+msgid "Finish"
+msgstr "Dokončit"
+
+#: 
+msgid "Check again"
+msgstr "Opakovat"
+
+#: 
+msgid "The folder is not writable, set the right permissions to the %s directory."
+msgstr "Do adresáře nelze zapisovat, nastavte oprávnění na %s."
+
+#: 
+msgid "%s is installed on your system."
+msgstr "%s je nainstalován na vašem systému."
+
+#: 
+msgid "%1s is not installed on your system, you should install %2s."
+msgstr "%1s není na vašem systému nainstalován, nainstalujte %2s."
+
+#: 
+msgid "PHP maximum upload size is sufficient (%s)."
+msgstr "PHP maximální velikost nahrávaného souboru je dostatečná (%s)."
+
+#: 
+msgid "PHP maximum upload size is not sufficient (%1s), you should define it to %2s in %3s."
+msgstr "PHP maximální velikost nahrávaného souboru není dostatečná (%1s), měli byste jí nastavit na %2s v %3s."
+
+#: 
+msgid "Jappix manager"
+msgstr "Jappix správce"
+
+#: 
+msgid "Manager access"
+msgstr "Přístup ke Správě"
+
+#: 
+msgid "Statistics"
+msgstr "Statistika"
+
+#: 
+msgid "Hosts"
+msgstr "Hostitelé"
+
+#: 
+msgid "Design"
+msgstr "Vzhled"
+
+#: 
+msgid "Repeat"
+msgstr "Opakovat"
+
+#: 
+msgid "All"
+msgstr "Vše"
+
+#: 
+msgid "Horizontal"
+msgstr "Horizontálně"
+
+#: 
+msgid "Vertical"
+msgstr "Vertikálně"
+
+#: 
+msgid "Center"
+msgstr "Střed"
+
+#: 
+msgid "Left"
+msgstr "Vlevo"
+
+#: 
+msgid "Right"
+msgstr "Vpravo"
+
+#: 
+msgid "Top"
+msgstr "Nahoře"
+
+#: 
+msgid "Bottom"
+msgstr "Dole"
+
+#: 
+msgid "Adapt"
+msgstr "Přizpůsobit"
+
+#: 
+msgid "Color"
+msgstr "Barva"
+
+#: 
+msgid "Users"
+msgstr "Uživatelé"
+
+#: 
+msgid "Updates"
+msgstr "Aktualizace"
+
+#: 
+msgid "This is a restricted area: only the authorized users can manage this Jappix node."
+msgstr "Omezený přístup: pouze oprávnění uživatelé mohou spravovat tento Jappix uzel."
+
+#: 
+msgid "Please use the form below to login to the administration panel."
+msgstr "Prosím požijte následující formulář pro přihlášení do administrátorského rozhraní."
+
+#: 
+msgid "To improve security, sessions are limited in time and when your browser will be closed, you will be logged out."
+msgstr "Pro zvýšení bezpečnosti je přihlášení časově omezeno a pokud zavřetel prohlížeč budete odhlášeni."
+
+#: 
+msgid "Credentials"
+msgstr "Ověření"
+
+#: 
+msgid "You have been logged out. Goodbye!"
+msgstr "Jste odhlášeni, Nashledanou!"
+
+#: 
+msgid "Oops, you could not be recognized as a valid administrator. Check your credentials!"
+msgstr "Jejda, nejste platný správce. Zkontrolujte, vaše přihlašovací údaje!"
+
+#: 
+msgid "Basic statistics are processed by Jappix about some important things, you can find them below."
+msgstr "Základní statisticky o některých důležitých údajích zpracováváných Jappixem najdete níže."
+
+#: 
+msgid "Change your Jappix node configuration with this tool."
+msgstr "Změna konfiguraci vašeho Jabbix uzlu pomocí správce."
+
+#: 
+msgid "Change the XMPP hosts that this Jappix node serve with this tool."
+msgstr "Změnit nastavení XMPP hostitelů, které tento Jappix uzel využívá, lze v tomto panelu."
+
+#: 
+msgid "All this Jappix node stored files can be managed with this tool: please select a sub-folder and start editing its content!"
+msgstr "Všechny soubory uložené na tomot Jappix uzlu můžete spravovat v tomto panelu: zvolte podadresář a můžete upravovat obsah."
+
+#: 
+msgid "Jappix is fully customisable: you can change its design right here."
+msgstr "Jappix je zcela přizpůsobitelný: jeho vzhled si můžete zde upravit."
+
+#: 
+msgid "This is not a valid image, please use PNG, GIF or JPG!"
+msgstr "Toto není povolený obrázek, prosím použijte PNG, GIF nebo JPG!"
+
+#: 
+msgid "The image could not be received, would you mind retry?"
+msgstr "Obrázek nebyl přijat, přejete si akci zopakovat?"
+
+#: 
+msgid "Your image was added to the list!"
+msgstr "Váš obrázek byl přidán do seznamu!"
+
+#: 
+msgid "Changes saved!"
+msgstr "Změny byly uloženy!"
+
+#: 
+msgid "You can define more than one administrator for this Jappix node. You can also change a password with this tool."
+msgstr "Na tomto Jappix uzlu lze zadat více správců. Také lze změnit heslo v tomto panelu."
+
+#: 
+msgid "Update your Jappix node with this tool, or check if a new one is available. Informations about the latest version are also displayed (in english)."
+msgstr "Aktualizuj Jappix uzel v tohoto panelu nebo zjisti, zda není dostupná nové verze. Informace o poslední verzi se také zobrazí (anglicky)."
+
+#: 
+msgid "Access statistics"
+msgstr "Statistiky přístupů"
+
+#: 
+msgid "Share statistics"
+msgstr "Statistiky sdílení"
+
+#: 
+msgid "Other statistics"
+msgstr "Oatatní statistiky"
+
+#: 
+msgid "January"
+msgstr "Leden"
+
+#: 
+msgid "February"
+msgstr "Únor"
+
+#: 
+msgid "March"
+msgstr "Březen"
+
+#: 
+msgid "April"
+msgstr "Duben"
+
+#: 
+msgid "May"
+msgstr "Květen"
+
+#: 
+msgid "June"
+msgstr "Červen"
+
+#: 
+msgid "July"
+msgstr "Červenec"
+
+#: 
+msgid "August"
+msgstr "Srpen"
+
+#: 
+msgid "September"
+msgstr "Září"
+
+#: 
+msgid "October"
+msgstr "Říjen"
+
+#: 
+msgid "November"
+msgstr "Listopad"
+
+#: 
+msgid "December"
+msgstr "Prosinec"
+
+#: 
+msgid "Monday"
+msgstr "Pondělí"
+
+#: 
+msgid "Tuesday"
+msgstr "Úterý"
+
+#: 
+msgid "Wednesday"
+msgstr "Středa"
+
+#: 
+msgid "Thursday"
+msgstr "Čtvrtek"
+
+#: 
+msgid "Friday"
+msgstr "Pátek"
+
+#: 
+msgid "Saturday"
+msgstr "Sobota"
+
+#: 
+msgid "Sunday"
+msgstr "Neděle"
+
+#: 
+msgid "Total"
+msgstr "Celkem"
+
+#: 
+msgid "Cache"
+msgstr "Keš"
+
+#: 
+msgid "Logs"
+msgstr "Logy"
+
+#: 
+msgid "Music"
+msgstr "Hudba"
+
+#: 
+msgid "Backgrounds"
+msgstr "Pozadí"
+
+#: 
+msgid "Share"
+msgstr "Sdílení"
+
+#: 
+msgid "Background"
+msgstr "Pozadí"
+
+#: 
+msgid "Notice"
+msgstr "Upozornění"
+
+#: 
+msgid "Your design preferences have been saved!"
+msgstr "Nastavení vašeho vzhledu bylo uloženo."
+
+#: 
+msgid "Please check your inputs: something is missing!"
+msgstr "Zkontrolujte údaje: nejsou kompletní!"
+
+#: 
+msgid "Change your Jappix node background with this tool. You can either set a custom color or an uploaded image. Let your creativity flow!"
+msgstr "V tomto panelu lze nastavit vzhled vašeho Jappix uzlu. Lze nastavit vlastní barvu či uložený obrázek. Nechte volnost své tvořivosti!"
+
+#: 
+msgid "Use default background"
+msgstr "Použít výchozí pozadí"
+
+#: 
+msgid "Use your own image"
+msgstr "Použít vlastní obrázek"
+
+#: 
+msgid "Select a background to use and change the display options."
+msgstr "Zvolte pozadí a upravte nastavení zobrazení."
+
+#: 
+msgid "Use your own color"
+msgstr "Použijte vlastní barvu"
+
+#: 
+msgid "Type the hexadecimal color value you want to use as a background."
+msgstr "Zadejte hexadecimálně barvu vašeho pozadí."
+
+#: 
+msgid "Manage backgrounds"
+msgstr "Správa pozadí"
+
+#: 
+msgid "You can add a new background to the list with this tool. Please send a valid image."
+msgstr "V tomto panelu lze přidat nové pozadí do seznamu. Prosím odešlete platný obrázek."
+
+#: 
+msgid "If you want to remove some backgrounds, use the browser below."
+msgstr "Pokud chcete některé pozadí odstranit, použijte následující prohlížeč."
+
+#: 
+msgid "Define a homepage notice for all your users, such as a warn, an important message or an advert with this tool."
+msgstr "Nastavení upozornění na výchozí stránce pro všechny uživatele, např. varování, důležité oznámení či raklama."
+
+#: 
+msgid "Simple notice"
+msgstr "Jednoduché upozornění"
+
+#: 
+msgid "This notice only needs simple text to be displayed, but no code is allowed!"
+msgstr "Toto upozornění umožňuje pouze jednoduchý text. Žádný kód není povolen."
+
+#: 
+msgid "Advanced notice"
+msgstr "Rozšířené upozornění"
+
+#: 
+msgid "You can customize your notice with embedded HTML, CSS and JavaScript, but you need to code the style."
+msgstr "Vaše upozornění lze upravit vložením HTML, CSS a JavaScript, ale je třeba i kód stylu."
+
+#: 
+msgid "Available updates"
+msgstr "Dostupné aktualizace"
+
+#: 
+msgid "What's new?"
+msgstr "Co je nového?"
+
+#: 
+msgid "Your storage folders are not writable, please apply the good rights!"
+msgstr "Do adresáře k ukládání nelze zapisovat, prosím upravte oprávnění!"
+
+#: 
+msgid "%1s may cause problems to the proxy, please increase %2s value up to %3s!"
+msgstr "%1s může způsobit problémy s proxy, prosím zvyšte hodnotu %2s na %3s!"
+
+#: 
+msgid "You are using a development version of Jappix. Update it through our repository by executing: %s."
+msgstr "Právě používáte vývojovou verzi Jappix. Aktualizujte jí z repozitáře spůštěním %s."
+
+#: 
+msgid "A new Jappix version is available! Check what is new and launch the update!"
+msgstr "Je dostupná nová verze Jappix! Zjistěte co je v ní nového a proveďte update!"
+
+#: 
+msgid "Your version is out to date. Update it now to %s by clicking here!"
+msgstr "Vaše verze je zastaralá. Aktualizujte ji nyní na %s kliknutím zde!"
+
+#: 
+msgid "Your version seems to be up to date, but you can check updates manually by clicking here."
+msgstr "Vaše verze se zdá být aktuální, ale je možné zkontrolovat aktualizace ručně kliknutím zde."
+
+#: 
+msgid "Check for updates"
+msgstr "Dostupné aktualizace"
+
+#: 
+msgid "Update in progress"
+msgstr "Prohíhá aktualizace"
+
+#: 
+msgid "Jappix has been updated: you are now running the latest version. Have fun!"
+msgstr "Jabbix byl aktualizován: právě používáte nejnovější verzi. Příjemnou zábavu!"
+
+#: 
+msgid "The update has failed! Please try again later."
+msgstr "Aktualizace selhala! Prosím opakujte později."
+
+#: 
+msgid "Downloading package..."
+msgstr "Stahuji balíček ..."
+
+#: 
+msgid "Removing current Jappix system files..."
+msgstr "Odstraňování aktuálních systémových souborů Jappixe ..."
+
+#: 
+msgid "Extracting package..."
+msgstr "Rozbaluji balíček ..."
+
+#: 
+msgid "Regenerating storage folder tree..."
+msgstr "Obnovování stromu adresáře úložiště ..."
+
+#: 
+msgid "Jappix is now up to date!"
+msgstr "Jappix je aktualizován!"
+
+#: 
+msgid "Aborted: socket error!"
+msgstr "Nezdařilo se: chyba soketu!"
+
+#: 
+msgid "Aborted: buffer error!"
+msgstr "Nezdařilo se: chyba bufferu!"
+
+#: 
+msgid "Aborted: everything is not writable!"
+msgstr "Nezdařilo se: nelze zapsat!"
+
+#: 
+msgid "Aborted: could not extract the package!"
+msgstr "Nezdařilo se: nelze rozbalti balíček!"
+
+#: 
+msgid "Visits"
+msgstr "Návštěvnost"
+
+#: 
+msgid "Daily"
+msgstr "Denně"
+
+#: 
+msgid "Weekly"
+msgstr "Týdně"
+
+#: 
+msgid "Monthly"
+msgstr "Měsíčně"
+
+#: 
+msgid "Yearly"
+msgstr "Ročně"
+
+#: 
+msgid "Size"
+msgstr "Velikost"
+
+#: 
+msgid "Clean everything"
+msgstr "Vše odstranit"
+
+#: 
+msgid "Purge cache"
+msgstr "Vymazat keš"
+
+#: 
+msgid "Purge logs"
+msgstr "Vymazat logy"
+
+#: 
+msgid "Purge updates"
+msgstr "Vymazat aktualizace"
+
+#: 
+msgid "The storage folder you wanted to clean is now empty!"
+msgstr "Odkládací adresář, který chcete vymazat je nyní prázdny!"
+
+#: 
+msgid "Keep your Jappix node fresh and fast, clean the storage folders regularly!"
+msgstr "Udržujte váš uzel Jappix čistý a rychlý, pravidelně čistěte adkládací prostor!"
+
+#: 
+msgid "Upload your music (Ogg Vorbis, MP3 or WAV) to be able to listen to it in Jappix!"
+msgstr "Nahrajte vlastní hudbu (Ogg Vorbis, MP3 or WAV) a můžete jí poslouchat v Jappixu!"
+
+#: 
+msgid "The file you want to upload must be smaller than %s."
+msgstr "Soubor který chcete nahrát nesmí být větší než %s."
+
+#: 
+msgid "Stay tuned in what your users store on your server and remove undesired content with this tool."
+msgstr "Buďte v obraze o tom co vaši uživatelé ukládají na server a odstraňte nevhodný obsah v tomto panelu."
+
+#: 
+msgid "Title"
+msgstr "Název"
+
+#: 
+msgid "Artist"
+msgstr "Zpěvák/Zpěvačka"
+
+#: 
+msgid "Album"
+msgstr "Album"
+
+#: 
+msgid "File"
+msgstr "Soubor"
+
+#: 
+msgid "Upload"
+msgstr "Nahrát"
+
+#: 
+msgid "The folder is empty."
+msgstr "Adresář je prázdný."
+
+#: 
+msgid "The music could not be received, please retry!"
+msgstr "Hudba nebyla přijata, prosím opakujte akci!"
+
+#: 
+msgid "This is not a valid music file, please encode in Ogg Vorbis, MP3 or WAV!"
+msgstr "Toto není platný hudební soubor, prosím použijte Ogg Vorbis, MP3 nebo WAV!"
+
+#: 
+msgid "Your music has been added!"
+msgstr "Vaše písnička byla přidána!"
+
+#: 
+msgid "The selected elements have been removed."
+msgstr "Vybrané položky budou nyní odstraněny."
+
+#: 
+msgid "You must select elements to remove!"
+msgstr "Musíte vybrat položky k odstranění!"
+
+#: 
+msgid "Add a new user with this tool, or change a password (type an existing username). Please submit a strong password!"
+msgstr "Zde lze přidat uživatele, změnit heslo (použijte existující uživatelské jméno). Zvolte silné heslo!"
+
+#: 
+msgid "Manage"
+msgstr "Spravovat"
+
+#: 
+msgid "List"
+msgstr "Seznam"
+
+#: 
+msgid "Remove users with this tool. Note that you cannot remove an user if he is the only one remaining."
+msgstr "V tomto panelu lze odstranit uživatele. Mějte na paměti, že nelze odstranit uživatele, pokud je poslední."
+
+#: 
+msgid "The user has been added!"
+msgstr "Uživatel byl přidán!"
+
+#: 
+msgid "The chosen users have been removed."
+msgstr "Zvolený uživatel byl odstraněn."
+
+#: 
+msgid "You must select one or more users to be removed!"
+msgstr "Musíte zvolit jednoho nebo více uživatelu k odstranění!"
+
+#: 
+msgid "Yesterday"
+msgstr "Včera"
+
+#: 
+msgid "%s days ago"
+msgstr "Před %s dny"
+
+#: 
+msgid "User currently active"
+msgstr "Uživatel je nyní aktivní"
+
+#: 
+msgid "Last seen: %s"
+msgstr "Naposledy viděn: %s"
+
+#: 
+msgid "Inactive since: %s"
+msgstr "Nečinný od: %s"
+
+#: 
+msgid "Your friend seems not to have received your message(s)!"
+msgstr "Zdá se, že váš kamarád nedostal vaší zprávu(y)!"
+
+#: 
+msgid "Static content server"
+msgstr "Statický obsah serveru"
+
+#: 
+msgid "This is the static content server for %1s, “%2s”."
+msgstr "Toto je statický obsah serveru před %1s, “%2s”."
+
+#: 
+msgid "Suggested friends"
+msgstr "Navrhovaní kamarádi"
+
+#: 
+msgid "Check all"
+msgstr "Označit vše"
+
+#: 
+msgid "Uncheck all"
+msgstr "Zrušit označení všeho"
+
+#: 
+msgid "Choose"
+msgstr "Vybrat"
+
+#: 
+msgid "List name"
+msgstr "Jméno seznamu"
+
+#: 
+msgid "Allow"
+msgstr "Povolit"
+
+#: 
+msgid "Deny"
+msgstr "Zakázat"
+
+#: 
+msgid "Group"
+msgstr "Skupina"
+
+#: 
+msgid "Subscription"
+msgstr "Oprávnění"
+
+#: 
+msgid "Both"
+msgstr "Obojí"
+
+#: 
+msgid "From"
+msgstr "Od"
+
+#: 
+msgid "Everybody"
+msgstr "Všichni"
+
+#: 
+msgid "Send messages"
+msgstr "Odeslat zprávu"
+
+#: 
+msgid "Send queries"
+msgstr "Odeslat žádost"
+
+#: 
+msgid "See my status"
+msgstr "Vidět můj status"
+
+#: 
+msgid "Send his/her status"
+msgstr "Odeslat jemu/ji status"
+
+#: 
+msgid "Everything"
+msgstr "Vše"
+
+#: 
+msgid "Item"
+msgstr "Položka"
+
+#: 
+msgid "Order"
+msgstr "Pořadí"
+
+#: 
+msgid "Active for this session"
+msgstr "Aktivní v tomto sezení"
+
+#: 
+msgid "Always active"
+msgstr "Stále aktivní"
+
+#: 
+msgid "User directory"
+msgstr "Adresář uživatelů"
+
+#: 
+msgid "Search a friend"
+msgstr "Najít kamaráda"
+
+#: 
+msgid "The feature requested is not implemented by the recipient or server and therefore cannot be processed."
+msgstr "Požadovanou vlastnost nepodporuje buď příjemce nebo server, a proto nemůže být vykonána."
+
+#: 
+msgid "This is a repeat from %s"
+msgstr "Jedná se o opakování od %s"
+
+#: 
+msgid "Loading comments..."
+msgstr "Načítám komentáře..."
+
+#: 
+msgid "Type your comment here..."
+msgstr "Napište svůj komentář zde ..."
+
+#: 
+msgid "Could not get the comments!"
+msgstr "Nelze získat komentáře!"
+
+#: 
+msgid "Show comments"
+msgstr "Zobrazit komentáře"
+
+#: 
+msgid "Send him/her a message"
+msgstr "Odeslat jemu/jí zprávu"
+
+#: 
+msgid "Start a chat with him/her"
+msgstr "Začít rozhovor s ním/ní"
+

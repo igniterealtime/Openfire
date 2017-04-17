@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.ofsocial.OfSocialPlugin</class>
+    <name>Openfire Social</name>
+    <description>Provides social network with member profiles, activity streams, user groups, messaging, blogs and more using WordPress and BuddyPress</description>
+    <author>Ignite Realtime</author>
+    <version>0.0.1</version>
+    <date>12/13/2015</date>
+    <minServerVersion>3.11.0 alpha</minServerVersion>    
+</plugin>

@@ -1,0 +1,109 @@
+.rtmedia-activity-container {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+
+	* {
+		&,
+		&:before,
+			&:after {
+			-webkit-box-sizing: inherit;
+			-moz-box-sizing: inherit;
+			box-sizing: inherit;
+		}
+
+	}
+}
+
+// remove border and padding
+#buddypress ul.rtmedia-list li {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+// hide unnecessory div
+.rtmedia-activity-container {
+
+	.rtmedia-item-actions {
+		display: none;
+	}
+
+	.rtmedia-item-title {
+
+		&, a {
+			border: 0;
+			color: $gray;
+			font-size: 13px;
+			margin: 5px 0 0;
+			overflow: hidden;
+			text-align: center;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+}
+
+// Uploader Button
+#rtmedia-whts-new-upload-container div {
+    left: 0 !important;
+    position: absolute;
+    top: 0 !important;
+}
+
+#aw-whats-new-submit,
+.rtmedia-add-media-button {
+	display: block; // Remove extra space
+}
+
+.rtm-drag-drop-active {
+    border: 4px dashed green !important;
+    display: block;
+    height: 100%;
+    opacity: 0.5;
+    z-index: 9999;
+}
+
+#rtm-drop-files-title {
+	background: rgba(0, 0, 0, 0.2);
+    display: none;
+    font-size: 14px;
+    height: 100%;
+    padding: 20px;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+#rtSelectPrivacy {
+	float: right;
+}
+
+.rtmedia-plupload-container {
+    position: relative;
+	float: left;
+}
+
+.rtm-upload-button-wrapper {
+	float: left;
+	margin-right: 5px;
+}
+
+#rtmedia-action-update {
+	margin-right: 10px;
+}
+
+// Video/Music title make center align
+.rtmedia-list-item {
+	&.media-type-document,
+	&.media-type-music,
+	&.media-type-video {
+		display: inline-block;
+	}
+}
+
+.media-type-music {
+	.mejs-container {
+		margin-bottom: 10px;
+	}
+}

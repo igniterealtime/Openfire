@@ -1,0 +1,93 @@
+/*
+
+Jappix - An open social platform
+This is the archives CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 19/12/10
+
+*/
+
+#archives .content {
+	padding: 10px 0 10px 0;
+}
+
+#archives .filter {
+	background-color: #d3dee1;
+	border-right: 1px solid #a9bbbf;
+	width: 180px;
+	padding: 12px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	float: left;
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
+	-moz-border-radius-topleft: 4px;
+	-moz-border-radius-bottomleft: 4px;
+	-webkit-border-top-left-radius: 4px;
+	-webkit-border-bottom-left-radius: 4px;
+}
+
+#archives .filter .friend {
+	margin-bottom: 12px;
+}
+
+#archives .filter .friend {
+	height: 210px;
+	width: 180px;
+	float: none;
+}
+
+#archives .current,
+#archives .logs {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	left: 204px;
+}
+
+#archives .current {
+	background-color: #d3dee1;
+	border-bottom: 1px solid #a9bbbf;
+	font-size: 0.9em;
+	height: 16px;
+	padding: 6px;
+	top: 0;
+}
+
+#archives .current span {
+	height: 16px;
+	overflow: hidden;
+}
+
+#archives .current .name {
+	max-width: 160px;
+	font-weight: bold;
+	float: left;
+}
+
+#archives .current .time {
+	color: #47646a;
+	font-size: 0.95em;
+	float: right;
+}
+
+#archives .logs {
+	color: black;
+	font-size: 0.9em;
+	overflow: auto;
+	padding: 8px 10px 0;
+	float: left;
+	position: absolute;
+	top: 29px;
+}
+
+#archives .logs a {
+	color: black;
+	text-decoration: underline;
+}

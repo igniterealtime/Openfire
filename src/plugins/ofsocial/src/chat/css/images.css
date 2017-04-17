@@ -1,0 +1,84 @@
+/*
+
+Jappix - An open social platform
+This is the images CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 13/05/11
+
+*/
+
+.body-images {
+	background-image: url(../img/sprites/background.png);
+	background-repeat: repeat;
+	background-color: #93c5fa;
+}
+
+.install-images {
+	background-image: url(../img/sprites/install.png);
+	background-repeat: no-repeat;
+}
+
+.home-images {
+	background-image: url(../img/sprites/home.png);
+	background-repeat: no-repeat;
+}
+
+.browsers-images {
+	background-image: url(../img/sprites/browsers.png);
+	background-repeat: no-repeat;
+}
+
+.buttons-images {
+	background-image: url(../img/sprites/buttons.png);
+	background-repeat: repeat-x;
+}
+
+.talk-images {
+	background-image: url(../img/sprites/talk.png);
+	background-repeat: no-repeat;
+}
+
+.smileys-images {
+	background-image: url(../img/sprites/smileys.png);
+	background-repeat: no-repeat;
+}
+
+.welcome-images {
+	background-image: url(../img/sprites/welcome.png);
+	background-repeat: no-repeat;
+}
+
+.manager-images {
+	background-image: url(../img/sprites/manager.png);
+	background-repeat: no-repeat;
+}
+
+.mobile-images {
+	background-image: url(../img/sprites/mobile.png);
+	background-repeat: no-repeat;
+}
+
+.wait-small {
+	background-image: url(../img/wait/wait-small.gif);
+	background-repeat: no-repeat;
+	height: 16px;
+	width: 16px;
+}
+
+.wait-medium {
+	background-image: url(../img/wait/wait-medium.png);
+	background-repeat: no-repeat;
+	height: 24px;
+	width: 24px;
+}
+
+.wait-big {
+	background-image: url(../img/wait/wait-big.gif);
+	background-repeat: no-repeat;
+	height: 30px;
+	width: 30px;
+}

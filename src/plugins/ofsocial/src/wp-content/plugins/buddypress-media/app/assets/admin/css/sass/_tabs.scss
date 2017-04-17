@@ -1,0 +1,107 @@
+.rtm-tabs {
+
+	li {
+		margin: 0;
+	}
+
+	a {
+		border-bottom: 1px solid $border;
+		border-top: 1px solid $light-extra;
+		color: $dark;
+		display: block;
+		font-weight: 700;
+		outline: none;
+		opacity: 0.8;
+		padding: 10px 4px 10px 14px;
+		position: relative;
+		text-decoration: none;
+		z-index: 10;
+
+		&:hover {
+			background: $light;
+			color: $link;
+			margin-right: 0;
+			opacity: 1;
+			width: auto;
+		}
+
+		&:focus {
+			background: $white;
+			box-shadow: 0 0 0;
+		}
+
+	}
+
+	.active {
+		background: white;
+		position: relative;
+
+		&:after {
+			background: $white;
+			content: ' ';
+			height: 100%;
+			position: absolute;
+			right: -1px;
+			top: 0;
+			width: 1px;
+		}
+
+		a {
+			border-top-color: $white;
+			color: $dark;
+			opacity: 1;
+
+			&:hover {
+				background: $white;
+			}
+
+		}
+	}
+
+	span {
+		display: block;
+		padding: 0 0 0 25px;
+	}
+
+	.dashicons {
+		font-size: 14px;
+		height: auto;
+		line-height: 1;
+		margin-top: 3px;
+		position: absolute;
+		vertical-align: middle;
+		width: auto;
+	}
+}
+
+/*
+horizontal tab css
+*/
+.rtm-horizotanl-tabs{
+	.rtm-tabs {
+		list-style: none;
+		margin: 0;
+		display: block;
+		width: auto;
+		min-height: 0;
+	}
+	.rtm-tabs-content {
+		border-left: none;
+		background: $white;
+		min-height: $container-min-height;
+		padding: 20px 30px;
+		vertical-align: top;
+	}
+	.rtm-tabs{
+		a{
+			border-bottom: none;
+		}
+		li{
+			display: inline-block;
+		}
+	}
+}
+.rtm-horizotanl-tabs.rtm-admin-tab-container{
+	width: 100%;
+	display: block;
+}

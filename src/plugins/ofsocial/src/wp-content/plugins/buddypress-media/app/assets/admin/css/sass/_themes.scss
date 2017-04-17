@@ -1,0 +1,25 @@
+.rtm-theme-browser {
+
+	.rtm-themes {
+		clear: none;
+		padding: 0;
+
+		.rtm-theme {
+			width: 48%;
+
+			&:nth-child(even) {
+				margin-right: 0 !important;
+			}
+
+			&:nth-child(3n) {
+				margin-right: 4%;
+			}
+		}
+
+	}
+
+}
+
+.admin-bar .theme-overlay .theme-wrap {
+	z-index: 99999;
+}

@@ -1,0 +1,54 @@
+/*--------------------------------------------------------------
+Hello, this is the BuddyPress Reponsive theme rtl stylesheet.
+Right to left styles. This will transform the theme to read from
+right to left for languages that support this method.
+
+----------------------------------------------------------------
+>>> TABLE OF CONTENTS:
+----------------------------------------------------------------
+1.0 - iPad
+	1.1 - Landscape
+	1.2 - Portrait
+2.0 - iPhone
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+1.1 - iPad Landscape
+--------------------------------------------------------------*/
+@media only screen and (max-width: 768px) {
+	div#content .padder {
+		margin-left: 0;
+		margin-right: auto;
+	}
+	ul#nav li {
+		margin-left: 0;
+		margin-right: auto;
+	}
+	ul#nav li:nth-child(even) {
+		margin-left: 0;
+		margin-right: 3%;
+	}
+}
+
+
+/*--------------------------------------------------------------
+1.2 - iPad Portrait
+--------------------------------------------------------------*/
+@media only screen and (max-width: 640px) {
+	ul.item-list li div.action {
+		padding-left: auto;
+		padding-right: 64px;
+	}
+}
+
+
+/*--------------------------------------------------------------
+2.0 - iPhone
+--------------------------------------------------------------*/
+@media only screen and (max-width: 320px) {
+	div.post div.post-content,
+	div.comment-content {
+		margin-left: auto;
+		margin-right: 0px;
+	}
+}

@@ -1,0 +1,26 @@
+{
+  "name": "rtmedia-test-suite",
+  "main": "",
+  "author": "Prabuddha Chakraborty",
+  "version": "1.0.0",
+  "keywords": [],
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "description": "",
+  "contributors": [],
+  "dependencies": {
+    "nightwatch": "~0.4.17"
+  },
+
+  "devDependencies": {
+    "selenium-server": "2.45.0",
+    "jquery": "^2.1.1",
+    "jsdom": "^1.0.0-pre.3",
+    "nightwatch": "0.4.17"
+
+
+  }
+}

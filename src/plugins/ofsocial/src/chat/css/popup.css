@@ -1,0 +1,612 @@
+/*
+
+Jappix - An open social platform
+This is the popup CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 02/05/11
+
+*/
+
+.lock {
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.6);
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	position: fixed;
+	z-index: 9999;
+}
+
+.popup {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.95);
+	margin-top: -250px;
+	margin-left: -330px;
+	width: 640px;
+	height: 500px;
+	padding: 0 10px;
+	position: absolute;
+	z-index: 10000;
+	left: 50%;
+	top: 50%;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	box-shadow: 0 0 35px #232323;
+	-moz-box-shadow: 0 0 35px #232323;
+	-webkit-box-shadow: 0 0 35px #232323;
+}
+
+.popup.large {
+	margin-left: -460px;
+	width: 920px;
+}
+
+.popup .top {
+	width: 600px;
+	height: 45px;
+	font-size: 1.2em;
+	padding-top: 9px;
+	color: white;
+	margin: 14px 0 0 40px;
+	text-transform: uppercase;
+	text-decoration: none;
+	font-weight: bold;
+	text-shadow: 0 2px 2px black;
+}
+
+.popup .tab {
+	width: 620px;
+	height: 25px;
+	margin: -5px 10px 0 10px;
+	position: relative;
+	z-index: 1;
+}
+
+.popup .tab a {
+	background-color: #d9e7ea;
+	color: #204249;
+	width: 180px;
+	height: 17px;
+	padding: 4px 4px 4px 16px;
+	margin-left: 5px;
+	font-size: 0.94em;
+	overflow: hidden;
+	float: left;
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-moz-border-radius-topleft: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-webkit-border-top-left-radius: 3px;
+}
+
+.popup .tab a:hover,
+.popup .tab a:focus {
+	background-color: #cedee1;
+	text-decoration: none;
+}
+
+.popup .tab a:active {
+	background-color: #c3d3d7;
+	text-decoration: none;
+}
+
+.popup .tab a.tab-active {
+	background-color: #e4eef9 !important;
+}
+
+.popup .one-lap {
+	display: none;
+}
+
+.popup .one-lap.lap-active {
+	display: block;
+}
+
+.popup .content {
+	background: #e4eef9;
+	background: -moz-linear-gradient(top, #e4eef9, #D0E5FA);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e4eef9), to(#D0E5FA));
+	height: 358px;
+	width: 640px;
+	position: absolute;
+	left: 10px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 20px black;
+	-moz-box-shadow: 0 0 20px black;
+	-webkit-box-shadow: 0 0 20px black;
+}
+
+.popup .content,
+.popup .content a {
+	color: #112a2f;
+}
+
+.popup.large div.comments {
+	background-color: #f4f4f4;
+	width: 272px;
+	margin: 0;
+	position: absolute;
+	right: 10px;
+	top: 63px;
+	bottom: 10px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+.popup.large div.comments div.comments-content {
+	font-size: 0.8em;
+}
+
+.popup.large div.comments input {
+	width: 185px;
+	min-width: 0;
+}
+
+.popup.large div.comments .one-comment {
+	padding-bottom: 4px;
+}
+
+.popup.large div.comments .one-comment a {
+	text-decoration: underline;
+}
+
+.popup.large div.comments div.comments-content {
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-moz-border-radius-topleft: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-webkit-border-top-left-radius: 3px;
+}
+
+.popup .head {
+	background: #f1f6fd;
+	border: 1px #9dc4fc solid;
+	width: 606px;
+	height: 24px;
+	margin: 0 10px 10px 10px;
+	padding: 6px;
+}
+
+.popup .head-text {
+	float: left;
+	font-size: 0.9em;
+	margin: 3px;
+}
+
+.popup .head-actions {
+	float: right;
+	margin-top: 2px;
+}
+
+.popup .head-actions a {
+	font-size: 0.9em;
+	margin: 0 4px;
+}
+
+.popup .actions a {
+	color: #30575f;
+	font-size: 0.9em;
+	margin-left: 5px;
+}
+
+.popup .head .head-input {
+	float: right;
+	width: 200px;
+	padding: 2px;
+}
+
+.popup .head .head-select {
+	float: right;
+	height: 24px;
+}
+
+.popup .forms {
+	width: 390px;
+	height: 328px;
+	margin: 15px;
+	float: left;
+}
+
+.popup fieldset {
+	border: 1px #547177 solid;
+	margin: 0 0 15px 0;
+	padding: 8px 2px 3px 2px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+.popup legend {
+	font-size: 0.9em;
+	margin: 0 0 0 15px;
+	padding: 0 2px;
+	text-transform: uppercase;
+}
+
+.popup label {
+	color: #1b1b1b;
+	width: 150px;
+	margin: 0 0 10px 12px;
+	clear: both;
+	float: left;
+}
+
+.popup input,
+.popup select {
+	margin: 0 10px 10px 0;
+	float: left;
+}
+
+.popup input[type=text] {
+	min-width: 174px;
+}
+
+.popup select {
+	min-height: 20px;
+}
+
+.popup .results {
+	height: 310px;
+	width: 620px;
+	margin: -5px 0 0 10px;
+	padding: 6px 0 0 0;
+	overflow: auto;
+}
+
+.popup .results .no-results {
+	margin: 6px 0;
+	font-size: 0.85em;
+	font-weight: bold;
+}
+
+.popup .results label {
+	width: 180px;
+	margin: 6px 4px 4px 4px;
+}
+
+.popup .results input,
+.popup .results textarea,
+.popup .results select {
+	margin: 4px;
+}
+
+.popup .results input,
+.popup .results select {
+	min-width: 180px;
+}
+
+.popup .results input[type=checkbox],
+.popup .results input[type=radio] {
+	margin-top: 7px;
+}
+
+.popup .results textarea {
+	width: 380px;
+}
+
+.popup .results .avatar-container {
+	float: left;
+	width: 60px;
+	height: 60px;
+	margin: 5px 12px 5px 9px;
+	text-align: center;
+	background-repeat: no-repeat;
+}
+
+.popup .results img.avatar {
+	max-width: 60px;
+	max-height: 60px;
+}
+
+.popup .results .one-icon {
+	height: 16px;
+	width: 16px;
+	margin: 10px 3px 0 8px;
+	float: left;
+}
+
+.popup .results .one-icon.account,
+.popup .results .one-icon.auth {
+	background-position: 0 -777px;
+}
+
+.popup .results .one-icon.automation,
+.popup .results .one-icon.client {
+	background-position: 0 -1500px;
+}
+
+.popup .results .one-icon.collaboration {
+	background-position: 0 -1520px;
+}
+
+.popup .results .one-icon.proxy,
+.popup .results .one-icon.server,
+.popup .results .one-icon.others {
+	background-position: 0 -1540px;
+}
+
+.popup .results .one-icon.component,
+.popup .results .one-icon.gateway {
+	background-position: 0 -1560px;
+}
+
+.popup .results .one-icon.conference {
+	background-position: 0 -1082px;
+}
+
+.popup .results .one-icon.directory {
+	background-position: 0 -876px;
+}
+
+.popup .results .one-icon.headline,
+.popup .results .one-icon.hierarchy {
+	background-position: 0 -1580px;
+}
+
+.popup .results .one-icon.pubsub,
+.popup .results .one-icon.store {
+	background-position: 0 -1600px;
+}
+
+.popup .results .one-icon.loading {
+	background-position: 0 -1620px;
+}
+
+.popup .results .one-icon.down {
+	background-position: 0 -1640px;
+}
+
+.popup .results .one-host {
+	font-weight: bold;
+	width: 170px;
+}
+
+.popup .results .one-type {
+	width: 210px;
+}
+
+.popup .results .one-type,
+.popup .results .one-host {
+	float: left;
+	overflow: hidden;
+	margin: 9px 8px;
+}
+
+.popup .results .one-jid,
+.popup .results .one-ctry,
+.popup .results .one-fn {
+	margin: 4px;
+	width: 400px;
+}
+
+.popup .results .one-fn {
+	font-weight: bold;
+}
+
+.popup .results .one-jid {
+	margin-top: 8px;
+	font-size: 0.9em;
+}
+
+.popup .results .one-name {
+	float: left;
+	margin: 4px;
+}
+
+.popup a.one-button {
+	display: none;
+	background-color: #f1f6fd;
+	border: 1px solid #b9cbcf;
+	margin-top: 1px;
+	padding: 4px 8px;
+	text-decoration: none;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+.popup a.one-button:hover,
+.popup a.one-button:focus {
+	border: 1px solid #95b1b7;
+}
+
+.popup a.one-button:active {
+	border: 1px solid #77989f;
+}
+
+.popup .results .oneresult:hover a.one-button {
+	display: block;
+}
+
+.popup .results a.one-button,
+#inbox .one-message a.one-button {
+	float: right;
+	padding: 3px 6px;
+	margin-right: 4px;
+}
+
+.popup .results a.one-vjud {
+	position: absolute;
+	right: 4px;
+}
+
+.popup .results a.one-add {
+	top: 8px;
+}
+
+.popup .results a.one-chat {
+	top: 42px;
+}
+
+.popup .results .one-next {
+	float: right;
+	margin: 4px 8px 4px 4px;
+	font-weight: bold;
+}
+
+.popup .results .one-actions {
+	width: 148px;
+	margin: 4px;
+	float: left;
+}
+
+.popup .results .one-actions a {
+	width: 16px;
+	height: 16px;
+	padding: 2px 2px 4px 5px !important;
+	margin-top: 2px;
+}
+
+.popup .results .one-actions a.browse {
+	background-position: 3px -1396px;
+}
+
+.popup .results .one-actions a.command {
+	background-position: 3px -1415px;
+}
+
+.popup .results .one-actions a.subscribe {
+	background-position: 4px -1435px;
+}
+
+.popup .results .one-actions a.join {
+	background-position: 3px -1455px;
+}
+
+.popup .results .one-actions a.search {
+	background-position: 4px -1475px;
+}
+
+.popup .results a.submit,
+.popup .results a.cancel,
+.popup .results a.back {
+	margin-right: 8px;
+	float: right;
+}
+
+.popup .onetitle {
+	font-size: 0.9em;
+	padding: 4px;
+	font-weight: bold;
+}
+
+.popup .oneinstructions {
+	font-size: 0.9em;
+	padding: 4px;
+	margin: 8px 0;
+}
+
+.popup .oneresult {
+	font-size: 0.9em;
+	padding: 3px 0 4px 4px;
+	border-bottom: 1px #9dc4fc solid;
+	overflow: hidden;
+	position: relative;
+}
+
+.popup .oneresult:hover {
+	background: #e9f1fd;
+}
+
+.popup .oneresult[onclick]:hover {
+	cursor: pointer;
+}
+
+.popup .oneresult[onclick]:active {
+	background: #f1f6fd;
+}
+
+.popup .infos {
+	background-color: rgb(255,239,104);
+	background-color: rgba(255,239,104,0.8);
+	border: 1px #decb2f solid;
+	color: #3f3f3f;
+	padding: 8px;
+	margin: 10px;
+	font-size: 0.8em;
+}
+
+.popup .infos p {
+	margin-top: 10px;
+}
+
+.popup .infos p.infos-title {
+	font-weight: bold;
+}
+
+.popup .bottom {
+	width: 640px;
+	height: 40px;
+	position: absolute;
+	bottom: 8px;
+}
+
+.popup .wait {
+	display: none;
+	margin: 8px 0 0 3px;
+	float: left;
+}
+
+a.finish {
+	border: 1px solid white;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.1);
+	color: white;
+	padding: 4px 8px;
+	margin-right: 7px;
+	font-size: 0.95em;
+	text-align: center;
+	text-decoration: none;
+	text-shadow: 0 1px 1px black;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 5px black;
+	-moz-box-shadow: 0 0 5px black;
+	-webkit-box-shadow: 0 0 5px black;
+}
+
+a.finish:hover,
+a.finish:focus {
+	cursor: pointer;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.2);
+	box-shadow: 0 0 15px black;
+	-moz-box-shadow: 0 0 15px black;
+	-webkit-box-shadow: 0 0 15px black;
+}
+
+a.finish:active {
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.3);
+}
+
+a.finish.disabled {
+	opacity: 0.2;
+}
+
+a.finish.disabled:hover,
+a.finish.disabled:focus,
+a.finish.disabled:active {
+	cursor: default;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.1);
+}
+
+.popup a.finish {
+	margin-top: 6px;
+	float: right;
+}

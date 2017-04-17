@@ -1,0 +1,189 @@
+/* Globals 
+=================================== */
+
+body { font-family: Tahoma, 'Trebuchet MS', 'Lucida Grande', Verdana, Tahoma, Arial; }
+
+pre, code { font-family: Tahoma, Monaco, 'Courier New', monospace; }
+
+.left { float: right; }
+
+.right { float: left; }
+
+/* Structure
+=================================== */
+
+#header { background-position: -43px bottom; }
+
+#header h1 {
+	font-family: Tahoma, Georgia;
+	text-align: left;
+	left: 53px;
+	right: auto;
+}
+
+#header div.search {
+	float: left;
+}
+
+#header p.description {
+	font-family: Tahoma, Georgia;
+	text-align: left;
+	left: 53px;
+	right: auto;
+}
+
+#footer {
+	font-family: Tahoma, Georgia;
+	text-align: left;
+}
+
+/* Login Form
+=================================== */
+
+.login { 
+	right: 0;
+	left: auto;
+}
+
+.login label {
+	float: right;
+	padding-left: 10px;
+	padding-right: 0;
+}
+
+form.login input.submit { float: right; }
+
+
+/* Front Page
+=================================== */
+
+#front-page #hottags {
+	right: 0;
+	left: auto;
+	width: 150px;
+}
+
+#front-page #discussions {
+	margin-right: 170px;
+	margin-left: 0;
+}
+
+#front-page #discussions ul { padding: 0 14px 0 0; }
+
+/* Topic Page
+=================================== */
+
+.infobox ul { margin: 10px 20px 10px 0; }
+
+#topic-info {
+	float: right;
+	padding: 0 0 0 1em;
+}
+
+#topic-tags {
+	border-right: 1px solid #ccc;
+	border-left: none;
+	float: left;
+	padding: 0 1em 0 0;
+}
+
+#thread li ol, #thread li ul {
+	margin-right: 40px;
+	margin-left: 0;
+}
+
+.threadauthor { float: right; }
+
+.threadauthor small { font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif; }
+
+.threadpost { margin: 0 140px 0 0; }
+
+#thread .post blockquote {
+	margin: 0 4ex 0 0;
+	padding: 0 1ex 0 0;
+	border-right: 5px solid #ccc;
+	border-left: none;
+}
+
+.poststuff { font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif; }
+
+.num, #forumlist small { font-family: Tahoma, Verdana,Arial,Helvetica,sans-serif; }
+
+#manage-tags li { float: right; }
+
+p.submit { text-align: left; }
+
+.rss-link {
+	background-position: 100% 50%;
+}
+
+/* Other
+=================================== */
+
+#front-search { float: left; }
+
+#forumlist tr td div.nest {
+	padding-right: 2.5ex;
+	padding-left: 0;
+}
+
+#latest th, #forumlist th, #favorites th {
+	text-align: right;
+	font-family: Tahoma, Verdana,Arial,Helvetica,sans-serif;
+}
+
+/* Profile Page
+=================================== */
+
+#profile-menu {
+	left: 0;
+	right: auto;
+}
+
+#profile-menu li {
+	margin-left: 0;
+	margin-right: 3px;
+}
+
+.user-recent ol { margin: 5px 28px 0 0; }
+
+/* Search
+=================================== */
+
+#topic-search-form fieldset {
+	padding: 10px 10px 10px 0;
+}
+
+#topic-search-form div label {
+	float: right;
+	text-align: left;
+	padding-right: 0;
+	padding-left: 1em;
+}
+
+#topic-search-form div div {
+	float: right;
+}
+
+.search-results ol { margin: 5px 28px 0 0; }
+
+/* Profile Edit
+=================================== */
+
+#login-page fieldset,
+#register-page fieldset,
+#profile-page fieldset {
+	padding: 10px 10px 10px 0;
+}
+
+#login-page fieldset table,
+#register-page fieldset table,
+#profile-page fieldset table {
+	text-align: right;
+}
+
+#login-page fieldset table th,
+#register-page fieldset table th,
+#profile-page fieldset table th {
+	text-align: left;
+}

@@ -1,0 +1,100 @@
+body {
+	font-family: Tahoma, "Times New Roman";
+}
+
+div#container {
+	text-align: right;
+}
+
+dl {
+	border-left-width: 0;
+	border-right: 1px solid rgb(125, 125, 125);
+	margin-right: 2.5em;
+	margin-left: 0;
+}
+
+dt {
+	padding-right: 0.6em;
+	padding-left: 0;
+}
+
+dd {
+	padding-right: 3.6em;
+	padding-left: 0;
+}
+
+p.status {
+	right: auto;
+	left: 0;
+	text-shadow: none;
+}
+
+h2 {
+	text-shadow: none;
+}
+
+label a.note-toggle {
+	float: right;
+	padding-left: 0;
+	width: 18px;
+	margin-left: 0;
+	margin-right: 6px;
+}
+
+label.has-note.for-textarea a.note-toggle {
+	margin-left: 0;
+	margin-right: 6px;
+}
+
+label.has-note.for-select a.note-toggle {
+	margin-left: 0;
+	margin-right: 4px;
+}
+
+label.has-note.for-toggle a.note-toggle {
+	margin-left: 0;
+	margin-right: 6px;
+}
+
+label.for-textarea span,
+label.for-toggle span {
+	float: right;
+}
+
+label span.error {
+	margin-right: 3em;
+	margin-left: 0.4em;
+}
+
+fieldset.buttons label.forward {
+	float: left;
+}
+
+fieldset.buttons label.back {
+	float: right;
+}
+
+p.note {
+	margin-right: 2.5em;
+	margin-left: 0;
+	border-left-width: 0;
+	border-right: 1px solid rgb(50, 140, 0);
+}
+
+input.text {
+	font-family: Tahoma, "Times New Roman";
+	float: right;
+}
+
+select {
+	font-family: Tahoma, "Times New Roman";
+	float: right;
+}
+
+textarea {
+	font-family: Tahoma, "Times New Roman";
+}
+
+input.button {
+	font-family: Tahoma, "Times New Roman";
+}

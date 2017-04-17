@@ -1,0 +1,14 @@
+1.1
+----
+Changed use of section where no headers
+Changed sidebars to use asides for widgets
+Various responsive fixes
+Add in github page
+
+1.1.1
+-----
+Padding fixes for content / content header on larger screen resolutions
+
+1.2
+-----
+Correct Activity whats new submit button

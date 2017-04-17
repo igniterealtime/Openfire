@@ -1,0 +1,883 @@
+/*--------------------------------------------------------------
+Hello, this is the Status rtl stylesheet.
+A large amount of these styles are adapted from the default 
+BuddyPress theme. 
+----------------------------------------------------------------
+>>> TABLE OF CONTENTS:
+----------------------------------------------------------------
+1.0 - Normalise - from HTML5 Boilerplate h5bp.com/css
+2.0 - Structural
+-2.1 - Content
+-2.2 - Header
+-2.3 - Footer
+-2.4 - Sidebar
+3.0 - Non-structural
+-3.1 - Text
+-3.2 - Headers
+-3.3 - Lists
+4.0 - Navigation
+-4.1 - Pagination
+5.0 - WordPress
+-5.1 - Alignments
+-5.2 - Comments
+-5.3 - Gallery
+-5.4 - Images
+-5.5 - Posts
+6.0 - BuddyPress
+-6.1 - Activity
+--6.1.1 - Activity Listing
+--6.1.2 - Activity Comments
+-6.2 - Admin Bar
+-6.3 - Directories - Members, Groups, Blogs, Forums
+-6.4 - Error / Success Messages
+-6.5 - Forms
+-6.6 - Ajax Loading
+-6.7 - Topics and Tables - Forums and General
+-6.8 - Headers, Lists and Tabs - Activity, Groups, Blogs, Forums
+-6.9 - Private Messaging Threads
+7.0 - Browser specific
+8.0 - Media queries
+--------------------------------------------------------------*/
+/*--------------------------------------------------------------
+1.0 - Normalise - HTML5 Boilerplate h5bp.com/css
+--------------------------------------------------------------*/
+
+ul, ol {
+	padding: 0 40px 0 0;
+}
+
+dd {
+	margin: 0 40px 0 0;
+}
+
+legend {
+	*margin-right: -7px;
+}
+
+.ir {
+	text-align: right;
+}
+
+@media print {
+
+}
+
+/*--------------------------------------------------------------
+2.0 - Structural
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+2.1 - Content
+--------------------------------------------------------------*/
+
+#content-register, #content, #content-404,  #content-profile, .home .status-signup {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+#content {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+.activity #content-profile {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+#profile-right {
+	border-left: none;
+	padding: 0 0 0 1em;
+	border-right: none;
+}
+
+/*--------------------------------------------------------------
+2.2 - Header
+--------------------------------------------------------------*/
+/*--------------------------------------------------------------
+2.3 - Footer
+--------------------------------------------------------------*/
+
+.bottom {
+	background-image: -webkit-gradient(linear,right bottom,right top,from(#373737),to(#464646));
+}
+
+/*--------------------------------------------------------------
+2.4 - Sidebar
+--------------------------------------------------------------*/
+
+#sidebar .widget {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+/*--------------------------------------------------------------
+3.0 - Non-structural
+--------------------------------------------------------------*/
+
+table th,
+table td {
+	text-align:right;
+}
+
+.table-bordered {
+	border-right:0;
+	border-left: none;
+}
+
+.table-bordered th,
+.table-bordered td {
+	border-right:1px solid #eee;
+	border-left: none;
+}
+
+/*--------------------------------------------------------------
+3.1 - Text
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+3.2 - Headers
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+3.3 - Lists
+--------------------------------------------------------------*/
+.post-content ul,
+.post-content ol,
+.post-content dl {
+	margin: 0 1.5em 18px 0;
+}
+
+dl {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+/*--------------------------------------------------------------
+4.0 - Navigation
+--------------------------------------------------------------*/
+nav ul, .looplist, .item-list-tabs ul {
+	padding-right: 0;
+	padding-left: 0;
+}
+
+nav {
+	float: right;
+}
+
+#nav li {
+	margin-right: 10px;
+	margin-left: auto;
+}
+
+.item-list-tabs li, nav ul li {
+	float: right;
+}
+
+li#forums-all {
+	margin-left:10px;
+	margin-right: auto;
+}
+
+/*--------------------------------------------------------------
+4.1 - Pagination
+--------------------------------------------------------------*/
+
+ul#members-list .item {
+	margin: 0 70px 10px 0;
+}
+
+div.pagination .pag-count {
+	float: right;
+}
+
+div.pagination .pagination-links {
+	float: left;
+}
+
+/*--------------------------------------------------------------
+5.0 - WordPress
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+5.1 - Alignments
+--------------------------------------------------------------*/
+.alignleft {
+	float: left;
+	margin-right: 15px;
+	margin-left: auto;
+}
+
+.alignright {
+	float: right;
+	margin-left: 15px;
+	margin-right: auto;
+}
+
+.aligncenter {
+	margin-right: auto;
+	margin-left: auto;
+}
+
+/*--------------------------------------------------------------
+5.2 - Comments
+--------------------------------------------------------------*/
+
+.comments {
+	float: left;
+}
+
+#comments ol.commentlist ol {
+	margin: 0 2.5em 18px 0;
+}
+
+ol.commentlist li.comment {
+	clear: right;
+}
+
+ol.commentlist div.comment-avatar-box {
+	float: right;
+	margin: 15px 0 0 15px;
+}
+
+.commentlist ul.children div.comment-avatar-box {
+	float: right;
+	margin-left: 10px;
+	margin-right: auto;
+}
+
+#reply-title small {
+	float: left;
+}
+
+#reply-title small a {
+	margin-left: 0;
+	margin-right: auto;
+}
+
+.commentlist ul.children {
+	margin: 15px 70px 15px 0;
+}
+
+.commentlist ul.children ul {
+	margin: 0 25px 0 0;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.commentlist ul.children img.avatar {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ccc;
+}
+
+#respond .comment-avatar-box {
+	float: right;
+}
+
+ol.commentlist #respond {
+	clear: right;
+	margin-right: 70px;
+	margin-left: auto;
+}
+
+.commentlist ul.children #respond {
+	margin-right: 35px;
+	margin-left: 20px;
+}
+
+.comment-options .comment-reply-link,
+.comment-options .comment-edit-link {
+	margin-left: 5px;
+	margin-right: auto;
+}
+
+/*--------------------------------------------------------------
+5.3 - Gallery
+--------------------------------------------------------------*/
+
+dd.wp-caption p.wp-caption-text,
+.wp-caption p.wp-caption-text {
+	padding: 5px 0 5px 4px;
+}
+
+#content .gallery .gallery-item {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+/*--------------------------------------------------------------
+5.4 - Images
+--------------------------------------------------------------*/
+
+img.avatar {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+	float: right;
+}
+
+img.centered,
+img.aligncenter {
+	margin-right: auto;
+	margin-left: auto;
+}
+
+img.alignleft {
+	margin: 0 7px 2px 0;
+}
+
+img.alignright {
+	margin: 0 0 2px 7px;
+}
+
+/*--------------------------------------------------------------
+5.5 - Posts
+--------------------------------------------------------------*/
+table {
+	text-align: right;
+}
+
+body.error404 .post-header {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+div.post table th,
+div.page table th {
+	text-align: right;
+}
+
+div.author-box {
+	float: right;
+	margin: 0 0 15px 15px;
+}
+
+div.post-content {
+	margin-right: 105px;
+	margin-left: auto;
+}
+
+p.postmetadata {
+	clear: right;
+}
+
+.page .tags,
+.post .tags {
+	float: right;
+}
+
+.post-format {
+	float: left;
+	margin: 10px 10px 0 0;
+}
+
+/*--------------------------------------------------------------
+6.0 - BuddyPress
+--------------------------------------------------------------*/
+/*--------------------------------------------------------------
+6.1 - Activity
+--------------------------------------------------------------*/
+
+.groups #whats-new-declare {
+	border-left: none;
+	border-right: none;
+}
+
+#whats-new-avatar {
+	float: right;
+}
+
+#whats-new-avatar img {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+	margin-right: 10px;
+	margin-left: auto;
+}
+
+#whats-new-wrapper {
+	margin-right: 80px;
+	margin-left: auto;
+}
+
+#whats-new-tail {
+	float: right;
+}
+
+#whats-new-textarea {
+	margin-right: 40px;
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+	margin-left: auto;
+}
+
+#whats-new-options {
+	float: left;
+}
+
+#whats-new-submit {
+	float: left;
+}
+
+#whats-new-post-in-box {
+	float: left;
+	margin-left: 10px;
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #eee;
+	margin-right: auto;
+}
+
+#activity-show {
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #eee;
+}
+
+#activity-show #subnav {
+	float: left;
+}
+
+#activity-show .activity-type-tabs {
+	float: right;
+}
+
+#activity-filter-select {
+	float: left;
+}
+
+li.feed {
+	padding: 0 20px 0 0;
+}
+
+/*--------------------------------------------------------------
+6.1.1 - Activity Listing
+--------------------------------------------------------------*/
+
+.activity-entry, .activity-comment {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+	margin-right: 0 1px 20px 10px;
+	margin-left: auto;
+}
+
+.groups .activity-entry, .groups .activity-comment {
+	border-left: none;
+	border-right: none;
+}
+
+.groups-activity .activity-entry, .groups-activity  .activity-comment {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+	margin-right: 0 1px 20px 10px;
+	margin-left: auto;
+}
+
+.acomment-avatar {
+	float: right;
+}
+
+.activity-avatar img {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+.activity-header {
+	float: right;
+}
+
+.activity-inner,
+.activity-meta {
+	margin-right: 65px;
+	margin-left: auto;
+}
+
+a.delete-activity, a.delete-activity-single, a.acomment-delete {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+a.acomment-reply {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+a.fav, a.unfav {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+a:hover.acomment-reply {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+a:hover.unfav, a:hover.fav {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+a:hover.delete-activity, a:hover.delete-activity-single, a:hover.acomment-delete {
+	padding: 2px 20px 0 0;
+	margin-left: 8px;
+	margin-right: auto;
+}
+
+/*--------------------------------------------------------------
+6.1.2 - Activity Comments
+--------------------------------------------------------------*/
+
+div.activity-comments form.root {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+div.activity-comments form div.ac-reply-avatar {
+	float: right;
+}
+
+div.ac-reply-avatar img {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+div.activity-comments form div.ac-reply-content {
+	margin-right: 50px;
+	padding-right: 15px;
+	padding-left: 0;
+	margin-left: auto;
+}
+
+/*--------------------------------------------------------------
+6.2 - Admin Bar
+--------------------------------------------------------------*/
+#wpadminbar {
+	right: 0;
+	background-image: -webkit-gradient(linear,right bottom,right top,from(#373737),to(#464646));
+	left: auto;
+}
+
+/*--------------------------------------------------------------
+6.3 - Directories - Members, Groups, Blogs, Forums
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+6.4 - Error / Success Messages
+--------------------------------------------------------------*/
+
+div#message.error p {
+	clear: right;
+}
+
+div.accept,
+div.reject {
+	float: right;
+	margin-right: 10px;
+	margin-left: auto;
+}
+
+ul.button-nav li {
+	float: right;
+	margin: 0 0 10px 10px;
+}
+
+/*--------------------------------------------------------------
+6.5 - Forms
+--------------------------------------------------------------*/
+
+#members-directory-form label, #forums-order-select label, #blogs-directory-form label, #blogs-order-select label {
+	float: right;
+	margin-left: 10px;
+	margin-right: auto;
+}
+
+li#groups-order-select {
+	margin: 10px 10px 10px 0;
+}
+
+#signup-login {
+	border-left: none;
+	border-right: none;
+}
+
+.standard-form #blog-details-section {
+	clear: right;
+}
+
+#invite-list ul {
+	padding: 0 10px 0 0;
+}
+
+ul#members-list .small .button {
+	margin-right: 10px;
+	margin-left: auto;
+}
+
+select {
+	margin-right: 10px;
+	margin-left: auto;
+}
+
+#forums-order-select {
+	padding: 5px 0 0 5px;
+}
+
+/*--------------------------------------------------------------
+6.6 - Ajax Loading
+--------------------------------------------------------------*/
+ul li.loading a {
+	padding-left: 30px !important;
+	padding-right: 0;
+}
+
+a.loading,
+input.loading {
+	padding-left: 25px;
+	padding-right: 0;
+}
+
+a.loading:hover,
+input.loading:hover {
+	padding-left: 25px;
+	padding-right: 0;
+}
+
+/*--------------------------------------------------------------
+6.7 - Topics and Tables - Forums and General
+--------------------------------------------------------------*/
+
+table tr td.label {
+	border-left: 1px solid #eee;
+	border-right: none;
+}
+
+table.notification-settings {
+	text-align: right;
+}
+
+table.forum tr.closed td.td-title {
+	padding-right: 35px;
+	padding-left: 0;
+}
+
+table.forum tr > td:first-child,
+table.forum tr > th:first-child {
+	padding-right: 15px;
+	padding-left: 0;
+}
+
+table.forum tr > td:last-child,
+table.forum tr > th:last-child {
+	padding-left: 15px;
+	padding-right: 0;
+}
+
+table.forum tr th#th-title,
+table.forum tr th#th-poster,
+table.forum tr th#th-group,
+table.forum td.td-poster,
+table.forum td.td-group,
+table.forum td.td-title {
+	text-align: right;
+}
+
+table.forum td img.avatar {
+	margin: 0 0 0 5px;
+}
+
+/*--------------------------------------------------------------
+6.8 - Headers, Lists and Tabs - Activity, Groups, Blogs, Forums
+--------------------------------------------------------------*/
+#content-profile-headerfull #item-header {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+#item-nav {
+	background-image: -webkit-gradient(linear,right bottom,right top,from(#373737),to(#464646));
+}
+
+#item-nav li {
+	border-left: 1px solid #555;
+	border-right: none;
+}
+
+#subnav li {
+	border-left: 1px solid #ddd;
+	border-right: none;
+}
+
+#item-header-avatar {
+	float: right;
+	margin-left: 10px;
+	margin-right: auto;
+}
+
+#item-header-avatar img {
+	border-right: 1px solid #fff;
+	border-left: 1px solid #ddd;
+}
+
+#blogs-order-select {
+	float: left;
+}
+
+div#item-header img.avatar {
+	float: right;
+	margin: 5px 0 10px 15px;
+}
+
+div#item-header h2 span.highlight span {
+	left: -2px;
+	right: auto;
+}
+
+div#item-header div#item-actions {
+	float: left;
+	margin: 0 10px 15px 0;
+	text-align: right;
+}
+
+div#item-header div.generic-button,
+div#item-header a.button {
+	float: right;
+	margin: 10px 0 10px 10px;
+}
+
+ul.item-list li img.avatar {
+	float: right;
+	margin: 0 0 10px 10px;
+}
+
+ul.item-list li div.item-desc {
+	margin: 10px 64px 0 0;
+}
+
+ul.item-list li div.action {
+	float: left;
+	text-align: left;
+	left: 0;
+	right: auto;
+}
+
+ul.item-list li h5 span.small {
+	float: left;
+}
+
+div.item-list-tabs ul li.feed a {
+	background: url(\'../images/rss.png\') center right no-repeat;
+	padding-right: 20px;
+	padding-left: 0;
+}
+
+/*--------------------------------------------------------------
+6.9 - Private Messaging Threads
+--------------------------------------------------------------*/
+
+div.messages-options-nav {
+	text-align: left;
+}
+
+div#message-thread img.avatar {
+	float: right;
+	margin: 0 0 0 10px;
+}
+
+div#message-thread strong span.activity {
+	margin: 4px 10px 0 0;
+}
+
+div#message-thread div.message-content {
+	margin-right: 45px;
+	margin-left: auto;
+}
+
+div#message-thread div.message-options {
+	text-align: left;
+}
+
+/*--------------------------------------------------------------
+7.0 - Browser specific
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+8.0 - Media queries
+--------------------------------------------------------------*/
+@media only screen and (min-width:960px) {
+
+div#item-header img.avatar {
+	float: right;
+	margin: 5px 0 10px 15px;
+}
+
+div#item-header h2 span.highlight span {
+	left: -2px;
+	right: auto;
+}
+
+div#item-header div#item-actions {
+	float: left;
+	margin: 0 10px 15px 0;
+	text-align: right;
+}
+
+div#item-header div.generic-button,
+div#item-header a.button {
+	float: right;
+	margin: 10px 0 10px 10px;
+}
+
+ul.item-list li img.avatar {
+	float: right;
+	margin: 0 0 10px 10px;
+}
+
+ul.item-list li div.item-desc {
+	margin: 10px 64px 0 0;
+}
+
+ul.item-list li div.action {
+	float: left;
+	text-align: left;
+	left: 0;
+	right: auto;
+}
+
+ul.item-list li h5 span.small {
+	float: left;
+}
+
+div.item-list-tabs ul li.feed a {
+	background: url(\'../images/rss.png\') center right no-repeat;
+	padding-right: 20px;
+	padding-left: 0;
+}
+
+/*--------------------------------------------------------------
+6.9 - Private Messaging Threads
+--------------------------------------------------------------*/
+
+div.messages-options-nav {
+	text-align: left;
+}
+
+div#message-thread img.avatar {
+	float: right;
+	margin: 0 0 0 10px;
+}
+
+div#message-thread strong span.activity {
+	margin: 4px 10px 0 0;
+}
+
+div#message-thread div.message-content {
+	margin-right: 45px;
+	margin-left: auto;
+}
+
+div#message-thread div.message-options {
+	text-align: left;
+}
+
+}

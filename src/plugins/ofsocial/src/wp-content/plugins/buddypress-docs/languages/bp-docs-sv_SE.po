@@ -1,0 +1,554 @@
+# Copyright (C) 2010 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version: BuddyPress Docs\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-docs\n"
+"POT-Creation-Date: 2011-06-08 16:33:05+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2011-07-12 09:06+0100\n"
+"Last-Translator: Thomas Schneider <thomas.schneider@famna.org>\n"
+"Language-Team: Famna <thomas.schneider@famna.org>\n"
+"X-Poedit-Language: Swedish\n"
+"X-Poedit-Country: SWEDEN\n"
+
+#: includes/integration-groups.php:337
+msgid "Doc creator only (%s)"
+msgstr "Bara för skaparen av dokumentet"
+
+#: includes/integration-groups.php:339
+msgid "Doc creator only (that's you!)"
+msgstr "Bara skaparen av dokumentet"
+
+#: includes/integration-groups.php:347
+msgid "Who can edit this doc?"
+msgstr "Vem får <em>redigera</em> detta dokument?"
+
+#: includes/integration-groups.php:351
+#: includes/integration-groups.php:368
+#: includes/integration-groups.php:389
+#: includes/integration-groups.php:409
+msgid "All members of the group"
+msgstr "Alla gruppmedlemmar"
+
+#: includes/integration-groups.php:356
+#: includes/integration-groups.php:371
+#: includes/integration-groups.php:392
+#: includes/integration-groups.php:412
+msgid "Only admins and mods of this group"
+msgstr "Bara gruppadministratörer och -moderatorer"
+
+#: includes/integration-groups.php:364
+msgid "Who can <em>post</em> comments on this doc?"
+msgstr "Vem får <em>kommentera</em> detta dokument?"
+
+#: includes/integration-groups.php:374
+#: includes/integration-groups.php:395
+#: includes/integration-groups.php:415
+msgid "No one"
+msgstr "Ingen"
+
+#: includes/integration-groups.php:381
+msgid "Who can <em>read</em> comments on this doc?"
+msgstr "Vem får <em>läsa</em> detta dokument?"
+
+#: includes/integration-groups.php:386
+#: includes/integration-groups.php:407
+msgid "Anyone"
+msgstr "Alla"
+
+#: includes/integration-groups.php:402
+msgid "Who can view this doc's history?"
+msgstr "Vem får <em>se</em> versionshistoriken av detta dokument?"
+
+#: includes/integration-groups.php:443
+msgid "%1$s created the doc %2$s in the group %3$s"
+msgstr "%1$s har skapat dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:445
+msgid "%1$s edited the doc %2$s in the group %3$s"
+msgstr "%1$s har redigerat dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:472
+msgid "%1$s commented on the doc %2$s in the group %3$s"
+msgstr "%1$s har kommenterat dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:582
+msgid "Docs (%d)"
+msgstr "Dokument"
+
+#: includes/integration-groups.php:604
+#: includes/integration-groups.php:659
+msgid "Docs"
+msgstr "Dokument"
+
+#: includes/integration-groups.php:610
+#: includes/integration-groups.php:923
+#: includes/templates/docs/docs-header.php:29
+#: bp-docs.php:187
+msgid "New Doc"
+msgstr "Nytt dokument"
+
+#: includes/integration-groups.php:617
+#: includes/templatetags.php:498
+#: includes/templates/docs/docs-header.php:19
+msgid "Edit"
+msgstr "Redigera"
+
+#: includes/integration-groups.php:619
+#: includes/templatetags.php:501
+#: includes/addon-history.php:482
+msgid "History"
+msgstr "Versioner"
+
+#: includes/integration-groups.php:726
+msgid "Save Changes"
+msgstr "Spara ändringar"
+
+#: includes/integration-groups.php:751
+msgid "There was an error saving, please try again"
+msgstr "Det uppstod ett fel när dokumentet skulle sparas, var god försök igen."
+
+#: includes/integration-groups.php:753
+msgid "Settings saved successfully"
+msgstr "De nya inställningarna har sparats"
+
+#: includes/integration-groups.php:808
+#: bp-docs.php:198
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Docs"
+
+#: includes/integration-groups.php:810
+msgid "BuddyPress Docs is a powerful tool for collaboration with members of your group. A cross between document editor and wiki, BuddyPress Docs allows you to co-author and co-edit documents with your fellow group members, which you can then sort and tag in a way that helps your group to get work done."
+msgstr "BuddyPress Docs är ett kraftfullt samarbetsverktyg för medlemmarna av en grupp och är en blandning av ordbehandlingsprogram och wiki. BuddyPress Docs möjliggör för en grupp att tillsammans skriva på dokument som man sedan kan tagga, sortera och organisera."
+
+#: includes/integration-groups.php:822
+msgid "Minimum role to create new Docs:"
+msgstr "Lägsta roll för att skapa nya dokument:"
+
+#: includes/integration-groups.php:827
+msgid "Group admin"
+msgstr "Gruppadministratör"
+
+#: includes/integration-groups.php:828
+msgid "Group moderator"
+msgstr "Gruppmoderator"
+
+#: includes/integration-groups.php:829
+msgid "Group member"
+msgstr "Gruppmedlem"
+
+#: includes/integration-groups.php:920
+msgid "View Docs"
+msgstr "Visa dokument"
+
+#: includes/addon-taxonomy.php:86
+msgid "Docs Tags"
+msgstr "Dokumenttaggar"
+
+#: includes/addon-taxonomy.php:87
+msgid "Docs Tag"
+msgstr "Dokumenttagg"
+
+#: includes/addon-taxonomy.php:212
+msgid "Tags: %s"
+msgstr "Taggar: %s"
+
+#: includes/addon-taxonomy.php:343
+#: includes/templates/docs/edit-doc.php:44
+msgid "Tags"
+msgstr "Taggar"
+
+#: includes/addon-taxonomy.php:392
+msgid "You are viewing docs with the following tags: %s"
+msgstr "Du visar dokument med följande taggar: %s"
+
+#: includes/addon-taxonomy.php:414
+msgid "Filter by tag"
+msgstr "Filtrerad efter tagg"
+
+#: includes/addon-taxonomy.php:420
+msgid "(%d)"
+msgstr "(%d)"
+
+#: includes/addon-taxonomy.php:502
+msgid "Docs tagged %s"
+msgstr "Dokument taggat %s"
+
+#: includes/addon-taxonomy.php:561
+msgid "Most Used"
+msgstr "Mest använda"
+
+#: includes/addon-taxonomy.php:585
+msgid "+ %s"
+msgstr "+ %s"
+
+#: includes/templatetags.php:94
+msgid "You are viewing <strong>all</strong> docs."
+msgstr "Du visar <strong>alla</strong> dokument."
+
+#: includes/templatetags.php:103
+msgid "<strong><a href=\"%s\" title=\"View All Docs\">View All Docs</a></strong>"
+msgstr "<strong><a href=\"%s\" title=\"Visa alla dokument\">Visa alla dokument</a></strong>"
+
+#: includes/templatetags.php:138
+msgid "You are searching for docs containing the term <em>%s</em>"
+msgstr "Du söker dokument som innehåller uttrycket <em>%s</em>"
+
+#: includes/templatetags.php:495
+#: includes/templates/docs/docs-header.php:14
+msgid "Read"
+msgstr "Visa"
+
+#: includes/templatetags.php:736
+msgid "&laquo;"
+msgstr "&laquo;"
+
+#: includes/templatetags.php:737
+msgid "&raquo;"
+msgstr "&raquo;"
+
+#: includes/query-builder.php:151
+msgid "Groups that have docs associated with them"
+msgstr "Grupper som har associerade dokument"
+
+#: includes/query-builder.php:155
+msgid "Users that have docs associated with them"
+msgstr "Användare som har associerade dokument"
+
+#: includes/query-builder.php:164
+msgid "Groups"
+msgstr "Grupper"
+
+#: includes/query-builder.php:386
+msgid "Unknown error. Please try again."
+msgstr "Okänt fel, var god försök igen."
+
+#: includes/query-builder.php:392
+msgid "Both the title and the content fields are required."
+msgstr "Det behövs både rubrik och innehåll."
+
+#: includes/query-builder.php:412
+msgid "There was an error when creating the doc."
+msgstr "Det uppstod ett fel när dokumentet skulle skapas."
+
+#: includes/query-builder.php:424
+msgid "Doc successfully created!"
+msgstr "Dokumentet har skapats!"
+
+#: includes/query-builder.php:443
+msgid "There was an error when saving the doc."
+msgstr "Det uppstod ett fel när dokumentet skulle sparas."
+
+#: includes/query-builder.php:452
+msgid "You idled a bit too long while in Edit mode. In order to allow others to edit the doc you were working on, your changes have been autosaved. Click the Edit button to return to Edit mode."
+msgstr "Du har varit inaktiv för länge. För att möjliggöra för andra att jobba med detta dokument har dina ändringar sparats automatiskt. Klicka på Redigera-knappen för att fortsätta redigera dokumentet."
+
+#: includes/query-builder.php:455
+msgid "Doc successfully edited!"
+msgstr "Dokumentet har redigerats!"
+
+#: includes/templates/docs/edit-doc.php:15
+msgid "You have been idle for <span id=\"idle-warning-time\"></span>"
+msgstr "Du har varit inaktiv i <span id=\"idle-warning-time\"></span>"
+
+#: includes/templates/docs/edit-doc.php:26
+#: includes/templates/docs/docs-loop.php:24
+msgid "Title"
+msgstr "Rubrik"
+
+#: includes/templates/docs/edit-doc.php:30
+msgid "Content"
+msgstr "Innehåll"
+
+#: includes/templates/docs/edit-doc.php:50
+msgid "Tags are words or phrases that help to describe and organize your Docs."
+msgstr "Taggar är ord eller fraser som används för att beskriva och organisera dokuemnt."
+
+#: includes/templates/docs/edit-doc.php:51
+msgid "Separate tags with commas (for example: <em>orchestra, snare drum, piccolo, Brahms</em>)"
+msgstr "Separera taggar med kommatecken (t. ex.: <em>orkester, flöjt, Brahms</em>)"
+
+#: includes/templates/docs/edit-doc.php:65
+msgid "Parent"
+msgstr "Förälder"
+
+#: includes/templates/docs/edit-doc.php:71
+msgid "Select a parent for this Doc."
+msgstr "Välj en förälder för detta dokument."
+
+#: includes/templates/docs/edit-doc.php:73
+msgid "(Optional) Assigning a parent Doc means that a link to the parent will appear at the bottom of this Doc, and a link to this Doc will appear at the bottom of the parent."
+msgstr "När man tilldelar ett förälderdokument visas en länk till detta längst ned i dokumentet, och en länk till dokumentet visas högst upp i förälderdokumentet."
+
+#: includes/templates/docs/edit-doc.php:88
+msgid "Settings"
+msgstr "Inställningar"
+
+#: includes/templates/docs/edit-doc.php:106
+msgid "Save"
+msgstr "Spara"
+
+#: includes/templates/docs/edit-doc.php:106
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: includes/templates/docs/edit-doc.php:127
+msgid "Are you still there?"
+msgstr "Är du kvar?"
+
+#: includes/templates/docs/edit-doc.php:129
+msgid "In order to prevent overwriting content, only one person can edit a given doc at a time. For that reason, you must periodically ensure the system that you're still actively editing. If you are idle for more than 30 minutes, your changes will be auto-saved, and you'll be sent out of Edit mode so that others can access the doc."
+msgstr "För att förhindra att innehållet i ett dokumentet skrivs över tillåts bara en användare åt gången att jobba i ett dokument. Av denna anledning måste du då och då bekräfta att du fortfarande är aktiv. Om du är inaktiv längre än 30 minuter så sparas ditt dokument automatiskt och du kastas ut ur redigeringsläget så att andra kan komma åt dokumentet."
+
+#: includes/templates/docs/edit-doc.php:131
+msgid "I'm still editing!"
+msgstr "Jag redigerar fortfarande!"
+
+#: includes/templates/docs/docs-loop.php:7
+msgid "Search"
+msgstr "Sök"
+
+#: includes/templates/docs/docs-loop.php:28
+#: includes/addon-history.php:453
+msgid "Author"
+msgstr "Författare"
+
+#: includes/templates/docs/docs-loop.php:32
+msgid "Created"
+msgstr "Skapat den"
+
+#: includes/templates/docs/docs-loop.php:36
+msgid "Last Edited"
+msgstr "Senast ändrat"
+
+#: includes/templates/docs/docs-loop.php:79
+msgid "Viewing %1$s-%2$s of %3$s docs"
+msgstr "Visa %1$s-%2$s av %3$s dokument"
+
+#: includes/templates/docs/docs-loop.php:89
+msgid "There are no docs for this view. Why not <a href=\"%s\">create one</a>?"
+msgstr "Det finns inga dokument i denna vy. Vill du <a href=\"%s\">skapa ett</a>?"
+
+#: includes/templates/docs/history-doc.php:9
+msgid "Click on a revision date from the list below to view that revision."
+msgstr "Klicka på ett versionsdatum på listen nedan för att visa respektive version."
+
+#: includes/templates/docs/history-doc.php:11
+msgid "Alternatively, you can compare two revisions by selecting them in the 'Old' and 'New' columns, and clicking 'Compare Revisions'."
+msgstr "Jämför två versioner genom att välja dessa i kolumnerna 'Gammal' respektive 'Ny' och klicka sedan på 'Jämför versioner'."
+
+#: includes/templates/docs/history-doc.php:22
+msgid "Older: %s"
+msgstr "Äldre: %s"
+
+#: includes/templates/docs/history-doc.php:23
+msgid "Newer: %s"
+msgstr "Nyare: %s"
+
+#: includes/templates/docs/history-doc.php:30
+msgid "You are currently viewing a revision titled \"%1$s\", saved on %2$s by %3$s"
+msgstr "Du läser just nu versionen: \"%1$s\", sparad %2$s av %3$s"
+
+#: includes/templates/docs/history-doc.php:52
+msgid "These revisions are identical."
+msgstr "Dessa versioner är identiska"
+
+#: includes/templates/docs/comments.php:22
+msgid "Discussion (%d)"
+msgstr "Diskussion (%d)"
+
+#: includes/templates/docs/comments.php:44
+msgid "There are no comments for this doc yet."
+msgstr "Det finns ännu inga kommentarer för detta dokument."
+
+#: includes/templates/docs/comments.php:53
+msgid "Comment display has been disabled on this doc."
+msgstr "Visning av kommentarer har avaktiverats för detta dokument."
+
+#: includes/templates/docs/comments.php:62
+msgid "Comment posting has been disabled on this doc."
+msgstr "Kommentarsfunktionen har avaktiverats för detta dokument."
+
+#: includes/templates/docs/single-doc.php:7
+msgid "Locked"
+msgstr "Låst"
+
+#: includes/templates/docs/single-doc.php:9
+msgid "This doc is currently being edited by %1$s. In order to prevent edit conflicts, only one user can edit a doc at a time."
+msgstr "Detta dokument redigeras just nu av %1$s. För att förhindra redigeringskonflikter kan bara en användare åt gången redigera ett dokument."
+
+#: includes/templates/docs/single-doc.php:12
+msgid "Please try again in a few minutes. Or, as an admin, you can <a href=\"%s\">force cancel</a> the edit lock."
+msgstr "Var god och försök igen om några minuter. Om du är administratör, så kan du <a href=\"%s\">låsa upp</a> dokumentet."
+
+#: includes/templates/docs/single-doc.php:14
+msgid "Please try again in a few minutes."
+msgstr "Var god och försök igen om några minuter."
+
+#: includes/templatetags-edit.php:112
+msgid "(no parent)"
+msgstr "(ingen förälder)"
+
+#: includes/integration-bp.php:138
+msgid "This doc is currently being edited by %s. To prevent overwrites, you cannot edit until that user has finished. Please try again in a few minutes."
+msgstr "Detta dokument redigeras just nu av %s. För att förhindra redigeringskonflikter så kan du inte redigera dokumentet samtidigt. Var god försök igen om några minuter."
+
+#: includes/integration-bp.php:148
+msgid "You do not have permission to edit the doc."
+msgstr "Du har inte behörighet att redigera detta dokument."
+
+#: includes/integration-bp.php:161
+msgid "You do not have permission to create a Doc in this group."
+msgstr "Du har inte behörighet att skapa ett dokument i denna grupp."
+
+#: includes/integration-bp.php:173
+msgid "You do not have permission to view this Doc's history."
+msgstr "Du har inte behörighet att visa versionshistoriken av detta dokument."
+
+#: includes/integration-bp.php:196
+msgid "Lock successfully removed"
+msgstr "Dokumentet har låsts upp."
+
+#: includes/integration-bp.php:237
+msgid "Doc successfully deleted!"
+msgstr "Dokumentet har raderats!"
+
+#: includes/integration-bp.php:239
+msgid "You do not have permission to delete that doc."
+msgstr "Du har inte behörighet att radera detta dokument."
+
+#: includes/integration-bp.php:304
+msgid "Show New Docs"
+msgstr "Visa nya dokument"
+
+#: includes/integration-bp.php:305
+msgid "Show Doc Edits"
+msgstr "Visa dokumentändringar"
+
+#: includes/integration-bp.php:306
+msgid "Show Doc Comments"
+msgstr "Visa dokumentkommentarer"
+
+#: includes/integration-bp.php:373
+msgid "%1$s created the doc %2$s"
+msgstr "%1$s har skapat dokumentet %2$s"
+
+#: includes/integration-bp.php:375
+msgid "%1$s edited the doc %2$s"
+msgstr "%1$s har redigerat dokumentet %2$s"
+
+#: includes/integration-bp.php:502
+msgid "%1$s commented on the doc %2$s"
+msgstr "%1$s har kommenterat dokumentet %2$s"
+
+#: includes/integration-bp.php:640
+msgid "Still working?"
+msgstr "Jobbar du fortfarande?"
+
+#: includes/addon-hierarchy.php:100
+msgid "Parent: "
+msgstr "Förälder:"
+
+#: includes/addon-hierarchy.php:143
+msgid "Children: "
+msgstr "Barn:"
+
+#: includes/addon-history.php:127
+msgid "You have successfully restored the Doc to the revision from %s."
+msgstr "Dokumentet har återställts till versionen från den %s."
+
+#: includes/addon-history.php:184
+msgid "Compare Revisions of &#8220;%1$s&#8221;"
+msgstr "Jämför versioner av &#8220;%1$s&#8221;"
+
+#: includes/addon-history.php:185
+#: includes/addon-history.php:217
+msgid "Revisions"
+msgstr "Versioner"
+
+#: includes/addon-history.php:216
+msgid "Revision for &#8220;%1$s&#8221; created on %2$s"
+msgstr "Version för &#8220;%1$s&#8221; skapad den %2$s"
+
+#: includes/addon-history.php:382
+msgctxt "post revision"
+msgid "%1$s by %2$s"
+msgstr "%1$s by %2$s"
+
+#: includes/addon-history.php:411
+msgid "Restore"
+msgstr "Återställ"
+
+#: includes/addon-history.php:434
+msgid "Compare Revisions"
+msgstr "Jämför versioner"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:450
+msgid "Old"
+msgstr "Gammal"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:451
+msgid "New"
+msgstr "Ny"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:452
+msgid "Date Created"
+msgstr "Skapat den"
+
+#: includes/addon-history.php:454
+msgid "Actions"
+msgstr "Åtgärder"
+
+#: bp-docs.php:182
+msgctxt "post type general name"
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Docs"
+
+#: bp-docs.php:183
+msgctxt "post type singular name"
+msgid "Doc"
+msgstr "Dokument"
+
+#: bp-docs.php:184
+msgctxt "add new"
+msgid "Add New"
+msgstr "Skapa nytt"
+
+#: bp-docs.php:185
+msgid "Add New Doc"
+msgstr "Skapa nytt dokument"
+
+#: bp-docs.php:186
+msgid "Edit Doc"
+msgstr "Redigera dokument"
+
+#: bp-docs.php:188
+msgid "View Doc"
+msgstr "Läs dokument"
+
+#: bp-docs.php:189
+msgid "Search Docs"
+msgstr "Sök dokument"
+
+#: bp-docs.php:190
+msgid "No Docs found"
+msgstr "Inga dokument hittades"
+
+#: bp-docs.php:191
+msgid "No Docs found in Trash"
+msgstr "Inga dokument hittades i papperskorgen"
+
+#: bp-docs.php:215
+msgid "Associated Items"
+msgstr "Tilldelningar"
+
+#: bp-docs.php:216
+msgid "Associated Item"
+msgstr "Tilldelning"
+

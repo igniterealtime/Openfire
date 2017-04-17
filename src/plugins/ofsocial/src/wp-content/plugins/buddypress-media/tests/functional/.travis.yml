@@ -1,0 +1,45 @@
+sudo: required
+
+language: node_js
+node_js:
+- "0.10"
+
+
+env:
+- WP_VERSION=4.0 WP_MULTISITE=0
+
+before_install:
+- rm -rf ~/.gnupg
+- sudo apt-get install xvfb
+
+before_script:
+- export PLUGIN_DIR=$(pwd)
+- sudo rm -rf /etc/mysql/
+- sudo apt-get -qq purge mysql* graphviz*
+- sudo apt-get -qq autoremove
+- sudo apt-get update
+- sudo bash -c 'echo -e "[user]\n\tname = abc\n\temail = root@localhost.com" > /home/travis/.gitconfig'
+- sudo wget -qO ee rt.cx/ee && sudo bash ee
+- source /etc/bash_completion.d/ee_auto.rc
+- sudo ee -v
+- sudo lsb_release  -a
+- sudo ee site create wp.localtest.me --wp --user=ADMINUSER --email=prabuddha.chakraborty@rtcamp.com --pass=ADMINPASS
+- sudo chmod 777 -R /var/www
+#- sudo bash -c 'echo "127.0.0.1	rtmediatest.com	www.rtmediatest.com" >> /etc/hosts'
+- cat ~/.my.cnf
+- sudo nginx -t
+- sudo service nginx reload
+- cd /var/www/wp.localtest.me/htdocs/ && ls
+- wp --allow-root plugin install https://github.com/rtCamp/rtMedia/archive/master.zip
+- wp --allow-root plugin install https://downloads.wordpress.org/plugin/buddypress.2.2.3.1.zip
+- wp --allow-root plugin install https://downloads.wordpress.org/plugin/bbpress.2.5.7.zip
+- wp --allow-root plugin install https://downloads.wordpress.org/plugin/rtsocial.2.1.18.zip
+- wp plugin activate --all
+- cd $PLUGIN_DIR
+- cd tests/functional/
+- npm install -g nightwatch
+- npm install
+- git clone --depth=1 https://github.com/rtCamp/rtmedia-test-data.git test-data
+script:
+- xvfb-run --server-args="-screen 0, 1624x1068x24" nightwatch --test res/setup.js
+- xvfb-run --server-args="-screen 0, 1624x1068x24" nightwatch --group src/

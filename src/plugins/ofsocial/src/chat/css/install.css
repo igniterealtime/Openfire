@@ -1,0 +1,285 @@
+/*
+
+Jappix - An open social platform
+This is the install CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 08/06/11
+
+*/
+
+body {
+	color: white;
+}
+
+#install {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.85);
+	width: 800px;
+	margin: 35px auto;
+	padding-bottom: 17px;
+	border-radius: 6px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	box-shadow: 0 0 35px #5c5c5c;
+	-moz-box-shadow: 0 0 35px #5c5c5c;
+	-webkit-box-shadow: 0 0 35px #5c5c5c;
+}
+
+#install a {
+	color: black;
+	text-decoration: underline;
+}
+
+#install .clear {
+	clear: both;
+}
+
+#install fieldset {
+	border: 1px solid black;
+	margin: 22px 0 15px 0;
+	padding: 7px 2px 5px 2px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#install legend {
+	font-size: 0.9em;
+	margin: 0 0 0 15px;
+	padding: 0 2px;
+	text-transform: uppercase;
+}
+
+#install label {
+	width: 200px;
+	display: block;
+	float: left;
+	clear: both;
+	margin: 0 0 9px 12px;
+}
+
+#install input {
+	float: left;
+	margin-bottom: 5px;
+}
+
+#install input[type=text],
+#install input[type=url],
+#install input[type=password] {
+	margin-top: -2px;
+	padding: 3px;
+	font-size: 0.95em;
+	min-width: 220px;
+}
+
+#install input.icon {
+	padding-left: 24px;
+	min-width: 199px;
+	max-height: 18px;
+}
+
+#install input.icon#user_name {
+	background-position: 4px -204px;
+}
+
+#install input.icon#user_password {
+	background-position: 4px -226px;
+}
+
+#install input.icon#user_repassword {
+	background-position: 4px -248px;
+}
+
+#install-top {
+	padding: 30px 45px;
+}
+
+#install-top .logo {
+	background-position: 0 0;
+	min-width: 88px;
+	height: 36px;
+	padding: 32px 0 0 66px;
+	font-size: 32px;
+	color: white;
+	text-transform: lowercase;
+	float: left;
+	text-shadow: 0 1px 1px black;
+}
+
+#install-top .step {
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.2);
+	border: 2px solid white;
+	padding: 6px 21px;
+	font-size: 2.7em;
+	text-shadow: 0 1px 1px black;
+	float: right;
+	border-radius: 40px;
+	-moz-border-radius: 40px;
+	-webkit-border-radius: 40px;
+	box-shadow: 0 0 10px #202020;
+	-moz-box-shadow: 0 0 10px #202020;
+	-webkit-box-shadow: 0 0 10px #202020;
+}
+
+#install-top .step span {
+	font-size: 0.6em;
+}
+
+#install-content {
+	background: #e4eef9;
+	background: -moz-linear-gradient(top, #e4eef9, #d0e5fa);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e4eef9), to(#d0e5fa));
+	color: black;
+	font-size: 0.9em;
+	margin: 0 10px;
+	padding: 20px 24px;
+	min-height: 260px;
+	clear: both;
+	right: 10px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 20px #202020;
+	-moz-box-shadow: 0 0 20px #202020;
+	-webkit-box-shadow: 0 0 20px #202020;
+}
+
+#install-content h3 {
+	padding-left: 24px;
+	margin-bottom: 15px;
+}
+
+#install-content h3.start {
+	background-position: 0 -73px;
+}
+
+#install-content h3.storage {
+	background-position: 0 -95px;
+}
+
+#install-content h3.account {
+	background-position: 0 -117px;
+}
+
+#install-content h3.main {
+	background-position: 0 -139px;
+}
+
+#install-content h3.hosts {
+	background-position: 0 -161px;
+}
+
+#install-content h3.services {
+	background-position: 0 -183px;
+}
+
+#install-content p {
+	margin-bottom: 10px;
+}
+
+#install-content .info {
+	color: black;
+	border-width: 1px;
+	border-style: dashed;
+	padding: 6px 8px;
+	display: block;
+	text-decoration: none;
+}
+
+#install-content .info.smallspace {
+	margin: 14px 0 10px 0;
+}
+
+#install-content .info.bigspace {
+	margin: 35px 0 20px 0;
+}
+
+#install-content .info.first {
+	margin-top: 28px;
+}
+
+#install-content .info.last {
+	margin-bottom: 28px;
+}
+
+#install-content .info.neutral {
+	background-color: #f0f19d;
+	border-color: #b3ad4f;
+}
+
+#install-content a.info.neutral:hover,
+#install-content a.info.neutral:focus {
+	background-color: #eced96;
+}
+
+#install-content a.info.neutral:active {
+	background-color: #e9ea93;
+}
+
+#install-content .info.success {
+	background-color: #a8dca9;
+	border-color: #5e9f5f;
+}
+
+#install-content a.info.success:hover,
+#install-content a.info.success:focus {
+	background-color: #a0d5a1;
+}
+
+#install-content a.info.success:active {
+	background-color: #9ad09b;
+}
+
+#install-content .info.fail {
+	background-color: #f19d9d;
+	border-color: #b34f4f;
+}
+
+#install-content ol {
+	margin: 20px 30px;
+}
+
+#install-content ol li {
+	margin-bottom: 1px;
+}
+
+#install-buttons {
+	margin-top: 22px;
+}
+
+#install-buttons input {
+	border: 1px solid white;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.1);
+	color: white;
+	padding: 4px 8px;
+	margin-right: 20px;
+	text-shadow: 0 1px 1px black;
+	float: right;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 5px #202020;
+	-moz-box-shadow: 0 0 5px #202020;
+	-webkit-box-shadow: 0 0 5px #202020;
+}
+
+#install-buttons input:hover,
+#install-buttons input:focus {
+	cursor: pointer;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.2);
+	box-shadow: 0 0 15px #202020;
+	-moz-box-shadow: 0 0 15px #202020;
+	-webkit-box-shadow: 0 0 15px #202020;
+}
+
+#install-buttons input:active {
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.3);
+}

@@ -1,0 +1,140 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: metrox\n"
+"POT-Creation-Date: 2014-04-14 17:09+0200\n"
+"PO-Revision-Date: 2014-04-14 17:10+0200\n"
+"Last-Translator: \n"
+"Language-Team: codeinwp <codeinwp>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.4\n"
+"X-Poedit-Basepath: C:\\wamp\\www\\wordpress-metrox\\wp-content\\themes"
+"\\metro-creativex\\\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: archive.php:1
+#, php-format
+msgid "Daily Archives: %s"
+msgstr ""
+
+#: archive.php:1
+#, php-format
+msgid "Monthly Archives: %s"
+msgstr ""
+
+#: archive.php:1
+#, php-format
+msgid "Yearly Archives: %s"
+msgstr ""
+
+#: comments.php:1
+msgid "Comment navigation"
+msgstr ""
+
+#: comments.php:1
+msgid "&larr; Older Comments"
+msgstr ""
+
+#: comments.php:1
+msgid "Newer Comments &rarr;"
+msgstr ""
+
+#: comments.php:1
+msgid "Comments are closed."
+msgstr ""
+
+#: content-none.php:1
+#, php-format
+msgid ""
+"Ready to publish your first post? <a href=\"%1$s\">Get started here</a>."
+msgstr ""
+
+#: content-none.php:1
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with "
+"different keywords."
+msgstr ""
+
+#: content-none.php:1
+msgid ""
+"It seems we can&rsquo;t find what you&rsquo;re looking for. Perhaps "
+"searching can help."
+msgstr ""
+
+#: footer.php:1
+msgid "All rights reserved."
+msgstr ""
+
+#: functions.php:1
+msgid "Header menu"
+msgstr ""
+
+#: functions.php:1
+msgid "Older posts"
+msgstr ""
+
+#: functions.php:1
+msgid "Newer posts"
+msgstr ""
+
+#: functions.php:1
+msgid "Pingback:"
+msgstr ""
+
+#: functions.php:1
+msgid "(Edit)"
+msgstr ""
+
+#: functions.php:1
+msgid "Your comment is awaiting moderation."
+msgstr ""
+
+#: functions.php:1
+msgid "Edit"
+msgstr ""
+
+#: functions.php:1
+msgid "Reply"
+msgstr ""
+
+#: header.php:1
+msgid "Menu"
+msgstr ""
+
+#: inc/customizer.php:22 inc/customizer.php:29
+msgid "Logo"
+msgstr ""
+
+#: inc/customizer.php:24
+msgid ""
+"Upload a logo to replace the default site name and description in the header"
+msgstr ""
+
+#: inc/customizer.php:37
+msgid "Socials"
+msgstr ""
+
+#: inc/customizer.php:43
+msgid "Facebook link"
+msgstr ""
+
+#: inc/customizer.php:50
+msgid "Twitter link"
+msgstr ""
+
+#: index.php:1
+msgid "Latest news"
+msgstr ""
+
+#: search.php:1
+msgid "Search Results for: "
+msgstr ""
+
+#: tag.php:1
+#, php-format
+msgid "Tag Archives: %s"
+msgstr ""

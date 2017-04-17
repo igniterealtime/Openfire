@@ -1,0 +1,614 @@
+# Translation of the WordPress plugin   by .
+# Copyright (C) 2010
+# This file is distributed under the same license as the  package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Buddypress Documents\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-group-documents\n"
+"POT-Creation-Date: 2014-12-08 12:04+0200\n"
+"PO-Revision-Date: 2014-12-08 12:06+0200\n"
+"Last-Translator: Lena Stergatu <stergatu@cti.gr>\n"
+"Language-Team: \n"
+"Language: sv_SE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:33
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:45
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:153
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:23
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:31
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:57
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:186
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:319
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:420
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/loader.php:126
+msgid "Documents"
+msgstr "Dokument"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:91
+msgid "There was an error saving, please try again"
+msgstr "Filen kunde inte sparas, vänligen försök igen."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:93
+#, fuzzy
+msgid "Settings Saved."
+msgstr "Inställningarna sparades"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:120
+msgid "Category List for"
+msgstr "Kategorilista för"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:131
+msgid "Update"
+msgstr "Uppdatera"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:136
+#, php-format
+msgid "Are you sure you want to delete category <b>%s</b>?"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:139
+#, fuzzy, php-format
+msgid "Any %s in the category will be left with no category."
+msgstr "Grupp%s-kategorin togs bort"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:143
+msgid "You can later assign them to another  category."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:146
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:163
+msgid "Delete"
+msgstr "Ta bort"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:154
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:159
+msgid "Edit"
+msgstr "Redigera"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:162
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:23
+msgid "Add"
+msgstr "Lägg till"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:171
+msgid "Save Changes"
+msgstr "Spara ändringar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:183
+msgid "Upload Permissions:"
+msgstr "Uppladdningsrättigheter:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:192
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:199
+msgid "All Group Members"
+msgstr "Alla gruppmedlemmar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:196
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:203
+msgid "Only Group's Administrators and Moderators"
+msgstr "Endast gruppadministratörer och -moderatorer"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:235
+#, php-format
+msgid "Group %s category deleted successfully"
+msgstr "Grupp%s-kategorin togs bort"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:241
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:258
+#, php-format
+msgid "No changes were made. This %s category name is used already"
+msgstr "Inga ändringar gjordes. Detta %skategorinamn används redan"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:245
+#, php-format
+msgid "Group %s category renamed successfully"
+msgstr "Grupp%skategorin döptes om"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:255
+#, php-format
+msgid "New group %s category created"
+msgstr "Ny %skategori skapades"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:266
+msgid "Upload Permissions changed successfully"
+msgstr "Uppladdningsrättigheterna ändrades"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:274
+msgid "No changes were made. Either error or you didn't change anything"
+msgstr "Inga ändringar gjordes."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:14
+#, php-format
+msgid "%s uploaded the file: %s to %s"
+msgstr "%s laddade upp filen %s i %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:34
+#, php-format
+msgid "%s edited the file: %s in %s"
+msgstr "%s redigerade filen: %s in %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:53
+#, php-format
+msgid "%s deleted the file: %s from %s"
+msgstr "%s tog bort filen %s från %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:307
+#, php-format
+msgid "Show New Group %s"
+msgstr "Visa nya grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:157
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:319
+#, php-format
+msgid "Show Group %s Edits"
+msgstr "Visa redigeringar av grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:88
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+msgid "Settings"
+msgstr "Inställningar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:93
+msgid "Settings Updated."
+msgstr "Inställningarna uppdaterades."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:99
+msgid "Use this name instead of \"documents\" "
+msgstr "Använd detta namn istället för \"documents\""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:105
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:221
+msgid "Valid File Formats"
+msgstr "Giltiga filformat"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:111
+msgid "Items per Page"
+msgstr "Objekt per sida"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:116
+msgid "Upload Permission:"
+msgstr "Uppladdningsrättigheter:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:120
+msgid "Members &amp; Moderators"
+msgstr "Medlemmar &amp; moderatorer"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:124
+msgid "Moderators Only"
+msgstr "Endast moderatorer"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:128
+msgid "Let individual moderators decide"
+msgstr "Låt enskilda moderatorer bestämma"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:131
+msgid "Use Categories"
+msgstr "Använd kategorier"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:139
+msgid "Display Icons"
+msgstr "Visa ikoner"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:147
+msgid "Display File Size"
+msgstr "Visa filstorlek"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:155
+msgid "Display File Downloads "
+msgstr "Visa filnedladdningar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:164
+msgid "Save Settings"
+msgstr "Spara inställningar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+msgid "Buddypress Group Documents"
+msgstr "BuddyPress Group Documents"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:32
+msgid "Group"
+msgstr "Grupp"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:36
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:59
+msgid "List"
+msgstr "lista"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:66
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:260
+msgid "Category:"
+msgstr "Kategori:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:68
+msgid "All"
+msgstr "Alla"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:76
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:94
+msgid "Go"
+msgstr "Skicka"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:82
+msgid "Order by:"
+msgstr "Sortera efter:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:86
+msgid "Newest"
+msgstr "Senaste"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:89
+msgid "Alphabetical"
+msgstr "Bokstavsordning"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:92
+msgid "Most Popular"
+msgstr "Populäraste"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:144
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:472
+#, php-format
+msgid "Uploaded by %s on %s"
+msgstr "Uppladdat av %s, %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:149
+msgid " downloads since then."
+msgstr " nedladdningar sedan dess."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:189
+msgid "There are no documents in the selected category."
+msgstr "Det finns inga dokument i den valda kategorin."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:191
+msgid "There are no documents uploaded for this group."
+msgstr "Det finns inga uppladdade dokument i den här gruppen."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:216
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:16
+msgid "Choose File:"
+msgstr "Välj fil:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:226
+#, fuzzy
+msgid "Document:"
+msgstr "Ladda upp ett nytt dokument"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:232
+msgid "Featured Document"
+msgstr "Dokument i fokus"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:237
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:21
+msgid "Display Name:"
+msgstr "Dokumentets titel:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:240
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:25
+msgid "Description:"
+msgstr "Beskrivning:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:280
+msgid "Save"
+msgstr "Spara"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:285
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:167
+msgid "Upload a New Document"
+msgstr "Ladda upp ett nytt dokument"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:309
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:83
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:197
+msgid "There was a security problem"
+msgstr "Ett säkerhetsproblem uppstod"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:313
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:218
+msgid "The item to delete could not be found"
+msgstr "Filen som skulle tas bort kunde inte hittas"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:422
+msgid "Group Document Categories"
+msgstr "Gruppdokument-kategorier"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:181
+msgid "Whoops!  There was no file selected for upload."
+msgstr "Oops! Det fanns ingen fil vald för uppladdning."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:186
+msgid "The type of document submitted is not allowed"
+msgstr "Denna filtyp är inte tillåten"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:194
+msgid "There was a problem; your file is larger than is allowed by the site administrator."
+msgstr "Ett problem uppstod: Filen är större än vad som är tillåtet."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:197
+msgid "There was a problem; the file was only partially uploaded."
+msgstr "Ett problem uppstod: Filen laddades bara upp delvis."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:200
+msgid "There was a problem; no file was found for the upload."
+msgstr "Ett problem uppstod: Filen som ska laddas upp hittades inte."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:203
+msgid "There was a problem; the temporary folder for the file is missing."
+msgstr "Ett problem uppstod: En tillfällig dokumentmapp saknas."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:206
+msgid "There was a problem; the file could not be saved."
+msgstr "Ett problem uppstod: Filen kunde inte sparas."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:227
+msgid "There was a problem saving your file, please try again."
+msgstr "Ett problem uppstod när filen skulle sparas, vänligen försök igen."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:492
+msgid "In category:"
+msgstr "I kategorin:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:20
+msgid "New Category...!"
+msgstr "Ny kategori"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:21
+msgid "You must select a file to upload!"
+msgstr "Du måste välja ett dokument att ladda upp!"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:22
+msgid "Are you sure you wish to permanently delete this document?"
+msgstr "Är du säker på att du vill radera detta dokument?"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:82
+#, fuzzy
+msgid "That group does not exist."
+msgstr "Filtrera på grupp:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:91
+#, php-format
+msgid ""
+"You must be a logged-in member of the group %s to access this document. If you are a member of the group, "
+"please log into the site and try again."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:124
+msgid "The file could not be found."
+msgstr "Filen kunde inte hittas"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:13
+msgid "Upload document (+)"
+msgstr "Ladda upp ett dokument"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:60
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:107
+msgid "Document successfully uploaded"
+msgstr "Dokumentet har laddats upp"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:25
+msgid "A member uploads a document to a group you belong to"
+msgstr "Ett dokument har laddats upp i en grupp du tillhör"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:31
+msgid "A member uploads a document to a group for which you are an moderator/admin"
+msgstr "Ett dokument har laddats upp i en grupp du är ansvarig för"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:61
+#, php-format
+msgid "A document was uploaded to %s"
+msgstr "Ett dokument laddades upp i %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:119
+#, php-format
+msgid ""
+"%s uploaded a new file: %s to the group: %s.\n"
+"\n"
+"To see %s's profile: %s\n"
+"\n"
+"To see the group %s's homepage: %s\n"
+"\n"
+"To download the new document directly: %s\n"
+"\n"
+"------------------------\n"
+msgstr ""
+"%s laddade upp en ny fil: %s till gruppen: %s.\n"
+"\n"
+"Visa %ss profil: %s\n"
+"\n"
+"Visa gruppen %s: %s\n"
+"\n"
+"Ladda ned dokumentet direkt: %s\n"
+"\n"
+"------------------------\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:132
+#, php-format
+msgid "To disable these notifications please log in and go to: %s"
+msgstr "För att avaktivera dessa meddelanden, logga in och gå till: %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:121
+msgid "Document successfully edited"
+msgstr "Dokumentet har redigerats"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:191
+msgid "You don't have permission to upload files"
+msgstr "Du har inte rättighet att ladda upp filer"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:201
+#, fuzzy
+msgid "The item to edit could not be found"
+msgstr "Filen som skulle tas bort kunde inte hittas"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:212
+msgid "Edit Document"
+msgstr "Redigera dokument"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:222
+msgid "Document successfully deleted"
+msgstr "Dokumentet har tagits bort"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:342
+#, php-format
+msgid "Viewing item %s to %s (of %s items)"
+msgstr "Visar dokument %s till %s (av totalt %s)"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:59
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:73
+#, php-format
+msgid "Recent Group %s"
+msgstr "Nyligen uppladdade grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:60
+#, php-format
+msgid "The most recently uploaded group %s. Only from public groups"
+msgstr "De senast uppladdade grupp%s (från publika grupper)"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:102
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:229
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:364
+#, php-format
+msgid "posted in %s"
+msgstr "publicerad i %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:108
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:240
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:370
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:479
+#, php-format
+msgid "There are no %s to display."
+msgstr "Det finns inga %s att visa."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:147
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:269
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:395
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:507
+msgid "Title:"
+msgstr "Titel:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:149
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:271
+msgid "Filter by Group:"
+msgstr "Filtrera på grupp:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:151
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:273
+msgid "Select Group..."
+msgstr "Välj grupp…"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:167
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:289
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:397
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:510
+#, php-format
+msgid "Show featured %s only"
+msgstr "Visa enbart %s i fokus"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:170
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:403
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:515
+msgid "Number of items to show:"
+msgstr "Antal filer att visa:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:188
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:202
+#, php-format
+msgid "Popular Group %s"
+msgstr "Populära grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:189
+#, php-format
+msgid "The most commonly downloaded group %s. Only for public groups"
+msgstr "The mest nedkladdade grupp%s (från publika grupper)"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:233
+msgid "downloads"
+msgstr "nedladdningar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:302
+msgid "Show downloads"
+msgstr "Visa nedladdningar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:321
+#, php-format
+msgid "%s in your groups"
+msgstr "%s i dina grupper"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:322
+#, php-format
+msgid "%s for a logged in user's groups."
+msgstr "%s för en inloggad användares grupper."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:343
+#, php-format
+msgid "Recent %s from your Groups"
+msgstr "Nya %s i dina grupper"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:422
+#, fuzzy, php-format
+msgid "%s in this group"
+msgstr "Populära grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:423
+#, fuzzy, php-format
+msgid "%s for the current group."
+msgstr "Grupp%s-kategorin togs bort"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:447
+#, fuzzy, php-format
+msgid "Recent %s for the group"
+msgstr "Nyligen uppladdade grupp%s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:481
+#, fuzzy
+msgid "View all"
+msgstr "Alla gruppmedlemmar"
+
+#~ msgid "Settings saved successfully"
+#~ msgstr "Inställningarna sparades"
+
+#~ msgid "Bulk File Uploads"
+#~ msgstr "Ladda upp flera filer"
+
+#~ msgid "Move File"
+#~ msgstr "Flytta fil"
+
+#~ msgid "You must choose a group for the file."
+#~ msgstr "Du måste välja en grupp för din fil."
+
+#~ msgid "Document moved successfully."
+#~ msgstr "Dokumentet har flyttats."
+
+#~ msgid "There was a problem saving the file info."
+#~ msgstr "Det gick inte att spara information om filen."
+
+#~ msgid "There was a problem moving the file."
+#~ msgstr "Det gick inte att flytta filen."
+
+#~ msgid "%s Documents Moved."
+#~ msgstr "%s dokument flyttade."
+
+#~ msgid "Group Documents Admin"
+#~ msgstr "Gruppdokument-administratör"
+
+#~ msgid "Group navigation page name"
+#~ msgstr "Sidnamn för gruppnavigering"
+
+#~ msgid "Group Documents"
+#~ msgstr "Gruppdokument"
+
+#~ msgid "Document List"
+#~ msgstr "Dokumentlista"
+
+#~ msgid "Document Upload Permissions:"
+#~ msgstr "Rättigheter för uppladdning:"
+
+#~ msgid "Submit"
+#~ msgstr "Skicka"

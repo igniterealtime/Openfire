@@ -1,0 +1,197 @@
+/*
+
+Jappix - An open social platform
+This is the privacy CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 16/02/11
+
+*/
+
+#privacy .content {
+	padding: 10px 0 10px 0;
+}
+
+#privacy .privacy-head div.list-left,
+#privacy .privacy-head div.list-center,
+#privacy .privacy-head div.list-right,
+#privacy .privacy-first {
+	float: left;
+}
+
+#privacy .privacy-head div.list-left {
+	margin-left: 5px;
+}
+
+#privacy .privacy-head div.list-center {
+	border-right: 1px dotted #1b393f;
+	height: 24px;
+	width: 1px;
+	margin-right: 15px;
+	padding-left: 18px;
+}
+
+#privacy .privacy-head span,
+#privacy .privacy-head a,
+#privacy .privacy-item span,
+#privacy .privacy-item a {
+	float: left;
+}
+
+#privacy .privacy-head span {
+	font-size: 0.9em;
+	font-weight: bold;
+	margin: 3px 10px 0 0;
+}
+
+#privacy .privacy-head input,
+#privacy .privacy-head select {
+	width: 180px;
+}
+
+#privacy .privacy-head input {
+	margin-top: 1px;
+}
+
+#privacy .privacy-head select,
+#privacy .privacy-item select {
+	margin-top: -2px;
+}
+
+#privacy .privacy-head span.left-space {
+	margin-left: 16px;
+}
+
+#privacy .privacy-head a,
+#privacy .privacy-item a {
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	display: block;
+}
+
+#privacy .privacy-item a.item-add {
+	background-position: 2px -1178px;
+}
+
+#privacy .privacy-head a.list-remove,
+#privacy .privacy-item a.item-remove {
+	background-position: 2px -1197px;
+}
+
+#privacy .privacy-item a.item-save {
+	background-position: 3px -126px;
+	width: auto;
+	height: 19px;
+	padding: 1px 7px 0 21px;
+}
+
+#privacy .privacy-item,
+#privacy form,
+#privacy .privacy-active {
+	clear: both;
+}
+
+#privacy .privacy-item {
+	margin: 17px 12px;
+	font-size: 0.9em;
+}
+
+#privacy .privacy-item span {
+	font-weight: bold;
+}
+
+#privacy .privacy-item select {
+	width: 300px;
+	margin: -4px 30px 0 10px;
+}
+
+#privacy .privacy-item a {
+	margin: -2px 6px 0 0;
+}
+
+#privacy .privacy-first,
+#privacy .privacy-second,
+#privacy .privacy-third {
+	height: 195px;
+	font-size: 0.9em;
+	margin: 10px 0 0 10px;
+	float: left;
+}
+
+#privacy .privacy-first,
+#privacy .privacy-second {
+	border-right: 1px dotted #1b393f;
+	padding-right: 14px;
+}
+
+#privacy .privacy-first {
+	width: 125px;
+}
+
+#privacy .privacy-first label {
+	margin: 50px 0 0 15px;
+}
+
+#privacy .privacy-first label input {
+	margin-top: 2px;
+}
+
+#privacy .privacy-second {
+	width: 205px;
+}
+
+#privacy .privacy-second label {
+	margin: 2px 0 0 12px;
+}
+
+#privacy .privacy-second input[type=radio],
+#privacy .privacy-third input[type=checkbox] {
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+#privacy .privacy-second input[type=text],
+#privacy .privacy-second select {
+	width: 170px;
+	margin: 2px 0 11px 12px;
+	float: none;
+}
+
+#privacy .privacy-third label {
+	width: auto;
+	margin-top: 11px;
+}
+
+#privacy .privacy-third {
+	width: 240px;
+}
+
+#privacy .privacy-active {
+	margin: 34px 16px 0 16px;
+	font-size: 0.9em;
+}
+
+#privacy .privacy-active-elements {
+	float: right;
+}
+
+#privacy .privacy-active input[type=text] {
+	width: 30px;
+	margin: 0 0 0 8px;
+	float: none;
+}
+
+#privacy .privacy-active input[type=checkbox] {
+	margin: 2px 8px 0 0;
+	float: left;
+}
+
+#privacy .privacy-active label {
+	width: auto;
+	margin: 0 15px 0 0;
+	clear: none;
+}

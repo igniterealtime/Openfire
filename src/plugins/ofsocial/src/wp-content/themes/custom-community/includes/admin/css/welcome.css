@@ -1,0 +1,136 @@
+/**
+ * cc2 Welcome Screen CSS
+ * 
+ * @author Fabian Wolf
+ * @package cc2
+ * @since 2.0.25
+ */
+ 
+	.wrap .cc2-welcome-actions .button {
+		vertical-align: top;
+	}
+
+
+		.wrap .cc2-welcome-actions  #welcome-action-rtfm:link,
+		.wrap .cc2-welcome-actions  #welcome-action-rtfm:visited {
+			opacity: 0.7;
+
+		}
+
+
+		.wrap .feature-list li:before {
+			content: "\f147";
+			display: inline-block;
+			-webkit-font-smoothing: antialiased;
+			font: normal 24px/1 'dashicons';
+			vertical-align: top;
+			padding-right: 3px;
+			color: #0a0;
+		}
+		
+		.wrap .feature-list li:before {
+			font-family: "font-awesome", "dashicons";
+			content: "\f046";
+			font-size: 20px;
+			padding-right: 8px;
+		}
+		
+		.wrap .feature-list li {
+			margin-bottom: 10px;
+		}
+		
+		.wrap .feature-list li.call-to-action {
+			margin-top: 15px;
+			font-weight: bold;
+		}
+			.wrap .feature-list li.call-to-action:before {
+				content: "\f310";
+				content: "\f0a4";
+
+				color: #444;
+			}
+			
+			
+				.wrap .welcome-slideshow-text .feature-list li.call-to-action:before {
+					content: "\f06e";
+				}
+				
+				.wrap .welcome-customizer-text .feature-list li.call-to-action:before {
+					content: "\f044";
+				}
+				
+			/**
+			 * Headline icons
+			 */
+			
+			
+			.wrap .feature-section h2:before {
+				display: inline-block;
+				-webkit-font-smoothing: antialiased;
+				font: normal 26px/1 'font-awesome';
+/*
+				width: 26px;
+*/
+				vertical-align: middle;
+				margin-right: 10px;
+/*
+				background: #444;
+*/
+				/*border-radius: 500px;
+				border-radius: 30px;*/
+/*
+				padding: 6px 8px;
+*/
+				padding: 4px;
+				color: #333;
+			}
+			
+			.wrap .welcome-responsive-layout-text h2:before {
+				content: "\f311";
+				content: "\f167";
+				content: "\f10a";
+			}
+			
+			.wrap .welcome-slideshow-text h2:before {
+				content: "\f181";
+				content: "\f03e";
+			}
+			
+			.wrap .welcome-customizer-text h2:before {
+				content: "\f108";
+				content: "\f138";
+				content: "\f085";
+			}
+			
+			
+			
+			/*
+			
+			.wrap .feature-section h2 .welcome-icon {
+				margin-right: 10px;
+				background: #444;
+				border-radius: 500px;
+				border-radius: 100px;
+				padding: 4px;
+				vertical-align: middle;
+				font-size: 22px;
+				color: #fcfcfc;
+			}
+			*/
+
+	.wrap .link-return:before {
+		content: "\f153";
+		display: inline-block;
+		-webkit-font-smoothing: antialiased;
+		font: normal 16px/1 'dashicons';
+		vertical-align: middle;
+		padding-right: 3px;
+
+	}
+
+
+		.wrap .link-return:hover:before {
+			color: #c33;
+		}
+
+

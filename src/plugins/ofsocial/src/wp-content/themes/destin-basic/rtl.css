@@ -1,0 +1,163 @@
+/**
+ * Theme Name: Destin Basic
+ * Description: Adds support for languages written in a Right To Left (RTL) direction.
+ *
+ * See http://codex.wordpress.org/Right_to_Left_Language_Support
+*/
+
+body {
+	direction: rtl;
+	unicode-bidi: embed;
+}
+
+.navbar-toggle {
+	right: auto;
+	left: 15px;
+}
+
+.navbar-nav {
+	padding: 0;
+}
+
+#site-logo {
+	margin-right: 0;
+	margin-left: 6px;
+}
+
+#site-title,
+#site-description {
+	float: right;
+}
+
+blockquote {
+	border-left: 0;
+	border-right: 5px solid #eeeeee;
+}
+
+.tags span {
+	margin-right: 0;
+	margin-left: 5px;
+}
+
+.format-status .avatar {
+	margin: 0 0 0 17px;
+}
+
+#posts-pagination a,
+table th,
+table td,
+.home-jumbotron .lead {
+	text-align: right;
+}
+
+#posts-pagination .next a,
+.format-quote cite {
+	text-align: left;
+}
+
+.comment .avatar,
+.gallery-item,
+.format-status .avatar,
+i.quote,
+.pullquote,
+#author-info img,
+#posts-pagination .previous,
+.navigation .nav-previous {
+	float: right !important;
+}
+
+#cancel-comment-reply-link,
+.pullquote.alignright,
+#posts-pagination .next,
+.navigation .nav-next {
+	float: left !important;
+}
+
+.comment-author,
+.comment-meta,
+.comment-text,
+.format-quote .entry-content,
+#author-info .author-text,
+.commentlist .children > .comment {
+	padding-left: 0 !important;
+}
+
+	.format-quote .entry-content {
+		padding-right: 70px;
+	}
+
+	#author-info .author-text {
+		padding-right: 90px;
+	}
+
+.sticky-container .item .effect-julia figcaption {
+	text-align: right;
+}
+
+.sticky-container .item .effect-julia p {
+    -moz-transform: translate3d(100%, 0, 0);
+    -ms-transform: translate3d(100%, 0, 0);
+    -webkit-transform: translate3d(100%, 0, 0);
+    transform: translate3d(100%, 0, 0);
+	margin: 0 -2em 0.25em 0;
+}
+
+  .sticky-container .item .effect-julia:hover p {
+    -moz-transform: translate3d(-2em, 0, 0);
+    -ms-transform: translate3d(-2em, 0, 0);
+    -webkit-transform: translate3d(-2em, 0, 0);
+    transform: translate3d(-2em, 0, 0); }
+
+/* =Pullquotes
+-------------------------------------------------------------- */
+.pullquote {
+	margin: 1em 0 1em 1.625em;
+	text-align: left;
+}
+
+.pullquote.alignright {
+	margin: 1em 1.625em 1em 0;
+	text-align: right;
+}
+
+@media (max-width: 480px) {
+	.pullquote {
+		text-align: right;
+	}
+}
+
+/* =Comments
+-------------------------------------------------------------- */
+.comment-author,
+.comment-meta,
+.comment-text {
+	padding-right: 75px;
+}
+
+.commentlist .children .comment {
+	border-left: 0;
+	border-right: 1px solid #ddd;
+}
+
+.commentlist .children > .comment {
+	padding-right: 23px !important;
+}
+
+.commentlist .children .comment:before,
+.commentlist .children .comment:after {
+	left: auto;
+}
+
+	.commentlist .children .comment:before {
+		right: -6px;
+	}
+
+	.commentlist .children .comment:after {
+		right: -5px;
+	}
+
+/* =bbPress
+-------------------------------------------------------------- */
+.subscription-toggle {
+	float: left;
+}

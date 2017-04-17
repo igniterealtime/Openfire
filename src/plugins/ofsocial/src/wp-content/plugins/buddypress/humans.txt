@@ -1,0 +1,84 @@
+               .$$$$$$$Z$.
+          .~$$7...........$$$.
+        .$$...?$$$$$$$$$$Z....$Z.
+      .Z$..Z$$$$$$$$$$$$$$$$Z:..$$.
+     ,$..$$$$$$$$$$$$$7...$$$$$?..$.
+   .$Z .$$$$$$$$$$..?$$.....$$$$$..Z:
+  .$$.$$$$$$$$$........$$....Z$$$$..Z,
+  :$.7$$$$$$$$..........$$....$$$$$..$.
+ .$. $$$$$$$$$...........$....$$$$$$..$.
+.$$.$$$$$$$$$$...........$...$$$$$$$$.$.
+.$. $$$$$$$$$$ ..........Z..$$$$$$$$$.$$.
+.$.,$$$$$$$$$$$.........$$$$Z$$$$$$$$..$.
+.Z $$$$$$$$$$$$$$....+$$$$$,,,,~$$$$$..$.
+.$.=$$$$$$Z,,,,,?$$$$$,,,,,Z$,,,,$$$$..$.
+.$..$$$$$$,,,,,,,,Z$$,,,,,,,,$:,,~$$$.:$.
+.$$.$$$$$,,,,,,,,,,,,,,,,,,,,:$,,:$$$.Z.
+ .$..$$$$,,,,,,,,,,,,,,,,,,,,:$,,,$$..$.
+ .$$.$$$:,,,,,,,,,,,,,,,,,,,,,Z$$$$+.$.
+  .$= $$~,,,,,,:::,:,,:,,::,:,$$$$Z.$Z.
+   .$+.$$$$$$$$$$$$$$$$$$$$$$$$$$:.$$.
+    .$$..Z$$$$$$$$$$$$$$$$$$$$$Z..$7.
+      .$...$$$$$$$$$$$$$$$$$$$..Z$.
+        .Z$=..?Z$$$$$$$$$$$Z...$$.
+          .$$7.............Z$$.
+             .7Z$$$$$$$$$$~
+
+   We are the humans behind BuddyPress
+
+/* TEAM */
+Name: Andy Peatling
+Title: Founding Developer
+Twitter: apeatling
+
+Name: John James Jacoby
+Title: Project Lead
+Twitter: jjj
+Favorite Food: Truffle Lasagna
+
+Name: Boone B. Gorges
+Title: Lead Developer
+Twitter: boone
+Favorite Pudgy Pie Filling: Cherry
+
+Name: Paul Gibbs
+Title: Lead Developer
+Twitter: pgibbs
+Favourite Food: Pizza
+
+Name: Ray
+Title: Core Developer
+Twitter: r-a-y
+Favourite Food: tbd
+
+Name: Mathieu Viet
+Title: Core Developer
+Twitter: imath
+Favorite Food: Spaghetti Bolognese
+
+Name: Mercime
+Title: Navigator
+Twitter: mercime_one
+Favorite Food: Paella Valenciana
+
+Name: David Cavins
+Title: Core Developer
+Twitter: daveycavey
+Favorite Food: Quad-Cities pizza
+
+Name: Michael Beckwith
+Title: Core Developer
+Twitter: tw2113
+Favorite Food: Jelly Beans
+
+Name: Hugo Ashmore (hnla)
+Title: Core Developer
+Twitter: hnla
+Favourite Food: Sunday Roast or Curries
+
+/* THANKS */
+modemlooper, cnorris23, karmatosed, photomatt
+
+/* META */
+Updated: 2015/05/09
+See: http://humanstxt.org/

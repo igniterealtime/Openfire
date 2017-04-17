@@ -1,0 +1,66 @@
+.rtm-plugin-card.plugin-card {
+    margin: 1%;
+    overflow: hidden;
+    width: 48%;
+
+	.rtm-logo {
+		float: left;
+		margin-right: 10px;
+		max-width: 200px;
+		width: auto;
+
+		img {
+			height: auto;
+			margin: -10px 0 0 -10px;
+			max-width: 120px;
+		}
+	}
+
+	.desc, .name {
+		margin-left: 0;
+		margin-right: 0;
+		overflow: hidden;
+	}
+
+	h4 {
+		margin-bottom: 0;
+	}
+
+	a {
+		text-decoration: none;
+	}
+
+	.rtm-live-demo {
+		margin-right: 10px;
+	}
+
+	.price {
+		color: $link;
+		font-size: 22px;
+		line-height: 1.2;
+	}
+}
+
+#rtm-plugins {
+	.rtm-option-title {
+		margin-top: 50px;
+	}
+
+	.rtm-setting-title + .rtm-option-title {
+		margin-top: 0;
+	}
+}
+
+.rtm-encoding-table {
+	border-collapse: collapse;
+	clear: none;
+
+	th, td {
+		border: 1px solid $border;
+	}
+
+	th {
+		font-size: 13px;
+		font-weight: 600;
+	}
+}

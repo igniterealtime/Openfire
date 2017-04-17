@@ -1,0 +1,19 @@
+# Bulgarian translations for PACKAGE package.
+# Copyright (C) 2008 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Nikolay Bachiyski <nb@nikolay.bg>, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: wp-polyglots@lists.automattic.com\n"
+"POT-Creation-Date: 2008-06-06 23:10+0300\n"
+"PO-Revision-Date: 2008-06-06 22:54+0300\n"
+"Last-Translator: Nikolay Bachiyski <nb@nikolay.bg>\n"
+"Language-Team: Bulgarian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "A string with low priority!"
+msgstr "Смотан низ!"

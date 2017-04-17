@@ -1,0 +1,843 @@
+
+/* --------------------------------------------------------------------------------
+  WordPress Style Updates
+--------------------------------------------------------------------------------- */  
+  
+  .inside ol {
+    margin: 0 0 1em 1.5em;
+  }
+    
+  #poststuff h2.nav-tab-wrapper {
+    margin-bottom: 0;
+  }
+
+  h2.nav-tab-wrapper.piklist-single-line-tab {
+    padding-left: 0;
+  }
+  
+  h1:empty {
+    display: none;
+  }
+
+
+/* --------------------------------------------------------------------------------
+  Styles for Piklist
+--------------------------------------------------------------------------------- */
+
+  .piklist-workflow {
+    padding: 10px 20px 0 2px;
+  }
+  
+  
+  /* Styles for the add-on field (admin) */
+
+  .piklist-field-add-on {
+    width: 210px;
+    min-height: 185px;
+    position: relative;
+    float: left;
+    border: 1px solid #e1e1e1;
+    padding: 10px;
+    margin: 0 15px 15px 0;
+    background-color: #f1f1f1;
+
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+  }
+  
+    .piklist-field-add-on h3 {
+      margin-top: 0px;
+    }
+  
+    .piklist-field-add-on .piklist-field-add-on-button {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+    }
+  
+    .piklist-field-add-on .piklist-field-add-on-button-settings {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+  
+  /* Additional style to show off extra information in meta box titles */
+
+  .stuffbox h3 .piklist-title-right,
+  .postbox h3 .piklist-title-right {
+    font-size: 75%;
+    font-family: sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    position: absolute;
+    right: 25px;
+    top: 10px;
+
+    opacity: 0.50;
+    filter: alpha(opacity=50);
+  }
+
+  /* Clone of admin notice but local placement */
+
+  div.piklist-admin-notice {
+    width: auto;
+    margin: 5px 0 15px;
+    border-left: 4px solid #7ad03a;
+    padding: 1px 12px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,0.1);
+  }
+
+  div.piklist-admin-notice-error {
+    border-left: 4px solid #dd3d36;
+  }
+
+  a.piklist-dismiss-notice:before {
+    color: #bbb;
+    content: "\f153";
+    display: inline-block !important;
+    font-family: 'dashicons';
+    -webkit-font-smoothing: antialiased;
+    font-weight: normal;
+    height: 20px;
+    margin-right: 0;
+    text-align: center;
+    vertical-align: middle;
+    width: 20px;
+  }
+
+    a.piklist-dismiss-notice:hover:before {
+      color: #2ea2cc;
+    }
+
+  
+  #side-sortables .piklist-field {
+    padding: 0.6667% 0 1% 0;
+    width: 100%;
+  }
+
+    #side-sortables .piklist-field-container { 
+      display: block;
+    }
+
+    #side-sortables .piklist-field-container select {
+      max-width: 100%;
+    }
+  
+    #side-sortables .piklist-label-container {
+      display: block;
+      position: static;
+      float: none;
+      width: auto;
+      padding: 1% 1.5% 1% 0;
+      margin: 0;
+      border: none;
+    }
+      
+  .widget-content .piklist-field {
+    padding: 0.6667% 0 1% 0;
+    width: auto;
+    float: none;
+  }
+  
+    .widget-content .piklist-label-container {
+      display: block;
+      float: none;
+      width: auto;
+      padding: 6px 0 0 0;
+      margin: 0;
+    }
+      
+
+
+/* --------------------------------------------------------------------------------
+  Admin Thumbnail Preview
+--------------------------------------------------------------------------------- */
+
+  .piklist-upload-file-preview {
+    clear: both;
+    margin-top: 10px;
+  }
+  
+    #side-sortables .piklist-upload-file-preview .attachment .icon {
+      padding-top: 10%;
+    }
+    
+    .piklist-upload-file-preview .attachment {
+      cursor: pointer;
+      margin: 10px 10px 5px 0;
+      width: auto;
+    }
+      
+      .piklist-meta-box-none .piklist-upload-file-preview .selected.attachment {
+        -webkit-box-shadow: inset 0 0 0 5px #f1f1f1, inset 0 0 0 7px #ccc;
+        box-shadow: inset 0 0 0 5px #f1f1f1, inset 0 0 0 7px #ccc;
+      }
+      
+      .piklist-upload-file-preview .attachment-preview-document {
+        width: 150px;
+        height: 150px;  
+      }
+       
+      .piklist-upload-file-preview .attachment .check {
+        top: -5px;
+        right: -5px;
+      }
+  
+      #side-sortables .piklist-upload-file-preview .attachment {
+        margin: 10px 15px 10px 5px;
+      }
+    
+    .piklist-upload-file-preview .attachment-preview img {
+      display: block;
+    }
+      
+    .piklist-upload-file-preview .attachment-preview.landscape:before {
+      display: inline;
+    }
+
+    .piklist-upload-file-preview .attachment-preview.landscape .icon {
+      padding-top: 1em;
+    }
+  
+    .piklist-upload-file-preview .attachment-preview:before {
+      display: none;
+    }
+    
+    .piklist-upload-file-preview a {
+      display: block;
+    }
+  
+      .piklist-upload-file-preview a span {
+        display: none;
+      }
+      
+        
+
+/* --------------------------------------------------------------------------------
+  Piklist Meta Box Helpers
+--------------------------------------------------------------------------------- */
+  
+  .piklist-meta-box hr {
+    color: #dfdfdf;
+    background-color: #dfdfdf;
+    border: 0 none #dfdfdf;
+    height: 1px;
+  }
+  
+  .piklist-meta-box h4 {
+    clear: both;
+  }
+  
+  .piklist-meta-box .inside:after {
+    content: "";
+    display: table;
+    clear: both;
+  }  
+  
+  .piklist-meta-box-none.postbox {
+    background: none;
+    border: none;
+  }
+
+    .piklist-meta-box-none.postbox h3 {
+      background: none;
+      border: none;
+    }
+
+    .piklist-meta-box-no-title.postbox h3 {
+      display: none;
+    }
+    
+    .piklist-meta-box-none .inside {
+    }
+
+  .piklist-border-top {
+    border-top: 1px solid #eee;
+    padding-top: 5px;
+  }
+    
+    /* Meta Messages */
+
+    .piklist-meta-message {
+      clear: both;
+      position: relative;
+      left: 0px;
+      bottom: 0px;
+      margin: 10px -10px 0 -10px;
+      padding: 0.8em;
+      background: white;
+      border-top: 1px solid;
+      border-bottom: 1px solid;
+      border-color: #dfdfdf;
+      line-height: 1.5;
+    }  
+
+      .piklist-meta-message a {
+        font-weight: 600;
+      }
+
+       .widgets-holder-wrap .piklist-field {
+         line-height: 1.6667;
+         padding: 0.3334em 0 0.3334em 1px;
+         margin: 0;
+       }
+
+
+
+/* --------------------------------------------------------------------------------
+  Piklist Widgets
+--------------------------------------------------------------------------------- */
+
+  .piklist-universal-widget-select-container {
+    position: relative;
+    width: 100%;
+    padding: 0 15px .3334em 15px;
+    margin-left: -15px;
+    margin-top: -1px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: #fafafa;
+  }
+  
+    #customize-controls .piklist-universal-widget-select-container {
+      padding: 4px 30px .3334em 30px;
+      margin-left: -30px;
+      margin-top: -20px;
+    }
+    
+    #customize-controls .widget-control-save {
+      display: block !important;
+    }
+  
+    .piklist-universal-widget-select-container label {
+      position: absolute;
+      left: -999999px;
+    }
+    
+    .piklist-universal-widget-select-container p {
+      margin: 0.3334em 0 0 0;
+    }
+    
+    .piklist-universal-widget-form-container {
+      margin-bottom: 15px;
+    }
+    
+      .piklist-universal-widget-form-container div.error,
+      .piklist-universal-widget-form-container div.updated {
+        background-color: #fafafa;
+      }
+      
+      .piklist-universal-widget-form-container .wp-editor-wrap {
+        margin-top: 10px;
+      }
+    
+
+
+
+/* --------------------------------------------------------------------------------
+  Piklist Admin Tooltips
+--------------------------------------------------------------------------------- */
+  
+  body.responsive-admin .piklist-tooltip.dashicons {
+    vertical-align: text-top;
+  }
+
+  body.admin-color-light .piklist-tooltip:after {
+    background-color: #04a4cc;
+    border: 1px solid #0490b3;
+  }
+
+    body.admin-color-light .piklist-tooltip:hover:before {
+      color: #04a4cc;
+    }
+
+  body.admin-color-blue .piklist-tooltip:after {
+    background-color: #096484;
+    border: 1px solid #07536c;
+  }
+
+    body.admin-color-blue .piklist-tooltip:hover:before {
+      color: #096484;
+    }
+
+  body.admin-color-coffee .piklist-tooltip:after {
+    background-color: #c7a589;
+    border: 1px solid #bf9878;
+  }
+
+    body.admin-color-coffee .piklist-tooltip:hover:before {
+      color: #c7a589;
+    }
+
+  body.admin-color-ectoplasm .piklist-tooltip:after {
+    background-color: #a3b745;
+    border: 1px solid #93a43e;
+  }
+
+    body.admin-color-ectoplasm .piklist-tooltip:hover:before {
+      color: #a3b745;
+    }
+
+  body.admin-color-midnight .piklist-tooltip:after {
+    background-color: #e14d43;
+    border: 1px solid #dd362d;
+  }
+
+    body.admin-color-midnight .piklist-tooltip:hover:before {
+      color: #e14d43;
+    }
+
+  body.admin-color-ocean .piklist-tooltip:after {
+    background-color: #9ebaa0;
+    border: 1px solid #8faf91;
+  }
+
+    body.admin-color-ocean .piklist-tooltip:hover:before {
+      color: #9ebaa0;
+    }
+
+
+  body.admin-color-sunrise .piklist-tooltip:after {
+    background-color: #dd823b;
+    border: 1px solid #d97326;
+  }
+
+    body.admin-color-sunrise .piklist-tooltip:hover:before {
+      color: #dd823b;
+    }
+    
+    
+
+/* --------------------------------------------------------------------------------
+  Piklist List Tables
+--------------------------------------------------------------------------------- */
+  
+  .piklist-list-table-export {
+    margin-top: 0;
+  }
+  
+  .piklist-list-table-export-columns {
+    margin-top: 1em;
+  }
+  
+    .piklist-list-table-export-columns .piklist-field-addmore-wrapper {
+      margin-bottom: 0.5em;
+    }
+    
+  
+
+  
+/* --------------------------------------------------------------------------------
+  Updates to WP-Tab Classes
+  - These should be submitted as patches to the core 
+--------------------------------------------------------------------------------- */
+
+  ul.wp-tab-bar { 
+    padding: 0;
+    margin: 8px 0 3px 0; 
+    float: none;
+    width: auto;
+    text-align: left;
+  }
+  
+    div.widget ul.wp-tab-bar {
+      margin-top: 15px;
+    }
+    
+      div.widget ul.wp-tab-bar.wp-tab-panel-vertical {
+        margin-top: 0;
+      }
+      
+    body.responsive-admin ul.wp-tab-bar.wp-tab-panel-vertical { 
+      width: 120px; 
+    }
+  
+      ul.wp-tab-bar.wp-tab-panel-vertical { 
+        margin: 0 -120px 0 5px;
+        float: left; 
+        width: 120px; 
+        text-align: right; 
+      } 
+
+    ul.wp-tab-bar a { 
+      text-decoration: none; 
+    }
+   
+    ul.wp-tab-bar li {
+      padding: 2px 5px 5px;
+      display: inline;
+    } 
+    
+      ul.wp-tab-bar li.hidden {
+        display: none;
+      }
+     
+      ul.wp-tab-bar.wp-tab-panel-vertical li {
+        padding: 8px; 
+        display: block; 
+      }
+
+      ul.wp-tab-bar li.wp-tab-active { 
+        border-style: solid solid none solid; 
+        border-width: 1px 1px 0px 1px;
+      } 
+
+      ul.wp-tab-bar.wp-tab-panel-vertical li.wp-tab-active { 
+        border-style: solid none solid solid; 
+        border-width: 1px 0 1px 1px;
+        margin-right: -1px
+      }
+
+        ul.wp-tab-bar li.wp-tab-active a { 
+          text-decoration: none;
+          font-weight: normal;
+        }
+        
+        ul.wp-tab-bar.wp-tab-panel-vertical li.wp-tab-active a { 
+          font-weight: bold;
+        }      
+     
+  div.wp-tab-panel { 
+    height: auto;
+    min-height: 240px;
+    margin-bottom: 15px;
+  } 
+
+    * html div.wp-tab-panel {
+      height: 240px;
+    }
+    
+    div.widget div.wp-tab-panel {
+      max-height: none;
+    }
+    
+    * html div.widget div.wp-tab-panel {
+      margin: 0 0 15px 0;
+    }
+    
+    div.wp-tab-panel.wp-tab-panel-vertical {
+      margin: 15px 0 15px 125px; 
+      height: none;
+    }
+    
+    div.wp-tab-panel-resize {
+      height: auto;
+      min-height: 240px;
+    }
+    
+    div.wp-tab-panel h4 {
+      margin-top: 0.25em;
+    }
+    
+    div.wp-tab-panel-active { 
+      display: block; 
+    } 
+   
+    div.wp-tab-panel-inactive { 
+      display: none; 
+    } 
+
+  .has-right-sidebar ul.wp-tab-bar.wp-tab-panel-vertical li { 
+    display: inline; 
+    line-height: 1.35em; 
+  } 
+   
+  .no-js ul.wp-tab-bar.wp-tab-panel-vertical li.hide-if-no-js { 
+    display: none; 
+  } 
+  
+  
+
+/* --------------------------------------------------------------------------------
+  Extra Styles for the core plugin pages
+--------------------------------------------------------------------------------- */
+
+  body.responsive-admin a.toplevel_page_piklist:hover {
+    color: #000;
+  }
+  
+  body.responsive-admin .about-wrap .feature-section.col .last-feature {
+    margin-bottom: -20px;
+  }
+  
+  body.cpt-setting .postbox {
+    background: #ffffff;
+  }
+
+
+
+/* --------------------------------------------------------------------------------
+  WordPress overrides
+--------------------------------------------------------------------------------- */
+  
+  #save-action {
+    float: left;
+    margin-bottom: 7px;
+  }
+
+  .subsubsub {
+    white-space: normal !important;
+  }
+
+  .subsubsub li {
+    white-space: nowrap !important;
+  }
+  
+  body.wp-admin select {
+    height: 1.9em;
+  }
+  
+  /* Alter Sortable Column Behavior */
+  .manage-column .sorting-indicator {
+    display: block !important;
+    visibility: hidden;
+  }
+  
+    .manage-column .sorted .sorting-indicator {
+      visibility: visible;
+    }
+  
+    .manage-column a:hover .sorting-indicator {
+      visibility: visible;
+    }
+
+  body.post_type-attachment #post-body-content h3 {
+    color: #222;
+    font-size: 1.3em !important;
+    margin: 1em 0 1em 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Workflow tabs on edit screens */
+  #poststuff h2.nav-tab-wrapper,
+  #poststuff h3.nav-tab-wrapper {
+    padding-bottom: 0px;
+    padding-left: 10px;
+    margin-bottom: 10px !important;
+  }
+
+  .button-primary {
+    color: #ffffff !important;
+  }
+
+  /* Fix for the floating footer issue in the admin */
+  #wpfooter {
+    margin-top: -4em;
+  }
+  
+  /* Adjust Layout on Edit Screens if containers are empty */
+  #post-body-content:empty {
+    margin: 0;
+  }
+  
+  /* Set the background color of the editor just in case its in a metabox */
+  .mceIframeContainer {
+    background-color: #ffffff;
+  }
+  
+  /* WP Color Picker - Fixes jQuery UI Theme Conflicts */
+  .wp-picker-container .ui-slider-vertical {
+    width: auto;
+    height: auto;
+  }
+  
+    .wp-picker-container .ui-slider-vertical .ui-widget-content,
+    .wp-picker-container .ui-slider-vertical {
+      background: none !important;
+      border: none !important;
+    }
+    
+    .wp-picker-container .ui-state-focus,
+    .wp-picker-container .ui-draggable-dragging {
+      background: none !important;
+      border: none !important;
+    }
+
+
+
+/* --------------------------------------------------------------------------------
+  Piklist Right Now Dashboard Widget
+---------------------------------------------------------------------------------- */
+   
+  body.responsive-admin #dashboard_right_now h4 {
+    margin: 0 0 8px 0px
+  }
+
+    body.responsive-admin #dashboard_right_now li a:before {
+      content: "\f139";
+    }
+
+ 
+    body.responsive-admin #dashboard_right_now li span:before {
+      content: "";
+    }
+
+
+  body.piklist-dependent table.plugins #piklist .check-column::before {
+    -moz-osx-font-smoothing: grayscale;
+    color: #888888;
+    content: "\f160";
+    display: inline-block;
+    float: left;
+    font-family: dashicons;
+    font-size: 1.7em;
+    margin-left: 5px;
+    vertical-align: middle;
+    visibility: visible;
+  }
+
+  body.piklist-dependent table.plugins #piklist input {
+    display: none;
+  }
+
+
+
+/* --------------------------------------------------------------------------------
+  Responsive fields
+---------------------------------------------------------------------------------- */
+
+  @media only screen and (min-width: 851px) {
+
+    #side-sortables .piklist-tooltip:after {
+      min-width: 175px;
+      max-width: 175px;
+    }
+
+    #side-sortables .piklist-upload-file-preview .attachment:nth-child(even) {
+      margin-right: 0;
+    }
+  }
+  
+  @media only screen and (max-width: 782px) {
+    
+    #normal-sortables ul.piklist-field-list li,
+    #advanced-sortables ul.piklist-field-list li {
+      height: 30px;
+    }
+  }
+
+  @media only screen and (max-width: 600px) {
+
+    #normal-sortables .piklist-field-container,
+    #advanced-sortables .piklist-field-container { 
+      display: block;
+    }
+
+      #normal-sortables .piklist-field-container select,
+      #advanced-sortables .piklist-field-container select {
+        max-width: 100%;
+      }
+
+      #normal-sortables .piklist-label-container,
+      #advanced-sortables .piklist-label-container {
+        display: block;
+        position: static;
+        float: none;
+        width: auto;
+        padding: 1% 1.5% 1% 0;
+        margin: 0;
+        border: none;
+      }
+
+      #normal-sortables .piklist-field,
+      #advanced-sortables .piklist-field {
+        padding: 0.6667% 0 1% 0;
+        width: 100%;
+      }
+
+      #normal-sortables .piklist-upload-file-preview .attachments,
+      #advanced-sortables .piklist-upload-file-preview .attachments {
+        margin-left: -16px;
+      }
+      
+      #normal-sortables .piklist-upload-file-preview .attachment .icon,
+      #advanced-sortables .piklist-upload-file-preview .attachment .icon {
+        padding-top: 10%;
+      }
+          
+      #normal-sortables .piklist-upload-file-preview .attachment,
+      #advanced-sortables .piklist-upload-file-preview .attachment {
+        margin: 0 0 20px 20px;
+      }
+      
+      #normal-sortables .piklist-upload-file-preview .attachment-preview, 
+      #normal-sortables .piklist-upload-file-preview .attachment-preview .thumbnail,
+      #advanced-sortables .piklist-upload-file-preview .attachment-preview, 
+      #advanced-sortables .piklist-upload-file-preview .attachment-preview .thumbnail {
+        width: 8.2em;
+        height: 8.2em;
+      }
+
+    #normal-sortables .piklist-field-addmore-wrapper,
+    #advanced-sortables .piklist-field-addmore-wrapper {
+      min-width: 0;
+    }
+  }
+
+
+
+/* --------------------------------------------------------------------------------
+  Piklist Link Bar
+---------------------------------------------------------------------------------- */
+
+  ul.piklist-tab-bar {
+    clear: right;
+    display: block;
+    margin-bottom: 1em;
+  }
+    
+    ul.piklist-tab-bar li {
+      padding: 6px;
+    }
+    
+    ul.piklist-tab-bar li.wp-tab-active {
+      background: #e5e5e5;
+      border: 1px solid #cccccc;
+      padding: 5px;
+    }
+
+  .piklist-tab-panel {
+    background: none !important;
+    border: none !important;
+    max-height: none !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    width: 100% !important;
+    float: none  !important;
+  }
+
+  .wp-tab-panel.piklist-tab-panel.piklist-fields-field-list {
+    clear: right;
+  }
+
+
+/* --------------------------------------------------------------------------------
+  Piklist Field Classes
+---------------------------------------------------------------------------------- */
+
+  /* .piklist-inline-edit */
+  input[type="text"].piklist-inline-edit {
+    border: none;
+    margin: 1px;
+    box-shadow: none;
+    text-decoration: underline;
+    color: #0074A2;
+    cursor: pointer;
+  }
+
+    input[type="text"].piklist-inline-edit:focus {
+      border: 1px solid #DDDDDD;
+      text-decoration: none;
+      color: #000;
+      margin: 0;
+    }
+
+    input[type="text"].piklist-inline-edit:disabled {
+      color: #000;
+      text-decoration: none;
+      cursor: initial;
+    }

@@ -1,0 +1,26 @@
+BuddyPress Docs was developed for the CUNY Academic Commons http://commons.gc.cuny.edu Many thanks to the CAC team for their ongoing support for open-source software like this.
+
+The attachments feature was developed with the financial support of the Center for Applied Research and Environmental Systems program at the University of Missouri http://cares.missouri.edu, and with the technical, conceptual, and design support of David Cavins.
+
+The original goal of BuddyPress Docs was to create "private wiki space" for BuddyPress. I'd planned to modify David Cartwright's BP Group Wiki plugin for that purpose (in fact, you can see that I committed the entire thing to the buddypress-docs git repo at the very beginning). In the end, I haven't used any code from David's plugin, but I would like to thank him for the original inspiration.
+
+== FILE AND LIBRARY CREDITS ==
+
+idle.js (includes/js/idle.js) is by Alexios Chouchoulas, and provided under the GPL v2.0 or later at http://www.bedroomlan.org/coding/detecting-%E2%80%98idle%E2%80%99-and-%E2%80%98away%E2%80%99-timeouts-javascript
+
+includes/images/padlock.png is derived from the file Gnome-emblem-readonly.svg, available under GPLv2+ from http://commons.wikimedia.org/wiki/File:Gnome-emblem-readonly.svg
+
+== TRANSLATION CREDITS ==
+
+Huge thanks go out to the individuals who donate their translations, making plugins like this one usable for a far bigger audience. Translations for BuddyPress Docs:
+- Spanish: Selu Vega
+- Italian: Luca Camellini
+- German: Birgit, HansRuedi Keller
+- French: stbouvier, Xavier Jimenez  
+- Swedish: Thomas Schneider
+- Brazilian Portuguese: John Morgenthaler
+- European Portuguese: André Barriguinha
+- Romanian: Web Geek Science  (http://webhostinggeeks.com/)
+- Danish: Morten Nalholm
+- Russian: Igor M., Eugene Efimenko
+- Dutch: Zé Vandenhoeck

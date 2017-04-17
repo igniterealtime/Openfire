@@ -1,0 +1,30 @@
+@media #{$large-up} {
+
+	.mfp-content {
+
+		.rtm-lightbox-container {
+			display: table;
+
+			// Fixed issue in Firefox and Opera
+			table-layout: fixed;
+			width: 100%;
+		}
+
+		.rtm-single-media {
+			display: table-cell;
+			width: 66.6667%;
+		}
+
+		.rtm-single-meta {
+			display: table-cell;
+			width: 33.3333%;
+		}
+
+		.rtmedia-item-comments {
+			max-height: 330px;
+			overflow-x: hidden;
+			overflow-y: auto;
+		}
+
+	}
+}

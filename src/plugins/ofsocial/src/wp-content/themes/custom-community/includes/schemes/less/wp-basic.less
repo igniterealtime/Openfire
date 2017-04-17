@@ -1,0 +1,258 @@
+
+/**
+ * Now come a few needed CSS additions to integrate bootstrap truly into WordPress,
+ * We kept this slim as possible. Try to avoid any overwriting if not really needed.
+ *
+ *
+ * First fixing the dropdown menu.
+ * Most stuff is handled by the walker, but some styles need to be added too.
+ * Here we are removing the ">" from the original bootstrap styles, so it works for 2nd and 3rd level dropdown too..
+ */
+
+.dropdown-menu li a {
+  display: block;
+  padding: 3px 20px;
+  clear: both;
+  font-weight: normal;
+  line-height: @line-height-base;
+  color: @text-color;
+  white-space: nowrap;
+  border: none;
+}
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  #gradient > .vertical(@start-color: @link-hover-color; @end-color: darken(@link-hover-color, 8%));
+  background-color: @link-hover-color;
+  color: #ffffff;
+  text-decoration: none;
+  background-repeat: repeat-x;
+}
+.dropdown-menu > .active > a,
+.dropdown-menu > .active > a:hover,
+.dropdown-menu > .active > a:focus {
+  #gradient > .vertical(@start-color: @link-hover-color; @end-color: darken(@link-hover-color, 8%));
+  background-color: @link-hover-color;
+  color: #ffffff;
+  text-decoration: none;
+  background-repeat: repeat-x;
+}
+.dropdown-menu ul {
+  list-style: none;
+}
+@media screen and (min-width: 768px) {
+  .navbar-inverse .dropdown-menu li > a,
+  .navbar-inverse .dropdown-menu li > a:first-child {
+    border-left: none;
+  }
+}
+
+
+/* Additional CSS (improved nav walker) */
+
+	.dropdown-submenu {
+		position:relative;
+	}
+	.dropdown-submenu > .dropdown-menu{
+		top:0;
+		left:100%;
+		/*-webkit-border-radius:0 6px 6px 6px;
+		-moz-border-radius:0 6px 6px 6px;*/
+		border-radius:0 6px 6px 6px;
+	}
+
+	
+/*
+	.dropdown-submenu:active > .dropdown-menu, 
+	.dropdown-submenu:hover > .dropdown-menu {
+		display: block;
+	}
+*/
+	
+		.dropdown-submenu > a:after {
+			display:block;
+			content:" ";
+			float:right;
+			width:0;
+			height:0;
+			
+			border-color:transparent;
+			border-style:solid;
+			border-width:5px 0 5px 5px;
+			border-left-color:#cccccc;
+			
+			
+			margin-top:5px;
+			margin-right:-10px;
+		}
+		
+			.dropdown-submenu:active > a:after{
+				border-left-color:#ffffff;
+			}
+			
+		.dropdown-submenu.pull-left { 
+			float:none;
+		}
+		
+		.dropdown-submenu.pull-left > .dropdown-menu {
+			left:-100%;
+			margin-left:5px;
+			
+			/*-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;*/
+			
+			border-radius:6px 0 6px 6px;
+		}
+
+
+
+
+/* Some modified padding for the bootstrap container.
+ * Now you can make many styles of design easily.
+ * Try with giving the .container class just a background colour and have a look. ;)
+ */
+/*.container { padding: 0 10px; }*/
+
+
+
+
+
+
+/** Now the minimum needed WordPress styles **/
+
+/* Alignment */
+.alignleft {
+  display: inline;
+  float: left;
+  margin-right: 1.5em;
+}
+.alignright {
+  display: inline;
+  float: right;
+  margin-left: 1.5em;
+}
+.aligncenter {
+  clear: both;
+  display: block;
+  margin: 0 auto;
+}
+
+
+/**
+ * Some WP Theme Repository requirements
+ */
+
+.sticky {
+	opacity: 1;
+}
+
+.bypostauthor {
+	opacity: 1;
+}
+
+
+/* Images and wp-captions should always fit and be responsive */
+img {
+  display: inline-block;
+  height: auto;
+  max-width: 100%;
+
+  &[class*="wp-image-"] {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+}
+.wp-caption,
+.gallery-caption
+{
+  margin-bottom: 10px;
+  max-width: 100%;
+  border-radius: 4px;
+  padding: 0;
+
+  &.aligncenter {
+    margin-bottom: 10px;
+  }
+  img[class*="wp-image-"] {
+    display: block;
+  }
+  .wp-caption-text {
+    text-align: center;
+    margin-top: 10px;
+  }
+}
+
+/* WP Gallery */
+.gallery {
+  margin-bottom: 1.5em;
+
+  a img {
+    border: none;
+    height: auto;
+    max-width: 90%;
+  }
+  dd {
+    margin: 0;
+  }
+}
+
+
+/* Make sure embeds and iframes fit their containers */
+embed,
+iframe,
+object {
+  max-width: 100%;
+}
+
+/* Text meant only for screen readers */
+.screen-reader-text,
+.sr-only {
+	/**
+	 * NOTE: clip is NOT recommended anymore = deprecated
+	 */
+	/*clip: rect(1px, 1px, 1px, 1px);*/
+	position: absolute !important;
+	top: auto;
+	left: -9999px;
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+}
+.screen-reader-text:hover,
+.screen-reader-text:active,
+.screen-reader-text:focus {
+	background-color: #f1f1f1;
+	border-radius: 3px;
+	box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.6);
+	clip: auto;
+	color: #002B3E;
+	display: block;
+	font-size: 16pt;
+	font-weight: bold;
+	height: auto;
+	left: 5px;
+	line-height: normal;
+	padding: 15px 23px 14px;
+	text-decoration: none;
+	top: 5px;
+	width: auto;
+	z-index: 100000; /* Above WP toolbar */
+}
+
+/* Clearing */
+.clear {
+  clear: both;
+  height: 0px;
+  overflow: hidden;
+}
+
+/* Make sure select elements fit in widgets */
+.widget select {
+  max-width: 100%;
+}
+
+/* Comments */
+#comments {
+  clear: both;
+}
+.comment .children {
+  margin-left: 1.5em;
+}

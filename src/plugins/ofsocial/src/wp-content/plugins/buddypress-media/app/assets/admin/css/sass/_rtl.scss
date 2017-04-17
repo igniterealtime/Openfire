@@ -1,0 +1,45 @@
+body.rtl {
+	.rtm-tabs a {
+		padding: 10px 32px 10px 4px;
+	}
+
+	.rtm-tabs .dashicons {
+		right: 10px;
+	}
+
+	.rtm-social-share .dashicons {
+		left: 10px;
+		right: auto;
+	}
+
+	.rtm-option-wrapper .rtm-field-wrap {
+		float: right;
+	}
+
+	.rtm-tip-top, .rtm-tip {
+		left: auto;
+		right: 24px;
+
+		&:after, &:before {
+			display: none;
+		}
+	}
+
+	.rtm-edit-td, .rtm-delete-td {
+		float: right;
+		margin-left: 0;
+	}
+
+	.rtm-edit-td {
+		margin-right: -15px;
+	}
+
+	#rtmedia-membership span.float-right {
+		float: left;
+	}
+
+	.theme-browser .theme {
+		float: left;
+		margin: 0 4% 4% 0;
+	}
+}

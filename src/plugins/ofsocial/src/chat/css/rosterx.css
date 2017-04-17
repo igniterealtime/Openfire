@@ -1,0 +1,53 @@
+/*
+
+Jappix - An open social platform
+This is the Roster Item Exchange tool CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 05/02/11
+
+*/
+
+#rosterx .content {
+	padding: 10px 0 10px 0;
+}
+
+#rosterx .rosterx-head a {
+	font-size: 0.9em;
+	margin: 3px 4px;
+	float: left;
+}
+
+#rosterx .oneresult:hover {
+	cursor: pointer;
+}
+
+#rosterx .oneresult span {
+	margin: 2px 5px 0 5px;
+	overflow: hidden;
+	float: left;
+}
+
+#rosterx .oneresult span.name {
+	width: 230px;
+	font-weight: bold;
+}
+
+#rosterx .oneresult span.xid {
+	width: 270px;
+	font-size: 0.9em;
+}
+
+#rosterx .oneresult span.action {
+	width: 16px;
+	height: 16px;
+	margin-top: 4px;
+	float: right;
+}
+
+#rosterx .oneresult span.action.modify {
+	background-position: 0 -1244px;
+}

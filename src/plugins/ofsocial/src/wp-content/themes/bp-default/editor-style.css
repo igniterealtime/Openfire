@@ -1,0 +1,272 @@
+/*
+Theme Name: BuddyPress Default
+Description: Used to style the TinyMCE editor.
+*/
+
+html .mceContentBody {
+	font-family: Arial, Tahoma, Verdana, sans-serif;
+	font-size: 12px;
+	color: #555;
+}
+ul,
+ol {
+	margin: 0;
+	padding: 0;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 5px 0 15px 0;
+}
+h1 {
+	font-size: 28px;
+	margin-bottom: 25px;
+}
+h2 {
+	font-size: 24px;
+	margin-bottom: 20px;
+}
+h3 {
+	font-size: 20px;
+}
+h4 {
+	font-size: 16px;
+	margin-bottom: 15px;
+}
+h5 {
+	font-size: 14px;
+	margin-bottom: 0;
+}
+h6 {
+	font-size: 12px;
+	margin-bottom: 0;
+}
+a {
+	color: #1fb3dd;
+}
+a:hover,
+a:active {
+	color: #888;
+}
+a:focus {
+	outline: 1px dotted #ccc;
+}
+p {
+	margin-bottom: 15px;
+}
+p:last-child {
+	margin-bottom: 0;
+}
+hr {
+	background-color: #e7e7e7;
+	border: 0 none;
+	clear: both;
+	height: 1px;
+	margin: 20px 0;
+}
+big {
+	font-size: 18px;
+}
+acronym {
+	border-bottom: 0;
+	cursor: normal;
+}
+acronym:hover {
+	cursor: normal;
+}
+del {
+	text-decoration: line-through;
+	color: #555;
+}
+ins {
+	background: #fff9db;
+	border: 0;
+	color: #555;
+	text-decoration: none;
+}
+sub {
+	top: .5ex;
+}
+sup {
+	bottom: 1ex;
+}
+sub,
+sup {
+	height: 0;
+	line-height: 1;
+	vertical-align: baseline;
+	position: relative;
+}
+html .mceContentBody .alignright {
+	float: right;
+	margin-left: 15px;
+}
+html .mceContentBody .alignleft {
+	float: left;
+	margin-right: 15px;
+}
+p {
+	margin: 0 0 20px 0;
+}
+dl {
+	margin-left: 0;
+}
+dt {
+	font-size: 14px;
+	font-weight: bold;
+}
+dd {
+	margin: 0 0 15px 0;
+}
+pre,
+code p {
+	padding: 15px;
+	background: #f4f4f4;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+code {
+	font-family: "Monaco", courier, sans-serif;
+}
+cite {
+	border: 0;
+}
+blockquote {
+	quotes: none;
+	font-style: italic;
+	margin: 0 0;
+	padding: 0 3em;
+	font-family: georgia, times, serif;
+	font-size: 16px;
+	line-height: 150%;
+}
+blockquote p {
+	margin-bottom: 15px !important;
+}
+p.date {
+	color: #888;
+	font-size: 12px;
+	font-family: Georgia, times, serif;
+	padding: 3px 0;
+	margin: 10px 0;
+	border-bottom: 1px solid #e4e4e4;
+	border-top: 1px solid #e4e4e4;
+}
+img.wp-smiley {
+	padding: 0 !important;
+	margin: 0 !important;
+	border: none !important;
+	float: none !important;
+	clear: none !important;
+}
+html .mceContentBody img.centered,
+html .mceContentBody img.aligncenter {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+html .mceContentBody img.alignright {
+	padding: 4px;
+	margin: 0 0 2px 7px;
+	display: inline;
+}
+html .mceContentBody img.alignleft {
+	padding: 4px;
+	margin: 0 7px 2px 0;
+	display: inline;
+}
+html .mceContentBody .aligncenter {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+.wp-caption {
+	border: 1px solid #ddd;
+	text-align: center;
+	background-color: #f3f3f3;
+	padding-top: 4px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+.wp-caption img {
+	margin: 0;
+	padding: 0;
+	border: 0 none;
+}
+dd.wp-caption p.wp-caption-text,
+.wp-caption p.wp-caption-text {
+	font-size: 0.9em;
+	line-height: 17px;
+	padding: 0 4px 5px 0;
+	margin: 0;
+}
+.gallery .gallery-caption {
+	color: #555;
+}
+table {
+	width: 100%;
+}
+table thead tr {
+	background: #eaeaea;
+}
+td {
+	color: #555;
+	font-size: 12px;
+}
+table tr td,
+table tr th {
+	padding: 8px;
+	vertical-align: middle;
+}
+table tr.alt td {
+	background: #f5f5f5;
+}
+html .mceContentBody ul,
+html .mceContentBody ol,
+html .mceContentBody dl {
+	margin: 0 0 18px 1.5em;
+}
+html .mceContentBody ul {
+	list-style: square;
+}
+html .mceContentBody ol {
+	list-style: decimal;
+}
+html .mceContentBody ol ol {
+	list-style: upper-alpha;
+}
+html .mceContentBody table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border: 1px solid #eee;
+}
+html .mceContentBody table th {
+	border-top: 1px solid #eee;
+	border-left: 0 none;
+	border-right: 0 none;
+	font-size: 12px;
+	text-align: left;
+}
+html .mceContentBody table th:first {
+	border-right: 1px solid #eaeaea;
+}
+html .mceContentBody table td {
+	border-top: 1px solid #eee;
+}
+html .mceContentBody img {
+	margin-bottom: 15px;
+}
+html .mceContentBody table tr td {
+	border-left: 0 none;
+	border-right: 0 none;
+}
+html .mceContentBody table tr td.label {
+	border-right: 1px solid #eaeaea;
+	font-weight: bold;
+	width: 25%;
+}

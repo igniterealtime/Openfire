@@ -1,0 +1,96 @@
+// New Switch
+
+$switchTransition: .15s ease-out;
+
+.switch {
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+	width: 58px;
+	height: 22px;
+	padding: 3px;
+	border-radius: 18px;
+
+
+	input[type=checkbox] {
+		position: absolute;
+		top: 0;
+		left: 0;
+		opacity: 0;
+	}
+}
+
+
+.switch-label {
+	position: relative;
+	display: block;
+	height: inherit;
+	color: $white;
+	font-size: 12px;
+	text-transform: uppercase;
+	background: #b4b4b4;
+	border-radius: inherit;
+	transition: $switchTransition;
+	transition-property: opacity background;
+
+	&:before, &:after {
+		position: absolute;
+		top: 50%;
+		margin-top: -.5em;
+		line-height: 1;
+		transition: inherit;
+	}
+
+	&:before {
+		content: attr(data-off);
+		right: 11px;
+		color: $white;
+	}
+
+	&:after {
+		content: attr(data-on);
+		left: 11px;
+		opacity: 0;
+	}
+
+	input[type=checkbox]:checked ~ & {
+		//background: #47a8d8;
+		background: lighten(#2ea2cc, 2);
+		//background: lighten(#2ecc71, 5); #2ea2cc
+
+		&:before { opacity: 0; }
+		&:after { opacity: 1; }
+	}
+}
+
+.switch-handle {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 18px;
+	height: 18px;
+	background: white;
+	border-radius: 10px;
+	box-shadow: 1px 1px 5px rgba(black, .2);
+	background-image: linear-gradient(to bottom, white 40%, #f0f0f0);
+	transition: left #{$switchTransition};
+
+	&:before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin: -6px 0 0 -6px;
+		width: 12px;
+		height: 12px;
+		background: #f9f9f9;
+		border-radius: 6px;
+		box-shadow: inset 0 1px rgba(black, .02);
+		background-image: linear-gradient(to bottom, #eee, white);
+	}
+
+	input[type=checkbox]:checked ~ & {
+		left: 41px;
+		box-shadow: -1px 1px 5px rgba(black, .2);
+	}
+}

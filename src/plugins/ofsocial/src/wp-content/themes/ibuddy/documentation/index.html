@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+	<title>iBuddy - Fast and Beautiful BuddyPress Theme</title>
+ 	<meta name="description" content="">
+	<meta name="author" content="Ayman Al Zarrad">
+	<meta name="copyright" content="Ayman Al Zarrad">
+	<meta name="generator" content="Documenter v2.0 http://rxa.li/documenter">
+	<meta name="date" content="2013-06-26T17:52:19+02:00">
+	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/js/google-code-prettify/prettify.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="assets/css/documenter_style.css" rel="stylesheet">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    
+	
+	<style>
+		html, body{background-color:#FFFFFF;color:#383838;}
+		h1,h2,h3,h4,h5,h6{color:#383838;}
+		section table{background-color:#FFFFFF;}
+		::-moz-selection{background:#444444;color:#DDDDDD;}
+		::selection{background:#444444;color:#DDDDDD;}
+		a.brand{background-image:url();}
+		a, a:hover, a:active{color:#0000FF;}
+		hr{border-top:1px solid #EBEBEB;border-bottom:1px solid #FFFFFF;}
+		div.navbar-inner, .navbar .nav li ul{background:#DDDDDD;color:#222222;}
+		a.btn-navbar{background:#DDDDDD;color:#222222;}
+		.navbar .nav li a{color:#222222;text-shadow:1px 1px 0px #EEEEEE;}
+		.navbar .nav li a:hover, .navbar .nav li.active a{text-shadow:none;}
+		div.navbar-inner ul{}
+		.marketing-byline{color:#FFFFFF;}
+		.navbar .nav > li a{color:#444444;}
+		.navbar .nav > li a:hover, a.btn-navbar:hover{background:#444444;color:#DDDDDD;}
+		.navbar .nav .active > a, .navbar .nav .active > a:hover, a.btn-navbar:active{background-color:#444444;color:#DDDDDD;}
+		.navbar .nav li ul li a:hover{background:#444444;color:#DDDDDD;}
+		.navbar .nav li ul li a:active{background:#444444;color:#DDDDDD;}
+		.btn-primary {
+			  background-image: -moz-linear-gradient(top, #0088CC, #0044CC);
+			  background-image: -ms-linear-gradient(top, #0088CC, #0044CC);
+			  background-image: -webkit-gradient(linear, 0 0, 0 0088CC%, from(#DDDDDD), to(#0044CC));
+			  background-image: -webkit-linear-gradient(top, #0088CC, #0044CC);
+			  background-image: -o-linear-gradient(top, #0088CC, #0044CC);
+			  background-image: linear-gradient(top, #0088CC, #0044CC);
+			  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0088CC', endColorstr='#0044CC', GradientType=0);
+			  border-color: #0044CC #0044CC #bfbfbf;
+			  color:#FFFFFF;
+		}
+		.btn-primary:hover,
+		.btn-primary:active,
+		.btn-primary.active,
+		.btn-primary.disabled,
+		.btn-primary[disabled] {
+		  background-color: #0044CC;
+		}
+		#documenter_copyright{display:block !important;visibility:visible !important;}
+	</style>
+	
+	
+	
+    </head>
+    
+<body class="documenter-project-ibuddy" data-spy="scroll" id="top">
+
+<!-- Documentation Navbar -->
+
+<div class="navbar navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container"> 
+			<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </a> 
+			<a class="brand" href="#">iBuddy - Fast and Beautiful BuddyPress Theme</a>
+			<div class="nav-collapse">
+			<ul class="nav">
+					
+			<li><a href="#setting_pages" title="Setting Pages">Setting Pages</a>
+				<ul>
+					<li><a href="#setting_pages_setting_the_home_page">Setting the Home page:</a>
+					<li><a href="#setting_pages_setting_the_blog_page">Setting the Blog page:</a>
+				</ul>
+			</li>
+			<li><a href="#theme_options" title="Theme Options">Theme Options</a></li>
+			<li><a href="#general_settings" title="General Settings">General Settings</a>
+				<ul>
+					<li><a href="#general_settings_stronglogo_strong">Logo</a>
+					<li><a href="#general_settings_strongskin_color_strong">Skin Color</a>
+					<li><a href="#general_settings_stronggoogle_analytics_code_strong">Google Analytics Code</a>
+				</ul>
+			</li>
+			<li><a href="#home_page" title="Home Page">Home Page</a>
+				<ul>
+					<li><a href="#home_page_groups_avatars">Groups Avatars</a>
+					<li><a href="#home_page_custom_image">Custom Image</a>
+					<li><a href="#home_page_welcome_message">Welcome Message</a>
+				</ul>
+			</li>
+			<li><a href="#registration_page" title="Registration Page">Registration Page</a>
+				<ul>
+					<li><a href="#registration_page_members_counter">Members Counter</a>
+					<li><a href="#registration_page_members_avatars">Members Avatars</a>
+					<li><a href="#registration_page_custom_image">Custom Image</a>
+					<li><a href="#registration_page_custom_message">Custom Message</a>
+				</ul>
+			</li>
+			<li><a href="#footer" title="Footer">Footer</a>
+				<ul>
+					<li><a href="#footer_footer_copyright_text">Footer Copyright Text</a>
+				</ul>
+			</li>
+			<li><a href="#advanced" title="Advanced">Advanced</a>
+				<ul>
+					<li><a href="#advanced_lock_down_buddypress">Lock-down BuddyPress</a>
+					<li><a href="#advanced_lock_down_home_page">Lock-down Home Page</a>
+				</ul>
+			</li>
+
+			</ul>
+			</div>
+		</div>
+	</div>
+</div> <!-- End of Navbar -->
+
+<!-- Main Container Beginning -->			
+			
+<div class="container" id="documenter_content">
+    
+	<div id="documenter-cover">
+	<div class="masthead">
+	    <h1>iBuddy - Fast and Beautiful BuddyPress Theme</h1>
+	    <p></p>
+	    <ul class="marketing-byline">
+			<li>created: 06/26/2013</li>
+			
+			<li>by: Ayman Al Zarrad</li>
+			
+		</ul>
+		
+	</div> <!-- masthead -->
+	
+   <div id="intro">
+    <p class="highlight hero-unit">Thank you for using my theme. If you have any questions that are beyond the scope of this help file, please feel free to ask on the support forum of the theme on WordPress.org website. Thanks!</p>
+   </div> <!-- intro -->
+   
+	</div>
+      
+  <section id="setting_pages">
+	<div class="page-header"><h3>Setting Pages</h3><hr class="notop"></div>
+<h4 id="setting_pages_setting_the_home_page">Setting the Home page:</h4>
+<ol>
+	<li>
+		Go to <strong>Pages &rarr; Add New </strong></li>
+	<li>
+		Give your page a title like <strong>Home</strong></li>
+	<li>
+		Select the <strong>Home template</strong> from the template select option</li>
+	<li>
+		Hit publish</li>
+</ol>
+<p>
+	&nbsp;</p>
+<p>
+	Now we have to to apply the Hom page we created as the front page for the website:</p>
+<ol>
+	<li>
+		Go to <strong>Settings &rarr; Reading </strong></li>
+	<li>
+		<strong>Front page displays</strong> select <strong>Static page</strong></li>
+	<li>
+		<strong>Front page</strong> select the <strong>Home</strong> page we created</li>
+	<li>
+		Hit <strong>Save changes</strong></li>
+</ol>
+<p>
+	&nbsp;</p>
+<p>
+	Now the Home page is set and ready. ( For further settings see the Home page Settings section )</p>
+<p>
+	<br>
+	&nbsp;</p>
+<h4 id="setting_pages_setting_the_blog_page">Setting the Blog page:</h4>
+<ol>
+	<li>
+		Go to <strong>Pages &rarr; Add New </strong></li>
+	<li>
+		Give your page a title like <strong>Home</strong></li>
+	<li>
+		Select the <strong>Home template</strong> from the template select option</li>
+	<li>
+		Hit publish</li>
+</ol>
+<p>
+	&nbsp;</p>
+<p>
+	Now the Blog page is set and ready. ( Please note: you don&#39;t have to apply any changes under <strong>Settings &rarr; Reading </strong> as this page template will already retrieve you blog posts )</p>
+</section>
+<section id="theme_options">
+	<div class="page-header"><h3>Theme Options</h3><hr class="notop"></div>
+<p>
+	&nbsp;</p>
+<p>
+	Theme Options are located under <strong>Appearance &rarr; Theme Options , </strong>This is an Overview of the different options you will find: ( Please note that we will be going though each one later on )</p>
+<p>
+	&nbsp;</p>
+<ol>
+	<li>
+		<p>
+			<a href="#general_settings"><strong>General Settings:</strong></a></p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Logo</p>
+	</li>
+	<li>
+		<p>
+			Skin Color</p>
+	</li>
+	<li>
+		<p>
+			Google Analytics Code</p>
+	</li>
+</ul>
+<ol>
+	<li value="2">
+		<p>
+			<strong><a href="#home_page">Home Page</a>:</strong></p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Groups Avatars</p>
+		<ul style="">
+			<li>
+				<p>
+					Groups Avatars Type</p>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<p>
+			Custom Image</p>
+		<ul>
+			<li>
+				<p>
+					Custom Image URL</p>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<p>
+			Welcome Message</p>
+		<ul>
+			<li>
+				<p>
+					Welcome Message Title</p>
+			</li>
+			<li>
+				<p>
+					Welcome Message Content</p>
+			</li>
+		</ul>
+	</li>
+</ul>
+<ol>
+	<li value="3">
+		<p>
+			<strong><a href="#registration_page">Registration Page</a>:</strong></p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Members Counter</p>
+	</li>
+	<li>
+		<p>
+			Members Avatars</p>
+		<ul>
+			<li>
+				<p>
+					Members Avatars Type</p>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<p>
+			Custom Image</p>
+		<ul>
+			<li>
+				<p>
+					Custom Image URL</p>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<p>
+			Custom Message</p>
+		<ul>
+			<li>
+				<p>
+					Custom Message Title</p>
+			</li>
+			<li>
+				<p>
+					Custom Message Content</p>
+			</li>
+		</ul>
+	</li>
+</ul>
+<ol>
+	<li value="4">
+		<p>
+			<strong><a href="#footer">Footer</a>:</strong></p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Footer Copyright Text</p>
+	</li>
+</ul>
+<ol>
+	<li value="5">
+		<p>
+			<strong><a href="#advanced">Advanced</a>:</strong></p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Lock-down BuddyPress</p>
+		<ul style="">
+			<li>
+				<p>
+					Redirect Page</p>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<p>
+			Lock-down Home Page</p>
+	</li>
+</ul>
+<p>
+	<br>
+	&nbsp;</p>
+<p>
+	&nbsp;</p>
+</section>
+<section id="general_settings">
+	<div class="page-header"><h3>General Settings</h3><hr class="notop"></div>
+<p>
+	&nbsp;</p>
+<ol>
+	<li>
+		<h4 id="general_settings_stronglogo_strong"><strong>Logo</strong></h4>
+	</li>
+</ol>
+<p style="margin-left: 40px;">
+	Here where you can upload your own logo that will be placed in:</p>
+<p style="margin-left: 40px;">
+	The header. It will be used instead of the texture logo (recommended max size H80px , w600px)</p>
+<p style="margin-left: 40px;">
+	The login page. It will be used instead of WordPress logo.</p>
+<p>
+	&nbsp;</p>
+<ol>
+	<li value="2">
+		<h4 id="general_settings_strongskin_color_strong"><strong>Skin Color</strong></h4>
+	</li>
+</ol>
+<p style="margin-left: 40px;">
+	You can chose the skin color you prefer to use. If you don&#39;t chose any, than the default will be used</p>
+<p style="margin-left: 40px;">
+	The colors you can chose are:</p>
+<p style="margin-left: 80px;">
+	<strong>Default ( Blue )</strong></p>
+<p style="margin-left: 80px;">
+	<strong>Red</strong></p>
+<p style="margin-left: 80px;">
+	<strong>Pink</strong></p>
+<p style="margin-left: 80px;">
+	<strong>Orange</strong></p>
+<p style="margin-left: 80px;">
+	<strong>Green</strong></p>
+<p style="margin-left: 80px;">
+	&nbsp;</p>
+<ol>
+	<li value="3">
+		<h4 id="general_settings_stronggoogle_analytics_code_strong"><strong>Google Analytics Code</strong></h4>
+		<p>
+			If you use Google Analytics to Track your website visitors than you can insert your tracking code in the text box so wit will be inserted before the closing of the &lt;/head&gt; tag.</p>
+	</li>
+</ol>
+<p>
+	<br>
+	&nbsp;</p>
+</section>
+<section id="home_page">
+	<div class="page-header"><h3>Home Page</h3><hr class="notop"></div>
+<p>
+	You can use only one component. For example: if you chose to use Groups Avatars than you can use the Custom Image or the Welcome Message.</p>
+<p>
+	If you don&#39;t modify anything here the Groups Avatars will be used.</p>
+<ol>
+	<li>
+		<h4 id="home_page_groups_avatars">Groups Avatars</h4>
+	</li>
+</ol>
+<ul>
+	<li style="margin-left: 40px;">
+		Groups Avatars Type</li>
+</ul>
+<p style="margin-left: 80px;">
+	The type of Groups you would like to show.</p>
+<p style="margin-left: 80px;">
+	The options are:</p>
+<p style="margin-left: 120px;">
+	<strong>Active</strong></p>
+<p style="margin-left: 120px;">
+	<strong>Newest </strong></p>
+<p style="margin-left: 120px;">
+	<strong>Popular</strong></p>
+<p style="margin-left: 120px;">
+	<strong>Random</strong></p>
+<p>
+	&nbsp;</p>
+<ol>
+	<li value="2">
+		<h4 id="home_page_custom_image">Custom Image</h4>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li value="2">
+		<p>
+			Custom Image URL</p>
+	</li>
+</ul>
+<p style="margin-left: 80px;">
+	You can insert the URL or upload directly the image you wanna use.</p>
+<p>
+	&nbsp;</p>
+<ol>
+	<li value="3">
+		<h4 id="home_page_welcome_message">Welcome Message</h4>
+	</li>
+</ol>
+<p>
+	&nbsp;</p>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Welcome Message Title</p>
+		<p>
+			Type in a title for the welcome message.</p>
+	</li>
+	<li>
+		<p>
+			Welcome Message Content</p>
+		<p>
+			Type in the body/content of your welcome message.</p>
+	</li>
+</ul>
+<p>
+	&nbsp;</p>
+</section>
+<section id="registration_page">
+	<div class="page-header"><h3>Registration Page</h3><hr class="notop"></div>
+<p>
+	You can use only one component. For example: if you chose to use Members Avatars than you can use the Custom Image or the Custom Message.</p>
+<p>
+	If you don&#39;t modify anything here the Members Avatars will be used.</p>
+<ol>
+	<li>
+		<h4 id="registration_page_members_counter">Members Counter</h4>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Counter of your total Members. Activated by default.</p>
+	</li>
+</ul>
+<p>
+	&nbsp;</p>
+<ol start="2">
+	<li>
+		<h4 id="registration_page_members_avatars">Members Avatars</h4>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Members Avatars Type</p>
+	</li>
+</ul>
+<p style="margin-left: 80px;">
+	The type of Members you would like to show.</p>
+<p style="margin-left: 80px;">
+	The options are:</p>
+<p style="margin-left: 120px;">
+	<b>Active</b></p>
+<p style="margin-left: 120px;">
+	<b>Newest </b></p>
+<p style="margin-left: 120px;">
+	<b>Popular</b></p>
+<p style="margin-left: 120px;">
+	<b>Random </b></p>
+<p>
+	&nbsp;</p>
+<ol start="3">
+	<li>
+		<h4 id="registration_page_custom_image">Custom Image</h4>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Custom Image URL</p>
+		<p>
+			You can insert the URL or upload directly the image you wanna use.</p>
+	</li>
+</ul>
+<p>
+	&nbsp;</p>
+<ol start="4">
+	<li>
+		<h4 id="registration_page_custom_message">Custom Message</h4>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Custom Message Title</p>
+		<p>
+			Type in a title for the custom message.</p>
+	</li>
+	<li>
+		<p>
+			Custom Message Content</p>
+		<p>
+			Type in the body/content of your custom message.</p>
+	</li>
+</ul>
+<p>
+	&nbsp;</p>
+<p>
+	&nbsp;</p>
+<p>
+	&nbsp;</p>
+</section>
+<section id="footer">
+	<div class="page-header"><h3>Footer</h3><hr class="notop"></div>
+<p>
+	&nbsp;</p>
+<ol>
+	<li>
+		<h4 id="footer_footer_copyright_text">Footer Copyright Text</h4>
+	</li>
+</ol>
+<p style="margin-left: 40px;">
+	Insert your copyright text or anything else you want it to be displayed in the Footer.</p>
+</section>
+<section id="advanced">
+	<div class="page-header"><h3>Advanced</h3><hr class="notop"></div>
+<p>
+	&nbsp;</p>
+<ol>
+	<li>
+		<h4 id="advanced_lock_down_buddypress">Lock-down BuddyPress</h4>
+		<p>
+			This option will Lock-down your BuddyPress pages to only logged-in Members. So non logged-in Members/Visitors will not have any access and if they try to access one of BuddyPress pages they will redirected to the page you specify in the option below.</p>
+	</li>
+</ol>
+<ul style="margin-left: 40px;">
+	<li>
+		<p>
+			Redirect Page</p>
+		<p>
+			If you activated the option above than chose the page that will be used for the redirection</p>
+		<p>
+			for logged-out Members/Visitors. Please note: If you don&#39;t select any, than the login page will be the default</p>
+	</li>
+</ul>
+<p>
+	<br>
+	&nbsp;</p>
+<ol start="2">
+	<li>
+		<h4 id="advanced_lock_down_home_page">Lock-down Home Page</h4>
+		<p>
+			With this option you have the possibility to prevent access to the Home page by the logged-in Members. But anyway they can still see access it as long as they are logged-out.</p>
+		<p>
+			So, if this option is active and a member uses the login form on the Home page, than the Member will be redirected to the profile page after a successful login.&nbsp;</p>
+	</li>
+</ol>
+</section>
+
+
+
+    <hr />
+
+<footer>
+    <p>Copyright Ayman Al Zarrad 2013 made with the <a href="http://rxa.li/documenter">Documenter v2.0</a></p>
+</footer>
+
+</div><!-- /container --> 
+
+<!-- Le javascript
+    ================================================== --> 
+<!-- Placed at the end of the document so the pages load faster --> 
+<script>document.createElement('section');var duration='500',easing='swing';</script>
+<script src="assets/js/jquery.js"></script> 
+<script src="assets/js/jquery.scrollTo.js"></script>
+<script src="assets/js/jquery.easing.js"></script>
+<script src="assets/js/scripts.js"></script> 
+<script src="assets/js/google-code-prettify/prettify.js"></script> 
+<script src="assets/js/bootstrap-min.js"></script> 
+</body>
+</html>

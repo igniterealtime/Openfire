@@ -1,0 +1,15 @@
+{
+	'slug':'greenthumb',
+	'title':'Green Thumb',
+	'file': 'greenthumb.less',
+	'output_file': 'greenthumb.css',
+	'output_dir': '%cc2_schemes%',
+	'settings': 'greenthumb.settings.php',
+	'scheme': {
+		'_font_color':'111',
+		'_font_family':'font-family-sans-serif',
+		'_link_color':'84F24B',
+		'_hover_color':'BFF15A',
+		'body-bg':'F0FFD9'
+	}
+}

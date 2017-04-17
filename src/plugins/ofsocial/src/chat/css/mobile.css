@@ -1,0 +1,288 @@
+/*
+
+Jappix - An open social platform
+This is the Jappix Mobile CSS stylesheet
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 20/05/11
+
+*/
+
+/* BEGIN GENERAL STYLE */
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font: 0.9em helvetica, "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", Arial, sans-serif;
+	background-color: #dcdcdc;
+	margin: 0 auto;
+	text-align: center;
+	min-width: 200px;
+	min-height: 260px;
+}
+
+a {
+	color: black;
+}
+
+/* END GENERAL STYLE */
+
+/* BEGIN HEADER STYLE */
+
+.header {
+	background-color: #2d2d2d;
+	border-bottom: 1px solid #6d6d6d;
+	color: #405964;
+	padding: 6px 0;
+	height: 30px;
+}
+
+.header div {
+	background-position: 0 0;
+	width: 83px;
+	height: 30px;
+}
+
+/* END HEADER STYLE */
+
+/* BEGIN HOME STYLE */
+
+#home .header div {
+	margin: 0 auto;
+}
+
+#home .notification {
+	padding: 2px;
+	margin-top: -1px;
+}
+
+#noscript {
+	background: #86a2ff;
+	border-bottom: 1px solid #5890d6;
+	color: #1e4b82;
+}
+
+#error {
+	background: #ff8686;
+	border-bottom: 1px solid #d65858;
+	color: #821e1e;
+	display: none;
+}
+
+#info {
+	background: #f3eba7;
+	border-bottom: 1px solid #d9d085;
+	color: #5e5616;
+	display: none;
+}
+
+#home .login {
+	padding: 8px 0;
+	margin: 30px 0 30px 0;
+}
+
+#home .login input {
+	margin-top: 5px;
+	padding: 2px;
+}
+
+#home .login input.xid,
+#home .login input.password {
+	display: block;
+	margin: 4px auto;
+	font-size: 0.85em;
+	padding: 4px;
+	background-color: white;
+	border: 1px solid #636363;
+	width: 150px;
+	padding-left: 24px;
+}
+
+#home .login input.xid {
+	background-position: 4px -30px;
+}
+
+#home .login input.password {
+	background-position: 4px -53px;
+}
+
+#home .login label {
+	margin-bottom: 12px;
+	display: block;
+}
+
+#home .login label input {
+	margin-right: 4px;
+}
+
+#home a {
+	font-size: 0.8em;
+}
+
+/* END HOME STYLE */
+
+/* BEGIN TALK STYLE */
+
+#talk .header div,
+#chat .header div {
+	float: left;
+	margin-left: 7px;
+}
+
+#talk .header button,
+#chat .header button {
+	float: right;
+	margin-right: 7px;
+	padding: 2px;
+}
+
+#talk a.one-buddy {
+	display: none;
+	background-color: #87a5ab;
+	border-bottom: 1px solid #5b8088;
+	text-shadow: 1px 1px 1px #5b8088;
+	text-decoration: none;
+	color: white;
+	outline-style: none;
+	padding: 10px 0;
+}
+
+#talk a.one-buddy:hover {
+	cursor: pointer;
+}
+
+#talk a.available,
+#talk a.chat {
+	background-color: #83b187;
+	border-bottom: 1px solid #4d8252;
+	text-shadow: 1px 1px 1px #4d8252;
+}
+
+#talk a.available:hover,
+#talk a.chat:hover,
+#talk a.available:focus,
+#talk a.chat:focus {
+	background-color: #89c68e;
+}
+
+#talk a.available:active,
+#talk a.chat:active {
+	background-color: #90d496;
+}
+
+#talk a.away {
+	background-color: #e0be7b;
+	border-bottom: 1px solid #ae8941;
+	text-shadow: 1px 1px 1px #ae8941;
+}
+
+#talk a.away:hover,
+#talk a.away:focus {
+	background-color: #eac784;
+}
+
+#talk a.away:active {
+	background-color: #f3d294;
+}
+
+#talk a.xa,
+#talk a.dnd {
+	background-color: #db8989;
+	border-bottom: 1px solid #a24343;
+	text-shadow: 1px 1px 1px #a24343;
+}
+
+#talk a.xa:hover,
+#talk a.dnd:hover,
+#talk a.xa:focus,
+#talk a.dnd:focus {
+	background-color: #e89797;
+}
+
+#talk a.xa:active,
+#talk a.dnd:active {
+	background-color: #ef9f9f;
+}
+
+/* END TALK STYLE */
+
+/* BEGIN CHAT STYLE */
+
+#chat {
+	display: none;
+}
+
+#chat .one-chat,
+#chat .one-chat p,
+#chat .one-chat div,
+#chat .one-chat input {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+#chat .one-chat {
+	top: 43px;
+	left: 0;
+}
+
+#chat .one-chat p {
+	background-color: #87a5ab;
+	border-bottom: 1px solid #5b8088;
+	text-shadow: 1px 1px 1px #5b8088;
+	color: white;
+	top: 0;
+	left: 0;
+	height: 18px;
+	padding: 2px 0;
+	font-size: 0.9em;
+}
+
+#chat .one-chat div {
+	border-bottom: 1px solid #cbcbcb;
+	top: 23px;
+	left: 0;
+	bottom: 25px;
+	overflow: auto;
+	text-align: left;
+}
+
+#chat .one-chat span {
+	display: block;
+	font-size: 0.85em;
+	margin: 4px 6px;
+	word-wrap: break-word;
+}
+
+#chat .one-chat b {
+	margin-right: 3px;
+}
+
+#chat .one-chat b.me {
+	color: #123a5c;
+}
+
+#chat .one-chat b.him {
+	color: #801e1e;
+}
+
+#chat .one-chat input {
+	background-color: white;
+	bottom: 0;
+	height: 25px;
+	width: 100%;
+	border: none;
+}
+
+#chat .one-chat input.submit {
+	right: 0;
+	width: 35px;
+}
+
+/* END CHAT STYLE */

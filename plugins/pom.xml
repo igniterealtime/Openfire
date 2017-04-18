@@ -54,7 +54,6 @@
         <!-- Versions -->
         <openfire.version>4.2.0-SNAPSHOT</openfire.version>
         <jetty.version>9.2.14.v20151106</jetty.version>
-        <slf4j.version>1.7.7</slf4j.version>
     </properties>
 
     <build>

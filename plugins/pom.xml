@@ -1,11 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <artifactId>parent</artifactId>
-        <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.2.0-SNAPSHOT</version>
-    </parent>
+    <groupId>org.igniterealtime.openfire</groupId>
+    <version>4.2.0-SNAPSHOT</version>
     <artifactId>plugins</artifactId>
     <packaging>pom</packaging>
     <name>Openfire Plugins</name>
@@ -52,7 +49,25 @@
         <module>xmldebugger</module>
     </modules>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Versions -->
+        <openfire.version>4.2.0-SNAPSHOT</openfire.version>
+        <jetty.version>9.2.14.v20151106</jetty.version>
+        <slf4j.version>1.7.7</slf4j.version>
+    </properties>
+
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+        </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -62,7 +77,7 @@
                         <dependency>
                             <groupId>org.igniterealtime.openfire.plugins</groupId>
                             <artifactId>openfire-plugin-assembly-descriptor</artifactId>
-                            <version>${project.version}</version>
+                            <version>${openfire.version}</version>
                         </dependency>
                     </dependencies>
                     <executions>
@@ -122,9 +137,9 @@
                     </executions>
                     <dependencies>
                         <dependency>
-                            <groupId>${project.parent.groupId}</groupId>
+                            <groupId>org.igniterealtime.openfire</groupId>
                             <artifactId>xmppserver</artifactId>
-                            <version>${project.version}</version>
+                            <version>${openfire.version}</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -134,9 +149,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.parent.groupId}</groupId>
+            <groupId>org.igniterealtime.openfire</groupId>
             <artifactId>xmppserver</artifactId>
-            <version>${project.version}</version>
+            <version>${openfire.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

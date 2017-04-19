@@ -63,6 +63,52 @@
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>
             <useProjectArtifact>false</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <excludes>
+                <!-- Exclude all dependencies that are provided by Openfire! -->
+                <exclude>org.igniterealtime:tinder</exclude>
+                <exclude>dom4j:dom4j</exclude>
+                <exclude>jaxme:jaxme-api</exclude>
+                <exclude>jaxen:jaxen</exclude>
+                <exclude>xpp3:xpp3</exclude>
+                <exclude>org.eclipse.jetty:jetty-server</exclude>
+                <exclude>org.eclipse.jetty:jetty-servlets</exclude>
+                <exclude>org.eclipse.jetty:jetty-webapp</exclude>
+                <exclude>org.eclipse.jetty:jetty-jmx</exclude>
+                <exclude>org.eclipse.jetty:jetty-plus</exclude>
+                <exclude>org.eclipse.jetty:jetty-annotations</exclude>
+                <exclude>org.eclipse.jetty.spdy:spdy-http-server</exclude>
+                <exclude>org.eclipse.jetty.websocket:websocket-server</exclude>
+                <exclude>org.eclipse.jetty:apache-jsp</exclude>
+                <exclude>org.apache.taglibs:taglibs-standard-impl</exclude>
+                <exclude>org.apache.taglibs:taglibs-standard-spec</exclude>
+                <exclude>org.apache.mina:mina-core</exclude>
+                <exclude>org.apache.mina:mina-integration-jmx</exclude>
+                <exclude>org.apache.mina:mina-filter-ssl</exclude>
+                <exclude>org.apache.mina:mina-filter-compression</exclude>
+                <exclude>org.bouncycastle:bcpg-jdk15on</exclude>
+                <exclude>org.bouncycastle:bcpkix-jdk15on</exclude>
+                <exclude>org.bouncycastle:bcprov-jdk15on</exclude>
+                <exclude>org.slf4j:slf4j-log4j12</exclude>
+                <exclude>log4j:log4j</exclude>
+                <exclude>org.slf4j:jcl-over-slf4j</exclude>
+                <exclude>rome:rome</exclude>
+                <exclude>rome:rome-fetcher</exclude>
+                <exclude>javax.mail:mail</exclude>
+                <exclude>jmdns:jmdns</exclude>
+                <exclude>com.cloudhopper.proxool:proxool</exclude>
+                <exclude>commons-httpclient:commons-httpclient</exclude>
+                <exclude>commons-lang:commons-lang</exclude>
+                <exclude>commons-codec:commons-codec</exclude>
+                <exclude>org.apache.commons:commons-pool2</exclude>
+                <exclude>com.cenqua.shaj:shaj</exclude>
+                <exclude>org.gnu.inet:libidn</exclude>
+                <exclude>org.apache.ant:ant</exclude>
+                <exclude>org.jsmpp:jsmpp</exclude>
+                <exclude>hsqldb:hsqldb</exclude>
+                <exclude>mysql:mysql-connector-java</exclude>
+                <exclude>org.postgresql:postgresql</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>

@@ -35,9 +35,6 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                         </manifest>
-                        <manifestEntries>
-                            <Class-Path>tinder-1.3.0.jar</Class-Path>
-                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>

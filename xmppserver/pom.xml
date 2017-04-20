@@ -266,6 +266,11 @@
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
+                <exclusion>
+                    <!-- This wasn not included prior to the Mavenization of Openfire, and pulls in an unwanted old servlet API. -->
+                    <groupId>avalon-framework</groupId>
+                    <artifactId>avalon-framework-api</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>

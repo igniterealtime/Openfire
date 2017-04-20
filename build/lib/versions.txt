@@ -11,7 +11,7 @@ commons-lang.jar                    | 2.3                                       
 commons-httpclient.jar              | 3.1                                                          | Apache 2.0
 commons-codec.jar                   | 1.9                                                          | Apache 2.0
 commons-pool2.jar                   | 2.4.2                                                        | Apache 2.0
-dom4j.jar                           | 1.6.1                                                        | BSD (http://www.dom4j.org/dom4j-1.6.1/license.html)
+dom4j.jar                           | 2.0.0                                                        | See https://github.com/dom4j/dom4j/blob/master/LICENSE
 concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5                         | Apache 2.0
 dbutil.jar                          | Jive Code, no release version.                               | GPL
 hsqldb.jar                          | 2.3.4                                                        | BSD (http://hsqldb.org/web/hsqlLicense.html)
@@ -49,7 +49,7 @@ org.eclipse.jetty.apache-jsp.jar                 | 9.2.14.v20151106 (from Jetty 
 org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar | 3.8.2.v20130121  (from Jetty 9.2.14.v20151106)  | Eclipse 1.0
 org.mortbay.jasper.apache-el.jar                 | 8.0.9.M3         (from Jetty 9.2.14.v20151106)  | Apache 2.0
 org.mortbay.jasper.apache-jsp.jar                | 8.0.9.M3         (from Jetty 9.2.14.v20151106)  | Apache 2.0
-jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1
+jaxen.jar                           | 1.1.6  (from DOM4J 2.0.0)                                    | Apache 1.1
 jdom.jar                            | 1.0 (required by rome)                                       | Apache 1.1
 jmdns.jar                           | PRE 1.0, patched                                             | Apache 2.0
 jmock.jar                           | 2.1.0                                                        |

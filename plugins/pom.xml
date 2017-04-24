@@ -51,6 +51,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- The name of the Openfire plugin (defaults to ${project.artifactId}. This value is somewhat particular:
+           - * It is used as a Java package name (and thus, cannot contain characters like dashes and dots.
+           - * It is also used as a file name for the resulting Openfire plugin.
+           - * Finally, it is used to identify resources, such as i18n files.
+           - Least issues will occur when this value is all lowercase, simple ASCII text.
+           -->
+        <plugin.name>${project.artifactId}</plugin.name>
+
         <!-- Versions -->
         <openfire.version>4.2.0-SNAPSHOT</openfire.version>
     </properties>
@@ -89,7 +98,7 @@
                             </goals>
                             <configuration>
                                 <appendAssemblyId>false</appendAssemblyId>
-                                <finalName>${project.artifactId}</finalName>
+                                <finalName>${plugin.name}</finalName>
                                 <attach>false</attach>
                                 <!-- This is where we use our shared assembly descriptor -->
                                 <descriptorRefs>
@@ -116,7 +125,7 @@
                             </goals>
                             <configuration>
                                 <jspc>
-                                    <package>org.jivesoftware.openfire.plugin.${project.artifactId}</package>
+                                    <package>org.jivesoftware.openfire.plugin.${plugin.name}</package>
                                 </jspc>
                             </configuration>
                         </execution>

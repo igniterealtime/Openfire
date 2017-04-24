@@ -9,8 +9,8 @@
     <description>Tab Library for Openfire Admin Console</description>
     <short-name>admin</short-name>
     <uri>admin</uri>
-	<tag>
-		<name>tabs</name>
+    <tag>
+        <name>tabs</name>
         <tag-class>org.jivesoftware.admin.TabsTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -65,7 +65,7 @@
         </attribute>
     </tag>
     <tag>
-		<name>sidebar</name>
+        <name>sidebar</name>
         <tag-class>org.jivesoftware.admin.SidebarTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -93,9 +93,9 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
-	</tag>
-	<tag>
-		<name>subsidebar</name>
+    </tag>
+    <tag>
+        <name>subsidebar</name>
         <tag-class>org.jivesoftware.admin.SubSidebarTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -118,7 +118,7 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
-	</tag>
+    </tag>
     <tag>
         <name>ASN1DER</name>
         <tag-class>org.jivesoftware.admin.ASN1DERTag</tag-class>
@@ -131,15 +131,15 @@
     </tag>
     <tag-file>
         <name>contentBox</name>
-        <path>/WEB-INF/tags/admin/contentBox.tagx</path>
+        <path>/META-INF/tags/admin/contentBox.tagx</path>
     </tag-file>
     <tag-file>
         <name>infobox</name>
-        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+        <path>/META-INF/tags/admin/infoBox.tagx</path>
     </tag-file>
     <tag-file>
         <name>infoBox</name>
-        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+        <path>/META-INF/tags/admin/infoBox.tagx</path>
     </tag-file>
     <function>
         <name>replaceAll</name>

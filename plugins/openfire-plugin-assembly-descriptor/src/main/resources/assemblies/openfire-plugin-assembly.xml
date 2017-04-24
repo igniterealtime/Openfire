@@ -11,7 +11,7 @@
 
         <!-- metadata files (plugin.xml, icons, etc). -->
         <fileSet>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory/>
             <directory>${project.build.sourceDirectory}/../..</directory>
             <includes>
                 <include>*.html</include>
@@ -23,7 +23,7 @@
 
         <!-- database, i18n and web directory -->
         <fileSet>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory/>
             <directory>${project.build.sourceDirectory}/..</directory>
             <includes>
                 <include>database/**</include>
@@ -39,20 +39,10 @@
 
         <!-- web.xml (it will be modified by JspC -->
         <fileSet>
-            <outputDirectory>/web/WEB-INF</outputDirectory>
+            <outputDirectory>web/WEB-INF</outputDirectory>
             <directory>${project.build.directory}</directory>
             <includes>
                 <include>web.xml</include>
-            </includes>
-        </fileSet>
-
-        <!-- The jar-file containing the compiled plugin code. This is assembled
-             by the assembly descriptor "openfire-plugin-jar" -->
-        <fileSet>
-            <directory>${project.build.directory}</directory>
-            <outputDirectory>/lib</outputDirectory>
-            <includes>
-                <include>plugin-${project.artifactId}.jar</include>
             </includes>
         </fileSet>
 
@@ -61,8 +51,8 @@
     <!-- Bundle the dependencies of this plugin -->
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/lib</outputDirectory>
-            <useProjectArtifact>false</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
         </dependencySet>
     </dependencySets>
 </assembly>

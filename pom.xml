@@ -15,6 +15,7 @@
         <module>starter</module>
         <module>plugins</module>
         <module>webadmin</module>
+        <module>webadmintld</module>
     </modules>
 
     <organization>

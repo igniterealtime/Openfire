@@ -91,21 +91,6 @@
                     </dependencies>
                     <executions>
                         <execution>
-                            <id>make-plugin-jar</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>single</goal>
-                            </goals>
-                            <configuration>
-                                <appendAssemblyId>false</appendAssemblyId>
-                                <finalName>plugin-${project.artifactId}</finalName>
-                                <!-- This is where we use our shared assembly descriptor -->
-                                <descriptorRefs>
-                                    <descriptorRef>openfire-plugin-jar</descriptorRef>
-                                </descriptorRefs>
-                            </configuration>
-                        </execution>
-                        <execution>
                             <id>make-assembly</id>
                             <phase>package</phase>
                             <goals>
@@ -114,6 +99,7 @@
                             <configuration>
                                 <appendAssemblyId>false</appendAssemblyId>
                                 <finalName>${plugin.name}</finalName>
+                                <attach>false</attach>
                                 <!-- This is where we use our shared assembly descriptor -->
                                 <descriptorRefs>
                                     <descriptorRef>openfire-plugin-assembly</descriptorRef>
@@ -148,6 +134,11 @@
                         <dependency>
                             <groupId>org.igniterealtime.openfire</groupId>
                             <artifactId>xmppserver</artifactId>
+                            <version>${openfire.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.igniterealtime.openfire</groupId>
+                            <artifactId>webadmintld</artifactId>
                             <version>${openfire.version}</version>
                         </dependency>
                     </dependencies>

@@ -720,7 +720,9 @@ public class JiveGlobals {
         // Check for a legacy, comma separated value.
         final String legacyValue = JiveGlobals.getProperty( parent );
 
-        final Collection<String> propertyNames = properties.getChildrenNames( parent );
+        // Ensure that properties are ordered.
+        final SortedSet<String> propertyNames = new TreeSet<>( properties.getChildrenNames( parent ) );
+
         if ( propertyNames.isEmpty() )
         {
             if ( legacyValue != null )
@@ -830,7 +832,7 @@ public class JiveGlobals {
             {
                 if ( value != null && !value.isEmpty() )
                 {
-                    final String childName = name + "." + i++;
+                    final String childName = name + "." + String.format("%05d", i++ );
                     properties.put( childName, value );
                 }
             }
@@ -838,7 +840,7 @@ public class JiveGlobals {
             // When no non-null, non-empty values are stored, store one to denote an empty collection.
             if ( i == 1 )
             {
-                properties.put( name + ".1", "" );
+                properties.put( name + ".00001", "" );
             }
 
             // The put's above will have generated events for each child property. Now, generate an event for the parent.

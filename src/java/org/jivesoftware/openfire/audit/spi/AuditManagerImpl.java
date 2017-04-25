@@ -316,7 +316,12 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
 
 	@Override
 	public void propertySet(String property, Map<String, Object> params) {
-		String value = (String) params.get("value");
+        final Object val = params.get("value");
+        if (!( val instanceof String ))
+        {
+            return;
+        }
+        String value = (String) val;
 		switch (property) {
 			case "xmpp.audit.active":
 				enabled = Boolean.parseBoolean(value);

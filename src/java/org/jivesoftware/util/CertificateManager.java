@@ -184,7 +184,7 @@ public class CertificateManager {
      */
     public static X509Certificate getEndEntityCertificate(Certificate chain[],
             KeyStore certStore, KeyStore trustStore) {
-        if (chain.length == 0) {
+        if (chain == null || chain.length == 0) {
             return null;
         }
         X509Certificate first = (X509Certificate) chain[0];

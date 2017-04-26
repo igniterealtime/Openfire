@@ -195,14 +195,12 @@ public class SASLAuthentication {
                 boolean trustedCert = false;
                 if (session.isSecure()) {
                     final LocalClientSession localClientSession = (LocalClientSession)session;
-                    if (localClientSession != null) {
-                        final Connection connection = localClientSession.getConnection();
-                        final KeyStore keyStore = connection.getConfiguration().getIdentityStore().getStore();
-                        final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
-                        final X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), keyStore, trustStore);
-                        if (trusted != null) {
-                            trustedCert = true;
-                        }
+                    final Connection connection = localClientSession.getConnection();
+                    final KeyStore keyStore = connection.getConfiguration().getIdentityStore().getStore();
+                    final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
+                    final X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), keyStore, trustStore);
+                    if (trusted != null) {
+                        trustedCert = true;
                     }
                 }
                 if (trustedCert == false) {

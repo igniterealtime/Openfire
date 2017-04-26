@@ -203,11 +203,11 @@
         <p><fmt:message key="reg.settings.inband_account_info" /></p>
         <table cellpadding="3" cellspacing="0" border="0">
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${canChangePassword ? 'checked' : ''}></td>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''}></td>
                 <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${canChangePassword ?  '' : 'checked'}></td>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'}></td>
                 <td width="99%"><label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label></td>
             </tr>
         </table>

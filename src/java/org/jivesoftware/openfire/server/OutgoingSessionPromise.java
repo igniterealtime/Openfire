@@ -21,11 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
@@ -199,7 +195,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
         private OutgoingSessionPromise promise;
         private String domain;
-        private Queue<Packet> packetQueue = new ConcurrentLinkedQueue<>();
+        private Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
+
         /**
          * Keep track of the last time s2s failed. Once a packet failed to be sent to a
          * remote server this stamp will be used so that for the next 5 seconds future packets
@@ -334,8 +331,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             }
         }
 
-        public void addPacket(Packet packet) {
-            packetQueue.add(packet);
+        public void addPacket(Packet packet)
+        {
+            if ( !packetQueue.offer( packet ) )
+            {
+                returnErrorToSender(packet);
+                Log.debug( "OutgoingSessionPromise: Error sending packet to remote server (queue full): " + packet);
+            }
         }
 
         public String getDomain() {

@@ -191,7 +191,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
     }
 
-    private class PacketsProcessor implements Runnable {
+    private class PacketsProcessor implements Runnable
+    {
+        private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
 
         private OutgoingSessionPromise promise;
         private String domain;
@@ -222,9 +224,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         // Check if enough time has passed to attempt a new s2s
                         if (System.currentTimeMillis() - failureTimestamp < 5000) {
                             returnErrorToSender(packet);
-                            Log.debug(
-                                    "OutgoingSessionPromise: Error sending packet to remote server (fast discard): " +
-                                            packet);
+                            Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domain, packet );
                             continue;
                         }
                         else {
@@ -237,9 +237,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                     catch (Exception e) {
                         returnErrorToSender(packet);
-                        Log.debug(
-                                "OutgoingSessionPromise: Error sending packet to remote server: " + packet,
-                                e);
+                        Log.debug( "Error sending packet to domain '{}': {}", domain, packet, e );
                         // Mark the time when s2s failed
                         failureTimestamp = System.currentTimeMillis();
                     }
@@ -327,16 +325,16 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 }
             }
             catch (Exception e) {
-                Log.warn("Error returning error to sender. Original packet: " + packet, e);
+                Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domain, packet, e );
             }
         }
 
-        public void addPacket(Packet packet)
+        void addPacket( Packet packet )
         {
             if ( !packetQueue.offer( packet ) )
             {
                 returnErrorToSender(packet);
-                Log.debug( "OutgoingSessionPromise: Error sending packet to remote server (queue full): " + packet);
+                Log.debug( "Error sending packet to domain '{}' (outbound queue full): {}", domain, packet );
             }
         }
 

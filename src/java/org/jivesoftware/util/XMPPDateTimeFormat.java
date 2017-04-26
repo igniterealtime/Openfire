@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2013 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

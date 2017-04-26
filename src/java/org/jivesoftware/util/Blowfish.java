@@ -1,4 +1,4 @@
-/**
+/*
  * Adapted from Markus Hahn's Blowfish package so that all functionality is
  * in a single source file. Please visit the following URL for his excellent
  * package: http://www.hotpixel.net/software.html

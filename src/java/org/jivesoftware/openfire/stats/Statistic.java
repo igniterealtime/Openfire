@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,7 +105,7 @@ public interface Statistic {
          */
         count;
 
-        /**
+        /*
          * The max count over a time period. An example would be the maximum number of users
          * connected to the server. Each time the {@link Statistic#sample()}
          * method is invoked, it should return the current measurement of the data, irrelevant of

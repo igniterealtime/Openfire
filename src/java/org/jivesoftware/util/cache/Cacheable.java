@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,5 +38,5 @@ public interface Cacheable extends java.io.Serializable {
      *
      * @return the size of the Object in bytes.
      */
-    public int getCachedSize() throws CannotCalculateSizeException;
+    int getCachedSize() throws CannotCalculateSizeException;
 }

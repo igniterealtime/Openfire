@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.sun.mail.smtp.DigestMD5;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;

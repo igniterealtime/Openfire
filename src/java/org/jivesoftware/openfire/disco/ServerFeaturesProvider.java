@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,5 +40,5 @@ public interface ServerFeaturesProvider {
      *
      * @return an Iterator (of String) with the supported features by the server.
      */
-    public abstract Iterator<String> getFeatures();
+    Iterator<String> getFeatures();
 }

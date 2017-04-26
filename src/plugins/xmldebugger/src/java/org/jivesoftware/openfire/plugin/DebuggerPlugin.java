@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,6 @@ import java.util.Map;
 
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.filterchain.IoFilter;
-import org.apache.mina.core.filterchain.IoFilterChain;
-import org.apache.mina.filter.compression.CompressionFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -37,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
 
 /**

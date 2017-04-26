@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,10 +32,10 @@ import java.util.Iterator;
 public interface AuditManager {
 
     // Presence transitions
-    public static final int PRESENCE_UNAVAILABLE_AVAILABLE = 1;
-    public static final int PRESENCE_AVAILABLE_AVAILABLE = 2;
-    public static final int PRESENCE_AVAILABLE_UNAVAILABLE = 4;
-    public static final int PRESENCE_UNAVAILABLE_UNAVAILABLE = 8;
+    int PRESENCE_UNAVAILABLE_AVAILABLE = 1;
+    int PRESENCE_AVAILABLE_AVAILABLE = 2;
+    int PRESENCE_AVAILABLE_UNAVAILABLE = 4;
+    int PRESENCE_UNAVAILABLE_UNAVAILABLE = 8;
 
     /**
      * Determines if auditing is enabled at all.

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,5 +28,5 @@ public interface StreamIDFactory {
      *
      * @return A new, unique stream id
      */
-    public StreamID createStreamID();
+    StreamID createStreamID();
 }

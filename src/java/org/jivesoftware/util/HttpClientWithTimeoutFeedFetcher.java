@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -292,7 +292,7 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
 	}
 
     public interface CredentialSupplier {
-        public Credentials getCredentials(String realm, String host);
+        Credentials getCredentials( String realm, String host );
     }
 
 

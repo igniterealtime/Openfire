@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,6 @@ public interface DiscoItemsProvider {
      * @param senderJID the XMPPAddress of user that sent the disco items request.
      * @return an Iterator (of DiscoItem) with the target entity's items or null if none.
      */
-    public abstract Iterator<DiscoItem> getItems(String name, String node, JID senderJID);
+    Iterator<DiscoItem> getItems( String name, String node, JID senderJID );
 
 }

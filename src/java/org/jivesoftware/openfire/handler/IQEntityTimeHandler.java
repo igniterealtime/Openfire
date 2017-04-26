@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2014 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.IQ;
 
 import javax.xml.bind.DatatypeConverter;

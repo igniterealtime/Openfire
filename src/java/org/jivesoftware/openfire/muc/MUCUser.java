@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,5 +44,5 @@ public interface MUCUser extends ChannelHandler<Packet> {
       *
       * @return the address of the packet handler.
       */
-     public JID getAddress();
+    JID getAddress();
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ public interface VCardListener {
      * @param username the username for which the vCard was created.
      * @param vCard the vcard created.
      */
-    public void vCardCreated(String username, Element vCard);
+    void vCardCreated( String username, Element vCard );
 
     /**
      * A vCard was updated.
@@ -40,7 +40,7 @@ public interface VCardListener {
      * @param username the user for which the vCard was updated.
      * @param vCard the vcard updated.
      */
-    public void vCardUpdated(String username, Element vCard);
+    void vCardUpdated( String username, Element vCard );
 
     /**
      * A vCard was deleted.
@@ -48,5 +48,5 @@ public interface VCardListener {
      * @param username the user for which the vCard was deleted.
      * @param vCard the vcard deleted.
      */
-    public void vCardDeleted(String username, Element vCard);
+    void vCardDeleted( String username, Element vCard );
 }

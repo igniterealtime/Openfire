@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,5 +32,5 @@ public interface DatagramListener {
      * @param datagramPacket the datagram packet received.
      * @return ?
      */
-    public boolean datagramReceived(DatagramPacket datagramPacket);
+    boolean datagramReceived( DatagramPacket datagramPacket );
 }

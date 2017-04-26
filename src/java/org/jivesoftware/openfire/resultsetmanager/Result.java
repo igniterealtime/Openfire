@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,6 @@ public interface Result {
 	 * 
 	 * @return Unique ID of the Result
 	 */
-	public String getUID();
+    String getUID();
 
 }

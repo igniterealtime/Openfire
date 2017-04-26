@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +29,9 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Blowfish;

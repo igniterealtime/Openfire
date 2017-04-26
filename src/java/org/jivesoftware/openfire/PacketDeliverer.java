@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,5 +37,5 @@ public interface PacketDeliverer {
      * @param packet the packet to route
      * @throws PacketException if the packet is null or the packet could not be routed.
      */
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException;
+    void deliver( Packet packet ) throws UnauthorizedException, PacketException;
 }

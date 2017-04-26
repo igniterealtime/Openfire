@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ package org.jivesoftware.openfire;
 
 import org.jivesoftware.util.Version;
 
-import java.util.Collection;
 import java.util.Date;
 
 /**

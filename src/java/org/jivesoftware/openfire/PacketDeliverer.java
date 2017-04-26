@@ -37,5 +37,5 @@ public interface PacketDeliverer {
      * @param packet the packet to route
      * @throws PacketException if the packet is null or the packet could not be routed.
      */
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException;
+    void deliver( Packet packet ) throws UnauthorizedException, PacketException;
 }

@@ -45,7 +45,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an Iterator (of Element) with the target entity's identities.
      */
-    public abstract Iterator<Element> getIdentities(String name, String node, JID senderJID);
+    Iterator<Element> getIdentities( String name, String node, JID senderJID );
 
     /**
      * Returns an Iterator (of String) with the supported features. The features to include are the
@@ -57,7 +57,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an Iterator (of String) with the supported features.
      */
-    public abstract Iterator<String> getFeatures(String name, String node, JID senderJID);
+    Iterator<String> getFeatures( String name, String node, JID senderJID );
 
     /**
      * Returns an XDataForm with the extended information about the entity or null if none. Each bit
@@ -68,7 +68,7 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an XDataForm with the extended information about the entity or null if none.
      */
-    public abstract DataForm getExtendedInfo(String name, String node, JID senderJID);
+    DataForm getExtendedInfo( String name, String node, JID senderJID );
 
     /**
      * Returns true if we can provide information related to the requested name and node. For
@@ -81,5 +81,5 @@ public interface DiscoInfoProvider {
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return true if we can provide information related to the requested name and node.
      */
-    public abstract boolean hasInfo(String name, String node, JID senderJID);
+    boolean hasInfo( String name, String node, JID senderJID );
 }

@@ -32,5 +32,5 @@ public interface UserNameProvider {
      * @param entity JID of the entity to return its name.
      * @return the name of the entity specified by the following JID.
      */
-    abstract String getUserName(JID entity);
+    String getUserName( JID entity );
 }

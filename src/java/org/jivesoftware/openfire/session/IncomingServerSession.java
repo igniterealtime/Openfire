@@ -48,7 +48,7 @@ public interface IncomingServerSession extends ServerSession {
      *
      * @return domains, subdomains and virtual hosts that where validated.
      */
-    public Collection<String> getValidatedDomains();
+    Collection<String> getValidatedDomains();
 
     /**
      * Returns the domain or subdomain of the local server used by the remote server
@@ -59,5 +59,5 @@ public interface IncomingServerSession extends ServerSession {
      * @return the domain or subdomain of the local server used by the remote server
      *         when validating the session.
      */
-    public String getLocalDomain();
+    String getLocalDomain();
 }

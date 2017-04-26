@@ -70,7 +70,7 @@ public interface Plugin {
      * @param manager the plugin manager.
      * @param pluginDirectory the directory where the plugin is located.
      */
-    public void initializePlugin(PluginManager manager, File pluginDirectory);
+    void initializePlugin( PluginManager manager, File pluginDirectory );
 
     /**
      * Destroys the plugin.<p>
@@ -81,6 +81,6 @@ public interface Plugin {
      * garbage collection executed after this method is called must be able
      * to clean up all plugin classes.
      */
-    public void destroyPlugin();
+    void destroyPlugin();
 
 }

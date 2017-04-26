@@ -46,5 +46,5 @@ public interface UserIdentitiesProvider {
      *
      * @return an Iterator (of Element) with identities of protocols supported by users.
      */
-    public abstract Iterator<Element> getIdentities();
+    Iterator<Element> getIdentities();
 }

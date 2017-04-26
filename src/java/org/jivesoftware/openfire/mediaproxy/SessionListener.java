@@ -29,6 +29,6 @@ public interface SessionListener {
      *
      * @param session the session that closed.
      */
-    public void sessionClosed(MediaProxySession session);
+    void sessionClosed( MediaProxySession session );
 
 }

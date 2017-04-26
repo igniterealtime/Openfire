@@ -33,5 +33,5 @@ public interface RoutableChannelHandler extends ChannelHandler<Packet> {
       *
       * @return the XMPP address.
       */
-     public JID getAddress();
+    JID getAddress();
 }

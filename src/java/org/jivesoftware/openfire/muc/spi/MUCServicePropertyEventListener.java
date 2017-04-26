@@ -35,7 +35,7 @@ public interface MUCServicePropertyEventListener {
      * @param property the name of the property.
      * @param params event parameters.
      */
-    public void propertySet(String service, String property, Map<String, Object> params);
+    void propertySet( String service, String property, Map<String, Object> params );
 
     /**
      * A property was deleted.
@@ -44,6 +44,6 @@ public interface MUCServicePropertyEventListener {
      * @param property the name of the property deleted.
      * @param params event parameters.
      */
-    public void propertyDeleted(String service, String property, Map<String, Object> params);
+    void propertyDeleted( String service, String property, Map<String, Object> params );
 
 }

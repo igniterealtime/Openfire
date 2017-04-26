@@ -42,19 +42,19 @@ public interface AuthorizationMapping {
      * @param principal The autheticated principal requesting authorization.
      * @return The name of the default username to use.
      */
-    public String map(String principal);
+    String map( String principal );
 
     /**
      * Returns the short name of the Policy
      *
      * @return The short name of the Policy
      */
-    public abstract String name();
+    String name();
 
     /**
      * Returns a description of the Policy
      *
      * @return The description of the Policy.
      */
-    public abstract String description();
+    String description();
 }

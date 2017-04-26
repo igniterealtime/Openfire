@@ -31,19 +31,19 @@ public interface PrivacyListEventListener {
      *
      * @param list the privacy list.
      */
-    public void privacyListCreated(PrivacyList list);
+    void privacyListCreated( PrivacyList list );
 
     /**
      * A privacy list is being deleted.
      *
      * @param listName name of the the privacy list that has been deleted.
      */
-    public void privacyListDeleting(String listName);
+    void privacyListDeleting( String listName );
 
     /**
      * Properties of the privacy list were changed.
      *
      * @param list the privacy list.
      */
-    public void privacyListModified(PrivacyList list);
+    void privacyListModified( PrivacyList list );
 }

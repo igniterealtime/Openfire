@@ -59,7 +59,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public String getPassword(String username) throws UserNotFoundException,
+    String getPassword( String username ) throws UserNotFoundException,
             UnsupportedOperationException;
 
     /**
@@ -72,7 +72,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public void setPassword(String username, String password)
+    void setPassword( String username, String password )
             throws UserNotFoundException, UnsupportedOperationException;
 
     /**
@@ -83,7 +83,7 @@ public interface AuthProvider {
      * @return true if this UserProvider is able to retrieve user passwords from the
      *         backend user store.
      */
-    public boolean supportsPasswordRetrieval();
+    boolean supportsPasswordRetrieval();
 
     boolean isScramSupported();
     String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException;

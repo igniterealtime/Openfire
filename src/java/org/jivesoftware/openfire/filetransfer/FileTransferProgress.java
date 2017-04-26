@@ -33,34 +33,34 @@ public interface FileTransferProgress {
      * @return the number of bytes that has been transferred.
      * @throws UnsupportedOperationException
      */
-    public long getAmountTransferred() throws UnsupportedOperationException;
+    long getAmountTransferred() throws UnsupportedOperationException;
 
     /**
      * Returns the fully qualified JID of the initiator of the file transfer.
      *
      * @return the fully qualified JID of the initiator of the file transfer.
      */
-    public String getInitiator();
+    String getInitiator();
 
-    public void setInitiator(String initiator);
+    void setInitiator( String initiator );
 
     /**
      * Returns the full qualified JID of the target of the file transfer.
      *
      * @return the fully qualified JID of the target
      */
-    public String getTarget();
+    String getTarget();
 
-    public void setTarget(String target);
+    void setTarget( String target );
 
     /**
      * Returns the unique session id that correlates to the file transfer.
      *
      * @return Returns the unique session id that correlates to the file transfer.
      */
-    public String getSessionID();
+    String getSessionID();
 
-    public void setSessionID(String streamID);
+    void setSessionID( String streamID );
 
     /**
      * When the file transfer is being caried out by another thread this will set the Future
@@ -68,13 +68,13 @@ public interface FileTransferProgress {
      *
      * @param future the furute that is carrying out the transfer
      */
-    public void setTransferFuture(Future<?> future);
+    void setTransferFuture( Future<?> future );
 
-    public void setInputStream(InputStream initiatorInputStream);
+    void setInputStream( InputStream initiatorInputStream );
 
-    public InputStream getInputStream();
+    InputStream getInputStream();
 
-    public void setOutputStream(OutputStream targetOutputStream);
+    void setOutputStream( OutputStream targetOutputStream );
 
-    public OutputStream getOutputStream();
+    OutputStream getOutputStream();
 }

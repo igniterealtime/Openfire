@@ -28,35 +28,35 @@ public interface Statistic {
      *
      * @return the name of a stat.
      */
-    public String getName();
+    String getName();
 
     /**
      * Returns the type of a stat.
      *
      * @return the type of a stat.
      */
-    public Type getStatType();
+    Type getStatType();
 
     /**
      * Returns a description of the stat.
      *
      * @return a description of the stat.
      */
-    public String getDescription();
+    String getDescription();
 
     /**
      * Returns the units that relate to the stat.
      *
      * @return the name of the units that relate to the stat.
      */
-    public String getUnits();
+    String getUnits();
 
     /**
      * Returns the current sample of data.
      *
      * @return a sample of the data.
      */
-    public double sample();
+    double sample();
 
     /**
      * Returns true if the sample value represents only the value of the cluster node
@@ -74,13 +74,13 @@ public interface Statistic {
      * @return true if the sample value represents only the value of the cluster node
      * or otherwise it represents the value of the entire cluster. 
      */
-    public boolean isPartialSample();
+    boolean isPartialSample();
 
     /**
      * The type of statistic.
      */
     @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
-    public enum Type {
+    enum Type {
 
         /**
          * The average rate over time. For example, the averave kb/s in bandwidth used for

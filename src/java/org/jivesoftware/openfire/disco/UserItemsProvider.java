@@ -49,5 +49,5 @@ public interface UserItemsProvider {
      * @param senderJID the XMPPAddress of user that sent the disco items request.
      * @return an Iterator (of Element) with the target entity's items or null if none.
      */
-    public abstract Iterator<Element> getUserItems(String name, JID senderJID);
+    Iterator<Element> getUserItems( String name, JID senderJID );
 }

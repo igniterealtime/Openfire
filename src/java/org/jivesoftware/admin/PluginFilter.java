@@ -263,7 +263,7 @@ public class PluginFilter implements Filter {
          * @throws ServletException if a servlet exception occurs.
          * @return true if further filters in the chain should be run.
          */
-        public boolean doFilter(ServletRequest request, ServletResponse response)
+        boolean doFilter( ServletRequest request, ServletResponse response )
                 throws IOException, ServletException;
 
     }

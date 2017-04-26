@@ -46,19 +46,19 @@ public interface AuthorizationPolicy {
      * @param principal The principal requesting the username.
      * @return true is the user is authorized to be principal
      */
-    public boolean authorize(String username, String principal);
+    boolean authorize( String username, String principal );
 
     /**
      * Returns the short name of the Policy
      *
      * @return The short name of the Policy
      */
-    public abstract String name();
+    String name();
 
     /**
      * Returns a description of the Policy
      *
      * @return The description of the Policy.
      */
-    public abstract String description();
+    String description();
 }

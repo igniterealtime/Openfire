@@ -292,7 +292,7 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
 	}
 
     public interface CredentialSupplier {
-        public Credentials getCredentials(String realm, String host);
+        Credentials getCredentials( String realm, String host );
     }
 
 

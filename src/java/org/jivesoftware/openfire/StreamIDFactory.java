@@ -28,5 +28,5 @@ public interface StreamIDFactory {
      *
      * @return A new, unique stream id
      */
-    public StreamID createStreamID();
+    StreamID createStreamID();
 }

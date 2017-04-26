@@ -28,5 +28,5 @@ public interface ConnectionCloseListener {
      *
      * @param handback The handback object associated with the connection listener during Connection.registerCloseListener()
      */
-    public void onConnectionClose(Object handback);
+    void onConnectionClose( Object handback );
 }

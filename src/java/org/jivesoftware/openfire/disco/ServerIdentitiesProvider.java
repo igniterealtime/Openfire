@@ -46,5 +46,5 @@ public interface ServerIdentitiesProvider {
      *
      * @return an Iterator (of Element) with identities of protocols supported by the server.
      */
-    public abstract Iterator<Element> getIdentities();
+    Iterator<Element> getIdentities();
 }

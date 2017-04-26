@@ -34,5 +34,5 @@ public interface ChannelHandler<T extends Packet> {
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */
-    public abstract void process(T packet) throws UnauthorizedException, PacketException;
+    void process( T packet ) throws UnauthorizedException, PacketException;
 }

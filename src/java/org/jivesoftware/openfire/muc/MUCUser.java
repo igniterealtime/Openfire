@@ -44,5 +44,5 @@ public interface MUCUser extends ChannelHandler<Packet> {
       *
       * @return the address of the packet handler.
       */
-     public JID getAddress();
+    JID getAddress();
 }

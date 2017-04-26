@@ -43,6 +43,6 @@ public interface Result {
 	 * 
 	 * @return Unique ID of the Result
 	 */
-	public String getUID();
+    String getUID();
 
 }

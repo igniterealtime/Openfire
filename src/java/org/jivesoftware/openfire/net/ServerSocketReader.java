@@ -18,9 +18,7 @@ package org.jivesoftware.openfire.net;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
@@ -28,7 +26,6 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;

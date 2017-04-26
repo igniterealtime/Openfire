@@ -23,7 +23,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;

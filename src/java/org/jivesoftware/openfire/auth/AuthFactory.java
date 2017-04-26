@@ -20,7 +20,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Blowfish;

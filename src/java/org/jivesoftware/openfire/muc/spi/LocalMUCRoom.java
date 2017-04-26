@@ -37,7 +37,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;

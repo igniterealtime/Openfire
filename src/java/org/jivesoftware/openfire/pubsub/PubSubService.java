@@ -23,8 +23,6 @@ import org.xmpp.packet.Packet;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default

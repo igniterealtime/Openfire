@@ -21,8 +21,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

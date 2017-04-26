@@ -30,17 +30,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.jasper.JasperException;
 import org.apache.jasper.JspC;
 import org.dom4j.*;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.WebXmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)

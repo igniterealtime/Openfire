@@ -21,7 +21,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.IQ;
 
 import javax.xml.bind.DatatypeConverter;

@@ -34,7 +34,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 

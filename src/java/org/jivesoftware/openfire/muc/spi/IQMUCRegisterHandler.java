@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.dom4j.DocumentHelper;

@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Arrays;
 
 /**

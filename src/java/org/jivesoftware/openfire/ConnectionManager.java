@@ -16,10 +16,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.net.SocketReader;
-
-import java.io.IOException;
-import java.net.Socket;
 import java.util.Collection;
 
 /**

@@ -18,14 +18,12 @@ package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -41,7 +39,6 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
-import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -52,16 +49,11 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-import org.xmpp.packet.PacketExtension;
 import org.xmpp.packet.Presence;
-
-import com.jcraft.jzlib.JZlib;
-import com.jcraft.jzlib.ZInputStream;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One

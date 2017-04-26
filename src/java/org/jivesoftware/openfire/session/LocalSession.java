@@ -25,7 +25,6 @@ import java.util.Map;
 
 import javax.net.ssl.SSLSession;
 
-import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;

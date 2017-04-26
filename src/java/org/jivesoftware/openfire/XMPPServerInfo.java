@@ -18,7 +18,6 @@ package org.jivesoftware.openfire;
 
 import org.jivesoftware.util.Version;
 
-import java.util.Collection;
 import java.util.Date;
 
 /**

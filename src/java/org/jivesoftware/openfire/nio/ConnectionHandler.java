@@ -21,7 +21,6 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;

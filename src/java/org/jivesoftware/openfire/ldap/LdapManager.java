@@ -16,19 +16,16 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -36,22 +33,14 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.PagedResultsControl;
-import javax.naming.ldap.PagedResultsResponseControl;
-import javax.naming.ldap.SortControl;
-import javax.naming.ldap.StartTlsRequest;
-import javax.naming.ldap.StartTlsResponse;
+import javax.naming.ldap.*;
 import javax.net.ssl.SSLSession;
-
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveInitialLdapContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -201,6 +190,8 @@ public class LdapManager {
 
     private final Map<String, String> properties;
 
+    private Cache<String, DNCacheEntry> userDNCache = null;
+
     /**
      * Provides singleton access to an instance of the LdapManager class.
      *
@@ -254,6 +245,11 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
         JiveGlobals.migrateProperty("ldap.encodeMultibyteCharacters");
+
+        if (JiveGlobals.getBooleanProperty("ldap.userDNCache.enabled", true)) {
+            String cacheName = "LDAP UserDN";
+            userDNCache = CacheFactory.createCache( cacheName );
+        }
 
         String host = properties.get("ldap.host");
         if (host != null) {
@@ -920,15 +916,41 @@ public class LdapManager {
      * @return the dn associated with <tt>username</tt>.
      * @throws Exception if the search for the dn fails.
      */
-    public String findUserDN(String username) throws Exception {
-        try {
-            return findUserDN(username, baseDN);
-        }
-        catch (Exception e) {
-            if (alternateBaseDN != null) {
-                return findUserDN(username, alternateBaseDN);
+    public String findUserDN( String username ) throws Exception
+    {
+        if ( userDNCache != null )
+        {
+            // Return a cache entry if one exists.
+            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            if ( dnCacheEntry != null )
+            {
+                return dnCacheEntry.getUserDN();
             }
-            else {
+        }
+
+        // No cache entry. Query for the value, and add that to the cache.
+        try
+        {
+            final String userDN = findUserDN( username, baseDN );
+            if ( userDNCache != null )
+            {
+                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+            }
+            return userDN;
+        }
+        catch ( Exception e )
+        {
+            if ( alternateBaseDN != null )
+            {
+                final String userDN = findUserDN( username, alternateBaseDN );
+                if ( userDNCache != null )
+                {
+                    userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                }
+                return userDN;
+            }
+            else
+            {
                 throw e;
             }
         }
@@ -1502,22 +1524,48 @@ public class LdapManager {
      * @return the BaseDN for the given username. If no baseDN is found,
      *         this method will return <tt>null</tt>.
      */
-    public String getUsersBaseDN(String username) {
-        try {
-            findUserDN(username, baseDN);
+    public String getUsersBaseDN( String username )
+    {
+        if ( userDNCache != null )
+        {
+            // Return a cache entry if one exists.
+            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            if ( dnCacheEntry != null )
+            {
+                return dnCacheEntry.getBaseDN();
+            }
+        }
+
+        // No cache entry. Query for the value, and add that to the cache.
+        try
+        {
+            final String userDN = findUserDN( username, baseDN );
+            if ( userDNCache != null )
+            {
+                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+            }
             return baseDN;
         }
-        catch (Exception e) {
-            try {
-                if (alternateBaseDN != null) {
-                    findUserDN(username, alternateBaseDN);
+        catch ( Exception e )
+        {
+            try
+            {
+                if ( alternateBaseDN != null )
+                {
+                    final String userDN = findUserDN( username, alternateBaseDN );
+                    if ( userDNCache != null )
+                    {
+                        userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                    }
                     return alternateBaseDN;
                 }
             }
-            catch (Exception ex) {
-                Log.debug(ex.getMessage(), ex);
+            catch ( Exception ex )
+            {
+                Log.debug( ex.getMessage(), ex );
             }
         }
+
         return null;
     }
 
@@ -2315,4 +2363,54 @@ public class LdapManager {
     // Set the pattern to use to wrap DN values with "
     private static Pattern dnPattern;
 
+    private static class DNCacheEntry
+    {
+        private final String userDN;
+        private final String baseDN;
+
+        public DNCacheEntry( String userDN, String baseDN )
+        {
+            this.userDN = userDN;
+            this.baseDN = baseDN;
+        }
+
+        public String getUserDN()
+        {
+            return userDN;
+        }
+
+        public String getBaseDN()
+        {
+            return baseDN;
+        }
+
+        @Override
+        public boolean equals( Object o )
+        {
+            if ( this == o )
+            {
+                return true;
+            }
+            if ( o == null || getClass() != o.getClass() )
+            {
+                return false;
+            }
+
+            DNCacheEntry that = (DNCacheEntry) o;
+
+            if ( userDN != null ? !userDN.equals( that.userDN ) : that.userDN != null )
+            {
+                return false;
+            }
+            return baseDN != null ? baseDN.equals( that.baseDN ) : that.baseDN == null;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            int result = userDN != null ? userDN.hashCode() : 0;
+            result = 31 * result + ( baseDN != null ? baseDN.hashCode() : 0 );
+            return result;
+        }
+    }
 }

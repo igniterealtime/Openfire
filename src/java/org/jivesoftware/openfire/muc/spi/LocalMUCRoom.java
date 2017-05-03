@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3158 $
- * $Date: 2005-12-04 22:55:49 -0300 (Sun, 04 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;

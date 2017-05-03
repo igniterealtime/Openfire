@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +20,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;

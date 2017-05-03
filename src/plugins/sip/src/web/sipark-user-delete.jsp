@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 5374 $
-  -	$Date: 2006-09-14 19:04:51 -0300 (qui, 14 set 2006) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -

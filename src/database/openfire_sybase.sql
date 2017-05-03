@@ -1,5 +1,3 @@
-/* $Revision: 1650 $                                       */
-/* $Date: 2005-07-19 20:18:17 -0700 (Tue, 19 Jul 2005) $   */
 
 CREATE TABLE ofUser (
   username              NVARCHAR(64)    NOT NULL,

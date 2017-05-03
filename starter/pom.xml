@@ -1,0 +1,97 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>parent</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.2.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>starter</artifactId>
+    <name>Starter for Openfire</name>
+    <description>Starts Openfire and also launches the web admin interface in a web browser</description>
+    <properties>
+        <openfireHome>${project.parent.build.directory}/openfire</openfireHome>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>startup</finalName>
+                    <outputDirectory>${openfireHome}/lib</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.jivesoftware.openfire.starter.ServerStarter</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>org/jivesoftware/openfire/starter/ServerStarter.java</include>
+                        <include>org/jivesoftware/openfire/starter/JiveClassLoader.java</include>
+                        <include>org/jivesoftware/openfire/launcher/*.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <sourceDirectory>../src/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>../build/lib/dist</directory>
+                <includes>
+                    <include>log4j.xml</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <!-- TODO: Move these resources to starter/src/main/resources !? -->
+            <resource>
+                <directory>../build/installer/images</directory>
+                <includes>
+                    <include>*.gif</include>
+                    <include>*.png</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>i18n</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+        <!-- This is required because ServerStarter.java references org.jivesoftware.util.Log etc... -->
+        <!-- TODO ServerStarter should only use slf4j -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xmppserver</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>install4j</groupId>
+            <artifactId>install4j</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../build/lib/i4jruntime.jar</systemPath>
+        </dependency>
+    </dependencies>
+</project>

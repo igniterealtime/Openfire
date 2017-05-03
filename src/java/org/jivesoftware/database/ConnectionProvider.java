@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * TLicensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +39,7 @@ public interface ConnectionProvider {
      * @return true if the Connection objects returned by this provider are
      *         pooled.
      */
-    public boolean isPooled();
+    boolean isPooled();
 
     /**
      * Returns a database connection. When a Jive component is done with a
@@ -56,20 +52,20 @@ public interface ConnectionProvider {
      * @return a Connection object.
      * @throws SQLException is an SQL error occured while retrieving the connection.
      */
-    public Connection getConnection() throws SQLException;
+    Connection getConnection() throws SQLException;
 
     /**
      * Starts the connection provider. For some connection providers, this
      * will be a no-op. However, connection provider users should always call
      * this method to make sure the connection provider is started.
      */
-    public void start();
+    void start();
 
     /**
      * This method should be called whenever properties have been changed so
      * that the changes will take effect.
      */
-    public void restart();
+    void restart();
 
     /**
      * Tells the connection provider to destroy itself. For many connection
@@ -78,5 +74,5 @@ public interface ConnectionProvider {
      * from one connection provider to another to ensure that there are no
      * dangling database connections.
      */
-    public void destroy();
+    void destroy();
 }

@@ -1,5 +1,3 @@
-# $Revision:  $
-# $Date:  $
 
 # Update the jiveVersion table to new definition.
 DROP TABLE jiveVersion;

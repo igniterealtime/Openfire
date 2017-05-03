@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -28,9 +26,12 @@
 <%@ page import="java.util.regex.Pattern" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.openfire.net.SASLAuthentication" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -55,6 +56,18 @@
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    final Enumeration<String> parameterNames = request.getParameterNames();
+    final String mechEnabledPrefix = "mech-enabled-";
+    final List<String> mechsEnabled = new ArrayList<>();
+    while ( parameterNames.hasMoreElements() )
+    {
+        final String parameterName = parameterNames.nextElement();
+        if (parameterName.startsWith( mechEnabledPrefix ))
+        {
+            mechsEnabled.add( parameterName.substring( mechEnabledPrefix.length() ) );
+        }
+    }
 
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
@@ -104,9 +117,10 @@
         LocalClientSession.setWhitelistedIPs( allowedSet );
         LocalClientSession.setWhitelistedAnonymousIPs( allowedAnonymousSet );
         LocalClientSession.setBlacklistedIPs( blockedSet );
+        SASLAuthentication.setEnabledMechanisms( mechsEnabled );
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs);
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs+"\nSASL mechanisms enabled = "+ mechsEnabled);
     }
 
     // Reset the value of page vars:
@@ -144,6 +158,20 @@
     }
     blockedIPs = buf2.toString();
 
+    pageContext.setAttribute( "inbandEnabled",      inbandEnabled );
+    pageContext.setAttribute( "canChangePassword",  canChangePassword );
+    pageContext.setAttribute( "anonLogin",          anonLogin );
+    pageContext.setAttribute( "blockedIPs",         blockedIPs);
+    pageContext.setAttribute( "allowedIPs",         allowedIPs );
+    pageContext.setAttribute( "allowedAnonymIPs",   allowedAnonymIPs );
+    pageContext.setAttribute( "saslEnabledMechanisms",     SASLAuthentication.getEnabledMechanisms() );
+    pageContext.setAttribute( "saslImplementedMechanisms", SASLAuthentication.getImplementedMechanisms() );
+    pageContext.setAttribute( "saslSupportedMechanisms",   SASLAuthentication.getSupportedMechanisms() );
+
+    final SortedSet<String> union = new TreeSet<>();
+    union.addAll( SASLAuthentication.getEnabledMechanisms() );
+    union.addAll( SASLAuthentication.getImplementedMechanisms() );
+    pageContext.setAttribute( "saslConsideredOrImplementedMechanisms", union );
 %>
 
 <p>
@@ -169,143 +197,112 @@
 <% } %>
 
 <!-- BEGIN registration settings -->
-	<!--<div class="jive-contentBoxHeader">
 
-	</div>-->
-	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
+    <fmt:message key="reg.settings.inband_account" var="inband_account_boxtitle"/>
+    <admin:contentBox title="${inband_account_boxtitle}">
+        <p><fmt:message key="reg.settings.inband_account_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''}></td>
+                <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
+            </tr>
+            <tr>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'}></td>
+                <td width="99%"><label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label></td>
+            </tr>
+        </table>
+    </admin:contentBox>
 
-	<h4><fmt:message key="reg.settings.inband_account" /></h4>
-	<p>
-    <fmt:message key="reg.settings.inband_account_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="inbandEnabled" value="true" id="rb01"
-                 <%= ((inbandEnabled) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -
-                <fmt:message key="reg.settings.auto_create_user" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="inbandEnabled" value="false" id="rb02"
-                 <%= ((!inbandEnabled) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
+    <fmt:message key="reg.settings.change_password" var="change_password_boxtitle"/>
+    <admin:contentBox title="${change_password_boxtitle}">
+	    <p><fmt:message key="reg.settings.change_password_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td width="1%"><input type="radio" name="canChangePassword" value="true" id="rb03" ${canChangePassword ? 'checked' : ''}></td>
+                <td width="99%"><label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label></td>
+            </tr>
+            <tr>
+                <td width="1%"><input type="radio" name="canChangePassword" value="false" id="rb04" ${canChangePassword ? '' : 'checked'}></td>
+                <td width="99%"><label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label></td>
+            </tr>
+        </table>
+    </admin:contentBox>
 
-	<br>
-	<br>
+    <fmt:message key="reg.settings.anonymous_login" var="anonymous_login_boxtitle"/>
+    <admin:contentBox title="${anonymous_login_boxtitle}">
+        <p><fmt:message key="reg.settings.anonymous_login_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td width="1%"><input type="radio" name="anonLogin" value="true" id="rb05" ${anonLogin ? 'checked' : ''}></td>
+                <td width="99%"><label for="rb05"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label></td>
+            </tr>
+            <tr>
+                <td width="1%"><input type="radio" name="anonLogin" value="false" id="rb06" ${anonLogin ? '' : 'checked'}></td>
+                <td width="99%"><label for="rb06"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label></td>
+            </tr>
+        </table>
+    </admin:contentBox>
 
-	<h4><fmt:message key="reg.settings.change_password" /></h4>
-	<p>
-    <fmt:message key="reg.settings.change_password_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td width="1%">
-            <input type="radio" name="canChangePassword" value="true" id="rb03"
-             <%= ((canChangePassword) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-            <input type="radio" name="canChangePassword" value="false" id="rb04"
-             <%= ((!canChangePassword) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
+    <fmt:message key="reg.settings.allowed_ips" var="allowed_ips_boxtitle"/>
+    <admin:contentBox title="${allowed_ips_boxtitle}">
+        <p><fmt:message key="reg.settings.allowed_ips_blocked_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td valign='top'><b><fmt:message key="reg.settings.ips_blocked" /></b></td>
+                <td><textarea name="blockedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty blockedIPs}"><c:out value="${blockedIPs}"/></c:if></textarea></td>
+            </tr>
+        </table>
 
-	<br>
-	<br>
+        <p><fmt:message key="reg.settings.allowed_ips_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td valign='top'><b><fmt:message key="reg.settings.ips_all" /></b></td>
+                <td><textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedIPs}"><c:out value="${allowedIPs}"/></c:if></textarea></td>
+            </tr>
+            <tr>
+                <td valign='top'><b><fmt:message key="reg.settings.ips_anonymous" /></b></td>
+                <td><textarea name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedAnonymIPs}"><c:out value="${allowedAnonymIPs}"/></c:if></textarea></td>
+            </tr>
+        </table>
+    </admin:contentBox>
 
-	<h4><fmt:message key="reg.settings.anonymous_login" /></h4>
-	<p>
-    <fmt:message key="reg.settings.anonymous_login_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td width="1%">
-            <input type="radio" name="anonLogin" value="true" id="rb05"
-             <%= ((anonLogin) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb05"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-            <input type="radio" name="anonLogin" value="false" id="rb06"
-             <%= ((!anonLogin) ? "checked" : "") %>>
-            </td>
-            <td width="99%">
-                <label for="rb06"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label>
-            </td>
-        </tr>
-    </tbody>
-    </table>
+    <fmt:message key="reg.settings.sasl_mechanisms" var="sasl_mechanism_boxtitle"/>
+    <admin:contentBox title="${sasl_mechanism_boxtitle}">
+        <p><fmt:message key="reg.settings.sasl_mechanisms_info" /></p>
+        <table class="jive-table" cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <th align="center" width="1%"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_enabled" /></th>
+                <th align="left" width="20%"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_name" /></th>
+                <th align="left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_description" /></th>
+                <th align="center" width="5%" style="text-align: center"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_implementation" /></th>
+                <th align="center" width="5%" style="text-align: center"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_supported" /></th>
+            </tr>
+            <c:forEach items="${saslConsideredOrImplementedMechanisms}" var="mechanism" varStatus="status">
+                <c:set var="idForForm">mech-enabled-<c:out value="${mechanism}"/></c:set>
+                <c:set var="description"><fmt:message key="reg.settings.description.${mechanism}" /></c:set>
+                <c:choose>
+                    <c:when test="${fn:startsWith(description,'???')}">
+                        <c:set var="description"><fmt:message key="reg.settings.description.none" /></c:set>
+                    </c:when>
+                </c:choose>
+                <c:set var="enabled" value="${saslEnabledMechanisms.contains(mechanism)}"/>
+                <c:set var="implemented" value="${saslImplementedMechanisms.contains(mechanism)}"/>
+                <c:set var="supported" value="${saslSupportedMechanisms.contains(mechanism)}"/>
+                <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
+                    <td align="center"><input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/></td>
+                    <td align="left"><label for="${idForForm}"><c:out value="${mechanism}"/></label></td>
+                    <td align="left"><c:out value="${description}"/></td>
+                    <td align="center"><c:if test="${implemented}"><img src="images/check-16x16.gif" width="16" height="16" border="0" alt=""/></c:if></td>
+                    <td align="center"><c:if test="${supported}"><img src="images/check-16x16.gif" width="16" height="16" border="0" alt=""/></c:if></td>
+                </tr>
+            </c:forEach>
+        </table>
+    </admin:contentBox>
 
-	<br>
-	<br>
-
-	<h4><fmt:message key="reg.settings.allowed_ips" /></h4>
-    <p>
-        <fmt:message key="reg.settings.allowed_ips_blocked_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-        <tbody>
-        <tr>
-            <td valign='top'><b><fmt:message key="reg.settings.ips_blocked" /></b></td>
-            <td>
-                <textarea name="blockedIPs" cols="40" rows="3" wrap="virtual"><%= ((blockedIPs != null) ? blockedIPs : "") %></textarea>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-	<p>
-    <fmt:message key="reg.settings.allowed_ips_info" />
-    </p>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td valign='top'><b><fmt:message key="reg.settings.ips_all" /></b></td>
-            <td>
-                <textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedIPs != null) ? allowedIPs : "") %></textarea>
-            </td>
-        </tr>
-        <tr>
-            <td valign='top'><b><fmt:message key="reg.settings.ips_anonymous" /></b></td>
-            <td>
-                <textarea name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><%= ((allowedAnonymIPs != null) ? allowedAnonymIPs : "") %></textarea>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-	
-	</div>
     <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 <!-- END registration settings -->
 
 </form>
-
 
 </body>
 

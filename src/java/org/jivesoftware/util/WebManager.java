@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -144,7 +140,19 @@ public class WebManager extends WebBean {
     public User getUser() {
         User pageUser = null;
         try {
-            pageUser = getUserManager().getUser(getAuthToken().getUsername());
+            final AuthToken authToken = getAuthToken();
+            if (authToken == null )
+            {
+                Log.debug( "Unable to get user: no auth token on session." );
+                return null;
+            }
+            final String username = authToken.getUsername();
+            if (username == null || username.isEmpty())
+            {
+                Log.debug( "Unable to get user: no username in auth token on session." );
+                return null;
+            }
+            pageUser = getUserManager().getUser(username);
         }
         catch (Exception ex) {
             Log.debug("Unexpected exception (which is ignored) while trying to obtain user.", ex);

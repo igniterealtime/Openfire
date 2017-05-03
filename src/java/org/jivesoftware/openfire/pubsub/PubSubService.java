@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +23,6 @@ import org.xmpp.packet.Packet;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default

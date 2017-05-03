@@ -1,8 +1,4 @@
-/**
- * $RCSfile: DefaultUserProvider.java,v $
- * $Revision: 3116 $
- * $Date: 2005-11-24 06:25:00 -0300 (Thu, 24 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +33,6 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

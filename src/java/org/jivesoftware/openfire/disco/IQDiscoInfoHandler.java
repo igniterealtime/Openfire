@@ -1,8 +1,4 @@
-/**
- * $RCSfile: IQDiscoInfoHandler.java,v $
- * $Revision: 2859 $
- * $Date: 2005-09-22 02:30:39 -0300 (Thu, 22 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

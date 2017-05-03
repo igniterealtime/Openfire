@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2013 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,6 @@ import java.util.regex.Pattern;
 //import net.jcip.annotations.ThreadSafe;
 
 /**
- * 
  * Utility class for date/time format conversions as specified in
  * <a href="http://www.xmpp.org/extensions/xep-0082.html">XEP-0082</a> and
  * <a href="http://www.xmpp.org/extensions/xep-0090.html">XEP-0090</a> and

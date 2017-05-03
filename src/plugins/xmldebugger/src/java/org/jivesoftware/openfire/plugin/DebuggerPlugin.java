@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +19,8 @@ package org.jivesoftware.openfire.plugin;
 import java.io.File;
 import java.util.Map;
 
+import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
+import org.apache.mina.core.filterchain.IoFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -33,6 +31,11 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
 
 /**
  * Debugger plugin that prints XML traffic to stdout. By default it will only print
@@ -43,6 +46,9 @@ import org.jivesoftware.util.PropertyEventListener;
  * @author Gaston Dombiak
  */
 public class DebuggerPlugin implements Plugin, PropertyEventListener {
+
+    public static final Logger Log = LoggerFactory.getLogger( DebuggerPlugin.class );
+
     private RawPrintFilter defaultPortFilter;
     private RawPrintFilter oldPortFilter;
     private RawPrintFilter componentPortFilter;
@@ -65,31 +71,65 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         }
     }
 
-    private void addInterceptors() {
-        // Add filter to filter chain builder
-        ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    protected void addFilterToChain( final SocketAcceptor acceptor, final String filterName, final IoFilter filter )
+    {
+        if ( acceptor == null )
+        {
+            Log.debug( "Not adding filter '{}' to acceptor that is null.", filterName );
+            return;
+        }
+
+        final DefaultIoFilterChainBuilder chain = acceptor.getFilterChain();
+        if ( chain.contains( COMPRESSION_FILTER_NAME ) )
+        {
+            Log.debug( "Adding filter '{}' as the first filter after the compression filter in acceptor {}", filterName, acceptor );
+            chain.addAfter( COMPRESSION_FILTER_NAME, filterName, filter );
+        }
+        else if ( chain.contains( TLS_FILTER_NAME ) )
+        {
+            Log.debug( "Adding filter '{}' as the first filter after the TLS filter in acceptor {}", filterName, acceptor );
+            chain.addAfter( TLS_FILTER_NAME, filterName, filter );
+        }
+        else
+        {
+            Log.debug( "Adding filter '{}' as the last filter in acceptor {}", filterName, acceptor );
+            chain.addLast( filterName, filter );
+        }
+    }
+
+    protected void removeFilterFromChain( final SocketAcceptor acceptor, final String filterName )
+    {
+        if ( acceptor == null )
+        {
+            Log.debug( "Not removing filter '{}' from acceptor that is null.", filterName );
+            return;
+        }
+
+        if ( acceptor.getFilterChain().contains( filterName ) )
+        {
+            Log.debug( "Removing filter '{}' from acceptor {}", filterName, acceptor );
+            acceptor.getFilterChain().remove( filterName );
+        }
+        else
+        {
+            Log.debug( "Unable to remove non-existing filter '{}' from acceptor {}", filterName, acceptor );
+        }
+    }
+
+    private void addInterceptors()
+    {
         defaultPortFilter = new RawPrintFilter("C2S");
-        SocketAcceptor socketAcceptor = connManager.getSocketAcceptor();
-        if (socketAcceptor != null) {
-            socketAcceptor.getFilterChain().addFirst("rawDebugger", defaultPortFilter);
-        }
         oldPortFilter = new RawPrintFilter("SSL");
-        SocketAcceptor sslAcceptor = connManager.getSSLSocketAcceptor();
-        if (sslAcceptor != null) {
-            sslAcceptor.getFilterChain().addFirst("rawDebugger", oldPortFilter);
-        }
-
         componentPortFilter = new RawPrintFilter("ExComp");
-        SocketAcceptor componentAcceptor = connManager.getComponentAcceptor();
-        if (componentAcceptor != null) {
-            componentAcceptor.getFilterChain().addFirst("rawDebugger", componentPortFilter);
-        }
-
         multiplexerPortFilter = new RawPrintFilter("CM");
-        SocketAcceptor multiplexerAcceptor = connManager.getMultiplexerSocketAcceptor();
-        if (multiplexerAcceptor != null) {
-            multiplexerAcceptor.getFilterChain().addFirst("rawDebugger", multiplexerPortFilter);
-        }
+
+        // Add filter to filter chain builder
+        final ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+
+        addFilterToChain( connManager.getSocketAcceptor(), RawPrintFilter.FILTER_NAME, defaultPortFilter );
+        addFilterToChain( connManager.getSSLSocketAcceptor(), RawPrintFilter.FILTER_NAME, oldPortFilter );
+        addFilterToChain( connManager.getComponentAcceptor(), RawPrintFilter.FILTER_NAME, componentPortFilter );
+        addFilterToChain( connManager.getMultiplexerSocketAcceptor(), RawPrintFilter.FILTER_NAME, multiplexerPortFilter );
 
         interpretedPrinter = new InterpretedXMLPrinter();
         if (JiveGlobals.getBooleanProperty("plugin.debugger.interpretedAllowed")) {
@@ -105,22 +145,11 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         PropertyEventDispatcher.removeListener(this);
         // Remove filter from filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        if (connManager.getSocketAcceptor() != null &&
-                connManager.getSocketAcceptor().getFilterChain().contains("rawDebugger")) {
-            connManager.getSocketAcceptor().getFilterChain().remove("rawDebugger");
-        }
-        if (connManager.getSSLSocketAcceptor() != null &&
-                connManager.getSSLSocketAcceptor().getFilterChain().contains("rawDebugger")) {
-            connManager.getSSLSocketAcceptor().getFilterChain().remove("rawDebugger");
-        }
-        if (connManager.getComponentAcceptor() != null &&
-                connManager.getComponentAcceptor().getFilterChain().contains("rawDebugger")) {
-            connManager.getComponentAcceptor().getFilterChain().remove("rawDebugger");
-        }
-        if (connManager.getMultiplexerSocketAcceptor() != null &&
-                connManager.getMultiplexerSocketAcceptor().getFilterChain().contains("rawDebugger")) {
-            connManager.getMultiplexerSocketAcceptor().getFilterChain().remove("rawDebugger");
-        }
+        removeFilterFromChain( connManager.getSocketAcceptor(), RawPrintFilter.FILTER_NAME );
+        removeFilterFromChain( connManager.getSSLSocketAcceptor(), RawPrintFilter.FILTER_NAME );
+        removeFilterFromChain( connManager.getComponentAcceptor(), RawPrintFilter.FILTER_NAME );
+        removeFilterFromChain( connManager.getMultiplexerSocketAcceptor(), RawPrintFilter.FILTER_NAME );
+
         // Remove the filters from existing sessions
         if (defaultPortFilter != null) {
             defaultPortFilter.shutdown();

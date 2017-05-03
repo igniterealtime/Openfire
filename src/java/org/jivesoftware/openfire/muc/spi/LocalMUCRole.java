@@ -1,8 +1,4 @@
-/**
- * $RCSfile: LocalMUCRole.java,v $
- * $Revision: 3168 $
- * $Date: 2005-12-07 13:55:47 -0300 (Wed, 07 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

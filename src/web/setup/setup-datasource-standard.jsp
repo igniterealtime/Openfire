@@ -1,8 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: 1772 $
-  -	$Date: 2005-08-11 12:56:15 -0700 (Thu, 11 Aug 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.database.DbConnectionManager,

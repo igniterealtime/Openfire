@@ -1,5 +1,4 @@
 /**
-*
 * jquery.sparkline.js
 *
 * v1.6

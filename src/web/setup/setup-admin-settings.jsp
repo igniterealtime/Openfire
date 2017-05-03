@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1410 $
-  -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
@@ -16,6 +13,7 @@
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -73,7 +71,7 @@
         }
         try {
             AuthFactory.authenticate("admin", "admin");
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             errors.put("password", "password");
         }
         if (email == null) {
@@ -125,8 +123,9 @@
     }
 
     if (addAdmin && !doTest) {
-        final String admin = request.getParameter("administrator");
+        String admin = request.getParameter("administrator");
         if (admin != null) {
+            admin = JID.escapeNode( admin );
             if (ldap) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
@@ -258,7 +257,7 @@ function checkClick() {
         AuthFactory.authenticate("admin", "admin");
         defaultPassword = true;
     }
-    catch (Exception e) {
+    catch (UnauthorizedException e) {
         // Ignore.
     }
     if (defaultPassword) {
@@ -458,7 +457,7 @@ if (errors.size() > 0) { %>
 %>
     <tr valign="top">
         <td>
-            <%= authJID.getNode()%>
+            <%= JID.unescapeNode( authJID.getNode() )%>
         </td>
         <td width="1%" align="center">
             <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"

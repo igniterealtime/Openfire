@@ -1,5 +1,4 @@
 /*
- $Id$
 
  Copyright 2003 (C) The Werken Company. All Rights Reserved.
  

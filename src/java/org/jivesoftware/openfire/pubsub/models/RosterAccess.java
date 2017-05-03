@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,6 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.roster.RosterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;

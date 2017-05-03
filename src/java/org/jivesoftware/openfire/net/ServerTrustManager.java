@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,15 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.Principal;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
 
 import javax.net.ssl.X509TrustManager;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

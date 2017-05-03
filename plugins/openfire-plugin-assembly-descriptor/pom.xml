@@ -1,0 +1,15 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>plugins</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.2.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.igniterealtime.openfire.plugins</groupId>
+    <artifactId>openfire-plugin-assembly-descriptor</artifactId>
+    <name>Openfire Plugin Assembly Descriptor</name>
+    <description>A shared assembly descriptor for Openfire plugins. See
+        http://maven.apache.org/plugins/maven-assembly-plugin/examples/sharing-descriptors.html
+    </description>
+</project>

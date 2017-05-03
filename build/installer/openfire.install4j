@@ -633,7 +633,7 @@
     </applications>
   </installerGui>
   <mediaSets>
-    <windows name="Windows" id="3" customizedId="" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_112" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows" id="3" customizedId="" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_121" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -654,7 +654,7 @@
         <customAttributes />
       </autoUpdate>
     </windows>
-    <linuxRPM name="Linux RPM" id="18" customizedId="" mediaFileName="" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-x86-1.8.0_112" manualJREEntry="false" overwriteNeverAsConfigFiles="false" os="linux" arch="i386">
+    <linuxRPM name="Linux RPM" id="18" customizedId="" mediaFileName="" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-x86-1.8.0_121" manualJREEntry="false" overwriteNeverAsConfigFiles="false" os="linux" arch="i386">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>

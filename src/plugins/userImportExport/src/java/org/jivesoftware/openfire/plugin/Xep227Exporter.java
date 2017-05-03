@@ -1,5 +1,4 @@
-/**
- *
+/*
  * Copyright 2016 Anno van Vliet
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,7 +109,6 @@ public class Xep227Exporter implements InExporter {
   private final DateFormat dateformater = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DATETIME_FORMAT, Locale.US);
 
   /**
-   * 
    */
   public Xep227Exporter() {
     offlineMessagesStore = XMPPServer.getInstance()

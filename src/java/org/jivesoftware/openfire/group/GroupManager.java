@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3117 $
- * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +19,7 @@ package org.jivesoftware.openfire.group;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -174,7 +171,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -185,7 +184,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -196,7 +197,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -207,20 +210,11 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
-            private void evictCachedUserForGroup(String user) {
-                if(user != null) {
-                    JID userJid = new JID(user);
-                    if (XMPPServer.getInstance().isLocal(userJid)) {
-                        String username = userJid.getNode();
-                        synchronized ((getClass().getSimpleName() + username).intern()) {
-                            groupMetaCache.remove(username);
-                        }
-                    }
-                 }
-            }
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {
@@ -480,7 +474,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(userName);
         if (groupNames == null) {
-            synchronized((getClass().getSimpleName() + userName).intern()) {
+            synchronized(userName.intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
                 	// assume this is a local user
@@ -589,7 +583,7 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String key = user.getNode();
+        String key = user.toBareJID();
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
@@ -674,6 +668,40 @@ public class GroupManager {
         }
         for (JID user : group.getMembers()) {
         	groupMetaCache.remove(user.getNode());
+        }
+
+        final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if (showInRoster != null )
+        {
+            switch ( showInRoster.toLowerCase() )
+            {
+                case "everybody":
+                    groupMetaCache.clear();
+                    break;
+
+                case "spefgroups":
+                    final String groupList = group.getProperties().get( "sharedRoster.groupList" );
+                    if ( groupList != null )
+                    {
+                        final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
+                        while ( tokenizer.hasMoreTokens() )
+                        {
+                            final String spefgroup = tokenizer.nextToken().trim();
+                            try
+                            {
+                                final Group nested = getGroup( spefgroup );
+                                evictCachedUsersForGroup( nested );
+                            }
+                            catch ( GroupNotFoundException e )
+                            {
+                                Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );
+                            }
+                        }
+                    }
+                    break;
+
+
+            }
         }
     }
 

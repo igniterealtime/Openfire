@@ -1,8 +1,4 @@
-/**
- * $RCSfile: ComponentSession.java,v $
- * $Revision: 3174 $
- * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,7 @@ import java.util.Collection;
  */
 public interface ComponentSession extends Session {
 
-    public ExternalComponent getExternalComponent();
+    ExternalComponent getExternalComponent();
 
     /**
      * The ExternalComponent acts as a proxy of the remote connected component. Any Packet that is
@@ -44,7 +40,7 @@ public interface ComponentSession extends Session {
      *
      * @author Gaston Dombiak
      */
-    public interface ExternalComponent extends Component {
+    interface ExternalComponent extends Component {
         void setName(String name);
 
         String getType();

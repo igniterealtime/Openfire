@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 919 $
- * $Date: 2005-01-29 19:26:02 -0300 (Sat, 29 Jan 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,14 +37,14 @@ public interface MUCRole {
      *
      * @return The presence of the user in the room.
      */
-    public Presence getPresence();
+    Presence getPresence();
 
     /**
      * Set the current presence status of a user in a chatroom.
      *
      * @param presence The presence of the user in the room.
      */
-    public void setPresence(Presence presence);
+    void setPresence( Presence presence );
 
     /**
      * Call this method to promote or demote a user's role in a chatroom.
@@ -63,14 +59,14 @@ public interface MUCRole {
      * @throws NotAllowedException   Thrown if trying to change the moderator role to an owner or
      *                               administrator.
      */
-    public void setRole(Role newRole) throws NotAllowedException;
+    void setRole( Role newRole ) throws NotAllowedException;
 
     /**
      * Obtain the role state of the user.
      *
      * @return The role status of this user.
      */
-    public Role getRole();
+    Role getRole();
 
     /**
      * Call this method to promote or demote a user's affiliation in a chatroom.
@@ -78,14 +74,14 @@ public interface MUCRole {
      * @param newAffiliation the new affiliation that the user will play.
      * @throws NotAllowedException thrown if trying to ban an owner or an administrator.
      */
-    public void setAffiliation(Affiliation newAffiliation) throws NotAllowedException;
+    void setAffiliation( Affiliation newAffiliation ) throws NotAllowedException;
 
     /**
      * Obtain the affiliation state of the user.
      *
      * @return The affiliation status of this user.
      */
-    public Affiliation getAffiliation();
+    Affiliation getAffiliation();
 
     /**
      * Changes the nickname of the occupant within the room to the new nickname.
@@ -99,13 +95,13 @@ public interface MUCRole {
      *
      * @return The user's nickname in the room or null if invisible.
      */
-    public String getNickname();
+    String getNickname();
 
     /**
      * Destroys this role after the occupant left the room. This role will be
      * removed from MUCUser.
      */
-    public void destroy();
+    void destroy();
 
     /**
      * Returns true if the room occupant does not want to get messages broadcasted to all
@@ -132,14 +128,14 @@ public interface MUCRole {
      *
      * @return The chatroom hosting this role.
      */
-    public MUCRoom getChatRoom();
+    MUCRoom getChatRoom();
 
     /**
      * Obtain the XMPPAddress representing this role in a room: room@server/nickname
      *
      * @return The Jabber ID that represents this role in the room.
      */
-    public JID getRoleAddress();
+    JID getRoleAddress();
 
     /**
      * Obtain the XMPPAddress of the user that joined the room. A <tt>null</tt> null value
@@ -147,30 +143,30 @@ public interface MUCRole {
      *
      * @return The address of the user that joined the room or null if this role belongs to the room itself.
      */
-    public JID getUserAddress();
+    JID getUserAddress();
 
     /**
      * Returns true if this room occupant is hosted by this JVM.
      *
      * @return true if this room occupant is hosted by this JVM
      */
-    public boolean isLocal();
+    boolean isLocal();
 
     /**
      * Returns the id of the node that is hosting the room occupant.
      *
      * @return the id of the node that is hosting the room occupant.
      */
-    public NodeID getNodeID();
+    NodeID getNodeID();
 
     /**
      * Sends a packet to the user.
      *
      * @param packet The packet to send
      */
-    public void send(Packet packet);
+    void send( Packet packet );
 
-    public enum Role {
+    enum Role {
 
         /**
          * Runs moderated discussions. Is allowed to kick users, grant and revoke voice, etc.
@@ -224,7 +220,7 @@ public interface MUCRole {
         }
     }
 
-    public enum Affiliation {
+    enum Affiliation {
 
         /**
          * Owner of the room.

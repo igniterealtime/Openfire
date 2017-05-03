@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -415,6 +415,12 @@ public class SparkManager implements Component {
         boolean invisibleloginEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("invisiblelogin.enabled", "true"));
         if (invisibleloginEnabled) {
             responseElement.addElement("feature").addAttribute("var", "invisible-login");
+        }
+        
+        // Check for LOGIN ANONYMOUSLY feature        
+        boolean anonymousloginEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("anonymouslogin.enabled", "true"));
+        if (anonymousloginEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "anonymous-login");
         }
 
         // Check for LOGOUT & EXIT feature

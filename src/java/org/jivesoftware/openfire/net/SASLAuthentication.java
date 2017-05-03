@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import com.sun.mail.smtp.DigestMD5;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -196,6 +191,22 @@ public class SASLAuthentication {
     {
         final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
         for (String mech : getSupportedMechanisms()) {
+            if (mech.equals("EXTERNAL")) {
+                boolean trustedCert = false;
+                if (session.isSecure()) {
+                    final LocalClientSession localClientSession = (LocalClientSession)session;
+                    final Connection connection = localClientSession.getConnection();
+                    final KeyStore keyStore = connection.getConfiguration().getIdentityStore().getStore();
+                    final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
+                    final X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), keyStore, trustStore);
+                    if (trusted != null) {
+                        trustedCert = true;
+                    }
+                }
+                if (trustedCert == false) {
+                    continue; // Do not offer EXTERNAL.
+                }
+            }
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
         }
@@ -335,13 +346,16 @@ public class SASLAuthentication {
                     {
                         // Flag that indicates if certificates of the remote server should be validated.
                         final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
-                        if ( verify && verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                        if ( verify )
                         {
-                            ( (LocalIncomingServerSession) session ).tlsAuth();
-                        }
-                        else
-                        {
-                            throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
+                            if ( verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                            {
+                                ( (LocalIncomingServerSession) session ).tlsAuth();
+                            }
+                            else
+                            {
+                                throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
+                            }
                         }
                     }
 
@@ -547,7 +561,7 @@ public class SASLAuthentication {
                     break;
 
                 case "SCRAM-SHA-1":
-                    if ( !AuthFactory.supportsPasswordRetrieval() && !AuthFactory.supportsScram() )
+                    if ( !AuthFactory.supportsPasswordRetrieval() || !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthFactory that's in used does not support password retrieval nor SCRAM.", mechanism );
                         it.remove();
@@ -609,22 +623,49 @@ public class SASLAuthentication {
         return result;
     }
 
+    /**
+     * Returns a collection of SASL mechanism names that forms the source pool from which the mechanisms that are
+     * eventually being offered to peers are obtained.
+     **
+     * When a mechanism is not returned by this method, it will never be offered, but when a mechanism is returned
+     * by this method, there is no guarantee that it will be offered.
+     *
+     * Apart from being returned in this method, an implementation must be available (see {@link #getImplementedMechanisms()}
+     * and configuration or other characteristics of this server must not prevent a particular mechanism from being
+     * used (see @{link {@link #getSupportedMechanisms()}}.
+     *
+     * @return A collection of mechanisms that are considered for use in this instance of Openfire.
+     */
+    public static List<String> getEnabledMechanisms()
+    {
+        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5","SCRAM-SHA-1","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+    }
+
+    /**
+     * Sets the collection of mechanism names that the system administrator allows to be used.
+     *
+     * @param mechanisms A collection of mechanisms that are considered for use in this instance of Openfire. Null to reset the default setting.
+     * @see #getEnabledMechanisms()
+     */
+    public static void setEnabledMechanisms( List<String> mechanisms )
+    {
+        JiveGlobals.setProperty( "sasl.mechs", mechanisms );
+        initMechanisms();
+    }
+
     private static void initMechanisms()
     {
-
-        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI,EXTERNAL" );
-        final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
+        final List<String> propertyValues = getEnabledMechanisms();
         mechanisms = new HashSet<>();
-        while ( st.hasMoreTokens() )
+        for ( final String propertyValue : propertyValues )
         {
-            final String mechanism = st.nextToken().toUpperCase();
             try
             {
-                addSupportedMechanism( mechanism );
+                addSupportedMechanism( propertyValue );
             }
             catch ( Exception ex )
             {
-                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", mechanism, ex );
+                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", propertyValue, ex );
             }
         }
     }

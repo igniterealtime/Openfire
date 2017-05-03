@@ -1,0 +1,158 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.igniterealtime.openfire</groupId>
+    <version>4.2.0-SNAPSHOT</version>
+    <artifactId>plugins</artifactId>
+    <packaging>pom</packaging>
+    <name>Openfire Plugins</name>
+
+    <modules>
+        <module>openfire-plugin-assembly-descriptor</module>
+        <module>broadcast</module>
+        <module>callbackOnOffline</module>
+        <module>clientControl</module>
+        <!-- Needs coherence.jar -->
+        <!--<module>clustering</module>-->
+        <module>contentFilter</module>
+        <module>dbaccess</module>
+        <module>emailListener</module>
+        <module>emailOnAway</module>
+        <module>fastpath</module>
+        <module>gojara</module>
+        <module>hazelcast</module>
+        <!-- jnsapi not in Maven Central-->
+        <!--<module>jingleNodes</module>-->
+        <module>jmxweb</module>
+        <module>justmarried</module>
+        <!--<module>kraken</module>-->
+        <module>loadStats</module>
+        <module>monitoring</module>
+        <module>motd</module>
+        <module>mucservice</module>
+        <module>nodejs</module>
+        <module>packetFilter</module>
+        <!--<module>rayo</module>-->
+        <module>presence</module>
+        <module>registration</module>
+        <module>restAPI</module>
+        <module>search</module>
+        <!-- Missing dependencies -->
+        <!--<module>sip</module>-->
+        <!-- Missing dependencies: jstun-0.6.1.jar -->
+        <!--<module>stunserver</module>-->
+        <module>subscription</module>
+        <module>userCreation</module>
+        <module>userImportExport</module>
+        <module>userservice</module>
+        <module>websocket</module>
+        <module>xmldebugger</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- The name of the Openfire plugin (defaults to ${project.artifactId}. This value is somewhat particular:
+           - * It is used as a Java package name (and thus, cannot contain characters like dashes and dots.
+           - * It is also used as a file name for the resulting Openfire plugin.
+           - * Finally, it is used to identify resources, such as i18n files.
+           - Least issues will occur when this value is all lowercase, simple ASCII text.
+           -->
+        <plugin.name>${project.artifactId}</plugin.name>
+
+        <!-- Versions -->
+        <openfire.version>4.2.0-SNAPSHOT</openfire.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.6</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.igniterealtime.openfire.plugins</groupId>
+                            <artifactId>openfire-plugin-assembly-descriptor</artifactId>
+                            <version>${openfire.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <appendAssemblyId>false</appendAssemblyId>
+                                <finalName>${plugin.name}</finalName>
+                                <attach>false</attach>
+                                <!-- This is where we use our shared assembly descriptor -->
+                                <descriptorRefs>
+                                    <descriptorRef>openfire-plugin-assembly</descriptorRef>
+                                </descriptorRefs>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <!-- Compile the JSP pages -->
+                <plugin>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-jspc-maven-plugin</artifactId>
+                    <version>9.2.14.v20151106</version>
+                    <configuration>
+                        <webAppSourceDirectory>${project.build.sourceDirectory}/../web</webAppSourceDirectory>
+                        <webXml>${project.build.sourceDirectory}/../web/WEB-INF/web.xml</webXml>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>jspc</id>
+                            <goals>
+                                <goal>jspc</goal>
+                            </goals>
+                            <configuration>
+                                <jspc>
+                                    <package>org.jivesoftware.openfire.plugin.${plugin.name}</package>
+                                </jspc>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.igniterealtime.openfire</groupId>
+                            <artifactId>xmppserver</artifactId>
+                            <version>${openfire.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.igniterealtime.openfire</groupId>
+                            <artifactId>webadmintld</artifactId>
+                            <version>${openfire.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.igniterealtime.openfire</groupId>
+            <artifactId>xmppserver</artifactId>
+            <version>${openfire.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

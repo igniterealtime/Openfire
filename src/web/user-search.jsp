@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
 --%>
 
 <%@ page import="org.jivesoftware.util.*,

@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.auth;
 
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * Implementations are used to determine what AuthProvider is to be used for a particular username.

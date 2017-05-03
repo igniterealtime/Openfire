@@ -161,4 +161,29 @@
         <function-class>org.jivesoftware.util.CertificateManager</function-class>
         <function-signature>java.util.List getClientIdentities(java.security.cert.X509Certificate)</function-signature>
     </function>
+    <function>
+        <name>getProperty</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String getProperty(java.lang.String,java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>getIntProperty</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>int getIntProperty(java.lang.String,int)</function-signature>
+    </function>
+    <function>
+        <name>getBooleanProperty</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>boolean getBooleanProperty(java.lang.String,boolean)</function-signature>
+    </function>
+    <function>
+        <name>getLongProperty</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>long getLongProperty(java.lang.String,long)</function-signature>
+    </function>
+    <function>
+        <name>getListProperty</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.util.List getListProperty(java.lang.String,java.util.List)</function-signature>
+    </function>
 </taglib>

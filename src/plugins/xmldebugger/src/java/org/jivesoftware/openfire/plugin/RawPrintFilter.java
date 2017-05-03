@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +35,9 @@ import org.jivesoftware.util.JiveGlobals;
  * @author Gaston Dombiak
  */
 public class RawPrintFilter extends IoFilterAdapter {
+
+    public static final String FILTER_NAME = "rawDebugger";
+
     private boolean enabled = true;
     private String prefix;
     private Collection<IoSession> sessions = new ConcurrentLinkedQueue<IoSession>();
@@ -70,7 +69,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     private String messagePrefix(final IoSession session, final String messageType) {
-        return prefix + " - " + messageType + String.format(" - (%1$11s)", session.hashCode());
+        return String.format("%1$s %2$15s - %3$s - (%4$11s)", prefix, session.getRemoteAddress(), messageType, session.hashCode());
     }
 
     @Override

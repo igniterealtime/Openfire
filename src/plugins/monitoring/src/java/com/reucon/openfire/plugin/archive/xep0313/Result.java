@@ -11,6 +11,8 @@ import java.util.Date;
 public final class Result extends PacketExtension {
     public Result(Forwarded forwarded, String xmlns, String queryId, String id) {
         super("result", xmlns);
+        element.addAttribute("queryid", queryId);
+        element.addAttribute("id", id);
         element.add(forwarded.getElement());
     }
 }

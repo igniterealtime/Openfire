@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +44,8 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -134,7 +133,7 @@ public class HttpSession extends LocalClientSession {
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
                        StreamID streamID, long rid, HttpConnection connection, Locale language) {
-        super(serverName, new HttpVirtualConnection(address), streamID, language);
+        super(serverName, new HttpVirtualConnection(address, ConnectionType.SOCKET_C2S), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
@@ -1101,9 +1100,16 @@ public class HttpSession extends LocalClientSession {
 
         private InetAddress address;
         private ConnectionConfiguration configuration;
+        private ConnectionType connectionType;
 
         public HttpVirtualConnection(InetAddress address) {
             this.address = address;
+            this.connectionType = ConnectionType.SOCKET_C2S;
+        }
+
+        public HttpVirtualConnection(InetAddress address, ConnectionType connectionType) {
+            this.address = address;
+            this.connectionType = connectionType;
         }
 
         @Override
@@ -1143,7 +1149,11 @@ public class HttpSession extends LocalClientSession {
 
         @Override
         public ConnectionConfiguration getConfiguration() {
-            return session.getConnection().getConfiguration();
+            if (configuration == null) {
+            	final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                configuration = connectionManager.getListener( connectionType, true ).generateConnectionConfiguration();
+            }
+            return configuration;
         }
 
         @Override

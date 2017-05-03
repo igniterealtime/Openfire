@@ -1,16 +1,10 @@
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.filter.ssl.SslFilter;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
 import java.net.InetAddress;
-import java.security.*;
 import java.util.*;
 
 /**

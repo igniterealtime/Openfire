@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +34,7 @@ public interface SecurityAuditProvider {
      * @param summary Short description of the event, similar to a subject.
      * @param details Detailed description of the event, can be null if not desired.
      */
-    public void logEvent(String username, String summary, String details);
+    void logEvent( String username, String summary, String details );
 
     /**
      * Retrieves security events that have occurred, filtered by the parameters passed.
@@ -54,7 +51,7 @@ public interface SecurityAuditProvider {
      * @param endTime Most recent date of range of events to retrieve.  Can be null for "now".
      * @return Array of security events.
      */
-    public List<SecurityAuditEvent> getEvents(String username, Integer skipEvents, Integer numEvents, Date startTime, Date endTime);
+    List<SecurityAuditEvent> getEvents( String username, Integer skipEvents, Integer numEvents, Date startTime, Date endTime );
 
     /**
      * Retrieves a specific event by ID.  The provider is expected to create and fill out to
@@ -64,14 +61,14 @@ public interface SecurityAuditProvider {
      * @return SecurityAuditEvent object with information from retrieved event.
      * @throws EventNotFoundException if event was not found.
      */
-    public SecurityAuditEvent getEvent(Integer msgID) throws EventNotFoundException;
+    SecurityAuditEvent getEvent( Integer msgID ) throws EventNotFoundException;
 
     /**
      * Retrieves number of events recorded.
      *
      * @return Number of events that have been recorded.
      */
-    public Integer getEventCount();
+    Integer getEventCount();
 
     /**
      * Returns true if the provider logs can be read by Openfire for display from Openfire's
@@ -83,7 +80,7 @@ public interface SecurityAuditProvider {
      * @see #getAuditURL()
      * @return True or false if the logs can be read remotely.
      */
-    public boolean isWriteOnly();
+    boolean isWriteOnly();
 
     /**
      * Retrieves a URL that can be visited to read the logs audited by this provider.  This
@@ -96,7 +93,7 @@ public interface SecurityAuditProvider {
      * @see #isWriteOnly()
      * @return String represented URL that can be visited to view the audit logs.
      */
-    public String getAuditURL();
+    String getAuditURL();
 
     /**
      * Returns true if the provider should not send user change (create, edit, delete, etc) related
@@ -105,7 +102,7 @@ public interface SecurityAuditProvider {
      *
      * @return True if we should block user related security audit events from being handled.
      */
-    public boolean blockUserEvents();
+    boolean blockUserEvents();
 
     /**
      * Returns true if the provider should not send group change (create, edit, delete, etc) related
@@ -114,6 +111,6 @@ public interface SecurityAuditProvider {
      *
      * @return True if we should block group related security audit events from being handled.
      */
-    public boolean blockGroupEvents();
+    boolean blockGroupEvents();
 
 }

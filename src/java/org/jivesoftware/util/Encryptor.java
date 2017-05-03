@@ -8,7 +8,7 @@ public interface Encryptor {
 	 * @param value The clear text attribute
 	 * @return The encrypted attribute, or null
 	 */
-	public abstract String encrypt(String value);
+    String encrypt( String value );
 
 	/**
 	 * Decrypt an encrypted String. 
@@ -16,7 +16,7 @@ public interface Encryptor {
 	 * @param value The encrypted attribute in Base64 encoding
 	 * @return The clear text attribute, or null
 	 */
-	public abstract String decrypt(String value);
+    String decrypt( String value );
 
 	/**
 	 * Set the encryption key. This will apply the user-defined key,
@@ -25,6 +25,6 @@ public interface Encryptor {
 	 *
 	 * @param key The encryption key
 	 */
-	public abstract void setKey(String key);
+    void setKey( String key );
 
 }

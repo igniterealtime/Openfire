@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1661 $
- * $Date: 2005-07-21 00:06:49 -0300 (Thu, 21 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,12 +37,12 @@ public interface PresenceManager {
     /**
      * Sort by username.
      */
-    public static final int SORT_USERNAME = 0;
+    int SORT_USERNAME = 0;
 
     /**
      * Sort by online time.
      */
-    public static final int SORT_ONLINE_TIME = 1;
+    int SORT_ONLINE_TIME = 1;
 
     /**
      * <p>Returns the availability of the user.<p>
@@ -54,7 +50,7 @@ public interface PresenceManager {
      * @param user the user who's availability is in question
      * @return true if the user as available for messaging (1 or more available sessions)
      */
-    public boolean isAvailable(User user);
+    boolean isAvailable( User user );
 
     /**
      * Returns the user's current presence, or <tt>null</tt> if the user is unavailable.
@@ -64,7 +60,7 @@ public interface PresenceManager {
      * @param user the user.
      * @return the user's current presence.
      */
-    public Presence getPresence(User user);
+    Presence getPresence( User user );
 
     /**
      * Returns all presences for the user, or <tt>null</tt> if the user is unavailable.
@@ -72,7 +68,7 @@ public interface PresenceManager {
      * @param username the name of the user.
      * @return the Presence packets for all the users's connected sessions.
      */
-    public Collection<Presence> getPresences(String username);
+    Collection<Presence> getPresences( String username );
 
     /**
      * Probes the presence of the given XMPPAddress and attempts to send it to the given user. If
@@ -82,7 +78,7 @@ public interface PresenceManager {
      * @param prober The user requesting the probe
      * @param probee The XMPPAddress whos presence we would like sent have have probed
      */
-    public void probePresence(JID prober, JID probee);
+    void probePresence( JID prober, JID probee );
 
     /**
      * Handle a presence probe sent by a remote server. The logic to apply is the following: If
@@ -92,7 +88,7 @@ public interface PresenceManager {
      *
      * @param packet the received probe presence from a remote server.
      */
-    public void handleProbe(Presence packet) throws UnauthorizedException;
+    void handleProbe( Presence packet ) throws UnauthorizedException;
 
     /**
      * Returns true if the the prober is allowed to see the presence of the probee.
@@ -103,7 +99,7 @@ public interface PresenceManager {
      * @throws UserNotFoundException If the probee does not exist in the local server or the prober
      *         is not present in the roster of the probee.
      */
-    public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException;
+    boolean canProbePresence( JID prober, String probee ) throws UserNotFoundException;
 
     /**
      * Sends unavailable presence from all of the user's available resources to the remote user.
@@ -115,21 +111,21 @@ public interface PresenceManager {
      * @param recipientJID JID of the remote user that will receive the unavailable presences.
      * @param userJID JID of the local user.
      */
-    public void sendUnavailableFromSessions(JID recipientJID, JID userJID);
+    void sendUnavailableFromSessions( JID recipientJID, JID userJID );
 
     /**
      * Notification message saying that the sender of the given presence just became available.
      *
      * @param presence the presence sent by the available user.
      */
-    public void userAvailable(Presence presence);
+    void userAvailable( Presence presence );
 
     /**
      * Notification message saying that the sender of the given presence just became unavailable.
      *
      * @param presence the presence sent by the unavailable user.
      */
-    public void userUnavailable(Presence presence);
+    void userUnavailable( Presence presence );
 
     /**
      * Returns the status sent by the user in his last unavailable presence or <tt>null</tt> if the
@@ -139,7 +135,7 @@ public interface PresenceManager {
      * @return the status sent by the user in his last unavailable presence or <tt>null</tt> if the
      *         user is online or never set such information.
      */
-    public String getLastPresenceStatus(User user);
+    String getLastPresenceStatus( User user );
 
     /**
      * Returns the number of milliseconds since the user went offline or -1 if such information
@@ -149,5 +145,5 @@ public interface PresenceManager {
      * @return the number of milliseconds since the user went offline or -1 if such information
      *         is not available or if the user is online.
      */
-    public long getLastActivity(User user);
+    long getLastActivity( User user );
 }

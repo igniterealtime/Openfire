@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -89,7 +87,13 @@
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
-        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        if (roomJID == null) {
+            // case when canceling creating a new room
+            response.sendRedirect("muc-room-summary.jsp");
+        } else {
+            // case when canceling a room edit, used on summary to set service
+            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        }
         return;
     }
 

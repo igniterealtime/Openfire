@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3762 $
- * $Date: 2006-04-12 18:07:15 -0500 (Mon, 12 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +23,6 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;

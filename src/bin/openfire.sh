@@ -1,9 +1,6 @@
 #!/bin/sh
 
 #
-# $RCSfile$
-# $Revision: 1194 $
-# $Date: 2005-03-30 13:39:54 -0300 (Wed, 30 Mar 2005) $
 #
 
 # tries to determine arguments to launch openfire

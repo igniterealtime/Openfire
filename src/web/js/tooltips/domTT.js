@@ -1,4 +1,3 @@
-/** $Id: domTT.js 2324 2006-06-12 07:06:39Z dallen $ */
 // {{{ license
 
 /*

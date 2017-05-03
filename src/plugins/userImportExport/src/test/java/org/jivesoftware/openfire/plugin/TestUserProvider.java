@@ -1,5 +1,4 @@
-/**
- *
+/*
  * Copyright 2016 Anno van Vliet
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +48,6 @@ public class TestUserProvider implements UserProvider {
     private final Collection<RosterItem> rosteritems;
 
     /**
-     * 
      */
     public TestRoster() {
       rosteritems = new ArrayList<RosterItem>();
@@ -106,7 +104,6 @@ public class TestUserProvider implements UserProvider {
   
   
   /**
-   * 
    */
   public TestUserProvider() {
     userList = new TreeMap<String,User>();

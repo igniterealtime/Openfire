@@ -1,5 +1,3 @@
-// $Revision$
-// $Date$
 
 INSERT INTO ofVersion (name, version) VALUES ('clientcontrol', 0);
 

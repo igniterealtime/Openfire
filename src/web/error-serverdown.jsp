@@ -1,7 +1,4 @@
  <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
 --%>
 <%@ page import="org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.util.LocaleUtils"%>

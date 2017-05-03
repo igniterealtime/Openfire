@@ -245,11 +245,6 @@ public class MUCRoomController {
 		room.setMaxUsers(mucRoomEntity.getMaxUsers());
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
-		
-		// Fire RoomUpdateEvent if cluster is started
-		if (ClusterManager.isClusteringStarted()) {
-		  CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
-		}
 
 		// Set broadcast presence roles
 		if (mucRoomEntity.getBroadcastPresenceRoles() != null) {
@@ -276,6 +271,11 @@ public class MUCRoomController {
 		
 		// Unlock the room, because the default configuration lock the room.  		
 		room.unlock(room.getRole());
+		
+		// Fire RoomUpdateEvent if cluster is started
+		if (ClusterManager.isClusteringStarted()) {
+		  CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
+		}
 
 		// Save the room to the DB if the room should be persistant
 		if (room.isPersistent()) {

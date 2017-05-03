@@ -1,0 +1,50 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>plugins</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.2.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.igniterealtime.openfire.plugins</groupId>
+    <artifactId>userImportExport</artifactId>
+    <name>UserImportExport Plugin</name>
+
+    <build>
+        <sourceDirectory>../../src/plugins/userImportExport/src/java</sourceDirectory>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>msv</groupId>
+            <artifactId>msv</artifactId>
+            <version>20030225</version>
+        </dependency>
+        <dependency>
+            <groupId>msv</groupId>
+            <artifactId>isorelax</artifactId>
+            <version>20030225</version>
+        </dependency>
+        <dependency>
+            <groupId>msv</groupId>
+            <artifactId>relaxngDatatype</artifactId>
+            <version>20030225</version>
+        </dependency>
+        <dependency>
+            <groupId>msv</groupId>
+            <artifactId>xsdlib</artifactId>
+            <version>20030225</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+</project>

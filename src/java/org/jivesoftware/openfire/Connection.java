@@ -1,8 +1,4 @@
-/**
- * $RCSfile: Connection.java,v $
- * $Revision: 3187 $
- * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +38,7 @@ public interface Connection extends Closeable {
      *
      * @return true if the socket remains valid, false otherwise.
      */
-    public boolean validate();
+    boolean validate();
 
     /**
      * Initializes the connection with it's owning session. Allows the
@@ -51,7 +47,7 @@ public interface Connection extends Closeable {
      *
      * @param session the session that owns this connection
      */
-    public void init(LocalSession session);
+    void init( LocalSession session );
 
     /**
      * Returns the raw IP address of this <code>InetAddress</code>
@@ -61,7 +57,7 @@ public interface Connection extends Closeable {
      * @return  the raw IP address of this object.
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public byte[] getAddress() throws UnknownHostException;
+    byte[] getAddress() throws UnknownHostException;
 
     /**
      * Returns the IP address string in textual presentation.
@@ -69,7 +65,7 @@ public interface Connection extends Closeable {
      * @return  the raw IP address in a string format.
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public String getHostAddress() throws UnknownHostException;
+    String getHostAddress() throws UnknownHostException;
 
     /**
      * Gets the host name for this IP address.
@@ -97,7 +93,7 @@ public interface Connection extends Closeable {
      * @see java.net.InetAddress#getCanonicalHostName
      * @see SecurityManager#checkConnect
      */
-    public String getHostName() throws UnknownHostException;
+    String getHostName() throws UnknownHostException;
 
 	/**
 	 * Returns the local underlying {@link javax.security.cert.X509Certificate}
@@ -107,7 +103,7 @@ public interface Connection extends Closeable {
 	 *         first followed by any certificate authorities. If no certificates
 	 *         is present for the connection, then <tt>null</tt> is returned.
 	 */
-    public Certificate[] getLocalCertificates();
+    Certificate[] getLocalCertificates();
 
 	/**
 	 * Returns the underlying {@link javax.security.cert.X509Certificate} for
@@ -116,7 +112,7 @@ public interface Connection extends Closeable {
 	 * @return an ordered array of peer certificates, with the peer's own
 	 *         certificate first followed by any certificate authorities.
 	 */
-    public Certificate[] getPeerCertificates();
+    Certificate[] getPeerCertificates();
 
     /**
      * Keeps track if the other peer of this session presented a self-signed certificate. When
@@ -126,7 +122,7 @@ public interface Connection extends Closeable {
      *
      * @param isSelfSigned true if the other peer presented a self-signed certificate.
      */
-    public void setUsingSelfSignedCertificate(boolean isSelfSigned);
+    void setUsingSelfSignedCertificate( boolean isSelfSigned );
 
     /**
      * Returns true if the other peer of this session presented a self-signed certificate. When
@@ -136,7 +132,7 @@ public interface Connection extends Closeable {
      *
      * @return true if the other peer of this session presented a self-signed certificate.
      */
-    public boolean isUsingSelfSignedCertificate();
+    boolean isUsingSelfSignedCertificate();
     
     /**
      * Close this session including associated socket connection. The order of
@@ -151,28 +147,28 @@ public interface Connection extends Closeable {
      * (idempotent, try-with-resources, etc.)
      */
     @Override
-    public void close();
+    void close();
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors
      * should send a stream error whose condition is system-shutdown before closing
      * the connection.
      */
-    public void systemShutdown();
+    void systemShutdown();
 
     /**
      * Returns true if the connection/session is closed.
      *
      * @return true if the connection is closed.
      */
-    public boolean isClosed();
+    boolean isClosed();
 
     /**
      * Returns true if this connection is secure.
      *
      * @return true if the connection is secure (e.g. SSL/TLS)
      */
-    public boolean isSecure();
+    boolean isSecure();
 
     /**
      * Registers a listener for close event notification. Registrations after
@@ -185,7 +181,7 @@ public interface Connection extends Closeable {
      * @param listener the listener to register for events.
      * @param handbackMessage the object to send in the event notification.
      */
-    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage);
+    void registerCloseListener( ConnectionCloseListener listener, Object handbackMessage );
 
     /**
      * Removes a registered close event listener. Registered listeners must
@@ -195,7 +191,7 @@ public interface Connection extends Closeable {
      *
      * @param listener the listener to deregister for close events.
      */
-    public void removeCloseListener(ConnectionCloseListener listener);
+    void removeCloseListener( ConnectionCloseListener listener );
 
     /**
      * Delivers the packet to this connection without checking the recipient.
@@ -204,7 +200,7 @@ public interface Connection extends Closeable {
      * @param packet the packet to deliver.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException if a permission error was detected.
      */
-    public void deliver(Packet packet) throws UnauthorizedException;
+    void deliver( Packet packet ) throws UnauthorizedException;
 
     /**
      * Delivers raw text to this connection. This is a very low level way for sending
@@ -217,7 +213,7 @@ public interface Connection extends Closeable {
      *
      * @param text the XML stanzas represented kept in a String.
      */
-    public void deliverRawText(String text);
+    void deliverRawText( String text );
 
     /**
      * Returns true if the connected client is a flash client. Flash clients need
@@ -227,7 +223,7 @@ public interface Connection extends Closeable {
      *
      * @return true if the connected client is a flash client.
      */
-    public boolean isFlashClient();
+    boolean isFlashClient();
 
     /**
      * Sets whether the connected client is a flash client. Flash clients need to
@@ -237,7 +233,7 @@ public interface Connection extends Closeable {
      *
      * @param flashClient true if the if the connection is a flash client.
      */
-    public void setFlashClient(boolean flashClient);
+    void setFlashClient( boolean flashClient );
 
     /**
      * Returns the major version of XMPP being used by this connection
@@ -247,7 +243,7 @@ public interface Connection extends Closeable {
      *
      * @return the major XMPP version being used by this connection.
      */
-    public int getMajorXMPPVersion();
+    int getMajorXMPPVersion();
 
     /**
      * Returns the minor version of XMPP being used by this connection
@@ -257,7 +253,7 @@ public interface Connection extends Closeable {
      *
      * @return the minor XMPP version being used by this connection.
      */
-    public int getMinorXMPPVersion();
+    int getMinorXMPPVersion();
 
     /**
      * Sets the XMPP version information. In most cases, the version should be "1.0".
@@ -267,7 +263,7 @@ public interface Connection extends Closeable {
      * @param majorVersion the major version.
      * @param minorVersion the minor version.
      */
-    public void setXMPPVersion(int majorVersion, int minorVersion);
+    void setXMPPVersion( int majorVersion, int minorVersion );
 
     /**
      * Returns true if the connection is using compression.

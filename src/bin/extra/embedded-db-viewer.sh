@@ -1,5 +1,3 @@
-# $Revision$
-# $Date$
 
 # Script to start the HSQLDB database viewer. The embedded-db.rc file
 # contains connection settings. Visit http://hsqldb.org for documentation

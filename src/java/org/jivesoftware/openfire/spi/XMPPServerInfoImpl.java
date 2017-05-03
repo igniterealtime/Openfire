@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1583 $
- * $Date: 2005-07-03 17:55:39 -0300 (Sun, 03 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,17 +57,23 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     @Override
     public String getHostname()
-	{
+    {
+        final String fqdn = JiveGlobals.getProperty( "xmpp.fqdn" );
+        if ( fqdn != null && !fqdn.trim().isEmpty() )
+        {
+            return fqdn.trim().toLowerCase();
+        }
+
         try
         {
-    	    return JiveGlobals.getProperty( "xmpp.fqdn",  InetAddress.getLocalHost().getCanonicalHostName() ).toLowerCase();
+            return InetAddress.getLocalHost().getCanonicalHostName().toLowerCase();
         }
         catch (UnknownHostException ex)
         {
             Log.warn( "Unable to determine local hostname.", ex );
             return "localhost";
         }
-	}
+    }
 
 	@Override
     public void setHostname( String fqdn )

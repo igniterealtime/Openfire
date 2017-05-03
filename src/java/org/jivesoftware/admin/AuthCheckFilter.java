@@ -33,6 +33,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
@@ -154,8 +156,11 @@ public class AuthCheckFilter implements Filter {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
             if (manager.getUser() == null) {
-                response.sendRedirect(getRedirectURL(request, loginPage, null));
-                return;
+                final boolean siteMinderAuthenticated = isSiteMinderAuthenticated(request);
+                if (!siteMinderAuthenticated) {
+                    response.sendRedirect(getRedirectURL(request, loginPage, null));
+                    return;
+                }
             }
         }
         chain.doFilter(req, res);
@@ -188,4 +193,56 @@ public class AuthCheckFilter implements Filter {
             return null;
         }
     }
+
+    public static boolean isSiteMinderAuthenticationEnabled() {
+        return JiveGlobals.getBooleanProperty("siteminder.auth.enabled", false);
+    }
+
+    /**
+     * If SiteMinder based authentication is enabled and the current SiteMinder user is an Openfire admin, then an
+     * AuthToken will be added to the session user
+     * 
+     * @param request
+     *            The HTTP request
+     * @return true if SiteMinder identifies the user as an admin user
+     */
+    private boolean isSiteMinderAuthenticated(HttpServletRequest request) {
+        if (!isSiteMinderAuthenticationEnabled()) {
+            // SiteMinder is disabled - do nothing
+            return false;
+        }
+        final AuthToken authToken = getSiteMinderBasedAuthToken(request);
+        if (authToken == null) {
+            // We've not authenticated the user - do nothing
+            return false;
+        }
+        request.getSession().setAttribute("jive.admin.authToken", authToken);
+        return true;
+    }
+
+    private AuthToken getSiteMinderBasedAuthToken(final HttpServletRequest request) {
+        final String smUser = request.getHeader("SM_USER");
+        if (smUser == null || smUser.trim().isEmpty()) {
+            // SiteMinder has not authenticated the user
+            return null;
+        }
+
+        if (LoginLimitManager.getInstance().hasHitConnectionLimit(smUser, request.getRemoteAddr())) {
+            // Too many connections
+            Log.warn("SiteMinder user '" + smUser + "' or address '" + request.getRemoteAddr() + "' has hit login attempt limit - login request rejected.");
+            return null;
+        }
+
+        if (!AdminManager.getInstance().isUserAdmin(smUser, true)) {
+            // Not an admin user
+            Log.warn("SiteMinder user '" + smUser + "' not allowed to login.");
+            return null;
+        }
+
+        // We've got a valid admin user, so record the login attempt
+        LoginLimitManager.getInstance().recordSuccessfulAttempt(smUser, request.getRemoteAddr());
+        // And return the auth token
+        return new AuthToken(smUser);
+    }
+
 }

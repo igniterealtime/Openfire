@@ -400,9 +400,15 @@ public class SparkManager implements Component {
         }
 
         // Check for HISTORY SETTINGS feature
-        boolean historyEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("history.enabled", "true"));
-        if (historyEnabled) {
+        boolean historysettingsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("historysettings.enabled", "true"));
+        if (historysettingsEnabled) {
             responseElement.addElement("feature").addAttribute("var", "history-settings");
+        }
+
+        // Check for HISTORY TRANSCRIPTS feature
+        boolean historytranscriptsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("historytranscripts.enabled", "true"));
+        if (historytranscriptsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "history-transcripts");
         }
 
         // Check for HOST NAME CHANGE feature

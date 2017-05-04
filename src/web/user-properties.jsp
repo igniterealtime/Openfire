@@ -301,34 +301,37 @@
 </table>
 </div>
 
-<br>
-<div class="jive-table">
-	<table cellpadding="0" cellspacing="0" border="0" width="100%">
-		<thead>
-			<tr>
-				<th colspan="2"><fmt:message key="user.properties.additional_properties" /></th>
-			</tr>
-		</thead>
-		<tbody>
-			<% for(Map.Entry<String, String> properties : user.getProperties().entrySet()) { %>
-			<tr>
-				<td class="c1"><%= StringUtils.escapeHTMLTags(properties.getKey()) %>:</td>
-				<td><%= StringUtils.escapeHTMLTags(properties.getValue()) %></td>
-			</tr>
-			<% } %>
-		</tbody>
-	</table>
-</div>
+<% if (user != null) { %>
+    <br>
+    <div class="jive-table">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th colspan="2"><fmt:message key="user.properties.additional_properties" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% for(Map.Entry<String, String> properties : user.getProperties().entrySet()) { %>
+                <tr>
+                    <td class="c1"><%= StringUtils.escapeHTMLTags(properties.getKey()) %>:</td>
+                    <td><%= StringUtils.escapeHTMLTags(properties.getValue()) %></td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
 
-<br><br>
 
-<% if (user != null && !UserManager.getUserProvider().isReadOnly()) { %>
+    <% if (!UserManager.getUserProvider().isReadOnly()) { %>
 
-<form action="user-edit-form.jsp">
-<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(user.getUsername()) %>">
-<input type="submit" value="<fmt:message key="global.edit_properties" />">
-</form>
+        <br><br>
 
+        <form action="user-edit-form.jsp">
+        <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(user.getUsername()) %>">
+        <input type="submit" value="<fmt:message key="global.edit_properties" />">
+        </form>
+
+    <% } %>
 <% } %>
 
 </body>

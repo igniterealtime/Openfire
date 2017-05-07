@@ -20,8 +20,22 @@
     String fileTransferEnabledString = JiveGlobals.getProperty("transfer.enabled", "true");    
     String helpforumsEnabledString = JiveGlobals.getProperty("helpforums.enabled", "true");
     String helpuserguideEnabledString = JiveGlobals.getProperty("helpuserguide.enabled", "true");
+
+// If the "history.enabled" property name exists from an older version of Client Control, then:
+//  1) Carry over its property value to "History Settings" and "History Transcripts"
+//  2) Delete the "history.enabled" property name since it has been superceded
+
+	String oldHistorySettings = JiveGlobals.getProperty("history.enabled");
+
+	if (oldHistorySettings != null) {
+		JiveGlobals.setProperty("historysettings.enabled", oldHistorySettings);
+		JiveGlobals.setProperty("historytranscripts.enabled", oldHistorySettings);
+		JiveGlobals.deleteProperty("history.enabled");
+	}
+
     String historysettingsEnabledString = JiveGlobals.getProperty("historysettings.enabled", "true");
     String historytranscriptsEnabledString = JiveGlobals.getProperty("historytranscripts.enabled", "true");
+
     String hostnameEnabledString = JiveGlobals.getProperty("hostname.enabled", "true");
     String invisibleloginEnabledString = JiveGlobals.getProperty("invisiblelogin.enabled", "true");
     String anonymousloginEnabledString = JiveGlobals.getProperty("anonymouslogin.enabled", "true");

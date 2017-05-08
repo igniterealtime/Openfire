@@ -909,7 +909,7 @@ public class JiveGlobals {
             loadOpenfireProperties();
         }
         // Note; only remove the encryption indicator from XML file if the (encrypted) property is not also defined in the XML file
-        if (openfireProperties.getProperty(name) == null) {
+        if (JiveGlobals.isXMLPropertyEncrypted(name) && openfireProperties.getProperty(name) == null) {
             securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
         }
     }

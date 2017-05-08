@@ -293,9 +293,8 @@ public class JiveProperties implements Map<String, String> {
 
             result = properties.put(key, value);
             encrypted.put(key, isEncrypted);
-            if(!isEncrypted) {
-                JiveGlobals.clearXMLPropertyEncryptionEntry(key);
-            }
+            // We now know the database is correct - so we can remove the entry from security.conf
+            JiveGlobals.clearXMLPropertyEncryptionEntry(key);
         }
 
         // Generate event.
@@ -317,9 +316,8 @@ public class JiveProperties implements Map<String, String> {
     void localPut(String key, String value, boolean isEncrypted) {
         properties.put(key, value);
         encrypted.put(key, isEncrypted);
-        if (!isEncrypted) {
-            JiveGlobals.clearXMLPropertyEncryptionEntry(key);
-        }
+        // We now know the database is correct - so we can remove the entry from security.conf
+        JiveGlobals.clearXMLPropertyEncryptionEntry(key);
 
         // Generate event.
         Map<String, Object> params = new HashMap<>();

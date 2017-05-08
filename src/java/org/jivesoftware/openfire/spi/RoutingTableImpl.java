@@ -1088,8 +1088,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         try {
         	componentLock.lock();
 	    	List<String> remoteComponents = new ArrayList<>();
+	    	NodeID nodeIDInstance = NodeID.getInstance( nodeID );
 	    	for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
-	    		if (entry.getValue().remove(nodeID) && entry.getValue().size() == 0) {
+	    		if (entry.getValue().remove(nodeIDInstance) && entry.getValue().size() == 0) {
 	    			remoteComponents.add(entry.getKey());
 	    		}
 	    	}

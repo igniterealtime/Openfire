@@ -283,9 +283,7 @@ public class JiveProperties implements Map<String, String> {
         String result;
         synchronized (this) {
             if (properties.containsKey(key)) {
-                if (!properties.get(key).equals(value) || !encrypted.get(key) == isEncrypted) {
-                    updateProperty(key, value, isEncrypted);
-                }
+                updateProperty(key, value, isEncrypted);
             }
             else {
                 insertProperty(key, value, isEncrypted);

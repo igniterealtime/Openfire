@@ -777,13 +777,25 @@ public class JiveGlobals {
      * @param value the value of the property being set.
      */
     public static void setProperty(String name, String value) {
+        setProperty(name, value, false);
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
+     * @param encrypt {@code true} to encrypt the property in the database, other {@code false}
+     */
+    public static void setProperty(String name, String value, boolean encrypt) {
         if (properties == null) {
             if (isSetupMode()) {
                 return;
             }
             properties = JiveProperties.getInstance();
         }
-        properties.put(name, value);
+        properties.put(name, value, encrypt);
     }
 
     /**
@@ -883,7 +895,23 @@ public class JiveGlobals {
             properties = JiveProperties.getInstance();
         }
         properties.remove(name);
-        setPropertyEncrypted(name, false);
+        clearXMLPropertyEncryptionEntry(name);
+    }
+
+    private static void clearXMLPropertyEncryptionEntry(String name) {
+        if (isSetupMode()) {
+            return;
+        }
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+        // Note; only remove the encryption indicator from XML file if the (encrypted) property is not also defined in the XML file
+        if (openfireProperties.getProperty(name) == null) {
+            securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
+        }
     }
 
     /**
@@ -921,18 +949,37 @@ public class JiveGlobals {
 
 
     /**
+     * Determines whether an XML property is configured for encryption.
+     *
+     * @param name
+     *            The name of the property
+     * @return {@code true} if the property is stored using encryption, otherwise {@code false}
+     */
+    static boolean isXMLPropertyEncrypted(final String name) {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        return name != null &&
+                !name.startsWith(JiveGlobals.ENCRYPTED_PROPERTY_NAME_PREFIX) &&
+                securityProperties.getProperties(JiveGlobals.ENCRYPTED_PROPERTY_NAMES, true).contains(name);
+
+    }
+
+    /**
      * Determines whether a property is configured for encryption.
      * 
-     * @param name The name of the property
-     * @return True if the property is stored using encryption, otherwise false
+     * @param name
+     *            The name of the property
+     * @return {@code true} if the property is stored using encryption, otherwise {@code false}
      */
     public static boolean isPropertyEncrypted(String name) {
-    	if (securityProperties == null) {
-    		loadSecurityProperties();
-    	}
-    	return	name != null && 
-    			!name.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX) &&
-    			securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true).contains(name);
+        if (properties == null) {
+            if (isSetupMode()) {
+                return false;
+            }
+            properties = JiveProperties.getInstance();
+        }
+        return properties.isEncrypted(name);
     }
 
     /**
@@ -943,19 +990,13 @@ public class JiveGlobals {
      * @return True if the property's encryption status changed, otherwise false
      */
     public static boolean setPropertyEncrypted(String name, boolean encrypt) {
-    	if (securityProperties == null) {
-    		loadSecurityProperties();
-    	}
-    	boolean propertyWasChanged;
-    	if (encrypt) {
-    		propertyWasChanged = securityProperties.addToList(ENCRYPTED_PROPERTY_NAMES, name);
-    	} else {
-    		propertyWasChanged = securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
-    	}
-    	if (propertyWasChanged) {
-    		resetProperty(name);
-    	}
-    	return propertyWasChanged;
+        if (properties == null) {
+            if (isSetupMode()) {
+                return false;
+            }
+            properties = JiveProperties.getInstance();
+        }
+        return properties.setPropertyEncrypted(name, encrypt);
     }
 
     /**

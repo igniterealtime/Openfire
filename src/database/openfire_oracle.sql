@@ -121,6 +121,7 @@ CREATE TABLE ofID (
 CREATE TABLE ofProperty (
   name        VARCHAR2(100) NOT NULL,
   propValue   VARCHAR2(4000) NOT NULL,
+  encrypted   INTEGER,
   CONSTRAINT ofProperty_pk PRIMARY KEY (name)
 );
 
@@ -376,7 +377,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 25);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 26);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

@@ -65,7 +65,7 @@ public class SchemaManager {
     /**
      * Current Openfire database schema version.
      */
-    private static final int DATABASE_VERSION = 25;
+    private static final int DATABASE_VERSION = 26;
 
     /**
      * Checks the Openfire database schema to ensure that it's installed and up to date.

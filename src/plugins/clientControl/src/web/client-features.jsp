@@ -360,17 +360,6 @@
 	        <th><fmt:message key="client.features.enabled"/></th>
 	        <th><fmt:message key="client.features.disabled"/></th>
 	        <tr>
-	            <td><b><fmt:message key="client.features.anonymouslogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
-	                     <fmt:message key="client.features.anonymouslogin.description" />
-	                  </span></td>
-	            <td width="1%" nowrap>
-	                <input type="radio" name="anonymousloginEnabled" value="true" <%= anonymousloginEnabled ? "checked" : "" %> />
-	            </td>
-	            <td width="1%" nowrap>
-	                <input type="radio" name="anonymousloginEnabled" value="false" <%= !anonymousloginEnabled ? "checked" : "" %> />
-	            </td>
-	        </tr>
-	        <tr>
 	            <td><b><fmt:message key="client.features.invisiblelogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
 	                     <fmt:message key="client.features.invisiblelogin.description" />
 	                  </span></td>
@@ -379,6 +368,17 @@
 	            </td>
 	            <td width="1%" nowrap>
 	                <input type="radio" name="invisibleloginEnabled" value="false" <%= !invisibleloginEnabled ? "checked" : "" %> />
+	            </td>
+	        </tr>
+	        <tr>
+	            <td><b><fmt:message key="client.features.anonymouslogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	                     <fmt:message key="client.features.anonymouslogin.description" />
+	                  </span></td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="anonymousloginEnabled" value="true" <%= anonymousloginEnabled ? "checked" : "" %> />
+	            </td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="anonymousloginEnabled" value="false" <%= !anonymousloginEnabled ? "checked" : "" %> />
 	            </td>
 	        </tr>
 	        <tr>

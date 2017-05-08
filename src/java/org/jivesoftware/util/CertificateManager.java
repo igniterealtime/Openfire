@@ -800,7 +800,7 @@ public class CertificateManager {
      */
     private static Map<String, List<X509Certificate>> getCertsByIssuer(KeyStore ks)
             throws Exception {
-        Map<String, List<X509Certificate>> answer = new HashMap<>();
+        Map<Principal, List<X509Certificate>> answer = new HashMap<>();
         Enumeration<String> aliases = ks.aliases();
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
@@ -817,10 +817,17 @@ public class CertificateManager {
                         vec.add(cert);
                     }
                 }
-                answer.put(subjectDN.getName(), vec);
+                answer.put(subjectDN, vec);
             }
         }
-        return answer;
+
+        // Compare by principal, but return by principal name.
+        final Map<String, List<X509Certificate>> result = new HashMap<>();
+        for ( Map.Entry<Principal, List<X509Certificate>> entry : answer.entrySet() )
+        {
+            result.put( entry.getKey().getName(), entry.getValue() );
+        }
+        return result;
     }
 
     /**

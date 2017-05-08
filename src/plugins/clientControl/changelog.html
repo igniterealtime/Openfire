@@ -43,6 +43,33 @@
 <h1>
 Client Control Plugin Changelog
 </h1>
+<p><b>2.1.2</b> -- May 7, 2017</p>
+<ul>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/OF-1325'>OF-1325</a>] - Adds 'History Transcripts' and fixes 'History Settings' in Client Control.</li>
+</ul>
+<ul>
+    <li><b>NOTE:</b> This update corresponds to ticket SPARK-1915 and requires Spark version 2.9.0 and above for proper functionality.</li>
+    <li>If a previous version of this plugin was installed, the previous History Settings will be carried over and split into the new settings.</li>
+</ul>
+<ul>
+    <li><b>History Settings</b> - Corresponds to <i>HIDE_HISTORY_SETTINGS</i> in 'default.properties' file and performs the following actions when set to <i>Disabled</i>:
+	<ul>
+  		<li>Removes history settings from Preferences menu</li>
+   		<li>Removes 'clear' option from context menu in the chat window</li>
+	</ul>
+	<br>
+    <li><b>History Transcripts</b> - Corresponds to <i>HISTORY_DISABLED</i> in 'default.properties' file and performs the following actions when set to <i>Disabled</i>:
+	<ul>
+   		<li>Removes history settings from Preferences menu</li>
+   		<li>Removes 'clear' option from context menu in the chat window</li>
+   		<li>Removes history button from the chat window</li>
+   		<li>Removes 'View Log' option from context menu in chat window</li>
+   		<li>Removes history from the chat window</li>
+   		<li>Removes 'View contact history' option from contact&#39;s context menu</li>
+   		<li>Does not save history into transcript files</li>
+   	</ul>
+</ul>
+
 <p><b>2.1.1</b> -- December 30, 2016</p>
 <ul>
     <li>[<a href='http://www.igniterealtime.org/issues/browse/OF-1258'>OF-1258</a>] - Adds an option to enable/disable anonymous login in Spark.</li>

@@ -16,9 +16,11 @@
 
 package org.jivesoftware.openfire.auth;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.xmpp.packet.JID;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -98,7 +100,8 @@ public class AuthorizationBasedAuthProviderMapper implements AuthProviderMapper
     public AuthProvider getAuthProvider( String username )
     {
         // TODO add optional caching, to prevent retrieving the administrative users upon every invocation.
-        final boolean isAdmin = AdminManager.getAdminProvider().getAdmins().contains( username );
+        final JID jid = XMPPServer.getInstance().createJID( username, null );
+        final boolean isAdmin = AdminManager.getAdminProvider().getAdmins().contains( jid );
 
         if ( isAdmin )
         {

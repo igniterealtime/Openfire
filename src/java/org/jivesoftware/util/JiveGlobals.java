@@ -898,7 +898,7 @@ public class JiveGlobals {
         clearXMLPropertyEncryptionEntry(name);
     }
 
-    private static void clearXMLPropertyEncryptionEntry(String name) {
+    static void clearXMLPropertyEncryptionEntry(String name) {
         if (isSetupMode()) {
             return;
         }

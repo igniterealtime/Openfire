@@ -125,7 +125,10 @@ public class NodeAffiliate {
                     if (acdf != null) {
                         try {
                             SecurityLabel securityLabel = acdf.check(acdf.getClearance(this.jid), publishedItem.getSecurityLabel(), this.jid);
-                            item.add(securityLabel.getElement().createCopy());
+                            notification.deleteExtension(SecurityLabel.NAME, SecurityLabel.NAMESPACE);
+                            if (securityLabel != null) {
+                                notification.addExtension(securityLabel);
+                            }
                         } catch (SecurityLabelException e) {
                             Log.debug("Dropped item publish due to SecurityLabel: ", e);
                             continue;

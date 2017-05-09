@@ -10,12 +10,17 @@ import org.xmpp.packet.PacketExtension;
  * themselves.
  */
 public class SecurityLabel extends PacketExtension {
+    public static final String NAMESPACE = "urn:xmpp:sec-label:0";
+    public static final String NAME = "securitylabel";
     public SecurityLabel(Element el) {
         super(el);
+        if (!el.getNamespaceURI().equals(NAMESPACE)) {
+            throw new RuntimeException("Incorrect namespace " + el.getNamespaceURI());
+        }
     }
 
     public SecurityLabel(final String displayMarking, final String fgcolour, final String bgcolour, Element label) {
-        super("securitylabel", "urn:xmpp:sec-label:0");
+        super(NAME, NAMESPACE);
         assert label != null : "Security Label element must not be null";
         if (fgcolour != null || bgcolour != null) {
             assert displayMarking != null : "Colours set without a marking";
@@ -43,7 +48,7 @@ public class SecurityLabel extends PacketExtension {
     }
 
     static {
-        registeredExtensions.put(QName.get("securitylabel", "urn:xmpp:sec-label:0"), SecurityLabel.class);
+        registeredExtensions.put(QName.get(NAME, NAMESPACE), SecurityLabel.class);
     }
 
 }

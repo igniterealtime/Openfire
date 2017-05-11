@@ -19,4 +19,11 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>de.javawi.jstun</groupId>
+            <artifactId>jstun</artifactId>
+            <version>0.7.4</version>
+        </dependency>
+    </dependencies>
 </project>

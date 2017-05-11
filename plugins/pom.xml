@@ -39,8 +39,7 @@
         <module>search</module>
         <!-- Missing dependencies -->
         <!--<module>sip</module>-->
-        <!-- Missing dependencies: jstun-0.6.1.jar -->
-        <!--<module>stunserver</module>-->
+        <module>stunserver</module>
         <module>subscription</module>
         <module>userCreation</module>
         <module>userImportExport</module>

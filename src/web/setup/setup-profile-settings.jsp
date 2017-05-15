@@ -23,6 +23,7 @@
     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
     boolean requestedScramOnly = (request.getParameter("scramOnly") != null);
     boolean next = request.getParameter("continue") != null;
+    boolean sessionFailure = false;
     if (next) {
         // Figure out where to send the user.
         String mode = request.getParameter("mode");
@@ -31,28 +32,31 @@
             // Set to default providers by deleting any existing values.
             @SuppressWarnings("unchecked")
             Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
-
-            xmppSettings.put("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
+            if (xmppSettings == null){
+                sessionFailure = true;
+            } else {
+                xmppSettings.put("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
                     org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
-            xmppSettings.put("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
+                xmppSettings.put("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
                     org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
-            xmppSettings.put("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
+                xmppSettings.put("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
                     org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
-            xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
+                xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
                     org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
-            xmppSettings.put("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
+                xmppSettings.put("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
                     org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
-            xmppSettings.put("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
+                xmppSettings.put("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
                     org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
-            xmppSettings.put("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
+                xmppSettings.put("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
                     org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
-            if (requestedScramOnly) {
-                JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
-            }
+                if (requestedScramOnly) {
+                    JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+                }
 
-            // Redirect
-            response.sendRedirect("setup-admin-settings.jsp");
-            return;
+                // Redirect
+                response.sendRedirect("setup-admin-settings.jsp");
+                return;
+            }
         }
         else if ("ldap".equals(mode)) {
             response.sendRedirect("setup-ldap-server.jsp");
@@ -74,6 +78,12 @@
 	<p>
 	<fmt:message key="setup.profile.description" />
 	</p>
+
+<% if (sessionFailure) { %>
+            <span class="jive-error-text">
+            <fmt:message key="setup.invalid_session" />
+            </span>
+<% } %>
 
 	<!-- BEGIN jive-contentBox -->
 	<div class="jive-contentBox">

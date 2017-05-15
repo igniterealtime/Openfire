@@ -114,6 +114,7 @@
 <h3><fmt:message key="server.db_stats.status" /></h3>
 
 <form action="server-db-stats.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
     <table cellpadding="3" cellspacing="1" border="0">
     <tr>
         <td>
@@ -138,6 +139,7 @@
 	<h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="5" border="0">
         <tr>
             <td>

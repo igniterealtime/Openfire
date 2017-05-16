@@ -70,7 +70,7 @@ mina-integration-jmx.jar            | Apache Mina 2.0.7                         
 mina-integration-ognl.jar           | Apache Mina 2.0.7                                            | Apache 2.0
 javassist.jar                       | 3.11.0.GA (Apache Mina 2.0.7)                                | Apache 2.0
 ognl.jar                            | 3.0.5 (Apache Mina 2.0.7)                                    | Apache 2.0
-mysql.jar                           | 5.1.30                                                       | GPL
+mysql.jar                           | 5.1.42                                                       | GPL
 objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
 pack200task.jar                     | August 5, 2004                                               | LGPL
 postgres.jar                        | 9.4-1201.jdbc4                                               | BSD (http://jdbc.postgresql.org/license.html)

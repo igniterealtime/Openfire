@@ -176,11 +176,11 @@
     Map errors = new HashMap();
     String errorMessage = "";
 
-    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+    if ((rebuildIndex || update) && (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
         rebuildIndex = false;
         update = false;
+        errorMessage = "CSRF Failure.";
         errors.put("csrf", "");
-        errorMessage = "Archive Index rebuild failed.";
     }
     csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);

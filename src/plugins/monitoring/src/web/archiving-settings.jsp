@@ -27,7 +27,6 @@
 <head>
 <title><fmt:message key="archive.settings.title"/></title>
 <meta name="pageID" content="archiving-settings"/>
-<link rel="stylesheet" type="text/css" href="style/global.css">
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/conversations.js" type="text/javascript"></script>

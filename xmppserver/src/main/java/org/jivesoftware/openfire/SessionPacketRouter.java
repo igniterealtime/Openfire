@@ -59,7 +59,7 @@ public class SessionPacketRouter implements PacketRouter {
             throws UnknownStanzaException {
         String tag = wrappedElement.getName();
         if ("auth".equals(tag) || "response".equals(tag)) {
-            SASLAuthentication.handle(session, wrappedElement);
+            SASLAuthentication.handle(session, wrappedElement, false);
         }
         else if ("iq".equals(tag)) {
             route(getIQ(wrappedElement));

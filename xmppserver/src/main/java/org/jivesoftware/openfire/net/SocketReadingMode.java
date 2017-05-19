@@ -133,7 +133,7 @@ abstract class SocketReadingMode {
         boolean isComplete = false;
         boolean success = false;
         while (!isComplete) {
-            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc);
+            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc, false);
             if (status == SASLAuthentication.Status.needResponse) {
                 // Get the next answer since we are not done yet
                 doc = socketReader.reader.parseDocument().getRootElement();

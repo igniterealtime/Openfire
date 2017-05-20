@@ -27,7 +27,6 @@
 <head>
 <title><fmt:message key="archive.settings.title"/></title>
 <meta name="pageID" content="archiving-settings"/>
-<link rel="stylesheet" type="text/css" href="style/global.css">
 <script src="dwr/engine.js" type="text/javascript"></script>
 <script src="dwr/util.js" type="text/javascript"></script>
 <script src="dwr/interface/conversations.js" type="text/javascript"></script>
@@ -177,11 +176,11 @@
     Map errors = new HashMap();
     String errorMessage = "";
 
-    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+    if ((rebuildIndex || update) && (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
         rebuildIndex = false;
         update = false;
+        errorMessage = "CSRF Failure.";
         errors.put("csrf", "");
-        errorMessage = "Archive Index rebuild failed.";
     }
     csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);

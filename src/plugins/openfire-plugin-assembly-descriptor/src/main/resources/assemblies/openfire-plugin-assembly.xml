@@ -9,7 +9,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
 
-        <!-- metadata files (plugin.xml, icons, etc). -->
+        <!-- metadata files (readme, icons, etc). -->
         <fileSet>
             <outputDirectory/>
             <directory>${project.build.sourceDirectory}/../..</directory>
@@ -17,7 +17,6 @@
                 <include>*.html</include>
                 <include>*.gif</include>
                 <include>*.png</include>
-                <include>plugin.xml</include>
                 <include>classes/**</include>
             </includes>
         </fileSet>
@@ -48,6 +47,15 @@
         </fileSet>
 
     </fileSets>
+
+    <!-- metadata files that need to have content replaced by Maven metadata -->
+    <files>
+        <file>
+            <source>plugin.xml</source>
+            <outputDirectory>/</outputDirectory>
+            <filtered>true</filtered>
+        </file>
+    </files>
 
     <!-- Bundle the dependencies of this plugin -->
     <dependencySets>

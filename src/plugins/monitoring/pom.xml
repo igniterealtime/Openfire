@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>monitoring</artifactId>
+    <version>1.5.7</version>
     <name>Monitoring Plugin</name>
+    <description>Monitors conversations and statistics of the server.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

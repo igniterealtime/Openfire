@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>xmldebugger</artifactId>
+    <version>1.7.0</version>
     <name>XML Debugger Plugin</name>
+    <description>Prints XML traffic to the stdout (raw and interpreted XML)</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

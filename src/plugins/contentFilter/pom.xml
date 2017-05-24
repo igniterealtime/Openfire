@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>contentFilter</artifactId>
+    <version>1.8.0</version>
     <name>ContentFilter Plugin</name>
+    <description>Scans message packets for defined patterns</description>
+
+    <developers>
+        <developer>
+            <name>Conor Hayes</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

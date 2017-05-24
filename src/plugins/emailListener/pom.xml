@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>emailListener</artifactId>
+    <version>1.2.0</version>
     <name>Email Listener Plugin</name>
+    <description>Listens for emails and sends alerts to specific users.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>bookmarks</artifactId>
+    <version>1.0.0</version>
     <name>Bookmarks Plugin</name>
+    <description>Allows clients to store URL and group chat bookmarks (XEP-0048)</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

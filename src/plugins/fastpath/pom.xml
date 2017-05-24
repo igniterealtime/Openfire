@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>fastpath</artifactId>
+    <version>4.4.2</version>
     <name>Fastpath Plugin</name>
+    <description>Support for managed queued chat requests, such as a support team might use.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>clientControl</artifactId>
+    <version>2.1.2</version>
     <name>ClientControl Plugin</name>
+    <description>Controls clients allowed to connect and available features</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

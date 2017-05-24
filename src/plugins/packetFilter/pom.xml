@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>packetFilter</artifactId>
+    <version>3.3.0</version>
     <name>PacketFilter Plugin</name>
+    <description>Rules to enforce ethical communication</description>
+
+    <developers>
+        <developer>
+            <name>Nate Putnam</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

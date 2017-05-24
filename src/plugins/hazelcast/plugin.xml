@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.HazelcastPlugin</class>
-    <name>${plugin.name}</name>
-    <description>${plugin.description}</description>
+    <name>Hazelcast plugin</name>
+    <description>Adds clustering support</description>
     <author>Tom Evans</author>
     <version>2.2.1</version>
     <date>11/04/2016</date>

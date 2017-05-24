@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>jingleNodes</artifactId>
+    <version>0.2.0</version>
     <name>JingleNodes Plugin</name>
+    <description>Provides support for Jingle Nodes</description>
+
+    <developers>
+        <developer>
+            <name>Rodrigo Martins</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

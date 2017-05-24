@@ -8,7 +8,18 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>userservice</artifactId>
-    <name>UserService Plugin</name>
+    <version>2.1.0</version>
+    <name>(deprecated) UserService Plugin</name>
+    <description>(Deprecated) Please use the REST API Plugin. Allows administration of users via HTTP requests.</description>
+
+    <developers>
+        <developer>
+            <name>Roman Soldatow</name>
+        </developer>
+        <developer>
+            <name>Justin Hunt</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

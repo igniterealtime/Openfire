@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>clustering</artifactId>
+    <version>1.4.0</version>
     <name>Clustering Plugin</name>
+    <description>(deprecated) Adds clustering support.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>stunserver</artifactId>
+    <version>1.2.2</version>
     <name>STUN Server Plugin</name>
+    <description>Adds STUN functionality to Openfire</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

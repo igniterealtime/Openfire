@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>kraken</artifactId>
+    <version>1.3.0</version>
     <name>Kraken Plugin</name>
+    <description>Adds transports to other IM networks.</description>
+
+    <developers>
+        <developer>
+            <name>Daniel Henninger</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

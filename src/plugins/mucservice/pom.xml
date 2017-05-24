@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>mucservice</artifactId>
-    <name>MUC Service Plugin</name>
+    <version>0.2.3</version>
+    <name>(deprecated) MUC Service Plugin</name>
+    <description>(Deprecated) Please use the REST API Plugin. MUC administration over REST Interface</description>
+
+    <developers>
+        <developer>
+            <name>Roman Soldatow</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

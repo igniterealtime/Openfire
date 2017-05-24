@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>nodejs</artifactId>
+    <version>0.1.0</version>
     <name>NodeJS Plugin</name>
+    <description>Integrates NodeJs Applications with Openfire.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

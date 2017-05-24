@@ -8,7 +8,9 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>jmxweb</artifactId>
+    <version>0.0.6</version>
     <name>JMXWeb Plugin</name>
+    <description>JmxWeb plugin is web based platform for managing and monitoring openfire via JMX.</description>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

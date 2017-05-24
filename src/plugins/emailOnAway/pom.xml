@@ -8,7 +8,16 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>emailOnAway</artifactId>
+    <version>1.0.3</version>
     <name>Email On Away Plugin</name>
+    <description>Messages sent to alternate location when recipient is away</description>
+
+    <developers>
+        <developer>
+            <name>Nick Mossie</name>
+        </developer>
+    </developers>
+
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

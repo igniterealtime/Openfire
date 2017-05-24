@@ -8,7 +8,15 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>websocket</artifactId>
+    <version>1.2.0</version>
     <name>WebSocket Plugin</name>
+    <description>Provides WebSocket support for Openfire.</description>
+
+    <developers>
+        <developer>
+            <name>Tom Evans</name>
+        </developer>
+    </developers>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

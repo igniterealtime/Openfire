@@ -1,4 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<server-data xmlns='urn:xmpp:pie:0' xmlns:xi='http://www.w3.org/2001/XInclude'>
-  <xi:include href='src/plugins/userImportExport/src/test/java/test-export-xinclude/test-import.xml' />
-</server-data>

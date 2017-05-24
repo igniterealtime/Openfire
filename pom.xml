@@ -13,7 +13,7 @@
         <module>i18n</module>
         <module>xmppserver</module>
         <module>starter</module>
-        <module>plugins</module>
+        <module>src/plugins</module>
         <module>webadmin</module>
         <module>webadmintld</module>
     </modules>

@@ -7,7 +7,7 @@
         <version>4.2.0-SNAPSHOT</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
-    <artifactId>nonsaslauthentication</artifactId>
+    <artifactId>nonSaslAuthentication</artifactId>
     <name>non-SASL Authentication Plugin</name>
 
     <build>

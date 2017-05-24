@@ -3,11 +3,10 @@ package org.jivesoftware.openfire.plugin;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.XPPReader;
-import org.jdom.filter.ContentFilter;
+import org.gjt.xpp.XmlPullParserException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
@@ -25,18 +24,14 @@ import static org.junit.Assert.*;
 public class ContentFilterTest {
     private ContentFilter filter;
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(ContentFilterTest.class);
-    }
-
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         filter = new ContentFilter();
         
     }
 
     @After
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         filter.clearMask();
         filter.clearPatterns();
         filter = null;

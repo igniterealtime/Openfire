@@ -495,4 +495,17 @@
         </dependencies>
     </dependencyManagement>
 
+    <repositories>
+        <repository>
+            <id>igniterealtime</id>
+            <name>Ignite Realtime Repository (Snapshots)</name>
+            <url>http://igniterealtime.org/repo/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

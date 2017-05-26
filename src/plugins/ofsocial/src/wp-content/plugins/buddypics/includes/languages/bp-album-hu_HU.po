@@ -1,0 +1,614 @@
+# Copyright (C) 2010
+# This file is distributed under the same license as the  package.
+# Baka Attila Tamás <baka.tamas@e-vista.hu>, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version:  \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/bp-album\n"
+"POT-Creation-Date: 2011-06-09 06:58:10+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2012-10-27 10:40+0200\n"
+"Last-Translator: Baka Attila Tamás <baka.tamas@e-vista.hu>\n"
+"Language-Team: Hungarian <kde-l10n-hu@kde.org>\n"
+"Language: hu\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: includes/bp-album-screens.php:40 includes/bp-album-screens.php:62
+msgid "Edit Picture"
+msgstr "Kép szerkesztése"
+
+#: includes/bp-album-screens.php:55 includes/bp-album-screens.php:162
+msgid "Public"
+msgstr "Publikus"
+
+#: includes/bp-album-screens.php:56 includes/bp-album-screens.php:163
+msgid "Registered members"
+msgstr "Regisztrált tagok"
+
+#: includes/bp-album-screens.php:57 includes/bp-album-screens.php:164
+msgid "Only friends"
+msgstr "Csak barátok"
+
+#: includes/bp-album-screens.php:58 includes/bp-album-screens.php:165
+msgid "Private"
+msgstr "Privát"
+
+#: includes/bp-album-screens.php:59
+msgid "Hidden (admin only)"
+msgstr "Rejtett (csak admin)"
+
+#: includes/bp-album-screens.php:67
+msgid "Picture Title *"
+msgstr "Kép cím *"
+
+#: includes/bp-album-screens.php:73
+msgid "Picture Description"
+msgstr "Kép leírás"
+
+#: includes/bp-album-screens.php:79 includes/bp-album-screens.php:182
+msgid "Visibility"
+msgstr "Láthatóság"
+
+#: includes/bp-album-screens.php:87 includes/bp-album-screens.php:194
+msgid "(limit reached)"
+msgstr "(korlát elérve)"
+
+#: includes/bp-album-screens.php:96
+msgid "Picture activity and comments"
+msgstr "Kép aktivitás és hozzászólások"
+
+#: includes/bp-album-screens.php:97
+msgid "Enable"
+msgstr "Engedélyez"
+
+#: includes/bp-album-screens.php:98
+msgid "Disable"
+msgstr "Letilt"
+
+#: includes/bp-album-screens.php:99
+msgid "If picture already has comments this will delete them"
+msgstr "Ha a képhez tartoznak hozzászólások, ez le fogja törölni őket"
+
+#: includes/bp-album-screens.php:102
+msgid "Save"
+msgstr "Mentés"
+
+#: includes/bp-album-screens.php:110
+msgid "Either this url is not valid or you can't edit this picture."
+msgstr "Ez az url vagy hibás, vagy nem szerkesztheted ezt a képet"
+
+#: includes/bp-album-screens.php:152 includes/bp-album-screens.php:170
+msgid "Upload new picture"
+msgstr "Új kép feltöltése"
+
+#: includes/bp-album-screens.php:178
+msgid "Select Picture to Upload *"
+msgstr "Válassza ki a képet a feltöltéshez *"
+
+#: includes/bp-album-screens.php:201 includes/bp-album-core.php:200
+msgid "Upload picture"
+msgstr "Kép feltöltése"
+
+#: includes/bp-album-screens.php:209
+msgid ""
+"You have reached the upload limit, delete some pictures if you want to "
+"upload more"
+msgstr ""
+"Elérted a feltöltési limitet, törölj párat, ha szeretnél  "
+"többet feltölteni"
+
+#: includes/bp-album-screens.php:238 includes/bp-album-screens.php:493
+msgid "Please select a privacy option."
+msgstr "Kérlek válassz egy adatvédelmi opciót."
+
+#: includes/bp-album-screens.php:271 includes/bp-album-screens.php:518
+msgid "Privacy option is not correct."
+msgstr "Az adatvédelmi opció nem helyes."
+
+#: includes/bp-album-screens.php:279 includes/bp-album-screens.php:524
+msgid "You reached the limit for public pictures."
+msgstr "Elérted a publikus képek korlátját."
+
+#: includes/bp-album-screens.php:279 includes/bp-album-screens.php:282
+#: includes/bp-album-screens.php:285 includes/bp-album-screens.php:288
+#: includes/bp-album-screens.php:524 includes/bp-album-screens.php:527
+#: includes/bp-album-screens.php:530 includes/bp-album-screens.php:533
+msgid "Please select another privacy option."
+msgstr "Kérlek válassz egy másik adatvédelmi opciót."
+
+#: includes/bp-album-screens.php:282 includes/bp-album-screens.php:527
+msgid "You reached the limit for pictures visible to community members."
+msgstr "Elérted a közösség tagjai számára látható képek korlátját."
+
+#: includes/bp-album-screens.php:285 includes/bp-album-screens.php:530
+msgid "You reached the limit for pictures visible to friends."
+msgstr "Elérted a barátaid számára látható képek korlátját."
+
+#: includes/bp-album-screens.php:288 includes/bp-album-screens.php:533
+msgid "You reached the limit for private pictures."
+msgstr "Elérted a privát képek korlátját."
+
+#: includes/bp-album-screens.php:295
+msgid "There is no error, the file uploaded with success"
+msgstr "Nincs hiba, a fájl sikeresen feltöltődött"
+
+#: includes/bp-album-screens.php:296 includes/bp-album-screens.php:297
+msgid "Your image was bigger than the maximum allowed file size of: "
+msgstr "A képed nagyobb volt, mint a maximum engedélyezett fájl méret: "
+
+#: includes/bp-album-screens.php:298
+msgid "The uploaded file was only partially uploaded"
+msgstr "A fájlt csak részlegesen sikerült feltölteni"
+
+#: includes/bp-album-screens.php:299
+msgid "No file was uploaded"
+msgstr "Nem töltődött fel fájl"
+
+#: includes/bp-album-screens.php:300
+msgid "Missing a temporary folder"
+msgstr "Hiányzó ideiglenes könyvtár"
+
+#: includes/bp-album-screens.php:306 includes/bp-album-screens.php:326
+#: includes/bp-album-screens.php:338
+msgid "Your upload failed, please try again. Error was: %s"
+msgstr ""
+"A feltöltésed nem sikerült, kérlek próbáld meg újra. A hiba a következő volt: "
+"%s"
+
+#: includes/bp-album-screens.php:312
+msgid "The file you uploaded is too big. Please upload a file under %s"
+msgstr ""
+"A feltöltött fájl túl nagy méretű. Kérlek próbálj meg feltölteni a következő "
+"méret alatt: %s"
+
+#: includes/bp-album-screens.php:320
+msgid "Please upload only JPG, GIF or PNG image files."
+msgstr "Kérlek csak JPG, GIF vagy PNG képfájlokat tölts fel."
+
+#: includes/bp-album-screens.php:418
+msgid "Picture uploaded. Now you can change picture details."
+msgstr "Kép sikeresen feltöltve. Most már módosítani tudod a részleteit."
+
+#: includes/bp-album-screens.php:421 includes/bp-album-screens.php:559
+msgid "There were problems saving picture details."
+msgstr "Probléma akadt a részletek mentése közben."
+
+#: includes/bp-album-screens.php:481
+msgid "Picture Title can not be blank."
+msgstr "A kép címe nem lehet üres."
+
+#: includes/bp-album-screens.php:487
+msgid "Picture Description can not be blank."
+msgstr "A kép leírása nem lehet üres."
+
+#: includes/bp-album-screens.php:543
+msgid "Comments option is not correct."
+msgstr "A hozzászólások opció hibás."
+
+#: includes/bp-album-screens.php:556
+msgid "Picture details saved."
+msgstr "A kép részleteit elmentettük."
+
+#: includes/bp-album-screens.php:584 includes/templates/album/single.php:52
+msgid "This url is not valid."
+msgstr "Az url hibás."
+
+#: includes/bp-album-screens.php:589
+msgid "You don't have permission to delete this picture"
+msgstr "Nincs jogosultságod ezen kép törlésére."
+
+#: includes/bp-album-screens.php:592
+msgid "Picture deleted."
+msgstr "Kép törölve."
+
+#: includes/bp-album-screens.php:597
+msgid "There were problems deleting the picture."
+msgstr "Problémák akadtak a kép törlése közben."
+
+#: includes/bp-album-core.php:125 includes/bp-album-core.php:149
+msgid "BP Album+"
+msgstr "BP Album+"
+
+#: includes/bp-album-core.php:168
+msgid "Album"
+msgstr "Album"
+
+#: includes/bp-album-core.php:176
+msgid "My pictures"
+msgstr "Saját képek"
+
+#: includes/bp-album-core.php:176
+msgid "%s's pictures"
+msgstr "%s képei"
+
+#: includes/bp-album-core.php:190
+msgid "Picture"
+msgstr "Kép"
+
+#: includes/bp-album-core.php:556 includes/bp-album-core.php:768
+msgid "%s uploaded a new picture: %s"
+msgstr "%s új képet töltött fel: %s"
+
+#: includes/bp-album-admin-network.php:82 includes/bp-album-admin-local.php:86
+msgid "BP Album - "
+msgstr "BP Album - "
+
+#: includes/bp-album-admin-network.php:82
+msgid " - [Network Mode]"
+msgstr " - [Network Mode]"
+
+#: includes/bp-album-admin-network.php:85 includes/bp-album-admin-local.php:89
+msgid "Settings Updated."
+msgstr "Beállítások frissítve."
+
+#: includes/bp-album-admin-network.php:90 includes/bp-album-admin-local.php:94
+msgid "Project Calendar"
+msgstr "Projekt naptár"
+
+#: includes/bp-album-admin-network.php:92 includes/bp-album-admin-local.php:96
+msgid "View our development schedule in real-time using Pivotal Tracker."
+msgstr ""
+"Nézd meg a fejlesztési ütemtervet valós időben a Pivotal Tracker "
+"használatával."
+
+#: includes/bp-album-admin-network.php:99
+#: includes/bp-album-admin-local.php:103
+msgid "Support Forum"
+msgstr "Support fórum"
+
+#: includes/bp-album-admin-network.php:101
+#: includes/bp-album-admin-local.php:105
+msgid ""
+"Need help with the plugin? There are <i>hundreds of other users</i> that can "
+"answer your questions on our BuddyPress support forum."
+msgstr ""
+"Segítségre van szükséged a pluginnal kapcsolatban? <i>Több száz</i> "
+"felhasználó tud választ adni a kérdéseidre a BuddyPress Support fórumon."
+
+#: includes/bp-album-admin-network.php:108
+#: includes/bp-album-admin-local.php:112
+msgid "Official Website"
+msgstr "Hivatalos weboldal"
+
+#: includes/bp-album-admin-network.php:110
+#: includes/bp-album-admin-local.php:114
+msgid ""
+"Our base of operations on the internet and the <i>only</i> source of info "
+"that's been checked by our dev team."
+msgstr ""
+"A központunk az interneten és az <i>egyetlen</i> információ forrás, "
+"amit leellenőrzött a fejlesztő csapatunk."
+
+#: includes/bp-album-admin-network.php:117
+#: includes/bp-album-admin-local.php:121
+msgid "Features List"
+msgstr "Szolgáltatások listája"
+
+#: includes/bp-album-admin-network.php:119
+#: includes/bp-album-admin-local.php:123
+msgid "See what features we're adding to upcoming versions of the plugin."
+msgstr ""
+"Nézd meg milyen szolgáltatásokat adunk hozzá a plugin következő verzióihoz."
+
+#: includes/bp-album-admin-network.php:126
+#: includes/bp-album-admin-local.php:130
+msgid "Activity Feed"
+msgstr "Tevékenységi hírcsatorna"
+
+#: includes/bp-album-admin-network.php:128
+#: includes/bp-album-admin-local.php:132
+msgid "Up-to-the-second bug reports and code updates via Google Code."
+msgstr "Azonnali hibajelentés és frissítések a Google Code által"
+
+#: includes/bp-album-admin-network.php:140
+#: includes/bp-album-admin-local.php:144
+msgid "Slug Name"
+msgstr "Közvetlen link neve"
+
+#: includes/bp-album-admin-network.php:144
+#: includes/bp-album-admin-local.php:148
+msgid ""
+"Bad slug names will disable the plugin. No Spaces. No punctuation. No "
+"special characters. No accents."
+msgstr ""
+"Hibás közvetlen link nevek esetén nem fog működni a plugin. Ne használj "
+"space-t, írásjeleket, ékezeteket és speciális karaktereket."
+
+#: includes/bp-album-admin-network.php:146
+#: includes/bp-album-admin-local.php:150
+msgid ""
+"{ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_- } ONLY."
+msgstr ""
+"Használható karakterek: { abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"01234567890_- }"
+
+#: includes/bp-album-admin-network.php:152
+#: includes/bp-album-admin-local.php:156
+msgid "Name of BP Album+ slug"
+msgstr "A BP Album+ közvetlen linkje"
+
+#: includes/bp-album-admin-network.php:160
+#: includes/bp-album-admin-local.php:164
+msgid "General"
+msgstr "Általános"
+
+#: includes/bp-album-admin-network.php:164
+#: includes/bp-album-admin-local.php:168
+msgid "Force members to enter a description for each image"
+msgstr "A tagoknak minden képhez kötelező leírást adni"
+
+#: includes/bp-album-admin-network.php:166
+#: includes/bp-album-admin-network.php:173
+#: includes/bp-album-admin-network.php:180
+#: includes/bp-album-admin-network.php:254
+#: includes/bp-album-admin-network.php:276
+#: includes/bp-album-admin-network.php:300
+#: includes/bp-album-admin-network.php:310
+#: includes/bp-album-admin-local.php:170 includes/bp-album-admin-local.php:177
+#: includes/bp-album-admin-local.php:184 includes/bp-album-admin-local.php:258
+#: includes/bp-album-admin-local.php:280 includes/bp-album-admin-local.php:304
+#: includes/bp-album-admin-local.php:314
+msgid "Yes"
+msgstr "Igen"
+
+#: includes/bp-album-admin-network.php:167
+#: includes/bp-album-admin-network.php:174
+#: includes/bp-album-admin-network.php:181
+#: includes/bp-album-admin-network.php:255
+#: includes/bp-album-admin-network.php:277
+#: includes/bp-album-admin-network.php:301
+#: includes/bp-album-admin-network.php:311
+#: includes/bp-album-admin-local.php:171 includes/bp-album-admin-local.php:178
+#: includes/bp-album-admin-local.php:185 includes/bp-album-admin-local.php:259
+#: includes/bp-album-admin-local.php:281 includes/bp-album-admin-local.php:305
+#: includes/bp-album-admin-local.php:315
+msgid "No"
+msgstr "Nem"
+
+#: includes/bp-album-admin-network.php:171
+#: includes/bp-album-admin-local.php:175
+msgid "Allow site members to post comments on album images"
+msgstr "A tagoknak hozzászólhatnak az albumok képeihez"
+
+#: includes/bp-album-admin-network.php:178
+#: includes/bp-album-admin-local.php:182
+msgid "Post image thumbnails to members activity stream"
+msgstr "A bélyegképek jelenjenek meg a tagok hírfolyamán"
+
+#: includes/bp-album-admin-network.php:187
+#: includes/bp-album-admin-local.php:191
+msgid "Album Size Limits"
+msgstr "Album méret korlátok"
+
+#: includes/bp-album-admin-network.php:190
+#: includes/bp-album-admin-local.php:194
+msgid ""
+"<b>Accepted values:</b> EMPTY (no limit), NUMBER (value you set), 0 "
+"(disabled). The first option does not accept 0. The last option only accepts "
+"a number."
+msgstr ""
+"<b>Elfogadott értékek:</b> ÜRES (nincs korlát), SZÁM (az általad beállított "
+"érték), 0 "
+"(kikapcsolva). Az első opció nem fogadja el a nullát. Az utolsó opció csak "
+"számot fogad el."
+
+#: includes/bp-album-admin-network.php:195
+#: includes/bp-album-admin-local.php:199
+msgid "Max total images allowed in a members album"
+msgstr "Egy tag albumába feltölthető képek maximális száma"
+
+#: includes/bp-album-admin-network.php:201
+#: includes/bp-album-admin-local.php:205
+msgid "Max images visible to public allowed in a members album"
+msgstr "Egy tag albumában publikusan elérhető képek maximális száma"
+
+#: includes/bp-album-admin-network.php:207
+#: includes/bp-album-admin-local.php:211
+msgid "Max images visible only to members in a members album"
+msgstr "Csak a tagok által látható képek maximális száma egy tag albumában"
+
+#: includes/bp-album-admin-network.php:213
+#: includes/bp-album-admin-local.php:217
+msgid "Max images visible only to friends in a members album"
+msgstr "Egy tag barátai által látható képek maximális száma egy tag albumában"
+
+#: includes/bp-album-admin-network.php:219
+#: includes/bp-album-admin-local.php:223
+msgid "Max private images in a members album"
+msgstr "Privát képek maximális száma egy tag albumában"
+
+#: includes/bp-album-admin-network.php:225
+#: includes/bp-album-admin-local.php:229
+msgid "Images per album page"
+msgstr "Képek száma oldalanként"
+
+#: includes/bp-album-admin-network.php:232
+#: includes/bp-album-admin-local.php:236
+msgid "Image Size Limits"
+msgstr "Kép méret korlátok"
+
+#: includes/bp-album-admin-network.php:235
+#: includes/bp-album-admin-local.php:239
+msgid ""
+"Uploaded images will be re-sized to the values you set here. Values are for "
+"both X and Y size in pixels. We <i>strongly</i> suggest you keep the "
+"original image files so BP-Media 0.1.9 can re-render your images during the "
+"upgrade process."
+msgstr ""
+"A feltöltött képek át lesznek méretezve az általad meghatározott értékek "
+"szerint. Az értékek pixelben számolva érvényesek a szélességre és a "
+"magasságra is.  <i>Erősen</i> ajánljuk az eredeti képek megőrzését, hogy a "
+"BP-Media 0.1.9 újra tudja generálni a képeket a frissítés során."
+
+#: includes/bp-album-admin-network.php:240
+#: includes/bp-album-admin-local.php:244
+msgid "Album Image Size"
+msgstr "Album kép méret"
+
+#: includes/bp-album-admin-network.php:246
+#: includes/bp-album-admin-local.php:250
+msgid "Thumbnail Image Size"
+msgstr "Bélyegkép méret korlát"
+
+#: includes/bp-album-admin-network.php:252
+#: includes/bp-album-admin-local.php:256
+msgid "Keep original image files"
+msgstr "Eredeti képek megőrzése"
+
+#: includes/bp-album-admin-network.php:261
+#: includes/bp-album-admin-local.php:265
+msgid "Image URL Mapping"
+msgstr "Kép URL újraképzés"
+
+#: includes/bp-album-admin-network.php:265
+#: includes/bp-album-admin-local.php:269
+msgid ""
+"If you get broken links when viewing images in BP-Album+, it means your "
+"server is sending the wrong base URL to the plugin. You can use the image "
+"URL re-mapping function to fix this."
+msgstr ""
+"Ha hibás linkeket kapsz a BP-Album+ használata során, a szervered hibás alap "
+"URL-t küld a plugin-nak. A kép URL újraképzés funkció használatával tudod ezt "
+"javítani."
+
+#: includes/bp-album-admin-network.php:267
+#: includes/bp-album-admin-local.php:271
+msgid "DOCUMENTATION"
+msgstr "DOKUMENTÁCIÓ"
+
+#: includes/bp-album-admin-network.php:274
+#: includes/bp-album-admin-local.php:278
+msgid "Use image URL re-mapping"
+msgstr "Kép URL újraképzés használata"
+
+#: includes/bp-album-admin-network.php:281
+#: includes/bp-album-admin-local.php:285
+msgid "Base URL"
+msgstr "Alap URL"
+
+#: includes/bp-album-admin-network.php:290
+#: includes/bp-album-admin-local.php:294
+msgid "Activity Stream Rebuild"
+msgstr "Tevékenység folyam újraépítése"
+
+#: includes/bp-album-admin-network.php:293
+#: includes/bp-album-admin-local.php:297
+msgid ""
+"A defect in plugin versions before 0.1.8.5 caused all bp-album activity "
+"posts to be deleted from the site when the administrator deleted a user. Set "
+"'Rebuild Posts' to 'yes' to add <b>EVERY PHOTO ON YOUR SITE</b> that users "
+"have marked as <b>PUBLIC</b> to the site activity stream. This will also "
+"<b>ALLOW COMMENTS</b> on the photos. The created posts will have random "
+"dates to avoid flooding the activity stream. Set 'UNDO Rebuild Posts' to "
+"'yes' to remove the posts <i>this function</i> creates <u>it will not harm "
+"posts that users created</u>."
+msgstr ""
+"A 0.1.8.5 előtti plugin verziónál egy hiba miatt minden tevékenység folyam "
+"poszt törlődött, ha az adminisztrátor törölt egy felhasználót. Állítsd a "
+"Posztok újraépítését igenre, hogy <b>MINDEN FOTÓ</b> az oldaladon <b>"
+"PUBLIKUSKÉNT</b> a tevékenységi folyamba kerüljön. Ez <b>ENGEDÉLYEZI A "
+"HOZZÁSZÓLÁSOKAT</b> is a fotókon. A kreált posztok véletlenszerű dátumokkal "
+"fognak rendelkezni, hogy ne árasszák el teljesen a tevékenységi folyamot. "
+"Állítsd az újraépítés visszavonását igenre, ha a kreált posztokat törölni "
+"akarod. A felhasználok által létrehozott posztok ebben az esetben nem fognak "
+"törlődni."
+
+#: includes/bp-album-admin-network.php:298
+#: includes/bp-album-admin-local.php:302
+msgid "Rebuild posts"
+msgstr "Posztok újraépítése"
+
+#: includes/bp-album-admin-network.php:308
+#: includes/bp-album-admin-local.php:312
+msgid "UNDO rebuild posts"
+msgstr "Újraépítés VISSZAVONÁSA"
+
+#: includes/bp-album-admin-network.php:317
+#: includes/bp-album-admin-local.php:321
+msgid "Save Settings"
+msgstr "Beállítások mentése"
+
+#: includes/templates/album/single.php:52
+msgid "Either this url is not valid or picture has restricted access."
+msgstr "Ez az URL vagy hibás, vagy a kép elérése korlátozva van"
+
+#: includes/templates/album/comments.php:12
+msgid "Reply"
+msgstr "Válasz"
+
+#: includes/templates/album/comments.php:17
+msgid "Mark as Favorite"
+msgstr "Kedvencnek jelölés"
+
+#: includes/templates/album/comments.php:17
+msgid "Favorite"
+msgstr "Kedvenc"
+
+#: includes/templates/album/comments.php:19
+msgid "Remove Favorite"
+msgstr "Kedvenc eltávolítása"
+
+#: includes/templates/album/comments.php:27
+msgid "In reply to"
+msgstr "Válaszként erre:"
+
+#: includes/templates/album/comments.php:28
+msgid "View Thread / Permalink"
+msgstr "Szál / Permalink megtekintése"
+
+#: includes/templates/album/comments.php:28
+msgid "View"
+msgstr "Megtekintés"
+
+#: includes/templates/album/comments.php:43
+msgid "Post"
+msgstr "Poszt"
+
+#: includes/templates/album/comments.php:43
+msgid "or press esc to cancel."
+msgstr "vagy nyomj Escape-et visszavonáshoz"
+
+#: includes/templates/album/comments.php:59
+msgid ""
+"Comments are disabled for this picture. %sEdit picture%s to enable them."
+msgstr ""
+"A hozzászólások ki vannak kapcsolva ennél a képnél. A %skép szerkesztésével%s "
+"tudod engedélyezni."
+
+#: includes/templates/album/pictures.php:46
+msgid "No pics here, show something to the community!"
+msgstr "Itt nincs kép, mutass valamit a közönségnek!"
+
+#: includes/templates/album/pictures.php:46
+msgid ""
+"Either %s hasn't uploaded any picture yet or they have restricted access"
+msgstr "%s vagy nem töltött fel még képet, vagy korlátozott a hozzáférésük."
+
+#: includes/bp-album-admin-local.php:86
+msgid " - [Single Site Mode]"
+msgstr "- [Egy oldalas üzemmód]"
+
+#: includes/bp-album-templatetags.php:247
+msgid "Edit picture"
+msgstr "Kép szerkesztése"
+
+#: includes/bp-album-templatetags.php:260
+msgid "Delete picture"
+msgstr "Kép törlése"
+
+#: includes/bp-album-templatetags.php:361
+#: includes/bp-album-templatetags.php:387
+#: includes/bp-album-templatetags.php:434
+msgid "Return to your album"
+msgstr "Vissza az albumodba"
+
+#: includes/bp-album-templatetags.php:361
+#: includes/bp-album-templatetags.php:387
+#: includes/bp-album-templatetags.php:434
+msgid "Return to %s album"
+msgstr "Vissza a következő albumba: %s"
+
+

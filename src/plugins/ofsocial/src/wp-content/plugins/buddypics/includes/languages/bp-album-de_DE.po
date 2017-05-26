@@ -1,0 +1,578 @@
+# Copyright (C) 2010 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version: BP-Album+ 0.1.8.10 Deutsch\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/bp-album\n"
+"POT-Creation-Date: 2011-06-09 06:58:10+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2011-07-07 18:12+0100\n"
+"Last-Translator: Inpsyde GmbH <info@inpsyde.com>\n"
+"Language-Team: Olaf Baumann - Inpsyde GmbH <o.baumann@inpsyde.com>\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+
+#: includes/bp-album-screens.php:40
+#: includes/bp-album-screens.php:62
+msgid "Edit Picture"
+msgstr "Bild bearbeiten"
+
+#: includes/bp-album-screens.php:55
+#: includes/bp-album-screens.php:162
+msgid "Public"
+msgstr "Öffentlich"
+
+#: includes/bp-album-screens.php:56
+#: includes/bp-album-screens.php:163
+msgid "Registered members"
+msgstr "Registrierte Mitglieder"
+
+#: includes/bp-album-screens.php:57
+#: includes/bp-album-screens.php:164
+msgid "Only friends"
+msgstr "Ausschließlich Freunde"
+
+#: includes/bp-album-screens.php:58
+#: includes/bp-album-screens.php:165
+msgid "Private"
+msgstr "Privat"
+
+#: includes/bp-album-screens.php:59
+msgid "Hidden (admin only)"
+msgstr "Versteckt (nur Admins)"
+
+#: includes/bp-album-screens.php:67
+msgid "Picture Title *"
+msgstr "Bildtitel *"
+
+#: includes/bp-album-screens.php:73
+msgid "Picture Description"
+msgstr "Bildbeschreibung"
+
+#: includes/bp-album-screens.php:79
+#: includes/bp-album-screens.php:182
+msgid "Visibility"
+msgstr "Sichtbarkeit"
+
+#: includes/bp-album-screens.php:87
+#: includes/bp-album-screens.php:194
+msgid "(limit reached)"
+msgstr "(Grenze erreicht)"
+
+#: includes/bp-album-screens.php:96
+msgid "Picture activity and comments"
+msgstr "Aktivitäten und Kommentare"
+
+#: includes/bp-album-screens.php:97
+msgid "Enable"
+msgstr "Aktivieren"
+
+#: includes/bp-album-screens.php:98
+msgid "Disable"
+msgstr "Deaktivieren"
+
+#: includes/bp-album-screens.php:99
+msgid "If picture already has comments this will delete them"
+msgstr "Falls es bereits Kommentare zum Bild gibt, dann werden diese gelöscht"
+
+#: includes/bp-album-screens.php:102
+msgid "Save"
+msgstr "Speichern"
+
+#: includes/bp-album-screens.php:110
+msgid "Either this url is not valid or you can't edit this picture."
+msgstr "Entweder ist diese URL nicht gültig oder du kannst das Bild nicht bearbeiten."
+
+#: includes/bp-album-screens.php:152
+#: includes/bp-album-screens.php:170
+msgid "Upload new picture"
+msgstr "Neues Bild hochladen"
+
+#: includes/bp-album-screens.php:178
+msgid "Select Picture to Upload *"
+msgstr "Bild zum Hochladen auswählen *"
+
+#: includes/bp-album-screens.php:201
+#: includes/bp-album-core.php:200
+msgid "Upload picture"
+msgstr "Bild hochladen"
+
+#: includes/bp-album-screens.php:209
+msgid "You have reached the upload limit, delete some pictures if you want to upload more"
+msgstr "Du hast das Limit der maximalen Anzahl an Bildern erreicht. Du musst erst Bilder löschen, bevor du neue hochladen kannst."
+
+#: includes/bp-album-screens.php:238
+#: includes/bp-album-screens.php:493
+msgid "Please select a privacy option."
+msgstr "Bitte wähle eine Option zur Sichtbarkeit."
+
+#: includes/bp-album-screens.php:271
+#: includes/bp-album-screens.php:518
+msgid "Privacy option is not correct."
+msgstr "Sichtbarkeitseinstellung ist nicht korrekt."
+
+#: includes/bp-album-screens.php:279
+#: includes/bp-album-screens.php:524
+msgid "You reached the limit for public pictures."
+msgstr "Du hast die maximale Anzahl an öffentlichen Bildern erreicht."
+
+#: includes/bp-album-screens.php:279
+#: includes/bp-album-screens.php:282
+#: includes/bp-album-screens.php:285
+#: includes/bp-album-screens.php:288
+#: includes/bp-album-screens.php:524
+#: includes/bp-album-screens.php:527
+#: includes/bp-album-screens.php:530
+#: includes/bp-album-screens.php:533
+msgid "Please select another privacy option."
+msgstr "Bitte wähle eine andere Sichtbarkeitsoption."
+
+#: includes/bp-album-screens.php:282
+#: includes/bp-album-screens.php:527
+msgid "You reached the limit for pictures visible to community members."
+msgstr "Du hast die maximale Anzahl an Bildern erreicht, die für registrierte Mitglieder sichtbar sind."
+
+#: includes/bp-album-screens.php:285
+#: includes/bp-album-screens.php:530
+msgid "You reached the limit for pictures visible to friends."
+msgstr "Du hast die maximale Anzahl an Bildern erreicht, die für Freunde sichtbar sind."
+
+#: includes/bp-album-screens.php:288
+#: includes/bp-album-screens.php:533
+msgid "You reached the limit for private pictures."
+msgstr "Du hast die maximale Anzahl an Bildern erreicht, die nur für dich sichtbar sind."
+
+#: includes/bp-album-screens.php:295
+msgid "There is no error, the file uploaded with success"
+msgstr "Die Datei wurde erfolgreich hochgeladen."
+
+#: includes/bp-album-screens.php:296
+#: includes/bp-album-screens.php:297
+msgid "Your image was bigger than the maximum allowed file size of: "
+msgstr "Dein Bild ist größer als die maximal erlaubte Dateigröße von:"
+
+#: includes/bp-album-screens.php:298
+msgid "The uploaded file was only partially uploaded"
+msgstr "Das Bild wurde nur zum Teil hochgeladen"
+
+#: includes/bp-album-screens.php:299
+msgid "No file was uploaded"
+msgstr "Es wurde keine Datei hochgeladen"
+
+#: includes/bp-album-screens.php:300
+msgid "Missing a temporary folder"
+msgstr "Es fehlt ein temporärer Ordner"
+
+#: includes/bp-album-screens.php:306
+#: includes/bp-album-screens.php:326
+#: includes/bp-album-screens.php:338
+msgid "Your upload failed, please try again. Error was: %s"
+msgstr "Das Hochladen ging leider schief, versuche es noch mal. Der Fehler war: %s"
+
+#: includes/bp-album-screens.php:312
+msgid "The file you uploaded is too big. Please upload a file under %s"
+msgstr "Die hochzuladende Datei ist zu groß. Bitte lade eine Datei hoch welche kleiner ist als %s"
+
+#: includes/bp-album-screens.php:320
+msgid "Please upload only JPG, GIF or PNG image files."
+msgstr "Bitte lade nur Bildateien vom Dateiformat JPG, GIF oder PNG hoch."
+
+#: includes/bp-album-screens.php:418
+msgid "Picture uploaded. Now you can change picture details."
+msgstr "Das Bild wurde hochgeladen. Du kannst nun die Details bearbeiten."
+
+#: includes/bp-album-screens.php:421
+#: includes/bp-album-screens.php:559
+msgid "There were problems saving picture details."
+msgstr "Es trat ein Fehler beim Speichern der Details auf."
+
+#: includes/bp-album-screens.php:481
+msgid "Picture Title can not be blank."
+msgstr "Der Bildtitel darf nicht leer bleiben."
+
+#: includes/bp-album-screens.php:487
+msgid "Picture Description can not be blank."
+msgstr "Die Bildbeschreibung darf nicht leer bleiben."
+
+#: includes/bp-album-screens.php:543
+msgid "Comments option is not correct."
+msgstr "Die Kommentaroption wurde nicht korrekt gesetzt."
+
+#: includes/bp-album-screens.php:556
+msgid "Picture details saved."
+msgstr "Bilddetails gespeichert."
+
+#: includes/bp-album-screens.php:584
+#: includes/templates/album/single.php:52
+msgid "This url is not valid."
+msgstr "Diese URL ist ungültig."
+
+#: includes/bp-album-screens.php:589
+msgid "You don't have permission to delete this picture"
+msgstr "Du hast nicht die nötigen Rechte um das Bild zu löschen."
+
+#: includes/bp-album-screens.php:592
+msgid "Picture deleted."
+msgstr "Bild gelöscht."
+
+#: includes/bp-album-screens.php:597
+msgid "There were problems deleting the picture."
+msgstr "Es traten Probleme beim Löschen des Bildes auf."
+
+#: includes/bp-album-core.php:125
+#: includes/bp-album-core.php:149
+msgid "BP Album+"
+msgstr "BP Album+"
+
+#: includes/bp-album-core.php:168
+msgid "Album"
+msgstr "Album"
+
+#: includes/bp-album-core.php:176
+msgid "My pictures"
+msgstr "Meine Bilder"
+
+#: includes/bp-album-core.php:176
+msgid "%s's pictures"
+msgstr "%ss Bilder"
+
+#: includes/bp-album-core.php:190
+msgid "Picture"
+msgstr "Bild"
+
+#: includes/bp-album-core.php:556
+#: includes/bp-album-core.php:768
+msgid "%s uploaded a new picture: %s"
+msgstr "%s hat ein neues Bild hochgeladen: %s"
+
+#: includes/bp-album-admin-network.php:82
+#: includes/bp-album-admin-local.php:86
+msgid "BP Album - "
+msgstr "BP Album - "
+
+#: includes/bp-album-admin-network.php:82
+msgid " - [Network Mode]"
+msgstr "- [Netzwerk-Modus]"
+
+#: includes/bp-album-admin-network.php:85
+#: includes/bp-album-admin-local.php:89
+msgid "Settings Updated."
+msgstr "Einstellungen aktualisiert."
+
+#: includes/bp-album-admin-network.php:90
+#: includes/bp-album-admin-local.php:94
+msgid "Project Calendar"
+msgstr "Projektkalender."
+
+#: includes/bp-album-admin-network.php:92
+#: includes/bp-album-admin-local.php:96
+msgid "View our development schedule in real-time using Pivotal Tracker."
+msgstr "Schaue in unseren Entwicklungskalender in Echtzeit mit Pivotal Tracker."
+
+#: includes/bp-album-admin-network.php:99
+#: includes/bp-album-admin-local.php:103
+msgid "Support Forum"
+msgstr "Hilfe-Forum"
+
+#: includes/bp-album-admin-network.php:101
+#: includes/bp-album-admin-local.php:105
+msgid "Need help with the plugin? There are <i>hundreds of other users</i> that can answer your questions on our BuddyPress support forum."
+msgstr "Brauchst du Hilfe mit dem Plugin? Es gibt <i>hunderte anderer Benutzer</i> die deine Fragen in unserem BuddyPress Hilfe-Forum beantworten können."
+
+#: includes/bp-album-admin-network.php:108
+#: includes/bp-album-admin-local.php:112
+msgid "Official Website"
+msgstr "Offizielle Website"
+
+#: includes/bp-album-admin-network.php:110
+#: includes/bp-album-admin-local.php:114
+msgid "Our base of operations on the internet and the <i>only</i> source of info that's been checked by our dev team."
+msgstr "Unsere Zentrale im Internet und die <i>einzige</i> Quelle für offizielle Informationen."
+
+#: includes/bp-album-admin-network.php:117
+#: includes/bp-album-admin-local.php:121
+msgid "Features List"
+msgstr "Liste zukünfiger Features"
+
+#: includes/bp-album-admin-network.php:119
+#: includes/bp-album-admin-local.php:123
+msgid "See what features we're adding to upcoming versions of the plugin."
+msgstr "Hier siehst, was wir in zukünftigen Versionen an Funktionen hinzufügen werden."
+
+#: includes/bp-album-admin-network.php:126
+#: includes/bp-album-admin-local.php:130
+msgid "Activity Feed"
+msgstr "Aktivitätsfeed"
+
+#: includes/bp-album-admin-network.php:128
+#: includes/bp-album-admin-local.php:132
+msgid "Up-to-the-second bug reports and code updates via Google Code."
+msgstr "Aktuelle Fehlerreports und Code-Aktualisierungen via Google Code."
+
+#: includes/bp-album-admin-network.php:140
+#: includes/bp-album-admin-local.php:144
+msgid "Slug Name"
+msgstr "Titelform"
+
+#: includes/bp-album-admin-network.php:144
+#: includes/bp-album-admin-local.php:148
+msgid "Bad slug names will disable the plugin. No Spaces. No punctuation. No special characters. No accents."
+msgstr "Fehlerhafte Titelformen deaktivieren das Plugin. Keine Leerzeichen, keine Punkte, keine Sonderzeichen, keine Umlaute oder Akzentzeichen."
+
+#: includes/bp-album-admin-network.php:146
+#: includes/bp-album-admin-local.php:150
+msgid "{ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_- } ONLY."
+msgstr "Ausschließlich folgende Zeichen sind erlaubt: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_-"
+
+#: includes/bp-album-admin-network.php:152
+#: includes/bp-album-admin-local.php:156
+msgid "Name of BP Album+ slug"
+msgstr "Titelform von Alben"
+
+#: includes/bp-album-admin-network.php:160
+#: includes/bp-album-admin-local.php:164
+msgid "General"
+msgstr "Allgemein"
+
+#: includes/bp-album-admin-network.php:164
+#: includes/bp-album-admin-local.php:168
+msgid "Force members to enter a description for each image"
+msgstr "Benutzer zwingen, eine Beschreibung für jedes Bild zu vergeben"
+
+#: includes/bp-album-admin-network.php:166
+#: includes/bp-album-admin-network.php:173
+#: includes/bp-album-admin-network.php:180
+#: includes/bp-album-admin-network.php:254
+#: includes/bp-album-admin-network.php:276
+#: includes/bp-album-admin-network.php:300
+#: includes/bp-album-admin-network.php:310
+#: includes/bp-album-admin-local.php:170
+#: includes/bp-album-admin-local.php:177
+#: includes/bp-album-admin-local.php:184
+#: includes/bp-album-admin-local.php:258
+#: includes/bp-album-admin-local.php:280
+#: includes/bp-album-admin-local.php:304
+#: includes/bp-album-admin-local.php:314
+msgid "Yes"
+msgstr "Ja"
+
+#: includes/bp-album-admin-network.php:167
+#: includes/bp-album-admin-network.php:174
+#: includes/bp-album-admin-network.php:181
+#: includes/bp-album-admin-network.php:255
+#: includes/bp-album-admin-network.php:277
+#: includes/bp-album-admin-network.php:301
+#: includes/bp-album-admin-network.php:311
+#: includes/bp-album-admin-local.php:171
+#: includes/bp-album-admin-local.php:178
+#: includes/bp-album-admin-local.php:185
+#: includes/bp-album-admin-local.php:259
+#: includes/bp-album-admin-local.php:281
+#: includes/bp-album-admin-local.php:305
+#: includes/bp-album-admin-local.php:315
+msgid "No"
+msgstr "Nein"
+
+#: includes/bp-album-admin-network.php:171
+#: includes/bp-album-admin-local.php:175
+msgid "Allow site members to post comments on album images"
+msgstr "Erlaube registrierten Mitgliedern Kommentare zu Bildern in Alben zu hinterlassen"
+
+#: includes/bp-album-admin-network.php:178
+#: includes/bp-album-admin-local.php:182
+msgid "Post image thumbnails to members activity stream"
+msgstr "Vorschaubilder im Aktivitätsstream des Mitglieds veröffentlichen"
+
+#: includes/bp-album-admin-network.php:187
+#: includes/bp-album-admin-local.php:191
+msgid "Album Size Limits"
+msgstr "Mengenbeschränkungen für Alben"
+
+#: includes/bp-album-admin-network.php:190
+#: includes/bp-album-admin-local.php:194
+msgid "<b>Accepted values:</b> EMPTY (no limit), NUMBER (value you set), 0 (disabled). The first option does not accept 0. The last option only accepts a number."
+msgstr "<b>Erlabute Werte:</b> LEER (keine Begrenzung), ZAHL, 0 (deaktiviert). Die erste Option erlaubt nicht den Eintrag '0'. Die letzte Option akzeptiert nur Ziffern."
+
+#: includes/bp-album-admin-network.php:195
+#: includes/bp-album-admin-local.php:199
+msgid "Max total images allowed in a members album"
+msgstr "Maximale Anzahl an Bildern in einem Album des Mitglieds"
+
+#: includes/bp-album-admin-network.php:201
+#: includes/bp-album-admin-local.php:205
+msgid "Max images visible to public allowed in a members album"
+msgstr "Maximale Anzahl an Bildern in einem Album die öffentlich sind"
+
+#: includes/bp-album-admin-network.php:207
+#: includes/bp-album-admin-local.php:211
+msgid "Max images visible only to members in a members album"
+msgstr "Maximale Anzahl an Bildern in einem Album die für andere Mitglieder sichtbar sind"
+
+#: includes/bp-album-admin-network.php:213
+#: includes/bp-album-admin-local.php:217
+msgid "Max images visible only to friends in a members album"
+msgstr "Maximale Anzahl an Bildern in einem Album die für Freunde sichtbar sind"
+
+#: includes/bp-album-admin-network.php:219
+#: includes/bp-album-admin-local.php:223
+msgid "Max private images in a members album"
+msgstr "Maximale Anzahl an privaten BIldern"
+
+#: includes/bp-album-admin-network.php:225
+#: includes/bp-album-admin-local.php:229
+msgid "Images per album page"
+msgstr "Bilder pro Albenseite"
+
+#: includes/bp-album-admin-network.php:232
+#: includes/bp-album-admin-local.php:236
+msgid "Image Size Limits"
+msgstr "Maximale Bildabmessungen"
+
+#: includes/bp-album-admin-network.php:235
+#: includes/bp-album-admin-local.php:239
+msgid "Uploaded images will be re-sized to the values you set here. Values are for both X and Y size in pixels. We <i>strongly</i> suggest you keep the original image files so BP-Media 0.1.9 can re-render your images during the upgrade process."
+msgstr "Hochgaledene Bilder werden auf die hier angegebenen Abmessungen skaliert. Die Werte beziehen sich sowohl auf Höhe als auch Breite und sind in Pixel angegeben. Wer empfehlen <i>sehr stark</i> die Originaldateien zu behalten, so dass BP-Media 0.1.9 die Bilder erneut erstellen kann, wenn aktualisiert wird."
+
+#: includes/bp-album-admin-network.php:240
+#: includes/bp-album-admin-local.php:244
+msgid "Album Image Size"
+msgstr "Bildgröße im Album"
+
+#: includes/bp-album-admin-network.php:246
+#: includes/bp-album-admin-local.php:250
+msgid "Thumbnail Image Size"
+msgstr "Größe Vorschaubild"
+
+#: includes/bp-album-admin-network.php:252
+#: includes/bp-album-admin-local.php:256
+msgid "Keep original image files"
+msgstr "Originaldateien behalten"
+
+#: includes/bp-album-admin-network.php:261
+#: includes/bp-album-admin-local.php:265
+msgid "Image URL Mapping"
+msgstr "Bild-URL-Anpassung"
+
+#: includes/bp-album-admin-network.php:265
+#: includes/bp-album-admin-local.php:269
+msgid "If you get broken links when viewing images in BP-Album+, it means your server is sending the wrong base URL to the plugin. You can use the image URL re-mapping function to fix this."
+msgstr "Falls die Links zu Bildern in Alben von BP-Album+ nicht funktionieren, dann sendet dein Server die falsche URL zum Plugin. Du kannst diese Funktion nutzen, um das Problem zu heben."
+
+#: includes/bp-album-admin-network.php:267
+#: includes/bp-album-admin-local.php:271
+msgid "DOCUMENTATION"
+msgstr "DOKUMENTATION"
+
+#: includes/bp-album-admin-network.php:274
+#: includes/bp-album-admin-local.php:278
+msgid "Use image URL re-mapping"
+msgstr "Bild-URL-Anpassung aktivieren"
+
+#: includes/bp-album-admin-network.php:281
+#: includes/bp-album-admin-local.php:285
+msgid "Base URL"
+msgstr "Basis-URL"
+
+#: includes/bp-album-admin-network.php:290
+#: includes/bp-album-admin-local.php:294
+msgid "Activity Stream Rebuild"
+msgstr "Aktivitätsstream erneut aufbauen"
+
+#: includes/bp-album-admin-network.php:293
+#: includes/bp-album-admin-local.php:297
+msgid "A defect in plugin versions before 0.1.8.5 caused all bp-album activity posts to be deleted from the site when the administrator deleted a user. Set 'Rebuild Posts' to 'yes' to add <b>EVERY PHOTO ON YOUR SITE</b> that users have marked as <b>PUBLIC</b> to the site activity stream. This will also <b>ALLOW COMMENTS</b> on the photos. The created posts will have random dates to avoid flooding the activity stream. Set 'UNDO Rebuild Posts' to 'yes' to remove the posts <i>this function</i> creates <u>it will not harm posts that users created</u>."
+msgstr "In Defekt in der Pluginversions 0.1.8.5 und älter bewirkt, dass all eBilder- Einträge im Aktivitätsstream gelöscht wurden, wenn ein Administrator einen Benutzer löschte. Setze auf \"Aktivitätsstream erneut aufbauen\" auf \"Ja\" um <b>alle Fotos</b> die <b>öffentlich</b> sind, dem Aktivitätsstream des Blogs hinzuzufügen. Dies erlaubt auch <b>Kommentare</b> zu den Bildern. Die neuen Einträge im Aktivitätsstream haben zufällige Datums- und Zeitangaben um den Aktivitätsstream nicht zu sehr zu beeinflussen. Klicke auf \"Aktivitätsstream erneut aufbauen rückgängig machen\" um durch <i>diese Funktion</i> erzeugte Einträge im Aktivitätsstream wieder zu entfernen. <u>Einträge anderer Nutzer werden dadurch nicht gefährdet.</u>"
+
+#: includes/bp-album-admin-network.php:298
+#: includes/bp-album-admin-local.php:302
+msgid "Rebuild posts"
+msgstr "Aktivitätsstream erneut aufbauen"
+
+#: includes/bp-album-admin-network.php:308
+#: includes/bp-album-admin-local.php:312
+msgid "UNDO rebuild posts"
+msgstr "Aktivitätsstream erneut aufbauen rückgängig machen"
+
+#: includes/bp-album-admin-network.php:317
+#: includes/bp-album-admin-local.php:321
+msgid "Save Settings"
+msgstr "Einstellungen speichern"
+
+#: includes/templates/album/single.php:52
+msgid "Either this url is not valid or picture has restricted access."
+msgstr "Entweder ist diese URL nicht gültig oder der Zugriff auf das Bild ist eingeschränkt."
+
+#: includes/templates/album/comments.php:12
+msgid "Reply"
+msgstr "Antworten"
+
+#: includes/templates/album/comments.php:17
+msgid "Mark as Favorite"
+msgstr "Als Favoriten markieren"
+
+#: includes/templates/album/comments.php:17
+msgid "Favorite"
+msgstr "Favorit"
+
+#: includes/templates/album/comments.php:19
+msgid "Remove Favorite"
+msgstr "Favoriten entfernen"
+
+#: includes/templates/album/comments.php:27
+msgid "In reply to"
+msgstr "Als Antwort auf"
+
+#: includes/templates/album/comments.php:28
+msgid "View Thread / Permalink"
+msgstr "Kommentarverlauf anschauen / Permalink"
+
+#: includes/templates/album/comments.php:28
+msgid "View"
+msgstr "Ansehen"
+
+#: includes/templates/album/comments.php:43
+msgid "Post"
+msgstr "Veröffentlichen"
+
+#: includes/templates/album/comments.php:43
+msgid "or press esc to cancel."
+msgstr "oder drücke ESC um Abzubrechen."
+
+#: includes/templates/album/comments.php:59
+msgid "Comments are disabled for this picture. %sEdit picture%s to enable them."
+msgstr "Kommentare zu diesem Bild sind nicht möglich. %sBearbeite das Bild%s um Kommentare zu aktivieren."
+
+#: includes/templates/album/pictures.php:46
+msgid "No pics here, show something to the community!"
+msgstr "Hier gibt es noch keine Bilder."
+
+#: includes/templates/album/pictures.php:46
+msgid "Either %s hasn't uploaded any picture yet or they have restricted access"
+msgstr "Entweder hat %s keine Bilder hochgeladen oder seine Bilder unterliegen Zugriffsbeschränkungen"
+
+#: includes/bp-album-admin-local.php:86
+msgid " - [Single Site Mode]"
+msgstr "- [Einzelblog-Modus]"
+
+#: includes/bp-album-templatetags.php:247
+msgid "Edit picture"
+msgstr "Bild bearbeiten"
+
+#: includes/bp-album-templatetags.php:260
+msgid "Delete picture"
+msgstr "Bild löschen"
+
+#: includes/bp-album-templatetags.php:361
+#: includes/bp-album-templatetags.php:387
+#: includes/bp-album-templatetags.php:434
+msgid "Return to your album"
+msgstr "Zurück zu deinem Album"
+
+#: includes/bp-album-templatetags.php:361
+#: includes/bp-album-templatetags.php:387
+#: includes/bp-album-templatetags.php:434
+msgid "Return to %s album"
+msgstr "Zurück zum Album %s"
+

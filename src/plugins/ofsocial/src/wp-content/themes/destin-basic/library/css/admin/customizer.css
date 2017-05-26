@@ -1,0 +1,74 @@
+/* Post layout options */
+.custom-textarea {
+	width: 100%;
+}
+
+#customize-control-post_layout .customize-control-title {
+	margin-bottom: 5px;
+}
+
+#customize-control-layout label,
+#customize-control-post_layout label {
+	display: block;
+	clear: both;
+	margin-bottom: 10px;
+	position: relative;
+}
+
+#customize-control-layout label input,
+#customize-control-post_layout label input {
+	display: inline-block;
+	margin-top: -78px;
+}
+
+	#customize-control-post_layout label.image-left input,
+	#customize-control-post_layout label.image-right input {
+		margin-top: -36px;
+	}
+
+#customize-control-layout div,
+#customize-control-post_layout div {
+	width: 123px;
+	height: 83px;
+	background: url(../../images/post-layout.png) no-repeat 0 0;
+	display: inline-block;
+}
+
+#customize-control-post_layout .image-left,
+#customize-control-post_layout .image-right {
+	height: 43px;
+	background-position: 0 -84px;
+}
+
+#customize-control-post_layout .image-right {
+	background-position: 0 -127px;
+}
+
+/* Sidebar options */
+#customize-control-layout .customize-control-title {
+	margin-bottom: 5px;
+}
+
+#customize-control-layout div {
+	background: url(../../images/layout.jpg) no-repeat 0 0;
+}
+
+	#customize-control-layout .right {
+		background-position: 0 -84px;
+	}
+
+	#customize-control-layout .left.second-sidebar {
+		background-position: 0 -250px;
+	}
+
+	#customize-control-layout .right.second-sidebar {
+		background-position: 0 -336px;
+	}
+
+	#customize-control-layout .separate {
+		background-position: 0 -168px;
+	}
+
+p.description.more-top {
+    margin-top: 8px;
+}

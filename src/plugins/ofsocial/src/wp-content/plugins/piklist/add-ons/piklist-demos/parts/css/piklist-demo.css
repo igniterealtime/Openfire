@@ -1,0 +1,23 @@
+
+  body.responsive-admin a.menu-icon-piklist_demo img {
+    width: 18px;
+    height: 16px;
+  }
+
+  .piklist-demo-help-source {
+    clear: both;
+  }
+  
+    .piklist-demo-help-source code {
+      max-width: 100%;
+    }
+
+  .demo-highlight,
+  .piklist-meta-box-none.postbox h3.demo-highlight {
+    color: #8a6d3b !important;
+    background-color: #fcf8e3 !important;
+    border: 1px solid #faebcc !important;
+    font-weight: normal;
+    font-size: 12px !important;
+    padding: 5px !important;
+  }

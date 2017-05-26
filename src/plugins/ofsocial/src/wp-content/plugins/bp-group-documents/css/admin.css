@@ -1,0 +1,37 @@
+
+#bp-group-documents-bulk-message {
+	display:none;
+}
+#bp-group-documents-bulk-upload .doc-single {
+	clear:both;
+	width:100%;
+	padding: 10px 0;
+	border-bottom:1px solid black;
+}
+	#bp-group-documents-bulk-upload .doc-single:last-child {
+		border-bottom:none;
+	}
+#bp-group-documents-bulk-upload .file {
+	padding-bottom:5px;
+}
+#bp-group-documents-bulk-upload .group,
+#bp-group-documents-bulk-upload .name, 
+#bp-group-documents-bulk-upload .description {
+	width: auto;
+	float:left;
+	margin-right:5px;
+}
+	#bp-group-documents-bulk-upload .name input{
+		width: 225px;
+	}
+	#bp-group-documents-bulk-upload .description textarea {
+		width:350px;
+		height:80px;
+	}
+#bp-group-documents-bulk-upload .submit {
+	padding-top:50px;
+	padding-bottom:0;
+}
+.clear {
+	clear:both;
+}

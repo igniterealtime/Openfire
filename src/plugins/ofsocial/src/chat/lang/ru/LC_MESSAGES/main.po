@@ -1,0 +1,2199 @@
+# Russian translations for Jappix package.
+# This file is distributed under the same license as the Jappix package.
+# This file was translated from CodingTeam at <http://codingteam.net/>.
+msgid ""
+msgstr ""
+"Project-Id-Version: Jappix\n"
+"PO-Revision-Date: 2011-03-20 13:43:50\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: 
+msgid "JavaScript is missing in your web browser, so that you will not be able to launch Jappix! Please fix this."
+msgstr "JavaScript отключен в вашем браузере, без него Jappix не может работать!"
+
+#: 
+msgid "An open social network"
+msgstr "Открытая социальная сеть"
+
+#: 
+msgid "Jappix has been interrupted by a network issue, a bug or bad login (check that you entered the right credentials), sorry for the inconvenience."
+msgstr "Работа с Jappix прервана из-за проблем со связью, ошибки или неверных регистрационных данных (проверьте имя и пароль), просим прощения за неудобства."
+
+#: 
+msgid "The element list on this server could not be obtained!"
+msgstr "Невозможно получить спискок содержимого этого сервера."
+
+#: 
+msgid "Your password has been changed, now you can connect to your account with your new login data."
+msgstr "Пароль изменен. Вы можете войти с новым паролем."
+
+#: 
+msgid "Your XMPP account has been removed, bye!"
+msgstr "Ваш XMPP аккаунт был удален, до скорой встречи!"
+
+#: 
+msgid "You have been logged out of your XMPP account, have a nice day!"
+msgstr "Вы покинули свою учетную запись XMPP, удачного дня!"
+
+#: 
+msgid "The room you joined seems not to exist. You should create it!"
+msgstr "Вы пытаетесь войти в несуществующую комнату. Можно попытаться создать её!"
+
+#: 
+msgid "The groupchat has been removed, now someone else will be able to recreate it."
+msgstr "Комната была удалена, теперь кто-то другой сможет создать её ещё раз."
+
+#: 
+msgid "The user that you want to reach is not present in the room."
+msgstr "Нужного вам пользователя здесь нет."
+
+#: 
+msgid "Please enter the group chat address to join."
+msgstr "Пожалуйста, введите адрес группового чата чтоб присоединиться."
+
+#: 
+msgid "Please enter your nickname to join %s."
+msgstr "Введите свое прозвище, чтобы присоединиться к %s."
+
+#: 
+msgid "This room (%s) is protected with a password."
+msgstr "Комната (%s) защищена паролем."
+
+#: 
+msgid "Your browser is out of date!"
+msgstr "Ваш браузер не сооветсвует требованиям!"
+
+#: 
+msgid "Last %s version is better!"
+msgstr "Свежая версия %s - лучше!"
+
+#: 
+msgid "Login"
+msgstr "Вход"
+
+#: 
+msgid "Register"
+msgstr "Регистрация"
+
+#: 
+msgid "Here we go!"
+msgstr "Поехали!"
+
+#: 
+msgid "Server"
+msgstr "Сервер"
+
+#: 
+msgid "Password"
+msgstr "Пароль"
+
+#: 
+msgid "Remember me"
+msgstr "Запомнить меня"
+
+#: 
+msgid "This tool has been disabled, you cannot use it!"
+msgstr "Этот инструмент был заблокирован, вы не можете его использовать!"
+
+#: 
+msgid "Due to a network issue, you were disconnected. What do you want to do now?"
+msgstr "Из-за неполадок в сети вы разъединились. Что теперь хотите сделать?"
+
+#: 
+msgid "Reconnect"
+msgstr "Переподключение"
+
+#: 
+msgid "Messages"
+msgstr "Сообщения"
+
+#: 
+msgid "Profile"
+msgstr "Профиль"
+
+#: 
+msgid "Options"
+msgstr "Настройки"
+
+#: 
+msgid "Disconnect"
+msgstr "Отключить"
+
+#: 
+msgid "Filter"
+msgstr "Фильтр"
+
+#: 
+msgid "Add a friend"
+msgstr "Добавить друга"
+
+#: 
+msgid "Your groupchats"
+msgstr "Ваша группа"
+
+#: 
+msgid "Manage your favorite groupchats"
+msgstr "Управлять списком Ваших любимых комнат."
+
+#: 
+msgid "More stuff"
+msgstr "Дополнительно"
+
+#: 
+msgid "Show all friends"
+msgstr "Показать всех"
+
+#: 
+msgid "Only show connected friends"
+msgstr "Показать лишь подключенных"
+
+#: 
+msgid "Message archives"
+msgstr "Архив сообщений"
+
+#: 
+msgid "Date"
+msgstr "Дата"
+
+#: 
+msgid "Please select a friend to view the chat history."
+msgstr "Выберите историю общения с кем хотите увидеть."
+
+#: 
+msgid "Nothing found for: %s"
+msgstr "Для %s ничего не найдено"
+
+#: 
+msgid "A short message?"
+msgstr "Статусное сообщение?"
+
+#: 
+msgid "How are you?"
+msgstr "Как дела?"
+
+#: 
+msgid "What are you doing?"
+msgstr "Чем вы сейчас заняты?"
+
+#: 
+msgid "Join a chat"
+msgstr "Поговорить"
+
+#: 
+msgid "Status"
+msgstr "Состояние"
+
+#: 
+msgid "Available"
+msgstr "Доступен"
+
+#: 
+msgid "Talkative"
+msgstr "Готов поболтать"
+
+#: 
+msgid "Away"
+msgstr "Отошел"
+
+#: 
+msgid "Not available"
+msgstr "Недоступен"
+
+#: 
+msgid "Busy"
+msgstr "Занят"
+
+#: 
+msgid "Mood"
+msgstr "Настроение"
+
+#: 
+msgid "None"
+msgstr "Ничего"
+
+#: 
+msgid "Crazy"
+msgstr "Сумасшедший"
+
+#: 
+msgid "Excited"
+msgstr "Взволнованный"
+
+#: 
+msgid "Playful"
+msgstr "Игривый"
+
+#: 
+msgid "Happy"
+msgstr "Счастливый"
+
+#: 
+msgid "Shocked"
+msgstr "Шокирован"
+
+#: 
+msgid "Hot"
+msgstr "Страстный"
+
+#: 
+msgid "Sad"
+msgstr "Грустный"
+
+#: 
+msgid "Amorous"
+msgstr "Влюблённый"
+
+#: 
+msgid "Confident"
+msgstr "Самоуверенный"
+
+#: 
+msgid "Activity"
+msgstr "Деятельность"
+
+#: 
+msgid "Chores"
+msgstr "Дела домашние"
+
+#: 
+msgid "Drinking"
+msgstr "Пью"
+
+#: 
+msgid "Eating"
+msgstr "Кушаю"
+
+#: 
+msgid "Exercising"
+msgstr "Осуществление"
+
+#: 
+msgid "Grooming"
+msgstr "Забота"
+
+#: 
+msgid "Appointment"
+msgstr "Должность"
+
+#: 
+msgid "Inactive"
+msgstr "Неактивный"
+
+#: 
+msgid "Relaxing"
+msgstr "Расслабляюсь"
+
+#: 
+msgid "Talking"
+msgstr "Болтаю"
+
+#: 
+msgid "Traveling"
+msgstr "Путешествую"
+
+#: 
+msgid "Working"
+msgstr "Работаю"
+
+#: 
+msgid "View profile"
+msgstr "Показать профиль"
+
+#: 
+msgid "Repeat this notice"
+msgstr "Повторить уведомление"
+
+#: 
+msgid "Remove this notice"
+msgstr "Удалить уведомление"
+
+#: 
+msgid "Your profile"
+msgstr "Ваш профиль"
+
+#: 
+msgid "Identity"
+msgstr "Подлинность"
+
+#: 
+msgid "Profile image"
+msgstr "Аватар"
+
+#: 
+msgid "Others"
+msgstr "Другие"
+
+#: 
+msgid "Personal"
+msgstr "Персональные данные"
+
+#: 
+msgid "Complete name"
+msgstr "Полное имя"
+
+#: 
+msgid "Nickname"
+msgstr "Псевдоним"
+
+#: 
+msgid "First name"
+msgstr "Имя"
+
+#: 
+msgid "Last name"
+msgstr "Фамилия"
+
+#: 
+msgid "Date of birth"
+msgstr "Дата рождения"
+
+#: 
+msgid "Contact"
+msgstr "Контакт"
+
+#: 
+msgid "E-mail"
+msgstr "E-mail"
+
+#: 
+msgid "Phone"
+msgstr "Телефон"
+
+#: 
+msgid "Website"
+msgstr "Веб-сайт"
+
+#: 
+msgid "Current"
+msgstr "Текущий"
+
+#: 
+msgid "Delete"
+msgstr "Удалить"
+
+#: 
+msgid "What a pity! You have no profile image defined in your identity card!"
+msgstr "Какая жалость! У вас нет аватара"
+
+#: 
+msgid "Address"
+msgstr "Адрес"
+
+#: 
+msgid "Street"
+msgstr "Улица"
+
+#: 
+msgid "City"
+msgstr "Город"
+
+#: 
+msgid "Postal code"
+msgstr "Индекс"
+
+#: 
+msgid "Country"
+msgstr "Страна"
+
+#: 
+msgid "Biography"
+msgstr "Биография"
+
+#: 
+msgid "Important notice"
+msgstr "Важное сообщение"
+
+#: 
+msgid "Be careful of the information you write into your profile, because it could be accessed by everyone (even someone you don't want to)."
+msgstr "Будьте осторожны с информацией которую вы пишете в вашем профиле, потому что это доступно каждому."
+
+#: 
+msgid "Not everything is private on XMPP; this is one of those things, your public profile (vCard)."
+msgstr "Не вся информация приватна на XMPP, одна из тех вещей - ваш профиль."
+
+#: 
+msgid "It is strongly recommended to upload a profile image (%s maximum), like a picture of yourself, because that makes you easily recognizable by your friends."
+msgstr ""
+
+#: 
+msgid "Save"
+msgstr "Сохранить"
+
+#: 
+msgid "Cancel"
+msgstr "Отмена"
+
+#: 
+msgid "Edit options"
+msgstr "Редактировать настройки"
+
+#: 
+msgid "Channel"
+msgstr "Канал"
+
+#: 
+msgid "Commands"
+msgstr "Комманды"
+
+#: 
+msgid "Sounds"
+msgstr "Звуки"
+
+#: 
+msgid "Privacy"
+msgstr "Приватность"
+
+#: 
+msgid "Message archiving"
+msgstr "Архив сообщений"
+
+#: 
+msgid "Store a history of your chats"
+msgstr "Сохранять историю разговоров"
+
+#: 
+msgid "Geolocation"
+msgstr "Местоположение"
+
+#: 
+msgid "Empty"
+msgstr "Освободить"
+
+#: 
+msgid "Empty channel"
+msgstr "Пустая конференция"
+
+#: 
+msgid "Persistent"
+msgstr "Постоянный"
+
+#: 
+msgid "Maximum notices"
+msgstr "Максимальное число уведомлений"
+
+#: 
+msgid "Account"
+msgstr "Учетная запись"
+
+#: 
+msgid "Change password"
+msgstr "Изменить пароль"
+
+#: 
+msgid "Delete account"
+msgstr "Удалить акаунт"
+
+#: 
+msgid "Old"
+msgstr "Старый"
+
+#: 
+msgid "New (2 times)"
+msgstr "Новый"
+
+#: 
+msgid "Continue"
+msgstr "Продолжить"
+
+#: 
+msgid "To"
+msgstr "К"
+
+#: 
+msgid "Close"
+msgstr "Закрыть"
+
+#: 
+msgid "unknown"
+msgstr "неизвестно"
+
+#: 
+msgid "Unavailable"
+msgstr "Недоступен"
+
+#: 
+msgid "is now"
+msgstr "в настоящее время"
+
+#: 
+msgid "Please wait while your avatar is uploaded..."
+msgstr ""
+
+#: 
+msgid "Here it is! A new beautiful profile image!"
+msgstr "Вот он! Новый аватар."
+
+#: 
+msgid "The image file is not supported or has a bad size."
+msgstr "Этот файл не поддерживается или имеет плохой размер."
+
+#: 
+msgid "Reply"
+msgstr "Ответить"
+
+#: 
+msgid "Error"
+msgstr "Ошибка"
+
+#: 
+msgid "Click here to solve the error"
+msgstr "Кликни, чтоб устранить ошибку"
+
+#: 
+msgid "You"
+msgstr "Ты"
+
+#: 
+msgid "Remove"
+msgstr "Удалить"
+
+#: 
+msgid "Rename"
+msgstr "Переименовать"
+
+#: 
+msgid "Hi, I am %s, I would like to add you as my friend."
+msgstr "Привет, я %s. Хочю добавить тебя в друзья."
+
+#: 
+msgid "Smiley insertion"
+msgstr "Добавить смайлик"
+
+#: 
+msgid "Change style"
+msgstr "Изменить стиль"
+
+#: 
+msgid "Text in bold"
+msgstr "Жирный"
+
+#: 
+msgid "Text in italic"
+msgstr "Курсив"
+
+#: 
+msgid "Underlined text"
+msgstr "Подчеркнуто"
+
+#: 
+msgid "Save chat"
+msgstr "Сохранить беседу"
+
+#: 
+msgid "Click on the following link to get the chat log, and wait. Then click again to get the file."
+msgstr "Щелкните на следующей ссылке чтобы получить журнал разговора и подождите. Потом опять щелкните для получения файла."
+
+#: 
+msgid "This chat is empty!"
+msgstr "Ето пустой чат!"
+
+#: 
+msgid "Generate file!"
+msgstr "Создать файл!"
+
+#: 
+msgid "Download file!"
+msgstr "Скачать файл!"
+
+#: 
+msgid "Clean current chat"
+msgstr "Очистить текущий чат"
+
+#: 
+msgid "View chat history"
+msgstr "Просмотр истории разговора"
+
+#: 
+msgid "Show user profile"
+msgstr "Показать профиль пользователя"
+
+#: 
+msgid "Add this contact to your friends"
+msgstr "Добавить этого пользователя в друзья"
+
+#: 
+msgid "Add this groupchat to your favorites"
+msgstr "Добавить эту конференцию в избранные"
+
+#: 
+msgid "All tabs"
+msgstr "Все вкладки"
+
+#: 
+msgid "Close this tab"
+msgstr "Закрить эту вкладку"
+
+#: 
+msgid "no subject defined for this room."
+msgstr "для данной комнаты тема не была установлена."
+
+#: 
+msgid "Administration panel for this room"
+msgstr "Панель администрирования для етой комнаты"
+
+#: 
+msgid "Moderators"
+msgstr "Модераторы"
+
+#: 
+msgid "Participants"
+msgstr "Участники"
+
+#: 
+msgid "Visitors"
+msgstr "Посетители"
+
+#: 
+msgid "Manage favorite rooms"
+msgstr "Управление избранни комнатами"
+
+#: 
+msgid "Change favorites"
+msgstr "изменить избранние"
+
+#: 
+msgid "Search a room"
+msgstr "Найти комнату"
+
+#: 
+msgid "Select a favorite"
+msgstr "Добавить в избраннное"
+
+#: 
+msgid "Getting the name..."
+msgstr "Получение имени..."
+
+#: 
+msgid "Gateway"
+msgstr "Маршрутизатор"
+
+#: 
+msgid "Name"
+msgstr "Имя"
+
+#: 
+msgid "Room"
+msgstr "Комната"
+
+#: 
+msgid "Add"
+msgstr "Добавить"
+
+#: 
+msgid "Edit"
+msgstr "Изменить"
+
+#: 
+msgid "Search a room on"
+msgstr "Найти комнату на"
+
+#: 
+msgid "No room found on this server."
+msgstr "Комнат на сервере не найдено."
+
+#: 
+msgid "Service discovery"
+msgstr "Обзор сервисов"
+
+#: 
+msgid "Server to query"
+msgstr "Запрос к серверу"
+
+#: 
+msgid "Sorry, but the entity didn't return any result!"
+msgstr "Сожалею, но объект не ответил на запрос!"
+
+#: 
+msgid "Accounts"
+msgstr "Учетные записи"
+
+#: 
+msgid "Authentications"
+msgstr "Аутентификация"
+
+#: 
+msgid "Automation"
+msgstr "Автоматизация"
+
+#: 
+msgid "Clients"
+msgstr "Клиенты"
+
+#: 
+msgid "Collaboration"
+msgstr "Сотрудничество"
+
+#: 
+msgid "Components"
+msgstr "Компоненты"
+
+#: 
+msgid "Rooms"
+msgstr "Комнаты"
+
+#: 
+msgid "Directories"
+msgstr "Директории"
+
+#: 
+msgid "Gateways"
+msgstr "Шлюзы"
+
+#: 
+msgid "News"
+msgstr "Новости"
+
+#: 
+msgid "Hierarchy"
+msgstr "Иерархия"
+
+#: 
+msgid "Proxies"
+msgstr "Прокси"
+
+#: 
+msgid "Publication/Subscription"
+msgstr "Публикация/Подписка"
+
+#: 
+msgid "Storage"
+msgstr "Хранилище"
+
+#: 
+msgid "Service offline or broken"
+msgstr "Сервис недоступен"
+
+#: 
+msgid "Your inbox"
+msgstr "Входящие"
+
+#: 
+msgid "Available actions"
+msgstr "Доступные действия"
+
+#: 
+msgid "Clean"
+msgstr "Очистить"
+
+#: 
+msgid "New"
+msgstr "Новый"
+
+#: 
+msgid "Received"
+msgstr "Принятый"
+
+#: 
+msgid "Subject"
+msgstr "Тема"
+
+#: 
+msgid "Content"
+msgstr "Содержимое"
+
+#: 
+msgid "Send message"
+msgstr "Отправит сообщение"
+
+#: 
+msgid "Your inbox is empty."
+msgstr "У вас нет сообщений"
+
+#: 
+msgid "MUC administration"
+msgstr "Администрирование многопользовательской конференции"
+
+#: 
+msgid "You administrate this room"
+msgstr "Вы администратор этой комнаты"
+
+#: 
+msgid "Enter new subject"
+msgstr "Введите тему"
+
+#: 
+msgid "Configuration"
+msgstr "Установки"
+
+#: 
+msgid "Authorizations"
+msgstr "Авторизация"
+
+#: 
+msgid "Member list"
+msgstr "Участники"
+
+#: 
+msgid "Owner list"
+msgstr "Список владельцев"
+
+#: 
+msgid "Administrator list"
+msgstr "Список администраторов"
+
+#: 
+msgid "Outcast list"
+msgstr "Отклонённые"
+
+#: 
+msgid "Add an input"
+msgstr "Добавить вход"
+
+#: 
+msgid "Destroy this MUC"
+msgstr "Уничтожить эту комнату"
+
+#: 
+msgid "Yes, let's do it!"
+msgstr "Да, давайте сделаем это!"
+
+#: 
+msgid "Your friend is paying attention to the conversation."
+msgstr "Ваш друг обращает внимание на беседу."
+
+#: 
+msgid "Your friend is writing a message..."
+msgstr "Ваш друг пишет сообщение..."
+
+#: 
+msgid "Your friend stopped writing a message."
+msgstr "Ваш друг прекратил написание сообщения."
+
+#: 
+msgid "Your friend is doing something else."
+msgstr "Ваш друг делает что-то ещё."
+
+#: 
+msgid "Your friend closed the chat."
+msgstr "Ваш друг закрыл окно чата."
+
+#: 
+msgid "Requesting this service..."
+msgstr "Запрос сервиса..."
+
+#: 
+msgid "Loading"
+msgstr "Загрузка"
+
+#: 
+msgid "joined the chat room"
+msgstr "присоединится к комнате"
+
+#: 
+msgid "left the chat room"
+msgstr "покинул комнату"
+
+#: 
+msgid "no status"
+msgstr "нет статуса"
+
+#: 
+msgid "has been kicked"
+msgstr ""
+
+#: 
+msgid "has been banned"
+msgstr "был забанен"
+
+#: 
+msgid "no reason"
+msgstr "нет причины"
+
+#: 
+msgid "Communicate with the entire world!"
+msgstr "Общайся со всем миром!"
+
+#: 
+msgid "Jappix is a non-profit social platform, that you can access wherever you are, whenever you want and communicate with whovever you want."
+msgstr "Jappix это некоммерческая общественная платформа, доступная откуда бы ни было, когда бы ни пожелаете и с кем бы ни решили пообщаться."
+
+#: 
+msgid "It allows you to get in touch with the millions of users who currently use the XMPP network like you do with Jappix. Join the community and stay free!"
+msgstr "Это позволит общаться с миллионами пользователей Jappix, как и вы, использующих XMPP. Войди в сообщество и почувствуй свободу!"
+
+#: 
+msgid "Hi there!"
+msgstr "Приветствуем здесь!"
+
+#: 
+msgid "Welcome on %1s, “%2s”."
+msgstr "Добро пожаловать в %1s, “%2s”."
+
+#: 
+msgid "Login to your existing XMPP account or create a new one for free!"
+msgstr "Ввойдите в ваш XMPP аккаунт или создайте новый бесплатно!"
+
+#: 
+msgid "Jappix is an open-source project from PostPro, a non-profit organization which provides us a great help."
+msgstr "Jappix - это открытый проект от PostPro, некоммерческой организации, обеспечивающей нам отличную поддержу"
+
+#: 
+msgid "Login to your existing XMPP account. You can also use the %s to join a groupchat."
+msgstr "Ввойдите в ваш XMPP аккаунт. Также можете использовать %s для присоединения к общей беседе."
+
+#: 
+msgid "Previous"
+msgstr "Предыдущий"
+
+#: 
+msgid "General"
+msgstr "Основные"
+
+#: 
+msgid "Advanced"
+msgstr "Дополнительно"
+
+#: 
+msgid "Resource"
+msgstr "Ресурс"
+
+#: 
+msgid "Priority"
+msgstr "Приоритет"
+
+#: 
+msgid "Low"
+msgstr "Низкий"
+
+#: 
+msgid "Medium"
+msgstr "Средний"
+
+#: 
+msgid "High"
+msgstr "Высокий"
+
+#: 
+msgid "Enter the groupchat you want to join and the nick you want to have. You can also go back to the %s."
+msgstr "Введите название конференции и ник. (Вы можете вернуться к %s)."
+
+#: 
+msgid "login page"
+msgstr "Страница входа"
+
+#: 
+msgid "Share this link with your friends:"
+msgstr "Поделитесь ссылкой с друзьями:"
+
+#: 
+msgid "Register a new XMPP account to join your friends on your own social cloud. That's simple!"
+msgstr "Зарегистрируйте новый XMPP-аккаунт чтобы подключиться к сети друзей. Это просто!"
+
+#: 
+msgid "Required"
+msgstr "Обязательный"
+
+#: 
+msgid "You have been registered, here is your XMPP address:"
+msgstr ""
+
+#: 
+msgid "Manager"
+msgstr ""
+
+#: 
+msgid "Project"
+msgstr "Проект"
+
+#: 
+msgid "Encrypted"
+msgstr "Зашифрованный"
+
+#: 
+msgid "Unencrypted"
+msgstr ""
+
+#: 
+msgid "Where are you?"
+msgstr "Где ты?"
+
+#: 
+msgid "What's up with you?"
+msgstr "Что с тобой?"
+
+#: 
+msgid "Fetching the social channel..."
+msgstr "Вход в социальный канал..."
+
+#: 
+msgid "You are synchronized with your network."
+msgstr "Вы синхронизированы с сетью."
+
+#: 
+msgid "Cannot send anything: you can only receive notices!"
+msgstr "Не может быть отправлено: вы можете только получать уведомления!"
+
+#: 
+msgid "Media viewer"
+msgstr "Медиа менеджер"
+
+#: 
+msgid "Browse"
+msgstr "Просмотр"
+
+#: 
+msgid "Command"
+msgstr "Команда"
+
+#: 
+msgid "Subscribe"
+msgstr "Подписаться"
+
+#: 
+msgid "Join"
+msgstr "Войти"
+
+#: 
+msgid "Automatic"
+msgstr "Автоматически"
+
+#: 
+msgid "Search"
+msgstr "Поиск"
+
+#: 
+msgid "No result!"
+msgstr "Нет результата!"
+
+#: 
+msgid "No notifications."
+msgstr "Нет уведомлений."
+
+#: 
+msgid "would like to add you as a friend."
+msgstr "добавить себя как друга."
+
+#: 
+msgid "would like you to join this chatroom:"
+msgstr "хотели бы присоединиться к чату:"
+
+#: 
+msgid "Do you accept?"
+msgstr "Вы принимаете?"
+
+#: 
+msgid "Yes"
+msgstr "Да"
+
+#: 
+msgid "No"
+msgstr "Нет"
+
+#: 
+msgid "would like to get authorization."
+msgstr "хочет получит авторизацию"
+
+#: 
+msgid "Do you want to see the friends %s suggests you?"
+msgstr "Хотите ли видеть предложенных вам %s друзей?"
+
+#: 
+msgid "Submit"
+msgstr "Отправить"
+
+#: 
+msgid "Client"
+msgstr "Клиент"
+
+#: 
+msgid "System"
+msgstr "Система"
+
+#: 
+msgid "Local time"
+msgstr "Местное время"
+
+#: 
+msgid "Comments"
+msgstr "Комментарии"
+
+#: 
+msgid "User profile"
+msgstr "Профиль пользователя"
+
+#: 
+msgid "See his/her position on the globe"
+msgstr "Посмотреть географическое положение"
+
+#: 
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#: 
+msgid "anonymous mode"
+msgstr "анонимный режим"
+
+#: 
+msgid "Groups"
+msgstr "Группы"
+
+#: 
+msgid "Unclassified"
+msgstr "Неизвестно"
+
+#: 
+msgid "Authorize"
+msgstr "Авторизовать"
+
+#: 
+msgid "Ask for authorization"
+msgstr "Запросить подписку"
+
+#: 
+msgid "Unblock"
+msgstr "Разблокировать"
+
+#: 
+msgid "Prohibit"
+msgstr "Запретить"
+
+#: 
+msgid "Block"
+msgstr "Блокировать"
+
+#: 
+msgid "Chat"
+msgstr "Чат"
+
+#: 
+msgid "Groupchat"
+msgstr "Чат"
+
+#: 
+msgid "Jappix Mobile"
+msgstr "Мобильный Jappix"
+
+#: 
+msgid "Desktop"
+msgstr "Полная версия"
+
+#: 
+msgid "Mobile"
+msgstr "Мобильный"
+
+#: 
+msgid "Please wait..."
+msgstr "Пожалуйста, подождите..."
+
+#: 
+msgid "Please enable JavaScript"
+msgstr "Пожалуйста, включите JavaScript"
+
+#: 
+msgid "Your channel"
+msgstr "Ваш канал"
+
+#: 
+msgid "Channel of"
+msgstr "Канал"
+
+#: 
+msgid "More notices..."
+msgstr "Другие уведомления..."
+
+#: 
+msgid "Attach a file"
+msgstr "Присоединить файл"
+
+#: 
+msgid "Send"
+msgstr "Отправить"
+
+#: 
+msgid "Unattach the file"
+msgstr "Удалить файл"
+
+#: 
+msgid "An error occured while uploading your file: maybe it is too big (%s maximum) or forbidden!"
+msgstr "При выгрузке вашего файла произошла ошибка: может он слишком велик (%s maximum) или его формат запрещен!"
+
+#: 
+msgid "Authorization failed"
+msgstr "Ошибка аутентификации"
+
+#: 
+msgid "Registration failed, please choose a different username"
+msgstr "Ошибка регистрации. Пожалуйста, выберите другое имя пользователя"
+
+#: 
+msgid "Service unavailable"
+msgstr "Сервис недоступен"
+
+#: 
+msgid "Internal server error, try later"
+msgstr "Внутренняя ошибка сервера. Попробуйте зайти позже"
+
+#: 
+msgid "Your form has been sent."
+msgstr ""
+
+#: 
+msgid "Application"
+msgstr "Приложение"
+
+#: 
+msgid "XMPP links"
+msgstr "XMPP ссылки"
+
+#: 
+msgid "Open XMPP links with Jappix"
+msgstr "Открывать XMPP ссылки в Jappix"
+
+#: 
+msgid "changed the subject to:"
+msgstr "изменил тему на:"
+
+#: 
+msgid "Welcome!"
+msgstr "Добро пожаловать!"
+
+#: 
+msgid "Friends"
+msgstr "Друзья"
+
+#: 
+msgid "Welcome on Jappix, your own social cloud!"
+msgstr "Добро пожаловать в Jappix, Вашу социальную сеть!"
+
+#: 
+msgid "Before you start using it, you will have to change some settings, search for friends and complete your profile."
+msgstr "До начала использования вам надо изменить некоторые установки, найти друзей и заполнить профиль."
+
+#: 
+msgid "Enable notification sounds"
+msgstr "Включить звуковые уведомления"
+
+#: 
+msgid "Share your position on the globe"
+msgstr "Поделится своим мемтоположением"
+
+#: 
+msgid "Offline friends"
+msgstr ""
+
+#: 
+msgid "Don't hide offline friends"
+msgstr ""
+
+#: 
+msgid "Use this tool to find your friends on the server you are using right now, or add them later."
+msgstr "Используйте это для поиска друзей, или добавьте их позже"
+
+#: 
+msgid "Great work! Now, you can share Jappix with your friends!"
+msgstr "Прекрасная работа! Итак, можете поделиться Jappix с друзьями!"
+
+#: 
+msgid "When you will press the save button, the profile editor will be opened. Happy socializing!"
+msgstr "Нажатие на кнопку сохранения открывает редактор профиля. Удачного общения!"
+
+#: 
+msgid "Share Jappix on %s"
+msgstr "Рассказать про Jappix в %s"
+
+#: 
+msgid "Using Jappix, an open social platform. I am %s!"
+msgstr "Использую для общения Jabber-сеть Jappix. Я - %s!"
+
+#: 
+msgid "Unknown name"
+msgstr "Неизвестное имя"
+
+#: 
+msgid "Unknown country"
+msgstr "Неизвестная страна"
+
+#: 
+msgid "Click to enable"
+msgstr "Включить"
+
+#: 
+msgid "Click to disable"
+msgstr "Выключить"
+
+#: 
+msgid "Installation"
+msgstr "Установка"
+
+#: 
+msgid "Jappix installation"
+msgstr "Установка Jappix"
+
+#: 
+msgid "Welcome to the Jappix installation!"
+msgstr ""
+
+#: 
+msgid "This tool will help you fastly install Jappix, the first full-featured XMPP-based social platform, on your server. You don't even need any technical knowledge."
+msgstr ""
+
+#: 
+msgid "Let's have a look at the installation steps:"
+msgstr ""
+
+#: 
+msgid "Welcome"
+msgstr ""
+
+#: 
+msgid "Storage configuration"
+msgstr "Настройка хранилища"
+
+#: 
+msgid "Administrator account"
+msgstr "Администраторсикий акаунт"
+
+#: 
+msgid "Main configuration"
+msgstr "Основные настройки"
+
+#: 
+msgid "Hosts configuration"
+msgstr ""
+
+#: 
+msgid "Services installation"
+msgstr "Установка сервиса"
+
+#: 
+msgid "If the current language does not match yours (%1s), you can make Jappix speak %2s it will be saved."
+msgstr ""
+
+#: 
+msgid "If you want to get some help about the Jappix installation and configuration, you can use our whole documentation, available at:"
+msgstr "Если хотите получить какую-либо помощь по установке и настройке Jappix, можете использовать полную документацию, доступную на:"
+
+#: 
+msgid "It's time to build your own social cloud: just go to the next step!"
+msgstr ""
+
+#: 
+msgid "Jappix stores persistent data (such as shared files, chat logs, your own music and its configuration) into a single secured storage folder."
+msgstr ""
+
+#: 
+msgid "Jappix must be able to write in this folder to create its sub-directories. If not, you must set the rights to %1s or change the folder owner to %2s (depending of your configuration)."
+msgstr ""
+
+#: 
+msgid "The folder is writable, you can continue!"
+msgstr ""
+
+#: 
+msgid "Jappix offers you the possibility to manage your configuration, install new plugins or search for updates. That's why you must create an administrator account to access the manager."
+msgstr ""
+
+#: 
+msgid "When Jappix will be installed, just click on the manager link on the home page to access it."
+msgstr ""
+
+#: 
+msgid "Oops, you missed something or the two passwords do not match!"
+msgstr "Опа! Вы вы что-то забыли, или два пароля не совпали!"
+
+#: 
+msgid "Jappix needs that you specify some values to work. Please correct the following inputs (or keep the default values, which are sufficient for most people)."
+msgstr ""
+
+#: 
+msgid "Note that if you don't specify a value which is compulsory, it will be automatically completed with the default one."
+msgstr ""
+
+#: 
+msgid "User"
+msgstr "Пользователь"
+
+#: 
+msgid "Service"
+msgstr "Сервис"
+
+#: 
+msgid "Service name"
+msgstr "Имя сервиса"
+
+#: 
+msgid "Service description"
+msgstr "Описание сервиса"
+
+#: 
+msgid "Connection"
+msgstr "Сединение"
+
+#: 
+msgid "Lock the host"
+msgstr ""
+
+#: 
+msgid "Anonymous mode"
+msgstr "Анонимны режим"
+
+#: 
+msgid "Registration allowed"
+msgstr "Регистрация дозволена"
+
+#: 
+msgid "Use a proxy"
+msgstr "Использовать proxy"
+
+#: 
+msgid "Encryption"
+msgstr ""
+
+#: 
+msgid "HTTPS storage"
+msgstr "HTTPS хранилище"
+
+#: 
+msgid "Force HTTPS"
+msgstr "Принудительно использовать HTTPS"
+
+#: 
+msgid "Compression"
+msgstr "Сжатие"
+
+#: 
+msgid "This page helps you specify the default hosts Jappix will connect to. You can leave it as it is and continue if you want to use the official service hosts."
+msgstr ""
+
+#: 
+msgid "Maybe you don't know what a BOSH server is? In fact, this is a relay between a Jappix client and a XMPP server, which is necessary because of technical limitations."
+msgstr "Возможно вы не знаете, что такое BOSH сервер? Фактически это переходник между Jappix-клиентом и XMPP-сервером, необходимый в силу технических ограничений."
+
+#: 
+msgid "Main host"
+msgstr "Основной хост"
+
+#: 
+msgid "Groupchat host"
+msgstr "Хост конференций"
+
+#: 
+msgid "Anonymous host"
+msgstr "Анонимный хост"
+
+#: 
+msgid "Directory host"
+msgstr "Хост директорий"
+
+#: 
+msgid "BOSH host"
+msgstr "BOSH хост"
+
+#: 
+msgid "You can install some extra softwares on your server, to extend your Jappix features. Some others might be modified, because of security restrictions which are set by default."
+msgstr ""
+
+#: 
+msgid "To perform this, you must be able to access your server's shell and be logged in as root. Remember this is facultative, Jappix will work without these modules, but some of its features will be unavailable."
+msgstr ""
+
+#: 
+msgid "After you finished the setup, Jappix will generate the cache files. It might be slow, just wait until the application is displayed and do not press any button."
+msgstr ""
+
+#: 
+msgid "Thanks for using Jappix!"
+msgstr "Спасибо за использование Jappix"
+
+#: 
+msgid "Next"
+msgstr "Следующий"
+
+#: 
+msgid "Finish"
+msgstr "Готово"
+
+#: 
+msgid "Check again"
+msgstr ""
+
+#: 
+msgid "The folder is not writable, set the right permissions to the %s directory."
+msgstr ""
+
+#: 
+msgid "%s is installed on your system."
+msgstr "%s установлен на вашей системе."
+
+#: 
+msgid "%1s is not installed on your system, you should install %2s."
+msgstr "%1s не установлен в вашей системе, вам необходимо установить %2s. "
+
+#: 
+msgid "PHP maximum upload size is sufficient (%s)."
+msgstr "Максимальный загружаемый файл в PHP %s."
+
+#: 
+msgid "PHP maximum upload size is not sufficient (%1s), you should define it to %2s in %3s."
+msgstr ""
+
+#: 
+msgid "Jappix manager"
+msgstr ""
+
+#: 
+msgid "Manager access"
+msgstr ""
+
+#: 
+msgid "Statistics"
+msgstr "Статистика"
+
+#: 
+msgid "Hosts"
+msgstr "Хосты"
+
+#: 
+msgid "Design"
+msgstr "Дизайн"
+
+#: 
+msgid "Repeat"
+msgstr "Повтор"
+
+#: 
+msgid "All"
+msgstr "Все"
+
+#: 
+msgid "Horizontal"
+msgstr "Горизонтальный"
+
+#: 
+msgid "Vertical"
+msgstr "Вертикальный"
+
+#: 
+msgid "Center"
+msgstr "Середина"
+
+#: 
+msgid "Left"
+msgstr "Левый"
+
+#: 
+msgid "Right"
+msgstr "Правый"
+
+#: 
+msgid "Top"
+msgstr "Верх"
+
+#: 
+msgid "Bottom"
+msgstr "Низ"
+
+#: 
+msgid "Adapt"
+msgstr "Принять"
+
+#: 
+msgid "Color"
+msgstr "Цвет"
+
+#: 
+msgid "Users"
+msgstr "Пользователи"
+
+#: 
+msgid "Updates"
+msgstr "Обновления"
+
+#: 
+msgid "This is a restricted area: only the authorized users can manage this Jappix node."
+msgstr "Запретная область: лишь утвержденные пользователи могут править этот узел Jappix."
+
+#: 
+msgid "Please use the form below to login to the administration panel."
+msgstr "Используйте нижеприведенную форму для доступа к панели администрирования."
+
+#: 
+msgid "To improve security, sessions are limited in time and when your browser will be closed, you will be logged out."
+msgstr "В целях безопасности сессия ограничена по времени, и, когда ваш браузер будет закрыт, вы также выйдете из нее."
+
+#: 
+msgid "Credentials"
+msgstr "Полномочия"
+
+#: 
+msgid "You have been logged out. Goodbye!"
+msgstr "Вы вышли из системы. До свидания!"
+
+#: 
+msgid "Oops, you could not be recognized as a valid administrator. Check your credentials!"
+msgstr "Опа! Вы не признаны действующим администратором. Проверьте ваши полномочия!"
+
+#: 
+msgid "Basic statistics are processed by Jappix about some important things, you can find them below."
+msgstr ""
+
+#: 
+msgid "Change your Jappix node configuration with this tool."
+msgstr ""
+
+#: 
+msgid "Change the XMPP hosts that this Jappix node serve with this tool."
+msgstr ""
+
+#: 
+msgid "All this Jappix node stored files can be managed with this tool: please select a sub-folder and start editing its content!"
+msgstr ""
+
+#: 
+msgid "Jappix is fully customisable: you can change its design right here."
+msgstr ""
+
+#: 
+msgid "This is not a valid image, please use PNG, GIF or JPG!"
+msgstr "Ето неправильная картинка, пожалуста используйте PNG, GIF или JPG"
+
+#: 
+msgid "The image could not be received, would you mind retry?"
+msgstr ""
+
+#: 
+msgid "Your image was added to the list!"
+msgstr "Ваш рисунок был добавлен к списку!"
+
+#: 
+msgid "Changes saved!"
+msgstr "Изменения сохранены!"
+
+#: 
+msgid "You can define more than one administrator for this Jappix node. You can also change a password with this tool."
+msgstr ""
+
+#: 
+msgid "Update your Jappix node with this tool, or check if a new one is available. Informations about the latest version are also displayed (in english)."
+msgstr ""
+
+#: 
+msgid "Access statistics"
+msgstr "Доступ к статистике"
+
+#: 
+msgid "Share statistics"
+msgstr "Поделится статистикой"
+
+#: 
+msgid "Other statistics"
+msgstr "Другая статистика"
+
+#: 
+msgid "January"
+msgstr "Январь"
+
+#: 
+msgid "February"
+msgstr "Февраль"
+
+#: 
+msgid "March"
+msgstr "Март"
+
+#: 
+msgid "April"
+msgstr "Апрель"
+
+#: 
+msgid "May"
+msgstr "Май"
+
+#: 
+msgid "June"
+msgstr "Июнь"
+
+#: 
+msgid "July"
+msgstr "Июль"
+
+#: 
+msgid "August"
+msgstr "Август"
+
+#: 
+msgid "September"
+msgstr "Сентябрь"
+
+#: 
+msgid "October"
+msgstr "Октябрь"
+
+#: 
+msgid "November"
+msgstr "Ноябрь"
+
+#: 
+msgid "December"
+msgstr "Декабрь"
+
+#: 
+msgid "Monday"
+msgstr "Понедельник"
+
+#: 
+msgid "Tuesday"
+msgstr "Вторник"
+
+#: 
+msgid "Wednesday"
+msgstr "Среда"
+
+#: 
+msgid "Thursday"
+msgstr "Четверг"
+
+#: 
+msgid "Friday"
+msgstr "Пятница"
+
+#: 
+msgid "Saturday"
+msgstr "Суббота"
+
+#: 
+msgid "Sunday"
+msgstr "Воскресенье"
+
+#: 
+msgid "Total"
+msgstr "Всего"
+
+#: 
+msgid "Cache"
+msgstr "Кеш"
+
+#: 
+msgid "Logs"
+msgstr "История"
+
+#: 
+msgid "Music"
+msgstr "Музыка"
+
+#: 
+msgid "Backgrounds"
+msgstr "Фон"
+
+#: 
+msgid "Share"
+msgstr "Поделиться"
+
+#: 
+msgid "Background"
+msgstr "Фон"
+
+#: 
+msgid "Notice"
+msgstr "Уведомление"
+
+#: 
+msgid "Your design preferences have been saved!"
+msgstr ""
+
+#: 
+msgid "Please check your inputs: something is missing!"
+msgstr ""
+
+#: 
+msgid "Change your Jappix node background with this tool. You can either set a custom color or an uploaded image. Let your creativity flow!"
+msgstr ""
+
+#: 
+msgid "Use default background"
+msgstr "Использовать фон поумолчани."
+
+#: 
+msgid "Use your own image"
+msgstr "Использовать собственную картинку"
+
+#: 
+msgid "Select a background to use and change the display options."
+msgstr ""
+
+#: 
+msgid "Use your own color"
+msgstr "Использовать собственний цвет"
+
+#: 
+msgid "Type the hexadecimal color value you want to use as a background."
+msgstr ""
+
+#: 
+msgid "Manage backgrounds"
+msgstr "Управление фоном"
+
+#: 
+msgid "You can add a new background to the list with this tool. Please send a valid image."
+msgstr ""
+
+#: 
+msgid "If you want to remove some backgrounds, use the browser below."
+msgstr ""
+
+#: 
+msgid "Define a homepage notice for all your users, such as a warn, an important message or an advert with this tool."
+msgstr ""
+
+#: 
+msgid "Simple notice"
+msgstr "Простое уведомление"
+
+#: 
+msgid "This notice only needs simple text to be displayed, but no code is allowed!"
+msgstr ""
+
+#: 
+msgid "Advanced notice"
+msgstr ""
+
+#: 
+msgid "You can customize your notice with embedded HTML, CSS and JavaScript, but you need to code the style."
+msgstr ""
+
+#: 
+msgid "Available updates"
+msgstr ""
+
+#: 
+msgid "What's new?"
+msgstr "Что нового?"
+
+#: 
+msgid "Your storage folders are not writable, please apply the good rights!"
+msgstr ""
+
+#: 
+msgid "%1s may cause problems to the proxy, please increase %2s value up to %3s!"
+msgstr "%1s может вызвать проблемы с proxy, пожалуйста увеличте значение %2s до %3s!"
+
+#: 
+msgid "You are using a development version of Jappix. Update it through our repository by executing: %s."
+msgstr "Вы используете версию разработчика для Jappix. Обновите ее из нашего репозитория выполнив: %s."
+
+#: 
+msgid "A new Jappix version is available! Check what is new and launch the update!"
+msgstr "Доступна новая версия Jappix! Проверьте изменения и запустите обновление!"
+
+#: 
+msgid "Your version is out to date. Update it now to %s by clicking here!"
+msgstr "Ваша версия устарела. Обновите ее до %s, кликнув здесь!"
+
+#: 
+msgid "Your version seems to be up to date, but you can check updates manually by clicking here."
+msgstr "Вашу версию неплохо бы обновить, но вы можете выбрать обновление собственноручно кликнув здесь."
+
+#: 
+msgid "Check for updates"
+msgstr "Проверить обновления"
+
+#: 
+msgid "Update in progress"
+msgstr "Обновление..."
+
+#: 
+msgid "Jappix has been updated: you are now running the latest version. Have fun!"
+msgstr "Jappix был обновлен: теперь у вас запущена свежайшая версия. Наслаждайтесь!"
+
+#: 
+msgid "The update has failed! Please try again later."
+msgstr "Ошибка при обновлении! Попробуйте еще раз."
+
+#: 
+msgid "Downloading package..."
+msgstr "Загрузка пакета..."
+
+#: 
+msgid "Removing current Jappix system files..."
+msgstr "Удаление текущих системных файлов Jappix..."
+
+#: 
+msgid "Extracting package..."
+msgstr ""
+
+#: 
+msgid "Regenerating storage folder tree..."
+msgstr "Восстановление дерева каталога..."
+
+#: 
+msgid "Jappix is now up to date!"
+msgstr "Jappix обновлен!"
+
+#: 
+msgid "Aborted: socket error!"
+msgstr ""
+
+#: 
+msgid "Aborted: buffer error!"
+msgstr ""
+
+#: 
+msgid "Aborted: everything is not writable!"
+msgstr ""
+
+#: 
+msgid "Aborted: could not extract the package!"
+msgstr ""
+
+#: 
+msgid "Visits"
+msgstr "Посещения"
+
+#: 
+msgid "Daily"
+msgstr "Ежедневно"
+
+#: 
+msgid "Weekly"
+msgstr "Еженедельно"
+
+#: 
+msgid "Monthly"
+msgstr "Ежемесячно"
+
+#: 
+msgid "Yearly"
+msgstr "Ежегодно"
+
+#: 
+msgid "Size"
+msgstr "Размер"
+
+#: 
+msgid "Clean everything"
+msgstr "Очистить все"
+
+#: 
+msgid "Purge cache"
+msgstr "Очистить кеш"
+
+#: 
+msgid "Purge logs"
+msgstr "Очистить историю"
+
+#: 
+msgid "Purge updates"
+msgstr "Удалить обновления"
+
+#: 
+msgid "The storage folder you wanted to clean is now empty!"
+msgstr "Папка которую вы хотите очистить, пуста."
+
+#: 
+msgid "Keep your Jappix node fresh and fast, clean the storage folders regularly!"
+msgstr ""
+
+#: 
+msgid "Upload your music (Ogg Vorbis, MP3 or WAV) to be able to listen to it in Jappix!"
+msgstr "Выгрузите вашу музыку (Ogg Vorbis, MP3 или WAV), чтобы слушать ее в Jappix!"
+
+#: 
+msgid "The file you want to upload must be smaller than %s."
+msgstr "Файл который вы хотите загрузить должен быть меньше %s."
+
+#: 
+msgid "Stay tuned in what your users store on your server and remove undesired content with this tool."
+msgstr ""
+
+#: 
+msgid "Title"
+msgstr "Название"
+
+#: 
+msgid "Artist"
+msgstr "Артист"
+
+#: 
+msgid "Album"
+msgstr "Альбом"
+
+#: 
+msgid "File"
+msgstr "Файл"
+
+#: 
+msgid "Upload"
+msgstr "Загрузить"
+
+#: 
+msgid "The folder is empty."
+msgstr "Эта папка пуста."
+
+#: 
+msgid "The music could not be received, please retry!"
+msgstr ""
+
+#: 
+msgid "This is not a valid music file, please encode in Ogg Vorbis, MP3 or WAV!"
+msgstr ""
+
+#: 
+msgid "Your music has been added!"
+msgstr "Ваша музыка добавлена!"
+
+#: 
+msgid "The selected elements have been removed."
+msgstr "Выбранный элемент бил удален."
+
+#: 
+msgid "You must select elements to remove!"
+msgstr "Выберите удаляемые элементы!"
+
+#: 
+msgid "Add a new user with this tool, or change a password (type an existing username). Please submit a strong password!"
+msgstr "Добавить нового пользователя или изменить пароль (ввести существующее имя). Используйте сложный пароль!"
+
+#: 
+msgid "Manage"
+msgstr "Управление"
+
+#: 
+msgid "List"
+msgstr "Список"
+
+#: 
+msgid "Remove users with this tool. Note that you cannot remove an user if he is the only one remaining."
+msgstr "Удалите пользователей этим tool. Нельзя удалять единственого оставшегося пользователя."
+
+#: 
+msgid "The user has been added!"
+msgstr "Пользователь добавлен!"
+
+#: 
+msgid "The chosen users have been removed."
+msgstr "Выбранные польззователи удалены."
+
+#: 
+msgid "You must select one or more users to be removed!"
+msgstr "Выберите одного или более для удаления!"
+
+#: 
+msgid "Yesterday"
+msgstr "Вчера"
+
+#: 
+msgid "%s days ago"
+msgstr "%s дней назад"
+
+#: 
+msgid "User currently active"
+msgstr "Сейчас активен"
+
+#: 
+msgid "Last seen: %s"
+msgstr "Последний раз был: %s"
+
+#: 
+msgid "Inactive since: %s"
+msgstr "Бездействует с %s"
+
+#: 
+msgid "Your friend seems not to have received your message(s)!"
+msgstr "Похоже ваши друзья не получают сообщений!"
+
+#: 
+msgid "Static content server"
+msgstr "Сервер статического контента"
+
+#: 
+msgid "This is the static content server for %1s, “%2s”."
+msgstr ""
+
+#: 
+msgid "Suggested friends"
+msgstr "Рекомендованые друзья"
+
+#: 
+msgid "Check all"
+msgstr "Отметить все"
+
+#: 
+msgid "Uncheck all"
+msgstr "Отменить выбор"
+
+#: 
+msgid "Choose"
+msgstr "Выберите"
+
+#: 
+msgid "List name"
+msgstr "Фамилия"
+
+#: 
+msgid "Allow"
+msgstr "Зазрешить"
+
+#: 
+msgid "Deny"
+msgstr "Отказать"
+
+#: 
+msgid "Group"
+msgstr "Группа"
+
+#: 
+msgid "Subscription"
+msgstr "Подписка"
+
+#: 
+msgid "Both"
+msgstr ""
+
+#: 
+msgid "From"
+msgstr "От"
+
+#: 
+msgid "Everybody"
+msgstr "Все"
+
+#: 
+msgid "Send messages"
+msgstr "Послать сообщение"
+
+#: 
+msgid "Send queries"
+msgstr "Послать запрос"
+
+#: 
+msgid "See my status"
+msgstr "Смотри мой статус"
+
+#: 
+msgid "Send his/her status"
+msgstr "Отправлять статус"
+
+#: 
+msgid "Everything"
+msgstr "Все"
+
+#: 
+msgid "Item"
+msgstr "Предмет"
+
+#: 
+msgid "Order"
+msgstr "Запрос"
+
+#: 
+msgid "Active for this session"
+msgstr "Активный на сессию"
+
+#: 
+msgid "Always active"
+msgstr "Всегда активный"
+
+#: 
+msgid "User directory"
+msgstr "Каталог пользователя"
+
+#: 
+msgid "Search a friend"
+msgstr "Поиск друга"
+
+#: 
+msgid "The feature requested is not implemented by the recipient or server and therefore cannot be processed."
+msgstr ""
+

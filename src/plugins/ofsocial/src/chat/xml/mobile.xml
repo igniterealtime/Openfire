@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<jappix xmlns="jappix:file:get">
+	<css>mobile.css~images.css</css>
+	<js>base64.js~jsjac.js~constants.js~browser-detect.js~links.js~mobile.js</js>
+</jappix>

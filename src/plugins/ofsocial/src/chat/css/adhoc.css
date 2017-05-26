@@ -1,0 +1,26 @@
+/*
+
+Jappix - An open social platform
+This is the Ad-Hoc CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 20/12/10
+
+*/
+
+#adhoc .content {
+	padding: 10px 0 10px 0;
+}
+
+#adhoc .adhoc-head {
+	background-color: #f1f6fd;
+	border: 1px #9dc4fc solid;
+	width: 598px;
+	height: 18px;
+	font-size: 0.9em;
+	margin: 0 10px 12px 10px;
+	padding: 6px 10px;
+}

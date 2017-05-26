@@ -1,0 +1,125 @@
+/**********************************************************/
+
+== CHANGE LOG == 
+
+= Version 1.5.1 =
+* Improve performance
+
+= Version 1.5.0 =
+* Fixed duplicated title issue
+
+= Version 1.4.9 =
+* Added 404 page
+
+= Version 1.4.8 =
+* Added 'Delete section' function
+
+= Version 1.4.7 =
+* Fixed sidebar issue
+
+= Version 1.4.6 =
+* Added theme support: title-tag
+
+= Version 1.4.5 =
+* Added home page footer widgets area
+
+= Version 1.4.4 =
+* Updated Font Awesome to version 4.3.0
+* Added clients home page section
+
+= Version 1.4.3 =
+* Added rtl CSS style
+* CSS style optimization
+
+= Version 1.4.2 =
+* Fixed homepage slider height issue
+* Gallery style optimization
+* Fixed contact form return message issue
+
+= Version 1.4.1 =
+* Fixed Primary Menu window resize hide issue
+
+= Version 1.4.0 =
+* Provide original js files
+* Set the default home page content
+
+= Version 1.3.9 =
+* Fixed home page embed video issue
+* Fixed home page menu issue when trade content to Slider in section 1 conten
+
+= Version 1.3.8 =
+* Fixed child theme home page sections disappear issue
+* Added Parallax Scrolling Background Image
+
+= Version 1.3.6 =
+* Fixed menu issue displayed on the mobile
+
+= Version 1.3.5 =
+* Update Options Framework
+* Update Font Awesome
+* Video background optimization
+
+= Version 1.3.4 =
+* Internationalize the text in onetone_options_panel_sidebar()
+
+= Version 1.3.3 =
+* Fixed IE responsive issue
+* Added "Back to Top" button
+* Homepage nav menu current item color
+* Added links color option
+
+= Version 1.3.1 =
+* Homepage slider optimization
+
+= Version 1.2.9 =
+* Smooth scrolling optimization
+* Video Control buttons on/off
+
+= Version 1.2.8 =
+* Smooth scrolling optimization
+* Added home page top slider
+* Added viedo background position option
+
+= Version 1.2.5 =
+* Fixed favicon issue
+* Remove all sentence under the ¡°read more¡± on Category page
+
+= Version 1.2.4 =
+* Fixed 'Fatal error: Cannot redeclare class Mobile_Detect' issue
+
+= Version 1.2.3 =
+* Fixed header menu color issue.
+* Display background color or background image on tablet/mobile devices instead of background video.
+
+= Version 1.2.2 =
+* Default video audio setting to on.
+* Added Header Text Color setting
+* Fixed spelling error
+* Fixed IE issue
+
+= Version 1.1.9 =
+* Fixed child theme issue.
+
+= Version 1.1.8 =
+* Added header menu nav font color option.
+
+= Version 1.1.5 = 
+* Added background video controls(Play | Pause | Volume Up | Volume Down | Mute).
+* Added one page home menu slug.
+
+= Version 1.1.4 = 
+* Fixed layout issue
+
+= Version 1.1.3 = 
+* Added Font Awesome icons
+* Section content shortcode support
+* Fixed some style issue
+
+= Version 1.1.2 = 
+* Video background, Contact form optimization, Clear form after submitting successfully.
+
+= Version 1.1.1 = 
+* Fixed video background issue
+
+= Version 1.1.0 = 
+* Added home section video background

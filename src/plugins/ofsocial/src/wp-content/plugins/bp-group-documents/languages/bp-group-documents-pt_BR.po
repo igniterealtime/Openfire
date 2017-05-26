@@ -1,0 +1,628 @@
+# Translation of the WordPress plugin   by .
+# Copyright (C) 2010
+# This file is distributed under the same license as the  package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BP Group Documents\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-group-documents\n"
+"POT-Creation-Date: 2014-12-08 12:04+0200\n"
+"PO-Revision-Date: 2014-12-08 12:06+0200\n"
+"Last-Translator: Lena Stergatu <stergatu@cti.gr>\n"
+"Language-Team:  <eduardo@dotweb.com.br>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:33
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:45
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:153
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:23
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:31
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:57
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:186
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:319
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:420
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/loader.php:126
+msgid "Documents"
+msgstr "Documentos"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:91
+#, fuzzy
+msgid "There was an error saving, please try again"
+msgstr "Houve um problema ao armazenar seu arquivo. Tente novamente por favor."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:93
+#, fuzzy
+msgid "Settings Saved."
+msgstr "Configurações salvas com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:120
+#, fuzzy
+msgid "Category List for"
+msgstr "Categoria:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:131
+msgid "Update"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:136
+#, php-format
+msgid "Are you sure you want to delete category <b>%s</b>?"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:139
+#, php-format
+msgid "Any %s in the category will be left with no category."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:143
+msgid "You can later assign them to another  category."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:146
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:163
+msgid "Delete"
+msgstr "Excluir"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:154
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:159
+msgid "Edit"
+msgstr "Editar"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:162
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:23
+msgid "Add"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:171
+msgid "Save Changes"
+msgstr "Salvar mudanças"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:183
+#, fuzzy
+msgid "Upload Permissions:"
+msgstr "Enviar um novo documento"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:192
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:199
+msgid "All Group Members"
+msgstr "Todos os membros do grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:196
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:203
+#, fuzzy
+msgid "Only Group's Administrators and Moderators"
+msgstr "Somente Moderadores"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:235
+#, php-format
+msgid "Group %s category deleted successfully"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:241
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:258
+#, php-format
+msgid "No changes were made. This %s category name is used already"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:245
+#, fuzzy, php-format
+msgid "Group %s category renamed successfully"
+msgstr "Documento movido com sucesso."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:255
+#, php-format
+msgid "New group %s category created"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:266
+#, fuzzy
+msgid "Upload Permissions changed successfully"
+msgstr "Configurações salvas com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:274
+msgid "No changes were made. Either error or you didn't change anything"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:14
+#, php-format
+msgid "%s uploaded the file: %s to %s"
+msgstr "%s carregou o arquivo: %s to %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:34
+#, php-format
+msgid "%s edited the file: %s in %s"
+msgstr "%s editou o arquivo: %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:53
+#, php-format
+msgid "%s deleted the file: %s from %s"
+msgstr "%s removeu o arquivo: %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:307
+#, fuzzy, php-format
+msgid "Show New Group %s"
+msgstr "Documentos do grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:157
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:319
+#, fuzzy, php-format
+msgid "Show Group %s Edits"
+msgstr "Administração dos documentos de grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:88
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+#, fuzzy
+msgid "Settings"
+msgstr "Configurações salvas com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:93
+msgid "Settings Updated."
+msgstr "Configurações atualizadas."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:99
+msgid "Use this name instead of \"documents\" "
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:105
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:221
+msgid "Valid File Formats"
+msgstr "Formatos de arquivo aceitos"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:111
+msgid "Items per Page"
+msgstr "Itens por página"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:116
+msgid "Upload Permission:"
+msgstr "Permissões de envio"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:120
+msgid "Members &amp; Moderators"
+msgstr "Membros &amp; Moderadores"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:124
+msgid "Moderators Only"
+msgstr "Somente Moderadores"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:128
+msgid "Let individual moderators decide"
+msgstr "Deixar que os moderadores decidam individualmente"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:131
+msgid "Use Categories"
+msgstr "Usar Categorias"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:139
+msgid "Display Icons"
+msgstr "Mostrar Ícones"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:147
+msgid "Display File Size"
+msgstr "Mostrar tamanho do arquivo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:155
+#, fuzzy
+msgid "Display File Downloads "
+msgstr "Mostrar tamanho do arquivo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:164
+msgid "Save Settings"
+msgstr "Salvar configurações"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+#, fuzzy
+msgid "Buddypress Group Documents"
+msgstr "Documentos"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:32
+#, fuzzy
+msgid "Group"
+msgstr "Todos os membros do grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:36
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:59
+msgid "List"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:66
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:260
+msgid "Category:"
+msgstr "Categoria:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:68
+msgid "All"
+msgstr "Todas"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:76
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:94
+msgid "Go"
+msgstr "Ir"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:82
+msgid "Order by:"
+msgstr "Ordenar por:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:86
+msgid "Newest"
+msgstr "Mais novo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:89
+msgid "Alphabetical"
+msgstr "Alfabética"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:92
+msgid "Most Popular"
+msgstr "Mais popular"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:144
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:472
+#, php-format
+msgid "Uploaded by %s on %s"
+msgstr "Enviado por %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:149
+msgid " downloads since then."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:189
+#, fuzzy
+msgid "There are no documents in the selected category."
+msgstr "Categoria:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:191
+#, fuzzy
+msgid "There are no documents uploaded for this group."
+msgstr "Enviado por %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:216
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:16
+msgid "Choose File:"
+msgstr "Selecione arquivo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:226
+#, fuzzy
+msgid "Document:"
+msgstr "Enviar um novo documento"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:232
+msgid "Featured Document"
+msgstr "Documentos disponíveis"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:237
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:21
+msgid "Display Name:"
+msgstr "Nome a ser mostrado:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:240
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:25
+msgid "Description:"
+msgstr "Descrição:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:280
+#, fuzzy
+msgid "Save"
+msgstr "Salvar mudanças"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:285
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:167
+msgid "Upload a New Document"
+msgstr "Enviar um novo documento"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:309
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:83
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:197
+msgid "There was a security problem"
+msgstr "Houve um problema de segurança"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:313
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:218
+msgid "The item to delete could not be found"
+msgstr "Não foi possível encontrar o ítem a ser excluído"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:422
+msgid "Group Document Categories"
+msgstr "Categorias de documentos do grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:181
+msgid "Whoops!  There was no file selected for upload."
+msgstr "Ops! Não foi selecionado arquivo para carga."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:186
+msgid "The type of document submitted is not allowed"
+msgstr "O tipo de documento submetido não é aceito"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:194
+msgid "There was a problem; your file is larger than is allowed by the site administrator."
+msgstr "Houve um problema. Seu arquivo é maior do que o permitido pelo administrador do site."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:197
+msgid "There was a problem; the file was only partially uploaded."
+msgstr "Houve um problema. O arquivo foi carregado apenas parcialmente."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:200
+msgid "There was a problem; no file was found for the upload."
+msgstr "Houve um problema. Nenhum arquivo foi encontrado para carga."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:203
+msgid "There was a problem; the temporary folder for the file is missing."
+msgstr "Houve um problema. A pasta de armazenamento temporária não foi encontrada."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:206
+msgid "There was a problem; the file could not be saved."
+msgstr "Houve um problema. Não foi possível armazenar o arquivo."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:227
+msgid "There was a problem saving your file, please try again."
+msgstr "Houve um problema ao armazenar seu arquivo. Tente novamente por favor."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:492
+#, fuzzy
+msgid "In category:"
+msgstr "Categoria:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:20
+#, fuzzy
+msgid "New Category...!"
+msgstr "Categoria:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:21
+msgid "You must select a file to upload!"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:22
+msgid "Are you sure you wish to permanently delete this document?"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:82
+#, fuzzy
+msgid "That group does not exist."
+msgstr "Todos os membros do grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:91
+#, php-format
+msgid ""
+"You must be a logged-in member of the group %s to access this document. If you are a member of the group, "
+"please log into the site and try again."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:124
+#, fuzzy
+msgid "The file could not be found."
+msgstr "Houve um problema. Não foi possível armazenar o arquivo."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:13
+#, fuzzy
+msgid "Upload document (+)"
+msgstr "Enviar um novo documento"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:60
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:107
+msgid "Document successfully uploaded"
+msgstr "Documento carregado com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:25
+msgid "A member uploads a document to a group you belong to"
+msgstr "Um membro envia um documento para um grupo a que você pertence"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:31
+msgid "A member uploads a document to a group for which you are an moderator/admin"
+msgstr "Um membro envia um documento para um grupo do qual você é moderador/administrador"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:61
+#, php-format
+msgid "A document was uploaded to %s"
+msgstr "Um documento foi enviado para %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:119
+#, php-format
+msgid ""
+"%s uploaded a new file: %s to the group: %s.\n"
+"\n"
+"To see %s's profile: %s\n"
+"\n"
+"To see the group %s's homepage: %s\n"
+"\n"
+"To download the new document directly: %s\n"
+"\n"
+"------------------------\n"
+msgstr ""
+"%s enviou um novo arquivo (%s) para o grupo %s.\n"
+"\n"
+"Para ver o perfil de %s: %s\n"
+"\n"
+"Para ver a página inicial do grupo %s: %s\n"
+"\n"
+"Para acessar diretamente o novo documento: %s\n"
+"\n"
+"------------------------\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:132
+#, php-format
+msgid "To disable these notifications please log in and go to: %s"
+msgstr "Para desabilitar os avisos por favor faça login e vá para %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:121
+msgid "Document successfully edited"
+msgstr "Documento editado com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:191
+msgid "You don't have permission to upload files"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:201
+#, fuzzy
+msgid "The item to edit could not be found"
+msgstr "Não foi possível encontrar o ítem a ser excluído"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:212
+msgid "Edit Document"
+msgstr "Editar documento"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:222
+msgid "Document successfully deleted"
+msgstr "Documento excluído com sucesso"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:342
+#, php-format
+msgid "Viewing item %s to %s (of %s items)"
+msgstr "Visualizando itens de %s a %s (de %s itens)"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:59
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:73
+#, fuzzy, php-format
+msgid "Recent Group %s"
+msgstr "Filtro por grupo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:60
+#, fuzzy, php-format
+msgid "The most recently uploaded group %s. Only from public groups"
+msgstr "Os documentos mais recentes enviados para o grupo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:102
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:229
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:364
+#, fuzzy, php-format
+msgid "posted in %s"
+msgstr "Enviado por %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:108
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:240
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:370
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:479
+#, fuzzy, php-format
+msgid "There are no %s to display."
+msgstr "Mostrar tamanho do arquivo"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:147
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:269
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:395
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:507
+msgid "Title:"
+msgstr "Título:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:149
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:271
+msgid "Filter by Group:"
+msgstr "Filtro por grupo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:151
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:273
+msgid "Select Group..."
+msgstr "Selecione o grupo..."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:167
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:289
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:397
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:510
+#, fuzzy, php-format
+msgid "Show featured %s only"
+msgstr "Mostrar somente documentos suportados"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:170
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:403
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:515
+msgid "Number of items to show:"
+msgstr "Número de itens a mostrar:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:188
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:202
+#, fuzzy, php-format
+msgid "Popular Group %s"
+msgstr "Mais popular"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:189
+#, fuzzy, php-format
+msgid "The most commonly downloaded group %s. Only for public groups"
+msgstr "Os documentos do grupo mais frequentemente acessados"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:233
+msgid "downloads"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:302
+#, fuzzy
+msgid "Show downloads"
+msgstr "Número de itens a mostrar:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:321
+#, fuzzy, php-format
+msgid "%s in your groups"
+msgstr "Enviado por %s em %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:322
+#, php-format
+msgid "%s for a logged in user's groups."
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:343
+#, php-format
+msgid "Recent %s from your Groups"
+msgstr ""
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:422
+#, fuzzy, php-format
+msgid "%s in this group"
+msgstr "Filtro por grupo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:423
+#, fuzzy, php-format
+msgid "%s for the current group."
+msgstr "Filtro por grupo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:447
+#, fuzzy, php-format
+msgid "Recent %s for the group"
+msgstr "Filtro por grupo:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:481
+#, fuzzy
+msgid "View all"
+msgstr "Todos os membros do grupo"
+
+#~ msgid "Settings saved successfully"
+#~ msgstr "Configurações salvas com sucesso"
+
+#~ msgid "Bulk File Uploads"
+#~ msgstr "Carregar arquivos diversos"
+
+#~ msgid "Move File"
+#~ msgstr "Mover arquivo"
+
+#~ msgid "You must choose a group for the file."
+#~ msgstr "Você deve escolher um grupo para o arquivo."
+
+#~ msgid "Document moved successfully."
+#~ msgstr "Documento movido com sucesso."
+
+#~ msgid "There was a problem saving the file info."
+#~ msgstr "Houve um problema ao salvar as informações do arquivo."
+
+#~ msgid "There was a problem moving the file."
+#~ msgstr "Houve um problema ao mover o arquivo."
+
+#~ msgid "%s Documents Moved."
+#~ msgstr "%s documentos movidos."
+
+#~ msgid "Group Documents Admin"
+#~ msgstr "Administração dos documentos de grupo"
+
+#~ msgid "Group Documents"
+#~ msgstr "Documentos do grupo"
+
+#~ msgid "Document List"
+#~ msgstr "Lista de documentos"
+
+#~ msgid "Document Upload Permissions:"
+#~ msgstr "Permissões de envio de documentos:"
+
+#~ msgid "Submit"
+#~ msgstr "Enviar"

@@ -1,0 +1,170 @@
+/*
+
+Jappix - An open social platform
+This is the welcome tool CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 26/04/11
+
+*/
+
+#welcome .infos {
+	margin: 15px;
+}
+
+#welcome .infos p {
+	margin-top: 6px;
+}
+
+#welcome .infos p.infos-title {
+	margin-top: 0;
+}
+
+#welcome a.box {
+	background-color: #e4eef9;
+	border: 1px solid #ccdbde;
+	margin: 12px 11px 4px 15px;
+	padding: 10px;
+	width: 270px;
+	text-decoration: none;
+	float: left;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+}
+
+#welcome a.box.share {
+	width: 350px;
+	margin: 4px 130px;
+	padding: 4px 10px;
+	clear: both;
+}
+
+#welcome a.box.share.first {
+	margin-top: 0;
+}
+
+#welcome a.box.share:hover span.go {
+	display: block;
+}
+
+#welcome a.box:hover,
+#welcome a.box:focus {
+	border: 1px solid #93c5fa;
+}
+
+#welcome a.box:active {
+	border: 1px solid #419afa;
+}
+
+#welcome a.box.enabled {
+	background-color: #f1f6fd;
+	border: 1px solid #9dc4fc;
+}
+
+#welcome a.box span {
+	margin: 3px 0;
+	display: block;
+}
+
+#welcome a.box span.logo {
+	height: 35px;
+	width: 35px;
+	margin-right: 15px;
+	float: left;
+}
+
+#welcome a.box span.logo.facebook {
+	background-position: 0 0;
+}
+
+#welcome a.box span.logo.twitter {
+	background-position: -35px 0;
+}
+
+#welcome a.box span.logo.buzz {
+	background-position: -70px 0;
+}
+
+#welcome a.box span.logo.identica {
+	background-position: -105px 0;
+}
+
+#welcome a.box span.option,
+#welcome a.box span.name {
+	font-size: 0.9em;
+	font-weight: bold;
+}
+
+#welcome a.box span.description {
+	font-size: 0.7em;
+	margin-top: 7px;
+}
+
+#welcome a.box.share span.description {
+	margin-top: 4px;
+}
+
+#welcome a.box span.image {
+	height: 16px;
+	width: 16px;
+	margin: -30px 12px 0 0;
+	float: right;
+}
+
+#welcome a.box span.image.sound {
+	background-position: 0 -900px;
+}
+
+#welcome a.box span.image.geolocation {
+	background-position: 0 -658px;
+}
+
+#welcome a.box span.image.xmpp {
+	background-position: 0 -990px;
+}
+
+#welcome a.box span.image.archives,
+#page-engine .text .tools-archives {
+	background-position: 0 -1025px;
+}
+
+#welcome a.box span.image.offline {
+	background-position: 0 -80px;
+}
+
+#welcome a.box span.tick,
+#welcome a.box span.go {
+	height: 16px;
+	width: 16px;
+	display: none;
+	float: right;
+}
+
+#welcome a.box span.tick {
+	background-position: 0 -1661px;
+	margin: -52px -15px 0 0;
+}
+
+#welcome a.box span.go {
+	background-position: 0 -1120px;
+	margin: -28px 5px 0 0;
+}
+
+#welcome a.box.enabled span.tick {
+	display: block;
+}
+
+#welcome div.results {
+	margin: -7px 15px;
+	padding: 0;
+	height: 272px;
+	overflow: auto;
+}
+
+#welcome .bottom .finish.save {
+	display: none;
+}

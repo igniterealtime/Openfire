@@ -1,0 +1,2303 @@
+# Chinese translations for Jappix package.
+# This file is distributed under the same license as the Jappix package.
+# This file was translated from CodingTeam at <http://codingteam.net/>.
+msgid ""
+msgstr ""
+"Project-Id-Version: Jappix\n"
+"PO-Revision-Date: 2011-06-20 09:00:18\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: 
+msgid "JavaScript is missing in your web browser, so that you will not be able to launch Jappix! Please fix this."
+msgstr "在你的網頁瀏覽器找不到 JavaScript，所以你無法啟動 Jappix！請修正。"
+
+#: 
+msgid "An open social network"
+msgstr "開放社交網路"
+
+#: 
+msgid "Jappix has been interrupted by a network issue, a bug or bad login (check that you entered the right credentials), sorry for the inconvenience."
+msgstr "Jappix 已經因為網路問題、bug 或登入錯誤（檢查你輸入了正確的身份證明）而被中斷，抱歉造成不便。"
+
+#: 
+msgid "The element list on this server could not be obtained!"
+msgstr "此伺服器的元素清單無法取得！"
+
+#: 
+msgid "Your password has been changed, now you can connect to your account with your new login data."
+msgstr "你的密碼已被變更，現在你可以用新的登入資料連到你的帳號。"
+
+#: 
+msgid "Your XMPP account has been removed, bye!"
+msgstr "你的 XMPP 帳號已被刪除，再見！"
+
+#: 
+msgid "You have been logged out of your XMPP account, have a nice day!"
+msgstr "你已經登出你的 XMPP 帳號，祝你今天愉快！"
+
+#: 
+msgid "The room you joined seems not to exist. You should create it!"
+msgstr "你加入的房間似乎不存在。你應該建立它！"
+
+#: 
+msgid "The groupchat has been removed, now someone else will be able to recreate it."
+msgstr "群組聊天已經被刪除，現在其他人應該可以重新建立它。"
+
+#: 
+msgid "The user that you want to reach is not present in the room."
+msgstr "你想聯繫的使用者不在房間內。"
+
+#: 
+msgid "Please enter the group chat address to join."
+msgstr "請輸入要加入的群組聊天地址。"
+
+#: 
+msgid "Please enter your nickname to join %s."
+msgstr "請輸入要加入 %s 用的暱稱。"
+
+#: 
+msgid "This room (%s) is protected with a password."
+msgstr "此房間（%s）有密碼保護。"
+
+#: 
+msgid "Your browser is out of date!"
+msgstr "你的瀏覽器已經過時！"
+
+#: 
+msgid "Last %s version is better!"
+msgstr "推鑒使用最新版本 %s！"
+
+#: 
+msgid "Login"
+msgstr "登入"
+
+#: 
+msgid "Register"
+msgstr "註冊"
+
+#: 
+msgid "Here we go!"
+msgstr "開始囉！"
+
+#: 
+msgid "Server"
+msgstr "伺服器"
+
+#: 
+msgid "Password"
+msgstr "密碼"
+
+#: 
+msgid "Remember me"
+msgstr "記住我"
+
+#: 
+msgid "This tool has been disabled, you cannot use it!"
+msgstr "此工具已被停用，你不能使用它！"
+
+#: 
+msgid "Due to a network issue, you were disconnected. What do you want to do now?"
+msgstr "因為網路問題，你已被斷線。你現在想做什麼？"
+
+#: 
+msgid "Reconnect"
+msgstr "重新連線"
+
+#: 
+msgid "Messages"
+msgstr "訊息"
+
+#: 
+msgid "Profile"
+msgstr "個人資料"
+
+#: 
+msgid "Options"
+msgstr "選項"
+
+#: 
+msgid "Disconnect"
+msgstr "斷線"
+
+#: 
+msgid "Filter"
+msgstr "過濾"
+
+#: 
+msgid "Add a friend"
+msgstr "新增好友"
+
+#: 
+msgid "Your groupchats"
+msgstr "你的群組聊天"
+
+#: 
+msgid "Manage your favorite groupchats"
+msgstr "管理你最愛的群組聊天"
+
+#: 
+msgid "More stuff"
+msgstr "更多東西"
+
+#: 
+msgid "Show all friends"
+msgstr "顯示所有好友"
+
+#: 
+msgid "Only show connected friends"
+msgstr "只顯示已連線的好友"
+
+#: 
+msgid "Message archives"
+msgstr "訊息存檔"
+
+#: 
+msgid "Date"
+msgstr "日期"
+
+#: 
+msgid "Please select a friend to view the chat history."
+msgstr "請選取要檢視聊天記錄的朋友。"
+
+#: 
+msgid "Nothing found for: %s"
+msgstr "找不到：%s"
+
+#: 
+msgid "A short message?"
+msgstr "短訊息？"
+
+#: 
+msgid "How are you?"
+msgstr "你好嗎？"
+
+#: 
+msgid "What are you doing?"
+msgstr "你在做什麼？"
+
+#: 
+msgid "Join a chat"
+msgstr "加入聊天"
+
+#: 
+msgid "Status"
+msgstr "狀態"
+
+#: 
+msgid "Available"
+msgstr "有空"
+
+#: 
+msgid "Talkative"
+msgstr "多話"
+
+#: 
+msgid "Away"
+msgstr "離開"
+
+#: 
+msgid "Not available"
+msgstr "沒空"
+
+#: 
+msgid "Busy"
+msgstr "忙碌"
+
+#: 
+msgid "Mood"
+msgstr "心情"
+
+#: 
+msgid "None"
+msgstr "無"
+
+#: 
+msgid "Crazy"
+msgstr "抓狂"
+
+#: 
+msgid "Excited"
+msgstr "興奮"
+
+#: 
+msgid "Playful"
+msgstr "快活"
+
+#: 
+msgid "Happy"
+msgstr "快樂"
+
+#: 
+msgid "Shocked"
+msgstr "震驚"
+
+#: 
+msgid "Hot"
+msgstr "激動"
+
+#: 
+msgid "Sad"
+msgstr "悲傷"
+
+#: 
+msgid "Amorous"
+msgstr "愛慕"
+
+#: 
+msgid "Confident"
+msgstr "大膽"
+
+#: 
+msgid "Activity"
+msgstr "活動"
+
+#: 
+msgid "Chores"
+msgstr "雜事"
+
+#: 
+msgid "Drinking"
+msgstr "喝"
+
+#: 
+msgid "Eating"
+msgstr "吃"
+
+#: 
+msgid "Exercising"
+msgstr "運動"
+
+#: 
+msgid "Grooming"
+msgstr "訓練"
+
+#: 
+msgid "Appointment"
+msgstr "預約"
+
+#: 
+msgid "Inactive"
+msgstr "無效"
+
+#: 
+msgid "Relaxing"
+msgstr "放鬆"
+
+#: 
+msgid "Talking"
+msgstr "對話"
+
+#: 
+msgid "Traveling"
+msgstr "旅行"
+
+#: 
+msgid "Working"
+msgstr "工作"
+
+#: 
+msgid "View profile"
+msgstr "檢視個人資料"
+
+#: 
+msgid "Repeat this notice"
+msgstr "重覆此通知"
+
+#: 
+msgid "Remove this notice"
+msgstr "刪除此通知"
+
+#: 
+msgid "Your profile"
+msgstr "你的個人資料"
+
+#: 
+msgid "Identity"
+msgstr "身分證明"
+
+#: 
+msgid "Profile image"
+msgstr "大頭貼"
+
+#: 
+msgid "Others"
+msgstr "其他"
+
+#: 
+msgid "Personal"
+msgstr "個人"
+
+#: 
+msgid "Complete name"
+msgstr "全名"
+
+#: 
+msgid "Nickname"
+msgstr "暱稱"
+
+#: 
+msgid "First name"
+msgstr "名"
+
+#: 
+msgid "Last name"
+msgstr "姓"
+
+#: 
+msgid "Date of birth"
+msgstr "生日"
+
+#: 
+msgid "Contact"
+msgstr "連絡人"
+
+#: 
+msgid "E-mail"
+msgstr "電子郵件"
+
+#: 
+msgid "Phone"
+msgstr "電話"
+
+#: 
+msgid "Website"
+msgstr "網站"
+
+#: 
+msgid "Current"
+msgstr "目前"
+
+#: 
+msgid "Delete"
+msgstr "刪除"
+
+#: 
+msgid "What a pity! You have no profile image defined in your identity card!"
+msgstr "可惜！你沒有在你的身份證上設定大頭貼！"
+
+#: 
+msgid "Address"
+msgstr "地址"
+
+#: 
+msgid "Street"
+msgstr "街"
+
+#: 
+msgid "City"
+msgstr "市"
+
+#: 
+msgid "Postal code"
+msgstr "郵遞區號"
+
+#: 
+msgid "Country"
+msgstr "國家"
+
+#: 
+msgid "Biography"
+msgstr "自傳"
+
+#: 
+msgid "Important notice"
+msgstr "重要通知"
+
+#: 
+msgid "Be careful of the information you write into your profile, because it could be accessed by everyone (even someone you don't want to)."
+msgstr "小心你寫入個人資料的資訊，因為它可被每個人取得（甚至你不要的人）。"
+
+#: 
+msgid "Not everything is private on XMPP; this is one of those things, your public profile (vCard)."
+msgstr "在 XMPP 上不是每樣東西是私有的；這是其中一件，你的公開個人資料（vCard）。"
+
+#: 
+msgid "It is strongly recommended to upload a profile image (%s maximum), like a picture of yourself, because that makes you easily recognizable by your friends."
+msgstr "強烈建議上傳大頭照（最大 %s），像是你自己的相片，因為那會使你的朋友更容易認得你。"
+
+#: 
+msgid "Save"
+msgstr "儲存"
+
+#: 
+msgid "Cancel"
+msgstr "取消"
+
+#: 
+msgid "Edit options"
+msgstr "編輯選項"
+
+#: 
+msgid "Channel"
+msgstr "頻道"
+
+#: 
+msgid "Commands"
+msgstr "命令"
+
+#: 
+msgid "Sounds"
+msgstr "聲音"
+
+#: 
+msgid "Privacy"
+msgstr "隱私"
+
+#: 
+msgid "Message archiving"
+msgstr "訊息存檔"
+
+#: 
+msgid "Store a history of your chats"
+msgstr "儲存你的聊天記錄"
+
+#: 
+msgid "Geolocation"
+msgstr "地理位置"
+
+#: 
+msgid "Empty"
+msgstr "空"
+
+#: 
+msgid "Empty channel"
+msgstr "空的頻道"
+
+#: 
+msgid "Persistent"
+msgstr "持續"
+
+#: 
+msgid "Maximum notices"
+msgstr "通知的最大數"
+
+#: 
+msgid "Account"
+msgstr "帳號"
+
+#: 
+msgid "Change password"
+msgstr "變更密碼"
+
+#: 
+msgid "Delete account"
+msgstr "刪除帳號"
+
+#: 
+msgid "Old"
+msgstr "舊"
+
+#: 
+msgid "New (2 times)"
+msgstr "新（2 次）"
+
+#: 
+msgid "Continue"
+msgstr "繼續"
+
+#: 
+msgid "To"
+msgstr "至"
+
+#: 
+msgid "Close"
+msgstr "關閉"
+
+#: 
+msgid "unknown"
+msgstr "不明"
+
+#: 
+msgid "Unavailable"
+msgstr "無法使用"
+
+#: 
+msgid "is now"
+msgstr "現在是"
+
+#: 
+msgid "Please wait while your avatar is uploaded..."
+msgstr "請稍待，avatar 正被載入..."
+
+#: 
+msgid "Here it is! A new beautiful profile image!"
+msgstr "在此！美麗的新大頭貼！"
+
+#: 
+msgid "The image file is not supported or has a bad size."
+msgstr "影像檔不被支援或大小錯誤。"
+
+#: 
+msgid "Reply"
+msgstr "回覆"
+
+#: 
+msgid "Error"
+msgstr "錯誤"
+
+#: 
+msgid "Click here to solve the error"
+msgstr "在此點一下以解決錯誤"
+
+#: 
+msgid "You"
+msgstr "你"
+
+#: 
+msgid "Remove"
+msgstr "刪除"
+
+#: 
+msgid "Rename"
+msgstr "更名"
+
+#: 
+msgid "Hi, I am %s, I would like to add you as my friend."
+msgstr "嗨，我是 %s，我想把你加入為我的好友。"
+
+#: 
+msgid "Smiley insertion"
+msgstr "挿入微笑符號"
+
+#: 
+msgid "Change style"
+msgstr "變更風格"
+
+#: 
+msgid "Text in bold"
+msgstr "粗體字"
+
+#: 
+msgid "Text in italic"
+msgstr "斜體字"
+
+#: 
+msgid "Underlined text"
+msgstr "底線字"
+
+#: 
+msgid "Save chat"
+msgstr "儲存聊天"
+
+#: 
+msgid "Click on the following link to get the chat log, and wait. Then click again to get the file."
+msgstr "在以下連結點一下以取得聊天記錄，且稍待。然後再點一下取得檔案。"
+
+#: 
+msgid "This chat is empty!"
+msgstr "此聊天是空的！"
+
+#: 
+msgid "Generate file!"
+msgstr "產生檔案！"
+
+#: 
+msgid "Download file!"
+msgstr "下載檔案！"
+
+#: 
+msgid "Clean current chat"
+msgstr "清除目前的聊天"
+
+#: 
+msgid "View chat history"
+msgstr "檢視聊天記錄"
+
+#: 
+msgid "Show user profile"
+msgstr "顯示使用者個人資料"
+
+#: 
+msgid "Add this contact to your friends"
+msgstr "加入此連絡人至你的好友"
+
+#: 
+msgid "Add this groupchat to your favorites"
+msgstr "加入此群組聊天至你的最愛"
+
+#: 
+msgid "All tabs"
+msgstr "全部頁籤"
+
+#: 
+msgid "Close this tab"
+msgstr "關閉此頁籤"
+
+#: 
+msgid "no subject defined for this room."
+msgstr "此房間未設定主旨。"
+
+#: 
+msgid "Administration panel for this room"
+msgstr "此房間的管理面板"
+
+#: 
+msgid "Moderators"
+msgstr "主持人"
+
+#: 
+msgid "Participants"
+msgstr "参與者"
+
+#: 
+msgid "Visitors"
+msgstr "訪客"
+
+#: 
+msgid "Manage favorite rooms"
+msgstr "管理最愛的房間"
+
+#: 
+msgid "Change favorites"
+msgstr "變更我的最愛"
+
+#: 
+msgid "Search a room"
+msgstr "搜尋房間"
+
+#: 
+msgid "Select a favorite"
+msgstr "選取我的最愛"
+
+#: 
+msgid "Getting the name..."
+msgstr "正在取得名稱..."
+
+#: 
+msgid "Gateway"
+msgstr "閘道"
+
+#: 
+msgid "Name"
+msgstr "名稱"
+
+#: 
+msgid "Room"
+msgstr "房間"
+
+#: 
+msgid "Add"
+msgstr "增加"
+
+#: 
+msgid "Edit"
+msgstr "編輯"
+
+#: 
+msgid "Search a room on"
+msgstr "搜尋房間於"
+
+#: 
+msgid "No room found on this server."
+msgstr "在此伺服器上找不到房間。"
+
+#: 
+msgid "Service discovery"
+msgstr "服務探索"
+
+#: 
+msgid "Server to query"
+msgstr "查詢的伺服器"
+
+#: 
+msgid "Sorry, but the entity didn't return any result!"
+msgstr "抱歉，但是那實體未傳回任何結果！"
+
+#: 
+msgid "Accounts"
+msgstr "帳號"
+
+#: 
+msgid "Authentications"
+msgstr "授權"
+
+#: 
+msgid "Automation"
+msgstr "自動"
+
+#: 
+msgid "Clients"
+msgstr "客戶端"
+
+#: 
+msgid "Collaboration"
+msgstr "協同"
+
+#: 
+msgid "Components"
+msgstr "元件"
+
+#: 
+msgid "Rooms"
+msgstr "房間"
+
+#: 
+msgid "Directories"
+msgstr "目錄"
+
+#: 
+msgid "Gateways"
+msgstr "閘道"
+
+#: 
+msgid "News"
+msgstr "新聞"
+
+#: 
+msgid "Hierarchy"
+msgstr "階層"
+
+#: 
+msgid "Proxies"
+msgstr "代理伺服器"
+
+#: 
+msgid "Publication/Subscription"
+msgstr "公開/訂閱"
+
+#: 
+msgid "Storage"
+msgstr "儲存空間"
+
+#: 
+msgid "Service offline or broken"
+msgstr "服務離線或故障"
+
+#: 
+msgid "Your inbox"
+msgstr "你的收件匣"
+
+#: 
+msgid "Available actions"
+msgstr "可用的動作"
+
+#: 
+msgid "Clean"
+msgstr "清除"
+
+#: 
+msgid "New"
+msgstr "新增"
+
+#: 
+msgid "Received"
+msgstr "已接收"
+
+#: 
+msgid "Subject"
+msgstr "主旨"
+
+#: 
+msgid "Content"
+msgstr "内容"
+
+#: 
+msgid "Send message"
+msgstr "傳送訊息"
+
+#: 
+msgid "Your inbox is empty."
+msgstr "你的收件匣是空的。"
+
+#: 
+msgid "MUC administration"
+msgstr "MUC 管理"
+
+#: 
+msgid "You administrate this room"
+msgstr "你管理此房間"
+
+#: 
+msgid "Enter new subject"
+msgstr "輸入新的主旨"
+
+#: 
+msgid "Configuration"
+msgstr "設定"
+
+#: 
+msgid "Authorizations"
+msgstr "授權"
+
+#: 
+msgid "Member list"
+msgstr "會員清單"
+
+#: 
+msgid "Owner list"
+msgstr "所有者清單"
+
+#: 
+msgid "Administrator list"
+msgstr "管理員清單"
+
+#: 
+msgid "Outcast list"
+msgstr "被放逐者清單"
+
+#: 
+msgid "Add an input"
+msgstr "增加輸入"
+
+#: 
+msgid "Destroy this MUC"
+msgstr "銷毀此 MUC"
+
+#: 
+msgid "Yes, let's do it!"
+msgstr "是，做吧！"
+
+#: 
+msgid "Your friend is paying attention to the conversation."
+msgstr "你的好友正在注意會話。"
+
+#: 
+msgid "Your friend is writing a message..."
+msgstr "你的好友正在寫訊息..."
+
+#: 
+msgid "Your friend stopped writing a message."
+msgstr "你的好友停止寫訊息。"
+
+#: 
+msgid "Your friend is doing something else."
+msgstr "你的好友正在做其他事。"
+
+#: 
+msgid "Your friend closed the chat."
+msgstr "你的好友關閉了聊天。"
+
+#: 
+msgid "Requesting this service..."
+msgstr "正在要求此服務..."
+
+#: 
+msgid "Loading"
+msgstr "載入中"
+
+#: 
+msgid "joined the chat room"
+msgstr "加入聊天室"
+
+#: 
+msgid "left the chat room"
+msgstr "離開聊天室"
+
+#: 
+msgid "no status"
+msgstr "無狀態"
+
+#: 
+msgid "has been kicked"
+msgstr "已被踢掉"
+
+#: 
+msgid "has been banned"
+msgstr "已被禁止"
+
+#: 
+msgid "no reason"
+msgstr "無理由"
+
+#: 
+msgid "Communicate with the entire world!"
+msgstr "與全世界溝通！"
+
+#: 
+#~ msgid "Jappix is a non-profit social platform, that you can access wherever you are, whenever you want and communicate with whovever you want."
+#~ msgstr ""
+
+#: 
+msgid "It allows you to get in touch with the millions of users who currently use the XMPP network like you do with Jappix. Join the community and stay free!"
+msgstr "它允許你與幾百萬跟你一樣正在利用 Jappix 的使用者聯繫。自由地加入社群吧！"
+
+#: 
+msgid "Hi there!"
+msgstr "你好！"
+
+#: 
+msgid "Welcome on %1s, “%2s”."
+msgstr "歡迎來到 %1s，“%2s”。"
+
+#: 
+msgid "Login to your existing XMPP account or create a new one for free!"
+msgstr "登入你已有的 XMPP 帳號或免費建立新帳號！"
+
+#: 
+msgid "Jappix is an open-source project from PostPro, a non-profit organization which provides us a great help."
+msgstr "Jappix 是來自 PostPro 的開放原始碼專案，一個提供我們許多幫助的非營利團體。"
+
+#: 
+msgid "Login to your existing XMPP account. You can also use the %s to join a groupchat."
+msgstr "登入你已有的 XMPP 帳號。你也可以使用 %s 加入群組聊天。"
+
+#: 
+msgid "Previous"
+msgstr "上一頁"
+
+#: 
+msgid "General"
+msgstr "一般"
+
+#: 
+msgid "Advanced"
+msgstr "進階"
+
+#: 
+msgid "Resource"
+msgstr "資源"
+
+#: 
+msgid "Priority"
+msgstr "優先權"
+
+#: 
+msgid "Low"
+msgstr "低"
+
+#: 
+msgid "Medium"
+msgstr "中"
+
+#: 
+msgid "High"
+msgstr "高"
+
+#: 
+msgid "Enter the groupchat you want to join and the nick you want to have. You can also go back to the %s."
+msgstr "輸入你想加入的聊天群組與你想要的暱稱。你也可以回到 %s。"
+
+#: 
+msgid "login page"
+msgstr "登入頁"
+
+#: 
+msgid "Share this link with your friends:"
+msgstr "與好友分享此連結："
+
+#: 
+msgid "Register a new XMPP account to join your friends on your own social cloud. That's simple!"
+msgstr "註冊一個新的 XMPP 帳號以便在你自己的社交雲端上加入你的好友。那是簡單的！"
+
+#: 
+msgid "Required"
+msgstr "要求"
+
+#: 
+msgid "You have been registered, here is your XMPP address:"
+msgstr "你已經註冊了，這是你的 XMPP 地址："
+
+#: 
+msgid "Manager"
+msgstr "管理員"
+
+#: 
+msgid "Project"
+msgstr "專案"
+
+#: 
+msgid "Encrypted"
+msgstr "加密"
+
+#: 
+msgid "Unencrypted"
+msgstr "未加密"
+
+#: 
+msgid "Where are you?"
+msgstr "你在哪裡？"
+
+#: 
+msgid "What's up with you?"
+msgstr "你怎麼了？"
+
+#: 
+msgid "Fetching the social channel..."
+msgstr "取得社交頻道..."
+
+#: 
+msgid "You are synchronized with your network."
+msgstr "你已與你的網路同步。"
+
+#: 
+msgid "Cannot send anything: you can only receive notices!"
+msgstr "無法傳送任何東西：你只能接收通知！"
+
+#: 
+msgid "Media viewer"
+msgstr "媒體播放機"
+
+#: 
+msgid "Browse"
+msgstr "瀏覽"
+
+#: 
+msgid "Command"
+msgstr "命令"
+
+#: 
+msgid "Subscribe"
+msgstr "訂閱"
+
+#: 
+msgid "Join"
+msgstr "加入"
+
+#: 
+msgid "Automatic"
+msgstr "自動"
+
+#: 
+msgid "Search"
+msgstr "搜尋"
+
+#: 
+msgid "No result!"
+msgstr "無結果！"
+
+#: 
+msgid "No notifications."
+msgstr "無通知。"
+
+#: 
+msgid "would like to add you as a friend."
+msgstr "想要加入你為好友。"
+
+#: 
+msgid "would like you to join this chatroom:"
+msgstr "想要你加入此聊天室："
+
+#: 
+msgid "Do you accept?"
+msgstr "你接受嗎？"
+
+#: 
+msgid "Yes"
+msgstr "是"
+
+#: 
+msgid "No"
+msgstr "否"
+
+#: 
+msgid "would like to get authorization."
+msgstr "想要得到授權。"
+
+#: 
+msgid "Do you want to see the friends %s suggests you?"
+msgstr "你要看好友 %s 建議你？"
+
+#: 
+msgid "Submit"
+msgstr "送信"
+
+#: 
+msgid "Client"
+msgstr "客戶端"
+
+#: 
+msgid "System"
+msgstr "系統"
+
+#: 
+msgid "Local time"
+msgstr "本地時間"
+
+#: 
+msgid "Comments"
+msgstr "評論"
+
+#: 
+msgid "User profile"
+msgstr "使用者情報"
+
+#: 
+msgid "See his/her position on the globe"
+msgstr "看他在地球上的位置"
+
+#: 
+msgid "Confirm"
+msgstr "確認"
+
+#: 
+msgid "anonymous mode"
+msgstr "匿名模式"
+
+#: 
+msgid "Groups"
+msgstr "群組"
+
+#: 
+msgid "Unclassified"
+msgstr "未分類"
+
+#: 
+msgid "Authorize"
+msgstr "授權"
+
+#: 
+msgid "Ask for authorization"
+msgstr "要求授權"
+
+#: 
+msgid "Unblock"
+msgstr "解除鎖定"
+
+#: 
+msgid "Prohibit"
+msgstr "禁止"
+
+#: 
+msgid "Block"
+msgstr "阻擋"
+
+#: 
+msgid "Chat"
+msgstr "聊天"
+
+#: 
+msgid "Groupchat"
+msgstr "群組聊天"
+
+#: 
+msgid "Jappix Mobile"
+msgstr "Jappix 行動"
+
+#: 
+msgid "Desktop"
+msgstr "桌面"
+
+#: 
+msgid "Mobile"
+msgstr "行動"
+
+#: 
+msgid "Please wait..."
+msgstr "請稍待..."
+
+#: 
+msgid "Please enable JavaScript"
+msgstr "請啟用 JavaScript"
+
+#: 
+msgid "Your channel"
+msgstr "你的頻道"
+
+#: 
+msgid "Channel of"
+msgstr "頻道: "
+
+#: 
+msgid "More notices..."
+msgstr "更多通知..."
+
+#: 
+msgid "Attach a file"
+msgstr "附加檔案"
+
+#: 
+msgid "Send"
+msgstr "傳送"
+
+#: 
+msgid "Unattach the file"
+msgstr "取消附加檔案"
+
+#: 
+msgid "An error occured while uploading your file: maybe it is too big (%s maximum) or forbidden!"
+msgstr "當上傳你的檔案時發生錯誤：也許它太大（最大 %s）或被禁止！"
+
+#: 
+msgid "Authorization failed"
+msgstr "授權失敗"
+
+#: 
+msgid "Registration failed, please choose a different username"
+msgstr "註冊失敗，請挑選另一個使用者名稱"
+
+#: 
+msgid "Service unavailable"
+msgstr "服務無法使用"
+
+#: 
+msgid "Internal server error, try later"
+msgstr "内部伺服器錯誤，稍後再試"
+
+#: 
+msgid "Your form has been sent."
+msgstr "你的表單已被送出。"
+
+#: 
+msgid "Application"
+msgstr "應用程式"
+
+#: 
+msgid "XMPP links"
+msgstr "XMPP 連結"
+
+#: 
+msgid "Open XMPP links with Jappix"
+msgstr "用 Jappix 開啟 XMPP 連結"
+
+#: 
+msgid "changed the subject to:"
+msgstr "變更主旨為："
+
+#: 
+msgid "Welcome!"
+msgstr "歡迎！"
+
+#: 
+msgid "Friends"
+msgstr "好友"
+
+#: 
+msgid "Welcome on Jappix, your own social cloud!"
+msgstr "歡迎來到 Jappix，你自己的社交雲端！"
+
+#: 
+msgid "Before you start using it, you will have to change some settings, search for friends and complete your profile."
+msgstr "在你開使使用它之前，你必須變更一些設定，搜尋朋友並完成你的個人資訊。"
+
+#: 
+msgid "Enable notification sounds"
+msgstr "啟用通知音效"
+
+#: 
+msgid "Share your position on the globe"
+msgstr "分享你在地球上的位置"
+
+#: 
+msgid "Offline friends"
+msgstr "離線好友"
+
+#: 
+msgid "Don't hide offline friends"
+msgstr "不要隱藏離線好友"
+
+#: 
+msgid "Use this tool to find your friends on the server you are using right now, or add them later."
+msgstr "使用此工具在你正在使用的伺服器上找到你的朋友，或稍後加入他們。"
+
+#: 
+msgid "Great work! Now, you can share Jappix with your friends!"
+msgstr ""
+
+#: 
+msgid "When you will press the save button, the profile editor will be opened. Happy socializing!"
+msgstr ""
+
+#: 
+msgid "Share Jappix on %s"
+msgstr "在 %s 上分享 Jappix"
+
+#: 
+msgid "Using Jappix, an open social platform. I am %s!"
+msgstr "使用 Jappix，一個開放社交平台。我是 %s！"
+
+#: 
+msgid "Unknown name"
+msgstr "不明的名稱"
+
+#: 
+msgid "Unknown country"
+msgstr "不明的國家"
+
+#: 
+msgid "Click to enable"
+msgstr "點一下以啟用"
+
+#: 
+msgid "Click to disable"
+msgstr "點一下以停用"
+
+#: 
+msgid "Installation"
+msgstr "安裝"
+
+#: 
+msgid "Jappix installation"
+msgstr "Jappix 安裝"
+
+#: 
+msgid "Welcome to the Jappix installation!"
+msgstr "歡迎來到 Jappix 安裝！"
+
+#: 
+msgid "This tool will help you fastly install Jappix, the first full-featured XMPP-based social platform, on your server. You don't even need any technical knowledge."
+msgstr "此工具將幫你快速地安裝 Jappix，第一個全功能以 XMPP 為基礎的社交平台。你甚至不需要任何技術知識。"
+
+#: 
+msgid "Let's have a look at the installation steps:"
+msgstr "讓我們看一下安裝步驟："
+
+#: 
+msgid "Welcome"
+msgstr "歡迎"
+
+#: 
+msgid "Storage configuration"
+msgstr "儲存空間設定"
+
+#: 
+msgid "Administrator account"
+msgstr "管理員帳號"
+
+#: 
+msgid "Main configuration"
+msgstr "主要設定"
+
+#: 
+msgid "Hosts configuration"
+msgstr "主機設定"
+
+#: 
+msgid "Services installation"
+msgstr "服務安裝"
+
+#: 
+msgid "If the current language does not match yours (%1s), you can make Jappix speak %2s it will be saved."
+msgstr "如果目前的語言與你的不符（%1s），你可以讓 Jappix 說 %2s 它將被儲存。"
+
+#: 
+msgid "If you want to get some help about the Jappix installation and configuration, you can use our whole documentation, available at:"
+msgstr ""
+
+#: 
+msgid "It's time to build your own social cloud: just go to the next step!"
+msgstr ""
+
+#: 
+msgid "Jappix stores persistent data (such as shared files, chat logs, your own music and its configuration) into a single secured storage folder."
+msgstr ""
+
+#: 
+msgid "Jappix must be able to write in this folder to create its sub-directories. If not, you must set the rights to %1s or change the folder owner to %2s (depending of your configuration)."
+msgstr ""
+
+#: 
+msgid "The folder is writable, you can continue!"
+msgstr "資料夾可寫入，你可以繼續！"
+
+#: 
+msgid "Jappix offers you the possibility to manage your configuration, install new plugins or search for updates. That's why you must create an administrator account to access the manager."
+msgstr ""
+
+#: 
+msgid "When Jappix will be installed, just click on the manager link on the home page to access it."
+msgstr "當 Jappix 安裝完成後，只要點一下首頁上的管理員連結就可以進入。"
+
+#: 
+msgid "Oops, you missed something or the two passwords do not match!"
+msgstr "糟糕，你漏了某些東西或兩個密碼不一致！"
+
+#: 
+msgid "Jappix needs that you specify some values to work. Please correct the following inputs (or keep the default values, which are sufficient for most people)."
+msgstr "Jappix 需要你指定某些值才能開始工作。請確認下列輸入（或保留預設值，對大多數人來說是足夠的）。"
+
+#: 
+msgid "Note that if you don't specify a value which is compulsory, it will be automatically completed with the default one."
+msgstr ""
+
+#: 
+msgid "User"
+msgstr "使用者"
+
+#: 
+msgid "Service"
+msgstr "服務"
+
+#: 
+msgid "Service name"
+msgstr "服務名稱"
+
+#: 
+msgid "Service description"
+msgstr "服務説明"
+
+#: 
+msgid "Connection"
+msgstr "連線"
+
+#: 
+msgid "Lock the host"
+msgstr "鎖定主機"
+
+#: 
+msgid "Anonymous mode"
+msgstr "匿名模式"
+
+#: 
+msgid "Registration allowed"
+msgstr "允許註冊"
+
+#: 
+msgid "Use a proxy"
+msgstr "使用代理伺服器"
+
+#: 
+msgid "Encryption"
+msgstr "加密"
+
+#: 
+msgid "HTTPS storage"
+msgstr "HTTPS 儲存空間"
+
+#: 
+msgid "Force HTTPS"
+msgstr "強制使用 HTTPS"
+
+#: 
+msgid "Compression"
+msgstr "壓縮"
+
+#: 
+msgid "This page helps you specify the default hosts Jappix will connect to. You can leave it as it is and continue if you want to use the official service hosts."
+msgstr ""
+
+#: 
+msgid "Maybe you don't know what a BOSH server is? In fact, this is a relay between a Jappix client and a XMPP server, which is necessary because of technical limitations."
+msgstr ""
+
+#: 
+msgid "Main host"
+msgstr "主要主機"
+
+#: 
+msgid "Groupchat host"
+msgstr "群組聊天主機"
+
+#: 
+msgid "Anonymous host"
+msgstr "匿名主機"
+
+#: 
+msgid "Directory host"
+msgstr "目錄主機"
+
+#: 
+msgid "BOSH host"
+msgstr "BOSH 主機"
+
+#: 
+msgid "You can install some extra softwares on your server, to extend your Jappix features. Some others might be modified, because of security restrictions which are set by default."
+msgstr ""
+
+#: 
+msgid "To perform this, you must be able to access your server's shell and be logged in as root. Remember this is facultative, Jappix will work without these modules, but some of its features will be unavailable."
+msgstr ""
+
+#: 
+msgid "After you finished the setup, Jappix will generate the cache files. It might be slow, just wait until the application is displayed and do not press any button."
+msgstr "在你完成設定後，Jappix 將產生一些快取檔案。它也許會費時，只能等到應用程式顯示且不要按任何按鈕。"
+
+#: 
+msgid "Thanks for using Jappix!"
+msgstr "感謝使用 Jappix！"
+
+#: 
+msgid "Next"
+msgstr "下一頁"
+
+#: 
+msgid "Finish"
+msgstr "完成"
+
+#: 
+msgid "Check again"
+msgstr "再檢查"
+
+#: 
+msgid "The folder is not writable, set the right permissions to the %s directory."
+msgstr "資料夾不可寫入，設定正確權限至 %s 目錄。"
+
+#: 
+msgid "%s is installed on your system."
+msgstr "%s 已經安裝在你的系統。"
+
+#: 
+msgid "%1s is not installed on your system, you should install %2s."
+msgstr "%1s 未安裝在你的系統，你需要安裝 %2s。"
+
+#: 
+msgid "PHP maximum upload size is sufficient (%s)."
+msgstr "PHP 最大上傳已足夠（%s）。"
+
+#: 
+msgid "PHP maximum upload size is not sufficient (%1s), you should define it to %2s in %3s."
+msgstr "PHP 最大上傳不足夠（%1s），你必須定義它為 %2s 在 %3s 中。"
+
+#: 
+msgid "Jappix manager"
+msgstr "Jappix 管理員"
+
+#: 
+msgid "Manager access"
+msgstr "管理員入口"
+
+#: 
+msgid "Statistics"
+msgstr "統計"
+
+#: 
+msgid "Hosts"
+msgstr "主機"
+
+#: 
+msgid "Design"
+msgstr "設計"
+
+#: 
+msgid "Repeat"
+msgstr "報告"
+
+#: 
+msgid "All"
+msgstr "全部"
+
+#: 
+msgid "Horizontal"
+msgstr "水平"
+
+#: 
+msgid "Vertical"
+msgstr "垂直"
+
+#: 
+msgid "Center"
+msgstr "中"
+
+#: 
+msgid "Left"
+msgstr "左"
+
+#: 
+msgid "Right"
+msgstr "右"
+
+#: 
+msgid "Top"
+msgstr "上"
+
+#: 
+msgid "Bottom"
+msgstr "下"
+
+#: 
+msgid "Adapt"
+msgstr "適用"
+
+#: 
+msgid "Color"
+msgstr "色彩"
+
+#: 
+msgid "Users"
+msgstr "使用者"
+
+#: 
+msgid "Updates"
+msgstr "更新"
+
+#: 
+msgid "This is a restricted area: only the authorized users can manage this Jappix node."
+msgstr "這是限制區域：只有得到授權的使用者可以管理此 Jappix 節點。"
+
+#: 
+msgid "Please use the form below to login to the administration panel."
+msgstr "請使用下面的表單登入管理面板。"
+
+#: 
+msgid "To improve security, sessions are limited in time and when your browser will be closed, you will be logged out."
+msgstr ""
+
+#: 
+msgid "Credentials"
+msgstr "身份證明"
+
+#: 
+msgid "You have been logged out. Goodbye!"
+msgstr "你已經被登出。再見！"
+
+#: 
+msgid "Oops, you could not be recognized as a valid administrator. Check your credentials!"
+msgstr "糟糕，你無法被認為是有效的管理員。檢查你的身份證明！"
+
+#: 
+msgid "Basic statistics are processed by Jappix about some important things, you can find them below."
+msgstr "基本統計是由 Jappix 處理關於一些重要事物，你可以在下面找到它們。"
+
+#: 
+msgid "Change your Jappix node configuration with this tool."
+msgstr "利用此工具變更你的 Jappix 節點設定。"
+
+#: 
+msgid "Change the XMPP hosts that this Jappix node serve with this tool."
+msgstr "利用此工具變更此 Jappix 節點服務的 XMPP 主機。"
+
+#: 
+msgid "All this Jappix node stored files can be managed with this tool: please select a sub-folder and start editing its content!"
+msgstr "所有此 Jappix 節點儲存的檔案可利用此工具管理：請選取子資料夾且開始編輯它的內容！"
+
+#: 
+msgid "Jappix is fully customisable: you can change its design right here."
+msgstr "Jappix 可完全自訂：你可以在這邊變更它的設計。"
+
+#: 
+msgid "This is not a valid image, please use PNG, GIF or JPG!"
+msgstr "這不是有效的影像，請使用 PNG、GIF 或 JPG！"
+
+#: 
+msgid "The image could not be received, would you mind retry?"
+msgstr "影像無法被收到，你介意重試嗎？"
+
+#: 
+msgid "Your image was added to the list!"
+msgstr "你的影像已被加入到清單！"
+
+#: 
+msgid "Changes saved!"
+msgstr "變更已被儲存！"
+
+#: 
+msgid "You can define more than one administrator for this Jappix node. You can also change a password with this tool."
+msgstr "你可以為此 Jappix 節點定義多位管理員。你也可以利用此工具變更密碼。"
+
+#: 
+msgid "Update your Jappix node with this tool, or check if a new one is available. Informations about the latest version are also displayed (in english)."
+msgstr "利用此工具更新你的 Jappix 節點，或檢查是否有新的可用。關於最新版本的資訊也會被顯示。"
+
+#: 
+msgid "Access statistics"
+msgstr "存取統計"
+
+#: 
+msgid "Share statistics"
+msgstr "分享統計"
+
+#: 
+msgid "Other statistics"
+msgstr "其他統計"
+
+#: 
+msgid "January"
+msgstr "1月"
+
+#: 
+msgid "February"
+msgstr "2月"
+
+#: 
+msgid "March"
+msgstr "3月"
+
+#: 
+msgid "April"
+msgstr "4月"
+
+#: 
+msgid "May"
+msgstr "5月"
+
+#: 
+msgid "June"
+msgstr "6月"
+
+#: 
+msgid "July"
+msgstr "7月"
+
+#: 
+msgid "August"
+msgstr "8月"
+
+#: 
+msgid "September"
+msgstr "9月"
+
+#: 
+msgid "October"
+msgstr "10月"
+
+#: 
+msgid "November"
+msgstr "11月"
+
+#: 
+msgid "December"
+msgstr "12月"
+
+#: 
+msgid "Monday"
+msgstr "星期一"
+
+#: 
+msgid "Tuesday"
+msgstr "星期二"
+
+#: 
+msgid "Wednesday"
+msgstr "星期三"
+
+#: 
+msgid "Thursday"
+msgstr "星期四"
+
+#: 
+msgid "Friday"
+msgstr "星期五"
+
+#: 
+msgid "Saturday"
+msgstr "星期六"
+
+#: 
+msgid "Sunday"
+msgstr "星期日"
+
+#: 
+msgid "Total"
+msgstr "合計"
+
+#: 
+msgid "Cache"
+msgstr "快取"
+
+#: 
+msgid "Logs"
+msgstr "記錄"
+
+#: 
+msgid "Music"
+msgstr "音樂"
+
+#: 
+msgid "Backgrounds"
+msgstr "背景"
+
+#: 
+msgid "Share"
+msgstr "分享"
+
+#: 
+msgid "Background"
+msgstr "背景"
+
+#: 
+msgid "Notice"
+msgstr "通知"
+
+#: 
+msgid "Your design preferences have been saved!"
+msgstr "你的設計偏好已被儲存！"
+
+#: 
+msgid "Please check your inputs: something is missing!"
+msgstr "請檢查你的輸入：漏了某些東西！"
+
+#: 
+msgid "Change your Jappix node background with this tool. You can either set a custom color or an uploaded image. Let your creativity flow!"
+msgstr "利用此工具變更你的 Jappix 節點背景。你可以設定自訂色彩或上傳的影像。釋出你的創造力！"
+
+#: 
+msgid "Use default background"
+msgstr "使用預設的背景"
+
+#: 
+msgid "Use your own image"
+msgstr "使用你自己的影像"
+
+#: 
+msgid "Select a background to use and change the display options."
+msgstr "選取要使用的背景並變更顯示選項。"
+
+#: 
+msgid "Use your own color"
+msgstr "使用你自己的顏色"
+
+#: 
+msgid "Type the hexadecimal color value you want to use as a background."
+msgstr "輸入你要用來當作背景的 16 進位色彩值。"
+
+#: 
+msgid "Manage backgrounds"
+msgstr "管理背景"
+
+#: 
+msgid "You can add a new background to the list with this tool. Please send a valid image."
+msgstr ""
+
+#: 
+msgid "If you want to remove some backgrounds, use the browser below."
+msgstr ""
+
+#: 
+msgid "Define a homepage notice for all your users, such as a warn, an important message or an advert with this tool."
+msgstr ""
+
+#: 
+msgid "Simple notice"
+msgstr "簡單通知"
+
+#: 
+msgid "This notice only needs simple text to be displayed, but no code is allowed!"
+msgstr ""
+
+#: 
+msgid "Advanced notice"
+msgstr "進階通知"
+
+#: 
+msgid "You can customize your notice with embedded HTML, CSS and JavaScript, but you need to code the style."
+msgstr ""
+
+#: 
+msgid "Available updates"
+msgstr "可用的更新"
+
+#: 
+msgid "What's new?"
+msgstr "有什麼新鮮的？"
+
+#: 
+msgid "Your storage folders are not writable, please apply the good rights!"
+msgstr "你的儲存空間資料夾無法寫入，請套用正確權限！"
+
+#: 
+msgid "%1s may cause problems to the proxy, please increase %2s value up to %3s!"
+msgstr ""
+
+#: 
+msgid "You are using a development version of Jappix. Update it through our repository by executing: %s."
+msgstr "你正在使用開發版本的 Jappix。從我們的存放區更新它請執行：%s。"
+
+#: 
+msgid "A new Jappix version is available! Check what is new and launch the update!"
+msgstr "有新版本的 Jappix 可用！檢查有什麼新的並啟動更新！"
+
+#: 
+msgid "Your version is out to date. Update it now to %s by clicking here!"
+msgstr "你的版本已經過時。在此點一下以便立刻更新！"
+
+#: 
+msgid "Your version seems to be up to date, but you can check updates manually by clicking here."
+msgstr "你的版本似乎是最新的，但是你可以在此點一下以便手動檢查更新。"
+
+#: 
+msgid "Check for updates"
+msgstr "檢查更新"
+
+#: 
+msgid "Update in progress"
+msgstr "更新正在進行"
+
+#: 
+msgid "Jappix has been updated: you are now running the latest version. Have fun!"
+msgstr "Jappix 已更新：你現在使用的是最新版本。祝你玩得愉快！"
+
+#: 
+msgid "The update has failed! Please try again later."
+msgstr "更新失敗！請稍後重試。"
+
+#: 
+msgid "Downloading package..."
+msgstr "正在下載套件..."
+
+#: 
+msgid "Removing current Jappix system files..."
+msgstr "刪除目前的 Jappix 系統檔案..."
+
+#: 
+msgid "Extracting package..."
+msgstr "正在取出套件..."
+
+#: 
+msgid "Regenerating storage folder tree..."
+msgstr "重新產生儲存空間資料夾..."
+
+#: 
+msgid "Jappix is now up to date!"
+msgstr "Jappix 現在是最新的！"
+
+#: 
+msgid "Aborted: socket error!"
+msgstr "中止：socket 錯誤！"
+
+#: 
+msgid "Aborted: buffer error!"
+msgstr "中止：緩衝器錯誤！"
+
+#: 
+msgid "Aborted: everything is not writable!"
+msgstr "中止：全部都無法寫入！"
+
+#: 
+msgid "Aborted: could not extract the package!"
+msgstr "中止：無法取出套件！"
+
+#: 
+msgid "Visits"
+msgstr "訪問"
+
+#: 
+msgid "Daily"
+msgstr "日"
+
+#: 
+msgid "Weekly"
+msgstr "週"
+
+#: 
+msgid "Monthly"
+msgstr "月"
+
+#: 
+msgid "Yearly"
+msgstr "年"
+
+#: 
+msgid "Size"
+msgstr "大小"
+
+#: 
+msgid "Clean everything"
+msgstr "全部清除"
+
+#: 
+msgid "Purge cache"
+msgstr "清除快取"
+
+#: 
+msgid "Purge logs"
+msgstr "清除記錄"
+
+#: 
+msgid "Purge updates"
+msgstr "清除更新"
+
+#: 
+msgid "The storage folder you wanted to clean is now empty!"
+msgstr "你要清除的儲存空間資料夾是空的！"
+
+#: 
+msgid "Keep your Jappix node fresh and fast, clean the storage folders regularly!"
+msgstr "保持你的 Jappix 節點清新與快速，定期清除儲存空間資料夾！"
+
+#: 
+msgid "Upload your music (Ogg Vorbis, MP3 or WAV) to be able to listen to it in Jappix!"
+msgstr "上傳你的音樂（Ogg Vorbis、MP3 或 WAV）以便可以在 Jappix 聆聽！"
+
+#: 
+msgid "The file you want to upload must be smaller than %s."
+msgstr "你要上傳的檔案必須小於 %s。"
+
+#: 
+msgid "Stay tuned in what your users store on your server and remove undesired content with this tool."
+msgstr ""
+
+#: 
+msgid "Title"
+msgstr "標題"
+
+#: 
+msgid "Artist"
+msgstr "藝人"
+
+#: 
+msgid "Album"
+msgstr "專輯"
+
+#: 
+msgid "File"
+msgstr "檔案"
+
+#: 
+msgid "Upload"
+msgstr "上傳"
+
+#: 
+msgid "The folder is empty."
+msgstr "資料夾是空的。"
+
+#: 
+msgid "The music could not be received, please retry!"
+msgstr "音樂無法被收到，請重試！"
+
+#: 
+msgid "This is not a valid music file, please encode in Ogg Vorbis, MP3 or WAV!"
+msgstr "這不是有效的音樂檔案，請用 Ogg Vorbis、MP3 或 WAV 編碼！"
+
+#: 
+msgid "Your music has been added!"
+msgstr "你的音樂已被加入！"
+
+#: 
+msgid "The selected elements have been removed."
+msgstr "選取的元素已被刪除。"
+
+#: 
+msgid "You must select elements to remove!"
+msgstr "你必須選取要刪除的元素！"
+
+#: 
+msgid "Add a new user with this tool, or change a password (type an existing username). Please submit a strong password!"
+msgstr "利用此工具加入新的使用者，或變更密碼（輸入已存在的使用者名稱）。請輸入安全的密碼！"
+
+#: 
+msgid "Manage"
+msgstr "管理"
+
+#: 
+msgid "List"
+msgstr "清單"
+
+#: 
+msgid "Remove users with this tool. Note that you cannot remove an user if he is the only one remaining."
+msgstr "利用此工具刪除使用者。注意你不能刪除僅存的那一位使用者。"
+
+#: 
+msgid "The user has been added!"
+msgstr "使用者已被加入！"
+
+#: 
+msgid "The chosen users have been removed."
+msgstr "選取的使用者已經被刪除。"
+
+#: 
+msgid "You must select one or more users to be removed!"
+msgstr "你必須選取一或多位使用者以便刪除！"
+
+#: 
+msgid "Yesterday"
+msgstr "昨日"
+
+#: 
+msgid "%s days ago"
+msgstr "%s 日前"
+
+#: 
+msgid "User currently active"
+msgstr "使用者目前活動中"
+
+#: 
+msgid "Last seen: %s"
+msgstr "上次見到：%s"
+
+#: 
+msgid "Inactive since: %s"
+msgstr "不活動自：%s"
+
+#: 
+msgid "Your friend seems not to have received your message(s)!"
+msgstr "你的好友似乎沒收到你的訊息！"
+
+#: 
+msgid "Static content server"
+msgstr "靜態內容伺服器"
+
+#: 
+msgid "This is the static content server for %1s, “%2s”."
+msgstr "這是 %1s 用的靜態內容伺服器，“%2s”。"
+
+#: 
+msgid "Suggested friends"
+msgstr "建議的好友"
+
+#: 
+msgid "Check all"
+msgstr "全選"
+
+#: 
+msgid "Uncheck all"
+msgstr "取消全選"
+
+#: 
+msgid "Choose"
+msgstr "選取"
+
+#: 
+msgid "List name"
+msgstr ""
+
+#: 
+msgid "Allow"
+msgstr "允許"
+
+#: 
+msgid "Deny"
+msgstr "拒絕"
+
+#: 
+msgid "Group"
+msgstr "群組"
+
+#: 
+msgid "Subscription"
+msgstr "訂閱"
+
+#: 
+msgid "Both"
+msgstr ""
+
+#: 
+msgid "From"
+msgstr ""
+
+#: 
+msgid "Everybody"
+msgstr "每一位"
+
+#: 
+msgid "Send messages"
+msgstr "傳送訊息"
+
+#: 
+msgid "Send queries"
+msgstr "傳送查詢"
+
+#: 
+msgid "See my status"
+msgstr "看我的狀態"
+
+#: 
+msgid "Send his/her status"
+msgstr "傳送他的狀態"
+
+#: 
+msgid "Everything"
+msgstr ""
+
+#: 
+msgid "Item"
+msgstr "項目"
+
+#: 
+msgid "Order"
+msgstr ""
+
+#: 
+msgid "Active for this session"
+msgstr ""
+
+#: 
+msgid "Always active"
+msgstr ""
+
+#: 
+msgid "User directory"
+msgstr "使用者目錄"
+
+#: 
+msgid "Search a friend"
+msgstr "搜尋好友"
+
+#: 
+msgid "The feature requested is not implemented by the recipient or server and therefore cannot be processed."
+msgstr ""
+
+#: 
+msgid "This is a repeat from %s"
+msgstr ""
+
+#: 
+msgid "Loading comments..."
+msgstr "載入評論..."
+
+#: 
+msgid "Type your comment here..."
+msgstr "在此輸入你的評論..."
+
+#: 
+msgid "Could not get the comments!"
+msgstr "無法取得評論！"
+
+#: 
+msgid "Show comments"
+msgstr "顯示評論"
+
+#: 
+msgid "Send him/her a message"
+msgstr "傳送訊息給他"
+
+#: 
+msgid "Start a chat with him/her"
+msgstr "開始與他聊天"
+
+#: 
+msgid "Media integration"
+msgstr ""
+
+#: 
+msgid "Comments locked!"
+msgstr ""
+
+#: 
+msgid "Type something you want to share with your friends..."
+msgstr ""
+
+#: 
+msgid "changed his/her nickname to %s"
+msgstr ""
+
+#: 
+msgid "commented an item you follow: “%s”."
+msgstr ""
+
+#: 
+#~ msgid "See"
+#~ msgstr ""
+
+#: 
+msgid "Hide"
+msgstr ""
+
+#: 
+msgid "liked your post: “%s”."
+msgstr ""
+
+#: 
+msgid "quoted you somewhere: “%s”."
+msgstr ""
+
+#: 
+msgid "published on your wall: “%s”."
+msgstr ""
+
+#: 
+msgid "tagged you in a photo (%s)."
+msgstr ""
+
+#: 
+msgid "tagged you in a video (%s)."
+msgstr ""
+
+#: 
+msgid "Show"
+msgstr ""
+
+#: 
+msgid "Need help? You'd better read our documentation page about how to fill this form!"
+msgstr ""
+
+#: 
+msgid "Pubsub host"
+msgstr ""
+
+#: 
+msgid "Jappix is a great social platform, that you can access wherever you are, whenever you want and communicate with whovever you want."
+msgstr ""
+
+#: 
+msgid "Manager link"
+msgstr ""
+
+#: 
+msgid "User uploads server"
+msgstr ""
+
+#: 
+msgid "This is the user uploads server for %1s, “%2s”."
+msgstr ""
+

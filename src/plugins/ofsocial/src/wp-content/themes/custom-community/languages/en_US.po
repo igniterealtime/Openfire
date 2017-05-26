@@ -1,0 +1,1506 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Custom Community v2.0.24\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2015-01-21 10:41:21+0000\n"
+"Last-Translator: admin <mail@sven-lehnert.de>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: CSL v1.x\n"
+"X-Poedit-Language: English\n"
+"X-Poedit-Country: UNITED STATES\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Bookmarks: \n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Textdomain-Support: yes"
+
+#: 404.php:32
+#@ cc2
+msgid "Oops! Something went wrong here."
+msgstr ""
+
+#: 404.php:38
+#@ cc2
+msgid "Nothing could be found at this location. Maybe try a search?"
+msgstr ""
+
+#: comments.php:30
+#, php-format
+#@ cc2
+msgctxt "comments title"
+msgid "One thought on &ldquo;%2$s&rdquo;"
+msgid_plural "%1$s thoughts on &ldquo;%2$s&rdquo;"
+msgstr[0] ""
+msgstr[1] ""
+
+#: comments.php:38
+#: comments.php:60
+#@ cc2
+msgid "Comment navigation"
+msgstr ""
+
+#: comments.php:40
+#: comments.php:61
+#@ cc2
+msgid "&larr; Older Comments"
+msgstr ""
+
+#: comments.php:41
+#: comments.php:62
+#@ cc2
+msgid "Newer Comments &rarr;"
+msgstr ""
+
+#: comments.php:72
+#@ cc2
+msgid "Comments are closed."
+msgstr ""
+
+#: comments.php:81
+#@ default
+msgid "Leave a Reply"
+msgstr ""
+
+#: comments.php:82
+#, php-format
+#@ default
+msgid "Leave a Reply to %s"
+msgstr ""
+
+#: comments.php:83
+#@ default
+msgid "Cancel Reply"
+msgstr ""
+
+#: comments.php:84
+#@ default
+msgid "Post Comment"
+msgstr ""
+
+#: comments.php:86
+#@ cc2
+msgid "Start typing..."
+msgstr ""
+
+#: comments.php:89
+#@ default
+msgid "You may use these <abbr title=\"HyperText Markup Language\">HTML</abbr> tags and attributes:"
+msgstr ""
+
+#: content-archive.php:27
+#, php-format
+#@ cc2
+msgid "Author: %s"
+msgstr ""
+
+#: content-archive.php:35
+#, php-format
+#@ cc2
+msgid "Day: %s"
+msgstr ""
+
+#: content-archive.php:38
+#, php-format
+#@ cc2
+msgid "Month: %s"
+msgstr ""
+
+#: content-archive.php:41
+#, php-format
+#@ cc2
+msgid "Year: %s"
+msgstr ""
+
+#: content-archive.php:44
+#@ cc2
+msgid "Asides"
+msgstr ""
+
+#: content-archive.php:47
+#@ cc2
+msgid "Images"
+msgstr ""
+
+#: content-archive.php:50
+#@ cc2
+msgid "Videos"
+msgstr ""
+
+#: content-archive.php:53
+#@ cc2
+msgid "Quotes"
+msgstr ""
+
+#: content-archive.php:56
+#@ cc2
+msgid "Links"
+msgstr ""
+
+#: content-archive.php:59
+#: sidebar-left.php:28
+#: sidebar-right.php:25
+#: sidebar.php:27
+#@ cc2
+msgid "Archives"
+msgstr ""
+
+#: content-page.php:27
+#: content-single.php:55
+#: content.php:73
+#: image.php:76
+#@ cc2
+msgid "Pages:"
+msgstr ""
+
+#: content-page.php:32
+#: content-single.php:96
+#: content.php:107
+#: image.php:50
+#: image.php:94
+#: includes/template-tags.php:1591
+#@ cc2
+msgid "Edit"
+msgstr ""
+
+#. translators: used between list items, there is a space after the comma
+#: content-single.php:64
+#: content-single.php:67
+#: content.php:84
+#: content.php:94
+#@ cc2
+msgid ", "
+msgstr ""
+
+#: content-single.php:72
+#, php-format
+#@ cc2
+msgid "This entry was tagged %2$s. Bookmark the <a href=\"%3$s\" title=\"Permalink to %4$s\" rel=\"bookmark\">permalink</a>."
+msgstr ""
+
+#: content-single.php:74
+#, php-format
+#@ cc2
+msgid "Bookmark the <a href=\"%3$s\" title=\"Permalink to %4$s\" rel=\"bookmark\">permalink</a>."
+msgstr ""
+
+#: content-single.php:80
+#, php-format
+#@ cc2
+msgid "This entry was posted in %1$s and tagged %2$s. Bookmark the <a href=\"%3$s\" title=\"Permalink to %4$s\" rel=\"bookmark\">permalink</a>."
+msgstr ""
+
+#: content-single.php:82
+#, php-format
+#@ cc2
+msgid "This entry was posted in %1$s. Bookmark the <a href=\"%3$s\" title=\"Permalink to %4$s\" rel=\"bookmark\">permalink</a>."
+msgstr ""
+
+#: content.php:70
+#@ cc2
+msgid "Continue reading <span class=\"meta-nav\">&rarr;</span>"
+msgstr ""
+
+#: content.php:88
+#, php-format
+#@ cc2
+msgid "Posted in %1$s"
+msgstr ""
+
+#: content.php:98
+#, php-format
+#@ cc2
+msgid "Tagged %1$s"
+msgstr ""
+
+#: content.php:104
+#@ cc2
+msgid "Leave a comment"
+msgstr ""
+
+#: content.php:104
+#@ cc2
+msgid "1 Comment"
+msgstr ""
+
+#: content.php:104
+#@ cc2
+msgid "% Comments"
+msgstr ""
+
+#: footer.php:27
+#: sidebar-header.php:22
+#@ cc2
+msgid "Add a widget"
+msgstr ""
+
+#: footer.php:27
+#: footer.php:50
+#: footer.php:60
+#: footer.php:70
+#: sidebar-header.php:22
+#@ cc2
+msgid "here"
+msgstr ""
+
+#: footer.php:50
+#: footer.php:60
+#: footer.php:70
+#@ cc2
+msgid "Add widgets"
+msgstr ""
+
+#: functions.php:293
+#@ cc2
+msgid "Header Top Nav"
+msgstr ""
+
+#: functions.php:294
+#@ cc2
+msgid "Header Secondary Nav"
+msgstr ""
+
+#: functions.php:315
+#@ cc2
+msgid "Sidebar Right"
+msgstr ""
+
+#: functions.php:325
+#@ cc2
+msgid "Sidebar Left"
+msgstr ""
+
+#: functions.php:336
+#@ cc2
+msgid "Sidebar Header"
+msgstr ""
+
+#: functions.php:349
+#@ cc2
+msgid "Footer Fullwidth"
+msgstr ""
+
+#: functions.php:359
+#@ cc2
+msgid "Footer Column 1"
+msgstr ""
+
+#: functions.php:369
+#@ cc2
+msgid "Footer Column 2"
+msgstr ""
+
+#: functions.php:379
+#@ cc2
+msgid "Footer Column 3"
+msgstr ""
+
+#: functions.php:475
+#@ cc2
+msgid "Back to Top"
+msgstr ""
+
+#: image.php:39
+#, php-format
+#@ cc2
+msgid "Published <span class=\"entry-date\"><time class=\"entry-date\" datetime=\"%1$s\">%2$s</time></span> at <a href=\"%3$s\" title=\"Link to full-size image\">%4$s &times; %5$s</a> in <a href=\"%6$s\" title=\"Return to %7$s\" rel=\"gallery\">%8$s</a>"
+msgstr ""
+
+#: image.php:55
+#@ cc2
+msgid "<span class=\"meta-nav\">&larr;</span> Previous"
+msgstr ""
+
+#: image.php:56
+#@ cc2
+msgid "Next <span class=\"meta-nav\">&rarr;</span>"
+msgstr ""
+
+#: image.php:85
+#, php-format
+#@ cc2
+msgid "<a class=\"comment-link\" href=\"#respond\" title=\"Post a comment\">Post a comment</a> or leave a trackback: <a class=\"trackback-link\" href=\"%s\" title=\"Trackback URL for your post\" rel=\"trackback\">Trackback URL</a>."
+msgstr ""
+
+#: image.php:87
+#, php-format
+#@ cc2
+msgid "Comments are closed, but you can leave a trackback: <a class=\"trackback-link\" href=\"%s\" title=\"Trackback URL for your post\" rel=\"trackback\">Trackback URL</a>."
+msgstr ""
+
+#: image.php:89
+#@ cc2
+msgid "Trackbacks are closed, but you can <a class=\"comment-link\" href=\"#respond\" title=\"Post a comment\">post a comment</a>."
+msgstr ""
+
+#: image.php:91
+#@ cc2
+msgid "Both comments and trackbacks are currently closed."
+msgstr ""
+
+#: includes/admin/advanced-settings.php:348
+#: includes/template-tags.php:564
+#@ cc2
+#@ default
+msgid "Save Changes"
+msgstr ""
+
+#: includes/admin/backup-settings.php:62
+#@ cc2
+msgid "Customizer Settings"
+msgstr ""
+
+#: includes/admin/backup-settings.php:66
+#@ cc2
+msgid "Advanced Settings"
+msgstr ""
+
+#: includes/admin/backup-settings.php:583
+#@ cc2
+msgid "Advanced settings"
+msgstr ""
+
+#: includes/admin/backup-settings.php:618
+#@ cc2
+msgid "Customizer options"
+msgstr ""
+
+#: includes/admin/backup-settings.php:638
+#@ cc2
+msgid "Slideshows"
+msgstr ""
+
+#: includes/admin/backup-settings.php:704
+#@ cc2
+msgid "No settings to export selected - please choose at least one!"
+msgstr ""
+
+#: includes/admin/backup-settings.php:708
+#@ cc2
+msgid "Error: No data to import added!"
+msgstr ""
+
+#: includes/admin/cc2-dashboard.php:291
+#@ cc2
+msgid "Look's like there aint no old settings to import. So, on to a fresh start! ;-)"
+msgstr ""
+
+#: includes/admin/customizer/cc2-color-control.php:58
+#@ default
+msgid "Default"
+msgstr ""
+
+#: includes/admin/customizer/cc2-color-control.php:103
+#@ default
+msgid "Hex Value"
+msgstr ""
+
+#: includes/admin/customizer/cc2-color-control.php:104
+#@ cc2
+msgid "Set transparent"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:123
+#: includes/admin/templates/settings-reset.php:20
+#@ cc2
+msgid "Reset settings"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:260
+#@ cc2
+msgid "None"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:550
+#@ cc2
+msgid "Choose a scheme"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:565
+#@ cc2
+msgid "Note: Switching is also going to change quite a lot of other settings, including Font, Link and Link Hover Color. Better to save your current changes before-hand."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:610
+#: includes/admin/customizer-settings.php:48
+#@ cc2
+msgid "Hide all content on the front page"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:635
+#: includes/admin/customizer-settings.php:65
+#@ cc2
+msgid "Site Title Font Family"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:648
+#@ cc2
+msgid "Add Google Fonts and make them available in the theme options with <a href=\"http://themekraft.com/store/tk-google-fonts-wordpress-plugin/\" target=\"_blank\">TK Google Fonts</a>."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:663
+#: includes/admin/customizer-settings.php:80
+#@ cc2
+msgid "Site Title Position"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:679
+#: includes/admin/customizer-settings.php:95
+#@ cc2
+msgid "Tagline Font Family"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:697
+#: includes/admin/customizer-settings.php:111
+#@ cc2
+msgid "Tagline Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:722
+#@ cc2
+msgid "Display Header"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:742
+#@ cc2
+msgid "on blog"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:757
+#@ cc2
+msgid "on static frontpage"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:771
+#: includes/admin/customizer-options.class.php:1429
+#: includes/admin/customizer-options.class.php:1553
+#@ cc2
+msgid "on homepage"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:788
+#: includes/admin/customizer-options.class.php:1444
+#: includes/admin/customizer-options.class.php:1568
+#@ cc2
+msgid "on posts"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:802
+#: includes/admin/customizer-options.class.php:1459
+#: includes/admin/customizer-options.class.php:1583
+#@ cc2
+msgid "on pages"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:816
+#: includes/admin/customizer-options.class.php:1475
+#: includes/admin/customizer-options.class.php:1599
+#@ cc2
+msgid "on archive"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:830
+#: includes/admin/customizer-options.class.php:1490
+#: includes/admin/customizer-options.class.php:1614
+#@ cc2
+msgid "on search"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:844
+#: includes/admin/customizer-options.class.php:1506
+#: includes/admin/customizer-options.class.php:1630
+#@ cc2
+msgid "on 404: not-found"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:858
+#: includes/admin/customizer-settings.php:131
+#@ cc2
+msgid "Header Height"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:869
+#@ cc2
+msgid "<small><em>Write \"auto\" or in px, like \"200px\"</em></small>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:886
+#: includes/admin/customizer-settings.php:143
+#@ cc2
+msgid "Header Height on Blog"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:897
+#: includes/admin/customizer-options.class.php:922
+#, php-format
+#@ cc2
+msgid "<small><em>Just for the %s, also &quot;auto&quot; or in px</em></small>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:897
+#@ cc2
+msgid "blog"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:911
+#: includes/admin/customizer-options.class.php:939
+#: includes/admin/customizer-settings.php:154
+#@ cc2
+msgid "Header Height on Homepage"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:922
+#@ cc2
+msgid "Homepage"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:950
+#@ cc2
+msgid "<small><em>Just for the homepage, also \"auto\" or in px</em></small>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:967
+#: includes/admin/customizer-settings.php:168
+#@ cc2
+msgid "Header Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:980
+#: includes/admin/customizer-settings.php:181
+#@ cc2
+msgid "Header Background Image"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1002
+#: includes/admin/customizer-settings.php:192
+#@ cc2
+msgid "Top nav fixed to top?"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1017
+#: includes/admin/customizer-settings.php:203
+#@ cc2
+msgid "Top Nav Position"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1032
+#: includes/admin/customizer-settings.php:215
+#@ cc2
+msgid "Secondary Nav Position"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1047
+#@ cc2
+msgid "Use dark colors?"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1064
+#: includes/admin/customizer-settings.php:227
+#@ cc2
+msgid "Top nav color scheme"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1083
+#: includes/admin/customizer-settings.php:242
+#@ cc2
+msgid "Bottom nav color scheme"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1101
+#, php-format
+#@ cc2
+msgid "<strong>Warning:</strong> Changing any of the above options is likely going to <strong>reset</strong> your current navigation color settings. It's suggested to either save the current customizer setup or <a href=\"%s\">backup your current settings</a> before-hand."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1127
+#: includes/admin/customizer-settings.php:263
+#@ cc2
+msgid "Top Nav Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1143
+#: includes/admin/customizer-settings.php:273
+#@ cc2
+msgid "Top Nav Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1160
+#: includes/admin/customizer-settings.php:283
+#@ cc2
+msgid "Top Nav Hover Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1180
+#: includes/admin/customizer-settings.php:297
+#@ cc2
+msgid "Secondary Nav Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1196
+#: includes/admin/customizer-settings.php:307
+#@ cc2
+msgid "Secondary Nav Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1212
+#: includes/admin/customizer-settings.php:317
+#@ cc2
+msgid "Secondary Nav Hover Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1232
+#@ cc2
+msgid "Branding"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1246
+#@ cc2
+msgid "Add your branding?"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1264
+#@ cc2
+msgid "for top nav"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1280
+#@ cc2
+msgid "Top nav branding Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1300
+#@ cc2
+msgid "Top nav brand image"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1323
+#@ cc2
+msgid "for bottom nav"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1339
+#@ cc2
+msgid "Bottom nav branding Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1357
+#@ cc2
+msgid "Bottom nav brand image"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1374
+#@ cc2
+msgid "Content"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1414
+#@ cc2
+msgid "Display Page Title ..."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1523
+#@ cc2
+msgid "Center Page Title ..."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1538
+#@ cc2
+msgid "everywhere"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1667
+#@ cc2
+msgid "Sidebar Layouts"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1677
+#@ cc2
+msgid "Where do you like your sidebars? *Collapse&nbsp;options or zoom out if your display is too small*"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1691
+#@ cc2
+msgid "Default Layout"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1708
+#@ cc2
+msgid "Page Layout"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1723
+#@ cc2
+msgid "Post Layout"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1738
+#@ cc2
+msgid "Archive Layout"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1757
+#: includes/admin/customizer-options.class.php:1771
+#, php-format
+#@ cc2
+msgid "Hide %s sidebar on phones?"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1757
+#@ cc2
+msgid "left"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1771
+#@ cc2
+msgid "right"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1804
+#@ cc2
+msgid "Get more options to style your header and footer widgets with the CC2 Premium Pack"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1820
+#@ cc2
+msgid "Title Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1835
+#@ cc2
+msgid "Title Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1850
+#@ cc2
+msgid "Title Font Size"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1869
+#@ cc2
+msgid "Widget Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1885
+#@ cc2
+msgid "Widget Link Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1901
+#@ cc2
+msgid "Widget Link Text Hover Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1929
+#, php-format
+#@ cc2
+msgid "Most Typography just work with Bootstrap Variables, which cannot be compiled within the theme, as this is plugin territory. Get all typography options with the <a href=\"%s\" target=\"_blank\">premium extension.</a>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1945
+#@ cc2
+msgid "Headline Font Family"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1960
+#: includes/admin/customizer-options.class.php:2573
+#: includes/admin/customizer-options.class.php:2672
+#@ cc2
+msgid "Bold"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1974
+#: includes/admin/customizer-options.class.php:2587
+#: includes/admin/customizer-options.class.php:2685
+#@ cc2
+msgid "Italic"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:1989
+#@ cc2
+msgid "Headline Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2000
+#@ cc2
+msgid "Headline Font Sizes"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2012
+#@ cc2
+msgid "For displays from 768px and up"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2026
+#@ cc2
+msgid "H1"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2039
+#@ cc2
+msgid "H2"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2052
+#@ cc2
+msgid "H3"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2065
+#@ cc2
+msgid "H4"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2078
+#@ cc2
+msgid "H5"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2091
+#@ cc2
+msgid "H6"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2133
+#@ cc2
+msgid "Fullwidth Footer"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2134
+#@ cc2
+msgid "Attributes of the fullwidth footer"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2151
+#@ cc2
+msgid "Background Image"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2168
+#@ cc2
+msgid "Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2184
+#@ cc2
+msgid "Color of upper border"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2200
+#@ cc2
+msgid "Color of lower border"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2226
+#@ cc2
+msgid "Blog Archive View - List Post Style"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2239
+#@ cc2
+msgid "Loop-Designer-Ready! Get more loop templates available here, which you can easily customize, or simply create new ones. Get full control of how your post listings look with the <a href=\"http://themekraft.com/store/customize-wordpress-loop-with-tk-loop-designer/\" target=\"_blank\">TK Loop Designer Plugin</a>."
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2251
+#@ cc2
+msgid "Blog Archive View - Display Post Meta"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2265
+#: includes/admin/customizer-options.class.php:2334
+#@ cc2
+msgid "show date"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2279
+#: includes/admin/customizer-options.class.php:2348
+#@ cc2
+msgid "show category"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2293
+#: includes/admin/customizer-options.class.php:2362
+#@ cc2
+msgid "show author"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2307
+#: includes/admin/customizer-options.class.php:2376
+#@ cc2
+msgid "show author image / avatar"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2320
+#@ cc2
+msgid "Blog Single View - Display Post Meta"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2414
+#@ cc2
+msgid "Select A Slideshow"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2429
+#@ cc2
+msgid "Slideshow Style"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2448
+#@ cc2
+msgid "Display Slideshow"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2468
+#@ cc2
+msgid "Slideshow Position"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2483
+#@ cc2
+msgid "Animation Effect on Caption Title"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2498
+#@ cc2
+msgid "Animation Effect on Caption Text"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2513
+#@ cc2
+msgid "Text Align"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2529
+#@ cc2
+msgid "Caption Title Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2543
+#@ cc2
+msgid "Caption Title Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2556
+#@ cc2
+msgid "Caption Title Font Family"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2601
+#: includes/admin/customizer-options.class.php:2699
+#@ cc2
+msgid "Text Shadow"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2616
+#@ cc2
+msgid "Caption Title Opacity"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2631
+#@ cc2
+msgid "Caption Text Background Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2645
+#@ cc2
+msgid "Caption Text Font Color"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2658
+#@ cc2
+msgid "Caption Text Font Family"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2714
+#@ cc2
+msgid "Caption Text Opacity"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2782
+#@ cc2
+msgid "Sliding Time in ms"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2794
+#@ cc2
+msgid "Slideshow Dimensions"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2806
+#@ cc2
+msgid "You don't need to set the width and height of the slider: just make all your images the size you want to have as your slideshow size. You can still define a width and max height here, but we recommend to leave it automatic. <a href=\"https://themekraft.zendesk.com/hc/en-us/articles/200270762\" target=\"_blank\">Read more.</a>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2821
+#@ cc2
+msgid "Slider width"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2836
+#@ cc2
+msgid "Slider max height"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2868
+#@ cc2
+msgid "Bootstrap Container Width"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2880
+#, php-format
+#@ cc2
+msgid "Customize the width values of the .container class, for each different screen size. Leave the field empty for default width.<br /><a href=\"%s\">Screen size info</a>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2896
+#@ cc2
+msgid "Container Width (Small Screen)"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2911
+#@ cc2
+msgid "Container Width (Medium Screen)"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2925
+#@ cc2
+msgid "Container Width (large Screen)"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2941
+#@ cc2
+msgid "Custom Sidebar Size"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2955
+#@ cc2
+msgid "Adjust the <strong>column numbers</strong>, which are used for setting the size of the sidebars. <a href=\"http://getbootstrap.com/css/#grid\">Read about the Bootstrap Grid system</a>"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2965
+#@ cc2
+msgid "4 (default)"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2974
+#@ cc2
+msgid "Left sidebar"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:2990
+#@ cc2
+msgid "Right sidebar"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:3007
+#@ cc2
+msgid "Comment form orientation"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:3011
+#@ cc2
+msgid "Vertical (default)"
+msgstr ""
+
+#: includes/admin/customizer-options.class.php:3011
+#@ cc2
+msgid "Horizontal"
+msgstr ""
+
+#: includes/admin/slider-ajax.php:218
+#@ cc2
+msgid "Add New Slide"
+msgstr ""
+
+#: includes/admin/slider.php:183
+#@ cc2
+msgid "SlideShow Settings"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-bootstrap.php:19
+#@ cc2
+msgid "A few settings for enabling optional components for Bootstrap."
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-bootstrap.php:33
+#@ cc2
+msgid "Enable simple CSS-based dropdown hover menus"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-bootstrap.php:37
+#@ cc2
+msgid "Enable scroll-to-top button"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-bootstrap.php:41
+#, php-format
+#@ cc2
+msgid "Enable %s"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:13
+#@ cc2
+msgid "Fine-tune <a href=\"http://headjs.com/\">HeadJS</a>, the responsive webdesign JS helper."
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:17
+#@ cc2
+msgid "Load reduced HeadJS version (no async. loading)"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:20
+#@ cc2
+msgid "Enable full HeadJS version"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:23
+#@ cc2
+msgid "Load from URL:"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:25
+#, php-format
+#@ cc2
+msgid "If you don't add a URL, the full HeadJS version shipped together with the theme is automatically being used. Also, to improve handling of local scripts, you may use the following keywords inside the URL field, which are automatically replaced with their respective URL parts: <a href=\"http://codex.wordpress.org/template_directory_uri\">%template_directory_uri%</a>, <a href=\"http://codex.wordpress.org/stylesheet_directory_uri\">%stylesheet_directory_uri%</a>"
+msgstr ""
+
+#: includes/admin/templates/advanced-settings-headjs.php:29
+#@ cc2
+msgid "Completely disable HeadJS"
+msgstr ""
+
+#: includes/admin/templates/custom-styling-edit.php:10
+#@ default
+msgid "Add, edit or remove custom CSS for the current theme. Will be added <strong>after</strong> the CSS issued by the Customizer and just about everything else."
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:13
+#@ cc2
+msgid "Import old theme options"
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:15
+#@ cc2
+msgid "Before you start exploring the new theme, you might want to import the options of your <strong>old theme</strong> (cc v1)."
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:20
+#@ cc2
+msgid "Found the following data - optionally <strong>DEselect</strong> what you don NOT want to import:"
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:51
+#@ cc2
+msgid "Note: Empty settings may have been discarded."
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:64
+#@ cc2
+msgid "Test run"
+msgstr ""
+
+#: includes/admin/templates/dashboard-updates.php:67
+#@ cc2
+msgid "Import Old Options"
+msgstr ""
+
+#: includes/admin/templates/part-settings-select.php:14
+#@ cc2
+msgid "Choose settings:"
+msgstr ""
+
+#: includes/admin/templates/settings-export.php:12
+#, php-format
+#@ cc2
+msgid "Export the current theme settings into the %s."
+msgstr ""
+
+#: includes/admin/templates/settings-export.php:16
+#@ cc2
+msgid "Select export format:"
+msgstr ""
+
+#: includes/admin/templates/settings-export.php:41
+#@ cc2
+msgid "Start Export"
+msgstr ""
+
+#: includes/admin/templates/settings-export.php:51
+#@ cc2
+msgid "Select All"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:12
+#@ cc2
+msgid "Import theme settings from the format of your choice."
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:15
+#@ cc2
+msgid "Select import format:"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:26
+#@ cc2
+msgid "Copy + paste the data you want to import into the following text field:"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:37
+#@ cc2
+msgid "Start Import"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:42
+#@ cc2
+msgid "Successfully imported all settings."
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:45
+#: includes/admin/templates/settings-reset.php:27
+#, php-format
+#@ cc2
+msgid "%s the following data:"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:55
+#, php-format
+#@ cc2
+msgid "(%1$d/%2$d items)"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:57
+#, php-format
+#@ cc2
+msgid "(%d items)"
+msgstr ""
+
+#: includes/admin/templates/settings-import.php:59
+#@ cc2
+msgid "Display details"
+msgstr ""
+
+#: includes/admin/templates/settings-reset-confirmation.php:15
+#@ cc2
+msgid "Do you really want to reset the following settings?"
+msgstr ""
+
+#: includes/admin/templates/settings-reset-confirmation.php:27
+#@ cc2
+msgid "No, abort now!"
+msgstr ""
+
+#: includes/admin/templates/settings-reset-confirmation.php:28
+#@ cc2
+msgid "Yes, please reset!"
+msgstr ""
+
+#: includes/admin/templates/settings-reset-confirmation.php:33
+#@ cc2
+msgid "Nothing to do here. NO settings selected."
+msgstr ""
+
+#: includes/admin/templates/settings-reset.php:12
+#@ cc2
+msgid "Reset all or just selected settings."
+msgstr ""
+
+#: includes/extras.php:293
+#, php-format
+#@ cc2
+msgid "Page %s"
+msgstr ""
+
+#: includes/template-tags.php:353
+#@ cc2
+msgid "A Semantic Personal Publishing Platform"
+msgstr ""
+
+#: includes/template-tags.php:353
+#@ cc2
+msgid "Proudly powered by WordPress"
+msgstr ""
+
+#: includes/template-tags.php:357
+#@ cc2
+msgid "WordPress Theme Custom Community"
+msgstr ""
+
+#: includes/template-tags.php:357
+#@ cc2
+msgid "developed by ThemeKraft"
+msgstr ""
+
+#: includes/template-tags.php:1249
+#@ cc2
+msgid "Name"
+msgstr ""
+
+#: includes/template-tags.php:1255
+#@ cc2
+msgid "Email"
+msgstr ""
+
+#: includes/template-tags.php:1262
+#@ cc2
+msgid "Website"
+msgstr ""
+
+#: includes/template-tags.php:1382
+#@ cc2
+msgid "<span class=\"arrow-left\">&laquo;</span><span class=\"nav-next-text\"> Older Entries</span>"
+msgstr ""
+
+#: includes/template-tags.php:1384
+#@ cc2
+msgid "<span class=\"nav-prev-text\">Newer Entries </span><span class=\"arrow-right\">&raquo;</span>"
+msgstr ""
+
+#: includes/template-tags.php:1553
+#@ cc2
+msgid "Post navigation"
+msgstr ""
+
+#: includes/template-tags.php:1557
+#@ cc2
+msgctxt "Previous post link"
+msgid "&larr;"
+msgstr ""
+
+#: includes/template-tags.php:1558
+#@ cc2
+msgctxt "Next post link"
+msgid "&rarr;"
+msgstr ""
+
+#: includes/template-tags.php:1564
+#@ cc2
+msgid "<span class=\"meta-nav\">&larr;</span> Older posts"
+msgstr ""
+
+#: includes/template-tags.php:1568
+#@ cc2
+msgid "Newer posts <span class=\"meta-nav\">&rarr;</span>"
+msgstr ""
+
+#: includes/template-tags.php:1591
+#@ cc2
+msgid "Pingback:"
+msgstr ""
+
+#: includes/template-tags.php:1605
+#, php-format
+#@ cc2
+msgid "%s <span class=\"says\">says:</span>"
+msgstr ""
+
+#: includes/template-tags.php:1609
+#, php-format
+#@ cc2
+msgctxt "1: date, 2: time"
+msgid "%1$s at %2$s"
+msgstr ""
+
+#: includes/template-tags.php:1612
+#@ cc2
+msgid "<span style=\"margin-left: 5px;\" class=\"glyphicon glyphicon-edit\"></span> Edit"
+msgstr ""
+
+#: includes/template-tags.php:1616
+#@ cc2
+msgid "Your comment is awaiting moderation."
+msgstr ""
+
+#: includes/template-tags.php:1699
+#@ cc2
+msgid "Posted "
+msgstr ""
+
+#: includes/template-tags.php:1729
+#: includes/template-tags.php:1731
+#, php-format
+#@ cc2
+msgid "by %s"
+msgstr ""
+
+#: includes/template-tags.php:1746
+#@ cc2
+msgid "No Comments"
+msgstr ""
+
+#: includes/template-tags.php:1746
+#@ cc2
+msgid "One Comment"
+msgstr ""
+
+#: includes/template-tags.php:1746
+#@ cc2
+msgid "$ Comments"
+msgstr ""
+
+#: includes/template-tags.php:1810
+#, php-format
+#@ cc2
+msgid "View all posts by %s"
+msgstr ""
+
+#: no-results.php:13
+#@ cc2
+msgid "Nothing Found"
+msgstr ""
+
+#: no-results.php:19
+#, php-format
+#@ cc2
+msgid "Ready to publish your first post? <a href=\"%1$s\">Get started here</a>."
+msgstr ""
+
+#: no-results.php:23
+#@ cc2
+msgid "Sorry, but nothing matched your search terms. Please try again with some different keywords."
+msgstr ""
+
+#: no-results.php:28
+#@ cc2
+msgid "It seems we can&rsquo;t find what you&rsquo;re looking for. Perhaps searching can help."
+msgstr ""
+
+#: search.php:29
+#, php-format
+#@ cc2
+msgid "Search Results for: %s"
+msgstr ""
+
+#: searchform.php:10
+#@ cc2
+msgctxt "placeholder"
+msgid "Search &hellip;"
+msgstr ""
+
+#: searchform.php:10
+#@ cc2
+msgctxt "label"
+msgid "Search for:"
+msgstr ""
+
+#: searchform.php:12
+#@ cc2
+msgctxt "submit button"
+msgid "Search"
+msgstr ""
+
+#: sidebar-header.php:23
+#@ cc2
+msgid "* only visible for admins ;)"
+msgstr ""
+
+#: sidebar-left.php:35
+#: sidebar-right.php:32
+#: sidebar.php:34
+#@ cc2
+msgid "Meta"
+msgstr ""
+

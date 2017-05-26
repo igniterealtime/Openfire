@@ -1,0 +1,536 @@
+# Translation of the WordPress plugin   by .
+# Copyright (C) 2010
+# This file is distributed under the same license as the  package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/bp-album\n"
+"POT-Creation-Date: 2010-12-18 16:12+0000\n"
+"PO-Revision-Date: 2011-01-17 10:48+0100\n"
+"Last-Translator: jacek <admin@szklarska.org>\n"
+"Language-Team: jacek606 <admin@szklarska.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: includes/bp-album-admin.php:76
+msgid "BP Album+ Settings"
+msgstr "BP Album+ Ustawienia"
+
+#: includes/bp-album-admin.php:79
+msgid "Settings Updated."
+msgstr "Zaktualizowano ustawienia"
+
+#: includes/bp-album-admin.php:81
+msgid "Are you ready for BP-Media 0.1.9?"
+msgstr "Czy jesteś gotowy na  BP-Media 0.1.9?"
+
+#: includes/bp-album-admin.php:84
+msgid "Over the past six months, we've grown from a tiny plugin to a massive project with over 25,000 users, corporate sponsors, and a busy developer community. We've added multiple-album, audio, video, and embedded media support ...tagging and activity stream functionality that exceeds FaceBook and Flickr ...and powerful caching and content delivery network features. The next version of the plugin, BP-Media 0.1.9, is over <i>20 times bigger</i> than BP-Album 0.1.8 ...it has <i>350+ configuration options and 25 different template files</i>."
+msgstr "Przez ostatnie 6 miesięcy wyrośliśmy z małej wtyczki na wielki projekt z ponad 25 000 użytkowników, korporacyjnymi sponsorami i aktywną społecznością programistów. Dodaliśmy obsługę wielu albumów, audio, video i mediów osadzonych... funkcje obsługi tagów i strumienia aktywności, przekraczającą możliwości FaceBook i Flickr.... i potężne możliwości buforowania i dostarczania treści w sieci. Następna wersja wtyczki, BP-Media 0.1.9, jest ponad <i>20 razy większa</i> niż BP-Album 0.1.8 ...posiada <i>350+ opcji konfiguracyjnych i 25 różnych plików szablonów wyglądu.</i>"
+
+#: includes/bp-album-admin.php:88
+msgid "Version 0.1.9 won't be ready until 2011-01-30, but you can download the latest beta <i>right now</i> from our Google Code <a href='http://code.google.com/p/buddypress-media/downloads/list'>download page</a>, and start preparing for the big upgrade."
+msgstr "Wersja 0.1.9 nie będzie gotowa do 2011-01-30, ale możesz pobrać najnowszą wersję beta <i>już teraz</i> <a href='http://code.google.com/p/buddypress-media/downloads/list'>z naszej strony Google Code</a> i rozpocząć przygotowania do wielkiej aktualizacji"
+
+#: includes/bp-album-admin.php:92
+msgid "<b>For more information, follow these links:</b>"
+msgstr "<b>Aby uzyskać więcej informacji, otwórz poniższe linki</b>"
+
+#: includes/bp-album-admin.php:98
+msgid "Official Website"
+msgstr "Strona Oficjalna"
+
+#: includes/bp-album-admin.php:100
+msgid "Our base of operations on the internet and the <i>only</i> source of info that's been checked by our dev team."
+msgstr "Nasza baza operacyjna w internecie i <i>jedyne</i> źródło informacji sprawdzone, przez nasz zespół."
+
+#: includes/bp-album-admin.php:107
+msgid "Support Forum"
+msgstr "Forum Wsparcia"
+
+#: includes/bp-album-admin.php:109
+msgid "Need help with the plugin? There are <i>hundreds of other users</i> that can answer your questions on our BuddyPress support forum."
+msgstr "Potrzebujesz pomocy przy wtyczce? Są <i>setki użytkowników</i>, którzy mogą odpowiedzieć na Twoje pytania na naszym forum wsparcia BuddyPress."
+
+#: includes/bp-album-admin.php:116
+msgid "Features List"
+msgstr "Lista funkcji"
+
+#: includes/bp-album-admin.php:118
+msgid "See what features we're adding to upcoming versions of the plugin."
+msgstr "Zobacz jakie funkcje dodamy do nadchodzącej wersji wtyczki."
+
+#: includes/bp-album-admin.php:125
+msgid "Project Calendar"
+msgstr "Kalendarz projektu"
+
+#: includes/bp-album-admin.php:127
+msgid "View our development schedule in real-time using Pivotal Tracker."
+msgstr "Zobacz nasz harmonogram zadań w czasie rzeczywistym za pomocą Pivotal Tracker."
+
+#: includes/bp-album-admin.php:134
+msgid "Activity Feed"
+msgstr "Strumień Aktywności"
+
+#: includes/bp-album-admin.php:136
+msgid "Up-to-the-second bug reports and code updates via Google Code."
+msgstr "raporty błędów i aktualizacja kodu co do sekundy, przez Google Code."
+
+#: includes/bp-album-admin.php:147
+msgid "Slug Name"
+msgstr "Nazwa skrótu (slug)"
+
+#: includes/bp-album-admin.php:151
+msgid "Bad slug names will disable the plugin. No Spaces. No punctuation. No special characters. No accents."
+msgstr "Złe ustawienie skrótów (slug) wyłączy wtyczkę. Nie używać spacji, znaków interpunkcyjnych, znaków specjalnych ani akcentów"
+
+#: includes/bp-album-admin.php:153
+msgid "{ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_- } ONLY."
+msgstr "{ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_- } TYLKO."
+
+#: includes/bp-album-admin.php:159
+msgid "Name of BP Album+ slug"
+msgstr "nazwa skrótu (slug)  BP Album+"
+
+#: includes/bp-album-admin.php:167
+msgid "General"
+msgstr "Generalne"
+
+#: includes/bp-album-admin.php:171
+msgid "Force members to enter a description for each image"
+msgstr "Wymuś na użytkownikach umieszczanie opisu dla każdego zdjęcia"
+
+#: includes/bp-album-admin.php:173
+#: includes/bp-album-admin.php:180
+#: includes/bp-album-admin.php:187
+#: includes/bp-album-admin.php:261
+#: includes/bp-album-admin.php:283
+#: includes/bp-album-admin.php:307
+#: includes/bp-album-admin.php:317
+msgid "Yes"
+msgstr "Tak"
+
+#: includes/bp-album-admin.php:174
+#: includes/bp-album-admin.php:181
+#: includes/bp-album-admin.php:188
+#: includes/bp-album-admin.php:262
+#: includes/bp-album-admin.php:284
+#: includes/bp-album-admin.php:308
+#: includes/bp-album-admin.php:318
+msgid "No"
+msgstr "Nie"
+
+#: includes/bp-album-admin.php:178
+msgid "Allow site members to post comments on album images"
+msgstr "Zezwól użytkownikom na komentowanie zdjęć w albumie"
+
+#: includes/bp-album-admin.php:185
+msgid "Post image thumbnails to members activity stream"
+msgstr "Umieść miniaturki w strumieniu aktywności"
+
+#: includes/bp-album-admin.php:194
+msgid "Album Size Limits"
+msgstr "Limit rozmiaru Albumu"
+
+#: includes/bp-album-admin.php:197
+msgid "<b>Accepted values:</b> EMPTY (no limit), NUMBER (value you set), 0 (disabled). The first option does not accept 0. The last option only accepts a number."
+msgstr "<b>Dozwolone wartości:</b> PUSTA (brak limitu), LICZBA (wartość, którą ustawisz), 0 (wyłączone). Pierwsza opcja nie akceptuje 0. Ostatnia opcja akceptuje tylko liczbę."
+
+#: includes/bp-album-admin.php:202
+msgid "Max total images allowed in a members album"
+msgstr "Maksymalna liczba wszystkich zdjęć w albumie użytkownika"
+
+#: includes/bp-album-admin.php:208
+msgid "Max images visible to public allowed in a members album"
+msgstr "Maksymalna liczba zdjęć widocznych publicznie"
+
+#: includes/bp-album-admin.php:214
+msgid "Max images visible only to members in a members album"
+msgstr "Maksymalna liczba zdjęć widocznych tylko dla zarejestrowanych użytkowników"
+
+#: includes/bp-album-admin.php:220
+msgid "Max images visible only to friends in a members album"
+msgstr "Maksymalna liczba zdjęć widocznych tylko dla znajomych użytkownika albumu"
+
+#: includes/bp-album-admin.php:226
+msgid "Max private images in a members album"
+msgstr "Maksymalna ilość prywatnych zdjęć w albumie użytkownika"
+
+#: includes/bp-album-admin.php:232
+msgid "Images per album page"
+msgstr "Ilość zdjęć na stronę albumu"
+
+#: includes/bp-album-admin.php:239
+msgid "Image Size Limits"
+msgstr "Limit rozmiaru zdjęcia"
+
+#: includes/bp-album-admin.php:242
+msgid "Uploaded images will be re-sized to the values you set here. Values are for both X and Y size in pixels. We <i>strongly</i> suggest you keep the original image files so BP-Media 0.1.9 can re-render your images during the upgrade process."
+msgstr "Przesłane zdjęcia zostaną przeformatowane do rozmiarów, które ustawiasz tutaj. Wartości dla wymiaru X oraz Y podane są w pixelach. <i>Stanowczo</i> sugerujemy pozostawienie oryginalnych plików, by wtyczka BP-Media 0.1.9 mogła ponownie zrenderować zdjęcia podczas procesu aktualizacji."
+
+#: includes/bp-album-admin.php:247
+msgid "Album Image Size"
+msgstr "Rozmiar Albumu"
+
+#: includes/bp-album-admin.php:253
+msgid "Thumbnail Image Size"
+msgstr "Rozmiar miniaturki"
+
+#: includes/bp-album-admin.php:259
+msgid "Keep original image files"
+msgstr "Zachowaj oryginalne pliki zdjęć"
+
+#: includes/bp-album-admin.php:268
+msgid "Image URL Mapping"
+msgstr "Mapowanie adresu url zdjęcia"
+
+#: includes/bp-album-admin.php:272
+msgid "If you get broken links when viewing images in BP-Album+, it means your server is sending the wrong base URL to the plugin. You can use the image URL re-mapping function to fix this."
+msgstr "Jeśli tworzone są niedziałające linki podczas przeglądania zdjęć w albumie BP-Album+, to znaczy, że twój serwer wysyła zły adres bazowy do wtyczki. Możesz użyć funkcji mapowania adresu URL, żeby to naprawić."
+
+#: includes/bp-album-admin.php:274
+msgid "DOCUMENTATION"
+msgstr "DOKUMENTACJA"
+
+#: includes/bp-album-admin.php:281
+msgid "Use image URL re-mapping"
+msgstr "Użyj mapowania adresu URL dla zdjęcia"
+
+#: includes/bp-album-admin.php:288
+msgid "Base URL"
+msgstr "Bazowy adres URL"
+
+#: includes/bp-album-admin.php:297
+msgid "Activity Stream Rebuild"
+msgstr "Odbudowywanie Strumienia Aktywności"
+
+#: includes/bp-album-admin.php:300
+msgid "A defect in plugin versions before 0.1.8.5 caused all bp-album activity posts to be deleted from the site when the administrator deleted a user. Set 'Rebuild Posts' to 'yes' to add <b>EVERY PHOTO ON YOUR SITE</b> that users have marked as <b>PUBLIC</b> to the site activity stream. This will also <b>ALLOW COMMENTS</b> on the photos. The created posts will have random dates to avoid flooding the activity stream. Set 'UNDO Rebuild Posts' to 'yes' to remove the posts <i>this function</i> creates <u>it will not harm posts that users created</u>."
+msgstr "Błąd we wtyczce w wersji przed 0.1.8.5 powodował, że wszystkie posty użytkownika usuniętego przez administratora były również usuwane . Zaznacz 'Odbuduj posty' na 'tak' by dodać <b>WSZYSTKIE ZDJĘCIA NA STRONIE</b> które użytkownicy oznaczyli jako <b>PUBLICZNE</b> do strumienia aktywności. Ta opcja również <b>ZEZWOLI NA KOMENTOWANIE</b> zdjęć. Utworzone posty będą miały losowe daty, by uniknąć zalania strumienia aktywności. Zaznacz 'COFNIJ Odbudowanie postów' na 'tak' by usunąć posty, które <i>ta funkcja</i> utworzyła <u>, posty utworzone przez użytkowników nie zostaną uszkodzone.</u>."
+
+#: includes/bp-album-admin.php:305
+msgid "Rebuild posts"
+msgstr "Odbuduj posty"
+
+#: includes/bp-album-admin.php:315
+msgid "UNDO rebuild posts"
+msgstr "Cofnij odbudowanie postów"
+
+#: includes/bp-album-admin.php:324
+msgid "Save Settings"
+msgstr "Zapisz ustawienia"
+
+#: includes/bp-album-core.php:113
+msgid "BP Album+"
+msgstr "BP Album+"
+
+#: includes/bp-album-core.php:129
+msgid "Album"
+msgstr "Album"
+
+#: includes/bp-album-core.php:137
+msgid "My pictures"
+msgstr "Moje zdjęcia"
+
+#: includes/bp-album-core.php:137
+#, php-format
+msgid "%s's pictures"
+msgstr "Zdjęcia użytkownika: %s"
+
+#: includes/bp-album-core.php:151
+msgid "Picture"
+msgstr "Zdjęcie"
+
+#: includes/bp-album-core.php:161
+#: includes/bp-album-screens.php:197
+msgid "Upload picture"
+msgstr "Dodaj zdjęcie"
+
+#: includes/bp-album-core.php:490
+#: includes/bp-album-core.php:702
+#, php-format
+msgid "%s uploaded a new picture: %s"
+msgstr "%s dodał nowe zdjęcie: %s"
+
+#: includes/bp-album-screens.php:39
+#: includes/bp-album-screens.php:59
+msgid "Edit Picture"
+msgstr "Edytuj Zdjęcie"
+
+#: includes/bp-album-screens.php:52
+#: includes/bp-album-screens.php:158
+msgid "Public"
+msgstr "Publiczne"
+
+#: includes/bp-album-screens.php:53
+#: includes/bp-album-screens.php:159
+msgid "Registered members"
+msgstr "Tylko dla zarejestrowanych użytkowników"
+
+#: includes/bp-album-screens.php:54
+#: includes/bp-album-screens.php:160
+msgid "Only friends"
+msgstr "Tylko dla znajomych"
+
+#: includes/bp-album-screens.php:55
+#: includes/bp-album-screens.php:161
+msgid "Private"
+msgstr "Prywatne"
+
+#: includes/bp-album-screens.php:56
+msgid "Hidden (admin only)"
+msgstr "Ukryte (tylko dla admina)"
+
+#: includes/bp-album-screens.php:64
+msgid "Picture Title *"
+msgstr "Tytuł zdjęcia *"
+
+#: includes/bp-album-screens.php:70
+msgid "Picture Description"
+msgstr "Opis zdjęcia"
+
+#: includes/bp-album-screens.php:76
+#: includes/bp-album-screens.php:178
+msgid "Visibility"
+msgstr "Widoczność"
+
+#: includes/bp-album-screens.php:84
+#: includes/bp-album-screens.php:190
+msgid "(limit reached)"
+msgstr "(osiągnięto limit)"
+
+#: includes/bp-album-screens.php:93
+msgid "Picture activity and comments"
+msgstr "Aktywność i komentarze"
+
+#: includes/bp-album-screens.php:94
+msgid "Enable"
+msgstr "Włącz"
+
+#: includes/bp-album-screens.php:95
+msgid "Disable"
+msgstr "Wyłącz"
+
+#: includes/bp-album-screens.php:96
+msgid "If picture already has comments this will delete them"
+msgstr "Jeśli są już jakieś komentarze do zdjęcia, ta operacja usunie je."
+
+#: includes/bp-album-screens.php:99
+msgid "Save"
+msgstr "Zapisz"
+
+#: includes/bp-album-screens.php:107
+msgid "Either this url is not valid or you can't edit this picture."
+msgstr "Adres url jest niewłaściwy, lub nie masz praw do edycji tego zdjęcia."
+
+#: includes/bp-album-screens.php:148
+#: includes/bp-album-screens.php:166
+msgid "Upload new picture"
+msgstr "Prześlij nowe zdjęcie"
+
+#: includes/bp-album-screens.php:174
+msgid "Select Picture to Upload *"
+msgstr "Wybierz zdjęcie do przesłania *"
+
+#: includes/bp-album-screens.php:205
+msgid "You have reached the upload limit, delete some pictures if you want to upload more"
+msgstr "Osiągnąłeś limit ilości zdjęć, usuń niektóre zdjęcia, jeśli chcesz przesłać następne."
+
+#: includes/bp-album-screens.php:234
+#: includes/bp-album-screens.php:447
+msgid "Please select a privacy option."
+msgstr "Wybierz opcję prywatności"
+
+#: includes/bp-album-screens.php:267
+#: includes/bp-album-screens.php:471
+msgid "Privacy option is not correct."
+msgstr "Opcja prywatności jest niewłaściwa"
+
+#: includes/bp-album-screens.php:275
+#: includes/bp-album-screens.php:476
+msgid "You reached the limit for public pictures."
+msgstr "Osiągnąłeś limit ilości zdjęc publicznych"
+
+#: includes/bp-album-screens.php:275
+#: includes/bp-album-screens.php:278
+#: includes/bp-album-screens.php:281
+#: includes/bp-album-screens.php:284
+#: includes/bp-album-screens.php:476
+#: includes/bp-album-screens.php:479
+#: includes/bp-album-screens.php:482
+#: includes/bp-album-screens.php:485
+msgid "Please select another privacy option."
+msgstr "Wybierz następną opcję prywatności"
+
+#: includes/bp-album-screens.php:278
+#: includes/bp-album-screens.php:479
+msgid "You reached the limit for pictures visible to community members."
+msgstr "Osiągnąłeś limit ilości zdjęć widocznych dla członków społeczności."
+
+#: includes/bp-album-screens.php:281
+#: includes/bp-album-screens.php:482
+msgid "You reached the limit for pictures visible to friends."
+msgstr "Osiągnąłeś limit ilości zdjęć widocznych dla znajomych."
+
+#: includes/bp-album-screens.php:284
+#: includes/bp-album-screens.php:485
+msgid "You reached the limit for private pictures."
+msgstr "Osiągnąłeś limit ilości prywatnych zdjęć."
+
+#: includes/bp-album-screens.php:291
+msgid "There is no error, the file uploaded with success"
+msgstr "Przesyłanie pliku zakończyło się sukcesem"
+
+#: includes/bp-album-screens.php:292
+#: includes/bp-album-screens.php:293
+msgid "Your image was bigger than the maximum allowed file size of: "
+msgstr "Twoje zdjęcie jest większe, niż największy dozwolony rozmiar: "
+
+#: includes/bp-album-screens.php:294
+msgid "The uploaded file was only partially uploaded"
+msgstr "Przesłany plik załadował się tylko częściowo"
+
+#: includes/bp-album-screens.php:295
+msgid "No file was uploaded"
+msgstr "Żaden plik nie został przesłany"
+
+#: includes/bp-album-screens.php:296
+msgid "Missing a temporary folder"
+msgstr "Brak folderu tymczasowego"
+
+#: includes/bp-album-screens.php:301
+#: includes/bp-album-screens.php:315
+#: includes/bp-album-screens.php:327
+#, php-format
+msgid "Your upload failed, please try again. Error was: %s"
+msgstr "Przesyłanie nieudane, proszę spróbować jeszcze raz. Błąd: %s"
+
+#: includes/bp-album-screens.php:306
+#, php-format
+msgid "The file you uploaded is too big. Please upload a file under %s"
+msgstr "Plik, który wysłałeś jest zbyt duży. Proszę o przesłanie pliku o rozmiarze do %s"
+
+#: includes/bp-album-screens.php:311
+msgid "Please upload only JPG, GIF or PNG photos."
+msgstr "Proszę o przesyłanie zdjęć tylko w formacie JPG, GIF lub PNG"
+
+#: includes/bp-album-screens.php:373
+msgid "Picture uploaded. Now you can change picture details."
+msgstr "Zdjęcie załadowane. Możesz teraz edytować szczegóły zdjęcia."
+
+#: includes/bp-album-screens.php:376
+#: includes/bp-album-screens.php:506
+msgid "There were problems saving picture details."
+msgstr "Wystąpił problem podczas zapisywania szczegółów zdjęcia."
+
+#: includes/bp-album-screens.php:435
+msgid "Picture Title can not be blank."
+msgstr "Tytuł zdjęcia nie może być pusty."
+
+#: includes/bp-album-screens.php:441
+msgid "Picture Description can not be blank."
+msgstr "Opis zdjęcia nie może być pusty."
+
+#: includes/bp-album-screens.php:495
+msgid "Comments option is not correct."
+msgstr "Opcja kometarzy jest niepoprawna."
+
+#: includes/bp-album-screens.php:503
+msgid "Picture details saved."
+msgstr "Szczegóły zdjęcia zostały zapisane."
+
+#: includes/bp-album-screens.php:530
+#: includes/templates/album/single.php:51
+msgid "This url is not valid."
+msgstr "Ten adres url jest niepoprawny."
+
+#: includes/bp-album-screens.php:535
+msgid "You don't have permission to delete this picture"
+msgstr "Nie masz uprawnień do usunięcia tego zdjęcia"
+
+#: includes/bp-album-screens.php:537
+msgid "Picture deleted."
+msgstr "Zdjęcie zostało usunięte."
+
+#: includes/bp-album-screens.php:541
+msgid "There were problems deleting the picture."
+msgstr "Wystąpił problem z usunięciem zdjęcia."
+
+#: includes/bp-album-templatetags.php:220
+msgid "Edit picture"
+msgstr "Edytuj zdjęcie"
+
+#: includes/bp-album-templatetags.php:233
+msgid "Delete picture"
+msgstr "Usuń zdjęcie"
+
+#: includes/bp-album-templatetags.php:334
+#: includes/bp-album-templatetags.php:360
+#: includes/bp-album-templatetags.php:407
+msgid "Return to your album"
+msgstr "Powróć do swojego albumu"
+
+#: includes/bp-album-templatetags.php:334
+#: includes/bp-album-templatetags.php:360
+#: includes/bp-album-templatetags.php:407
+#, php-format
+msgid "Return to %s album"
+msgstr "Powrót do albumu: %s"
+
+#: includes/templates/album/comments.php:12
+msgid "Reply"
+msgstr "Odpowiedz"
+
+#: includes/templates/album/comments.php:17
+msgid "Mark as Favorite"
+msgstr "Dodaj do ulubionych"
+
+#: includes/templates/album/comments.php:17
+msgid "Favorite"
+msgstr "Ulubione"
+
+#: includes/templates/album/comments.php:19
+msgid "Remove Favorite"
+msgstr "Usuń z ulubionych"
+
+#: includes/templates/album/comments.php:27
+msgid "In reply to"
+msgstr "W odpowiedzi na"
+
+#: includes/templates/album/comments.php:28
+msgid "View Thread / Permalink"
+msgstr "Zobacz wątek / Permalink"
+
+#: includes/templates/album/comments.php:28
+msgid "View"
+msgstr "Zobacz"
+
+#: includes/templates/album/comments.php:43
+msgid "Post"
+msgstr "Opublikuj"
+
+#: includes/templates/album/comments.php:43
+msgid "or press esc to cancel."
+msgstr "lub naciśnij esc żeby wyjść."
+
+#: includes/templates/album/comments.php:59
+#, php-format
+msgid "Comments are disabled for this picture. %sEdit picture%s to enable them."
+msgstr "Komentarze do tego zdjęcia zostały wyłaczone. %sEdytuj zdjęcie%s żeby je włączyć."
+
+#: includes/templates/album/pictures.php:46
+msgid "No pics here, show something to the community!"
+msgstr "Brak zdjęć, pokaż się społeczności!"
+
+#: includes/templates/album/pictures.php:46
+#, php-format
+msgid "Either %s hasn't uploaded any picture yet or they have restricted access"
+msgstr "%s Nie dodał/a jeszcze żadnego zdjęcia, lub dostęp do zdjęć jest zastrzeżony"
+
+#: includes/templates/album/single.php:51
+msgid "Either this url is not valid or picture has restricted access."
+msgstr "niepoprawny adres url lub dostęp do zdjęcia jest zastrzeżony."
+

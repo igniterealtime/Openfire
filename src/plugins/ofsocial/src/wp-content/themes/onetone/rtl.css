@@ -1,0 +1,267 @@
+/*
+Theme Name: Onetone
+
+Adding support for language written in a Right To Left (RTL) direction is easy -
+it's just a matter of overwriting all the horizontal positioning attributes
+of your CSS stylesheet in a separate stylesheet file named rtl.css.
+
+http://codex.wordpress.org/Right_to_Left_Language_Support
+
+*/
+
+
+body {
+    direction: rtl;
+    unicode-bidi: embed;
+}
+
+.home-logo {
+    float: right;
+    margin-right: 20px;
+}
+
+.home-navigation {
+    float: left;
+    margin-right: 40px;
+    margin-left: 20px;
+}
+
+.home-navigation ul {
+    margin-left: 0;
+}
+
+.home-navigation li {
+    float: right;
+}
+
+.section-about p {
+    text-align: right;
+}
+
+.section-about li {
+    text-align: right;
+}
+
+.site {
+    background-position:  top right;
+}
+
+.site-header {
+    right: 0;
+}
+
+.site-logo {
+    float: right;
+    margin-right: 210px;
+    margin-left: 0;
+}
+
+.sidebar {
+    padding: 12px 12px 120px 12px;
+}
+
+.site-main {
+    margin-right: 180px;
+    margin-left: 0;
+}
+
+.main-content {
+    float: left;
+}
+
+.entry-main {
+    float: right;
+}
+
+.entry-category, .entry-author, .entry-comments {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.site-footer {
+    right: auto;
+    left: 10px;
+    text-align: left;
+}
+
+body {
+    direction: rtl;
+    unicode-bidi: embed;
+}
+
+.home-logo {
+    float: right;
+    margin-right: 20px;
+}
+
+.home-navigation {
+    float: left;
+    margin-right: 40px;
+    margin-left: 20px;
+}
+
+.home-navigation ul {
+    margin-left: 0;
+}
+
+.home-navigation li {
+    float: right;
+}
+
+.section-about p {
+    text-align: right;
+}
+
+.section-about li {
+    text-align: right;
+}
+
+.site {
+    background-position:  top right;
+}
+
+.site-header {
+    right: 0;
+}
+
+.site-logo {
+    float: right;
+    margin-right: 210px;
+    margin-left: 0;
+}
+
+.sidebar {
+    padding: 12px 12px 120px 12px;
+}
+
+.site-main {
+    margin-right: 180px;
+    margin-left: 0;
+}
+
+.main-content {
+    float: left;
+}
+
+.entry-main {
+    float: right;
+}
+
+.entry-category, .entry-author, .entry-comments {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.site-footer {
+    right: auto;
+    left: 10px;
+    text-align: left;
+}
+
+#back-to-top {
+    left: 10px;
+    right: auto;
+}
+
+.site-navbar {
+    float: left;
+    margin-left: 20px;
+}
+
+.site-navigation {
+    float: left;
+    margin-left: 50px;
+}
+
+@media screen and (max-width: 1119px) {
+    .site-main {
+        margin-right: 0;
+    }
+    .site-logo {
+	margin-right:10px;
+    }
+    .site-navigation {
+        margin-left:30px;
+        margin-right: 0;
+    }
+}
+
+@media screen and (max-width:919px) {
+    .site-logo {
+	margin-top: 0;
+    }
+}
+
+.full_width, .one_half, .one_third, .two_third, .one_fourth, .three_fourth, .one_fifth, .two_fifth, .three_fifth, .four_fifth, .one_sixth {
+    float: right;
+}
+
+.one_third {
+    margin-left: 2%;
+    margin-right: 0;
+}
+
+.one_half {
+	margin-left: 2%;
+	margin-right: 0;
+}
+
+.one_half.last_column {
+	margin-right:0;
+}
+
+.two_third {
+	width:66%;
+	margin-right:2%;
+}
+
+.one_fourth {
+	width:23.5%;
+	margin-right:2%;
+}
+
+.three_fourth {
+	width:74.5%;
+	margin-right:2%;
+}
+
+.one_fifth {
+	width:18.4%;
+	margin-right:2%;
+}
+
+.two_fifth {
+	width:39%;
+	margin-right:2%;
+}
+
+.three_fifth {
+	width:59%;
+	margin-right:2%;
+}
+
+.four_fifth {
+	width:79.6%;
+	margin-right:2%;
+}
+
+.one_sixth {
+	width:15%;
+	margin-right:2%;
+}
+
+.last {
+    margin-left: 0;
+    clear: left;
+}
+
+.portfolio-list li {
+    float: right;
+    margin-left: 2.66666666%;
+    margin-right: 0;
+}
+
+.portfolio-list li:nth-child(4n) {
+    margin-left: 0;
+    clear: left;
+}

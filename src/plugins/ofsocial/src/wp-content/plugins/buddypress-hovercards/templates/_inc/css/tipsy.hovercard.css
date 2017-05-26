@@ -1,0 +1,23 @@
+.tipsy .tipsy-inner {
+  padding: 10px;
+  background: url('../images/45pc_black.png');
+}
+.tipsy-arrow {
+    opacity: 0.45;
+}
+.tipsy a {
+  color: inherit;
+}
+
+.tipsy .tipsy-avatar {
+    float: left;
+}
+
+.tipsy .tipsy-content {
+    width: 200px;
+    margin-left: 150px;
+}
+
+.tipsy .tipsy-inner {
+    max-width: 350px;
+}

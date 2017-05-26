@@ -1,0 +1,528 @@
+/*
+
+Jappix - An open social platform
+This is the manager CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 08/06/11
+
+*/
+
+#manager {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.85);
+	width: 945px;
+	margin: 0 auto 25px;
+	padding-bottom: 17px;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	-moz-border-radius-bottomleft: 5px;
+	-moz-border-radius-bottomright: 5px;
+	-webkit-border-bottom-left-radius: 5px;
+	-webkit-border-bottom-right-radius: 5px;
+	box-shadow: 0 0 35px #5c5c5c;
+	-moz-box-shadow: 0 0 35px #5c5c5c;
+	-webkit-box-shadow: 0 0 35px #5c5c5c;
+}
+
+#manager a {
+	color: black;
+	text-decoration: underline;
+}
+
+#manager .clear {
+	clear: both;
+}
+
+#manager fieldset {
+	border: 1px solid black;
+	margin: 22px 0 15px 0;
+	padding: 7px 2px 5px 2px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#manager legend {
+	font-size: 0.9em;
+	margin: 0 0 0 15px;
+	padding: 0 2px;
+	text-transform: uppercase;
+}
+
+#manager label {
+	width: 200px;
+	display: block;
+	float: left;
+	clear: both;
+	margin: 0 0 9px 12px;
+}
+
+#manager label.master {
+	text-decoration: underline;
+}
+
+#manager input,
+#manager select {
+	float: left;
+	margin-bottom: 5px;
+}
+
+#manager input[type=radio] {
+	margin: 2px 8px 5px 0;
+}
+
+#manager input[type=text],
+#manager input[type=url],
+#manager input[type=password],
+#manager select {
+	margin-top: -2px;
+	font-size: 0.95em;
+}
+
+#manager input[type=text],
+#manager input[type=url],
+#manager input[type=password] {
+	padding: 3px;
+	min-width: 220px;
+}
+
+#manager input.icon {
+	padding-left: 24px;
+	min-width: 199px;
+	max-height: 18px;
+}
+
+#manager input.icon#admin_name {
+	background-position: 4px -510px;
+}
+
+#manager input.icon#admin_password,
+#manager input.icon#user_repassword {
+	background-position: 4px -532px;
+}
+
+#manager input.icon#user_name,
+#manager input.icon#music_artist {
+	background-position: 4px -554px;
+}
+
+#manager input.icon#user_password {
+	background-position: 4px -576px;
+}
+
+#manager input.icon#music_title {
+	background-position: 4px -598px;
+}
+
+#manager input.icon#music_album {
+	background-position: 4px -620px;
+}
+
+#manager input.icon#background_image_color,
+#manager input.icon#background_color_color {
+	background-position: 4px -641px;
+}
+
+#manager select {
+	min-width: 160px;
+	max-width: 230px;
+}
+
+#manager-top {
+	padding: 25px 45px 30px;
+}
+
+#manager-top .logo {
+	background-position: 0 0;
+	min-width: 89px;
+	height: 40px;
+	padding: 28px 0 0 65px;
+	font-size: 32px;
+	color: white;
+	text-transform: lowercase;
+	float: left;
+	text-shadow: 0 1px 1px black;
+}
+
+#manager-top .meta {
+	background-color: #e0eaec;
+	font-size: 0.9em;
+	padding: 12px 7px 12px 14px;
+	float: right;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 10px #202020;
+	-moz-box-shadow: 0 0 10px #202020;
+	-webkit-box-shadow: 0 0 10px #202020;
+}
+
+#manager-top .meta span {
+	margin-right: 10px;
+	color: black;
+}
+
+#manager-top .meta a {
+	background-color: #c7d5d9;
+	border: 1px solid #b9cbcf;
+	color: #224249;
+	padding: 4px 8px 4px 21px;
+	margin-left: 2px;
+	text-decoration: none;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#manager-top .meta a:hover,
+#manager-top .meta a:focus {
+	border: 1px solid #95b1b7;
+}
+
+#manager-top .meta a:active {
+	border: 1px solid #77989f;
+}
+
+#manager-top .meta a.logout {
+	background-position: 3px -69px;
+}
+
+#manager-top .meta a.close {
+	background-position: 3px -90px;
+}
+
+#manager-tabs {
+	margin-left: 12px;
+}
+
+#manager-tabs a {
+	background-color: #d9e7ea;
+	color: #204249;
+	width: 107px;
+	height: 17px;
+	padding: 4px 4px 4px 16px;
+	margin-left: 4px;
+	font-size: 0.94em;
+	text-decoration: none;
+	overflow: hidden;
+	float: left;
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-moz-border-radius-topleft: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-webkit-border-top-left-radius: 3px;
+}
+
+#manager-tabs a:hover,
+#manager-tabs a:focus {
+	background-color: #cedee1;
+	text-decoration: none;
+}
+
+#manager-tabs a:active {
+	background-color: #c3d3d7;
+	text-decoration: none;
+}
+
+#manager-tabs a.tab-active {
+	background-color: #e4eef9 !important;
+}
+
+#manager-content {
+	background: #e4eef9;
+	background: -moz-linear-gradient(top, #e4eef9, #d0e5fa);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e4eef9), to(#d0e5fa));
+	color: black;
+	font-size: 0.9em;
+	margin: 0 10px;
+	padding: 20px 24px;
+	min-height: 260px;
+	clear: both;
+	right: 10px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 20px #202020;
+	-moz-box-shadow: 0 0 20px #202020;
+	-webkit-box-shadow: 0 0 20px #202020;
+}
+
+#manager-content h3 {
+	padding-left: 24px;
+	margin-bottom: 15px;
+}
+
+#manager-content h3.login {
+	background-position: 0 -466px;
+}
+
+#manager-content h3.statistics {
+	background-position: 0 -203px;
+}
+
+#manager-content h3.configuration {
+	background-position: 0 -224px;
+}
+
+#manager-content h3.hosts {
+	background-position: 0 -246px;
+}
+
+#manager-content h3.storage {
+	background-position: 0 -268px;
+}
+
+#manager-content h3.design {
+	background-position: 0 -290px;
+}
+
+#manager-content h3.users {
+	background-position: 0 -312px;
+}
+
+#manager-content h3.updates {
+	background-position: 0 -334px;
+}
+
+#manager-content h4 {
+	border-top: 1px dotted black;
+	padding-top: 5px;
+	margin: 20px 0 14px;
+	clear: both;
+}
+
+#manager-content ul,
+#manager-content ol {
+	width: 380px;
+	margin: 8px 0 20px 18px;
+}
+
+#manager-content li {
+	margin-bottom: 3px;
+}
+
+#manager-content li.total {
+	margin-bottom: 14px;
+}
+
+#manager-content li b {
+	width: 190px;
+	float: left;
+}
+
+#manager-content li span {
+	margin-left: 10px;
+	float: left;
+}
+
+#manager-content ul.stats,
+#manager-content ol.stats {
+	float: left;
+}
+
+#manager-content object.stats {
+	border: 1px dotted #bed4d9;
+	width: 450px;
+	height: 270px;
+	margin-bottom: 20px;
+	float: right;
+}
+
+#manager-content p,
+#manager-content div {
+	margin-bottom: 10px;
+}
+
+#manager-content .info {
+	color: black;
+	border-width: 1px;
+	border-style: dashed;
+	padding: 6px 8px;
+	display: block;
+	text-decoration: none;
+}
+
+#manager-content .info.bottomspace {
+	margin-bottom: 16px;
+}
+
+#manager-content .info.smallspace {
+	margin: 14px 0 10px 0;
+}
+
+#manager-content .info.bigspace {
+	margin: 35px 0 20px 0;
+}
+
+#manager-content .info.neutral {
+	background-color: #f0f19d;
+	border-color: #b3ad4f;
+}
+
+#manager-content a.info.neutral:hover,
+#manager-content a.info.neutral:focus {
+	background-color: #eced96;
+}
+
+#manager-content a.info.neutral:active {
+	background-color: #e9ea93;
+}
+
+#manager-content .info.success {
+	background-color: #a8dca9;
+	border-color: #5e9f5f;
+}
+
+#manager-content a.info.success:hover,
+#manager-content a.info.success:focus {
+	background-color: #a0d5a1;
+}
+
+#manager-content a.info.success:active {
+	background-color: #9ad09b;
+}
+
+#manager-content .info.fail {
+	background-color: #f19d9d;
+	border-color: #b34f4f;
+}
+
+#manager-content a.info.fail:hover,
+#manager-content a.info.fail:focus {
+	background-color: #ea9595;
+}
+
+#manager-content a.info.fail:active {
+	background-color: #e59090;
+}
+
+#manager-content .browse {
+	margin: 2px 0 6px;
+	max-height: 243px;
+	overflow: auto;
+}
+
+#manager-content .browse .one-browse {
+	padding: 5px 10px 5px 34px;
+	height: 17px;
+}
+
+#manager-content .browse .user {
+	background-position: 9px -111px;
+}
+
+#manager-content .browse .other {
+	background-position: 9px -133px;
+}
+
+#manager-content .browse .folder {
+	background-position: 9px -178px;
+}
+
+#manager-content .browse .audio {
+	background-position: 9px -154px;
+}
+
+#manager-content .browse .alert {
+	background-position: 9px -353px;
+}
+
+#manager-content .browse .image {
+	background-position: 9px -374px;
+}
+
+#manager-content .browse .video {
+	background-position: 9px -397px;
+}
+
+#manager-content .browse .document {
+	background-position: 9px -418px;
+}
+
+#manager-content .browse .package {
+	background-position: 9px -441px;
+}
+
+#manager-content .browse .previous {
+	background-position: 9px -485px;
+	margin-bottom: 4px;
+}
+
+#manager-content .browse div {
+	margin: 0;
+}
+
+#manager-content .browse input {
+	float: right;
+	margin: 1px 0;
+}
+
+#manager-content .browse .odd {
+	background-color: #e9f1fd;
+}
+
+#manager-content .browse .even {
+	background-color: #f1f6fd;
+}
+
+#manager-content .sub {
+	border-left: 1px solid black;
+	margin: 5px 0 20px 22px;
+	padding-left: 12px;
+	clear: both;
+}
+
+#manager-content .clear {
+	margin: 0;
+}
+
+#manager-content textarea.notice-text {
+	height: 70px;
+	width: 600px;
+	margin-left: 4px;
+	padding: 5px;
+	font-size: 1.2em;
+}
+
+#manager-buttons {
+	margin-top: 22px;
+}
+
+#manager-buttons input {
+	border: 1px solid white;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.1);
+	color: white;
+	padding: 4px 8px;
+	margin-left: -12px;
+	margin-right: 20px;
+	font-size: 1em;
+	text-shadow: 0 1px 1px black;
+	float: right;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 5px #202020;
+	-moz-box-shadow: 0 0 5px #202020;
+	-webkit-box-shadow: 0 0 5px #202020;
+}
+
+#manager-buttons input:hover,
+#manager-buttons input:focus {
+	cursor: pointer;
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.2);
+	box-shadow: 0 0 15px #202020;
+	-moz-box-shadow: 0 0 15px #202020;
+	-webkit-box-shadow: 0 0 15px #202020;
+}
+
+#manager-buttons input:active {
+	background-color: rgb(255,255,255);
+	background-color: rgba(255,255,255,0.3);
+}

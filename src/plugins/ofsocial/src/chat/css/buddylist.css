@@ -1,0 +1,530 @@
+/*
+ 
+Jappix - An open social platform
+This is the buddy-list CSS stylesheet for Jappix
+ 
+-------------------------------------------------
+ 
+License: AGPL
+Author: Valérian Saliou
+Last revision: 22/06/11
+ 
+*/
+ 
+#buddy-list {
+        background-color: rgb(20,20,20);
+        background-color: rgba(20,20,20,0.85);
+        color: #919191;
+        padding: 15px 6px 4px 6px;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        box-shadow: 0 0 6px #5c5c5c;
+        -moz-box-shadow: 0 0 6px #5c5c5c;
+        -webkit-box-shadow: 0 0 6px #5c5c5c;
+}
+ 
+#buddy-list .content {
+	background: #e8f1f3;
+	background: -moz-linear-gradient(top, #e8f1f3, #e4edef);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e8f1f3), to(#e4edef));
+        color: #666666;
+        height: 207px;
+        padding: 4px 4px 0 4px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+        -moz-border-radius-topleft: 3px;
+        -moz-border-radius-topright: 3px;
+        -webkit-border-top-left-radius: 3px;
+        -webkit-border-top-right-radius: 3px;
+}
+ 
+#buddy-list .one-group {
+        margin-bottom: 10px;
+}
+ 
+#buddy-list .one-group a.group {
+        color: #202c2f;
+        font-size: 0.8em;
+        margin: 3px 6px;
+        padding-left: 12px;
+        max-height: 15px;
+        text-decoration: none;
+        overflow: hidden;
+        display: block;
+}
+ 
+#buddy-list .one-group a.group.plus {
+        background-position: -4px -1143px;
+}
+ 
+#buddy-list .one-group a.group.minus {
+        background-position: -4px -1162px;
+}
+ 
+#buddy-list .one-group a.group:hover {
+        cursor: pointer;
+}
+ 
+#buddy-list .hidden-buddy,
+#buddy-list .foot-edit-finish,
+.buddy-conf-more-display-available {
+        display: none;
+}
+ 
+#buddy-list .buddy {
+        width: 100%;
+        height: 50px;
+        margin-bottom: 4px;
+}
+ 
+#buddy-list .buddy-click {
+        background: #d9e7ea;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 3px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+}
+ 
+#buddy-list .buddy-click:hover,
+#buddy-list .buddy-click:focus {
+        background: #cedee1;
+        cursor: pointer;
+}
+ 
+#buddy-list .buddy-click:active {
+        background: #c3d3d7;
+}
+ 
+#buddy-list .gateway {
+        height: 27px;
+}
+ 
+#buddy-list .gateway .name {
+        margin-left: 0;
+}
+ 
+#buddy-list .gateway .buddy-presence {
+        float: left;
+        overflow: hidden;
+        width: 0;
+        margin: 0 4px;
+}
+ 
+#buddy-list .avatar-container {
+        float: left;
+        text-align: center;
+        margin: 3px;
+        width: 46px;
+        height: 46px;
+}
+ 
+#buddy-list .avatar {
+        max-width: 44px;
+        max-height: 44px;
+}
+ 
+#buddy-list .name {
+        margin: 4px 3px 5px 56px;
+}
+ 
+#buddy-list .buddy-name {
+        height: 17px;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #3d585f;
+        margin: 5px 0 5px 2px;
+        overflow: hidden;
+}
+ 
+#buddy-list .buddy.blocked p.buddy-name {
+        text-decoration: line-through;
+}
+ 
+#buddy-list .buddy-presence {
+        height: 14px;
+        font-size: 0.7em;
+        color: #4e6c72;
+        padding: 2px 0 0 16px;
+        margin-top: -3px;
+}
+ 
+#buddy-list .unavailable,
+#page-switch .unavailable,
+#page-engine p.bc-infos span.show.unavailable {
+        background-position: 0 -153px;
+}
+ 
+#buddy-list .available,
+#page-engine p.bc-infos span.show.available,
+#page-engine .list .available,
+#page-engine .list .chat,
+#page-switch .available,
+#my-infos .f-presence a[data-value=available] span {
+        background-position: 0 -169px;
+}
+ 
+#buddy-list .away,
+#page-engine p.bc-infos span.show.away,
+#page-engine .list .away,
+#page-switch .away,
+#my-infos .f-presence a[data-value=away] span {
+        background-position: 0 -185px;
+}
+ 
+#buddy-list .busy,
+#page-engine p.bc-infos span.show.busy,
+#page-engine .list .xa,
+#page-engine .list .dnd,
+#page-switch .busy,
+#my-infos .f-presence a[data-value=xa] span {
+        background-position: 0 -201px;
+}
+ 
+#buddy-list .error,
+#page-switch .error,
+#page-engine p.bc-infos span.show.error {
+        background-position: 0 -217px;
+}
+ 
+#buddy-list .buddy-infos {
+	position: absolute;
+        z-index: 100;
+        width: 337px;
+        color: white;
+        font-size: 0.8em;
+}
+ 
+.buddy-infos-subarrow {
+        background-position: 0 -241px;
+        opacity: 0.8;
+        width: 9px;
+        height: 20px;
+        margin-top: 12px;
+        float: left;
+}
+ 
+.buddy-infos-subitem {
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.8);
+        padding: 8px 10px;
+        width: 308px;
+        text-shadow: 0 1px 1px black;
+        float: left;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+ 
+.manage-infos p.bm-authorize,
+#rosterx .oneresult span.action.add {
+        background-position: 0 -1181px;
+}
+ 
+.manage-infos p.bm-remove,
+#rosterx .oneresult span.action.delete,
+#attach div.one-file a.remove {
+        background-position: 0 -1200px;
+}
+ 
+.manage-infos p.bm-remove {
+        margin-bottom: 18px;
+}
+ 
+.manage-infos p.bm-rename {
+        background-position: 0 -1216px;
+}
+ 
+.manage-infos p.bm-group {
+        background-position: 0 -1241px;
+}
+ 
+.manage-infos div.bm-choose {
+        max-height: 95px;
+        margin: 0 0 8px 102px;
+        overflow: auto;
+}
+ 
+.manage-infos div.bm-choose label {
+        float: left;
+        clear: both;
+        margin-bottom: 1px;
+}
+ 
+.manage-infos div.bm-choose input {
+        float: left;
+}
+ 
+.manage-infos div.bm-choose input[type=checkbox] {
+        margin: 1px 6px 0 0;
+}
+ 
+.manage-infos div.bm-choose div {
+        clear: both;
+}
+ 
+.manage-infos p.bm-rename,
+.manage-infos p.bm-group {
+        height: 26px;
+}
+ 
+.manage-infos p.bm-rename label,
+.manage-infos p.bm-group label {
+        width: 80px;
+        padding-top: 3px;
+        float: left;
+}
+ 
+.manage-infos p.bm-rename input,
+.manage-infos p.bm-group input {
+        float: left;
+        width: 155px;
+}
+ 
+.manage-infos a.save {
+        float: right;
+        margin: 4px;
+}
+ 
+.buddy-infos-subitem p {
+        margin: 6px 0;
+        padding-left: 22px;
+        height: 16px;
+        overflow: hidden;
+}
+ 
+.buddy-infos-subitem a {
+        color: white;
+        text-decoration: underline;
+}
+ 
+.tune-note {
+        background-position: 0 -676px;
+}
+ 
+.location-world {
+        background-position: 0 -658px;
+}
+ 
+.view-individual {
+        background-position: 0 -34px;
+}
+ 
+.edit-buddy {
+        background-position: 0 -1008px;
+}
+ 
+#buddy-list .filter {
+        background-color: white;
+        border-top: 1px solid #b8c2c4;
+        height: 15px;
+        padding: 2px 4px;
+        font-size: 0.8em;
+        border-bottom-left-radius: 3px;
+        border-bottom-right-radius: 3px;
+        -moz-border-radius-bottomleft: 3px;
+        -moz-border-radius-bottomright: 3px;
+        -webkit-border-bottom-left-radius: 3px;
+        -webkit-border-bottom-right-radius: 3px;
+}
+ 
+#buddy-list .filter input {
+        border: none;
+        color: #273a3f;
+        width: 211px;
+        padding: 0;
+        box-shadow: none;
+        -moz-box-shadow: none;
+        -webkit-box-shadow: none;
+}
+ 
+#buddy-list .filter a {
+        display: none;
+        background-color: #9a2d2d;
+        color: white;
+        height: 13px;
+        width: 13px;
+        margin-top: 1px;
+        font-size: 0.8em;
+        text-align: center;
+        text-decoration: none;
+        float: right;
+        border-radius: 2px;
+        -moz-border-radius: 2px;
+        -webkit-border-radius: 2px;
+}
+ 
+#buddy-list .filter a:hover,
+#buddy-list .filter a:focus {
+        background-color: #8c2121;
+}
+ 
+#buddy-list .filter a:active {
+        background-color: #7e1919;
+}
+ 
+#buddy-list .foot {
+        padding: 9px 1px 3px;
+}
+ 
+#buddy-list .buddy-list-icon {
+        height: 16px;
+        width: 16px;
+        margin: -3px 5px 0 0;
+        float: left;
+}
+ 
+#buddy-list .buddy-list-icon a.talk-images {
+        height: 16px;
+        width: 16px;
+        display: block;
+}
+ 
+#buddy-list .add,
+#page-engine .text .tools-add {
+        background-position: 0 -1047px;
+}
+ 
+#buddy-list .join {
+        background-position: 0 -1065px;
+}
+ 
+#buddy-list .groupchat,
+#page-switch .groupchat-default {
+        background-position: 0 -1082px;
+}
+ 
+#buddy-list .more {
+        background-position: 0 -1100px;
+}
+ 
+#buddy-list .foot-edit-finish a {
+        color: white;
+        font-size: 0.8em;
+        margin: -3px 4px 0 0;
+        float: right;
+        display: block;
+}
+ 
+#buddy-list .foot-edit-finish a:hover,
+#buddy-list .foot-edit-finish a:focus {
+        text-decoration: underline;
+        cursor: pointer;
+}
+ 
+.buddy-conf-item {
+        position: absolute;
+        width: 263px;
+        color: white;
+        z-index: 9998;
+        text-align: left;
+        font-size: 0.8em;
+        margin-left: -10px;
+}
+ 
+.buddy-conf-item:hover {
+        cursor: default;
+}
+ 
+.buddy-conf-subarrow {
+        background-position: 0 -241px;
+        opacity: 0.8;
+        height: 10px;
+        width: 18px;
+        margin-left: 9px;
+}
+ 
+.buddy-conf-subitem {
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.8);
+        padding: 10px;
+        text-shadow: 0 1px 1px black;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+ 
+.buddy-conf-p {
+        margin-bottom: 4px;
+        width: 220px;
+        font-weight: bold;
+        float: left;
+}
+ 
+.buddy-conf-input {
+        padding-top: 2px;
+}
+ 
+.buddy-conf-text {
+        font-size: 11px;
+        clear: both;
+        margin-bottom: 3px;
+}
+ 
+.buddy-conf-text a {
+        color: white;
+}
+ 
+.buddy-conf-text a:hover,
+.buddy-conf-text a:focus {
+        cursor: pointer;
+        text-decoration: underline;
+}
+ 
+.buddy-conf-text a.buddy-conf-add-search {
+        text-decoration: underline;
+        margin-top: 6px;
+        display: block;
+}
+ 
+.buddy-conf-select {
+        font-size: 1.1em;
+        clear: both;
+        margin-bottom: 8px;
+        width: 180px;
+        height: 23px;
+}
+ 
+.join-jid {
+        width: 220px;
+        margin-top: 5px;
+}
+ 
+.add-contact-jid,
+.add-contact-name,
+.add-contact-gateway {
+        width: 156px;
+        margin-bottom: 4px;
+}
+ 
+.add-contact-name-get {
+        font-size: 0.8em;
+        display: none;
+}
+ 
+.buddy-conf-subitem label {
+        clear: both;
+}
+ 
+.buddy-conf-subitem label span {
+        width: 76px;
+        height: 14px;
+        margin-top: 3px;
+        overflow: hidden;
+        float: left;
+}
+ 
+#buddy-conf-join ul {
+        width: 224px;
+        max-height: 160px;
+        left: 10px;
+        top: 51px;
+}
+ 
+.buddy-conf-join-select {
+        margin: 8px 0 0 0;
+}

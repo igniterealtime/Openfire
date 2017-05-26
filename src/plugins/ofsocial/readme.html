@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>Openfire Social Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size: 100%;
+        }
+
+        BODY, TD, TH {
+            font-family: tahoma, verdana, arial, helvetica, sans-serif;
+            font-size: 0.8em;
+        }
+
+        H2 {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        A:hover {
+            text-decoration: none;
+        }
+
+        H1 {
+            font-family: tahoma, arial, helvetica, sans-serif;
+            font-size: 1.4em;
+            font-weight: bold;
+            border-bottom: 1px #ccc solid;
+            padding-bottom: 2px;
+        }
+
+        TT {
+            font-family: courier new;
+            font-weight: bold;
+            color: #060;
+        }
+
+        PRE {
+            font-family: courier new;
+            font-size: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    Openfire Social Plugin Readme
+</h1>
+
+<h2>Requirements</h2>
+
+<p>
+You need Openfire 4.0 and above with Java 1.8.<br/>
+You will need to have configured Openfire with MySQL or compatible DB. Other DBs have not beed tested or confirm suitable for WordPress.<br>
+</p>
+
+<h2>Overview</h2>
+
+<p>
+Openfire Social is a plugin which combines WordPress and BuddyPress to provide a fully collaborative online social community.
+</p>
+
+
+<p>
+Openfire is auto-configured as follows when plugin is installed and reset back when plugin is uninstalled:
+<ul>
+<li>All Openfire users are WordPress users and Openfire admin console cannot add or modify users</li>
+<li>All Openfire user groups are read from BuddyPress groups Openfire admin console cannot add or modify user groups</li>
+<li>Group Chat rooms and Roster groups are auto-created every time a BuddyPress group is created</li>
+<li>User Rosters are updated every time a BuddyPress friendship is made or broken.</li>
+</ul>
+</p>
+
+<p>
+Please note that Only Openfire and MySQL required. No Apache, No PHP. The Openfire Social plugin has embedded Quercus PHP Engine which is a 100% Java implementation of PHP 5.
+</p>
+<p>
+Quercus presents a new mixed Java/PHP approach to web applications and services where Java and PHP tightly integrate with each other. WordPress and BuddyPress interface directly with Openfire. This capability is made possible because 1) PHP code is interpreted/compiled into Java and 2) Quercus and its libraries are written entirely in Java.
+</p>
+<h2>How to use</h2>
+<p>
+WordPress admin web page - http://yourserver:7070/ofsocial/wp-admin
+</p>
+<p>
+WordPress social home page - http://yourserver:7070/ofsocial/wp-user
+</p>
+<p>
+Communications toolbar at bottom of screen
+<ul>
+<li>Single/Auto sign-in to Openfire from WordPress</li>
+<li>Roster of BuddyPress Friendships showing Presence</li>
+<li>IM chat with BuddyPress friends</li>
+<li>MUC chats with BuddyPress group members</li>
+<li>Openfire Meetings audio/video with friends</li>
+<li>Openfire Meetings audio/video with a Buddypress group</li>
+</ul>
+</p>
+</div>
+</body>
+</html>

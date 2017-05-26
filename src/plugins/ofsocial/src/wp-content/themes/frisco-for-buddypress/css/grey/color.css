@@ -1,0 +1,86 @@
+a {
+    color: #999;
+    font-weight: bold;
+    text-decoration: none;
+}
+a:hover {
+    color: #737373;
+}
+
+#header #search-bar {
+	background: #999; 
+	background: -moz-linear-gradient(top, #999 0%, #999 15%, #707070 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#999), color-stop(15%,#999), color-stop(100%,#707070)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #999 0%,#999 15%,#707070 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #999 0%,#999 15%,#707070 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #999 0%, #999 15%,#707070 100%); /* IE10+ */
+	filter: none; /* IE6-9 */
+	background: linear-gradient(top, #999 0%,#999 15%,#707070 100%); /* W3C */
+}
+ 
+div.item-list-tabs ul li {
+    background: #A6A6A6;
+    border: 1px solid #A6A6A6;
+}
+div.item-list-tabs ul li:hover {
+    background: #999;
+    border-color: #999;
+}
+
+div.item-list-tabs ul li, 
+div.item-list-tabs ul li.selected, 
+div.item-list-tabs ul li.current {
+	border-bottom: none; 
+	margin-bottom: -1px; 
+}
+
+div.item-list-tabs ul li a span {
+  	background: #737373;
+}
+div.item-list-tabs ul li a:hover span {
+  	background: #666;
+}
+
+#header #search-bar input[type=submit] {
+	background: #4D4D4D; 
+	background: -moz-linear-gradient(top, #4D4D4D 0%, #595959 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#4D4D4D), color-stop(100%,#595959)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #4D4D4D) 0%,#595959 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #4D4D4D 0%,#595959 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #4D4D4D 0%,#595959 100%); /* IE10+ */
+	filter: none; /* IE6-9 */
+	background: linear-gradient(top, #4D4D4D 0%,#595959  100%); /* W3C */
+    border-color: #595959 #595959 #595959 #595959;
+    border-right: 1px solid #595959;
+    color: #FFF;
+	text-shadow: 0 1px 0 #000; 	
+}
+#header h1 a {
+	text-shadow: 0 -1px 0 #000000;
+}
+form#whats-new-form textarea:focus {
+	-moz-box-shadow: 0 0 7px #EEE inset, 0 0 7px #EEE inset;
+   	-webkit-box-shadow: 0 0 7px #EEE inset, 0 0 7px #EEE inset;
+    box-shadow: 0 0 7px #EEE inset, 0 0 7px #EEE inset;
+}
+#whats-new:focus {
+    border-color: #CCC !important;
+    outline-color: #CCC;
+}
+#wpadminbar .quicklinks li#wp-admin-bar-bp-notifications #ab-pending-notifications.alert,
+#wpadminbar .quicklinks li#wp-admin-bar-my-account a span.count,
+#wpadminbar .quicklinks li#wp-admin-bar-my-account-with-avatar a span.count {
+    background-color: #AAA;
+}
+#wpadminbar .quicklinks .menupop ul li a, 
+#wpadminbar .quicklinks .menupop ul li a strong, 
+#wpadminbar .quicklinks .menupop.hover ul li a,
+#wpadminbar.nojs .quicklinks .menupop:hover ul li a {
+    color: #777;
+}
+#wpadminbar .menupop li:hover,
+#wpadminbar .menupop li.hover, 
+#wpadminbar .quicklinks .menupop .ab-item:focus, 
+#wpadminbar .quicklinks .ab-top-menu .menupop .ab-item:focus {
+    background-color: #EEE;
+}

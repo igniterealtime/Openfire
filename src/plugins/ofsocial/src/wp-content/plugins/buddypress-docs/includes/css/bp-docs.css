@@ -1,0 +1,725 @@
+.hide-if-no-js {
+	display: none;
+}
+
+.description {
+	font-weight: normal;
+	font-style: italic;
+}
+	.description code {
+		font-style: normal;
+		background: #eee;
+		padding: 2px 4px;
+	}
+
+#bp-create-doc-button {
+	float: right;
+	margin: 5px 19px;
+	font-weight: bold;
+}
+
+body.bp-docs div.page ul {
+	list-style-type: none;
+}
+
+#bp-docs-all-docs {
+	width: auto;
+}
+
+/* Make it look decent on theme compat */
+#buddypress #bp-docs-all-docs li {
+	background: #eee;
+}
+
+.doc-tabs {
+	overflow: hidden;
+}
+	.doc-tabs li {
+		float: left;
+		margin: 0 5px;
+		list-style-type: none;
+	}
+	.doc-tabs li:first-child {
+		margin-left: 0;
+	}
+	.doc-tabs li a {
+		background: #f1f1f1;
+		text-decoration: none;
+		display: block;
+		padding: 4px 10px;
+		font-size: 1.2em;
+		border-radius: 5px 5px 0 0;
+	}
+	.doc-tabs li.current a {
+		background: #eaeaea;
+		color: #555;
+		font-weight: bold;
+	}
+
+.doc-header h4 {
+	margin-bottom: 15px !important;
+}
+
+.docs-filter {
+	display: block;
+	width: 400px;
+	float: left;
+	margin-bottom: 15px;
+}
+
+.doc-search {
+	float: right;
+	width: 250px;
+	text-align: right;
+}
+
+.docs-filter-tags {
+	width: 100%; /* At the moment there is only one filter box, so let's make it wide */
+}
+
+.docs-filter-tags ul li {
+	display: block;
+	width: 120px;
+	float: left;
+	padding: 6px;
+}
+
+.doctable p {
+	padding: 0;
+	margin: 0;
+}
+
+.row-actions {
+	visibility: hidden;
+	padding: 2px 0 0;
+}
+
+.row-actions a {
+	color: #999;
+	font-size: 11px;
+}
+	.row-actions a.delete {
+		color: #f00;
+	}
+
+.doctable tr:hover .row-actions {
+	visibility: visible;
+}
+
+.doctable tr:nth-child(even) {
+	background-color: #eaeaea;
+}
+
+
+#docs-filter-submit {
+	margin: 10px 4px;
+}
+
+.title-cell {
+	width: 30%;
+}
+
+.author-cell, .created-date-cell, .edited-date-cell {
+	text-align: center;
+	width: 100px;
+}
+
+.current-orderby a {
+	padding-left: 20px;
+}
+
+.asc a {
+	background: url(../images/sort-col-asc.gif) no-repeat;
+}
+
+.desc a {
+	background: url(../images/sort-col-desc.gif) no-repeat;
+}
+
+.doc-edit-link {
+	margin: 15px 0 20px 0;
+}
+
+.doc-meta, #doc-meta, .docs #comments {
+	padding-top: 20px;
+	border-top: 1px solid #ddd;
+}
+
+div.docs-info-header {
+	background: #eaeaea;
+	padding: 5px 10px;
+	margin-bottom: 10px;
+}
+
+#associated_group_summary .item {
+	padding-top: 1em;
+}
+
+#associated_group_summary .meta {
+	font-size: 11px;
+	color: #888;
+}
+
+#associated_group_summary img.avatar {
+	margin-left: 0;
+}
+
+/* ATTACHMENTS */
+#doc-attachments-ul {
+	margin-top: 1em;
+	list-style-type: none;
+}
+
+#doc-attachments-ul li {
+	margin: 0px 5px 0px 0;
+	padding: 5px 0;
+}
+	#doc-attachments-ul li.even {
+		background-color: #eaeaea;
+	}
+
+#doc-attachments-ul .doc-attachment-delete {
+	float: right;
+	margin-top: .15em;
+	margin-right: .3em;
+}
+
+#buddypress table.doctable td {
+	vertical-align: top;
+}
+
+.bp-docs-attachment-clip {
+	cursor: pointer;
+	display: block;
+	margin-top: 10px;
+}
+
+.doc-attachment-mime-icon {
+	display: block;
+	float: left;
+	width: 24px;
+	height: 24px;
+	margin-right: 5px;
+	background: transparent url('../images/mime-type-sprites.png') no-repeat;
+}
+	/* Archive */
+	.doc-attachment-mime-tar,
+	.doc-attachment-mime-zip,
+	.doc-attachment-mime-gz,
+	.doc-attachment-mime-gzip,
+	.doc-attachment-mime-rar,
+	.doc-attachment-mime-7z {
+		background-position: 0 0px;
+	}
+
+	/* Audio */
+	.doc-attachment-mime-mp3,
+	.doc-attachment-mime-m4a,
+	.doc-attachment-mime-m4b,
+	.doc-attachment-mime-ra,
+	.doc-attachment-mime-ram,
+	.doc-attachment-mime-wav,
+	.doc-attachment-mime-ogg,
+	.doc-attachment-mime-oga,
+	.doc-attachment-mime-mid,
+	.doc-attachment-mime-midi,
+	.doc-attachment-mime-wma,
+	.doc-attachment-mime-mka {
+		background-position: 0 -40px;
+	}
+
+	/* Calendar */
+	.doc-attachment-mime-ics {
+		background-position: 0 -80px;
+	}
+
+	/* Database */
+	.doc-attachment-mime-mdb,
+	.doc-attachment-mime-odb {
+		background-position: 0 -120px;
+	}
+
+	/* Drawing */
+	.doc-attachment-mime-odg {
+		background-position: 0 -160px;
+	}
+
+	/* Image */
+	.doc-attachment-mime-jpg,
+	.doc-attachment-mime-jpeg,
+	.doc-attachment-mime-gif,
+	.doc-attachment-mime-png,
+	.doc-attachment-mime-bmp,
+	.doc-attachment-mime-tif,
+	.doc-attachment-mime-tiff,
+	.doc-attachment-mime-ico {
+		background-position: 0 -200px;
+	}
+
+	/* Report */
+	.doc-attachment-mime-pdf {
+		background-position: 0 -240px;
+	}
+
+	/* Spreadsheet */
+	.doc-attachment-mime-xla,
+	.doc-attachment-mime-xls,
+	.doc-attachment-mime-xlt,
+	.doc-attachment-mime-xlw,
+	.doc-attachment-mime-xlsx,
+	.doc-attachment-mime-xlsm,
+	.doc-attachment-mime-xlsb,
+	.doc-attachment-mime-xlsb,
+	.doc-attachment-mime-xlsx,
+	.doc-attachment-mime-xlsm,
+	.doc-attachment-mime-xlam,
+	.doc-attachment-mime-ods,
+	.doc-attachment-mime-odc {
+		background-position: 0 -280px;
+	}
+
+	/* Text */
+	.doc-attachment-mime-txt,
+	.doc-attachment-mime-asc,
+	.doc-attachment-mime-c,
+	.doc-attachment-mime-cc,
+	.doc-attachment-mime-h,
+	.doc-attachment-mime-csv,
+	.doc-attachment-mime-tsv,
+	.doc-attachment-mime-ics,
+	.doc-attachment-mime-rtx,
+	.doc-attachment-mime-css,
+	.doc-attachment-mime-htm,
+	.doc-attachment-mime-html {
+		background-position: 0 -320px;
+	}
+
+	/* Video */
+	.doc-attachment-mime-asf,
+	.doc-attachment-mime-asx,
+	.doc-attachment-mime-wax,
+	.doc-attachment-mime-wmv,
+	.doc-attachment-mime-wmx,
+	.doc-attachment-mime-avi,
+	.doc-attachment-mime-divx,
+	.doc-attachment-mime-flv,
+	.doc-attachment-mime-mov,
+	.doc-attachment-mime-qt,
+	.doc-attachment-mime-mpeg,
+	.doc-attachment-mime-mpg,
+	.doc-attachment-mime-mpe,
+	.doc-attachment-mime-mp4,
+	.doc-attachment-mime-m4v,
+	.doc-attachment-mime-ogv,
+	.doc-attachment-mime-mkv {
+		background-position: 0 -360px;
+	}
+
+body.js .bp-docs-attachment-drawer {
+	display: none;
+}
+
+.bp-docs-attachment-drawer h4 {
+	margin: .5em 0;
+}
+
+.bp-docs-attachment-drawer > ul > li {
+	margin-left: 0;
+}
+
+/* TOGGLES */
+
+.toggle-switch,
+.entry-content p.toggle-switch {
+	display: block;
+	font-weight: bold;
+	font-size: 1.1em;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	background: #bbb;
+	border: 1px solid #333;
+	padding: 3px 16px;
+	margin: 16px 0 0;
+}
+	.toggle-switch.active-switch {
+		-moz-border-radius-bottomleft: 10px;
+		-webkit-border-bottom-left-radius: 10px;
+		-moz-border-radius-bottomright: 10px;
+		-webkit-border-bottom-right-radius: 10px;
+		border-radius: 3px 3px 0px 0px;
+	}
+	.toggle-switch a {
+		text-decoration: none;
+		display: block;
+		width: 100%;
+		height: 100%;
+		color: #fff;
+	}
+	.toggle-switch a:hover {
+		color: #eee;
+	}
+	.standard-form label.toggle-switch {
+		margin: 16px 0 0;
+	}
+
+.toggle-content {
+	width: 100%;
+	-moz-border-radius-bottomleft: 3px;
+	-webkit-border-bottom-left-radius: 3px;
+	-moz-border-radius-bottomright: 3px;
+	-webkit-border-bottom-right-radius: 3px;
+	border: 1px solid #333;
+	border-top: none;
+	overflow: hidden;
+}
+
+.toggle-content *:first-child {
+	margin-left: 10px;
+}
+
+span.plus-or-minus {
+	font-size: 1.3em;
+	font-weight: normal;
+	display: block;
+	float: left;
+	width: 20px;
+}
+
+td.desc-column {
+	width: 300px;
+	padding: 0px 18px 12px;
+}
+
+.docs-info-header .docs-filter {
+	margin-bottom: 0;
+}
+
+#docs-filter-meta {
+	font-size: .8em;
+	color: #666;
+	margin-bottom: 0;
+}
+
+a.docs-filter-title {
+	margin: 0 7px;
+	text-decoration: none;
+}
+
+a.docs-filter-title:visited {
+	color: inherit;
+}
+
+a.docs-filter-title.current {
+	font-weight: bold;
+}
+
+.docs-filter-section {
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	font-size: .8em;
+	padding: 6px 10px;
+	margin-top: 8px;
+}
+
+body.js .docs-filter-section {
+	display: none;
+}
+	body.js .docs-filter-section.docs-filter-section-open {
+		display: block;
+	}
+
+p.currently-viewing {
+	margin-bottom: 5px;
+	font-size: .8em;
+	margin-top: 8px;
+}
+
+p#filter-by-tag {
+	margin-bottom: 0;
+}
+
+.docs-info-header .toggle-switch {
+	margin-top: 8px;
+}
+
+.entry-content ul#tags-list {
+	list-style-type: none;
+	margin-bottom: 0;
+}
+
+.entry-content #tags-list li {
+	margin-left: 0;
+}
+
+.groups-cell ul li img.avatar {
+	float: none;
+}
+
+.groups-cell ul li a {
+	vertical-align: middle;
+	font-size: .85em;
+}
+
+.groups-cell ul {
+	list-style-type: none;
+	padding-left: 0;
+}
+.groups-cell ul li {
+	margin-bottom: .5em;
+}
+
+select#has-attachment {
+	margin: 8px 10px;
+}
+
+div#bp-docs-pagination {
+	position: relative;
+	height: 30px;
+}
+	div#bp-docs-pagination-count {
+		position: absolute;
+		left: 0;
+		top: 5px;
+		font-size: .9em;
+		color: #999;
+	}
+	div#bp-docs-paginate-links {
+		position: absolute;
+		right: 0;
+		top: 5px;
+	}
+	div#bp-docs-paginate-links a {
+		padding: 0 4px;
+	}
+
+/* Single doc view */
+div.doc-content {
+	padding: 20px;
+	border: 3px solid #eaeaea;
+}
+	div.doc-content img {
+		margin: 10px;
+	}
+	div.doc-content img.mceIcon {
+		margin: 0;
+	}
+
+#bp-docs-single-doc-header {
+	overflow: hidden;
+}
+div.doc-permissions {
+	float: right;
+	width: 35%;
+	background: #f0f0f0;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 4px;
+}
+	div.doc-permissions div:last-child {
+		clear: both;
+	}
+
+/* On theme-compat, can't float next to title */
+#buddypress div.doc-permissions {
+	float: none;
+	width: auto;
+	margin-bottom: 1em;
+}
+
+#doc-permissions-summary, #doc-group-summary {
+	font-size: 1.0em;
+	padding: 3px 12px;
+	border: 1px solid;
+}
+	#doc-permissions-summary.doc-public {
+		background: #b2ffb2;
+		border-color: #00ff00;
+	}
+	#doc-permissions-summary.doc-limited {
+		background: #ffffe0;
+		border-color: #e6db55;
+	}
+	#doc-permissions-summary.doc-private {
+		background: #ffebe8;
+		border-color: #ff0000;
+	}
+
+a.doc-permissions-toggle {
+	display: block;
+	float: right;
+	font-size: 12px;
+	cursor: hand;
+}
+
+dl.doc-permissions-types dd,
+dl.doc-permissions-types dt {
+	height: 1.5em;
+}
+dl.doc-permissions-types dt {
+	width: 50%;
+	float: left;
+	clear: left;
+}
+
+#doc-group-summary {
+	border-color: #f0f0f0;
+}
+#doc-group-summary img.avatar {
+	float: none;
+}
+
+/* Permissions level icons */
+#doc-permissions-details ul {
+	list-style-type: none;
+	padding-left: 0;
+}
+#doc-permissions-details ul li {
+	margin-bottom: .5em;
+}
+span.bp-docs-level-icon {
+	display: block;
+	float: left;
+	width: 1.2em;
+	height: 1.2em;
+	margin: 3px 5px;
+}
+.bp-docs-level-anyone span.bp-docs-level-icon {
+	-moz-border-radius: .6em;
+	-webkit-border-radius: .6em;
+	border-radius: .6em;
+	background: green;
+}
+.bp-docs-level-friends span.bp-docs-level-icon,
+.bp-docs-level-loggedin span.bp-docs-level-icon,
+.bp-docs-level-group-members span.bp-docs-level-icon {
+	width: 0;
+	height: 0;
+	border-left: .6em solid transparent;
+	border-right: .6em solid transparent;
+	border-bottom: 1.2em solid yellow;
+}
+.bp-docs-level-admins-mods span.bp-docs-level-icon,
+.bp-docs-level-no-one span.bp-docs-level-icon,
+.bp-docs-level-creator span.bp-docs-level-icon {
+	background: red;
+}
+
+
+div.doc-is-locked .toggle-switch {
+	display: block;
+	background: #bbb url(../images/padlock.gif) no-repeat;
+	text-indent: 25px;
+	padding-top: 3px;
+}
+
+div.doc-is-locked .toggle-content {
+	border: 2px solid #f33;
+	margin-top: 5px;
+	padding: 7px 10px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+
+div.doc-meta p {
+	margin-bottom: 5px;
+}
+
+a.nonexistent-doc {
+	color: #f33;
+}
+
+h2.doc-title {
+	display: inline-block;
+	width: 50%;
+}
+
+/* Comment section */
+.comments-closed {
+	padding: 10px 20px;
+	background: #eaeaea;
+	margin-top: 10px;
+}
+
+#respond {
+	margin-top: 20px;
+}
+
+/* Reversing some resets done by bp-default */
+.doc-content ul {
+	list-style: disc;
+}
+
+.doc-content ol {
+	list-style: decimal;
+}
+
+.doc-content li {
+	margin-left: 20px;
+}
+
+.doc-content blockquote {
+	background: #eaeaea;
+	padding: 5px;
+	margin: 10px 30px;
+}
+
+/* GROUP ADMIN */
+
+div.hidden {
+	display: none;
+}
+
+table.group-docs-options td.label {
+	width: 200px;
+}
+
+/* HISTORY */
+
+table.diff {
+	width: 100%;
+}
+	table.diff col.content {
+		width: 50%;
+	}
+	table.diff tr {
+		background-color: transparent;
+	}
+	table.diff td, table.diff th {
+		padding: .5em;
+		font-family: Consolas, Monaco, Courier, monospace;
+		border: none;
+	}
+	table.diff .diff-deletedline del, table.diff .diff-addedline ins {
+		text-decoration: none;
+	}
+	table.diff .diff-deletedline {
+		background-color: #fdd;
+	}
+		table.diff .diff-deletedline del {
+			background-color: #f99;
+		}
+	table.diff .diff-addedline {
+		background-color: #dfd;
+	}
+		table.diff .diff-addedline ins {
+			background-color: #9f9;
+		}
+
+#att-info {
+	background-color: #E4F2FD;
+}
+
+table#post-revisions {
+	margin-top: 20px;
+}
+
+/* Use for text meant only for screen readers */
+.screen-reader-text {
+	clip: rect(1px, 1px, 1px, 1px);
+	height: 1px;
+	overflow: hidden;
+	position: absolute !important;
+	width: 1px;
+}

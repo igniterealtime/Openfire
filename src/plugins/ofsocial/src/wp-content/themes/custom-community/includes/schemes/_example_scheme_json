@@ -1,0 +1,17 @@
+{
+	'slug':'example',
+	'title':'Oranciata',
+	'file': {
+		'variation_of':'default'
+	},
+	'output_file': 'other-than-default.css',
+	'output_dir': '%cc2_schemes%',
+	'scheme': {
+		'_font_color':'111',
+		'_font_family':'font-family-sans-serif',
+		'_link_color':'F2914B',
+		'_hover_color':'F1BC5A',
+		'my_custom_hover_text_color':'090909',
+		'body-bg':'FFD5B4'
+	}
+}

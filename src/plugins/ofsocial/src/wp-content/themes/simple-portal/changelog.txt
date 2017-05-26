@@ -1,0 +1,113 @@
+1.0
+Added functions for the private portal.
+changed readme.txt
+bug fixing with some of the page templates
+minor style sheet changes
+header files edits
+regenerated pot file
+
+1.1
+removed .hidden from bootstrap responsive css files because it conflicts with BuddyPress 1.9
+changed news post type to being public view instead of just logged in view.
+
+1.2
+Changed colours in the main style sheet to yellow colour scheme.
+Changed description of theme in style sheet.
+Changed author.php so that contributors can submit a post in the Docs section if none is published for them already(fix).
+
+1.3
+Updated Po file
+
+1.4
+Removed custom login template
+removed function for custom login page
+removed thickbox function
+Updated deprecated function for showing user notifications in theme in functions.php
+
+1.5
+Made public view by default- different private and public page layouts can be set using page templates
+Removed custom post type for news
+
+1.6
+Added if buddypress components are active rules for the user menu.
+
+1.7
+Added conditionals taking into account if buddypress is not active so that theme can be activated and used without BuddyPress
+
+1.8
+Added page templates for alternate sub-page galleries
+edited sub-page gallery and gallery page templates
+Added post thumbnail size
+
+1.9
+Added style changes to main stylesheet for the .img.thumbnail
+Changed navbar- removed background colour as bootstrap css uses same class
+removed inclusion of bootstrap theme.css
+
+2.0
+Added conditionals in functions.php in case buddypress is not active. 
+
+2.1
+Added style to allow hidden groups in BuddyPress to be seen. Bootstrap 3 adds a .hidden class that hides them because BuddyPress adds a .hidden to the hidden groups.
+Updated screen shot.
+
+2.2
+
+Fixed a conditional query in the footer.
+
+2.3
+Fixed display of the sign in button in public-header.php
+Removed robots stuff in header files (missed that from an older version sorry)
+Updated the html5shiv.js and respond.min.js in header files and js folder
+
+2.4
+changed template uri in header files to stylesheet uri for HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries
+
+2.5
+Removed Privacy page templates function from the theme as it was seen as a plugin functionality
+Changed readme file
+Made bbpress pages full width as well
+removed logged out widget
+
+2.6
+Changed entry H1 in style sheet
+Escaped bloginfo and home_url in header files
+Removed php flush
+Removed if IE6 from header
+Removed css and js files which were not being enqueued
+Updated footer div conditional statements to match header-public
+Fixed unique theme slug in functions.php for menus
+Removed buddypress profile privacy redirect function
+Updated language po file
+Added print style sheet for bbpress forums
+
+2.7
+Removed extra / in header files for links to buddypress areas.
+Declared content width at the top of functions.php and corrected to the right width 828.
+enqueued the respond.min.js and html5shiv.js in functions.php conditionally
+Changed copyright notice in readme.txt
+Removed headers folder in images folder of theme as not used.
+Added class to the H1 tag class="site-title" and got the colour change to work
+The Heading color is tough to read with a red background- fixed with #000
+Need styling for the navigations of the gallery - fixed so don't go over the image.
+The chat, quote and the link post needed padding
+The sidebar image for text widget overflows- added rule in stylesheet for div.well img
+Images in text widget areas fixed with setting max-width css property
+Changed Screenshot
+
+2.8
+Issue: It is not needed to register internal styles and enqueue it after that- fixed in functions.php
+Issue In header.php we allow only one JS, which would be HTML5- I've enqueued both respond.min.js and html5shiv.js in functions.php conditionally
+
+2.9
+I was testing with the beta buddypress without bbpress active and noticed the profile pages were not full width- so I have fixed this adding bp_is_user() to the statements in header.php and footer.php.(See http://codex.buddypress.org/developer/template-tag-reference/ for more information on tags).
+Added a css override for td.label in style.css so the labels show up on the profile pages for buddypress
+
+3.0
+Changed style sheet rules to fit better with bootstrap styles on the links and colours for post formats.
+
+3.1
+Added missing images into images folder that were referenced in the style.css
+Fixed some minor HTML validation errors in public-subpages-4-column.php and public-subpages.php, deleted the skip to content anchor link. 
+Changed the upper right login link appearance from a button to a text link and added a glyphicon.
+Added a glyphicon to the user menu in the top right as well.

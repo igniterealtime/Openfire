@@ -16,24 +16,6 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
@@ -49,30 +31,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.resultsetmanagement.Result;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
+
 /**
- * Encapsulates information about a user. New users are created using
- * {@link UserManager#createUser(String, String, String, String)}. All user
- * properties are loaded on demand and are read from the <tt>ofUserProp</tt>
- * database table. The currently-installed {@link UserProvider} is used for
- * setting all other user data and some operations may not be supported
- * depending on the capabilities of the {@link UserProvider}.
+ * Encapsulates information about a user.
+ *
+ * New users are created using {@link UserManager#createUser(String, String, String, String)}.
+ *
+ * The currently-installed {@link UserProvider} is used for setting all other user data and some operations may not be
+ * supported depending on the capabilities of the {@link UserProvider}.
+ *
+ * All user properties are loaded on demand from the currently-installed
+ * {@link org.jivesoftware.openfire.user.property.UserPropertyProvider}.
  *
  * @author Matt Tucker
  */
 public class User implements Cacheable, Externalizable, Result {
 
-	private static final Logger Log = LoggerFactory.getLogger(User.class);
-
-    private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM ofUserProp WHERE username=?";
-    private static final String LOAD_PROPERTY =
-        "SELECT propValue FROM ofUserProp WHERE username=? AND name=?";
-    private static final String DELETE_PROPERTY =
-        "DELETE FROM ofUserProp WHERE username=? AND name=?";
-    private static final String UPDATE_PROPERTY =
-        "UPDATE ofUserProp SET propValue=? WHERE name=? AND username=?";
-    private static final String INSERT_PROPERTY =
-        "INSERT INTO ofUserProp (username, name, propValue) VALUES (?, ?, ?)";
+    private static final Logger Log = LoggerFactory.getLogger(User.class);
 
     // The name of the name visible property
     private static final String NAME_VISIBLE_PROPERTY = "name.visible";
@@ -98,29 +78,10 @@ public class User implements Cacheable, Externalizable, Result {
      * @param username the username of the user to get a specific property value.
      * @param propertyName the name of the property to return its value.
      * @return the value of the specified property for the given username.
+     * @throws UserNotFoundException Depending on the installed user provider (some will return null instead).
      */
-    public static String getPropertyValue(String username, String propertyName) {
-        String propertyValue = null;
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propertyName);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                propertyValue = rs.getString(1);
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return propertyValue;
+    public static String getPropertyValue(String username, String propertyName) throws UserNotFoundException {
+        return UserManager.getUserPropertyProvider().loadProperty( username, propertyName );
     }
 
     /**
@@ -195,35 +156,35 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e.getMessage(), e);
         }
     }
-    
+
     public String getStoredKey() {
     	return storedKey;
     }
-    
+
     public void setStoredKey(String storedKey) {
     	this.storedKey = storedKey;
     }
-    
+
     public String getServerKey() {
     	return serverKey;
     }
-    
+
     public void setServerKey(String serverKey) {
     	this.serverKey = serverKey;
     }
-    
+
     public String getSalt() {
     	return salt;
     }
-    
+
     public void setSalt(String salt) {
     	this.salt = salt;
     }
-    
+
     public int getIterations() {
     	return iterations;
     }
-    
+
     public void setIterations(int iterations) {
     	this.iterations = iterations;
     }
@@ -398,8 +359,11 @@ public class User implements Cacheable, Externalizable, Result {
     public Map<String,String> getProperties() {
         synchronized (this) {
             if (properties == null) {
-                properties = new ConcurrentHashMap<>();
-                loadProperties();
+                try {
+                    properties = UserManager.getUserPropertyProvider().loadProperties( username );
+                } catch (UserNotFoundException e ) {
+                    Log.error( "Unable to retrieve properties for user " + username, e );
+                }
             }
         }
         // Return a wrapper that will intercept add and remove commands.
@@ -472,28 +436,34 @@ public class User implements Cacheable, Externalizable, Result {
             String answer;
             String keyString = key;
 
-            synchronized (getName() + keyString.intern()) {
-                if (properties.containsKey(keyString)) {
-                    String originalValue = properties.get(keyString);
-                    answer = properties.put(keyString, value);
-                    updateProperty(keyString, value);
-                    // Configure event.
-                    eventParams.put("type", "propertyModified");
-                    eventParams.put("propertyKey", key);
-                    eventParams.put("originalValue", originalValue);
+            try {
+                synchronized (getName() + keyString.intern()) {
+                    if (properties.containsKey(keyString)) {
+                        String originalValue = properties.get(keyString);
+                        answer = properties.put(keyString, value);
+                        UserManager.getUserPropertyProvider().updateProperty(username, keyString, value);
+                        // Configure event.
+                        eventParams.put("type", "propertyModified");
+                        eventParams.put("propertyKey", key);
+                        eventParams.put("originalValue", originalValue);
+                    }
+                    else {
+                        answer = properties.put(keyString, value);
+                        UserManager.getUserPropertyProvider().insertProperty(username, keyString, value);
+                        // Configure event.
+                        eventParams.put("type", "propertyAdded");
+                        eventParams.put("propertyKey", key);
+                    }
                 }
-                else {
-                    answer = properties.put(keyString, value);
-                    insertProperty(keyString, value);
-                    // Configure event.
-                    eventParams.put("type", "propertyAdded");
-                    eventParams.put("propertyKey", key);
-                }
+
+                // Fire event.
+                UserEventDispatcher.dispatchEvent(User.this,
+                                                  UserEventDispatcher.EventType.user_modified, eventParams);
+                return answer;
+            } catch (UserNotFoundException e ) {
+                Log.error( "Unable to put property for user " + username, e );
             }
-            // Fire event.
-            UserEventDispatcher.dispatchEvent(User.this,
-                    UserEventDispatcher.EventType.user_modified, eventParams);
-            return answer;
+            return null;
         }
 
         @Override
@@ -536,93 +506,20 @@ public class User implements Cacheable, Externalizable, Result {
                         throw new IllegalStateException();
                     }
                     String key = current.getKey();
-                    deleteProperty(key);
-                    iter.remove();
-                    // Fire event.
-                    Map<String,Object> params = new HashMap<>();
-                    params.put("type", "propertyDeleted");
-                    params.put("propertyKey", key);
-                    UserEventDispatcher.dispatchEvent(User.this,
-                        UserEventDispatcher.EventType.user_modified, params);
+                    try {
+                        UserManager.getUserPropertyProvider().deleteProperty(username, key);
+                        iter.remove();
+                        // Fire event.
+                        Map<String,Object> params = new HashMap<>();
+                        params.put("type", "propertyDeleted");
+                        params.put("propertyKey", key);
+                        UserEventDispatcher.dispatchEvent(User.this,
+                                                          UserEventDispatcher.EventType.user_modified, params);
+                    } catch (UserNotFoundException e ) {
+                        Log.error( "Unable to delete property for user " + username, e );
+                    }
                 }
             };
-        }
-    }
-
-    private void loadProperties() {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, username);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                properties.put(rs.getString(1), rs.getString(2));
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    private void insertProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, propValue);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void updateProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, propValue);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, username);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void deleteProperty(String propName) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

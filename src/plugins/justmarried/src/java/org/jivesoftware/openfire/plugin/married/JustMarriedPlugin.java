@@ -98,9 +98,7 @@ public class JustMarriedPlugin implements Plugin {
 	}
 
 	private static void copyProperties(User currentUser, User newUser) {
-		for (String key : currentUser.getProperties().keySet()) {
-			newUser.getProperties().put(key, User.getPropertyValue(currentUser.getUsername(), key));
-		}
+		newUser.getProperties().putAll( currentUser.getProperties() );
 	}
 
 	private static void copyRoster(User currentUser, User newUser, String currentUserName) {

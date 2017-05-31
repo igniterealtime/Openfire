@@ -5,8 +5,8 @@
     <name>REST API</name>
     <description>Allows administration over a RESTful API.</description>
     <author>Roman Soldatow</author>
-    <version>1.2.5</version>
-    <date>10/14/2016</date>
+    <version>1.2.6</version>
+    <date>05/31/2017</date>
     <minServerVersion>4.1.0</minServerVersion>
     <adminconsole>
         <tab id="tab-server">

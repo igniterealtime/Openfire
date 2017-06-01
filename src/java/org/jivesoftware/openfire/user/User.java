@@ -437,7 +437,7 @@ public class User implements Cacheable, Externalizable, Result {
             String keyString = key;
 
             try {
-                synchronized (getName() + keyString.intern()) {
+                synchronized ((getName() + keyString).intern()) {
                     if (properties.containsKey(keyString)) {
                         String originalValue = properties.get(keyString);
                         answer = properties.put(keyString, value);

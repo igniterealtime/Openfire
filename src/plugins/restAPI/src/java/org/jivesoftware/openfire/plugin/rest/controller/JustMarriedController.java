@@ -148,9 +148,7 @@ public class JustMarriedController {
 	 *            the new user
 	 */
 	private static void copyProperties(User currentUser, User newUser) {
-		for (String key : currentUser.getProperties().keySet()) {
-			newUser.getProperties().put(key, User.getPropertyValue(currentUser.getUsername(), key));
-		}
+		newUser.getProperties().putAll( currentUser.getProperties() );
 	}
 
 	/**

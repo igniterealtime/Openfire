@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.session;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -40,10 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
 
 /**
  * Represents a session between the server and a client.
@@ -51,6 +49,8 @@ import org.xmpp.packet.StreamError;
  * @author Gaston Dombiak
  */
 public class LocalClientSession extends LocalSession implements ClientSession {
+
+    private static final String DISCARD_CARBON_SPOOF = "discard.carbon.spoof";
 
 	private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
 
@@ -932,6 +932,26 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     @Override
 	public boolean canProcess(Packet packet) {
+        if (JiveGlobals.getBooleanProperty(DISCARD_CARBON_SPOOF, true)) {
+            Message msg = (Message)packet;
+            if (msg != null) {
+                PacketExtension carbon = msg.getExtension("received", "urn:xmpp:carbons:2");
+                if (carbon != null) {
+                    try {
+                        Element copy = carbon.getElement().element("forwarded").element("message");
+                        JID carbonFrom = new JID(copy.attribute("from").getValue());
+                        if (carbonFrom.asBareJID() != packet.getFrom()) {
+                            Log.info("Carbons message appears spoofed, dropping");
+                            return false;
+                        }
+                    } catch(NullPointerException e) {
+                        // So this is odd - a Carbon without the right structure. Drop it, I think.
+                        Log.info("Carbons message is malformed? Dropping:", e);
+                        return false;
+                    }
+                }
+            }
+        }
 
         PrivacyList list = getActiveList();
         if (list != null) {

@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
+import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,6 +169,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
         // Setup the default handlers. Order is important here. First, evaluate if the 'standard' handlers can be used to fulfill requests.
         this.handlerList.addHandler( createBoshHandler() );
+        this.handlerList.addHandler( createWebsocketHandler() );
         this.handlerList.addHandler( createCrossDomainHandler() );
 
         // When standard handling does not apply, see if any of the handlers in the extension pool of handlers applies to the request.
@@ -604,6 +606,25 @@ public final class HttpBindManager implements CertificateEventListener, Property
             filterHolder.setFilter( gzipFilter );
             context.addFilter( filterHolder, "/*", EnumSet.of( DispatcherType.REQUEST ) );
         }
+
+        return context;
+    }
+
+    /**
+     * Creates a Jetty context handler that can be used to expose Websocket functionality.
+     *
+     * Note that an invocation of this method will not register the handler (and thus make the related functionality
+     * available to the end user). Instead, the created handler is returned by this method, and will need to be
+     * registered with the embedded Jetty webserver by the caller.
+     *
+     * @return A Jetty context handler (never null).
+     */
+    protected Handler createWebsocketHandler()
+    {
+        final ServletContextHandler context = new ServletContextHandler( null, "/ws", ServletContextHandler.SESSIONS );
+
+        // Add the functionality-providers.
+        context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
 
         return context;
     }

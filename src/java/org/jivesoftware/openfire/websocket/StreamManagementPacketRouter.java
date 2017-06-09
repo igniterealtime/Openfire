@@ -41,35 +41,35 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class StreamManagementPacketRouter extends SessionPacketRouter {
 
-	public static final String SM_UNSOLICITED_ACK_FREQUENCY = "stream.management.unsolicitedAckFrequency";
-	static {
-		JiveGlobals.migrateProperty(SM_UNSOLICITED_ACK_FREQUENCY);
-	}
-	
-	private int unsolicitedAckFrequency = JiveGlobals.getIntProperty(SM_UNSOLICITED_ACK_FREQUENCY, 0);
-	
-	public StreamManagementPacketRouter(LocalClientSession session) {
-		super(session);
-	}
+    public static final String SM_UNSOLICITED_ACK_FREQUENCY = "stream.management.unsolicitedAckFrequency";
+    static {
+        JiveGlobals.migrateProperty(SM_UNSOLICITED_ACK_FREQUENCY);
+    }
 
-	@Override
-	public void route(Element wrappedElement) throws UnknownStanzaException {
-		
-		if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {
-			session.getStreamManager().process( wrappedElement, session.getAddress() );
+    private int unsolicitedAckFrequency = JiveGlobals.getIntProperty(SM_UNSOLICITED_ACK_FREQUENCY, 0);
+
+    public StreamManagementPacketRouter(LocalClientSession session) {
+        super(session);
+    }
+
+    @Override
+    public void route(Element wrappedElement) throws UnknownStanzaException {
+
+        if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {
+            session.getStreamManager().process( wrappedElement, session.getAddress() );
         } else {
-        	super.route(wrappedElement);
-			if (isUnsolicitedAckExpected()) {
-				session.getStreamManager().sendServerAcknowledgement();
-			}
-		}
-	}
+            super.route(wrappedElement);
+            if (isUnsolicitedAckExpected()) {
+                session.getStreamManager().sendServerAcknowledgement();
+            }
+        }
+    }
 
-	private boolean isUnsolicitedAckExpected() {
-		if (!session.getStreamManager().isEnabled()) {
-			return false;
-		}
-		return unsolicitedAckFrequency > 0 && session.getNumClientPackets() % unsolicitedAckFrequency == 0;
-	}
+    private boolean isUnsolicitedAckExpected() {
+        if (!session.getStreamManager().isEnabled()) {
+            return false;
+        }
+        return unsolicitedAckFrequency > 0 && session.getNumClientPackets() % unsolicitedAckFrequency == 0;
+    }
 
 }

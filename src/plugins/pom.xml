@@ -50,7 +50,6 @@
         <module>userCreation</module>
         <module>userImportExport</module>
         <module>userservice</module>
-        <module>websocket</module>
         <module>xmldebugger</module>
     </modules>
 

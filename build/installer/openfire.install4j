@@ -487,7 +487,7 @@
                     </object>
                   </java>
                 </serializedBean>
-                <condition />
+                <condition>context.getBooleanVariable("executeLauncherAction") &amp;&amp; (!context.isUnattended())</condition>
               </action>
               <action name="" id="1348" customizedId="" beanClass="com.install4j.runtime.beans.actions.finish.ShowURLAction" enabled="true" commentSet="false" comment="" actionElevationType="none" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
                 <serializedBean>
@@ -499,7 +499,7 @@
                     </object>
                   </java>
                 </serializedBean>
-                <condition>!context.isUnattended()</condition>
+                <condition>context.getBooleanVariable("executeLauncherAction") &amp;&amp; (!context.isUnattended())</condition>
               </action>
             </actions>
             <formComponents>
@@ -508,7 +508,7 @@
                   <java class="java.beans.XMLDecoder">
                     <object class="com.install4j.runtime.beans.formcomponents.CheckboxComponent">
                       <void property="checkboxText">
-                        <string>${i18n:RunEntryExec("${compiler:sys.fullName}")}</string>
+                        <string>Start Openfire Service</string>
                       </void>
                       <void property="initiallySelected">
                         <boolean>true</boolean>
@@ -803,7 +803,7 @@
         <customAttributes />
       </autoUpdate>
     </windowsArchive>
-    <windows name="Windows x64" id="1354" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows x64" id="1354" customizedId="" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>

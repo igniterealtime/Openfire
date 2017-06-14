@@ -15,70 +15,70 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.PresenceManager,
-                 org.jivesoftware.openfire.group.Group,
-                 org.jivesoftware.openfire.group.GroupManager,
-                 org.jivesoftware.openfire.security.SecurityAuditManager,
-                 org.jivesoftware.openfire.user.User,
-                 org.jivesoftware.openfire.user.UserManager,
-                 org.jivesoftware.openfire.user.UserNotFoundException"
-%>
 <%@ page import="gnu.inet.encoding.Stringprep"%>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.openfire.group.Group"%>
+<%@ page import="org.jivesoftware.openfire.group.GroupManager"%>
+<%@ page import="org.jivesoftware.openfire.group.GroupNotFoundException"%>
+<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager"%>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.openfire.user.UserNotFoundException"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
-<%@ page import="java.net.URLDecoder"%>
-<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.net.URLDecoder" %>
+<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
+
 <%  webManager.init(pageContext); %>
 
 <%  // Get parameters
-    boolean add = request.getParameter("add") != null;
-    boolean delete = request.getParameter("remove") != null;
+    boolean updateDetails = request.getParameter( "updateDetails" ) != null;
+    boolean addMember = request.getParameter( "addMember") != null;
+    boolean removeMember = request.getParameter( "removeMember") != null;
     boolean updateMember = request.getParameter("updateMember") != null;
-    boolean update = request.getParameter("save") != null;
+    boolean updateContactListSettings = request.getParameter("updateContactListSettings") != null;
     boolean cancel = request.getParameter("cancel") != null;
+
+    String name = ParamUtils.getParameter( request, "name" ); // update for group name
+    String description = ParamUtils.getParameter( request, "description" ); // update for group description.
+
     String username = ParamUtils.getParameter(request, "username");
-    String [] adminIDs = ParamUtils.getParameters(request, "admin");
+    String [] adminJIDs = ParamUtils.getParameters(request, "admin");
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
-    Map<String,String> errors = new HashMap<String,String>();
-
-    // Get the presence manager
-    PresenceManager presenceManager = webManager.getPresenceManager();
-    UserManager userManager = webManager.getUserManager();
+    Map<String,String> errors = new HashMap<>();
 
     boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
-    boolean shareAdditional = ParamUtils.getParameter(request, "shareContactList") != null;
     String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
     String showGroup = ParamUtils.getParameter(request,"showGroup");
-    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
+    List<String> groupNames = Arrays.asList(ParamUtils.getParameters(request, "groupNames"));
 
     Group group = groupManager.getGroup(groupName);
     boolean success;
-    StringBuffer errorBuf = new StringBuffer();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (add || delete || updateMember || update) {
+    if ( addMember || removeMember || updateMember || updateContactListSettings || updateDetails ) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            add = false;
-            delete = false;
-            update = false;
+            addMember = false;
+            removeMember = false;
+            updateContactListSettings = false;
             updateMember = false;
+            updateDetails = false;
             errors.put("csrf", "CSRF Failure!");
         }
     }
@@ -91,33 +91,89 @@
         return;
     }
 
-    if (update) {
-        if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0)) {
-            errors.put("groupDisplayName", "");
+    // Handle a request to update the group details (name, description).
+    if ( updateDetails )
+    {
+        // Validate
+        if ( name == null || name.trim().isEmpty() )
+        {
+            errors.put( "name", "Name cannot be null or empty." );
         }
-        if (errors.isEmpty()) {
-            if (enableRosterGroups) {
-                if (showGroup == null || !shareAdditional) {
+        else if ( !groupName.equalsIgnoreCase( name.trim() ) )
+        {
+            try
+            {
+                webManager.getGroupManager().getGroup( name.trim(), true );
+                errors.put( "alreadyExists", name.trim() );
+            }
+            catch ( GroupNotFoundException e)
+            {
+                // intended.
+            }
+        }
+
+        if ( errors.isEmpty() )
+        {
+            try
+            {
+                webManager.getGroupManager().getGroup( groupName );
+                group.setName( name.trim() );
+                group.setDescription( description != null ? description.trim() : null );
+
+                if ( !SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents() )
+                {
+                    // Log the event
+                    webManager.logEvent( "edited group " + groupName, "name = " + group.getName() + ",description = " + group.getDescription() );
+                }
+
+                // Successful, so redirect
+                response.sendRedirect( "group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode( group.getName(), "UTF-8" ) );
+                return;
+            }
+            catch ( Exception e )
+            {
+                errors.put( "general", e.getMessage() );
+            }
+        }
+    }
+
+    // Handle a request to update the contact list settings.
+    if ( updateContactListSettings )
+    {
+        if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0))
+        {
+            errors.put("groupDisplayName", "Group display name cannot be null or empty.");
+        }
+
+        if (errors.isEmpty())
+        {
+            if (enableRosterGroups)
+            {
+                if ( !"spefgroups".equals( showGroup ) )
+                {
+                    // not spefgroups? Either 'everybody' or 'onlyGroups' - in any case, no 'groupList' should be empty.
+                    groupNames = new ArrayList<>();
+                }
+
+                // The stored value for 'showInRoster' is either 'onlyGroups' or 'everybody', when sharing is enabled
+                // 'spefgroups' isn't actually saved. That's represented by 'onlyGroups' combined with a 'groupList'.
+                if ( !"everybody".equals( showGroup ) )
+                {
                     showGroup = "onlyGroup";
                 }
-                if ("spefgroups".equals(showGroup)) {
-                    showGroup = "onlyGroup";
-                }
-                else {
-                    groupNames = new String[] {};
-                }
-                group.getProperties().put("sharedRoster.showInRoster", showGroup);
-                if (groupDisplayName != null) {
-                    group.getProperties().put("sharedRoster.displayName", groupDisplayName);
-                }
-                group.getProperties().put("sharedRoster.groupList", toList(groupNames, "UTF-8"));
+
+                // update
+                group.getProperties().put( "sharedRoster.showInRoster", showGroup );
+                group.getProperties().put( "sharedRoster.displayName", groupDisplayName.trim() );
+                group.getProperties().put( "sharedRoster.groupList", toList( groupNames.toArray( new String[]{} ) ) );
 
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
                     // Log the event
-                    webManager.logEvent("enabled roster groups for "+groupName, "showinroster = "+showGroup+"\ndisplayname = "+groupDisplayName+"\ngrouplist = "+toList(groupNames, "UTF-8"));
+                    webManager.logEvent("enabled roster groups for "+groupName, "showinroster = "+showGroup+"\ndisplayname = "+groupDisplayName+"\ngrouplist = "+toList(groupNames.toArray( new String[]{} ) ));
                 }
             }
-            else {
+            else
+            {
                 group.getProperties().put("sharedRoster.showInRoster", "nobody");
                 group.getProperties().put("sharedRoster.displayName", "");
                 group.getProperties().put("sharedRoster.groupList", "");
@@ -132,107 +188,110 @@
             response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
             return;
         }
-        else {
-            // Continue editing since there are some errors
-            updateMember = false;
-        }
     }
 
+    // Handle a request to update the privilege of an existing group member.
+    if (errors.isEmpty() && updateMember)
+    {
+        final Set<JID> newAdmins = new HashSet<>();
+        for ( final String adminJID : adminJIDs )
+        {
+            newAdmins.add( new JID( adminJID ) );
+        }
 
-    if (updateMember) {
-        Set<JID> adminIDSet = new HashSet<JID>();
-        for (String adminID : adminIDs) {
-            JID newAdmin = new JID(adminID);
-            adminIDSet.add(newAdmin);
-            boolean isAlreadyAdmin = group.getAdmins().contains(newAdmin);
-            if (!isAlreadyAdmin) {
-                // Add new admin
-                group.getAdmins().add(newAdmin);
+        // Process changes to admins. First, add users that are newly marked as 'admin'...
+        for ( final JID newAdmin : newAdmins )
+        {
+            if ( !group.getAdmins().contains( newAdmin ) )
+            {
+                group.getAdmins().add( newAdmin );
             }
         }
-        Collection<JID> admins = Collections.unmodifiableCollection(group.getAdmins());
-        Set<JID> removeList = new HashSet<JID>();
-        for (JID admin : admins) {
-            if (!adminIDSet.contains(admin)) {
-                removeList.add(admin);
-            }
+
+        // ... all users that are unmarked should be moved from the 'admins' group to the 'members' group.
+        final Set<JID> oldAdmins = new HashSet<>( group.getAdmins() );
+        oldAdmins.removeAll( newAdmins ); // All left are no longer supposed to be admins.
+        for ( final JID oldAdmin : oldAdmins )
+        {
+            // Update privilege by explicitly adding the old admin to the member group.
+            group.getMembers().add(oldAdmin);
         }
-        for (JID member : removeList) {
-            group.getMembers().add(member);
-        }
-        if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+
+        if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents())
+        {
             // Log the event
-            // TODO: Should log more here later
             webManager.logEvent("updated group membership for "+groupName, null);
         }
+
         // Get admin list and compare it the admin posted list.
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
         return;
     }
-    else if (add && username != null) {
-        int count = 0;
-        username = username.trim();
-        username = username.toLowerCase();
 
-        if (username.indexOf('@') != -1) {
-            try {
-                UserManager.getInstance().getUser(JID.escapeNode(username));
-                // That means that this user has an email address as their node.
-                username = JID.escapeNode(username);
-            }
-            catch (UserNotFoundException e) {
-
-            }
+    // Handle a request to add a new group member.
+    if ( errors.isEmpty() && addMember)
+    {
+        if ( username == null || username.trim().isEmpty() )
+        {
+            errors.put( "addMember", "username" );
         }
+        else
+        {
+            boolean memberAdded = false;
+            username = username.trim();
+            username = username.toLowerCase();
 
-        // Add to group as member by default.
-        try {
-            boolean added;
-            if (username.indexOf('@') == -1) {
-                // No @ was found so assume this is a JID of a local user
-                username = JID.escapeNode(username);
-                username = Stringprep.nodeprep(username);
-                UserManager.getInstance().getUser(username);
-                added = group.getMembers().add(webManager.getXMPPServer().createJID(username, null));
-            }
-            else {
-                // Admin entered a JID. Add the JID directly to the list of group members
-                added = group.getMembers().add(new JID(username));
-                if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
-                    // Log the event
-                    webManager.logEvent("added group member to "+groupName, "username = "+username);
+            if ( username.contains( "@" ) )
+            {
+                try
+                {
+                    UserManager.getInstance().getUser( JID.escapeNode( username ) );
+                    // That means that this user has an email address as their node.
+                    username = JID.escapeNode( username );
+                }
+                catch (UserNotFoundException e)
+                {
+                    // that's ok.
                 }
             }
 
-            if (added) {
-                count++;
+            // Add to group as member by default.
+            try
+            {
+                if ( !username.contains( "@" ) )
+                {
+                    // No @ was found so assume this is a JID of a local user
+                    username = JID.escapeNode(username);
+                    username = Stringprep.nodeprep(username);
+                    UserManager.getInstance().getUser(username);
+                    memberAdded = group.getMembers().add(webManager.getXMPPServer().createJID(username, null));
+                }
+                else
+                {
+                    // Admin entered a JID. Add the JID directly to the list of group members
+                    memberAdded = group.getMembers().add( new JID(username) );
+                    if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
+                        // Log the event
+                        webManager.logEvent("added group member to "+groupName, "username = "+username);
+                    }
+                }
             }
-            else {
-                errorBuf.append("<br>").append(
-                        LocaleUtils.getLocalizedString("group.edit.already_user", Arrays.asList(username)));
+            catch ( Exception e )
+            {
+                errors.put( "general", e.getMessage() );
+                Log.warn("Problem adding new user to existing group", e);
             }
 
+            if ( memberAdded )
+            {
+                response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&success=true");
+                return;
+            }
         }
-        catch (Exception e) {
-            Log.warn("Problem adding new user to existing group", e);
-            errorBuf.append("<br>").append(
-                    LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
-        }
-        if (count > 0) {
-            response.sendRedirect("group-edit.jsp?group=" +
-                    URLEncoder.encode(groupName, "UTF-8") + "&success=true");
-            return;
-        }
-        else {
-            success = false;
-            add = true;
-        }
+    }
 
-    }
-    else if(add && username == null){
-        add = false;
-    }
-    else if (delete) {
+    // Handle a request to remove group members.
+    if ( errors.isEmpty() && removeMember ) {
         for (String deleteMember : deleteMembers) {
             JID member = new JID(deleteMember);
             group.getMembers().remove(member);
@@ -241,297 +300,303 @@
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true");
         return;
     }
+
     success = groupInfoChanged || "true".equals(request.getParameter("success")) ||
             "true".equals(request.getParameter("deletesuccess")) ||
             "true".equals(request.getParameter("updatesuccess")) ||
             "true".equals(request.getParameter("creategroupsuccess"));
 
-    if (errors.size() == 0) {
-        showGroup = group.getProperties().get("sharedRoster.showInRoster");
-        enableRosterGroups = !"nobody".equals(showGroup);
-        shareAdditional = "everybody".equals(showGroup);
-        if ("onlyGroup".equals(showGroup)) {
-            String glist = group.getProperties().get("sharedRoster.groupList");
-            List<String> l = new ArrayList<String>();
-            if (glist != null) {
-                StringTokenizer tokenizer = new StringTokenizer(glist,",\t\n\r\f");
-                while (tokenizer.hasMoreTokens()) {
-                    String tok = tokenizer.nextToken().trim();
-                    l.add(tok.trim());
-                }
-                if (!l.isEmpty()) {
-                    shareAdditional = true;
-                }
+    showGroup = group.getProperties().get( "sharedRoster.showInRoster" );
+    if ( "onlyGroup".equals( showGroup ) )
+    {
+        String glist = group.getProperties().get( "sharedRoster.groupList" );
+        List<String> l = new ArrayList<>();
+        if ( glist != null )
+        {
+            StringTokenizer tokenizer = new StringTokenizer( glist, ",\t\n\r\f" );
+            while ( tokenizer.hasMoreTokens() )
+            {
+                String tok = tokenizer.nextToken().trim();
+                l.add( tok.trim() );
             }
-            groupNames = l.toArray(new String[]{});
         }
-        groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
+        groupNames = l;
     }
+
+    pageContext.setAttribute( "success", success );
+    pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "groupInfoChanged", groupInfoChanged );
+    pageContext.setAttribute( "group", group );
+    pageContext.setAttribute( "groupNames", groupNames );
+
+    final List<JID> allMembers = new ArrayList<>();
+    allMembers.addAll( group.getAdmins() );
+    allMembers.addAll( group.getMembers() );
+    Collections.sort( allMembers );
+    pageContext.setAttribute( "allMembers", allMembers );
 %>
 
 <html>
 <head>
 <title><fmt:message key="group.edit.title"/></title>
 <meta name="subPageID" content="group-edit"/>
-<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+<meta name="extraParams" content="group=${fn:escapeXml(param.group)}"/>
 <meta name="helpPage" content="edit_group_properties.html"/>
 </head>
 <body>
-
-<% if (webManager.getGroupManager().isReadOnly()) { %>
-<div class="error">
-    <fmt:message key="group.read_only"/>
-</div>
-<% } %>
 
 <p>
 	<fmt:message key="group.edit.form_info" />
 </p>
 
-<p>
-	<a href="group-summary.jsp" class="jive-link-back"><span>&laquo;</span> Back to all groups</a>
-</p>
+<c:if test="${not empty errors['general']}">
+    <admin:infobox type="error">
+        <fmt:message key="group.edit.error" />
+    </admin:infobox>
+</c:if>
+<c:if test="${not empty errors['csrf']}">
+    <admin:infobox type="error">
+        <fmt:message key="global.csrf.failed" />
+    </admin:infobox>
+</c:if>
 
-<%
-    if (success) {
-%>
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <% if (groupInfoChanged) { %>
-        <fmt:message key="group.edit.update" />
-        <% } else if ("true".equals(request.getParameter("success"))) { %>
-            <fmt:message key="group.edit.update_add_user" />
-        <% } else if ("true".equals(request.getParameter("deletesuccess"))) { %>
-            <fmt:message key="group.edit.update_del_user" />
-        <% } else if ("true".equals(request.getParameter("updatesuccess"))) { %>
-            <fmt:message key="group.edit.update_user" />
-         <% } else if ("true".equals(request.getParameter("creategroupsuccess"))) { %>
-            <fmt:message key="group.edit.update_success" />
-        <%
-            }
-        %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%
-    }
-    else if(!success && add){
-%>
-	<div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <% if(add) { %>
-        <fmt:message key="group.edit.not_update" />
-        <%= StringUtils.escapeHTMLTags(errorBuf.toString()) %>
-        <% } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<% } %>
+<c:if test="${empty errors and success}">
+    <admin:infobox type="success">
+        <c:choose>
+            <c:when test="${groupInfoChanged}">
+                <fmt:message key="group.edit.update" />
+            </c:when>
+            <c:when test="${param.success}">
+                <fmt:message key="group.edit.update_add_user" />
+            </c:when>
+            <c:when test="${param.deletesuccess}">
+                <fmt:message key="group.edit.update_del_user" />
+            </c:when>
+            <c:when test="${param.updatesuccess}">
+                <fmt:message key="group.edit.update_user" />
+            </c:when>
+            <c:when test="${param.creategroupsuccess}">
+                <fmt:message key="group.edit.update_success" />
+            </c:when>
+            <c:otherwise>
+                <fmt:message key="group.edit.update" />
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:if>
 
-	<div class="jive-horizontalRule"></div>
+<!-- BEGIN group name and description -->
+<fmt:message key="group.edit.edit_details" var="groupdetailsboxtitle"/>
+<admin:contentBox title="${groupdetailsboxtitle}">
 
-<form name="ff" action="group-edit.jsp">
-    <input type="hidden" name="csrf" value="${csrf}">
+    <form name="groupdetails">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
 
-<input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>"/>
+        <c:if test="${webManager.groupManager.readOnly}">
+            <admin:infobox type="info"><fmt:message key="group.read_only"/></admin:infobox>
+        </c:if>
+
+        <table width="80%" cellpadding="3" cellspacing="0" border="0">
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <label for="gname"><fmt:message key="group.create.group_name" /></label> *
+                </td>
+                <td width="99%">
+                    <input type="text" name="name" size="75" maxlength="75" value="${fn:escapeXml(group.name)}" id="gname" ${webManager.groupManager.readOnly ? 'readonly' : ''} />
+                </td>
+            </tr>
+            <c:if test="${not empty errors['name'] or not empty errors['alreadyExists']}">
+                <tr valign="top">
+                    <td></td>
+                    <td>
+                        <span class="jive-error-text">
+                            <c:if test="${not empty errors['name']}"><fmt:message key="group.create.invalid_group_name" /></c:if>
+                            <c:if test="${not empty errors['alreadyExists']}"><fmt:message key="group.create.invalid_group_info" /></c:if>
+                        </span>
+                    </td>
+                </tr>
+            </c:if>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
+                </td>
+                <td width="99%">
+                    <textarea name="description" cols="75" rows="3" id="gdesc" ${webManager.groupManager.readOnly ? 'readonly' : ''}><c:out value="${group.description}"/></textarea>
+                </td>
+            </tr>
+            <c:if test="${not empty errors['description']}">
+                <tr valign="top">
+                    <td></td>
+                    <td>
+                        <span class="jive-error-text"><fmt:message key="group.create.invalid_description" /></span>
+                    </td>
+                </tr>
+            </c:if>
+            <c:if test="${not webManager.groupManager.readOnly}">
+                <tr valign="top">
+                    <td></td>
+                    <td>
+                        <input type="submit" name="updateDetails" value="<fmt:message key="global.save_settings" />">
+                    </td>
+                </tr>
+            </c:if>
+        </table>
+
+        <span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
+    </form>
+</admin:contentBox>
+<!-- END group name and description -->
 
 
-	<!-- BEGIN group name and description -->
-	<div class="jive-contentBox-plain">
-        <%  // Only show edit and delete options if the groups aren't read-only.
-            if (!webManager.getGroupManager().isReadOnly()) { %>
-        <div class="jive-contentBox-toolbox">
-			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= group.getDescription() != null? URLEncoder.encode(group.getDescription(), "UTF-8") : "" %>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
-			<a href="group-delete.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
-		</div>
-        <% } %>
+<!-- BEGIN contact list settings -->
+<fmt:message key="group.edit.share_title" var="contactlistsettingsboxtitle"/>
+<admin:contentBox title="${contactlistsettingsboxtitle}">
 
-        <h3>
-			<%= StringUtils.escapeHTMLTags(group.getName()) %>
-		</h3>
-		<p>
-			<%= group.getDescription() != null ? StringUtils.escapeHTMLTags(group.getDescription()) : "" %>
-		</p>
-    </div>
-	<!-- END group name and description -->
+    <form name="groupshare">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
 
-
-	<!-- BEGIN contact list settings -->
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="group.edit.share_title" />
-
-	</div>
-	<div class="jive-contentBox">
         <p>
             <fmt:message key="group.edit.share_content" />
         </p>
 
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-		<tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'none';">
-            </td>
-            <td width="99%">
-                <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%" valign="top">
-                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'block';">
-            </td>
-            <td width="99%">
-                <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
-
-                <div id="jive-roster" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
-	               <b><fmt:message key="group.edit.share_display_name" /></b>
-	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? StringUtils.escapeForXML(groupDisplayName) : "") %>"><br>
-                       <%  if (errors.get("groupDisplayName") != null) { %>
-                           <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span><br/>
-                       <%  } %>
-	                   <script type="text/javascript" language="JavaScript">
-		                   function toggleRosterShare() {
-			                   if (document.getElementById('cb101').checked == false) {
-			                       document.getElementById('jive-rosterShare').style.display = 'none';
-                                } else {
-				                   document.getElementById('jive-rosterShare').style.display = 'block';
-                                   document.getElementById('rb002').checked = true;
-			                   }
-		                   }
-	                   </script>
-
-	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;"
-										 <%= (shareAdditional ? "checked" : "") %>>
-	               <label for="cb101"><fmt:message key="group.edit.share_additional" /></label>
-	                    <div id="jive-rosterShare" style="display: <%= (enableRosterGroups && shareAdditional) ? "block" : "none"  %>;">
-		                    <table cellpadding="2" cellspacing="0" border="0" width="100%">
-							<tbody>
-								<tr>
-									<td width="1%" nowrap>
-										<input type="radio" name="showGroup" value="everybody" id="rb002"
-										 <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
-									</td>
-									<td width="99%">
-										<label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
-									</td>
-								</tr>
-								<tr>
-									<td width="1%" nowrap>
-										<input type="radio" name="showGroup" value="spefgroups" id="rb003"
-										 <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
-									</td>
-									<td width="99%">
-										<label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
-									</td>
-								</tr>
-								<tr>
-									<td width="1%" nowrap>
-										&nbsp;
-									</td>
-									<td width="99%">
-										<select name="groupNames" size="6" onclick="this.form.showGroup[1].checked=true;"
-										 multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-
-										<%  for (Group g : webManager.getGroupManager().getGroups()) {
-											// Do not offer the edited group in the list of groups
-											// Members of the editing group can always see each other
-											if (g.equals(group)) {
-												continue;
-											}
-										%>
-
-											<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
-											 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
-											 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
-
-										<%  } %>
-
-										</select>
-									</td>
-								</tr>
-							</tbody>
-							</table>
-		                </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                &nbsp;
-            </td>
-            <td width="99%">
-
-                <input type="submit" name="save" value="<fmt:message key="group.edit.share_save" />">
-
-            </td>
-        </tr>
-    </tbody>
-    </table>
-	</div>
-	<!-- END contact list settings -->
-
-
-</form>
-
-
-	<!-- BEGIN group membership management -->
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="group.edit.members" />
-	</div>
-	<div class="jive-contentBox">
-		<%  // Only show if the group isn't read-only.
-            if (!webManager.getGroupManager().isReadOnly()) { %>
-        <p>
-			<fmt:message key="group.edit.members_description" />
-		</p>
-
-        <form action="group-edit.jsp" method="post" name="f">
-            <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
-        <input type="hidden" name="add" value="Add"/>
-        <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
+        <table width="80%" cellpadding="3" cellspacing="0" border="0">
             <tr>
-                <td nowrap width="1%">
-                    <fmt:message key="group.edit.add_user" />
+                <td width="1%">
+                    <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""} onClick="toggleReadOnly();">
                 </td>
-                <td nowrap class="c1" align="left">
-                    <input type="text" size="45" name="username"/>
-                    &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
+                <td width="99%">
+                    <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%" valign="top">
+                    <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"} onClick="toggleReadOnly();"">
+                </td>
+                <td width="99%">
+                    <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
+
+                    <div id="jive-roster">
+                        <b><label for="groupDisplayName"><fmt:message key="group.edit.share_display_name" /></label></b>
+                        <p><input type="text" id="groupDisplayName" name="groupDisplayName" size="45" maxlength="100" value="${fn:escapeXml(group.properties['sharedRoster.displayName'])}">
+                        <c:if test="${not empty errors['groupDisplayName']}">
+                            <br><span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span>
+                        </c:if>
+                        </p>
+                        <p><b><fmt:message key="group.edit.share_with"/></b></p>
+                        <table cellpadding="2" cellspacing="0" border="0" width="100%">
+                            <tr>
+                                <td width="1%" nowrap>
+                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.properties["sharedRoster.showInRoster"] eq "nobody" ) or ( group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and empty groupNames ) ? "checked" : "" }>
+                                </td>
+                                <td width="99%">
+                                    <label for="rb001"><fmt:message key="group.edit.share_group_only" /></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="1%" nowrap>
+                                    <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.properties["sharedRoster.showInRoster"] eq "everybody" ? "checked" : ""}>
+                                </td>
+                                <td width="99%">
+                                    <label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="1%" nowrap>
+                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and not empty groupNames ? "checked" : ""}>
+                                </td>
+                                <td width="99%">
+                                    <label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="1%" nowrap></td>
+                                <td width="99%">
+                                    <select name="groupNames" id="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;"
+                                            multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
+
+                                        <c:forEach var="g" items="${webManager.groupManager.groups}">
+                                            <!-- Do not offer the edited group in the list of groups. Members of the editing group can always see each other -->
+                                            <c:if test="${not g.equals(group)}">
+                                                <option value="${fn:escapeXml(g.name)}" ${groupNames.contains(g.name) ? "selected": ""}>
+                                                    <c:out value="${g.name}"/>
+                                                </option>
+                                            </c:if>
+                                        </c:forEach>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%"></td>
+                <td width="99%">
+                    <input type="submit" name="updateContactListSettings" value="<fmt:message key="group.edit.share_save" />">
                 </td>
             </tr>
         </table>
+
+    </form>
+</admin:contentBox>
+<!-- END contact list settings -->
+
+<!-- BEGIN group membership management -->
+<fmt:message key="group.edit.members" var="groupmembersboxtitle"/>
+<admin:contentBox title="${groupmembersboxtitle}">
+
+    <c:if test="${webManager.groupManager.readOnly}">
+        <admin:infobox type="info"><fmt:message key="group.read_only"/></admin:infobox>
+    </c:if>
+
+    <c:if test="${not webManager.groupManager.readOnly}">
+        <p>
+            <fmt:message key="group.edit.members_description" />
+        </p>
+
+        <form name="groupmembers" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
+            <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
+            <input type="hidden" name="addMember" value="addMember"/>
+
+            <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
+                <tr>
+                    <td nowrap width="1%">
+                        <fmt:message key="group.edit.add_user" />
+                    </td>
+                    <td nowrap class="c1" align="left">
+                         <input type="text" size="45" name="username"/>
+                        &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
+                    </td>
+                    <c:if test="${not empty errors['addMember']}">
+                        <td>
+                            <span class="jive-error-text"><fmt:message key="group.edit.invalid_username"/></span>
+                        </td>
+                    </c:if>
+                </tr>
+            </table>
         </form>
 
-        <% } %>
+    </c:if>
 
-        <form action="group-edit.jsp" method="post" name="main">
-    <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
-        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
+    <form method="post" name="main">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
+        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="80%">
             <tr>
 	            <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
-                <%  // Only show if the group isn't read-only.
-                if (!webManager.getGroupManager().isReadOnly()) { %>
-                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
-                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
-                <% } %>
+                <c:if test="${not webManager.groupManager.readOnly}">
+                    <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
+                    <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
+                </c:if>
             </tr>
-            <!-- Add admins first -->
-<%
-            int memberCount = group.getMembers().size() + group.getAdmins().size();
-            boolean showUpdateButtons = memberCount > 0;
-            boolean showRemoteJIDsWarning = false;
-            if (memberCount == 0) {
-%>
+
+            <c:set var="showRemoteJIDsWarning" value="false"/>
+
+            <c:if test="${empty allMembers}">
                 <tr>
                     <td align="center" colspan="4">
                         <br>
@@ -540,115 +605,113 @@
                         <br>
                     </td>
                 </tr>
-<%
-            }
-            else {
-                // Sort the list of members.
-                ArrayList<JID> allMembers = new ArrayList<JID>(memberCount);
-                allMembers.addAll(group.getMembers());
-                Collection<JID> admins = group.getAdmins();
-                allMembers.addAll(admins);
-                Collections.sort(allMembers);
-                for (JID jid:allMembers) {
-                    boolean isLocal = webManager.getXMPPServer().isLocal(jid);
-                    User user = null;
-                    if (isLocal) {
-                        try {
-                            user = userManager.getUser(jid.getNode());
-                        }
-                        catch (UserNotFoundException unfe) {
-                            // Ignore.
-                        }
-                    }
-%>
+            </c:if>
+            <c:forEach var="member" items="${allMembers}">
                 <tr>
                     <td width="1%">
-                    <%  if (user != null && presenceManager.isAvailable(user)) {
-                            Presence presence = presenceManager.getPresence(user);
-                    %>
-                    <% if (presence.getShow() == null) { %>
-                    <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
-                    <% } %>
-                    <% if (presence.getShow() == Presence.Show.chat) { %>
-                    <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
-                    <% } %>
-                    <% if (presence.getShow() == Presence.Show.away) { %>
-                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
-                    <% } %>
-                    <% if (presence.getShow() == Presence.Show.xa) { %>
-                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
-                    <% } %>
-                    <% if (presence.getShow() == Presence.Show.dnd) { %>
-                    <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
-                    <% } %>
 
-                    <%  } else { %>
-                    <img src="images/im_unavailable.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
-                    <%  } %>
-
+                        <c:choose>
+                            <c:when test="${webManager.XMPPServer.isLocal(member)}">
+                                <c:choose>
+                                    <c:when test="${webManager.userManager.isRegisteredUser(member) and webManager.presenceManager.isAvailable(webManager.userManager.getUser(member))}">
+                                        <c:choose>
+                                            <c:when test="${empty webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show}">
+                                                <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                                            </c:when>
+                                            <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'chat'}">
+                                                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                                            </c:when>
+                                            <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'away'}">
+                                                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                                            </c:when>
+                                            <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'xa'}">
+                                                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                                            </c:when>
+                                            <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'dnd'}">
+                                                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                                            </c:when>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="images/im_unavailable.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="showRemoteJIDsWarning" value="true"/>
+                                &nbsp;
+                            </c:otherwise>
+                        </c:choose>
                     </td>
-                    <% if (user != null) { %>
-                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
-                    <% } else { %>
-                    <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
-                    <% } %>
-                    <%  // Only show if the group isn't read-only.
-                    if (!webManager.getGroupManager().isReadOnly()) { %>
-                    <td align="center">
-                        <input type="checkbox" name="admin" value="<%= jid %>" <% if (admins.contains(jid)) { %>checked<% } %>>
+                    <td>
+                        <c:choose>
+                            <c:when test="${webManager.userManager.isRegisteredUser(member)}">
+                                <a href="user-properties.jsp?username=${fn:escapeXml(webManager.userManager.getUser(member).username)}">
+                                    <c:out value="${webManager.userManager.getUser(member).username}"/>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${member}"/> <font color="red"><b>*</b></font>
+                            </c:otherwise>
+                        </c:choose>
                     </td>
-                    <td align="center">
-                        <input type="checkbox" name="delete" value="<%= jid %>">
-                    </td>
-                    <% } %>
+                    <c:if test="${not webManager.groupManager.readOnly}">
+                        <td align="center">
+                            <input type="checkbox" name="admin" value="${fn:escapeXml(member)}" ${group.admins.contains(member) ? 'checked' : ''}>
+                        </td>
+                        <td align="center">
+                            <input type="checkbox" name="delete" value="${fn:escapeXml(member)}">
+                        </td>
+                    </c:if>
                 </tr>
-<%
-                }
-            }
-            if (showUpdateButtons && !webManager.getGroupManager().isReadOnly()) {
-%>
+            </c:forEach>
+
+            <c:if test="${ ( not empty allMembers ) and (not webManager.groupManager.readOnly)}">
                 <tr>
-                    <td colspan="2">
-                        &nbsp;
-                    </td>
+                    <td colspan="2">&nbsp;</td>
                     <td align="center">
                         <input type="submit" name="updateMember" value="Update">
                     </td>
                     <td align="center">
-                        <input type="submit" name="remove" value="Remove">
+                        <input type="submit" name="removeMember" value="Remove">
                     </td>
                 </tr>
-<%
-            }
-
-            if (showRemoteJIDsWarning) {
-%>
-            <tr>
-                <td colspan="4">
-                    <font color="red">* <fmt:message key="group.edit.note" /></font>
-                </td>
-            </tr>
-<%
-            }
-%>
+            </c:if>
         </table>
-        </form>
+
+        <c:if test="${showRemoteJIDsWarning}">
+            <span class="jive-description"><font color="red">* <fmt:message key="group.edit.note" /></font></span>
+        </c:if>
+
+    </form>
 
     <script type="text/javascript">
         document.f.username.focus();
     </script>
 
-	</div>
-	<!-- END group membership management -->
+</admin:contentBox>
+<!-- END group membership management -->
 
+<script type="text/javascript">
+    function toggleReadOnly()
+    {
+        var disabled = document.getElementById('rb201').checked;
 
+        document.getElementById( 'groupDisplayName' ).disabled = disabled;
+        document.getElementById( 'rb001' ).disabled = disabled;
+        document.getElementById( 'rb002' ).disabled = disabled;
+        document.getElementById( 'rb003' ).disabled = disabled;
+        document.getElementById( 'groupNames' ).disabled = disabled;
+    }
+    toggleReadOnly();
+</script>
 
 </body>
 </html>
 
 
 <%!
-    private static String toList(String[] array, String enc) {
+    private static String toList( String[] array ) {
         if (array == null || array.length == 0) {
             return "";
         }
@@ -657,7 +720,7 @@
         for (String anArray : array) {
             String item;
             try {
-                item = URLDecoder.decode(anArray, enc);
+                item = URLDecoder.decode( anArray, "UTF-8" );
             }
             catch (UnsupportedEncodingException e) {
                 item = anArray;
@@ -666,17 +729,5 @@
             sep = ",";
         }
         return buf.toString();
-    }
-
-    private static boolean contains(String[] array, String item) {
-        if (array == null || array.length == 0 || item == null) {
-            return false;
-        }
-        for (String anArray : array) {
-            if (item.equals(anArray)) {
-                return true;
-            }
-        }
-        return false;
     }
 %>

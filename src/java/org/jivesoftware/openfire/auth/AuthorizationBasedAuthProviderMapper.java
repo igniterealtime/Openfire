@@ -22,8 +22,8 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * A {@link AuthProviderMapper} that can be used to draw administrative users from another source than the regular, non-
@@ -113,9 +113,9 @@ public class AuthorizationBasedAuthProviderMapper implements AuthProviderMapper
     }
 
     @Override
-    public SortedSet<AuthProvider> getAuthProviders()
+    public Set<AuthProvider> getAuthProviders()
     {
-        final SortedSet<AuthProvider> result = new TreeSet<>();
+        final Set<AuthProvider> result = new LinkedHashSet<>();
         result.add( adminProvider );
         result.add( userProvider );
 

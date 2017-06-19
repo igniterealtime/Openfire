@@ -133,7 +133,7 @@ public final class Version implements Comparable<Version> {
     	if (versionString == null) {
             StringBuilder sb = new StringBuilder();
             sb.append(major).append('.').append(minor).append('.').append(micro);
-            if (status != ReleaseStatus.Release) {
+            if (status != ReleaseStatus.Release || statusVersion != -1) {
                 sb.append(' ').append(status);
                 if (statusVersion >= 0) {
                     sb.append(' ').append(statusVersion);
@@ -196,7 +196,7 @@ public final class Version implements Comparable<Version> {
      * are indicated by type safe enum constants.
      */
     public enum ReleaseStatus {
-        Release(""), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha");
+        Release("Release"), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha");
 
         private String status;
 

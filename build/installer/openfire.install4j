@@ -487,7 +487,7 @@
                     </object>
                   </java>
                 </serializedBean>
-                <condition />
+                <condition>context.getBooleanVariable("executeLauncherAction") &amp;&amp; (!context.isUnattended())</condition>
               </action>
               <action name="" id="1348" customizedId="" beanClass="com.install4j.runtime.beans.actions.finish.ShowURLAction" enabled="true" commentSet="false" comment="" actionElevationType="none" rollbackBarrier="false" multiExec="false" failureStrategy="1" errorMessage="">
                 <serializedBean>
@@ -499,7 +499,7 @@
                     </object>
                   </java>
                 </serializedBean>
-                <condition>!context.isUnattended()</condition>
+                <condition>context.getBooleanVariable("executeLauncherAction") &amp;&amp; (!context.isUnattended())</condition>
               </action>
             </actions>
             <formComponents>
@@ -508,7 +508,7 @@
                   <java class="java.beans.XMLDecoder">
                     <object class="com.install4j.runtime.beans.formcomponents.CheckboxComponent">
                       <void property="checkboxText">
-                        <string>${i18n:RunEntryExec("${compiler:sys.fullName}")}</string>
+                        <string>Start Openfire Service</string>
                       </void>
                       <void property="initiallySelected">
                         <boolean>true</boolean>
@@ -705,7 +705,7 @@
     </applications>
   </installerGui>
   <mediaSets>
-    <windows name="Windows" id="3" customizedId="" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows x86" id="3" customizedId="" mediaFileName="" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -803,7 +803,49 @@
         <customAttributes />
       </autoUpdate>
     </windowsArchive>
-    <windows name="Windows x64" id="1354" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows x64" id="1354" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+      <excludedComponents />
+      <includedDownloadableComponents />
+      <excludedLaunchers>
+        <launcher id="22" />
+      </excludedLaunchers>
+      <excludedBeans />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
+      <exclude>
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="documentation/javadoc" fileType="regular" />
+      </exclude>
+      <variables />
+      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
+        <commentFiles />
+        <customAttributes />
+      </autoUpdate>
+    </windows>
+    <windows name="Windows Bundled JRE x86" id="1394" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}_bundledJRE" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+      <excludedComponents />
+      <includedDownloadableComponents />
+      <excludedLaunchers>
+        <launcher id="22" />
+      </excludedLaunchers>
+      <excludedBeans />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
+      <exclude>
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="documentation/javadoc" fileType="regular" />
+      </exclude>
+      <variables />
+      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
+        <commentFiles />
+        <customAttributes />
+      </autoUpdate>
+    </windows>
+    <windows name="Windows Bundled JRE x64" id="1396" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}_bundledJRE_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_131" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>

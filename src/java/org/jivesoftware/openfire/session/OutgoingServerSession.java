@@ -79,4 +79,6 @@ public interface OutgoingServerSession extends ServerSession {
      * @return True if the subdomain was authenticated by the remote server.
      */
     boolean authenticateSubdomain(String domain, String hostname);
+
+    boolean checkOutgoingDomainPair(String local, String remote);
 }

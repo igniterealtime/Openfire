@@ -71,6 +71,11 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         return usingServerDialback == 1;
     }
 
+    public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
+        ClusterTask task = new CheckOutgoingDomainPairTask(address, localDomain, remoteDomain);
+        return (Boolean)doSynchronousClusterTask(task);
+    }
+
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
         return new OutgoingServerSessionTask(address, operation);
     }
@@ -165,6 +170,37 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super.readExternal(in);
             domain = ExternalizableUtil.getInstance().readSafeUTF(in);
             hostname = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
+    }
+
+    private static class CheckOutgoingDomainPairTask extends OutgoingServerSessionTask {
+        private String local;
+        private String remote;
+
+        public CheckOutgoingDomainPairTask() {
+            super();
+        }
+
+        protected CheckOutgoingDomainPairTask(JID address, String local, String remote) {
+            super(address, null);
+            this.local = local;
+            this.remote = remote;
+        }
+
+        public void run() {
+            result = ((OutgoingServerSession) getSession()).checkOutgoingDomainPair(local, remote);
+        }
+
+        public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, local);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, remote);
+        }
+
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
+            local = ExternalizableUtil.getInstance().readSafeUTF(in);
+            remote = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
     }
 }

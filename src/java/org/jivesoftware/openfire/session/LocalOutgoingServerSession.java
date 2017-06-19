@@ -88,6 +88,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     private Collection<String> authenticatedDomains = new HashSet<>();
     private final Collection<String> hostnames = new HashSet<>();
     private OutgoingServerSocketReader socketReader;
+    private Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
 
     /**
      * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
@@ -172,7 +173,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             if ( session != null )
             {
                 log.debug( "A pre-existing session can be re-used. The session was established using server dialback so it is possible to do piggybacking to authenticate more domains." );
-                if ( session.getAuthenticatedDomains().contains( localDomain ) && session.getHostnames().contains( remoteDomain ) )
+                if ( session.checkOutgoingDomainPair(localDomain, remoteDomain) )
                 {
                     // Do nothing since the domain has already been authenticated.
                     log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
@@ -609,6 +610,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Add the validated domain as an authenticated domain
             addAuthenticatedDomain(localDomain);
             addHostname(remoteDomain);
+            addOutgoingDomainPair(localDomain, remoteDomain);
             return true;
         }
         return false;
@@ -697,5 +699,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
+    }
+
+    public void addOutgoingDomainPair(String localDomain, String remoteDomain) {
+        outgoingDomainPairs.add(new DomainPair(localDomain, remoteDomain));
+    }
+
+    @Override
+    public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
+         return outgoingDomainPairs.contains(new DomainPair(localDomain, remoteDomain));
     }
 }

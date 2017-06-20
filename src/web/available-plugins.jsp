@@ -323,7 +323,7 @@
     <td width="60%" class="line-bottom-border">
         <%= pluginDescription != null ? StringUtils.escapeHTMLTags(pluginDescription) : "" %>
     </td>
-    <td width="5%" align="center" valign="top" class="line-bottom-border">
+    <td width="5%" nowrap valign="top" class="line-bottom-border">
         <%= pluginVersion != null ? StringUtils.escapeHTMLTags(pluginVersion) : "" %>
     </td>
     <td width="15%" nowrap valign="top" class="line-bottom-border">

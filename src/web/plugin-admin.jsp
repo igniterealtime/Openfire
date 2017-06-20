@@ -542,8 +542,8 @@
     <td width="60%" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
         <%= pluginDescription != null ? pluginDescription : "" %>
     </td>
-    <td width="5%" align="center" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
-        <p><%= pluginVersion != null ? pluginVersion : "" %></p>
+    <td width="5%" nowrap valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
+        <%= pluginVersion != null ? pluginVersion : "" %>
 
     </td>
     <td width="15%" nowrap valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">

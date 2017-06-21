@@ -21,9 +21,12 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -35,6 +38,18 @@ import java.nio.file.Path;
 public class PluginMetadataHelper
 {
     private static final Logger Log = LoggerFactory.getLogger( PluginMetadataHelper.class );
+
+    /**
+     * Returns the name of the directory of the parent for this plugin. The value is retrieved from the plugin.xml file
+     * of the plugin (which is casted down to lower-case). If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param plugin The plugin (cannot be null)
+     * @return the parent plugin's directory name
+     */
+    public static String getParentPlugin( Plugin plugin )
+    {
+        return getParentPlugin( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
 
     /**
      * Returns the name of the directory of the parent for this plugin. The value is retrieved from the plugin.xml file
@@ -54,7 +69,7 @@ public class PluginMetadataHelper
     }
 
     /**
-     * Returns the canonical name for the plugin, derived from the plugin directory name.
+     * Returns the canonical name for the plugin, derived from the plugin archive file name.
      *
      * Note that this value can be different from the 'human readable' plugin name, as returned by {@link #getName(Path)}.
      *
@@ -67,20 +82,32 @@ public class PluginMetadataHelper
      */
     public static String getCanonicalName( Plugin plugin )
     {
-        return getCanonicalName( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+        return XMPPServer.getInstance().getPluginManager().getCanonicalName( plugin );
     }
 
     /**
-     * Returns the canonical name for the plugin, derived from the plugin directory name.
+     * Returns the canonical name for the plugin, derived from the plugin directory or archive file name.
+     *
+     * The provided path can refer to either the plugin archive file, or the directory in which the archive was
+     * extracted.
      *
      * Note that this value can be different from the 'human readable' plugin name, as returned by {@link #getName(Path)}.
      *
-     * @param pluginDir the path of the plugin directory.
+     * @param pluginPath the path of the plugin directory, or plugin archive file.
      * @return the plugin's canonical name.
      */
-    public static String getCanonicalName( Path pluginDir )
+    public static String getCanonicalName( Path pluginPath )
     {
-        return pluginDir.getFileName().toString().toLowerCase();
+        final String pathFileName = pluginPath.getFileName().toString().toLowerCase();
+        if ( pluginPath.toFile().isDirectory() )
+        {
+            return pathFileName;
+        }
+        else
+        {
+            // Strip file extension
+            return pathFileName.substring( 0, pathFileName.lastIndexOf( '.' ) );
+        }
     }
 
     /**
@@ -191,7 +218,7 @@ public class PluginMetadataHelper
      * @param plugin The plugin (cannot be null)
      * @return the plugin's version.
      */
-    public static String getVersion( Plugin plugin )
+    public static Version getVersion( Plugin plugin )
     {
         return getVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
     }
@@ -203,9 +230,16 @@ public class PluginMetadataHelper
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's version.
      */
-    public static String getVersion( Path pluginDir )
+    public static Version getVersion( Path pluginDir )
     {
-        return getElementValue( pluginDir, "/plugin/version" );
+        final String value = getElementValue( pluginDir, "/plugin/version" );
+
+        if ( value == null || value.trim().isEmpty() )
+        {
+            return null;
+        }
+
+        return new Version( value );
     }
 
     /**
@@ -217,9 +251,9 @@ public class PluginMetadataHelper
      * argument.
      *
      * @param plugin The plugin (cannot be null)
-     * @return the plugin's minimum server version.
+     * @return the plugin's minimum server version (possibly null).
      */
-    public static String getMinServerVersion( Plugin plugin )
+    public static Version getMinServerVersion( Plugin plugin )
     {
         return getMinServerVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
     }
@@ -229,11 +263,52 @@ public class PluginMetadataHelper
      * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
      *
      * @param pluginDir the path of the plugin directory.
-     * @return the plugin's minimum server version.
+     * @return the plugin's minimum server version (possibly null).
      */
-    public static String getMinServerVersion( Path pluginDir )
+    public static Version getMinServerVersion( Path pluginDir )
     {
-        return getElementValue( pluginDir, "/plugin/minServerVersion" );
+        final String value = getElementValue( pluginDir, "/plugin/minServerVersion" );
+
+        if ( value == null || value.trim().isEmpty() )
+        {
+            return null;
+        }
+
+        return new Version( value );
+    }
+
+    /**
+     * Returns the maximum server version this plugin can run within. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * Note that this method will return data only for plugins that have successfully been installed. To obtain data
+     * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
+     * argument.
+     *
+     * @param plugin The plugin (cannot be null)
+     * @return the plugin's maximum server version (possibly null).
+     */
+    public static Version getMaxServerVersion( Plugin plugin )
+    {
+        return getMaxServerVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
+
+    /**
+     * Returns the maximum server version this plugin can run within. The value is retrieved from the plugin.xml file
+     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param pluginDir the path of the plugin directory.
+     * @return the plugin's maximum server version (possibly null).
+     */
+    public static Version getMaxServerVersion( Path pluginDir )
+    {
+        final String value = getElementValue( pluginDir, "/plugin/maxServerVersion" );
+        if ( value == null || value.trim().isEmpty() )
+        {
+            return null;
+        }
+
+        return new Version( value );
     }
 
     /**
@@ -306,7 +381,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the license agreement type that the plugin is governed by. The value is retrieved from the plugin.xml
-     * file of the plugin. If the value could not be found, {@link License#other} is returned.
+     * file of the plugin.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -315,35 +390,97 @@ public class PluginMetadataHelper
      * @param plugin The plugin (cannot be null)
      * @return the plugin's license agreement.
      */
-    public static License getLicense( Plugin plugin )
+    public static String getLicense( Plugin plugin )
     {
         return getLicense( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
     }
 
     /**
      * Returns the license agreement type that the plugin is governed by. The value is retrieved from the plugin.xml
-     * file of the plugin. If the value could not be found, {@link License#other} is returned.
+     * file of the plugin.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's license agreement.
      */
-    public static License getLicense( Path pluginDir )
+    public static String getLicense( Path pluginDir )
     {
-        String licenseString = getElementValue( pluginDir, "/plugin/licenseType" );
-        if ( licenseString != null )
+        return getElementValue( pluginDir, "/plugin/licenseType" );
+    }
+
+    public static URL getIcon( Plugin plugin )
+    {
+        return getIcon( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
+
+    public static URL getIcon( Path pluginDir )
+    {
+        Path icon = pluginDir.resolve( "logo_small.png" );
+        if ( !icon.toFile().exists() )
         {
-            try
-            {
-                // Attempt to load the get the license type. We lower-case and trim the license type to give plugin
-                // author's a break. If the license type is not recognized, we'll log the error and default to "other".
-                return License.valueOf( licenseString.toLowerCase().trim() );
-            }
-            catch ( IllegalArgumentException iae )
-            {
-                Log.error( "Unrecognized license type '{}' for plugin '{}'.", licenseString.toLowerCase().trim(), getCanonicalName( pluginDir ), iae );
-            }
+            icon = pluginDir.resolve( "logo_small.gif" );
         }
-        return License.other;
+        if ( !icon.toFile().exists() )
+        {
+            return null;
+        }
+
+        try
+        {
+            return icon.toUri().toURL();
+        }
+        catch ( MalformedURLException e )
+        {
+            Log.warn( "Unable to parse URL for icon of plugin '{}'.", getCanonicalName( pluginDir ), e );
+            return null;
+        }
+    }
+
+    public static URL getReadme( Plugin plugin )
+    {
+        return getReadme( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
+
+    public static URL getReadme( Path pluginDir )
+    {
+        final Path file = pluginDir.resolve( "readme.html" );
+        if ( !file.toFile().exists() )
+        {
+            return null;
+        }
+
+        try
+        {
+            return file.toUri().toURL();
+        }
+        catch ( MalformedURLException e )
+        {
+            Log.warn( "Unable to parse URL for readme of plugin '{}'.", getCanonicalName( pluginDir ), e );
+            return null;
+        }
+    }
+
+    public static URL getChangelog( Plugin plugin )
+    {
+        return getChangelog( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
+
+    public static URL getChangelog( Path pluginDir )
+    {
+        final Path file = pluginDir.resolve( "changelog.html" );
+        if ( !file.toFile().exists() )
+        {
+            return null;
+        }
+
+        try
+        {
+            return file.toUri().toURL();
+        }
+        catch ( MalformedURLException e )
+        {
+            Log.warn( "Unable to parse URL for changelog of plugin '{}'.", getCanonicalName( pluginDir ), e );
+            return null;
+        }
     }
 
     /**

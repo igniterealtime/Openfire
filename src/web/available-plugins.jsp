@@ -12,29 +12,26 @@
   - limitations under the License.
 --%>
 
-<%@ page errorPage="error.jsp" import="org.jivesoftware.util.ByteFormat,
-                                       org.jivesoftware.util.Version,
-                                       org.jivesoftware.openfire.XMPPServer,
+<%@ page errorPage="error.jsp" import="org.jivesoftware.openfire.XMPPServer,
                                        org.jivesoftware.openfire.container.Plugin,
-                                       org.jivesoftware.util.StringUtils"
+                                       org.jivesoftware.openfire.container.PluginManager,
+                                       org.jivesoftware.openfire.container.PluginMetadataHelper,
+                                       org.jivesoftware.openfire.update.AvailablePlugin"
     %>
-<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
-<%@ page import="org.jivesoftware.openfire.update.AvailablePlugin" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="java.io.File" %>
-<%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.nio.file.Path" %>
 <%@ page import="java.util.ArrayList" %>
-<%@ page import="java.util.Collections" %>
-<%@ page import="java.util.Comparator" %>
+<%@ page import="java.util.Date" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals"%>
-<%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.util.CookieUtils"%>
-<%@ page import="java.util.Date"%>
+<%@ page import="org.jivesoftware.openfire.container.PluginMetadata" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="admin" prefix="admin" %>
+
+
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -54,16 +51,13 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
-    UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
-    List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();
+    final XMPPServer server = XMPPServer.getInstance();
+    final UpdateManager updateManager = server.getUpdateManager();
 
-    String time = JiveGlobals.getProperty("update.lastCheck");
-    // Sort plugins alphabetically
-    Collections.sort(plugins, new Comparator<AvailablePlugin>() {
-        public int compare(AvailablePlugin o1, AvailablePlugin o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
-    });
+    final String value = JiveGlobals.getProperty( "update.lastCheck" );
+    pageContext.setAttribute( "lastCheck", value != null ? new Date( Long.parseLong( value ) ) : null );
+    pageContext.setAttribute( "updateServiceEnabled", updateManager.isServiceEnabled() );
+    pageContext.setAttribute( "notInstalledPlugins", updateManager.getNotInstalledPlugins() );
 
     if (downloadRequested) {
         // Download and install new plugin
@@ -231,320 +225,134 @@
 
 <body>
 
-<p>
-    <fmt:message key="plugin.available.info"/>
-</p>
-
-<p>
-
-<%if(time == null){ %>
-<div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
-    <fmt:message key="plugin.available.no.list" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
-</div>
-<br/>
-<div style="width:75%;">
     <p>
-   <fmt:message key="plugin.available.no.list.description" />
-</p>
+        <fmt:message key="plugin.available.info"/>
+    </p>
 
-<% if(!updateManager.isServiceEnabled()){ %>
-<fmt:message key="plugin.available.auto.update.currently" /> <b><fmt:message key="plugin.available.auto.update.currently.disabled" /></b>. <a href="manage-updates.jsp"><fmt:message key="plugin.available.click.here" /></a> <fmt:message key="plugin.available.change" />
-<% } %>
-</div>
-<% } else {%>
+    <c:choose>
+        <c:when test="${empty lastCheck}">
+            <div style="padding:10px;background:#FFEBB5;border:1px solid #DEB24A;width:75%;">
+                <fmt:message key="plugin.available.no.list" />&nbsp;<span id="reloaderID"><a href="javascript:updatePluginsList();"><fmt:message key="plugin.available.list" /></a></span>
+            </div>
+            <br/>
+            <div style="width:75%;">
+                <p>
+                    <fmt:message key="plugin.available.no.list.description" />
+                </p>
+                <c:if test="${not updateServiceEnabled}">
+                    <fmt:message key="plugin.available.auto.update.currently" /> <b><fmt:message key="plugin.available.auto.update.currently.disabled" /></b>. <a href="manage-updates.jsp"><fmt:message key="plugin.available.click.here" /></a> <fmt:message key="plugin.available.change" />
+                </c:if>
+            </div>
+        </c:when>
+        <c:otherwise>
+            <div id="errorMessage" class="error" style="display:none;">
+                <fmt:message key="plugin.available.error.downloading" />
+            </div>
 
+            <div class="light-gray-border" style="padding:10px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <thead>
+                        <tr style="background:#eee;">
+                            <td class="table-header-left">&nbsp;</td>
+                            <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>
+                            <td nowrap class="table-header">File Size</td>
+                            <td nowrap class="table-header-right"><fmt:message key="plugin.available.install"/></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:choose>
+                            <c:when test="${empty notInstalledPlugins}">
+                                <tr>
+                                    <td align="center" colspan="8"><fmt:message key="plugin.available.no_plugin"/></td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach items="${notInstalledPlugins}" var="notInstalledPlugin">
+                                    <tr id="${notInstalledPlugin.hashCode}">
+                                        <td width="1%" class="line-bottom-border">
+                                            <c:choose>
+                                                <c:when test="${not empty notInstalledPlugin.icon}">
+                                                    <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt="Plugin">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td width="20%" nowrap class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.name}">
+                                                <c:out value="${notInstalledPlugin.name}"/>
+                                            </c:if>
+                                        </td>
+                                        <td nowrap valign="top" class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.readme}">
+                                                <a href="${fn:escapeXml(notInstalledPlugin.readme)}"><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+                                            </c:if>
+                                            <c:if test="${not empty notInstalledPlugin.changelog}">
+                                                <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                                            </c:if>
+                                        </td>
+                                        <td width="60%" class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.description}">
+                                                <c:out value="${notInstalledPlugin.description}"/>
+                                            </c:if>
+                                        </td>
+                                        <td width="5%" nowrap valign="top" class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.version}">
+                                                <c:out value="${notInstalledPlugin.version}"/>
+                                            </c:if>
+                                        </td>
+                                        <td width="15%" nowrap valign="top" class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.author}">
+                                                <c:out value="${notInstalledPlugin.author}"/>
+                                            </c:if>
+                                        </td>
+                                        <td width="15%" nowrap valign="top" class="line-bottom-border" align="right">
+                                            <c:out value="${admin:byteFormat( notInstalledPlugin.fileSize )}"/>
+                                        </td>
+                                        <td width="1%" align="center" valign="top" class="line-bottom-border">
+                                            <a href="javascript:downloadPlugin('${fn:escapeXml(notInstalledPlugin.downloadURL)}', '${notInstalledPlugin.hashCode}')">
+                                                <span id="${notInstalledPlugin.hashCode}-image">
+                                                    <img src="images/add-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.available.download" />">
+                                                </span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr id="${notInstalledPlugin.hashCode}-row" style="display:none;background: #E7FBDE;">
+                                        <td width="1%" class="line-bottom-border">
+                                            <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt=""/>
+                                        </td>
+                                        <td colspan="6" nowrap class="line-bottom-border">${admin:escapeHTMLTags(notInstalledPlugin.name)} <fmt:message key="plugin.available.installation.success" /></td>
+                                        <td class="line-bottom-border" align="center">
+                                            <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
+            </div>
 
-<div id="errorMessage" class="error" style="display:none;">
-    <fmt:message key="plugin.available.error.downloading" />
-</div>
+        </c:otherwise>
+    </c:choose>
 
-
-<div class="light-gray-border" style="padding:10px;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr style="background:#eee;">
-        <td class="table-header-left">&nbsp;</td>
-        <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
-        <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
-        <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
-        <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>
-        <td nowrap class="table-header">File Size</td>
-        <td nowrap class="table-header-right"><fmt:message key="plugin.available.install"/></td>
-    </tr>
-</thead>
-<tbody>
-
-<%
-    // If only the admin plugin is installed, show "none".
-    if (plugins.isEmpty()) {
-%>
-<tr>
-    <td align="center" colspan="8"><fmt:message key="plugin.available.no_plugin"/></td>
-</tr>
-<%
-    }
-
-    for (AvailablePlugin plugin : plugins) {
-        String pluginName = plugin.getName();
-        String pluginDescription = plugin.getDescription();
-        String pluginAuthor = plugin.getAuthor();
-        String pluginVersion = plugin.getLatestVersion();
-        ByteFormat byteFormat = new ByteFormat();
-        String fileSize = byteFormat.format(plugin.getFileSize());
-
-        if (plugin.isCommercial()) {
-            continue;
-        }
-%>
-<tr id="<%= plugin.hashCode()%>">
-    <td width="1%" class="line-bottom-border">
-        <% if (plugin.getIcon() != null) { %>
-        <img src="<%= StringUtils.escapeForXML(plugin.getIcon()) %>" width="16" height="16" alt="Plugin">
-        <% }
-        else { %>
-        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-        <% } %>
-    </td>
-    <td width="20%" nowrap class="line-bottom-border">
-        <%= (pluginName != null ? StringUtils.escapeHTMLTags(pluginName) : "") %> &nbsp;
-    </td>
-    <td nowrap valign="top" class="line-bottom-border">
-        <% if (plugin.getReadme() != null) { %>
-        <a href="<%= StringUtils.escapeForXML(plugin.getReadme()) %>"
-            ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-        <% if (plugin.getChangelog() != null) { %>
-        <a href="<%= StringUtils.escapeForXML(plugin.getChangelog()) %>"
-            ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-    </td>
-    <td width="60%" class="line-bottom-border">
-        <%= pluginDescription != null ? StringUtils.escapeHTMLTags(pluginDescription) : "" %>
-    </td>
-    <td width="5%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginVersion != null ? StringUtils.escapeHTMLTags(pluginVersion) : "" %>
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginAuthor != null ? StringUtils.escapeHTMLTags(pluginAuthor) : "" %>  &nbsp;
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border" align="right">
-        <%= StringUtils.escapeHTMLTags(fileSize) %>
-    </td>
-    <td width="1%" align="center" valign="top" class="line-bottom-border">
-        <%
-            String updateURL = plugin.getURL();
-            if (updateManager.isPluginDownloaded(updateURL)) {
-        %>
-        &nbsp;
-        <%  }
-        else { %>
-        <%
-
-        %>
-        <a href="javascript:downloadPlugin('<%=StringUtils.escapeForXML(updateURL)%>', '<%= plugin.hashCode()%>')"><span id="<%= plugin.hashCode() %>-image"><img src="images/add-16x16.gif" width="16" height="16" border="0"
-                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></span></a>
-
-        <% } %>
-    </td>
-</tr>
-<tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
-    <td width="1%" class="line-bottom-border">
-        <img src="<%= StringUtils.escapeForXML(plugin.getIcon())%>" width="16" height="16" alt=""/>
-    </td>
-    <td colspan="6" nowrap class="line-bottom-border"><%= StringUtils.escapeHTMLTags(plugin.getName())%> <fmt:message key="plugin.available.installation.success" /></td>
-    <td class="line-bottom-border" align="center">
-        <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
-    </td>
-</tr>
-<%
-    }
-%>
-<tr><td><br/></td></tr>
-<tr style="background:#eee;">
-    <td class="table-header-left">&nbsp;</td>
-    <td nowrap colspan="7" class="row-header"><fmt:message key="plugin.available.commercial_plugins" /></td>
-</tr>
-<%
-    for (AvailablePlugin plugin : plugins) {
-        String pluginName = plugin.getName();
-        String pluginDescription = plugin.getDescription();
-        String pluginAuthor = plugin.getAuthor();
-        String pluginVersion = plugin.getLatestVersion();
-        ByteFormat byteFormat = new ByteFormat();
-        String fileSize = byteFormat.format(plugin.getFileSize());
-
-        if (!plugin.isCommercial()) {
-            continue;
-        }
-%>
-<tr id="<%= plugin.hashCode()%>">
-    <td width="1%" class="line-bottom-border">
-        <% if (plugin.getIcon() != null) { %>
-        <img src="<%= StringUtils.escapeForXML(plugin.getIcon()) %>" width="16" height="16" alt="Plugin">
-        <% }
-        else { %>
-        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-        <% } %>
-    </td>
-    <td width="20%" nowrap class="line-bottom-border">
-        <%= (pluginName != null ? StringUtils.escapeHTMLTags(pluginName) : "") %> &nbsp;
-    </td>
-    <td nowrap valign="top" class="line-bottom-border">
-        <% if (plugin.getReadme() != null) { %>
-        <a href="<%= StringUtils.escapeForXML(plugin.getReadme()) %>"
-            ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-        <% if (plugin.getChangelog() != null) { %>
-        <a href="<%= StringUtils.escapeForXML(plugin.getChangelog()) %>"
-            ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-        <% }
-        else { %> &nbsp; <% } %>
-    </td>
-    <td width="60%" class="line-bottom-border">
-        <%= pluginDescription != null ? StringUtils.escapeHTMLTags(pluginDescription) : "" %>
-    </td>
-    <td width="5%" align="center" valign="top" class="line-bottom-border">
-        <%= pluginVersion != null ? StringUtils.escapeHTMLTags(pluginVersion) : "" %>
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginAuthor != null ? StringUtils.escapeHTMLTags(pluginAuthor) : "" %>  &nbsp;
-    </td>
-    <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= StringUtils.escapeHTMLTags(fileSize)  %>
-    </td>
-    <td width="1%" align="center" valign="top" class="line-bottom-border">
-        <%
-            String updateURL = plugin.getURL();
-            if (updateManager.isPluginDownloaded(updateURL)) {
-        %>
-        &nbsp;
-        <%  }
-        else { %>
-
-        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=StringUtils.escapeForXML(updateURL) %>', '<%= plugin.hashCode() %>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
-                                                                                                                                        alt="<fmt:message key="plugin.available.download" />"></a></span>
-        <% } %>
-    </td>
-</tr>
-<tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
-     <td width="1%" class="line-bottom-border">
-        <img src="<%= StringUtils.escapeForXML(plugin.getIcon())%>" width="16" height="16" alt=""/>
-    </td>
-    <td colspan="6" nowrap class="line-bottom-border"><%= StringUtils.escapeHTMLTags(plugin.getName())%> <fmt:message key="plugin.available.installation.success" /></td>
-    <td class="line-bottom-border" align="center">
-        <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
-    </td>
-</tr>
-<%
-    }
-%>
-
-</tbody>
-</table>
-
-</div>
-
-<br/>
-
-
-<%
-    final XMPPServer server = XMPPServer.getInstance();
-    Version serverVersion = server.getServerInfo().getVersion();
-    List<Plugin> outdatedPlugins = new ArrayList<Plugin>();
-    for (Plugin plugin : server.getPluginManager().getPlugins()) {
-        String pluginVersion = server.getPluginManager().getMinServerVersion(plugin);
-        if (pluginVersion != null) {
-        	Version pluginMinServerVersion = new Version(pluginVersion);
-        	if (pluginMinServerVersion.isNewerThan(serverVersion)) {
-                outdatedPlugins.add(plugin);
-        	}
-        }
-    }
-
-    if (outdatedPlugins.size() > 0) {
-%>
-    <div class="light-gray-border" style="padding:10px;">
-    <p><fmt:message key="plugin.available.outdated" /><a href="http://www.igniterealtime.org/projects/openfire/" target="_blank"><fmt:message key="plugin.available.outdated.update" /></a></p>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-
-
-        <%
-            PluginManager pluginManager = server.getPluginManager();
-            for (Plugin plugin : outdatedPlugins) {
-                String pluginName = pluginManager.getName(plugin);
-                String pluginDescription = pluginManager.getDescription(plugin);
-                String pluginAuthor = pluginManager.getAuthor(plugin);
-                String pluginVersion = pluginManager.getVersion(plugin);
-                File pluginDir = pluginManager.getPluginDirectory(plugin);
-                File icon = new File(pluginDir, "logo_small.png");
-                boolean readmeExists = new File(pluginDir, "readme.html").exists();
-                boolean changelogExists = new File(pluginDir, "changelog.html").exists();
-                if (!icon.exists()) {
-                    icon = new File(pluginDir, "logo_small.gif");
-                }
-        %>
-        <tr>
-            <td class="line-bottom-border" width="1%">
-                <% if (icon.exists()) { %>
-                <img src="/geticon?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
-                <% }
-                else { %>
-                <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
-                <% } %>
-            </td>
-            <td class="line-bottom-border" width="1%" nowrap>
-                <%= pluginName%>
-            </td>
-            <td nowrap class="line-bottom-border">
-                <p><% if (readmeExists) { %>
-                    <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showReadme=true&decorator=none"
-                        ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
-                    <% }
-                    else { %> &nbsp; <% } %>
-                    <% if (changelogExists) { %>
-                    <a href="plugin-admin.jsp?plugin=<%= URLEncoder.encode(pluginDir.getName(), "utf-8") %>&showChangelog=true&decorator=none"
-                        ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
-                    <% }
-                    else { %> &nbsp; <% } %></p>
-            </td>
-            <td class="line-bottom-border">
-                <%= StringUtils.escapeHTMLTags(pluginDescription) %>
-            </td>
-            <td class="line-bottom-border">
-                <%= StringUtils.escapeHTMLTags(pluginVersion) %>
-            </td>
-            <td class="line-bottom-border">
-                <%= StringUtils.escapeHTMLTags(pluginAuthor) %>
-            </td>
-        </tr>
-        <% }%>
-  </table>
-
-        <%} %>
-
-</div>
-<br/>
- <%
-        if(time != null){
-            Date date = new Date(Long.parseLong(time));
-            time = JiveGlobals.formatDate(date);
-        }
-    %>
-       <p>
-           <% if(time != null) { %>
-        <fmt:message key="plugin.available.autoupdate" /> <%= time%>.
-           <% } %>
-           <% if(updateManager.isServiceEnabled()){%>
-              <fmt:message key="plugin.available.autoupdate.on" />
-           <% } else { %>
+    <p>
+        <c:if test="${not empty lastCheck}">
+            <fmt:message key="plugin.available.autoupdate" /> <c:out value="${admin:formatDateTime(lastCheck)}" />.
+        </c:if>
+        <c:choose>
+            <c:when test="${updateServiceEnabled}">
+                <fmt:message key="plugin.available.autoupdate.on" />
+            </c:when>
+            <c:otherwise>
                 <fmt:message key="plugin.available.autoupdate.off" />
-           <% } %>
-           &nbsp;<span id="reloader2"><a href="javascript:updatePluginsListNow()"><fmt:message key="plugin.available.manual.update" /></a></span>
-        </p>
-           <% } %>
-
+            </c:otherwise>
+        </c:choose>
+        <span id="reloader2"><a href="javascript:updatePluginsListNow()"><fmt:message key="plugin.available.manual.update" /></a></span>
+    </p>
 </body>
 </html>

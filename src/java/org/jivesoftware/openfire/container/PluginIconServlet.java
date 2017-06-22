@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 
 /**
  * Servlet is used for retrieval of plugin icons.
@@ -44,28 +45,22 @@ public class PluginIconServlet extends HttpServlet {
 
     @Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-        String pluginName = ParamUtils.getParameter(request, "plugin");
+        String canonicalName = ParamUtils.getParameter(request, "plugin");
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        Plugin plugin = pluginManager.getPlugin(pluginName);
-        if (plugin != null) {
-            // Try looking for PNG file first then default to GIF.
-            File icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.png");
-            boolean isPng = true;
-            if (!icon.exists()) {
-                icon = new File(pluginManager.getPluginDirectory(plugin), "logo_small.gif");
-                isPng = false;
-            }
-            if (icon.exists()) {
+        PluginMetadata metadata = pluginManager.getMetadata( canonicalName );
+        if (metadata != null) {
+            final URL icon = metadata.getIcon();
+            if ( icon != null ) {
                 // Clear any empty lines added by the JSP declaration. This is required to show
                 // the image in resin!
                 response.reset();
-                if (isPng) {
+                if ( icon.toExternalForm().toLowerCase().endsWith( ".png" )) {
                     response.setContentType("image/png");
                 }
-                else {
+                else if (icon.toExternalForm().toLowerCase().endsWith( ".png" )) {
                     response.setContentType("image/gif");
                 }
-                try (InputStream in = new FileInputStream(icon)) {
+                try (InputStream in = icon.openStream()) {
                     try (OutputStream ost = response.getOutputStream()) {
                         byte[] buf = new byte[1024];
                         int len;

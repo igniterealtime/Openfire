@@ -280,7 +280,7 @@ public class PluginManager
     /**
      * Returns metadata for all extracted plugins, mapped by their canonical name.
      *
-     * The collection is alphabeticially sorted, by plugin name.
+     * The collection is alphabetically sorted, by plugin name.
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
@@ -291,6 +291,20 @@ public class PluginManager
     public Map<String, PluginMetadata> getMetadataExtractedPlugins()
     {
         return Collections.unmodifiableMap( this.pluginMetadata );
+    }
+
+    /**
+     * Returns metadata for an extracted plugin, or null when the plugin is extracted nor loaded.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @return A collection of metadata (possibly empty, never null).
+     */
+    public PluginMetadata getMetadata( String canonicalName )
+    {
+        return this.pluginMetadata.get( canonicalName );
     }
 
     /**

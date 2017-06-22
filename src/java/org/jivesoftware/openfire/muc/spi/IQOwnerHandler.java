@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -95,7 +92,8 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     @SuppressWarnings("unchecked")
-	public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException {
+	public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
         if (MUCRole.Affiliation.owner != role.getAffiliation()) {
             throw new ForbiddenException();
@@ -158,7 +156,7 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void handleDataFormElement(MUCRole senderRole, Element formElement)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, NotAcceptableException {
         DataForm completedForm = new DataForm(formElement);
 
         switch(completedForm.getType()) {
@@ -206,7 +204,8 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void processConfigurationForm(DataForm completedForm, MUCRole senderRole)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, NotAcceptableException
+    {
         List<String> values;
         String booleanValue;
         FormField field;
@@ -320,23 +319,56 @@ public class IQOwnerHandler {
             room.setCanOccupantsInvite(("1".equals(booleanValue)));
         }
 
+
+        boolean passwordProtectionChanged = false;
+        boolean passwordChanged = false;
+
+        boolean updatedIsPasswordProtected = false;
+        String updatedPassword = null;
+
         field = completedForm.getField("muc#roomconfig_passwordprotectedroom");
-        if (field != null) {
+        if (field != null)
+        {
+            passwordProtectionChanged = true;
             final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            boolean isPasswordProtected = "1".equals(booleanValue);
-            if (isPasswordProtected) {
-                // The room is password protected so set the new password
-                field = completedForm.getField("muc#roomconfig_roomsecret");
-                if (field != null) {
-                    final String secret = completedForm.getField("muc#roomconfig_roomsecret").getFirstValue();
-                    room.setPassword(secret);
-                }
+            booleanValue = ( ( value != null ? value : "1" ) );
+            updatedIsPasswordProtected = "1".equals( booleanValue );
+        }
+
+        field = completedForm.getField("muc#roomconfig_roomsecret");
+        if (field != null) {
+            passwordChanged = true;
+            updatedPassword = completedForm.getField("muc#roomconfig_roomsecret").getFirstValue();
+            if ( updatedPassword != null && updatedPassword.isEmpty() )
+            {
+                updatedPassword = null;
             }
-            else {
-                // The room is not password protected so remove any previous password
-                room.setPassword(null);
+        }
+
+        if ( passwordProtectionChanged )
+        {
+            // The owner signifies that a change in password-protection status is desired.
+            if ( !updatedIsPasswordProtected )
+            {
+                // The owner lifts password protection.
+                room.setPassword( null );
             }
+            else if ( updatedPassword == null && room.getPassword() == null )
+            {
+                // The owner sets password-protection, but does not provide a password (and the room does not already have a password).
+                throw new NotAcceptableException( "Room is made password-protected, but is missing a password." );
+            }
+            else if ( updatedPassword != null )
+            {
+                // The owner sets password-protection and provided a new password.
+                room.setPassword( updatedPassword );
+            }
+        }
+        else if ( passwordChanged )
+        {
+            // The owner did not explicitly signal a password protection change, but did change the password value.
+            // This implies a change in password protection.
+            room.setPassword( updatedPassword );
         }
 
         field = completedForm.getField("muc#roomconfig_whois");

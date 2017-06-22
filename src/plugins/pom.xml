@@ -13,6 +13,7 @@
         <module>bookmarks</module>
         <module>broadcast</module>
         <module>callbackOnOffline</module>
+        <module>candy</module>
         <module>clientControl</module>
         <!-- Needs coherence.jar -->
         <!--<module>clustering</module>-->

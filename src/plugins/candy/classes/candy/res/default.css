@@ -1,0 +1,803 @@
+/** File: default.css
+ * Candy - Chats are not dead yet.
+ *
+ * Legal: See the LICENSE file at the top-level directory of this distribution and at https://github.com/candy-chat/candy/blob/master/LICENSE
+ */
+html, body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+#candy {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	background-color: #444;
+	color: #333;
+	overflow: hidden;
+}
+
+a {
+	color: #333;
+	text-decoration: none;
+}
+
+ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+#chat-tabs {
+	list-style: none;
+	margin: 0 200px 0 0;
+	padding: 0;
+	overflow: auto;
+	overflow-y: hidden;
+}
+
+#chat-tabs li {
+	margin: 0;
+	float: left;
+	position: relative;
+	white-space: nowrap;
+	margin: 3px 0 0 3px;
+}
+
+#chat-tabs a {
+	padding: 4px 50px 4px 10px;
+	display: inline-block;
+	color: #ccc;
+	height: 20px;
+	background-color: #666;
+	border-radius: 3px 3px 0 0;
+}
+
+#chat-tabs .active a {
+	background-color: #eee;
+	color: black;
+}
+
+#chat-tabs .transition {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 0;
+	width: 30px;
+	height: 30px;
+	background: url(img/tab-transitions.png) repeat-y left;
+	border-radius: 0 3px 0 0;
+}
+
+#chat-tabs a.close {
+	background-color: transparent;
+	position: absolute;
+	right: -2px;
+	top: -3px;
+	height: auto;
+	padding: 5px;
+	margin: 0 5px 0 2px;
+	color: #999;
+}
+
+#chat-tabs .active .transition {
+	background: url(img/tab-transitions.png) repeat-y -50px;
+}
+
+#chat-tabs .close:hover {
+	color: black;
+}
+
+#chat-tabs .unread {
+	color: white;
+	background-color: #9b1414;
+	padding: 2px 4px;
+	font-weight: bold;
+	font-size: 10px;
+	position: absolute;
+	top: 5px;
+	right: 22px;
+	border-radius: 3px;
+}
+
+#chat-tabs .offline .label {
+	text-decoration: line-through;
+}
+
+#chat-toolbar {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	font-size: 11px;
+	color: #666;
+	width: 200px;
+	height: 24px;
+	padding-top: 7px;
+	background-color: #444;
+	display: none;
+	border-top: 1px solid black;
+	box-shadow: 0 1px 0 0 #555 inset;
+}
+
+#chat-toolbar li {
+	width: 16px;
+	height: 16px;
+	margin-left: 5px;
+	float: left;
+	display: inline-block;
+	cursor: pointer;
+	background-position: top left;
+	background-repeat: no-repeat;
+}
+
+#chat-toolbar #emoticons-icon {
+	background-image: url(img/action/emoticons.png);
+}
+
+#chat-toolbar .context {
+	background-image: url(img/action/settings.png);
+	display: none;
+}
+
+.role-moderator #chat-toolbar .context, .affiliation-owner #chat-toolbar .context {
+	display: inline-block;
+}
+
+#chat-sound-control {
+	background-image: url(img/action/sound-off.png);
+}
+
+#chat-sound-control.checked {
+	background-image: url(img/action/sound-on.png);
+}
+
+#chat-autoscroll-control {
+	background-image: url(img/action/autoscroll-off.png);
+}
+
+#chat-autoscroll-control.checked {
+	background-image: url(img/action/autoscroll-on.png);
+}
+
+#chat-statusmessage-control {
+	background-image: url(img/action/statusmessage-off.png);
+}
+
+#chat-statusmessage-control.checked {
+	background-image: url(img/action/statusmessage-on.png);
+}
+
+#chat-toolbar .usercount {
+	background-image: url(img/action/usercount.png);
+	cursor: default;
+	padding-left: 20px;
+	width: auto;
+	margin-right: 5px;
+	float: right;
+}
+
+.usercount span {
+	display: inline-block;
+	padding: 1px 3px;
+	background-color: #666;
+	font-weight: bold;
+	border-radius: 3px;
+	color: #ccc;
+}
+
+.room-pane {
+	display: none;
+}
+
+.roster-pane {
+	position: absolute;
+	overflow: auto;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 200px;
+	margin: 30px 0 31px 0;
+	background-color: #333;
+	border-top: 1px solid black;
+	box-shadow: inset 0 1px 0 0 #555;
+}
+
+.roster-pane .user {
+	cursor: pointer;
+	padding: 7px 10px;
+	font-size: 12px;
+	opacity: 0;
+	display: none;
+	color: #ccc;
+	clear: both;
+	height: 14px;
+	border-bottom: 1px solid black;
+	box-shadow: 0 1px 0 0 #555;
+}
+
+.roster-pane .user:hover {
+	background-color: #222;
+}
+
+.roster-pane .user.status-ignored {
+	cursor: default;
+}
+
+.roster-pane .user.me {
+	font-weight: bold;
+	cursor: default;
+}
+
+.roster-pane .user.me:hover {
+	background-color: transparent;
+}
+
+.roster-pane .label {
+	float: left;
+	width: 110px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-shadow: 1px 1px black;
+}
+
+.roster-pane li {
+	width: 16px;
+	height: 16px;
+	float: right;
+	display: block;
+	margin-left: 3px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.roster-pane li.role {
+	cursor: default;
+	display: none;
+}
+
+.roster-pane li.role-moderator {
+	background-image: url(img/roster/role-moderator.png);
+	display: block;
+}
+
+.roster-pane li.affiliation-owner {
+	background-image: url(img/roster/affiliation-owner.png);
+	display: block;
+}
+
+.roster-pane li.ignore {
+	background-image: url(img/roster/ignore.png);
+	display: none;
+}
+
+.roster-pane .status-ignored li.ignore {
+	display: block;
+}
+
+.roster-pane li.context {
+	color: #999;
+	text-align: center;
+	cursor: pointer;
+}
+
+.roster-pane li.context:hover {
+	background-color: #666;
+	border-radius: 4px;
+}
+
+.roster-pane .me li.context {
+	display: none;
+}
+
+.message-pane-wrapper {
+	clear: both;
+	overflow: auto;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: auto;
+	width: auto;
+	margin: 30px 200px 31px 0;
+	background-color: #eee;
+	font-size: 13px;
+	padding: 0 5px;
+}
+
+.message-pane {
+	padding-top: 1px;
+}
+
+.message-pane li {
+	cursor: default;
+	border-bottom: 1px solid #ccc;
+	box-shadow: 0 1px 0 0 white;
+}
+
+.message-pane small {
+	display: none;
+	color: #a00;
+	font-size: 10px;
+	position: absolute;
+	background-color: #f7f7f7;
+	text-align: center;
+	line-height: 20px;
+	margin: 4px 0;
+	padding: 0 5px;
+	right: 5px;
+}
+
+.message-pane li:hover {
+	background-color: #f7f7f7;
+}
+
+.message-pane li:hover small {
+	display: block;
+}
+
+.message-pane li>div {
+	overflow: auto;
+	padding: 2px 0 2px 130px;
+	line-height: 24px;
+	white-space: -o-pre-wrap; /* Opera */
+	word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
+.message-pane li>div p {
+	margin: 0;
+}
+
+.message-pane .label {
+	font-weight: bold;
+	white-space: nowrap;
+	display: block;
+	margin-left: -130px;
+	width: 110px;
+	float: left;
+	overflow: hidden;
+	text-align: right;
+	color: black;
+}
+
+.message-pane .label:hover,
+.message-pane .label:focus {
+	color: inherit;
+}
+
+.message-pane .spacer {
+	color: #aaa;
+	font-weight: bold;
+	margin-left: -14px;
+	float: left;
+}
+
+.message-pane .subject, .message-pane .subject .label {
+	color: #a00;
+	font-weight: bold;
+}
+
+.message-pane .adminmessage {
+	color: #a00;
+	font-weight: bold;
+}
+
+.message-pane .infomessage {
+	color: #888;
+	font-style: italic;
+}
+
+.message-pane div>a {
+	color: #a00;
+}
+
+.message-pane a:hover {
+	text-decoration: underline;
+}
+
+.message-pane .emoticon {
+	vertical-align: text-bottom;
+	height: 15px;
+	width: 15px;
+}
+
+.message-form-wrapper {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: auto;
+	margin-right: 200px;
+	border-top: 1px solid #ccc;
+	background-color: white;
+	height: 31px;
+}
+
+.message-form {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin-right: 320px;
+	padding: 0;
+}
+
+.message-form input {
+	border: 0 none;
+	padding: 5px 10px;
+	font-size: 14px;
+	width: 100%;
+	display: block;
+	outline-width: 0;
+	background-color: white;
+}
+
+.message-form input.submit {
+	cursor: pointer;
+	background-color: #ccc;
+	color: #666;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	margin: 3px 203px 3px 3px;
+	padding: 0 10px;
+	width: auto;
+	font-size: 12px;
+	line-height: 12px;
+	height: 25px;
+	font-weight: bold;
+	border-radius: 3px;
+}
+
+#tooltip {
+	position: absolute;
+	z-index: 10;
+	display: none;
+	margin: 13px -18px -3px -2px;
+	color: #333;
+	font-size: 11px;
+	padding: 5px 0;
+}
+
+#tooltip div {
+	background-color: #f7f7f7;
+	padding: 2px 5px;
+	zoom: 1;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .75);
+}
+
+.arrow {
+	background: url(img/tooltip-arrows.gif) no-repeat left bottom;
+	height: 5px;
+	display: block;
+	position: relative;
+	z-index: 11;
+}
+
+.right-bottom .arrow-bottom {
+	background-position: right bottom;
+}
+
+.arrow-top {
+	display: none;
+	background-position: left top;
+}
+
+.right-top .arrow-top {
+	display: block;
+	background-position: right top;
+}
+
+.left-top .arrow-top {
+	display: block;
+}
+
+
+.left-top .arrow-bottom,
+.right-top .arrow-bottom {
+	display: none;
+}
+
+#context-menu {
+	position: absolute;
+	z-index: 10;
+	display: none;
+	padding: 5px 10px;
+	margin: 13px -28px -3px -12px;
+}
+
+#context-menu ul {
+	background-color: #f7f7f7;
+	color: #333;
+	font-size: 12px;
+	padding: 2px;
+	zoom: 1;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .75);
+}
+
+#context-menu li {
+	padding: 3px 5px 3px 20px;
+	line-height: 12px;
+	cursor: pointer;
+	margin-bottom: 2px;
+	background: 1px no-repeat;
+	white-space: nowrap;
+}
+
+#context-menu li:hover {
+	background-color: #ccc;
+}
+
+#context-menu li:last-child {
+	margin-bottom: 0;
+}
+
+#context-menu .private {
+	background-image: url(img/action/private.png);
+}
+
+#context-menu .ignore {
+	background-image: url(img/action/ignore.png);
+}
+
+#context-menu .unignore {
+	background-image: url(img/action/unignore.png);
+}
+
+#context-menu .kick {
+	background-image: url(img/action/kick.png);
+}
+
+#context-menu .ban {
+	background-image: url(img/action/ban.png);
+}
+
+#context-menu .subject {
+	background-image: url(img/action/subject.png);
+}
+
+#context-menu .emoticons {
+	padding-left: 5px;
+	width: 85px;
+	white-space: normal;
+}
+
+#context-menu .emoticons:hover {
+	background-color: transparent;
+}
+
+#context-menu .emoticons img {
+	cursor: pointer;
+	margin: 3px;
+	height: 15px;
+	width: 15px;
+}
+
+#chat-modal.modal-common {
+	background: #eee;
+	width: 300px;
+	padding: 20px 5px;
+	color: #333;
+	font-size: 16px;
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	margin-left: -160px;
+	margin-top: -45px;
+	text-align: center;
+	display: none;
+	z-index: 100;
+	border: 5px solid #888;
+	border-radius: 5px;
+	box-shadow: 0 0 5px black;
+}
+
+#chat-modal-overlay {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 90;
+	background-image: url(img/overlay.png);
+}
+
+#chat-modal.modal-login {
+	display: block;
+	margin-top: -100px;
+}
+
+#chat-modal-spinner {
+	display: none;
+	margin-left: 15px;
+}
+
+#chat-modal form {
+	margin: 15px 0;
+}
+
+#chat-modal label, #chat-modal input, #chat-modal select {
+	display: block;
+	float: left;
+	line-height: 26px;
+	font-size: 16px;
+	margin: 5px 0;
+}
+
+#chat-modal input, #chat-modal select {
+	padding: 2px;
+	line-height: 16px;
+	width: 150px;
+}
+
+#chat-modal input[type='text'],
+#chat-modal input[type='password'] {
+	background-color: white;
+	border: 1px solid #ccc;
+	padding: 4px;
+	font-size: 14px;
+	color: #333;
+}
+
+#chat-modal.login-with-domains {
+	width: 650px;
+	margin-left: -330px;
+}
+
+#chat-modal span.at-symbol {
+	float: left;
+	padding: 6px;
+	font-size: 14px;
+}
+
+#chat-modal select[name=domain] {
+	width: 320px;
+}
+
+#chat-modal label {
+	 text-align: right;
+	 padding-right: 1em;
+	 clear: both;
+	 width: 100px;
+}
+
+#chat-modal input.button {
+	float: none;
+	display: block;
+	margin: 5px auto;
+	clear: both;
+	position: relative;
+	top: 10px;
+	width: 200px;
+}
+
+#chat-modal .close {
+	position: absolute;
+	right: 0;
+	display: none;
+	padding: 0 5px;
+	margin: -17px 3px 0 0;
+	color: #999;
+	border-radius: 3px;
+}
+
+#chat-modal .close:hover {
+	color: #333;
+	background-color: #aaa;
+}
+
+/**
+ * Bootstrap Responsive Design styles
+ * It add styles to every element so we need to override some to keep the look of Candy
+ */
+*, :after, :before {
+	-webkit-box-sizing: content-box;
+	-moz-box-sizing: content-box;
+	box-sizing: content-box;
+}
+
+label {
+	font-weight: normal;
+}
+
+.label {
+	font-size: 100%;
+	font-weight: normal;
+	text-align: left;
+	line-height: inherit;
+	padding: 0;
+	color: inherit;
+}
+
+.close {
+	font-size: inherit;
+	line-height: inherit;
+	opacity: 1;
+	text-shadow: none;
+}
+
+#mobile-roster-icon {
+	display: none;
+}
+
+/*
+ * Responsive specific styles for devices under 600px
+ * Mainly changing the size of room, roster and message panes when opened / closed
+ */
+@media (max-width: 599px) {
+	.room-pane .message-pane-wrapper {
+		margin-right: 50px;
+	}
+
+	.room-pane:not(.open) .roster-pane {
+		right: -150px;
+	}
+
+	.roster-pane {
+		z-index: 10;
+	}
+
+	.message-pane li>div {
+		padding-left: 10px;
+	}
+
+	.message-pane li>div.infomessage {
+		padding-left: 30px;
+	}
+
+	.message-pane .label {
+		width: auto;
+		margin-left: 0;
+	}
+
+	.message-pane .spacer {
+		margin: 0 5px;
+	}
+
+	.room-pane:not(.open) .message-form-wrapper {
+		margin-right: 50px;
+	}
+
+	.room-pane:not(.open) .message-form {
+		margin-right: 150px;
+	}
+
+	.room-pane:not(.open) .message-form input.submit {
+		margin-right: 53px;
+	}
+
+	#mobile-roster-icon {
+		position: fixed;
+		top: 0;
+		right: 0;
+	}
+
+/*
+ * These are for the hamburger icon. The box-shadow adds the extra lines
+ */
+	.box-shadow-icon {
+		position: relative;
+		display: block;
+		width: 50px;
+		height: 30px;
+		cursor: pointer;
+	}
+
+	.box-shadow-icon:before {
+		content: "";
+		position: absolute;
+		left: 15px;
+		top: 9px;
+		width: 20px;
+		height: 2px;
+		background: #aaa;
+		box-shadow: 0 5px 0 0 #aaa, 0 10px 0 0 #aaa;
+	}
+
+	.box-shadow-icon:hover {
+		background: #222;
+	}
+}

@@ -379,8 +379,8 @@ tr.lowerhalf > td:last-child {
     <c:set var="plugin" value="${entry.value}"/>
     <c:if test="${canonicalName != 'admin'}">
         <c:set var="minServerVersionFail" value="${not empty plugin.minServerVersion and plugin.minServerVersion.isNewerThan(serverVersion)}"/>
-        <c:set var="maxServerVersionFail" value="${not empty plugin.maxServerVersion and serverVersion.isNewerThan(plugin.maxServerVersion)}"/>
-        <c:set var="unsupported" value="${ minServerVersionFail or maxServerVersionFail }"/>
+        <c:set var="priorToServerVersionFail" value="${not empty plugin.priorToServerVersion and not plugin.priorToServerVersion.isNewerThan( serverVersion )}"/>
+        <c:set var="unsupported" value="${ minServerVersionFail or priorToServerVersionFail }"/>
         <c:set var="update" value="${updateManager.getPluginUpdate( plugin.name, plugin.version) }"/>
         <c:choose>
             <c:when test="${unsupported}">
@@ -461,9 +461,9 @@ tr.lowerhalf > td:last-child {
                                 <fmt:param value="${plugin.minServerVersion}"/>
                             </fmt:message>
                         </c:if>
-                        <c:if test="${maxServerVersionFail}">
-                            <fmt:message key="plugin.admin.failed.maxserverversion">
-                                <fmt:param value="${plugin.maxServerVersion}"/>
+                        <c:if test="${priorToServerVersionFail}">
+                            <fmt:message key="plugin.admin.failed.priortoserverversion">
+                                <fmt:param value="${plugin.priorToServerVersion}"/>
                             </fmt:message>
                         </c:if>
                     </span>

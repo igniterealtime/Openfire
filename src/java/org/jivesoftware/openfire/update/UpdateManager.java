@@ -342,7 +342,7 @@ public class UpdateManager extends BasicModule {
             }
 
             // Remove plugins that require an older server version.
-            if ( availablePlugin.getMaxServerVersion() != null && currentServerVersion.isNewerThan( availablePlugin.getMaxServerVersion() ) )
+            if ( availablePlugin.getPriorToServerVersion() != null && !availablePlugin.getPriorToServerVersion().isNewerThan( currentServerVersion ) )
             {
                 iterator.remove();
             }
@@ -658,8 +658,8 @@ public class UpdateManager extends BasicModule {
                     continue;
                 }
 
-                final Version pluginMaxServerVersion = latestPlugin.getMaxServerVersion();
-                if ( pluginMaxServerVersion != null && currentServerVersion.isNewerThan( pluginMaxServerVersion ))
+                final Version pluginPriorToServerVersion = latestPlugin.getPriorToServerVersion();
+                if ( pluginPriorToServerVersion != null && !pluginPriorToServerVersion.isNewerThan( currentServerVersion ))
                 {
                     continue;
                 }
@@ -724,7 +724,7 @@ public class UpdateManager extends BasicModule {
             component.addAttribute("description", plugin.getDescription());
             component.addAttribute("icon", plugin.getIcon() != null ? plugin.getIcon().toExternalForm() : null );
             component.addAttribute("minServerVersion", plugin.getMinServerVersion() != null ? plugin.getMinServerVersion().getVersionString() : null);
-            component.addAttribute("maxServerVersion", plugin.getMaxServerVersion() != null ? plugin.getMaxServerVersion().getVersionString() : null);
+            component.addAttribute("priorToServerVersion", plugin.getPriorToServerVersion() != null ? plugin.getPriorToServerVersion().getVersionString() : null);
             component.addAttribute("readme", plugin.getReadme() != null ? plugin.getReadme().toExternalForm() : null );
             component.addAttribute( "licenseType", plugin.getLicense() );
             component.addAttribute("fileSize", Long.toString(plugin.getFileSize()));

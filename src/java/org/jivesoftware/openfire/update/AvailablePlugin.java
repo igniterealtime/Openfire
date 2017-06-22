@@ -120,11 +120,11 @@ public class AvailablePlugin extends PluginMetadata
             minServerVersion = new Version( minServerVersionValue );
         }
 
-        Version maxServerVersion = null;
-        String maxServerVersionValue = plugin.attributeValue("maxServerVersion");
-        if ( maxServerVersionValue != null && !maxServerVersionValue.isEmpty() )
+        Version priorToServerVersion = null;
+        String priorToServerVersionValue = plugin.attributeValue("priorToServerVersion");
+        if ( priorToServerVersionValue != null && !priorToServerVersionValue.isEmpty() )
         {
-            maxServerVersion = new Version( maxServerVersionValue );
+            priorToServerVersion = new Version( priorToServerVersionValue );
         }
 
         long fileSize = -1;
@@ -147,7 +147,7 @@ public class AvailablePlugin extends PluginMetadata
                 readme,
                 license,
                 minServerVersion,
-                maxServerVersion,
+                priorToServerVersion,
                 downloadUrl,
                 fileSize
         );
@@ -155,7 +155,7 @@ public class AvailablePlugin extends PluginMetadata
     }
     public AvailablePlugin( String name, String canonicalName, String description, Version latestVersion, String author,
                             URL icon, URL changelog, URL readme, String license,
-                            Version minServerVersion, Version maxServerVersion, URL downloadUrl, long fileSize ) {
+                            Version minServerVersion, Version priorToServerVersion, URL downloadUrl, long fileSize ) {
         super(
                 name,
                 canonicalName,
@@ -167,7 +167,7 @@ public class AvailablePlugin extends PluginMetadata
                 readme,
                 license,
                 minServerVersion,
-                maxServerVersion
+                priorToServerVersion
         );
         this.downloadURL = downloadUrl;
         this.fileSize = fileSize;

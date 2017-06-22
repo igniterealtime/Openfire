@@ -278,8 +278,8 @@ public class PluginMetadataHelper
     }
 
     /**
-     * Returns the maximum server version this plugin can run within. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * Returns the server version up, but not including, in which this plugin can run within. The value is retrieved from
+     * the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -288,21 +288,21 @@ public class PluginMetadataHelper
      * @param plugin The plugin (cannot be null)
      * @return the plugin's maximum server version (possibly null).
      */
-    public static Version getMaxServerVersion( Plugin plugin )
+    public static Version getPriorToServerVersion( Plugin plugin )
     {
-        return getMaxServerVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+        return getPriorToServerVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
     }
 
     /**
-     * Returns the maximum server version this plugin can run within. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * Returns the server version up, but not including, in which this plugin can run within. The value is retrieved from
+     * the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's maximum server version (possibly null).
      */
-    public static Version getMaxServerVersion( Path pluginDir )
+    public static Version getPriorToServerVersion( Path pluginDir )
     {
-        final String value = getElementValue( pluginDir, "/plugin/maxServerVersion" );
+        final String value = getElementValue( pluginDir, "/plugin/priorToServerVersion" );
         if ( value == null || value.trim().isEmpty() )
         {
             return null;

@@ -74,14 +74,14 @@ public class PluginMetadata
     private final String license;
 
     /**
-     * Minimum server version required by this plugin as specified in plugin.xml.
+     * Minimum server version (inclusive) required by this plugin as specified in plugin.xml.
      */
     private final Version minServerVersion;
 
     /**
-     * Maximum server version required by this plugin as specified in plugin.xml.
+     * Maximum server version (exclusive) required by this plugin as specified in plugin.xml.
      */
-    private final Version maxServerVersion;
+    private final Version priorToServerVersion;
 
     /**
      * Constructs a metadata object based on a plugin.
@@ -104,7 +104,7 @@ public class PluginMetadata
                 PluginMetadataHelper.getReadme( pluginDir ),
                 PluginMetadataHelper.getLicense( pluginDir ),
                 PluginMetadataHelper.getMinServerVersion( pluginDir ),
-                PluginMetadataHelper.getMaxServerVersion( pluginDir )
+                PluginMetadataHelper.getPriorToServerVersion( pluginDir )
         );
     }
 
@@ -129,13 +129,13 @@ public class PluginMetadata
                 PluginMetadataHelper.getReadme( plugin ),
                 PluginMetadataHelper.getLicense( plugin ),
                 PluginMetadataHelper.getMinServerVersion( plugin ),
-                PluginMetadataHelper.getMaxServerVersion( plugin )
+                PluginMetadataHelper.getPriorToServerVersion( plugin )
         );
     }
 
     public PluginMetadata( String name, String canonicalName, String description, Version version, String author,
                            URL icon, URL changelog, URL readme, String license,
-                           Version minServerVersion, Version maxServerVersion )
+                           Version minServerVersion, Version priorToServerVersion )
     {
         this.name = name;
         this.canonicalName = canonicalName;
@@ -147,7 +147,7 @@ public class PluginMetadata
         this.readme = readme;
         this.license = license;
         this.minServerVersion = minServerVersion;
-        this.maxServerVersion = maxServerVersion;
+        this.priorToServerVersion = priorToServerVersion;
     }
 
     public String getName()
@@ -200,9 +200,9 @@ public class PluginMetadata
         return minServerVersion;
     }
 
-    public Version getMaxServerVersion()
+    public Version getPriorToServerVersion()
     {
-        return maxServerVersion;
+        return priorToServerVersion;
     }
 
     public String getHashCode() {

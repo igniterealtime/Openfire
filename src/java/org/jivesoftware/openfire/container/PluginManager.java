@@ -436,13 +436,13 @@ public class PluginManager
             }
 
             // See if the plugin specifies a maximum version of Openfire required to run.
-            if ( metadata.getMaxServerVersion() != null )
+            if ( metadata.getPriorToServerVersion() != null )
             {
                 // OF-1338: Ignore release status when comparing maximum server version requirement.
                 final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
-                if ( compareVersion.isNewerThan( metadata.getMaxServerVersion() ) )
+                if ( !metadata.getPriorToServerVersion().isNewerThan( compareVersion ) )
                 {
-                    Log.warn( "Ignoring plugin '{}': compatible with server versions up to and including {}. Current server version is {}.", canonicalName, metadata.getMaxServerVersion(), currentServerVersion );
+                    Log.warn( "Ignoring plugin '{}': compatible with server versions up to but excluding {}. Current server version is {}.", canonicalName, metadata.getPriorToServerVersion(), currentServerVersion );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
                     return false;
                 }

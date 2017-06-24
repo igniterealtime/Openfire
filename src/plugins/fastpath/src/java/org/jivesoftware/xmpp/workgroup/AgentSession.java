@@ -560,11 +560,11 @@ public class AgentSession {
     }
 
     /**
-     * This agent is not longer related to this offer. The agent may have been selected to answer
+     * This agent is no longer related to this offer. The agent may have been selected to answer
      * the user's request or the offer has been assigned to another agent or the request was
      * cancelled.
      *
-     * @param offer the offer that is not longer related to this agent.
+     * @param offer the offer that is no longer related to this agent.
      */
     public void removeOffer(Offer offer) {
         if (offer.equals(this.offer)) {

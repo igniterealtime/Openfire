@@ -74,6 +74,11 @@
                         <artifactId>xmppserver</artifactId>
                         <version>${project.version}</version>
                     </dependency>
+                    <dependency>
+                        <groupId>org.igniterealtime.openfire</groupId>
+                        <artifactId>webadmintld</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
                 </dependencies>
             </plugin>
 

@@ -40,12 +40,22 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
- * new plugins, and they are dynamically loaded.
+ * Manages plugins.
  *
- * <p>An instance of this class can be obtained using:</p>
+ * The <tt>plugins</tt> directory is monitored for any new plugins, and they are dynamically loaded.
  *
- * <tt>XMPPServer.getInstance().getPluginManager()</tt>
+ * An instance of this class can be obtained using: <tt>XMPPServer.getInstance().getPluginManager()</tt>
+ *
+ * These states are defined for plugin management:
+ * <ul>
+ *     <li><em>installed</em> - the plugin archive file is present in the <tt>plugins</tt> directory.</li>
+ *     <li><em>extracted</em> - the plugin archive file has been extracted.</li>
+ *     <li><em>loaded</em> - the plugin has (successfully) been initialized.</li>
+ * </ul>
+ *
+ * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+ * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+ * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
  *
  * @author Matt Tucker
  * @see Plugin
@@ -56,9 +66,31 @@ public class PluginManager
     private static final Logger Log = LoggerFactory.getLogger( PluginManager.class );
 
     private final Path pluginDirectory;
-    private final Map<String, Plugin> plugins = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
+    /**
+     * Plugins that are loaded, mapped by their canonical name.
+     */
+    private final Map<String, Plugin> pluginsLoaded = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
+    /**
+     * The plugin classloader for each loaded plugin.
+     */
     private final Map<Plugin, PluginClassLoader> classloaders = new HashMap<>();
-    private final Map<Plugin, Path> pluginDirs = new HashMap<>();
+
+    /**
+     * The directory in which a plugin is extracted, mapped by canonical name. This collection contains loaded plugins,
+     * as well as extracted (but not loaded) plugins.
+     *
+     * Note that typically these directories are subdirectories of <tt>plugins</tt>, but a 'dev-plugin' could live
+     * elsewhere.
+     */
+    private final Map<String, Path> pluginDirs = new HashMap<>();
+
+    /**
+     * Plugin metadata for all extracted plugins, mapped by canonical name.
+     */
+    private final Map<String, PluginMetadata> pluginMetadata = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
     private final Map<Plugin, PluginDevEnvironment> pluginDevelopment = new HashMap<>();
     private final Map<Plugin, List<String>> parentPluginMap = new HashMap<>();
     private final Map<Plugin, String> childPluginMap = new HashMap<>();
@@ -93,13 +125,13 @@ public class PluginManager
      */
     public synchronized void shutdown()
     {
-        Log.info( "Shutting down. Unloading all installed plugins..." );
+        Log.info( "Shutting down. Unloading all loaded plugins..." );
 
         // Stop the plugin monitoring service.
         pluginMonitor.stop();
 
-        // Shutdown all installed plugins.
-        for ( Map.Entry<String, Plugin> plugin : plugins.entrySet() )
+        // Shutdown all loaded plugins.
+        for ( Map.Entry<String, Plugin> plugin : pluginsLoaded.entrySet() )
         {
             try
             {
@@ -111,8 +143,9 @@ public class PluginManager
                 Log.error( "An exception occurred while trying to unload plugin '{}':", plugin.getKey(), e );
             }
         }
-        plugins.clear();
+        pluginsLoaded.clear();
         pluginDirs.clear();
+        pluginMetadata.clear();
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
@@ -176,37 +209,145 @@ public class PluginManager
     }
 
     /**
-     * Returns true if the specified filename, that belongs to a plugin, exists.
+     * Returns true if the plugin by the specified name is installed. Specifically, this checks if the plugin
+     * archive file is present in the <tt>plugins</tt> directory.
      *
-     * @param pluginFilename the filename of the plugin to create or update.
-     * @return true if the specified filename, that belongs to a plugin, exists.
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is installed, otherwise false.
      */
-    public boolean isPluginDownloaded( String pluginFilename )
+    public boolean isInstalled( final String canonicalName )
     {
-        return Files.exists( pluginDirectory.resolve( pluginFilename ) );
+        final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>()
+        {
+            @Override
+            public boolean accept( Path entry ) throws IOException
+            {
+                final String name = entry.getFileName().toString();
+                return Files.exists( entry ) && !Files.isDirectory( entry ) &&
+                        ( name.equalsIgnoreCase( canonicalName + ".jar" ) || name.equalsIgnoreCase( canonicalName + ".war" ) );
+            }
+        };
+
+        try ( final DirectoryStream<Path> paths = Files.newDirectoryStream( pluginDirectory, filter ) )
+        {
+            return paths.iterator().hasNext();
+        }
+        catch ( IOException e )
+        {
+            Log.error( "Unable to determine if plugin '{}' is installed.", canonicalName, e );
+
+            // return the next best guess
+            return pluginsLoaded.containsKey( canonicalName );
+        }
     }
 
     /**
-     * Returns a Collection of all installed plugins.
+     * Returns true if the plugin by the specified name is extracted. Specifically, this checks if the <tt>plugins</tt>
+     * directory contains a subdirectory that matches the canonical name of the plugin.
      *
-     * @return a Collection of all installed plugins.
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is extracted, otherwise false.
+     */
+    public boolean isExtracted( final String canonicalName )
+    {
+        return pluginMetadata.containsKey( canonicalName );
+    }
+
+    /**
+     * Returns true if the plugin by the specified name is loaded. Specifically, this checks if an instance was created
+     * for the plugin class file.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is extracted, otherwise false.
+     */
+    public boolean isLoaded( final String canonicalName )
+    {
+        return pluginsLoaded.containsKey( canonicalName );
+    }
+
+    /**
+     * Returns metadata for all extracted plugins, mapped by their canonical name.
+     *
+     * The collection is alphabetically sorted, by plugin name.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @return A collection of metadata (possibly empty, never null).
+     */
+    public Map<String, PluginMetadata> getMetadataExtractedPlugins()
+    {
+        return Collections.unmodifiableMap( this.pluginMetadata );
+    }
+
+    /**
+     * Returns metadata for an extracted plugin, or null when the plugin is extracted nor loaded.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @return A collection of metadata (possibly empty, never null).
+     */
+    public PluginMetadata getMetadata( String canonicalName )
+    {
+        return this.pluginMetadata.get( canonicalName );
+    }
+
+    /**
+     * Returns a Collection of all loaded plugins.
+     *
+     * The returned collection will not include plugins that have been downloaded, but not loaded.
+     *
+     * @return a Collection of all loaded plugins.
      */
     public Collection<Plugin> getPlugins()
     {
-        return Collections.unmodifiableCollection( Arrays.asList( plugins.values().toArray( new Plugin[ plugins.size() ] ) ) );
+        return Collections.unmodifiableCollection( Arrays.asList( pluginsLoaded.values().toArray( new Plugin[ pluginsLoaded.size() ] ) ) );
     }
 
     /**
-     * Returns a plugin by name or <tt>null</tt> if a plugin with that name does not
-     * exist. The name is the name of the directory that the plugin is in such as
-     * "broadcast".
+     * Returns the canonical name for a loaded plugin.
      *
-     * @param name the name of the plugin.
+     * @param plugin A plugin (cannot be null).
+     * @return The canonical name for the plugin (never null).
+     */
+    public String getCanonicalName( Plugin plugin )
+    {
+        // TODO consider using a bimap for a more efficient lookup.
+        for ( Map.Entry<String, Plugin> entry : pluginsLoaded.entrySet() )
+        {
+            if ( entry.getValue().equals( plugin ) )
+            {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns an loaded plugin by its canonical name or <tt>null</tt> if a plugin with that name does not exist. The
+     * canonical name is the lowercase-name of the plugin archive, without the file extension. For example: "broadcast".
+     *
+     * @param canonicalName the name of the plugin.
      * @return the plugin.
      */
-    public Plugin getPlugin( String name )
+    public Plugin getPlugin( String canonicalName )
     {
-        return plugins.get( name );
+        return pluginsLoaded.get( canonicalName.toLowerCase() );
     }
 
     /**
@@ -226,7 +367,12 @@ public class PluginManager
      */
     public Path getPluginPath( Plugin plugin )
     {
-        return pluginDirs.get( plugin );
+        final String canonicalName = getCanonicalName( plugin );
+        if ( canonicalName != null )
+        {
+            return pluginDirs.get( canonicalName );
+        }
+        return null;
     }
 
     /**
@@ -246,56 +392,65 @@ public class PluginManager
      *
      * @param pluginDir the plugin directory.
      */
-    boolean loadPlugin( Path pluginDir )
+    boolean loadPlugin( String canonicalName, Path pluginDir )
     {
+        final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
+        pluginMetadata.put( canonicalName, metadata );
+
         // Only load the admin plugin during setup mode.
-        final String pluginName = pluginDir.getFileName().toString();
-        if ( XMPPServer.getInstance().isSetupMode() && !( pluginName.equals( "admin" ) ) )
+        if ( XMPPServer.getInstance().isSetupMode() && !( canonicalName.equals( "admin" ) ) )
         {
             return false;
         }
 
-        if ( failureToLoadCount.containsKey( pluginName ) && failureToLoadCount.get( pluginName ) > JiveGlobals.getIntProperty( "plugins.loading.retries", 5 ) )
+        if ( failureToLoadCount.containsKey( canonicalName ) && failureToLoadCount.get( canonicalName ) > JiveGlobals.getIntProperty( "plugins.loading.retries", 5 ) )
         {
-            Log.debug( "The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", pluginName );
+            Log.debug( "The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName );
             return false;
         }
 
-        Log.debug( "Loading plugin '{}'...", pluginName );
+        Log.debug( "Loading plugin '{}'...", canonicalName );
         try
         {
             final Path pluginConfig = pluginDir.resolve( "plugin.xml" );
             if ( !Files.exists( pluginConfig ) )
             {
-                Log.warn( "Plugin '{}' could not be loaded: no plugin.xml file found.", pluginName );
-                failureToLoadCount.put( pluginName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                Log.warn( "Plugin '{}' could not be loaded: no plugin.xml file found.", canonicalName );
+                failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
                 return false;
             }
 
-            final SAXReader saxReader = new SAXReader();
-            saxReader.setEncoding( "UTF-8" );
-            final Document pluginXML = saxReader.read( pluginConfig.toFile() );
+            final Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
 
-            // See if the plugin specifies a version of Openfire required to run.
-            final Element minServerVersion = (Element) pluginXML.selectSingleNode( "/plugin/minServerVersion" );
-            if ( minServerVersion != null )
+            // See if the plugin specifies a minimum version of Openfire required to run.
+            if ( metadata.getMinServerVersion() != null )
             {
-                final Version requiredVersion = new Version( minServerVersion.getTextTrim() );
-                final Version currentVersion = XMPPServer.getInstance().getServerInfo().getVersion();
-
                 // OF-1338: Ignore release status when comparing minimum server version requirement.
-                final Version compareVersion = new Version( currentVersion.getMajor(), currentVersion.getMinor(), currentVersion.getMicro(), null, -1 );
-                if ( requiredVersion.isNewerThan( compareVersion ) )
+                final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
+                if ( metadata.getMinServerVersion().isNewerThan( compareVersion ) )
                 {
-                    Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", pluginName, requiredVersion, currentVersion );
-                    failureToLoadCount.put( pluginName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", canonicalName, metadata.getMinServerVersion(), currentServerVersion );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
+                }
+            }
+
+            // See if the plugin specifies a maximum version of Openfire required to run.
+            if ( metadata.getPriorToServerVersion() != null )
+            {
+                // OF-1338: Ignore release status when comparing maximum server version requirement.
+                final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
+                if ( !metadata.getPriorToServerVersion().isNewerThan( compareVersion ) )
+                {
+                    Log.warn( "Ignoring plugin '{}': compatible with server versions up to but excluding {}. Current server version is {}.", canonicalName, metadata.getPriorToServerVersion(), currentServerVersion );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
                     return false;
                 }
             }
 
             // Properties to be used to load external resources. When set, plugin is considered to run in DEV mode.
-            final String devModeClassesDir = System.getProperty( pluginName + ".classes" );
-            final String devModewebRoot = System.getProperty( pluginName + ".webRoot" );
+            final String devModeClassesDir = System.getProperty( canonicalName + ".classes" );
+            final String devModewebRoot = System.getProperty( canonicalName + ".webRoot" );
             final boolean devMode = devModewebRoot != null || devModeClassesDir != null;
             final PluginDevEnvironment dev = ( devMode ? configurePluginDevEnvironment( pluginDir, devModeClassesDir, devModewebRoot ) : null );
 
@@ -306,13 +461,14 @@ public class PluginManager
             // loader so that the plugins can interact.
             String parentPluginName = null;
             Plugin parentPlugin = null;
-            final Element parentPluginNode = (Element) pluginXML.selectSingleNode( "/plugin/parentPlugin" );
-            if ( parentPluginNode != null )
+
+            final String parentCanonicalName = PluginMetadataHelper.getParentPlugin( pluginDir );
+            if ( parentCanonicalName != null )
             {
                 // The name of the parent plugin as specified in plugin.xml might have incorrect casing. Lookup the correct name.
-                for ( final Map.Entry<String, Plugin> entry : plugins.entrySet() )
+                for ( final Map.Entry<String, Plugin> entry : pluginsLoaded.entrySet() )
                 {
-                    if ( entry.getKey().equalsIgnoreCase( parentPluginNode.getTextTrim() ) )
+                    if ( entry.getKey().equalsIgnoreCase( parentCanonicalName ) )
                     {
                         parentPluginName = entry.getKey();
                         parentPlugin = entry.getValue();
@@ -323,12 +479,12 @@ public class PluginManager
                 // See if the parent is loaded.
                 if ( parentPlugin == null )
                 {
-                    Log.info( "Unable to load plugin '{}': parent plugin '{}' has not been loaded.", pluginName, parentPluginNode.getTextTrim() );
-                    Integer count = failureToLoadCount.get( pluginName );
+                    Log.info( "Unable to load plugin '{}': parent plugin '{}' has not been loaded.", canonicalName, parentCanonicalName );
+                    Integer count = failureToLoadCount.get( canonicalName );
                     if ( count == null ) {
                         count = 0;
                     }
-                    failureToLoadCount.put( pluginName, ++count );
+                    failureToLoadCount.put( canonicalName, ++count );
                     return false;
                 }
                 pluginLoader = classloaders.get( parentPlugin );
@@ -349,13 +505,17 @@ public class PluginManager
             }
 
             // Instantiate the plugin!
+            final SAXReader saxReader = new SAXReader();
+            saxReader.setEncoding( "UTF-8" );
+            final Document pluginXML = saxReader.read( pluginConfig.toFile() );
+
             final String className = pluginXML.selectSingleNode( "/plugin/class" ).getText().trim();
             final Plugin plugin = (Plugin) pluginLoader.loadClass( className ).newInstance();
 
             // Bookkeeping!
             classloaders.put( plugin, pluginLoader );
-            plugins.put( pluginName, plugin );
-            pluginDirs.put( plugin, pluginDir );
+            pluginsLoaded.put( canonicalName, plugin );
+            pluginDirs.put( canonicalName, pluginDir );
             if ( dev != null )
             {
                 pluginDevelopment.put( plugin, dev );
@@ -370,7 +530,7 @@ public class PluginManager
                     childrenPlugins = new ArrayList<>();
                     parentPluginMap.put( parentPlugin, childrenPlugins );
                 }
-                childrenPlugins.add( pluginName );
+                childrenPlugins.add( canonicalName );
 
                 // Also register child to parent relationship.
                 childPluginMap.put( plugin, parentPluginName );
@@ -380,7 +540,7 @@ public class PluginManager
             if ( !DbConnectionManager.getSchemaManager().checkPluginSchema( plugin ) )
             {
                 // The schema was not there and auto-upgrade failed.
-                Log.error( "Error while loading plugin '{}': {}", pluginName, LocaleUtils.getLocalizedString( "upgrade.database.failure" ) );
+                Log.error( "Error while loading plugin '{}': {}", canonicalName, LocaleUtils.getLocalizedString( "upgrade.database.failure" ) );
             }
 
             // Load any JSP's defined by the plugin.
@@ -398,13 +558,13 @@ public class PluginManager
             }
 
             // Configure caches of the plugin
-            configureCaches( pluginDir, pluginName );
+            configureCaches( pluginDir, canonicalName );
 
             // Initialze the plugin.
             final ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
             Thread.currentThread().setContextClassLoader( pluginLoader );
             plugin.initializePlugin( this, pluginDir.toFile() );
-            Log.debug( "Initialized plugin '{}'.", pluginName );
+            Log.debug( "Initialized plugin '{}'.", canonicalName );
             Thread.currentThread().setContextClassLoader( oldLoader );
 
             // If there a <adminconsole> section defined, register it.
@@ -415,21 +575,21 @@ public class PluginManager
                 if ( appName != null )
                 {
                     // Set the plugin name so that the proper i18n String can be loaded.
-                    appName.addAttribute( "plugin", pluginName );
+                    appName.addAttribute( "plugin", canonicalName );
                 }
 
                 // If global images are specified, override their URL.
                 Element imageEl = (Element) adminElement.selectSingleNode( "/plugin/adminconsole/global/logo-image" );
                 if ( imageEl != null )
                 {
-                    imageEl.setText( "plugins/" + pluginName + "/" + imageEl.getText() );
-                    imageEl.addAttribute( "plugin", pluginName ); // Set the plugin name so that the proper i18n String can be loaded.
+                    imageEl.setText( "plugins/" + canonicalName + "/" + imageEl.getText() );
+                    imageEl.addAttribute( "plugin", canonicalName ); // Set the plugin name so that the proper i18n String can be loaded.
                 }
                 imageEl = (Element) adminElement.selectSingleNode( "/plugin/adminconsole/global/login-image" );
                 if ( imageEl != null )
                 {
-                    imageEl.setText( "plugins/" + pluginName + "/" + imageEl.getText() );
-                    imageEl.addAttribute( "plugin", pluginName ); // Set the plugin name so that the proper i18n String can be loaded.
+                    imageEl.setText( "plugins/" + canonicalName + "/" + imageEl.getText() );
+                    imageEl.addAttribute( "plugin", canonicalName ); // Set the plugin name so that the proper i18n String can be loaded.
                 }
 
                 // Modify all the URL's in the XML so that they are passed through the plugin servlet correctly.
@@ -437,7 +597,7 @@ public class PluginManager
                 for ( final Object url : urls )
                 {
                     final Attribute attr = (Attribute) url;
-                    attr.setValue( "plugins/" + pluginName + "/" + attr.getValue() );
+                    attr.setValue( "plugins/" + canonicalName + "/" + attr.getValue() );
                 }
 
                 // In order to internationalize the names and descriptions in the model, we add a "plugin" attribute to
@@ -452,25 +612,25 @@ public class PluginManager
                         // Make sure there's a name or description. Otherwise, no need to i18n settings.
                         if ( element.attribute( "name" ) != null || element.attribute( "value" ) != null )
                         {
-                            element.addAttribute( "plugin", pluginName );
+                            element.addAttribute( "plugin", canonicalName );
                         }
                     }
                 }
 
-                AdminConsole.addModel( pluginName, adminElement );
+                AdminConsole.addModel( canonicalName, adminElement );
             }
-            firePluginCreatedEvent( pluginName, plugin );
-            Log.info( "Successfully loaded plugin '{}'.", pluginName );
+            firePluginCreatedEvent( canonicalName, plugin );
+            Log.info( "Successfully loaded plugin '{}'.", canonicalName );
             return true;
         }
         catch ( Throwable e )
         {
-            Log.error( "An exception occurred while loading plugin '{}':", pluginName, e );
-            Integer count = failureToLoadCount.get( pluginName );
+            Log.error( "An exception occurred while loading plugin '{}':", canonicalName, e );
+            Integer count = failureToLoadCount.get( canonicalName );
             if ( count == null ) {
                 count = 0;
             }
-            failureToLoadCount.put( pluginName, ++count );
+            failureToLoadCount.put( canonicalName, ++count );
             return false;
         }
     }
@@ -624,15 +784,15 @@ public class PluginManager
      *
      * This method is called automatically when a plugin's JAR file is deleted.
      *
-     * @param pluginName the name of the plugin to unload.
+     * @param canonicalName the canonical name of the plugin to unload.
      */
-    void unloadPlugin( String pluginName )
+    void unloadPlugin( String canonicalName )
     {
-        Log.debug( "Unloading plugin '{}'...", pluginName );
+        Log.debug( "Unloading plugin '{}'...", canonicalName );
 
-        failureToLoadCount.remove( pluginName );
+        failureToLoadCount.remove( canonicalName );
 
-        Plugin plugin = plugins.get( pluginName );
+        Plugin plugin = pluginsLoaded.get( canonicalName );
         if ( plugin != null )
         {
             // Remove from dev mode if it exists.
@@ -645,19 +805,19 @@ public class PluginManager
                 for ( String childPlugin : childPlugins )
                 {
                     Log.debug( "Unloading child plugin: '{}'.", childPlugin );
-                    childPluginMap.remove( plugins.get( childPlugin ) );
+                    childPluginMap.remove( pluginsLoaded.get( childPlugin ) );
                     unloadPlugin( childPlugin );
                 }
                 parentPluginMap.remove( plugin );
             }
 
-            Path webXML = pluginDirectory.resolve( pluginName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );
+            Path webXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );
             if ( Files.exists( webXML ) )
             {
-                AdminConsole.removeModel( pluginName );
+                AdminConsole.removeModel( canonicalName );
                 PluginServlet.unregisterServlets( webXML.toFile() );
             }
-            Path customWebXML = pluginDirectory.resolve( pluginName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web-custom.xml" );
+            Path customWebXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web-custom.xml" );
             if ( Files.exists( customWebXML ) )
             {
                 PluginServlet.unregisterServlets( customWebXML.toFile() );
@@ -671,11 +831,11 @@ public class PluginManager
             try
             {
                 plugin.destroyPlugin();
-                Log.debug( "Destroyed plugin '{}'.", pluginName );
+                Log.debug( "Destroyed plugin '{}'.", canonicalName );
             }
             catch ( Exception e )
             {
-                Log.error( "An exception occurred while unloading plugin '{}':", pluginName, e );
+                Log.error( "An exception occurred while unloading plugin '{}':", canonicalName, e );
             }
         }
 
@@ -683,9 +843,10 @@ public class PluginManager
         // If plugin still fails to be removed then we will add references back
         // Anyway, for a few seconds admins may not see the plugin in the admin console
         // and in a subsequent refresh it will appear if failed to be removed
-        plugins.remove( pluginName );
-        Path pluginFile = pluginDirs.remove( plugin );
+        pluginsLoaded.remove( canonicalName );
+        Path pluginFile = pluginDirs.remove( canonicalName );
         PluginClassLoader pluginLoader = classloaders.remove( plugin );
+        PluginMetadata metadata = pluginMetadata.remove( canonicalName );
 
         // try to close the cached jar files from the plugin class loader
         if ( pluginLoader != null )
@@ -694,13 +855,13 @@ public class PluginManager
         }
         else
         {
-            Log.warn( "No plugin loader found for '{}'.", pluginName );
+            Log.warn( "No plugin loader found for '{}'.", canonicalName );
         }
 
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
-        Path dir = pluginDirectory.resolve( pluginName );
+        Path dir = pluginDirectory.resolve( canonicalName );
         // Give the plugin 2 seconds to unload.
         try
         {
@@ -710,7 +871,7 @@ public class PluginManager
             int count = 0;
             while ( !deleteDir( dir ) && count++ < 5 )
             {
-                Log.warn( "Error unloading plugin '{}'. Will attempt again momentarily.", pluginName );
+                Log.warn( "Error unloading plugin '{}'. Will attempt again momentarily.", canonicalName );
                 Thread.sleep( 8000 );
                 // Ask the system to clean up references.
                 System.gc();
@@ -718,23 +879,23 @@ public class PluginManager
         }
         catch ( InterruptedException e )
         {
-            Log.debug( "Stopped waiting for plugin '{}' to be fully unloaded.", pluginName, e );
+            Log.debug( "Stopped waiting for plugin '{}' to be fully unloaded.", canonicalName, e );
         }
 
         if ( plugin != null && Files.notExists( dir ) )
         {
             // Unregister plugin caches
-            PluginCacheRegistry.getInstance().unregisterCaches( pluginName );
+            PluginCacheRegistry.getInstance().unregisterCaches( canonicalName );
 
             // See if this is a child plugin. If it is, we should unload
             // the parent plugin as well.
             if ( childPluginMap.containsKey( plugin ) )
             {
                 String parentPluginName = childPluginMap.get( plugin );
-                Plugin parentPlugin = plugins.get( parentPluginName );
+                Plugin parentPlugin = pluginsLoaded.get( parentPluginName );
                 List<String> childrenPlugins = parentPluginMap.get( parentPlugin );
 
-                childrenPlugins.remove( pluginName );
+                childrenPlugins.remove( canonicalName );
                 childPluginMap.remove( plugin );
 
                 // When the parent plugin implements PluginListener, its pluginDestroyed() method
@@ -745,19 +906,20 @@ public class PluginManager
                 {
                     PluginListener listener;
                     listener = (PluginListener) parentPlugin;
-                    listener.pluginDestroyed( pluginName, plugin );
+                    listener.pluginDestroyed( canonicalName, plugin );
                 }
                 unloadPlugin( parentPluginName );
             }
-            firePluginDestroyedEvent( pluginName, plugin );
-            Log.info( "Successfully unloaded plugin '{}'.", pluginName );
+            firePluginDestroyedEvent( canonicalName, plugin );
+            Log.info( "Successfully unloaded plugin '{}'.", canonicalName );
         }
         else if ( plugin != null )
         {
-            Log.info( "Restore references since we failed to remove the plugin '{}'.", pluginName );
-            plugins.put( pluginName, plugin );
-            pluginDirs.put( plugin, pluginFile );
+            Log.info( "Restore references since we failed to remove the plugin '{}'.", canonicalName );
+            pluginsLoaded.put( canonicalName, plugin );
+            pluginDirs.put( canonicalName, pluginFile );
             classloaders.put( plugin, pluginLoader );
+            pluginMetadata.put( canonicalName, metadata );
         }
     }
 
@@ -824,7 +986,7 @@ public class PluginManager
     @Deprecated
     public String getVersion( Plugin plugin )
     {
-        return PluginMetadataHelper.getVersion( plugin );
+        return PluginMetadataHelper.getVersion( plugin ).getVersionString();
     }
 
     /**
@@ -833,7 +995,7 @@ public class PluginManager
     @Deprecated
     public String getMinServerVersion( Plugin plugin )
     {
-        return PluginMetadataHelper.getMinServerVersion( plugin );
+        return PluginMetadataHelper.getMinServerVersion( plugin ).getVersionString();
     }
 
     /**
@@ -858,7 +1020,7 @@ public class PluginManager
      * @deprecated Moved to {@link PluginMetadataHelper#getLicense(Plugin)}.
      */
     @Deprecated
-    public License getLicense( Plugin plugin )
+    public String getLicense( Plugin plugin )
     {
         return PluginMetadataHelper.getLicense( plugin );
     }

@@ -4,7 +4,7 @@
         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
             http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
         version="2.1">
-    <tlib-version>1.2</tlib-version>
+    <tlib-version>1.3</tlib-version>
     <short-name>Tag Library for Openfire</short-name>
     <description>Tab Library for Openfire Admin Console</description>
     <short-name>admin</short-name>
@@ -152,6 +152,26 @@
         <function-signature>java.lang.String[] split(java.lang.String, java.lang.String)</function-signature>
     </function>
     <function>
+        <name>byteFormat</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String byteFormat(long)</function-signature>
+    </function>
+    <function>
+        <name>urlEncode</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String urlEncode(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>urlDecode</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String urlDecode(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>escapeHTMLTags</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String escapeHTMLTags(java.lang.String)</function-signature>
+    </function>
+    <function>
         <name>serverIdentities</name>
         <function-class>org.jivesoftware.util.CertificateManager</function-class>
         <function-signature>java.util.List getServerIdentities(java.security.cert.X509Certificate)</function-signature>
@@ -186,4 +206,20 @@
         <function-class>org.jivesoftware.util.JiveGlobals</function-class>
         <function-signature>java.util.List getListProperty(java.lang.String,java.util.List)</function-signature>
     </function>
+    <function>
+        <name>formatDate</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatDate(java.util.Date)</function-signature>
+    </function>
+    <function>
+        <name>formatDateTime</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatDateTime(java.util.Date)</function-signature>
+    </function>
+    <function>
+        <name>formatTime</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatTime(java.util.Date)</function-signature>
+    </function>
+
 </taglib>

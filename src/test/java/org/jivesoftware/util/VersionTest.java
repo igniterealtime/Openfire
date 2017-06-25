@@ -38,6 +38,20 @@ public class VersionTest {
 	}
 
 	@Test
+	public void testVersionWithRegularStringConstructorB() {
+		Version test = new Version("1.2.3 Release 3");
+
+		assertEquals(1, test.getMajor());
+		assertEquals(2, test.getMinor());
+		assertEquals(3, test.getMicro());
+
+		assertEquals(ReleaseStatus.Release, test.getStatus());
+		assertEquals(3, test.getStatusVersion());
+
+		assertEquals("1.2.3 Release 3", test.getVersionString());
+	}
+
+	@Test
 	public void testVersionWithNullStringConstructor() {
 		Version test = new Version(null);
 		

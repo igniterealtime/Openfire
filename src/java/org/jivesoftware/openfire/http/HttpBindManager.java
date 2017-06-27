@@ -175,7 +175,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
         // When everything else fails, use the static content handler. This one should be last, as it is mapping to the root context.
         // This means that it will catch everything and prevent the invocation of later handlers.
-        this.handlerList.addHandler( createStaticContentHandler() );
+        final Handler staticContentHandler = createStaticContentHandler();
+        if ( staticContentHandler != null )
+        {
+            this.handlerList.addHandler( staticContentHandler );
+        }
     }
 
     public void start() {

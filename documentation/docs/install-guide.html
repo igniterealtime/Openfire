@@ -33,7 +33,8 @@ visit the Openfire website: <a href="http://www.igniterealtime.org/projects/open
 <p>Run the Openfire installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
 
 <p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder. If Openfire is running via launcher without Run as administrator option from Program files it can't get proper permissions to write changes. It shows errors (in red) when running the launcher and during the setup will require the current password for the administrator account (although this is a new installation and normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to initialize the database and other resources.</p>
- 
+ <p><b>Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so one don't need to run it as administrator manually.</b></p>
+	
  <h3>Linux/Unix</h3>
  
  Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
@@ -136,25 +137,19 @@ unless you changed the port during the setup.<br>
 
 <hr>
 
-<h2><a name="windows">Running Openfire in Windows</a></h2>
+<h2><a name="windows">Running Openfire on Windows</a></h2>
 
-<p>If you used the Openfire installer, a shortcut for starting the graphical launcher is provided in your Start Menu. Otherwise, run openfire.exe in the <tt>bin/</tt> directory of your
-Openfire installation. A button on the on the launcher allows
-you to automatically open your web browser to the correct URL to finish 
-setting up the server: 
-
-<p>
-<div align="center">
-<img src="images/launcher.png" alt="Openfire Launcher" width="400" height="300" align="center">
-</div>
+<p>Since 4.1.5 version Openfire automatically installs and runs the service (and opens the browser with the web setup page). But you can also use the launcher, if you need to 
+(service has to be stopped before running the launcher). If you used the Openfire installer, a shortcut for starting the 
+graphical launcher is provided in your Start Menu. Otherwise, run openfire.exe in the <tt>bin/</tt> directory of your
+Openfire installation. A button on the launcher allows you to automatically open your web browser to the correct URL 
+to finish setting up the server: 
 </p>
 
 <h3>Windows Service</h3>
-<p>If you're running Openfire on Windows, you will likely want to
-run Openfire as a standard Windows service after initial setup.
-If you used the Windows installer, a <tt>openfire-service.exe</tt> file
-will be in the <tt>bin</tt> directory of the installation. You can use
-this executable to install and control the Openfire service.
+<p>As of 4.1.5 Openfire installs the service automatically. But if you are using older version or want to reinstall the service,
+you can use the <tt>openfire-service.exe</tt> executable in the <tt>bin</tt> directory of the installation to install or uninstall
+the service.
 
 </p>
 
@@ -179,7 +174,8 @@ stop the service.</p>
 <p>Note: the graphical launcher is not compatible with the Windows service. If you install the service, you should use service controls
 as described above to control the server rather than the graphical launcher.</p>
 
-<p><b>Upgrading Note:</b> you should stop Openfire service before running the installer to upgrade to the newer version.</p>
+<p><b>Upgrading Note:</b> you should stop Openfire service before running the installer to upgrade to the newer version. Starting
+with 4.1.5 version Openfire will automatically stop and reinstall the service when upgrading with the installer.</p>
 
 <h3>Custom Parameters</h3>
 

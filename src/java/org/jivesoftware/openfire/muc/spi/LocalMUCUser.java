@@ -407,6 +407,9 @@ public class LocalMUCUser implements MUCUser {
                             }
                         }
                     }
+                    catch (NotAcceptableException e) {
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable );
+                    }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);
                     }

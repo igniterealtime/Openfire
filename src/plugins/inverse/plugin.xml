@@ -8,9 +8,9 @@
     <date>06/19/2017</date>
     <minServerVersion>4.1.5</minServerVersion>
     <adminconsole>
-        <tab id="tab-server">
-            <sidebar id="webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}">
-                <item id="inverse-config" name="${admin.sidebar.webclients.item.inverse.name}" description="${admin.sidebar.webclients.item.inverse.description}" url="inverse-config.jsp"/>
+        <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="inverse-config.jsp">
+            <sidebar id="tab-inverse" name="${admin.sidebar.webclients.item.inverse.name}" description="${admin.sidebar.webclients.item.inverse.description}">
+                <item id="inverse-config" name="${admin.sidebar.webclients.item.settings.name}" description="${admin.sidebar.webclients.item.settings.description}" url="inverse-config.jsp"/>
             </sidebar>
         </tab>
     </adminconsole>

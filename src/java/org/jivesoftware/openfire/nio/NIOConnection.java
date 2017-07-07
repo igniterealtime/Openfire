@@ -216,22 +216,22 @@ public class NIOConnection implements Connection {
 
     @Override
     public void close() {
-    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
 
             // Ensure that the state of this connection, its session and the MINA context are eventually closed.
 
-    		if ( session != null ) {
-                session.setStatus( Session.STATUS_CLOSED );
-                }
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
+            }
 
             try {
-                            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
-            } catch ( Exception e ) {
+                deliverRawText0(flashClient ? "</flash:stream>" : "</stream:stream>");
+            } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
-                }
+            }
 
             try {
-                ioSession.close( true );
+                ioSession.close(true);
             } catch (Exception e) {
                 Log.error("Exception while closing MINA session", e);
             }
@@ -317,34 +317,38 @@ public class NIOConnection implements Connection {
     @Override
     public void deliverRawText(String text) {
         if (!isClosed()) {
-            boolean errorDelivering = false;
-            IoBuffer buffer = IoBuffer.allocate(text.length());
-            buffer.setAutoExpand(true);
-            try {
-                //Charset charset = Charset.forName(CHARSET);
-                //buffer.putString(text, charset.newEncoder());
-                buffer.put(text.getBytes(StandardCharsets.UTF_8));
-                if (flashClient) {
-                    buffer.put((byte) '\0');
-                }
-                buffer.flip();
-                ioSessionLock.lock();
-                try {
-                    ioSession.write(buffer);
-                }
-                finally {
-                    ioSessionLock.unlock();
-                }
-            }
-            catch (Exception e) {
-                Log.debug("Error delivering raw text:\n" + text, e);
-                errorDelivering = true;
-            }
+            deliverRawText0(text);
+        }
+    }
 
-            // Attempt to close the connection if delivering text fails.
-            if (errorDelivering) {
-                close();
+    private void deliverRawText0(String text){
+        boolean errorDelivering = false;
+        IoBuffer buffer = IoBuffer.allocate(text.length());
+        buffer.setAutoExpand(true);
+        try {
+            //Charset charset = Charset.forName(CHARSET);
+            //buffer.putString(text, charset.newEncoder());
+            buffer.put(text.getBytes(StandardCharsets.UTF_8));
+            if (flashClient) {
+                buffer.put((byte) '\0');
             }
+            buffer.flip();
+            ioSessionLock.lock();
+            try {
+                ioSession.write(buffer);
+            }
+            finally {
+                ioSessionLock.unlock();
+            }
+        }
+        catch (Exception e) {
+            Log.debug("Error delivering raw text:\n" + text, e);
+            errorDelivering = true;
+        }
+
+        // Attempt to close the connection if delivering text fails.
+        if (errorDelivering) {
+            close();
         }
     }
 

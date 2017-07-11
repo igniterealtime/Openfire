@@ -9,12 +9,18 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>registration</artifactId>
     <name>Registration Plugin</name>
+    <version>1.7.1</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <!-- Compiles the Openfire Admin Console JSP pages. -->
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-jspc-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

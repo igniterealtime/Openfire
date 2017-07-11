@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 128 $
- * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,7 +120,7 @@ public interface IQRegisterInfo {
      *
      * @return the location type.
      */
-    public int getFieldStoreLocation();
+    int getFieldStoreLocation();
 
     /**
      * Sets the location for storing field information.
@@ -133,7 +129,7 @@ public interface IQRegisterInfo {
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to adjust this setting
      */
-    public void setFieldStoreLocation(int location) throws UnauthorizedException;
+    void setFieldStoreLocation( int location ) throws UnauthorizedException;
 
     /**
      * Determines if users can automatically register user accounts
@@ -141,7 +137,7 @@ public interface IQRegisterInfo {
      *
      * @return True if open registration is supported
      */
-    public boolean isOpenRegistrationSupported();
+    boolean isOpenRegistrationSupported();
 
     /**
      * Tells the server whether to support open registration or not.
@@ -150,7 +146,7 @@ public interface IQRegisterInfo {
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
-    public void setOpenRegistrationSupported(boolean isSupported) throws UnauthorizedException;
+    void setOpenRegistrationSupported( boolean isSupported ) throws UnauthorizedException;
 
     /**
      * Determines if a given field is required for registration.
@@ -158,7 +154,7 @@ public interface IQRegisterInfo {
      * @param fieldType The field to check
      * @return True if the field is required
      */
-    public boolean isFieldRequired(int fieldType);
+    boolean isFieldRequired( int fieldType );
 
     /**
      * Tells the server whether to require a registration field or not.
@@ -168,7 +164,7 @@ public interface IQRegisterInfo {
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
-    public void setFieldRequired(int fieldType, boolean isRequired) throws UnauthorizedException;
+    void setFieldRequired( int fieldType, boolean isRequired ) throws UnauthorizedException;
 
     /**
      * Get the setting type from a field's element name. This is a convenience
@@ -177,7 +173,7 @@ public interface IQRegisterInfo {
      * @param fieldElementName The known element name
      * @return The field type, one of the static int types defined in this class
      */
-    public int getFieldType(String fieldElementName);
+    int getFieldType( String fieldElementName );
 
     /**
      * Obtain the element name from a field type. This is a convience for
@@ -186,5 +182,5 @@ public interface IQRegisterInfo {
      * @param fieldType The known field type
      * @return The field element name
      */
-    public String getFieldElementName(int fieldType);
+    String getFieldElementName( int fieldType );
 }

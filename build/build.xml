@@ -24,7 +24,7 @@
     <!-- ======================================================================================= -->
 
     <property name="version.major" value="4"/>
-    <property name="version.minor" value="1"/>
+    <property name="version.minor" value="2"/>
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
 
@@ -568,6 +568,7 @@
                 windowtitle="Openfire ${version} Javadoc"
                 overview="${src.java.dir}/overview.html"
                 failonerror="yes"
+		Encoding="UTF-8"
 				additionalparam="${javadoc.additionalparams}"
                 >
             <sourcepath>

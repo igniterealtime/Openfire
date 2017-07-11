@@ -1,5 +1,3 @@
--- $Revision:  $
--- $Date:  $
 
 ALTER TABLE jiveRemoteServerConf RENAME COLUMN domain TO xmppDomain;
 

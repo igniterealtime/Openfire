@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -156,5 +152,25 @@ public class LdapAuthProvider implements AuthProvider {
     @Override
     public boolean isScramSupported() {
         return false;
+    }
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
     }
 }

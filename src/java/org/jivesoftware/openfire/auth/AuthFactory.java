@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2814 $
- * $Date: 2005-09-13 16:41:10 -0300 (Tue, 13 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +20,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Blowfish;
@@ -292,5 +287,18 @@ public class AuthFactory {
     public static boolean supportsScram() {
         // TODO Auto-generated method stub
         return authProvider.isScramSupported();
+    }
+
+    public static String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getSalt(username);
+    }
+    public static int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getIterations(username);
+    }
+    public static String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getServerKey(username);
+    }
+    public static String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getStoredKey(username);
     }
 }

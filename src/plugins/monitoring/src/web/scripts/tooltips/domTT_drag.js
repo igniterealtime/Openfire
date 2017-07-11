@@ -1,4 +1,3 @@
-/** $Id: domTT_drag.js 2315 2006-06-12 05:45:36Z dallen $ */
 // {{{ license
 
 /*

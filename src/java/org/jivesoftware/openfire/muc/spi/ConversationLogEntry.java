@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 569 $
- * $Date: 2004-12-01 15:31:18 -0300 (Wed, 01 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +41,8 @@ class ConversationLogEntry {
     private final JID sender;
     
     private final String nickname;
+
+    private final String stanza;
     
     private final long roomID;
 
@@ -61,6 +59,7 @@ class ConversationLogEntry {
         this.date = date;
         this.subject = message.getSubject();
         this.body = message.getBody();
+        this.stanza = message.toString();
         this.sender = sender;
         this.roomID = room.getID();
         this.nickname = message.getFrom().getResource();
@@ -120,4 +119,10 @@ class ConversationLogEntry {
         return roomID;
     }
 
+    /**
+     * Returns the string representation of the message.
+     *
+     * @return string representation of the stanza.
+     */
+    public String getStanza() { return stanza; }
 }

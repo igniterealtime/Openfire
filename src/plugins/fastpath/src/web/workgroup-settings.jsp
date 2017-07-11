@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 32109 $
-  -	$Date: 2006-07-12 21:59:06 -0700 (Wed, 12 Jul 2006) $
 --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="org.jivesoftware.xmpp.workgroup.WorkgroupManager,

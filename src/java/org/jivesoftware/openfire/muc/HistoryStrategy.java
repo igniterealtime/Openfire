@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3157 $
- * $Date: 2005-12-04 22:54:55 -0300 (Sun, 04 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -185,14 +181,11 @@ public class HistoryStrategy {
         boolean subjectChange = isSubjectChangeRequest(packet);
         if (subjectChange) {
             roomSubject = packet;
+            return;
         }
 
         // store message according to active strategy
-        if (strategyType == Type.none && subjectChange) {
-            history.clear();
-            history.add(packet);
-        }
-        else if (strategyType == Type.all || subjectChange) {
+        if (strategyType == Type.all) {
             history.add(packet);
         }
         else if (strategyType == Type.number) {

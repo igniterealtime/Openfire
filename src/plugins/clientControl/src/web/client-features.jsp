@@ -1,5 +1,8 @@
 <%@ page import="org.jivesoftware.openfire.plugin.spark.manager.FileTransferFilterManager" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.plugin.ClientControlPlugin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -17,9 +20,25 @@
     String fileTransferEnabledString = JiveGlobals.getProperty("transfer.enabled", "true");    
     String helpforumsEnabledString = JiveGlobals.getProperty("helpforums.enabled", "true");
     String helpuserguideEnabledString = JiveGlobals.getProperty("helpuserguide.enabled", "true");
-    String historyEnabledString = JiveGlobals.getProperty("history.enabled", "true");
+
+// If the "history.enabled" property name exists from an older version of Client Control, then:
+//  1) Carry over its property value to "History Settings" and "History Transcripts"
+//  2) Delete the "history.enabled" property name since it has been superceded
+
+	String oldHistorySettings = JiveGlobals.getProperty("history.enabled");
+
+	if (oldHistorySettings != null) {
+		JiveGlobals.setProperty("historysettings.enabled", oldHistorySettings);
+		JiveGlobals.setProperty("historytranscripts.enabled", oldHistorySettings);
+		JiveGlobals.deleteProperty("history.enabled");
+	}
+
+    String historysettingsEnabledString = JiveGlobals.getProperty("historysettings.enabled", "true");
+    String historytranscriptsEnabledString = JiveGlobals.getProperty("historytranscripts.enabled", "true");
+
     String hostnameEnabledString = JiveGlobals.getProperty("hostname.enabled", "true");
     String invisibleloginEnabledString = JiveGlobals.getProperty("invisiblelogin.enabled", "true");
+    String anonymousloginEnabledString = JiveGlobals.getProperty("anonymouslogin.enabled", "true");
     String logoutexitEnabledString = JiveGlobals.getProperty("logoutexit.enabled", "true");
     String movecopyEnabledString = JiveGlobals.getProperty("movecopy.enabled", "true");
     String passwordchangeEnabledString = JiveGlobals.getProperty("passwordchange.enabled", "true");
@@ -34,7 +53,19 @@
     String viewtasklistEnabledString = JiveGlobals.getProperty("viewtasklist.enabled", "true");
 
     boolean submit = request.getParameter("submit") != null;
-    
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrfStatus = true;
+
+    if (submit == true && (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+        submit = false;
+        csrfStatus = false;
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (submit) {
 		accountsEnabledString = request.getParameter("accountsEnabled");
 		addcontactsEnabledString = request.getParameter("addcontactsEnabled");
@@ -47,9 +78,11 @@
         fileTransferEnabledString = request.getParameter("transferEnabled");
 		helpforumsEnabledString = request.getParameter("helpforumsEnabled");
 		helpuserguideEnabledString = request.getParameter("helpuserguideEnabled");
-		historyEnabledString = request.getParameter("historyEnabled");
+		historysettingsEnabledString = request.getParameter("historysettingsEnabled");
+		historytranscriptsEnabledString = request.getParameter("historytranscriptsEnabled");
 		hostnameEnabledString = request.getParameter("hostnameEnabled");
 		invisibleloginEnabledString = request.getParameter("invisibleloginEnabled");
+		anonymousloginEnabledString = request.getParameter("anonymousloginEnabled");
 		logoutexitEnabledString = request.getParameter("logoutexitEnabled");
 		movecopyEnabledString = request.getParameter("movecopyEnabled");
 		passwordchangeEnabledString = request.getParameter("passwordchangeEnabled");
@@ -74,9 +107,11 @@
         JiveGlobals.setProperty("transfer.enabled", fileTransferEnabledString);
 		JiveGlobals.setProperty("helpforums.enabled", helpforumsEnabledString);
 		JiveGlobals.setProperty("helpuserguide.enabled", helpuserguideEnabledString);
-		JiveGlobals.setProperty("history.enabled", historyEnabledString);
+		JiveGlobals.setProperty("historysettings.enabled", historysettingsEnabledString);
+		JiveGlobals.setProperty("historytranscripts.enabled", historytranscriptsEnabledString);
 		JiveGlobals.setProperty("hostname.enabled", hostnameEnabledString);
 		JiveGlobals.setProperty("invisiblelogin.enabled", invisibleloginEnabledString);
+		JiveGlobals.setProperty("anonymouslogin.enabled", anonymousloginEnabledString);
 		JiveGlobals.setProperty("logoutexit.enabled", logoutexitEnabledString);
 		JiveGlobals.setProperty("movecopy.enabled", movecopyEnabledString);
 		JiveGlobals.setProperty("passwordchange.enabled", passwordchangeEnabledString);
@@ -102,9 +137,11 @@
     boolean transferEnabled = Boolean.parseBoolean(fileTransferEnabledString);
 	boolean helpforumsEnabled = Boolean.parseBoolean(helpforumsEnabledString);
 	boolean helpuserguideEnabled = Boolean.parseBoolean(helpuserguideEnabledString);
-	boolean historyEnabled = Boolean.parseBoolean(historyEnabledString);
+	boolean historysettingsEnabled = Boolean.parseBoolean(historysettingsEnabledString);
+	boolean historytranscriptsEnabled = Boolean.parseBoolean(historytranscriptsEnabledString);
 	boolean hostnameEnabled = Boolean.parseBoolean(hostnameEnabledString);
 	boolean invisibleloginEnabled = Boolean.parseBoolean(invisibleloginEnabledString);
+	boolean anonymousloginEnabled = Boolean.parseBoolean(anonymousloginEnabledString);
 	boolean logoutexitEnabled = Boolean.parseBoolean(logoutexitEnabledString);
 	boolean movecopyEnabled = Boolean.parseBoolean(movecopyEnabledString);
 	boolean passwordchangeEnabled = Boolean.parseBoolean(passwordchangeEnabledString);
@@ -144,11 +181,15 @@
 </div>
 <br>
 <% }%>
+<% if (csrfStatus == false) { %>
+    <admin:infobox type="error"><fmt:message key="global.csrf.failed" /></admin:infobox>
+<% } %>
 <p>
     <fmt:message key="client.features.info"/>
 </p>
 
 <form name="f" action="client-features.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div style="display:inline-block;width:600px;margin:10px;">
 	    <table class="jive-table" cellspacing="0" width="600" >
 	        <th><fmt:message key="client.feature"/></th>
@@ -276,14 +317,25 @@
 	            </td>
 	        </tr>
 	        <tr>
-	            <td><b><fmt:message key="client.features.history" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
-	               <fmt:message key="client.features.history.description" />
+	            <td><b><fmt:message key="client.features.historysettings" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	               <fmt:message key="client.features.historysettings.description" />
 	           </span></td>
 	            <td width="1%" nowrap>
-	                <input type="radio" name="historyEnabled" value="true" <%= historyEnabled ? "checked" : "" %> />
+	                <input type="radio" name="historysettingsEnabled" value="true" <%= historysettingsEnabled ? "checked" : "" %> />
 	            </td>
 	            <td width="1%" nowrap>
-	                <input type="radio" name="historyEnabled" value="false" <%= !historyEnabled ? "checked" : "" %> />
+	                <input type="radio" name="historysettingsEnabled" value="false" <%= !historysettingsEnabled ? "checked" : "" %> />
+	            </td>
+	        </tr>
+	        <tr>
+	            <td><b><fmt:message key="client.features.historytranscripts" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	               <fmt:message key="client.features.historytranscripts.description" />
+	           </span></td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="historytranscriptsEnabled" value="true" <%= historytranscriptsEnabled ? "checked" : "" %> />
+	            </td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="historytranscriptsEnabled" value="false" <%= !historytranscriptsEnabled ? "checked" : "" %> />
 	            </td>
 	        </tr>
 	        <tr>
@@ -317,7 +369,18 @@
 	            <td width="1%" nowrap>
 	                <input type="radio" name="invisibleloginEnabled" value="false" <%= !invisibleloginEnabled ? "checked" : "" %> />
 	            </td>
-	        </tr>	        
+	        </tr>
+	        <tr>
+	            <td><b><fmt:message key="client.features.anonymouslogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	                     <fmt:message key="client.features.anonymouslogin.description" />
+	                  </span></td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="anonymousloginEnabled" value="true" <%= anonymousloginEnabled ? "checked" : "" %> />
+	            </td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="anonymousloginEnabled" value="false" <%= !anonymousloginEnabled ? "checked" : "" %> />
+	            </td>
+	        </tr>
 	        <tr>
 	            <td><b><fmt:message key="client.features.logoutexit" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
 	                     <fmt:message key="client.features.logoutexit.description" />

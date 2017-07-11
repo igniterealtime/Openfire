@@ -9,9 +9,12 @@ import java.util.Map;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
@@ -23,9 +26,10 @@ public abstract class AbstractXepSupport {
 	protected final Map<String, IQHandler> element2Handlers;
 	protected final IQHandler iqDispatcher;
 	protected final String namespace;
+	protected boolean muc = false;
 	protected Collection<IQHandler> iqHandlers;
 
-	public AbstractXepSupport(XMPPServer server, String namespace,String iqDispatcherNamespace, String iqDispatcherName) {
+	public AbstractXepSupport(XMPPServer server, String namespace,String iqDispatcherNamespace, String iqDispatcherName, boolean muc) {
 
 		this.server = server;
 		this.element2Handlers = Collections
@@ -49,7 +53,7 @@ public abstract class AbstractXepSupport {
 		};
 		this.namespace = namespace;
 		this.iqHandlers = Collections.emptyList();
-
+		this.muc = muc;
 	}
 
 	public void start() {
@@ -68,6 +72,13 @@ public abstract class AbstractXepSupport {
 				for (Iterator<String> i = ((ServerFeaturesProvider) iqHandler)
 						.getFeatures(); i.hasNext();) {
 					server.getIQDiscoInfoHandler().addServerFeature(i.next());
+				}
+			}
+			if (muc) {
+				MultiUserChatManager manager = server.getMultiUserChatManager();
+				for (MultiUserChatService mucService : manager.getMultiUserChatServices()) {
+					mucService.addIQHandler(iqHandler);
+					mucService.addExtraFeature(namespace);
 				}
 			}
 		}
@@ -94,6 +105,13 @@ public abstract class AbstractXepSupport {
 					if (iqDiscoInfoHandler != null) {
 						iqDiscoInfoHandler.removeServerFeature(i.next());
 					}
+				}
+			}
+			if (muc) {
+				MultiUserChatManager manager = server.getMultiUserChatManager();
+				for (MultiUserChatService mucService : manager.getMultiUserChatServices()) {
+					mucService.removeIQHandler(iqHandler);
+					mucService.removeExtraFeature(namespace);
 				}
 			}
 		}

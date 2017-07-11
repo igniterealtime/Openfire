@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +48,7 @@ public interface ComponentEventListener {
      *
      * @param componentJID address where the component can be located (e.g. search.myserver.com)
      */
-    public void componentRegistered(JID componentJID);
+    void componentRegistered( JID componentJID );
 
     /**
      * A component was removed. This means that no other cluster node has this component
@@ -60,7 +56,7 @@ public interface ComponentEventListener {
      *
      * @param componentJID address where the component was located (e.g. search.myserver.com)
      */
-    public void componentUnregistered(JID componentJID);
+    void componentUnregistered( JID componentJID );
 
     /**
      * The server has received a disco#info response from the component. Once a component
@@ -70,5 +66,5 @@ public interface ComponentEventListener {
      *
      * @param iq the IQ packet with the disco#info sent by the component.
      */
-    public void componentInfoReceived(IQ iq);
+    void componentInfoReceived( IQ iq );
 }

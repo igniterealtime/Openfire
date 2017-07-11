@@ -6,14 +6,14 @@
     
     <!-- Plugin meta-data -->
     <name>Kraken IM Gateway</name>
-    <description>${gateway.description}</description>
+    <description>Adds transports to other IM networks.</description>
     <author>Daniel Henninger</author>
     <version>1.3.0</version>
     <date>10/12/2015</date>
     <minServerVersion>4.0.0</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>12</databaseVersion>
-    <licenseType>gpl</licenseType>
+    <licenseType>apache2</licenseType>
     
     <!-- Admin console meta-data -->
     <adminconsole>              

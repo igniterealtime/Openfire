@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3084 $
- * $Date: 2005-11-15 23:51:41 -0300 (Tue, 15 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -410,6 +406,9 @@ public class LocalMUCUser implements MUCUser {
                                 sendErrorPacket(packet, PacketError.Condition.bad_request);
                             }
                         }
+                    }
+                    catch (NotAcceptableException e) {
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable );
                     }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);

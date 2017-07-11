@@ -1,5 +1,4 @@
-/**
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,8 +60,6 @@ import org.xmpp.packet.JID;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -104,10 +101,6 @@ public class XMPPServer {
 
     private static XMPPServer instance;
 
-    private String name;
-    private String host;
-    private Version version;
-    private Date startDate;
     private boolean initialized = false;
     private boolean started = false;
     private NodeID nodeID;
@@ -189,12 +182,9 @@ public class XMPPServer {
      * @param jid the JID to check.
      * @return true if the address is a local address to this server.
      */
-    public boolean isLocal(JID jid) {
-        boolean local = false;
-        if (jid != null && name != null && name.equals(jid.getDomain())) {
-            local = true;
-        }
-        return local;
+    public boolean isLocal( JID jid )
+    {
+        return jid != null && jid.getDomain().equals( xmppServerInfo.getXMPPDomain() );
     }
 
     /**
@@ -205,13 +195,11 @@ public class XMPPServer {
      * @return true if the given address does not match the local server hostname and does not
      *         match a component service JID.
      */
-    public boolean isRemote(JID jid) {
-        if (jid != null) {
-            if (!name.equals(jid.getDomain()) && !componentManager.hasComponent(jid)) {
-                return true;
-            }
-        }
-        return false;
+    public boolean isRemote( JID jid )
+    {
+        return jid != null
+                && !jid.getDomain().equals( xmppServerInfo.getXMPPDomain() )
+                && !componentManager.hasComponent( jid );
     }
 
     /**
@@ -242,8 +230,11 @@ public class XMPPServer {
      * @param jid the JID to check.
      * @return true if the given address matches a component service JID.
      */
-    public boolean matchesComponent(JID jid) {
-        return jid != null && !name.equals(jid.getDomain()) && componentManager.hasComponent(jid);
+    public boolean matchesComponent( JID jid )
+    {
+        return jid != null
+                && !jid.getDomain().equals( xmppServerInfo.getXMPPDomain() )
+                && componentManager.hasComponent( jid );
     }
 
     /**
@@ -254,7 +245,7 @@ public class XMPPServer {
      * @return an XMPPAddress for the server.
      */
     public JID createJID(String username, String resource) {
-        return new JID(username, name, resource);
+        return new JID(username, xmppServerInfo.getXMPPDomain(), resource);
     }
 
     /**
@@ -267,7 +258,7 @@ public class XMPPServer {
      * @return an XMPPAddress for the server.
      */
     public JID createJID(String username, String resource, boolean skipStringprep) {
-        return new JID(username, name, resource, skipStringprep);
+        return new JID(username, xmppServerInfo.getXMPPDomain(), resource, skipStringprep);
     }
 
     /**
@@ -303,19 +294,6 @@ public class XMPPServer {
     private void initialize() throws FileNotFoundException {
         locateOpenfire();
 
-        startDate = new Date();
-
-        try {
-            host = InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException ex) {
-            logger.warn("Unable to determine local hostname.", ex);
-        }
-        if (host == null) {
-            host = "127.0.0.1";        	
-        }
-
-        version = new Version(4, 1, 0, Version.ReleaseStatus.Alpha, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -336,13 +314,13 @@ public class XMPPServer {
         }
 
         JiveGlobals.migrateProperty("xmpp.domain");
-        name = JiveGlobals.getProperty("xmpp.domain", host).toLowerCase();
+        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
         Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
         
         // Update server info
-        xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate);
+        xmppServerInfo = new XMPPServerInfoImpl(new Date());
 
         initialized = true;
     }
@@ -358,10 +336,6 @@ public class XMPPServer {
         }
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
-            // Set the new server domain assigned during the setup process
-            name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
-            xmppServerInfo.setXMPPDomain(name);
-
             // Iterate through all the provided XML properties and set the ones that haven't
             // already been touched by setup prior to this method being called.
             for (String propName : JiveGlobals.getXMLPropertyNames()) {
@@ -461,7 +435,7 @@ public class XMPPServer {
             pluginManager.start();
 
             // Log that the server has been started
-            String startupBanner = LocaleUtils.getLocalizedString("short.title") + " " + version.getVersionString() +
+            String startupBanner = LocaleUtils.getLocalizedString("short.title") + " " + xmppServerInfo.getVersion().getVersionString() +
                     " [" + JiveGlobals.formatDateTime(new Date()) + "]";
             logger.info(startupBanner);
             System.out.println(startupBanner);

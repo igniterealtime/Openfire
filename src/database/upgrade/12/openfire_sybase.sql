@@ -1,5 +1,3 @@
-/* $Revision:  $ */
-/* $Date:  $ */
 
 sp_rename 'mucConversationLog.time', 'logTime';
 

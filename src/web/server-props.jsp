@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -133,7 +131,7 @@
         if (errors.size() == 0) {
             boolean needRestart = false;
             if (!serverName.equals(server.getServerInfo().getXMPPDomain())) {
-                server.getServerInfo().setXMPPDomain(serverName);
+                server.getServerInfo().setHostname(serverName);
                 needRestart = true;
             }
             connectionManager.setClientListenerPort(port);
@@ -163,7 +161,7 @@
             return;
         }
     } else {
-        serverName = server.getServerInfo().getXMPPDomain();
+        serverName = server.getServerInfo().getHostname();
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();

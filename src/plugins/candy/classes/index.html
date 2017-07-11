@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Candy - Chats are not dead yet</title>
+    <link rel="shortcut icon" href="candy/res/img/favicon.png" type="image/gif" />
+    <link rel="stylesheet" type="text/css" href="candy/libs.min.css" />
+    <link rel="stylesheet" type="text/css" href="candy/res/default.css" />
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="candy/libs.min.js"></script>
+    <script src="candy/candy.min.js"></script>
+    <script>
+        $( document ).ready( function()
+        {
+            var config = {};
+            $.getJSON( 'config.json', function ( config )
+            {
+                Candy.init( config.endpoint, config);
+                Candy.Core.connect();
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="candy"></div>
+</body>
+</html>

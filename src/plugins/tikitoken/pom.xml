@@ -1,0 +1,51 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>plugins</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.2.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.igniterealtime.openfire.plugins</groupId>
+    <artifactId>tikitoken</artifactId>
+    <version>0.2</version>
+    <name>TikiToken Plugin</name>
+    <description>Allows users to authenticate with a Tiki token.</description>
+
+    <organization>
+        <name>Tiki Wiki CMS GroupWare</name>
+        <url>https://dev.tiki.org/OpenFire</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>fabiomontefuscolo</id>
+            <name>Fabio Montefuscolo</name>
+            <organization>Tiki Wiki CMS GroupWare</organization>
+        </developer>
+        <developer>
+            <id>guusdk</id>
+            <name>Guus der Kinderen</name>
+            <email>guus.der.kinderen@gmail.com</email>
+            <organization>Ignite Realtime</organization>
+            <organizationUrl>https://www.igniterealtime.org</organizationUrl>
+        </developer>
+    </developers>
+
+    <build>
+        <sourceDirectory>src/java</sourceDirectory>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.owlike</groupId>
+            <artifactId>genson</artifactId>
+            <version>1.4</version>
+        </dependency>
+    </dependencies>
+</project>

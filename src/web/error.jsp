@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
 --%>
 
 <%@ page import="java.io.*,

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,7 +108,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
+        String toDomain = xpp.getAttributeValue("", "to");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+
+        if (toDomain == null) {
+            toDomain = serverName;
+        }
         
         try {
             // Get the stream ID for the new session
@@ -127,7 +128,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(serverName).append("\"");
+            openingStream.append(" from=\"").append(toDomain).append("\"");
             if (fromDomain != null) {
                 openingStream.append(" to=\"").append(fromDomain).append("\"");
             }
@@ -147,9 +148,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
 
 	            // Indicate the TLS policy to use for this connection
-	            Connection.TLSPolicy tlsPolicy =
-	                    ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
-	                            Connection.TLSPolicy.required;
+	            Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
 	            boolean hasCertificates = false;
 	            try {
 	                hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;

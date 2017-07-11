@@ -1,11 +1,8 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.security.Provider;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;

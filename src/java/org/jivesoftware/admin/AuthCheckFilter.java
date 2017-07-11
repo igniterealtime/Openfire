@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +33,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,6 +130,8 @@ public class AuthCheckFilter implements Filter {
     {
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
+        // Do not allow framing; OF-997
+        response.addHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "same"));
         // Reset the defaultLoginPage variable
         String loginPage = defaultLoginPage;
         if (loginPage == null) {

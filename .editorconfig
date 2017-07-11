@@ -1,0 +1,13 @@
+# EditorConfig helps developers define and maintain consistent coding styles between different editors and IDEs.
+#
+# EditorConfig is awesome: http://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 4

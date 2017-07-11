@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 128 $
- * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,10 +43,10 @@ import java.util.List;
 @Deprecated
 public interface DataForm {
 
-    public static final String TYPE_FORM = "form";
-    public static final String TYPE_SUBMIT = "submit";
-    public static final String TYPE_CANCEL = "cancel";
-    public static final String TYPE_RESULT = "result";
+    String TYPE_FORM = "form";
+    String TYPE_SUBMIT = "submit";
+    String TYPE_CANCEL = "cancel";
+    String TYPE_RESULT = "result";
 
     /**
      * Sets the description of the data. It is similar to the title on a web page or an X window.
@@ -58,7 +54,7 @@ public interface DataForm {
      *
      * @param title description of the data.
      */
-    public abstract void setTitle(String title);
+    void setTitle( String title );
 
     /**
      * Sets the list of instructions that explain how to fill out the form and what the form is
@@ -67,7 +63,7 @@ public interface DataForm {
      *
      * @param instructions list of instructions that explain how to fill out the form.
      */
-    public abstract void setInstructions(List instructions);
+    void setInstructions( List instructions );
 
     /**
      * Returns the meaning of the data within the context. The data could be part of a form
@@ -86,7 +82,7 @@ public interface DataForm {
      *
      * @return the form's type.
      */
-    public abstract String getType();
+    String getType();
 
     /**
      * Returns the description of the data. It is similar to the title on a web page or an X
@@ -94,7 +90,7 @@ public interface DataForm {
      *
      * @return description of the data.
      */
-    public abstract String getTitle();
+    String getTitle();
 
     /**
      * Returns an Iterator for the list of instructions that explain how to fill out the form and
@@ -104,7 +100,7 @@ public interface DataForm {
      *
      * @return an Iterator for the list of instructions that explain how to fill out the form.
      */
-    public abstract Iterator getInstructions();
+    Iterator getInstructions();
 
     /**
      * Returns the field of the form whose variable matches the specified variable.
@@ -114,21 +110,21 @@ public interface DataForm {
      * @param variable the variable to look for in the form fields.
      * @return the field of the form whose variable matches the specified variable.
      */
-    public FormField getField(String variable);
+    FormField getField( String variable );
 
     /**
      * Returns an Iterator for the fields that are part of the form.
      *
      * @return an Iterator for the fields that are part of the form.
      */
-    public abstract Iterator getFields();
+    Iterator getFields();
 
     /**
      * Returns the number of fields included in the form.
      *
      * @return the number of fields included in the form.
      */
-    public abstract int getFieldsSize();
+    int getFieldsSize();
 
     /**
      * Adds a new instruction to the list of instructions that explain how to fill out the form
@@ -137,14 +133,14 @@ public interface DataForm {
      *
      * @param instruction the new instruction that explain how to fill out the form.
      */
-    public abstract void addInstruction(String instruction);
+    void addInstruction( String instruction );
 
     /**
      * Adds a new field as part of the form.
      *
      * @param field the field to add to the form.
      */
-    public abstract void addField(FormField field);
+    void addField( FormField field );
 
     /**
      * Adds a field to the list of fields that will be returned from a search. Each field represents
@@ -153,7 +149,7 @@ public interface DataForm {
      *
      * @param field the field to add to the list of fields that will be returned from a search.
      */
-    public abstract void addReportedField(FormField field);
+    void addReportedField( FormField field );
 
     /**
      * Adds a new row of items of reported data. The list of items to add will be formed by
@@ -162,5 +158,5 @@ public interface DataForm {
      *
      * @param itemFields list of FormFields to add as a row in the report.
      */
-    public abstract void addItemFields(ArrayList itemFields);
+    void addItemFields( ArrayList itemFields );
 }

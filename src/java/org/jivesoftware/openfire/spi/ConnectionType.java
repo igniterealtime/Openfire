@@ -1,13 +1,5 @@
 package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.openfire.keystore.IdentityStore;
-import org.jivesoftware.openfire.keystore.TrustStore;
-import org.jivesoftware.util.JiveGlobals;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 /**
  * Types of (socket-based, including HTTP) connections.
  *

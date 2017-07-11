@@ -1,7 +1,4 @@
-/**
- * $Revision: 3034 $
- * $Date: 2005-11-04 21:02:33 -0300 (Fri, 04 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,7 +135,12 @@ public class AdminConsolePlugin implements Plugin {
         // Create a connector for https traffic if it's enabled.
         sslEnabled = false;
         try {
-            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
+            IdentityStore identityStore = null;
+            if (XMPPServer.getInstance().getCertificateStoreManager() == null){
+            	Log.warn( "Admin console: CertifcateStoreManager has not been initialized yet. HTTPS will be unavailable." );
+            } else {
+            	identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
+            }
             if (identityStore != null && adminSecurePort > 0 )
             {
                 if ( identityStore.getAllCertificates().isEmpty() )

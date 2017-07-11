@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.Connection;

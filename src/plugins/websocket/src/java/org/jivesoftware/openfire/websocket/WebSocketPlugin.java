@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 Tom Evans. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WebSocketPlugin extends WebSocketServlet implements Plugin  {
 
-	private static final long serialVersionUID = 7281841492829464603L;
+	private static final long serialVersionUID = 7281841492829464604L;
 	private static final Logger Log = LoggerFactory.getLogger(WebSocketPlugin.class);
 
 	private ServletContextHandler contextHandler;
@@ -63,11 +63,12 @@ public class WebSocketPlugin extends WebSocketServlet implements Plugin  {
             Log.info(String.format("Initializing websocket plugin"));
 
             try {
-    			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
-    			contextHandler = new ServletContextHandler(contexts, "/ws", ServletContextHandler.SESSIONS);
+    			contextHandler = new ServletContextHandler(null, "/ws", ServletContextHandler.SESSIONS);
     			contextHandler.addServlet(new ServletHolder(this), "/*");
 
-    		} catch (Exception e) {
+				HttpBindManager.getInstance().addJettyHandler( contextHandler );
+
+			} catch (Exception e) {
     			Log.error("Failed to start websocket plugin", e);
     		}
         } else {
@@ -88,8 +89,7 @@ public class WebSocketPlugin extends WebSocketServlet implements Plugin  {
     			}
     		}
     	}
-		ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
-		contexts.removeHandler(contextHandler);
+		HttpBindManager.getInstance().removeJettyHandler( contextHandler );
 		contextHandler = null;
 		pluginClassLoader = null;
     }

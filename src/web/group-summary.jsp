@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -41,6 +38,8 @@
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("group-summary", 15));
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("group-summary", range);
@@ -53,19 +52,27 @@
     if (webManager.getGroupManager().isSearchSupported() && request.getParameter("search") != null
             && !request.getParameter("search").trim().equals(""))
     {
-        search = request.getParameter("search");
-        // Santize variables to prevent vulnerabilities
-        search = StringUtils.escapeHTMLTags(search);
-        // Use the search terms to get the list of groups and group count.
-        groups = webManager.getGroupManager().search(search, start, range);
-        // Get the count as a search for *all* groups. That will let us do pagination even
-        // though it's a bummer to execute the search twice.
-        groupCount = webManager.getGroupManager().search(search).size();
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+
+        } else {
+            search = request.getParameter("search");
+            // Santize variables to prevent vulnerabilities
+            search = StringUtils.escapeForXML(search);
+            // Use the search terms to get the list of groups and group count.
+            groups = webManager.getGroupManager().search(search, start, range);
+            // Get the count as a search for *all* groups. That will let us do pagination even
+            // though it's a bummer to execute the search twice.
+            groupCount = webManager.getGroupManager().search(search).size();
+        }
     }
 
     // paginator vars
     int numPages = (int)Math.ceil((double)groupCount/(double)range);
     int curPage = (start/range) + 1;
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
 %>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -98,6 +105,7 @@
         </td>
         <td align="right" valign="bottom">
    <fmt:message key="group.summary.search" />: <input type="text" size="30" maxlength="150" name="search" value="<%= ((search!=null) ? search : "") %>">
+   <input type="hidden" name="csrf" value="${csrf}">
         </td>
     </tr>
 </table>

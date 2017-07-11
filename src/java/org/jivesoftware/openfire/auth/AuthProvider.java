@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 691 $
- * $Date: 2004-12-13 15:06:54 -0300 (Mon, 13 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +59,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public String getPassword(String username) throws UserNotFoundException,
+    String getPassword( String username ) throws UserNotFoundException,
             UnsupportedOperationException;
 
     /**
@@ -76,7 +72,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public void setPassword(String username, String password)
+    void setPassword( String username, String password )
             throws UserNotFoundException, UnsupportedOperationException;
 
     /**
@@ -87,7 +83,11 @@ public interface AuthProvider {
      * @return true if this UserProvider is able to retrieve user passwords from the
      *         backend user store.
      */
-    public boolean supportsPasswordRetrieval();
+    boolean supportsPasswordRetrieval();
 
     boolean isScramSupported();
+    String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException;
+    int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException;
 }

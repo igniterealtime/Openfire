@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -690,20 +686,68 @@ public class JiveGlobals {
      * @param parent the name of the parent property to return the children for.
      * @return all child property values for the given parent.
      */
-    public static List<String> getProperties(String parent) {
-        if (properties == null) {
-            if (isSetupMode()) {
-                return new ArrayList<>();
+    public static List<String> getProperties( String parent )
+    {
+        return getListProperty( parent, new ArrayList<String>() );
+    }
+
+    /**
+     * Return all immediate children property values of a parent Jive property as a list of strings, or an default list
+     * if the property does not exist.
+     *
+     * This implementation ignores child property values that are empty (these are excluded from the result). When all
+     * child properties are empty, an empty collection (and explicitly not the default values) is returned. This allows
+     * a property to override a default non-empty collection with an empty one.
+     *
+     * The child properties that are evaluated in this method are the same child properties as those used by
+     * {@link #getProperties(String)}.
+     *
+     * @param parent        the name of the parent property to return the children for.
+     * @param defaultValues values returned if the property doesn't exist.
+     * @return all child property values for the given parent.
+     */
+    public static List<String> getListProperty( String parent, List<String> defaultValues )
+    {
+        if ( properties == null )
+        {
+            if ( isSetupMode() )
+            {
+                return defaultValues;
             }
             properties = JiveProperties.getInstance();
         }
 
-        Collection<String> propertyNames = properties.getChildrenNames(parent);
-        List<String> values = new ArrayList<>();
-        for (String propertyName : propertyNames) {
-            String value = getProperty(propertyName);
-            if (value != null) {
-                values.add(value);
+        // Check for a legacy, comma separated value.
+        final String legacyValue = JiveGlobals.getProperty( parent );
+
+        // Ensure that properties are ordered.
+        final SortedSet<String> propertyNames = new TreeSet<>( properties.getChildrenNames( parent ) );
+
+        if ( propertyNames.isEmpty() )
+        {
+            if ( legacyValue != null )
+            {
+                Log.info( "Retrieving a list from property '{}' which is stored in a comma-separated format. Consider using child properties instead, via JiveGlobals.setProperty( String value, List<String> values )", parent );
+                return Arrays.asList( legacyValue.split( "\\s*,\\s*" ) );
+            }
+
+            // When there are no child properties, return the default values.
+            return defaultValues;
+        }
+        else if ( legacyValue != null )
+        {
+            // Raise a warning if two competing sets of data are detected.
+            Log.warn( "Retrieving a list from property '{}' which is stored using child properties, but also in a legacy format! The data that is in the legacy format (the text value of property '{}') is not returned by this call! Its child property values are used instead. Consider removing the text value of the parent property.", parent, parent );
+        }
+
+        // When there are child properties, return its non-null, non-empty values (which might be an empty collection).
+        final List<String> values = new ArrayList<>();
+        for ( String propertyName : propertyNames )
+        {
+            final String value = getProperty( propertyName );
+            if ( value != null && !value.isEmpty())
+            {
+                values.add( value );
             }
         }
 
@@ -742,9 +786,75 @@ public class JiveGlobals {
         properties.put(name, value);
     }
 
-   /**
-     * Sets multiple Jive properties at once. If a property doesn't already exists, a new
-     * one will be created.
+    /**
+     * Sets a Jive property with a list of values. If the property doesn't already exists, a new one will be created.
+     * Empty or null values in the collection are ignored.
+     *
+     * Each value is stored as a direct child property of the property name provided as an argument to this method. When
+     * this method is used, all previous children of the property will be deleted.
+     *
+     * When the provided value is null, any previously stored collection will be removed. If it is an empty collection
+     * (or a collection that consists of null and empty values onlu), it is stored as an empty collection
+     * (represented by a child property that has an empty value).
+     *
+     * The naming convention used by this method to define child properties is subject to change, and should not be
+     * depended on.
+     *
+     * This method differs from {@link #setProperties(Map)}, which is used to set multiple properties. This method sets
+     * one property with multiple values.
+     *
+     * @param name   the name of the property being set.
+     * @param values the values of the property.
+     */
+    public static void setProperty( String name, List<String> values )
+    {
+        if ( properties == null )
+        {
+            if ( isSetupMode() )
+            {
+                return;
+            }
+            properties = JiveProperties.getInstance();
+        }
+
+        final List<String> existing = getProperties( name );
+        if ( existing != null && existing.equals( values ) )
+        {
+            // no change.
+            return;
+        }
+
+        properties.remove( name );
+        if ( values != null )
+        {
+            int i = 1;
+            for ( final String value : values )
+            {
+                if ( value != null && !value.isEmpty() )
+                {
+                    final String childName = name + "." + String.format("%05d", i++ );
+                    properties.put( childName, value );
+                }
+            }
+
+            // When no non-null, non-empty values are stored, store one to denote an empty collection.
+            if ( i == 1 )
+            {
+                properties.put( name + ".00001", "" );
+            }
+
+            // The put's above will have generated events for each child property. Now, generate an event for the parent.
+            final Map<String, Object> params = new HashMap<>();
+            params.put("value", values);
+            PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.property_set, params);
+        }
+    }
+
+    /**
+     * Sets multiple Jive properties at once. If a property doesn't already exists, a new one will be created.
+     *
+     * This method differs from {@link #setProperty(String, List)}, which is used to one property with multiple
+     * values. This method sets multiple properties, each with one value.
      *
      * @param propertyMap a map of properties, keyed on property name.
      */

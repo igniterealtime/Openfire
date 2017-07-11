@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 10204 $
-  -	$Date: 2008-04-11 18:44:25 -0400 (Fri, 11 Apr 2008) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -25,7 +23,9 @@
 <%@ page import="org.jivesoftware.database.ProfiledConnection"%>
 <%@ page import="org.jivesoftware.database.ProfiledConnectionEntry"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -45,6 +45,17 @@
     String enableStats = ParamUtils.getParameter(request,"enableStats");
     int refresh = ParamUtils.getIntParameter(request,"refresh", -1);
     boolean doSortByTime = ParamUtils.getBooleanParameter(request,"doSortByTime");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrf_check = true;
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        csrf_check = false;
+        doClear = false;
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Var for the alternating colors
     int rowColor = 0;
@@ -56,16 +67,18 @@
         response.sendRedirect("server-db-stats.jsp");
     }
 
-    // Enable/disable stats
-    if ("true".equals(enableStats) && ! DbConnectionManager.isProfilingEnabled()) {
-        DbConnectionManager.setProfilingEnabled(true);
-        // Log the event
-        webManager.logEvent("enabled db profiling", null);
-    }
-    else if ("false".equals(enableStats) && DbConnectionManager.isProfilingEnabled()) {
-        DbConnectionManager.setProfilingEnabled(false);
-        // Log the event
-        webManager.logEvent("disabled db profiling", null);
+    if (csrf_check) {
+        // Enable/disable stats
+        if ("true".equals(enableStats) && ! DbConnectionManager.isProfilingEnabled()) {
+            DbConnectionManager.setProfilingEnabled(true);
+            // Log the event
+            webManager.logEvent("enabled db profiling", null);
+        }
+        else if ("false".equals(enableStats) && DbConnectionManager.isProfilingEnabled()) {
+            DbConnectionManager.setProfilingEnabled(false);
+            // Log the event
+            webManager.logEvent("disabled db profiling", null);
+        }
     }
 
     boolean showQueryStats = DbConnectionManager.isProfilingEnabled();
@@ -99,6 +112,7 @@
 <h3><fmt:message key="server.db_stats.status" /></h3>
 
 <form action="server-db-stats.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
     <table cellpadding="3" cellspacing="1" border="0">
     <tr>
         <td>
@@ -123,6 +137,7 @@
 	<h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="5" border="0">
         <tr>
             <td>

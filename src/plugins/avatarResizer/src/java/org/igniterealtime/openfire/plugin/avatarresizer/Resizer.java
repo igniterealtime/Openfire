@@ -85,7 +85,7 @@ public class Resizer
 
             if ( avatar.getWidth() <= targetDimension && avatar.getHeight() <= targetDimension )
             {
-                Log.debug( "Original image dimension ({}x{}) is within acceptable bounds ({}x{}). No need to resize.", avatar.getWidth(), avatar.getHeight(), targetDimension, targetDimension );
+                Log.debug( "Original image dimension ({}x{}) is within acceptable bounds ({}x{}). No need to resize.", new Object[] { avatar.getWidth(), avatar.getHeight(), targetDimension, targetDimension });
                 return null;
             }
         }

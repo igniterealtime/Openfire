@@ -3,10 +3,10 @@ language: java
 jdk:
   - oraclejdk8
 env:
-  - ENVTARGET=compile
-  - ENVTARGET=test
-  - ENVTARGET=openfire
-  - ENVTARGET=plugins
-
-script: ant -Dhalt.on.plugin.error=true -f build/build.xml clean $ENVTARGET 
-
+  - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean compile"
+  - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean test"
+  - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean openfire"
+  - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean plugins"
+  - SCRIPT="mvn clean verify"
+script: $SCRIPT
+install: true

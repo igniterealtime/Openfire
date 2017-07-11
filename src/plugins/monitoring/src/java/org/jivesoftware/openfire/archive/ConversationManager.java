@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1017,13 +1014,14 @@ public class ConversationManager implements Startable, ComponentEventListener{
 						} else {
 							pstmt.execute();
 						}
-						// Only batch up to 500 items at a time.
-						if (count % 500 == 0 && DbConnectionManager.isBatchUpdatesSupported()) {
-							pstmt.executeBatch();
-						}
 						count++;
+						// Only batch up to 500 items at a time.
+						if (count >= 500 && DbConnectionManager.isBatchUpdatesSupported()) {
+							pstmt.executeBatch();
+							count = 0;
+						}
 					}
-					if (DbConnectionManager.isBatchUpdatesSupported()) {
+					if (count > 0 && DbConnectionManager.isBatchUpdatesSupported()) {
 						pstmt.executeBatch();
 					}
 
@@ -1039,13 +1037,14 @@ public class ConversationManager implements Startable, ComponentEventListener{
 						} else {
 							pstmt.execute();
 						}
-						// Only batch up to 500 items at a time.
-						if (count % 500 == 0 && DbConnectionManager.isBatchUpdatesSupported()) {
-							pstmt.executeBatch();
-						}
 						count++;
+						// Only batch up to 500 items at a time.
+						if (count >= 500 && DbConnectionManager.isBatchUpdatesSupported()) {
+							pstmt.executeBatch();
+							count = 0;
+						}
 					}
-					if (DbConnectionManager.isBatchUpdatesSupported()) {
+					if (count > 0 && DbConnectionManager.isBatchUpdatesSupported()) {
 						pstmt.executeBatch();
 					}
 
@@ -1063,13 +1062,14 @@ public class ConversationManager implements Startable, ComponentEventListener{
 						} else {
 							pstmt.execute();
 						}
-						// Only batch up to 500 items at a time.
-						if (count % 500 == 0 && DbConnectionManager.isBatchUpdatesSupported()) {
-							pstmt.executeBatch();
-						}
 						count++;
+						// Only batch up to 500 items at a time.
+						if (count >= 500 && DbConnectionManager.isBatchUpdatesSupported()) {
+							pstmt.executeBatch();
+							count = 0;
+						}
 					}
-					if (DbConnectionManager.isBatchUpdatesSupported()) {
+					if (count > 0 && DbConnectionManager.isBatchUpdatesSupported()) {
 						pstmt.executeBatch();
 					}
 				} catch (Exception e) {

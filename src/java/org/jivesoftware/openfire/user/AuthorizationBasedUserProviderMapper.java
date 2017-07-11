@@ -16,11 +16,13 @@
 
 package org.jivesoftware.openfire.user;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.xmpp.packet.JID;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * A {@link UserProviderMapper} that can be used to draw administrative users from another source than the regular, non-
@@ -86,7 +88,8 @@ public class AuthorizationBasedUserProviderMapper implements UserProviderMapper
     public UserProvider getUserProvider( String username )
     {
         // TODO add optional caching, to prevent retrieving the administrative users upon every invocation.
-        final boolean isAdmin = AdminManager.getAdminProvider().getAdmins().contains( username );
+        final JID jid = XMPPServer.getInstance().createJID( username, null );
+        final boolean isAdmin = AdminManager.getAdminProvider().getAdmins().contains( jid );
 
         if ( isAdmin )
         {
@@ -98,9 +101,9 @@ public class AuthorizationBasedUserProviderMapper implements UserProviderMapper
     }
 
     @Override
-    public SortedSet<UserProvider> getUserProviders()
+    public Set<UserProvider> getUserProviders()
     {
-        final SortedSet<UserProvider> result = new TreeSet<>();
+        final Set<UserProvider> result = new LinkedHashSet<>();
         result.add( adminProvider );
         result.add( userProvider );
 

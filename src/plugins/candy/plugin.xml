@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <class>org.igniterealtime.openfire.plugin.candy.CandyPlugin</class>
+    <name>Candy</name>
+    <description>Adds the (third-party) Candy web client to Openfire.</description>
+    <author>Guus der Kinderen</author>
+    <version>2.2.0 Release 2</version>
+    <date>07/10/2017</date>
+    <minServerVersion>4.1.5</minServerVersion>
+    <adminconsole>
+        <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="candy-config.jsp">    
+            <sidebar id="tab-candy" name="${admin.sidebar.webclients.item.candy.name}" description="${admin.sidebar.webclients.item.candy.description}">
+                <item id="candy-config" name="${admin.sidebar.webclients.item.settings.name}" description="${admin.sidebar.webclients.item.settings.description}" url="candy-config.jsp"/>
+            </sidebar>
+        </tab>
+    </adminconsole>
+</plugin>

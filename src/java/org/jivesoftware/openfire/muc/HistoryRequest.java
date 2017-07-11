@@ -1,8 +1,4 @@
-/**
- * $RCSfile: HistoryRequest.java,v $
- * $Revision: 2899 $
- * $Date: 2005-09-28 15:30:42 -0300 (Wed, 28 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -143,13 +139,8 @@ public class HistoryRequest {
             }
         }
         else {
-            Message changedSubject = roomHistory.getChangedSubject();
-            boolean addChangedSubject = (changedSubject != null) ? true : false;
             if (getMaxChars() == 0) {
                 // The user requested to receive no history
-                if (addChangedSubject) {
-                    joinRole.send(changedSubject);
-                }
                 return;
             }
             int accumulatedChars = 0;
@@ -201,18 +192,7 @@ public class HistoryRequest {
 
                 }
 
-                // Don't add the latest subject change if it's already in the history.
-                if (addChangedSubject) {
-                    if (changedSubject != null && changedSubject.equals(message)) {
-                        addChangedSubject = false;
-                    }
-                }
-
                 historyToSend.addFirst(message);
-            }
-            // Check if we should add the latest subject change.
-            if (addChangedSubject) {
-                historyToSend.addFirst(changedSubject);
             }
             // Send the smallest amount of traffic to the user
             for (Object aHistoryToSend : historyToSend) {

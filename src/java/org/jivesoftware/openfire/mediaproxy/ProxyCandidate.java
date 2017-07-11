@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,37 +25,37 @@ import java.net.InetAddress;
  */
 public interface ProxyCandidate {
 
-    public String getSID();
+    String getSID();
 
-    public String getPass();
+    String getPass();
 
-    public InetAddress getLocalhost();
+    InetAddress getLocalhost();
 
-    public InetAddress getHostA();
+    InetAddress getHostA();
 
-    public InetAddress getHostB();
+    InetAddress getHostB();
 
-    public void setHostA(InetAddress hostA);
+    void setHostA( InetAddress hostA );
 
-    public void setHostB(InetAddress hostB);
+    void setHostB( InetAddress hostB );
 
-    public void sendFromPortA(String host, int port);
+    void sendFromPortA( String host, int port );
 
-    public void sendFromPortB(String host, int port);
+    void sendFromPortB( String host, int port );
 
-    public int getPortA();
+    int getPortA();
 
-    public int getPortB();
+    int getPortB();
 
-    public void setPortA(int portA);
+    void setPortA( int portA );
 
-    public void setPortB(int portB);
+    void setPortB( int portB );
 
-    public int getLocalPortA();
+    int getLocalPortA();
 
-    public int getLocalPortB();
+    int getLocalPortB();
 
-    public void start();
+    void start();
 
-    public void stopAgent();
+    void stopAgent();
 }

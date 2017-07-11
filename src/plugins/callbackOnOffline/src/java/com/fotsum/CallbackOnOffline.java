@@ -98,7 +98,7 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
                 boolean available = presenceManager.isAvailable(userTo);
 
                 if (debug) {
-                    Log.debug("intercepted message from {} to {}, recipient is available {}", packet.getFrom().toBareJID(), to.toBareJID(), available);
+                    Log.debug("intercepted message from {} to {}, recipient is available {}", new Object[] { packet.getFrom().toBareJID(), to.toBareJID(), available });
                 }
 
                 if (!available) {

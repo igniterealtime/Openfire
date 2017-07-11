@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1583 $
- * $Date: 2005-07-03 17:55:39 -0300 (Sun, 03 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,15 +16,14 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 
 /**
@@ -39,69 +34,68 @@ import java.util.Date;
  */
 public class XMPPServerInfoImpl implements XMPPServerInfo {
 
-    private Date startDate;
-    private String xmppDomain;
-    private String hostname;
-    private Version ver;
-    private ConnectionManager connectionManager;
+    private static final Logger Log = LoggerFactory.getLogger( XMPPServerInfoImpl.class );
+
+    private final Date startDate;
+
+    public static final Version VERSION = new Version(4, 2, 0, Version.ReleaseStatus.Alpha, -1 );
 
     /**
      * Simple constructor
      *
-     * @param xmppDomain the server's XMPP domain name (e.g. example.org).
-     * @param hostname the server's host name (e.g. server1.example.org).
-     * @param version the server's version number.
      * @param startDate the server's last start time (can be null indicating
      *      it hasn't been started).
      */
-    public XMPPServerInfoImpl(String xmppDomain, String hostname, Version version, Date startDate) {
-        this.xmppDomain = xmppDomain;
-        this.hostname = hostname;
-        this.ver = version;
+    public XMPPServerInfoImpl(Date startDate) {
         this.startDate = startDate;
     }
 
     @Override
     public Version getVersion() {
-        return ver;
+        return VERSION;
     }
 
     @Override
     public String getHostname()
-	{
-		return hostname;
-	}
+    {
+        final String fqdn = JiveGlobals.getProperty( "xmpp.fqdn" );
+        if ( fqdn != null && !fqdn.trim().isEmpty() )
+        {
+            return fqdn.trim().toLowerCase();
+        }
+
+        try
+        {
+            return InetAddress.getLocalHost().getCanonicalHostName().toLowerCase();
+        }
+        catch (UnknownHostException ex)
+        {
+            Log.warn( "Unable to determine local hostname.", ex );
+            return "localhost";
+        }
+    }
+
+	@Override
+    public void setHostname( String fqdn )
+    {
+        if ( fqdn == null || fqdn.isEmpty() )
+        {
+            JiveGlobals.deleteProperty( "xmpp.fqdn" );
+        }
+        else
+        {
+            JiveGlobals.setProperty( "xmpp.fqdn", fqdn.toLowerCase() );
+        }
+    }
 
 	@Override
     public String getXMPPDomain()
 	{
-		return xmppDomain;
+        return JiveGlobals.getProperty("xmpp.domain", getHostname() ).toLowerCase();
 	}
-
-	@Override
-    public void setXMPPDomain(String domainName)
-	{
-        this.xmppDomain = domainName;
-        if (domainName == null) { 
-            JiveGlobals.deleteProperty("xmpp.domain");
-        }
-        else {
-            JiveGlobals.setProperty("xmpp.domain", domainName);
-        }
-    }
 
     @Override
     public Date getLastStarted() {
         return startDate;
-    }
-
-    @Override
-    public Collection<ServerPort> getServerPorts() {
-        if (connectionManager == null) {
-        	connectionManager = XMPPServer.getInstance().getConnectionManager();
-        }
-        return connectionManager == null ?
-        		Collections.<ServerPort>emptyList() :
-        		connectionManager.getPorts();
     }
 }

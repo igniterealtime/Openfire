@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: 2006-04-07 09:28:54 -0500 (Fri, 07 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -95,7 +91,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
             };
             ctx = manager.getContext();
             Attributes attrs = ctx.getAttributes(userDN, attributes);
-            Attribute authorizeField_a = attrs.get(manager.getNameField());
+            Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
                 for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {
                     authorized.add((String)e.nextElement());

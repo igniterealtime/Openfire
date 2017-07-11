@@ -1,5 +1,3 @@
--- $Revision$
--- $Date$
 
 INSERT INTO ofVersion (name, version) VALUES ('monitoring', 4);
 
@@ -35,8 +33,8 @@ CREATE TABLE ofMessageArchive (
    toJID             VARCHAR2(1024)   NOT NULL,
    toJIDResource   VARCHAR2(255)      NULL,
    sentDate          INTEGER          NOT NULL,
-   stanza			 LONG			  NULL,
-   body              LONG
+   stanza			 CLOB			  NULL,
+   body              CLOB
 );
 CREATE INDEX ofMessageArchive_con_idx ON ofMessageArchive (conversationID);
 CREATE INDEX ofMessageArchive_fromjid_idx ON ofMessageArchive (fromJID);

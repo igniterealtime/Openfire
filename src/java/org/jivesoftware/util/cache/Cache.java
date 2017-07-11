@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,7 @@ package org.jivesoftware.util.cache;
  *
  * If the cache does grow too large, objects will be removed such that those
  * that are accessed least frequently are removed first. Because expiration
- * happens automatically, the cache makes <b>no</b> gaurantee as to how long
+ * happens automatically, the cache makes <b>no</b> guarantee as to how long
  * an object will remain in cache after it is put in.<p>
  *
  * Optionally, a maximum lifetime for all objects can be specified. In that
@@ -40,6 +36,9 @@ package org.jivesoftware.util.cache;
  * information from a database.<p>
  *
  * All cache operations are thread safe.<p>
+ *
+ * Note that neither keys or values can be null; A {@link NullPointerException}
+ * will be thrown attempting to place or retrieve null values in to the cache.
  *
  * @see Cacheable
  */

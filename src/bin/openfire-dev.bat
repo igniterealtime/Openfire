@@ -1,9 +1,6 @@
 @echo off
 
 REM #
-REM # $RCSfile$
-REM # $Revision: 1102 $
-REM # $Date: 2005-03-07 22:36:48 -0300 (Mon, 07 Mar 2005) $
 REM #
 
 REM # Starts Openfire in development mode, which means that JSP pages in the admin console will

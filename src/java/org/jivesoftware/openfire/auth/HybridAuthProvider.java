@@ -1,7 +1,4 @@
-/**
- * $Revision: 1116 $
- * $Date: 2005-03-10 15:18:08 -0800 (Thu, 10 Mar 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,5 +228,25 @@ public class HybridAuthProvider implements AuthProvider {
     public boolean isScramSupported() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
     }
 }

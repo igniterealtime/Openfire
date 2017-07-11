@@ -1,5 +1,3 @@
---   $Revision: 1650 $
---   $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE ofUser (
   username              VARCHAR(64)     NOT NULL,
@@ -261,13 +259,16 @@ CREATE TABLE ofMucMember (
 
 CREATE TABLE ofMucConversationLog (
   roomID              INTEGER       NOT NULL,
+  messageID         INTEGER NOT NULL,
   sender              VARCHAR(2000) NOT NULL,
   nickname            VARCHAR(255),
   logTime             CHAR(15)      NOT NULL,
   subject             VARCHAR(255),
-  body                CLOB
+  body                CLOB,
+  stanza              CLOB
 );
 CREATE INDEX ofMucConvLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConvLog_msg_id ON ofMucConversationLog (messageID);
 
 
 -- PubSub Tables
@@ -391,7 +392,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 23);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 25);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

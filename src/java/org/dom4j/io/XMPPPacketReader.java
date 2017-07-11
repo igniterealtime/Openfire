@@ -4,7 +4,6 @@
  * This software is open source.
  * See the bottom of this file for the licence.
  *
- * $Id: XMPPPacketReader.java 3190 2005-12-12 15:00:46Z gato $
  */
 
 package org.dom4j.io;
@@ -26,7 +25,6 @@ import java.net.URL;
  *
  * @author <a href="mailto:pelle@neubia.com">Pelle Braendgaard</a>
  * @author <a href="mailto:jstrachan@apache.org">James Strachan</a>
- * @version $Revision: 3190 $
  */
 public class XMPPPacketReader {
 
@@ -499,5 +497,4 @@ public class XMPPPacketReader {
  *
  * Copyright 2001-2004 (C) MetaStuff, Ltd. All Rights Reserved.
  *
- * $Id: XMPPPacketReader.java 3190 2005-12-12 15:00:46Z gato $
  */

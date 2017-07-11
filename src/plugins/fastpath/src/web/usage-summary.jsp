@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 32111 $
-  -	$Date: 2006-07-12 22:19:23 -0700 (Wed, 12 Jul 2006) $
 --%>
 
 <%@ page import="org.jivesoftware.xmpp.workgroup.Workgroup,

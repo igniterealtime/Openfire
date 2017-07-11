@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3117 $
- * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +19,7 @@ package org.jivesoftware.openfire.group;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -671,6 +668,40 @@ public class GroupManager {
         }
         for (JID user : group.getMembers()) {
         	groupMetaCache.remove(user.getNode());
+        }
+
+        final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if (showInRoster != null )
+        {
+            switch ( showInRoster.toLowerCase() )
+            {
+                case "everybody":
+                    groupMetaCache.clear();
+                    break;
+
+                case "spefgroups":
+                    final String groupList = group.getProperties().get( "sharedRoster.groupList" );
+                    if ( groupList != null )
+                    {
+                        final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
+                        while ( tokenizer.hasMoreTokens() )
+                        {
+                            final String spefgroup = tokenizer.nextToken().trim();
+                            try
+                            {
+                                final Group nested = getGroup( spefgroup );
+                                evictCachedUsersForGroup( nested );
+                            }
+                            catch ( GroupNotFoundException e )
+                            {
+                                Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );
+                            }
+                        }
+                    }
+                    break;
+
+
+            }
         }
     }
 

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,8 +59,8 @@ import org.xmpp.packet.PacketError;
 public class FileTransferProxy extends BasicModule
         implements ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider,
         RoutableChannelHandler {
-	
-	private static final Logger Log = LoggerFactory.getLogger(FileTransferProxy.class);
+
+    private static final Logger Log = LoggerFactory.getLogger( FileTransferProxy.class);
 
     /**
      * The JiveProperty relating to whether or not the file treansfer proxy is enabled.
@@ -76,6 +72,11 @@ public class FileTransferProxy extends BasicModule
      * proxy.
      */
     public static final String JIVEPROPERTY_PORT = "xmpp.proxy.port";
+
+    /**
+     * Name of the property that hardcodes the external IP that is being listened on.
+     */
+    public static final String PROPERTY_EXTERNALIP = "xmpp.proxy.externalip";
 
     /**
      * Whether or not the file transfer proxy is enabled by default.
@@ -132,14 +133,27 @@ public class FileTransferProxy extends BasicModule
         else if (FileTransferManager.NAMESPACE_BYTESTREAMS.equals(namespace)) {
             if (packet.getType() == IQ.Type.get) {
                 IQ reply = IQ.createResultIQ(packet);
-                Element newChild = reply.setChildElement("query",
-                        FileTransferManager.NAMESPACE_BYTESTREAMS);
-                for ( InetAddress address : getAddresses() )
+                Element newChild = reply.setChildElement("query", FileTransferManager.NAMESPACE_BYTESTREAMS);
+
+                final String externalIP = JiveGlobals.getProperty( PROPERTY_EXTERNALIP );
+                if ( externalIP != null && !externalIP.isEmpty() )
                 {
-                    Element response = newChild.addElement( "streamhost" );
+                    // OF-512: Override the automatic detection with a specific address (useful for NATs, proxies, etc)
+                    final Element response = newChild.addElement( "streamhost" );
                     response.addAttribute( "jid", getServiceDomain() );
-                    response.addAttribute( "host", address.getHostAddress() );
+                    response.addAttribute( "host", externalIP );
                     response.addAttribute( "port", String.valueOf( connectionManager.getProxyPort() ) );
+                }
+                else
+                {
+                    // Report all network addresses that we know that we're servicing.
+                    for ( final InetAddress address : getAddresses() )
+                    {
+                        final Element response = newChild.addElement( "streamhost" );
+                        response.addAttribute( "jid", getServiceDomain() );
+                        response.addAttribute( "host", address.getHostAddress() );
+                        response.addAttribute( "port", String.valueOf( connectionManager.getProxyPort() ) );
+                    }
                 }
                 router.route(reply);
                 return true;
@@ -179,71 +193,54 @@ public class FileTransferProxy extends BasicModule
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
-        final String hardCodedProxyIP = JiveGlobals.getProperty( "xmpp.proxy.externalip" );
+        connectionManager = new ProxyConnectionManager(getFileTransferManager(server));
+    }
+
+    /**
+     * Returns the IP address(es) that the proxy connection manager is servicing.
+     */
+    private Set<InetAddress> getAddresses()
+    {
         final String interfaceName = JiveGlobals.getXMLProperty( "network.interface" );
-        if ( hardCodedProxyIP != null && !hardCodedProxyIP.trim().isEmpty() )
+
+        final Set<InetAddress> result = new HashSet<>();
+
+        // Let's see if we hardcoded a specific interface, then use its address.
+        if ( interfaceName != null && !interfaceName.trim().isEmpty() )
         {
-            // First choice: a hardcoded IP address, if one exists.
-            try
-            {
-                bindInterface = InetAddress.getByName( hardCodedProxyIP.trim() );
-            }
-            catch ( UnknownHostException e )
-            {
-                Log.error( "Error binding to xmpp.proxy.externalip '{}'", interfaceName, e );
-            }
-        }
-        else if ( interfaceName != null && !interfaceName.trim().isEmpty() )
-        {
-            // No hardcoded IP? Let's see if we hardcoded a specific interface, then use its address.
             try
             {
                 bindInterface = InetAddress.getByName( interfaceName.trim() );
+                result.add( bindInterface );
+                return result;
             }
             catch ( UnknownHostException e )
             {
                 Log.error( "Error binding to network.interface '{}'", interfaceName, e );
             }
         }
-        else
-        {
-            // If no configuration is available, use all available addresses.
-            bindInterface = null;
-        }
 
-        connectionManager = new ProxyConnectionManager(getFileTransferManager(server));
-    }
-
-    /**
-     * Returns the IP address(es) that are used.
-     */
-    private Set<InetAddress> getAddresses()
-    {
-        final Set<InetAddress> result = new HashSet<>();
-        if ( bindInterface != null )
+        // When there's no specific address configured, return all available (non-loopback) addresses.
+        try
         {
-            result.add( bindInterface );
-        }
-        else
-        {
-            // When there's no specific address configured, return all available addresses.
-            try
+            final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while ( networkInterfaces.hasMoreElements() )
             {
-                final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-                while ( networkInterfaces.hasMoreElements() )
+                final NetworkInterface networkInterface = networkInterfaces.nextElement();
+                if ( networkInterface.isLoopback() )
                 {
-                    final NetworkInterface networkInterface = networkInterfaces.nextElement();
-                    final Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-                    while ( inetAddresses.hasMoreElements() )
-                    {
-                        result.add( inetAddresses.nextElement() );
-                    }
+                    continue;
+                }
+                final Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                while ( inetAddresses.hasMoreElements() )
+                {
+                    result.add( inetAddresses.nextElement() );
                 }
             }
-            catch ( SocketException e )
-            {
-                Log.error( "Error determining all addresses for this server", e );
-            }
+        }
+        catch ( SocketException e )
+        {
+            Log.error( "Error determining all addresses for this server", e );
         }
         return result;
     }
@@ -253,7 +250,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
-	public void start() {
+    public void start() {
         super.start();
 
         if (isEnabled()) {
@@ -273,7 +270,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
 
         XMPPServer.getInstance().getIQDiscoItemsHandler()
@@ -283,7 +280,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
-	public void destroy() {
+    public void destroy() {
         super.destroy();
 
         connectionManager.shutdown();
@@ -291,7 +288,8 @@ public class FileTransferProxy extends BasicModule
 
     public void enableFileTransferProxy(boolean isEnabled) {
         JiveGlobals.setProperty(FileTransferProxy.JIVEPROPERTY_PROXY_ENABLED,
-                Boolean.toString(isEnabled));
+                                Boolean.toString(isEnabled));
+        setEnabled( isEnabled );
     }
 
     private void setEnabled(boolean isEnabled) {
@@ -358,9 +356,9 @@ public class FileTransferProxy extends BasicModule
         }
 
         final DiscoServerItem item = new DiscoServerItem(new JID(
-			getServiceDomain()), "Socks 5 Bytestreams Proxy", null, null, this,
-			this);
-        
+                getServiceDomain()), "Socks 5 Bytestreams Proxy", null, null, this,
+                                                         this);
+
         return Collections.singleton(item).iterator();
     }
 
@@ -378,7 +376,7 @@ public class FileTransferProxy extends BasicModule
     @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(FileTransferManager.NAMESPACE_BYTESTREAMS,
-                "http://jabber.org/protocol/disco#info").iterator();
+                             "http://jabber.org/protocol/disco#info").iterator();
     }
 
     @Override
@@ -415,11 +413,21 @@ public class FileTransferProxy extends BasicModule
 
     private class FileTransferPropertyListener implements PropertyEventListener {
         @Override
-        public void propertySet(String property, Map params) {
+        public void propertySet(String property, Map params)
+        {
+            if ( isEnabled() )
+            {
+                // Restart when configuration changed.
+                if (JIVEPROPERTY_PORT.equalsIgnoreCase( property ))
+                {
+                    setEnabled( false );
+                    setEnabled( true );
+                }
+            }
+
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 Object value = params.get("value");
-                boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString()) :
-                        DEFAULT_IS_PROXY_ENABLED);
+                boolean isEnabled = (value != null ? Boolean.parseBoolean(value.toString()) : DEFAULT_IS_PROXY_ENABLED);
                 setEnabled(isEnabled);
             }
         }
@@ -428,6 +436,16 @@ public class FileTransferProxy extends BasicModule
         public void propertyDeleted(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 setEnabled(DEFAULT_IS_PROXY_ENABLED);
+            }
+
+            if ( isEnabled() )
+            {
+                // Restart when configuration changed.
+                if (JIVEPROPERTY_PORT.equalsIgnoreCase( property ) )
+                {
+                    setEnabled( false );
+                    setEnabled( true );
+                }
             }
         }
 

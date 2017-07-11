@@ -1,8 +1,4 @@
-/**
- * $RCSfile: MultiUserChatServerImpl.java,v $
- * $Revision: 3036 $
- * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,17 +16,7 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +31,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
@@ -55,6 +42,7 @@ import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.HistoryStrategy;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCEventDispatcher;
@@ -139,9 +127,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private String chatDescription = null;
 
     /**
-     * chatrooms managed by this manager, table: key room name (String); value ChatRoom
+     * LocalMUCRoom chat manager which supports simple chatroom management
      */
-    private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
+    private LocalMUCRoomManager localMUCRoomManager = new LocalMUCRoomManager();
 
     /**
      * Chat users managed by this manager. This includes only users connected to this JVM.
@@ -167,6 +155,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * The handler of search requests ('jabber:iq:search' namespace).
      */
     private IQMUCSearchHandler searchHandler = null;
+
+    /**
+     * Plugin (etc) provided IQ Handlers for MUC:
+     */
+    private Map<String,IQHandler> iqHandlers = null;
 
     /**
      * The total time all agents took to chat *
@@ -294,6 +287,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
+    public void addIQHandler(IQHandler iqHandler) {
+        if (this.iqHandlers == null) {
+            this.iqHandlers = new HashMap<>();
+        }
+        this.iqHandlers.put(iqHandler.getInfo().getNamespace(), iqHandler);
+    }
+
+    @Override
+    public void removeIQHandler(IQHandler iqHandler) {
+        if (this.iqHandlers != null) {
+            if (iqHandler == this.iqHandlers.get(iqHandler.getInfo().getNamespace())) {
+                this.iqHandlers.remove(iqHandler.getInfo().getNamespace());
+            }
+        }
+    }
+
+    @Override
     public String getDescription() {
         return chatDescription;
     }
@@ -401,7 +411,24 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else if ("urn:xmpp:ping".equals(namespace)) {
             router.route( IQ.createResultIQ(iq) );
         }
-        else {
+        else if (this.iqHandlers != null) {
+            IQHandler h = this.iqHandlers.get(namespace);
+            if (h != null) {
+                try {
+                    IQ reply = h.handleIQ(iq);
+                    if (reply != null) {
+                        router.route(reply);
+                    }
+                } catch (UnauthorizedException e) {
+                    IQ reply = IQ.createResultIQ(iq);
+                    reply.setType(IQ.Type.error);
+                    reply.setError(PacketError.Condition.service_unavailable);
+                    router.route(reply);
+                }
+                return true;
+            }
+            return false;
+        } else {
             return false;
         }
         return true;
@@ -614,21 +641,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return;
             }
             try {
-                cleanupRooms();
+            	localMUCRoomManager.cleanupRooms(getCleanupDate());
             }
             catch (Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
     }
-
-    private void cleanupRooms() {
-        for (MUCRoom room : rooms.values()) {
-            if (room.getEmptyDate() != null && room.getEmptyDate().before(getCleanupDate())) {
-                removeChatRoom(room.getName());
-            }
-        }
-    }
+ 
 
     @Override
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
@@ -636,7 +656,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         boolean loaded = false;
         boolean created = false;
         synchronized (roomName.intern()) {
-            room = rooms.get(roomName);
+            room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
                 room = new LocalMUCRoom(this, roomName, router);
                 // If the room is persistent load the configuration values from the DB
@@ -680,7 +700,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         created = true;
                     }
                 }
-                rooms.put(roomName, room);
+                localMUCRoomManager.addRoom(roomName, room);
             }
         }
         if (created) {
@@ -702,11 +722,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public MUCRoom getChatRoom(String roomName) {
         boolean loaded = false;
-        LocalMUCRoom room = rooms.get(roomName);
+        LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
             // Check if the room exists in the databclase and was not present in memory
             synchronized (roomName.intern()) {
-                room = rooms.get(roomName);
+            	room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
                     room = new LocalMUCRoom(this, roomName, router);
                     // If the room is persistent load the configuration values from the DB
@@ -716,7 +736,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         // room may be an old room that was not present in memory)
                         MUCPersistenceManager.loadFromDB(room);
                         loaded = true;
-                        rooms.put(roomName, room);
+                        localMUCRoomManager.addRoom(roomName,room);
                     }
                     catch (IllegalArgumentException e) {
                         // The room does not exist so do nothing
@@ -734,17 +754,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void refreshChatRoom(String roomName) {
-        rooms.remove(roomName);
+    	localMUCRoomManager.removeRoom(roomName);
         getChatRoom(roomName);
     }
 
     public LocalMUCRoom getLocalChatRoom(String roomName) {
-        return rooms.get(roomName);
+        return localMUCRoomManager.getRoom(roomName);
     }
 
     @Override
     public List<MUCRoom> getChatRooms() {
-        return new ArrayList<MUCRoom>(rooms.values());
+        return new ArrayList<MUCRoom>(localMUCRoomManager.getRooms());
     }
 
     @Override
@@ -776,20 +796,22 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     @Override
     public void chatRoomAdded(LocalMUCRoom room) {
-        rooms.put(room.getName(), room);
+    	localMUCRoomManager.addRoom(room.getName(), room) ;
     }
 
     private void removeChatRoom(String roomName, boolean notify) {
-        MUCRoom room = rooms.remove(roomName);
-		Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
-		if (room instanceof LocalMUCRoom)
-			GroupEventDispatcher.removeListener((LocalMUCRoom) room);
+        MUCRoom room = localMUCRoomManager.removeRoom(roomName);
         if (room != null) {
-            totalChatTime += room.getChatLength();
+            Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
+            if (room instanceof LocalMUCRoom)
+                GroupEventDispatcher.removeListener((LocalMUCRoom) room);
+           totalChatTime += room.getChatLength();
             if (notify) {
                 // Notify other cluster nodes that a room has been removed
                 CacheFactory.doClusterTask(new RoomRemovedEvent((LocalMUCRoom)room));
             }
+        } else {
+            Log.info("No chatroom {} during removal.", roomName);
         }
     }
 
@@ -844,7 +866,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (user == null) {
                 if (roomName != null) {
                     // Check if the JID belong to a user hosted in another cluster node
-                    LocalMUCRoom localMUCRoom = rooms.get(roomName);
+                    LocalMUCRoom localMUCRoom = localMUCRoomManager.getRoom(roomName);
                     if (localMUCRoom != null) {
                         MUCRole occupant = localMUCRoom.getOccupantByFullJID(userjid);
                         if (occupant != null && !occupant.isLocal()) {
@@ -862,8 +884,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public Collection<MUCRole> getMUCRoles(JID user) {
         List<MUCRole> userRoles = new ArrayList<>();
-        for (LocalMUCRoom room : rooms.values()) {
-            MUCRole role = room.getOccupantByFullJID(user);
+        for (LocalMUCRoom room : localMUCRoomManager.getRooms()) {
+        	MUCRole role = room.getOccupantByFullJID(user);
             if (role != null) {
                 userRoles.add(role);
             }
@@ -1259,7 +1281,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
         for (LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
-            rooms.put(room.getName().toLowerCase(), room);
+        	localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
         }
     }
 
@@ -1312,7 +1334,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     @Override
     public int getNumberChatRooms() {
-        return rooms.size();
+    	 return localMUCRoomManager.getNumberChatRooms();
     }
 
     /**
@@ -1351,7 +1373,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public int getNumberRoomOccupants() {
         int total = 0;
-        for (MUCRoom room : rooms.values()) {
+        for (MUCRoom room : localMUCRoomManager.getRooms()) {
             total = total + room.getOccupantsCount();
         }
         return total;
@@ -1528,6 +1550,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 else {
                     features.add("muc_temporary");
                 }
+                if (!extraDiscoFeatures.isEmpty()) {
+                    features.addAll(extraDiscoFeatures);
+                }
             }
         }
         return features.iterator();
@@ -1669,7 +1694,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 		if (name == null && node == null)
 		{
 			// Answer all the public rooms as items
-			for (MUCRoom room : rooms.values())
+			for (MUCRoom room : localMUCRoomManager.getRooms())
 			{
 				if (canDiscoverRoom(room, senderJID))
 				{

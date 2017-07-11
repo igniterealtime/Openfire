@@ -5,8 +5,8 @@
     <name>STUN server plugin</name>
     <description>Adds STUN functionality to Openfire</description>
     <author>Ignite Realtime</author>
-    <version>1.2.0</version>
-    <date>10/12/2015</date>
+    <version>1.2.2</version>
+    <date>05/11/2017</date>
     <minServerVersion>4.0.0</minServerVersion>
     
     <adminconsole>

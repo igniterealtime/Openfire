@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,5 +46,5 @@ public interface ServerIdentitiesProvider {
      *
      * @return an Iterator (of Element) with identities of protocols supported by the server.
      */
-    public abstract Iterator<Element> getIdentities();
+    Iterator<Element> getIdentities();
 }

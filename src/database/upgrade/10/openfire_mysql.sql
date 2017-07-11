@@ -1,5 +1,3 @@
-# $Revision:  $
-# $Date:  $
 
 CREATE TABLE jiveSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,

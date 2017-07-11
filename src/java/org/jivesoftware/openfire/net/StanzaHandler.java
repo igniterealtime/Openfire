@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +30,6 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -434,7 +430,7 @@ public abstract class StanzaHandler {
     private void tlsNegotiated() {
         // Offer stream features including SASL Mechanisms
         StringBuilder sb = new StringBuilder(620);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
@@ -455,7 +451,7 @@ public abstract class StanzaHandler {
      */
     private void saslSuccessful() {
         StringBuilder sb = new StringBuilder(420);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
 
         // Include specific features such as resource binding and session establishment
@@ -531,7 +527,7 @@ public abstract class StanzaHandler {
      */
     private void compressionSuccessful() {
         StringBuilder sb = new StringBuilder(340);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
@@ -558,7 +554,7 @@ public abstract class StanzaHandler {
 				StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
 	}
 
-    private String geStreamHeader() {
+    private String getStreamHeader() {
         StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
@@ -649,12 +645,13 @@ public abstract class StanzaHandler {
 
         if (streamError != null) {
             StringBuilder sb = new StringBuilder(250);
+            if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append(STREAM_ID_FACTORY.createStreamID()).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");

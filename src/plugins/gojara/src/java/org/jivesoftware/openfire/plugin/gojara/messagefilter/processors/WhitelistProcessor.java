@@ -12,7 +12,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 /**
- * 
  * If the access to external components or gateways is limited to a special
  * group in GoJara settings we have to filter the disco#infos from the server to
  * the client. If the user is not on the list we are hiding the specified info

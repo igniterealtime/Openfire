@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -287,6 +283,9 @@ public class LeafNode extends Node {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
             PubSubPersistenceManager.removePublishedItem(item);
+            if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
+                lastPublished = null;
+            }
         }
         if (isNotifiedOfRetract()) {
             // Broadcast notification deletion to subscribers

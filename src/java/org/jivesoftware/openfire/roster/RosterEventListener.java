@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +30,7 @@ public interface RosterEventListener {
      *
      * @param roster the loaded roster.
      */
-    public void rosterLoaded(Roster roster);
+    void rosterLoaded( Roster roster );
 
     /**
      * Notification message indicating that a contact is about to be added to a roster. New
@@ -47,7 +43,7 @@ public interface RosterEventListener {
      * @param persistent true if the new contact is going to be saved to the database.
      * @return false if the contact should not be persisted to the database.
      */
-    public boolean addingContact(Roster roster, RosterItem item, boolean persistent);
+    boolean addingContact( Roster roster, RosterItem item, boolean persistent );
 
     /**
      * Notification message indicating that a contact has been added to a roster.
@@ -55,7 +51,7 @@ public interface RosterEventListener {
      * @param roster the roster that was updated.
      * @param item the new roster item.
      */
-    public void contactAdded(Roster roster, RosterItem item);
+    void contactAdded( Roster roster, RosterItem item );
 
     /**
      * Notification message indicating that a contact has been updated.
@@ -63,7 +59,7 @@ public interface RosterEventListener {
      * @param roster the roster that was updated.
      * @param item the updated roster item.
      */
-    public void contactUpdated(Roster roster, RosterItem item);
+    void contactUpdated( Roster roster, RosterItem item );
 
     /**
      * Notification message indicating that a contact has been deleted from a roster.
@@ -71,5 +67,5 @@ public interface RosterEventListener {
      * @param roster the roster that was updated.
      * @param item the roster item that was deleted.
      */
-    public void contactDeleted(Roster roster, RosterItem item);
+    void contactDeleted( Roster roster, RosterItem item );
 }

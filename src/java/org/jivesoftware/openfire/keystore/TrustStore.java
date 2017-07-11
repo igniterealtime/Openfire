@@ -4,10 +4,8 @@ import org.jivesoftware.util.CertificateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.TrustManager;
 import java.io.IOException;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
 import java.util.*;
 

@@ -2,9 +2,6 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: 2873 $
-  -	$Date: 2005-09-23 10:54:57 -0700 (Fri, 23 Sep 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,

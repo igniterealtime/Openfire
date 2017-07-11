@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * https://svn.apache.org/repos/asf/mina/branches/1.1/core/src/main/java/org/apache/mina/management.
  *
  * @author The Apache Directory Project (mina-dev@directory.apache.org)
- * @version $Rev: 477648 $, $Date: 2006-11-21 04:33:38 -0800 (Tue, 21 Nov 2006) $
  */
 public class MINAStatCollector {
     /**

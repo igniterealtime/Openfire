@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -129,14 +127,19 @@
     boolean saveLog = ParamUtils.getBooleanParameter(request,"saveLog");
     boolean emailLog = ParamUtils.getBooleanParameter(request,"emailLog");
     boolean debugEnabled = ParamUtils.getBooleanParameter(request,"debugEnabled");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
 
     // Enable/disable debugging
     if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
-    	JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
-        // Log the event
-        admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
-        response.sendRedirect("logviewer.jsp?log=debug");
-        return;
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
+            // Log the event
+            admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
+            response.sendRedirect("logviewer.jsp?log=debug");
+            return;
+        }
     }
 
     // Santize variables to prevent vulnerabilities
@@ -147,36 +150,40 @@
     User pageUser = admin.getUser();
 
     if (clearLog && log != null) {
-        if ("error".equals(log)) {
-            Log.rotateErrorLogFile();
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            if ("error".equals(log)) {
+                Log.rotateErrorLogFile();
+            }
+            else if ("warn".equals(log)) {
+                Log.rotateWarnLogFile();
+            }
+            else if ("info".equals(log)) {
+                Log.rotateInfoLogFile();
+            }
+            else if ("debug".equals(log)) {
+                Log.rotateDebugLogFile();
+            }
+            response.sendRedirect("logviewer.jsp?log=" + log);
+            return;
         }
-        else if ("warn".equals(log)) {
-            Log.rotateWarnLogFile();
-        }
-        else if ("info".equals(log)) {
-            Log.rotateInfoLogFile();
-        }
-        else if ("debug".equals(log)) {
-            Log.rotateDebugLogFile();
-        }
-        response.sendRedirect("logviewer.jsp?log=" + log);
-        return;
     }
     else if (markLog && log != null) {
-        if ("error".equals(log)) {
-            Log.markErrorLogFile(pageUser.getUsername());
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            if ("error".equals(log)) {
+                Log.markErrorLogFile(pageUser.getUsername());
+            }
+            else if ("warn".equals(log)) {
+                Log.markWarnLogFile(pageUser.getUsername());
+            }
+            else if ("info".equals(log)) {
+                Log.markInfoLogFile(pageUser.getUsername());
+            }
+            else if ("debug".equals(log)) {
+                Log.markDebugLogFile(pageUser.getUsername());
+            }
+            response.sendRedirect("logviewer.jsp?log=" + log);
+            return;
         }
-        else if ("warn".equals(log)) {
-            Log.markWarnLogFile(pageUser.getUsername());
-        }
-        else if ("info".equals(log)) {
-            Log.markInfoLogFile(pageUser.getUsername());
-        }
-        else if ("debug".equals(log)) {
-            Log.markDebugLogFile(pageUser.getUsername());
-        }
-        response.sendRedirect("logviewer.jsp?log=" + log);
-        return;
     }
     else if (saveLog && log != null) {
         saveLog = false;
@@ -206,6 +213,10 @@
 
     // Determine if any of the log files contents have been updated:
     HashMap newlogs = getLogUpdate(request, response, logDir);
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
 %>
 
 <html>
@@ -360,6 +371,7 @@ IFRAME {
                     <input type="hidden" name="markLog" value="false">
                     <input type="hidden" name="saveLog" value="false">
                     <input type="hidden" name="emailLog" value="false">
+                    <input type="hidden" name="csrf" value="${csrf}">
                     <div class="buttons">
                     <table cellpadding="0" cellspacing="0" border="0">
                     <tbody>

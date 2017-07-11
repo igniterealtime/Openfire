@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1695 $
- * $Date: 2005-07-26 02:09:55 -0300 (Tue, 26 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,5 +40,5 @@ public interface ServerFeaturesProvider {
      *
      * @return an Iterator (of String) with the supported features by the server.
      */
-    public abstract Iterator<String> getFeatures();
+    Iterator<String> getFeatures();
 }

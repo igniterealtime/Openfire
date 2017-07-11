@@ -2,12 +2,13 @@
 <%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.openfire.ldap.LdapManager, org.jivesoftware.openfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-    String username = ParamUtils.getParameter(request, "username");
+    String username = URLDecoder.decode( ParamUtils.getParameter( request, "username"), "UTF-8" );
     String password = ParamUtils.getParameter(request, "password");
     boolean ldap = "true".equals(request.getParameter("ldap"));
 

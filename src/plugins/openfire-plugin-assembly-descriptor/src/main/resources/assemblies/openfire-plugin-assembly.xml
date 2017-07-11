@@ -1,0 +1,67 @@
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <id>openfire-plugin-assembly</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+
+        <!-- metadata files (readme, icons, etc). -->
+        <fileSet>
+            <outputDirectory/>
+            <directory>${project.build.sourceDirectory}/../..</directory>
+            <includes>
+                <include>*.html</include>
+                <include>*.gif</include>
+                <include>*.png</include>
+                <include>classes/**</include>
+            </includes>
+        </fileSet>
+
+        <!-- database, i18n and web directory -->
+        <fileSet>
+            <outputDirectory/>
+            <directory>${project.build.sourceDirectory}/..</directory>
+            <includes>
+                <include>database/**</include>
+                <include>i18n/**</include>
+                <include>web/**</include>
+            </includes>
+            <!-- Don't include jsp pages, they will be compiled -->
+            <excludes>
+                <exclude>**/*.jsp</exclude>
+                <exclude>web/WEB-INF/web.xml</exclude>
+            </excludes>
+        </fileSet>
+
+        <!-- web.xml (it will be modified by JspC -->
+        <fileSet>
+            <outputDirectory>web/WEB-INF</outputDirectory>
+            <directory>${project.build.directory}</directory>
+            <includes>
+                <include>web.xml</include>
+            </includes>
+        </fileSet>
+
+    </fileSets>
+
+    <!-- metadata files that need to have content replaced by Maven metadata -->
+    <files>
+        <file>
+            <source>plugin.xml</source>
+            <outputDirectory>/</outputDirectory>
+            <filtered>true</filtered>
+        </file>
+    </files>
+
+    <!-- Bundle the dependencies of this plugin -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
+        </dependencySet>
+    </dependencySets>
+</assembly>

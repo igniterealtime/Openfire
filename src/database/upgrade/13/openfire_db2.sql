@@ -1,5 +1,3 @@
--- $Revision:  $
--- $Date:  $
 
 -- Rename column
 CREATE TABLE jiveRemoteServerConf2 (

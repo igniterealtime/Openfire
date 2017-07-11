@@ -1,5 +1,4 @@
-/**
- *
+/*
  * Copyright 2016 Anno van Vliet
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +54,6 @@ public class OpenfireExporter implements InExporter {
   private final RosterItemProvider rosterItemProvider;
   
   /**
-   * 
    */
   public OpenfireExporter() {
     serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();

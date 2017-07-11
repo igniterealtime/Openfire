@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 16:48:22 -0700 (Fri, 19 Aug 2005) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -19,7 +17,8 @@
 
 <%@ page import="org.jivesoftware.util.StringUtils,
                  org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.util.LocaleUtils"
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.openfire.cluster.ClusterManager"
     errorPage="../error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
 
@@ -96,7 +95,21 @@
         </div>
         <div id="jive-userstatus">
             <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
-            <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a>
+            <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a><br/>
+            <fmt:message key="admin.clustering.status"/> -
+                <% if (ClusterManager.isClusteringEnabled()) { %>
+                    <% if (ClusterManager.isClusteringStarted()) { %>
+                        <% if (ClusterManager.isSeniorClusterMember()) { %>
+                                <fmt:message key="admin.clustering.senior"/>
+                        <% } else { %>
+                                <fmt:message key="admin.clustering.junior"/>
+                        <% }  %>
+                    <% } else { %>
+                        <fmt:message key="admin.clustering.starting"/>
+                    <% } %>
+                <% } else { %>
+                    <fmt:message key="admin.clustering.disabled"/>
+                <% } %>
         </div>
         <div id="jive-nav">
             <div id="jive-nav-left"></div>

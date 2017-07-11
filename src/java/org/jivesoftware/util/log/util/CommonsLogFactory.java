@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * A LogFactory implementation to override the default commons-logging behavior. All log
  * statements are written to the Openfire logs. Info level logging is sent to debug.
  *
- * @Deprecated Openfire uses SLF4J's 'jcl-over-slf4j' instead. See http://www.slf4j.org/legacy.html
+ * @deprecated Openfire uses SLF4J's 'jcl-over-slf4j' instead. See http://www.slf4j.org/legacy.html
  */
 @Deprecated
 public class CommonsLogFactory extends LogFactory {

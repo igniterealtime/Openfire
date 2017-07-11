@@ -20,7 +20,7 @@ public interface GroupAwareMap<K, V> extends Map<K, V> {
 	 * @param key The target, presumably a JID
 	 * @return True if the target is in the key list, or in any groups in the key list
 	 */
-	public boolean includesKey(Object key);
+    boolean includesKey( Object key );
 
 	/**
 	 * Returns true if the map contains a value referencing the given JID. If the JID
@@ -30,7 +30,7 @@ public interface GroupAwareMap<K, V> extends Map<K, V> {
 	 * @param value The target, presumably a JID
 	 * @return True if the target is in the key list, or in any groups in the key list
 	 */
-	public boolean includesValue(Object value);
+    boolean includesValue( Object value );
 	
 	/**
 	 * Returns the groups that are implied (resolvable) from the keys in the map.

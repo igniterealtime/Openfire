@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jivesoftware.util.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

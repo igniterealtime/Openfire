@@ -1,7 +1,4 @@
-/**
- * $Revision: 3067 $
- * $Date: 2005-11-12 22:29:01 -0300 (Sat, 12 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,17 +30,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.jasper.JasperException;
 import org.apache.jasper.JspC;
 import org.dom4j.*;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.WebXmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -110,8 +104,6 @@ public class PluginServlet extends HttpServlet {
                 else {
                     handleOtherRequest(pathInfo, response);
                 }
-                // Do not allow framing; OF-997
-                response.addHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "deny"));
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

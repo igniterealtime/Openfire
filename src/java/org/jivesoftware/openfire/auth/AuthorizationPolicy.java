@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: 2006-04-07 09:28:54 -0500 (Fri, 07 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,19 +46,19 @@ public interface AuthorizationPolicy {
      * @param principal The principal requesting the username.
      * @return true is the user is authorized to be principal
      */
-    public boolean authorize(String username, String principal);
+    boolean authorize( String username, String principal );
 
     /**
      * Returns the short name of the Policy
      *
      * @return The short name of the Policy
      */
-    public abstract String name();
+    String name();
 
     /**
      * Returns a description of the Policy
      *
      * @return The description of the Policy.
      */
-    public abstract String description();
+    String description();
 }

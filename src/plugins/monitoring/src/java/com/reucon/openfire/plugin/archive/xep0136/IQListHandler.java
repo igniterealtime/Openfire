@@ -49,7 +49,7 @@ public class IQListHandler extends AbstractIQHandler implements
 	}
 
 	private Collection<Conversation> list(JID from, ListRequest request) {
-		return getPersistenceManager().findConversations(request.getStart(),
+		return getPersistenceManager(from).findConversations(request.getStart(),
 				request.getEnd(), from.toBareJID(), request.getWith(),
 				request.getResultSet());
 	}

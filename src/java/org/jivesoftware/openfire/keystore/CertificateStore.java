@@ -1,8 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,8 +8,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;

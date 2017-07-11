@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +65,7 @@ public class MUCPersistenceManager {
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM ofMucMember WHERE roomID=?";
     private static final String LOAD_HISTORY =
-        "SELECT sender, nickname, logTime, subject, body FROM ofMucConversationLog " +
+        "SELECT sender, nickname, logTime, subject, body, stanza FROM ofMucConversationLog " +
         "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
@@ -85,7 +81,7 @@ public class MUCPersistenceManager {
         "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_HISTORY =
         "SELECT ofMucConversationLog.roomID, ofMucConversationLog.sender, ofMucConversationLog.nickname, " +
-        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body FROM " +
+        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body, ofMucConversationLog.stanza FROM " +
         "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
         "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
         "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
@@ -129,8 +125,8 @@ public class MUCPersistenceManager {
     private static final String DELETE_USER_MUCAFFILIATION =
         "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
-        "VALUES (?,?,?,?,?,?)";
+        "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) " +
+        "SELECT ?,COUNT(*),?,?,?,?,?,? FROM ofMucConversationLog";
 
     /* Map of subdomains to their associated properties */
     private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
@@ -249,8 +245,9 @@ public class MUCPersistenceManager {
                     Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
                     String subject = rs.getString(4);
                     String body = rs.getString(5);
+                    String stanza = rs.getString(6);
                     room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
-                            body);
+                            body, stanza);
                 }
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
@@ -260,7 +257,7 @@ public class MUCPersistenceManager {
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                     room.getSubject().length() > 0) {
                 room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
-                        null, room.getModificationDate(), room.getSubject(), null);
+                        null, room.getModificationDate(), room.getSubject(), null, null);
             }
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
@@ -599,7 +596,8 @@ public class MUCPersistenceManager {
                     Date sentDate    = new Date(Long.parseLong(resultSet.getString(4).trim()));
                     String subject   = resultSet.getString(5);
                     String body      = resultSet.getString(6);
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body);
+                    String stanza = resultSet.getString(7);
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }
@@ -620,6 +618,7 @@ public class MUCPersistenceManager {
                                                             null,
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
+                                                            null,
                                                             null);
             }
         }
@@ -1063,6 +1062,7 @@ public class MUCPersistenceManager {
             pstmt.setString(4, StringUtils.dateToMillis(entry.getDate()));
             pstmt.setString(5, entry.getSubject());
             pstmt.setString(6, entry.getBody());
+            pstmt.setString(7, entry.getStanza());
             pstmt.executeUpdate();
             return true;
         }

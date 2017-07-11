@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.jasper.servlet.JasperInitializer;
 
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.util.security.*;
 import org.eclipse.jetty.security.*;
@@ -71,9 +66,10 @@ public class JmxWebPlugin implements Plugin  {
     private final static String OBJECTNAME_DATABASEPOOL = NAMEBASE + "type=databasepool";
     private DatabasePool database = null;
     private EmailScheduler emailScheduler = null;
+    private WebAppContext context;
+    private WebAppContext context2;
 
-
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		Log.info( "["+ NAME + "] initialize " + NAME + " plugin resources");
 
         try {
@@ -118,12 +114,9 @@ public class JmxWebPlugin implements Plugin  {
 
 		try {
 
-			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
-
 			try {
 				Log.info( "["+ NAME + "] starting jolokia");
-				WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/jolokia");
-
+				context = new WebAppContext(null, pluginDirectory.getPath(), "/jolokia");
 				final List<ContainerInitializer> initializers = new ArrayList<>();
 				initializers.add(new ContainerInitializer(new JasperInitializer(), null));
 				context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
@@ -131,7 +124,7 @@ public class JmxWebPlugin implements Plugin  {
 				context.setWelcomeFiles(new String[]{"index.html"});
 
 				Log.info( "["+ NAME + "] starting hawtio");
-				WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath() + "/hawtio", "/hawtio");
+				context2 = new WebAppContext(null, pluginDirectory.getPath() + "/classes/hawtio", "/hawtio");
 				final List<ContainerInitializer> initializers2 = new ArrayList<>();
 				initializers2.add(new ContainerInitializer(new JasperInitializer(), null));
 				context2.setAttribute("org.eclipse.jetty.containerInitializers", initializers2);
@@ -146,7 +139,8 @@ public class JmxWebPlugin implements Plugin  {
 					SecurityHandler securityHandler2 = basicAuth("jmxweb");
 					if (securityHandler2 != null) context2.setSecurityHandler(securityHandler2);
 				}
-
+                HttpBindManager.getInstance().addJettyHandler( context );
+                HttpBindManager.getInstance().addJettyHandler( context2 );
 			}
 			catch(Exception e) {
 				Log.error( "An error has occurred", e );
@@ -193,6 +187,10 @@ public class JmxWebPlugin implements Plugin  {
 		{
 			emailScheduler.stopMonitoring();
 		}
+
+        HttpBindManager.getInstance().removeJettyHandler( context );
+        HttpBindManager.getInstance().removeJettyHandler( context2 );
+
         Log.info("["+ NAME + "]  plugin fully destroyed.");
 	}
 

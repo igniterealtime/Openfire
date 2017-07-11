@@ -25,7 +25,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
 
 /**
  * Auth provider for Atlassian Crowd
@@ -46,9 +45,6 @@ public class CrowdAuthProvider implements AuthProvider {
     /**
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
-     *
-     * If {@link #isPlainSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
      *
      * @param username the username or full JID.
      * @param password the password
@@ -107,4 +103,24 @@ public class CrowdAuthProvider implements AuthProvider {
         return false;
     }
 
+
+	@Override
+	public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+		throw new UnsupportedOperationException();
+	}
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +29,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
+import org.jivesoftware.openfire.user.property.UserPropertyProvider;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -54,7 +52,7 @@ import org.xmpp.packet.JID;
  */
 public class UserManager implements IQResultListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
     // Wrap this guy up so we can mock out the UserManager class.
     private static class UserManagerContainer {
@@ -74,6 +72,21 @@ public class UserManager implements IQResultListener {
     }
 
     /**
+     * Returns the currently-installed UserPropertyProvider.
+     *
+     * <b>Warning:</b> in virtually all cases the user property provider should not be used directly. Instead, use the
+     * Map returned by {@link User#getProperties() ) to create, read, update or delete user properties. Failure to do so
+     * is likely to result in inconsistent data behavior and race conditions. Direct access to the user property
+     * provider is only provided for special-case logic.
+     *
+     * @return the current UserPropertyProvider.
+     * @see User#getProperties
+     */
+    public static UserPropertyProvider getUserPropertyProvider() {
+        return UserManagerContainer.instance.propertyProvider;
+    }
+
+    /**
      * Returns a singleton UserManager instance.
      *
      * @return a UserManager instance.
@@ -87,14 +100,16 @@ public class UserManager implements IQResultListener {
     /** Cache if a local or remote user exists. */
     private Cache<String, Boolean> remoteUsersCache;
     private UserProvider provider;
+    private UserPropertyProvider propertyProvider;
 
     private UserManager() {
         // Initialize caches.
         userCache = CacheFactory.createCache("User");
         remoteUsersCache = CacheFactory.createCache("Remote Users Existence");
 
-        // Load a user provider.
+        // Load a user & property provider.
         initProvider();
+        initPropertyProvider();
 
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
@@ -103,12 +118,18 @@ public class UserManager implements IQResultListener {
                 if ("provider.user.className".equals(property)) {
                     initProvider();
                 }
+                if ("provider.userproperty.className".equals(property)) {
+                    initPropertyProvider();
+                }
             }
 
             @Override
             public void propertyDeleted(String property, Map params) {
                 if ("provider.user.className".equals(property)) {
                     initProvider();
+                }
+                if ("provider.userproperty.className".equals(property)) {
+                    initPropertyProvider();
                 }
             }
 
@@ -493,6 +514,25 @@ public class UserManager implements IQResultListener {
             catch (Exception e) {
                 Log.error("Error loading user provider: " + className, e);
                 provider = new DefaultUserProvider();
+            }
+        }
+    }
+
+    private void initPropertyProvider() {
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("provider.userproperty.className");
+
+        String className = JiveGlobals.getProperty("provider.userproperty.className",
+                                                   "org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider");
+        // Check if we need to reset the provider class
+        if (propertyProvider == null || !className.equals(propertyProvider.getClass().getName())) {
+            try {
+                Class c = ClassUtils.forName(className);
+                propertyProvider = (UserPropertyProvider) c.newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading user property provider: " + className, e);
+                propertyProvider = new DefaultUserPropertyProvider();
             }
         }
     }

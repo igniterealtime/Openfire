@@ -1,7 +1,4 @@
 <%--
-   -	$RCSfile$
-   -	$Revision: 32926 $
-   -	$Date: 2006-08-04 15:39:24 -0700 (Fri, 04 Aug 2006) $
 --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="org.jivesoftware.xmpp.workgroup.RequestQueue,

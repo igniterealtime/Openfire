@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3187 $
- * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -400,7 +396,7 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
@@ -429,7 +425,7 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");

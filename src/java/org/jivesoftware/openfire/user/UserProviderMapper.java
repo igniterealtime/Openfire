@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.user;
 
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * Implementations are used to determine what UserProvider is to be used for a particular username.

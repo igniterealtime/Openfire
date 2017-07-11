@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1705 $
- * $Date: 2005-07-26 14:10:33 -0300 (Tue, 26 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +35,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void groupCreated(Group group, Map params);
+    void groupCreated( Group group, Map params );
 
     /**
      * A group is being deleted.
@@ -47,7 +43,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void groupDeleting(Group group, Map params);
+    void groupDeleting( Group group, Map params );
 
     /**
      * A group's name, description, or an extended property was changed.
@@ -55,7 +51,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void groupModified(Group group, Map params);
+    void groupModified( Group group, Map params );
 
     /**
      * A member was added to a group.
@@ -63,7 +59,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void memberAdded(Group group, Map params);
+    void memberAdded( Group group, Map params );
 
     /**
      * A member was removed from a group.
@@ -71,7 +67,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void memberRemoved(Group group, Map params);
+    void memberRemoved( Group group, Map params );
 
     /**
      * An administrator was added to a group.
@@ -79,7 +75,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void adminAdded(Group group, Map params);
+    void adminAdded( Group group, Map params );
 
     /**
      * An administrator was removed from a group.
@@ -87,5 +83,5 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    public void adminRemoved(Group group, Map params);
+    void adminRemoved( Group group, Map params );
 }

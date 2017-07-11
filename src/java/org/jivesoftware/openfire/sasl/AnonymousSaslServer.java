@@ -1,6 +1,5 @@
 package org.jivesoftware.openfire.sasl;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.JiveGlobals;

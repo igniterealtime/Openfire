@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
@@ -789,9 +786,17 @@ public class NodeSubscription {
      * Depending on the subscription configuration the event notification may or may not have
      * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
      *
+     * <p>Sending the last published item can also be entirely disabled by setting
+     * <tt>xmpp.pubsub.disable-delayed-delivery</tt> to <tt><true</tt>.</p>
+     *
      * @param publishedItem the last item that was published to the node.
      */
     void sendLastPublishedItem(PublishedItem publishedItem) {
+        // Check to see if we've been disabled
+        if (JiveGlobals.getBooleanProperty("xmpp.pubsub.disable-delayed-delivery", false)) {
+            return;
+        }
+
         // Check if the published item can be sent to the subscriber
         if (!canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
             return;

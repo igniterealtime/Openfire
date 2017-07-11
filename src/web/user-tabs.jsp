@@ -1,8 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: DNSUtil.java,v $
- * $Revision: 2867 $
- * $Date: 2005-09-22 03:40:04 -0300 (Thu, 22 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +30,7 @@ import javax.naming.directory.InitialDirContext;
 import java.util.*;
 
 /**
- * Utilty class to perform DNS lookups for XMPP services.
+ * Utility class to perform DNS lookups for XMPP services.
  *
  * @author Matt Tucker
  */
@@ -98,9 +94,9 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        results.addAll(srvLookup("_xmpp-server._tcp." + domain));
+        results.addAll(srvLookup("xmpp-server", "tcp", domain ) );
         if (results.isEmpty()) {
-            results.addAll(srvLookup("_jabber._tcp." + domain));
+            results.addAll(srvLookup( "jabber", "tcp", domain ) );
         }
 
         // Use domain and default port as fallback.
@@ -161,10 +157,47 @@ public class DNSUtil {
         return answer;
     }
 
-    private static List<? extends HostAddress> srvLookup(String lookup) {
-        if (lookup == null) {
+    /**
+     * Performs a DNS SRV lookup. Does not take into account any DNS overrides configured in this class.
+     *
+     * The results returned by this method are ordered by priority (ascending), and order of equal priority entries is
+     * randomized by weight, as defined in the DNS SRV specification.
+     *
+     * @param service the symbolic name of the desired service (cannot be null).
+     * @param proto the transport protocol of the desired service; this is usually either TCP or UDP (cannot be null).
+     * @param name the domain name for which this record is valid (cannot be null).
+     * @return An ordered of results (possibly empty, never null).
+     */
+    public static List<WeightedHostAddress> srvLookup(String service, String proto, String name) {
+        if (service == null || proto == null || name == null) {
             throw new NullPointerException("DNS lookup can't be null");
         }
+
+        if ( !service.startsWith( "_" ) )
+        {
+            service = "_" + service;
+        }
+        if ( !service.endsWith( "." ) )
+        {
+            service = service + ".";
+        }
+
+        if ( !proto.startsWith( "_" ) )
+        {
+            proto = "_" + proto;
+        }
+        if ( !proto.endsWith( "." ) )
+        {
+            proto = proto+ ".";
+        }
+
+        if ( !name.endsWith( "." ) ) {
+            name = name + ".";
+        }
+
+        // _service._proto.name.
+        final String lookup = (service + proto + name).toLowerCase();
+
         try {
             Attributes dnsLookup =
                     context.getAttributes(lookup, new String[]{"SRV"});

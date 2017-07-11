@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3158 $
- * $Date: 2005-12-04 22:55:49 -0300 (Sun, 04 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;
@@ -387,7 +382,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         rolesToBroadcastPresence.add("moderator");
         rolesToBroadcastPresence.add("participant");
         rolesToBroadcastPresence.add("visitor");
-        GroupEventDispatcher.addListener(this);
     }
 
     @Override
@@ -721,6 +715,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         else {
             historyRequest.sendHistory(joinRole, roomHistory);
+        }
+        Message roomSubject = roomHistory.getChangedSubject();
+        if (roomSubject != null) {
+            joinRole.send(roomSubject);
         }
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
@@ -1621,6 +1619,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 if (!nickname.equals(members.get(bareJID))) {
                     throw new ConflictException();
                 }
+            } else if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().length() == 0)) {
+                throw new ConflictException();
             }
             // Check that the room always has an owner
             if (owners.contains(bareJID) && owners.size() == 1) {

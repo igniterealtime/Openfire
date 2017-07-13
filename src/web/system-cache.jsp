@@ -198,6 +198,8 @@
             hitPercent = percentFormat.format(hitValue) + "%";
             lowEffec = (hits > 500 && hitValue < 85.0 && freeMem < 20.0);
         }
+        // OF-1365: Don't allow caches that do not expire to be purged. Many of these caches store data that cannot be recovered again.
+        final boolean canPurge = cache.getMaxLifetime() > -1;
 %>
     <tr class="<%= (lowEffec ? "jive-error" : "") %>">
         <td class="c1">
@@ -229,7 +231,11 @@
             <%= hitPercent%>
         </td>
 
-        <td width="1%" class="c5"><input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);"></td>
+        <td width="1%" class="c5">
+            <% if ( canPurge ) {%>
+            <input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);">
+            <% } %>
+        </td>
     </tr>
 
 <%  } %>

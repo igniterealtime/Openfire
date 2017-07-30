@@ -51,6 +51,7 @@
     String updatesEnabledString = JiveGlobals.getProperty("updates.enabled", "true");
     String viewnotesEnabledString = JiveGlobals.getProperty("viewnotes.enabled", "true");
     String viewtasklistEnabledString = JiveGlobals.getProperty("viewtasklist.enabled", "true");
+    String startachatEnabledString = JiveGlobals.getProperty("startachat.enabled", "true");
 
     boolean submit = request.getParameter("submit") != null;
 
@@ -95,6 +96,7 @@
 		updatesEnabledString = request.getParameter("updatesEnabled");
 		viewnotesEnabledString = request.getParameter("viewnotesEnabled");
 		viewtasklistEnabledString = request.getParameter("viewtasklistEnabled");
+        startachatEnabledString = request.getParameter("startachatEnabled");
 
 		JiveGlobals.setProperty("accounts.enabled", accountsEnabledString);
 		JiveGlobals.setProperty("addcontacts.enabled", addcontactsEnabledString);
@@ -124,6 +126,7 @@
 		JiveGlobals.setProperty("updates.enabled", updatesEnabledString);
 		JiveGlobals.setProperty("viewnotes.enabled", viewnotesEnabledString);
 		JiveGlobals.setProperty("viewtasklist.enabled", viewtasklistEnabledString);
+        JiveGlobals.setProperty("startachat.enabled", startachatEnabledString);
     }
     
 	boolean accountsEnabled = Boolean.parseBoolean(accountsEnabledString);
@@ -154,6 +157,7 @@
 	boolean updatesEnabled = Boolean.parseBoolean(updatesEnabledString);
 	boolean viewnotesEnabled = Boolean.parseBoolean(viewnotesEnabledString);
 	boolean viewtasklistEnabled = Boolean.parseBoolean(viewtasklistEnabledString);
+    boolean startachatEnabled = Boolean.parseBoolean(startachatEnabledString);
 		
     // Enable File Transfer in the system.
     ClientControlPlugin plugin = (ClientControlPlugin) XMPPServer.getInstance()
@@ -281,6 +285,17 @@
 	            </td>
 	            <td width="1%" nowrap>
 	                <input type="radio" name="renamesEnabled" value="false" <%= !renamesEnabled ? "checked" : "" %> />
+	            </td>
+	        </tr>
+            <tr>
+	            <td><b><fmt:message key="client.features.startachat" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	               <fmt:message key="client.features.startachat.description" />
+	           </span></td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="startachatEnabled" value="true" <%= startachatEnabled ? "checked" : "" %> />
+	            </td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="startachatEnabled" value="false" <%= !startachatEnabled ? "checked" : "" %> />
 	            </td>
 	        </tr>
 	        <tr>

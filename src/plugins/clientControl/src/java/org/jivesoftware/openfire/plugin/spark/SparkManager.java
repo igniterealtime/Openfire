@@ -506,6 +506,12 @@ public class SparkManager implements Component {
         if (viewtasklistEnabled) {
         	responseElement.addElement("feature").addAttribute("var", "view-tasks");
         }
+        
+        // Check for START A CHAT feature        
+        boolean startachatEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("startachat.enabled", "true"));
+        if (startachatEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "start-a-chat");
+        }
 
     }
 

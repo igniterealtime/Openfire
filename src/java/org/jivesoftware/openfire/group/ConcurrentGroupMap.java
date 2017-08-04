@@ -46,7 +46,9 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 			JID target = (JID) key;
 			Iterator<Group> iterator = getGroupsFromKeys().iterator();
 			while (!found && iterator.hasNext()) {
-				found = iterator.next().isUser(target);
+			    Group next = iterator.next();
+			    if(next != null)
+				    found = next.isUser(target);
 			}
 		}
 		return found;
@@ -86,7 +88,9 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	public synchronized Set<Group> getGroupsFromKeys() {
 		Set<Group> result = new HashSet<>();
 		for(String groupName : getKnownGroupNamesFromKeys()) {
-			result.add(Group.resolveFrom(groupName));
+		    Group resolved = Group.resolveFrom(groupName);
+		    if(resolved != null)
+    			result.add(resolved);
 		}
 		return result;
 	}

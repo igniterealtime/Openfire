@@ -12,4 +12,5 @@
     <date>08/07/2017</date>
     <url>https://tools.ietf.org/html/rfc7395</url>
     <minServerVersion>4.1.5</minServerVersion>
+    <priorToServerVersion>4.2.0</priorToServerVersion>
 </plugin>

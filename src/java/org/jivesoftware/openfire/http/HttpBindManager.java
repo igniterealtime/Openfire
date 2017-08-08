@@ -423,15 +423,15 @@ public final class HttpBindManager implements CertificateEventListener, Property
     }
 
     public String getHttpBindUnsecureAddress() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + getHttpBindUnsecurePort() + "/http-bind/";
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/http-bind/";
     }
 
     public String getHttpBindSecureAddress() {
-        return "https://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + getHttpBindSecurePort() + "/http-bind/";
+        return "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindSecurePort() + "/http-bind/";
     }
 
     public String getJavaScriptUrl() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" + getHttpBindUnsecurePort() + "/scripts/";
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/scripts/";
     }
 
     // http binding CORS support start

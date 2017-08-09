@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.plugin.util.cluster.HazelcastClusterNodeInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
 import org.jivesoftware.util.cache.CacheWrapper;
 import org.jivesoftware.util.cache.ClusterTask;
@@ -54,6 +55,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.MapConfig;
+import com.hazelcast.config.MaxSizeConfig;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -211,6 +214,15 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         if (state == State.stopped) {
             throw new IllegalStateException("Cannot create clustered cache when not in a cluster");
         }
+        // Determine the time to live. Note that in Hazelcast 0 means "forever", not -1
+        final long openfireLifetimeInMilliseconds = CacheFactory.getMaxCacheLifetime(name);
+        final int hazelcastLifetimeInSeconds = openfireLifetimeInMilliseconds < 0 ? 0 : (int) (openfireLifetimeInMilliseconds / 1000);
+        // Determine the max cache size. Note that in Hazelcast the max cache size must be positive
+        final long openfireMaxCacheSize = CacheFactory.getMaxCacheSize(name);
+        final int hazelcastMaxCacheSize = openfireMaxCacheSize < 0 ? Integer.MAX_VALUE : (int) openfireMaxCacheSize;
+        final MapConfig mapConfig = hazelcast.getConfig().getMapConfig(name);
+        mapConfig.setTimeToLiveSeconds(hazelcastLifetimeInSeconds);
+        mapConfig.setMaxSizeConfig(new MaxSizeConfig(hazelcastMaxCacheSize, MaxSizeConfig.MaxSizePolicy.USED_HEAP_SIZE));
         return new ClusteredCache(name, hazelcast.getMap(name));
     }
 

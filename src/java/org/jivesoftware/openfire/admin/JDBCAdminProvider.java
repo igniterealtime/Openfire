@@ -116,19 +116,30 @@ public class JDBCAdminProvider implements AdminProvider {
 
         List<JID> jids = new ArrayList<>();
         synchronized (getAdminsSQL) {
-            try {
-                con = getConnection();
-                pstmt = con.prepareStatement(getAdminsSQL);
-                rs = pstmt.executeQuery();
-                while (rs.next()) {
-                    String name = rs.getString(1);
-                    jids.add(new JID(name + "@" + xmppDomain));
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(getAdminsSQL);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString(1);
+                jids.add(new JID(name + "@" + xmppDomain));
+            }
+            return jids;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        }
+    }
+
+    private void changeAdmins(final Connection con, final String sql, final List<JID> admins) throws SQLException {
+        if (!admins.isEmpty()) {
+            try (final PreparedStatement pstmt = con.prepareStatement(sql)) {
+                for (final JID jid : admins) {
+                    pstmt.setString(1, jid.getNode());
+                    pstmt.execute();
                 }
-                return jids;
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            } finally {
-                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
         }
     }
@@ -152,17 +163,6 @@ public class JDBCAdminProvider implements AdminProvider {
                 changeAdmins(con, deleteAdminsSQL, currentAdmins);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private void changeAdmins(final Connection con, final String sql, final List<JID> admins) throws SQLException {
-        if (!admins.isEmpty()) {
-            try (final PreparedStatement pstmt = con.prepareStatement(sql)) {
-                for (final JID jid : admins) {
-                    pstmt.setString(1, jid.getNode());
-                    pstmt.execute();
-                }
             }
         }
     }

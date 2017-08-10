@@ -72,6 +72,9 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
      * than the max size, the least frequently used items will be removed. If
      * the max cache size is set to -1, there is no size limit.
      *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
+     *
      * @param maxSize the maximum size of the cache in bytes.
      */
     void setMaxCacheSize(int maxSize);
@@ -79,7 +82,7 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
     /**
      * Returns the maximum number of milliseconds that any object can live
      * in cache. Once the specified number of milliseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
      *
      * @return the maximum number of milliseconds before objects are expired.
@@ -89,8 +92,11 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
     /**
      * Sets the maximum number of milliseconds that any object can live
      * in cache. Once the specified number of milliseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
+     *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
      *
      * @param maxLifetime the maximum number of milliseconds before objects are expired.
      */

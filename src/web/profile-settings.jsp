@@ -1,5 +1,7 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapAuthProvider" %>
 <%--
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
@@ -36,8 +38,8 @@
     </head>
     <body>
     <%
-        boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
-                JiveGlobals.getProperty("provider.auth.className"));
+        boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(JiveGlobals.getProperty("provider.auth.className"))
+            || AuthFactory.isProviderHybridInstanceOf(LdapAuthProvider.class);
     %>
     <p>
     <fmt:message key="profile-settings.info"/>

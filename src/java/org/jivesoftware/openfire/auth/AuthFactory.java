@@ -132,6 +132,17 @@ public class AuthFactory {
     }
 
     /**
+     * Indicates if the currently-installed AuthProvider is the HybridAuthProvider supporting a specific class.
+     *
+     * @param clazz the class to check
+     * @return {@code true}  if the currently-installed AuthProvider is a HybridAuthProvider that supports an instance of clazz, otherwise {@code false}.
+     */
+    public static boolean isProviderHybridInstanceOf(Class<? extends AuthProvider> clazz) {
+        return authProvider instanceof HybridAuthProvider &&
+            ((HybridAuthProvider) authProvider).isProvider(clazz);
+    }
+
+    /**
      * Returns true if the currently installed {@link AuthProvider} supports password
      * retrieval. Certain implementation utilize password hashes and other authentication
      * mechanisms that do not require the original password.

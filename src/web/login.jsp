@@ -1,6 +1,3 @@
-<%--
---%>
-
 <%@ page import="org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.openfire.admin.AdminManager"
     errorPage="error.jsp"
@@ -144,8 +141,13 @@
         catch (UnauthorizedException ue) {
             Log.debug(ue);
             LoginLimitManager.getInstance().recordFailedAttempt(username, request.getRemoteAddr());
-            errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
-        }
+            // Provide a special message if the user provided something containing @
+            if (username.contains("@")){
+        	    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.lookslikeemail"));            	
+            } else {
+        	    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
+            }
+    	}
     }
 
     // Escape HTML tags in username to prevent cross-site scripting attacks. This

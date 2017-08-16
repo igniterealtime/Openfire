@@ -454,36 +454,49 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	 * @return <tt>true</tt> if the packet was routed successfully,
 	 *         <tt>false</tt> otherwise.
 	 */
-	private boolean routeToRemoteDomain(JID jid, Packet packet,
-			boolean routed) {
-		byte[] nodeID = serversCache.get(jid.getDomain());
-		if (nodeID != null) {
-		    if (server.getNodeID().equals(nodeID)) {
-		        // This is a route to a remote server connected from this node
-		        try {
-		            localRoutingTable.getRoute(jid.getDomain()).process(packet);
-		            routed = true;
-		        } catch (UnauthorizedException e) {
-		            Log.error("Unable to route packet " + packet.toXML(), e);
-		        }
-		    }
-		    else {
-		        // This is a route to a remote server connected from other node
-		        if (remotePacketRouter != null) {
-		            routed = remotePacketRouter.routePacket(nodeID, jid, packet);
-		        }
-		    }
-		}
-		else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
-            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
-            routed = false;
+	private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
+    {
+		if ( JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
+        {
+            // Disallow anonymous users to send data to other domains than the local domain.
+            final ClientSession clientSession = SessionManager.getInstance().getSession( packet.getFrom() );
+            if ( clientSession != null && clientSession.isAnonymousUser() )
+            {
+                Log.info( "The anonymous user '{}' attempted to send data to '{}', which is on a remote domain. Openfire is configured to not allow anonymous users to send data to remote domains.", packet.getFrom(), jid );
+                routed = false;
+            }
         }
-        else {
-		    // Return a promise of a remote session. This object will queue packets pending
-		    // to be sent to remote servers
-		    OutgoingSessionPromise.getInstance().process(packet);
-		    routed = true;
-		}
+        else
+        {
+            byte[] nodeID = serversCache.get(jid.getDomain());
+            if (nodeID != null) {
+                if (server.getNodeID().equals(nodeID)) {
+                    // This is a route to a remote server connected from this node
+                    try {
+                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                        routed = true;
+                    } catch (UnauthorizedException e) {
+                        Log.error("Unable to route packet " + packet.toXML(), e);
+                    }
+                }
+                else {
+                    // This is a route to a remote server connected from other node
+                    if (remotePacketRouter != null) {
+                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                    }
+                }
+            }
+            else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+                Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
+                routed = false;
+            }
+            else {
+                // Return a promise of a remote session. This object will queue packets pending
+                // to be sent to remote servers
+                OutgoingSessionPromise.getInstance().process(packet);
+                routed = true;
+            }
+        }
 		return routed;
 	}
 	

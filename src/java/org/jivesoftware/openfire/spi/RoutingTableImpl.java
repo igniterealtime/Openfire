@@ -454,13 +454,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	 * @return <tt>true</tt> if the packet was routed successfully,
 	 *         <tt>false</tt> otherwise.
 	 */
-	private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
+    private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
     {
-		if ( JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
+        if ( JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
         {
-            // Disallow anonymous users to send data to other domains than the local domain.
-            final ClientSession clientSession = SessionManager.getInstance().getSession( packet.getFrom() );
-            if ( clientSession != null && clientSession.isAnonymousUser() )
+            // Disallow anonymous local users to send data to other domains than the local domain.
+            if ( isAnonymousRoute( packet.getFrom() ) )
             {
                 Log.info( "The anonymous user '{}' attempted to send data to '{}', which is on a remote domain. Openfire is configured to not allow anonymous users to send data to remote domains.", packet.getFrom(), jid );
                 routed = false;
@@ -497,8 +496,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 routed = true;
             }
         }
-		return routed;
-	}
+        return routed;
+    }
 	
     /**
      * Returns true if the specified packet must only be route to available client sessions.

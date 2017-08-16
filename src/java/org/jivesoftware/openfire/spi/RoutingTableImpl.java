@@ -463,38 +463,37 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             {
                 Log.info( "The anonymous user '{}' attempted to send data to '{}', which is on a remote domain. Openfire is configured to not allow anonymous users to send data to remote domains.", packet.getFrom(), jid );
                 routed = false;
+                return routed;
             }
         }
-        else
-        {
-            byte[] nodeID = serversCache.get(jid.getDomain());
-            if (nodeID != null) {
-                if (server.getNodeID().equals(nodeID)) {
-                    // This is a route to a remote server connected from this node
-                    try {
-                        localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                        routed = true;
-                    } catch (UnauthorizedException e) {
-                        Log.error("Unable to route packet " + packet.toXML(), e);
-                    }
+
+        byte[] nodeID = serversCache.get(jid.getDomain());
+        if (nodeID != null) {
+            if (server.getNodeID().equals(nodeID)) {
+                // This is a route to a remote server connected from this node
+                try {
+                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
+                    routed = true;
+                } catch (UnauthorizedException e) {
+                    Log.error("Unable to route packet " + packet.toXML(), e);
                 }
-                else {
-                    // This is a route to a remote server connected from other node
-                    if (remotePacketRouter != null) {
-                        routed = remotePacketRouter.routePacket(nodeID, jid, packet);
-                    }
-                }
-            }
-            else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
-                Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
-                routed = false;
             }
             else {
-                // Return a promise of a remote session. This object will queue packets pending
-                // to be sent to remote servers
-                OutgoingSessionPromise.getInstance().process(packet);
-                routed = true;
+                // This is a route to a remote server connected from other node
+                if (remotePacketRouter != null) {
+                    routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                }
             }
+        }
+        else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
+            routed = false;
+        }
+        else {
+            // Return a promise of a remote session. This object will queue packets pending
+            // to be sent to remote servers
+            OutgoingSessionPromise.getInstance().process(packet);
+            routed = true;
         }
         return routed;
     }

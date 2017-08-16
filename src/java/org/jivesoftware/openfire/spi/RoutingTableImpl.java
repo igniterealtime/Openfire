@@ -467,36 +467,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
-        byte[] nodeID = serversCache.get(jid.getDomain());
-        if (nodeID != null) {
-            if (server.getNodeID().equals(nodeID)) {
-                // This is a route to a remote server connected from this node
-                try {
-                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
-                    routed = true;
-                } catch (UnauthorizedException e) {
-                    Log.error("Unable to route packet " + packet.toXML(), e);
-                }
-            }
-            else {
-                // This is a route to a remote server connected from other node
-                if (remotePacketRouter != null) {
-                    routed = remotePacketRouter.routePacket(nodeID, jid, packet);
-                }
-            }
-        }
-        else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
-            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
-            routed = false;
-        }
-        else {
-            // Return a promise of a remote session. This object will queue packets pending
-            // to be sent to remote servers
-            OutgoingSessionPromise.getInstance().process(packet);
-            routed = true;
-        }
-        return routed;
-    }
+		byte[] nodeID = serversCache.get(jid.getDomain());
+		if (nodeID != null) {
+			if (server.getNodeID().equals(nodeID)) {
+				// This is a route to a remote server connected from this node
+				try {
+					localRoutingTable.getRoute(jid.getDomain()).process(packet);
+					routed = true;
+				} catch (UnauthorizedException e) {
+					Log.error("Unable to route packet " + packet.toXML(), e);
+				}
+			}
+			else {
+				// This is a route to a remote server connected from other node
+				if (remotePacketRouter != null) {
+					routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+				}
+			}
+		}
+		else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+			Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
+			routed = false;
+		}
+		else {
+			// Return a promise of a remote session. This object will queue packets pending
+			// to be sent to remote servers
+			OutgoingSessionPromise.getInstance().process(packet);
+			routed = true;
+		}
+		return routed;
+	}
 	
     /**
      * Returns true if the specified packet must only be route to available client sessions.

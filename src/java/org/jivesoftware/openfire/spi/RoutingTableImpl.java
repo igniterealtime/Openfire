@@ -456,7 +456,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	 */
     private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
     {
-        if ( JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
+        if ( !JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
         {
             // Disallow anonymous local users to send data to other domains than the local domain.
             if ( isAnonymousRoute( packet.getFrom() ) )

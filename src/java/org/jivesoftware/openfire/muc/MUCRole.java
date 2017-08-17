@@ -211,12 +211,10 @@ public interface MUCRole {
          * @return the associated affiliation.
          */
         public static Role valueOf(int value) {
-            switch (value) {
-                case 0: return moderator;
-                case 1: return participant;
-                case 2: return visitor;
-                default: return none;
-            }
+            for(Role role : Role.values()) {
+        		return role.getValue() == value ? role : null;
+        	}
+        	return null;
         }
     }
 
@@ -271,13 +269,10 @@ public interface MUCRole {
          * @return the associated affiliation.
          */
         public static Affiliation valueOf(int value) {
-            switch (value) {
-                case 10: return owner;
-                case 20: return admin;
-                case 30: return member;
-                case 40: return outcast;
-                default: return none;
-            }
+            for(Affiliation affiliation : Affiliation.values()) {
+        		return affiliation.getValue() == value ? affiliation : null;
+        	}
+        	return null;
         }
     }
 }

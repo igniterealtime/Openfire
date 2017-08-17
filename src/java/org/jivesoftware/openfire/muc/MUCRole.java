@@ -211,8 +211,8 @@ public interface MUCRole {
          * @return the associated affiliation.
          */
         public static Role valueOf(int value) {
-            for(Affiliation affiliation : Affiliation.values()) {
-        		return affiliation.getValue() == value ? affiliation : null;
+            for(Role role : Role.values()) {
+        		return role.getValue() == value ? role : null;
         	}
         	return null;
         }

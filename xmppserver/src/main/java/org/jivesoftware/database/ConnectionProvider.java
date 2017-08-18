@@ -75,4 +75,12 @@ public interface ConnectionProvider {
      * dangling database connections.
      */
     void destroy();
+
+    /**
+     * Configuration accessors.
+     */
+    String getDriver();
+    String getServerURL();
+    String getUsername();
+    String getPassword();
 }

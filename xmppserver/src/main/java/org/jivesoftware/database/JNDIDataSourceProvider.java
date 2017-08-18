@@ -127,4 +127,21 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
         }
         return dataSource.getConnection();
     }
+
+    @Override
+    public String getDriver() {
+        throw new UnsupportedOperationException("JNDIDataSourceProvider cannot support this operation");
+    }
+    @Override
+    public String getServerURL() {
+        throw new UnsupportedOperationException("JNDIDataSourceProvider cannot support this operation");
+    }
+    @Override
+    public String getUsername() {
+        throw new UnsupportedOperationException("JNDIDataSourceProvider cannot support this operation");
+    }
+    @Override
+    public String getPassword() {
+        throw new UnsupportedOperationException("JNDIDataSourceProvider cannot support this operation");
+    }
 }

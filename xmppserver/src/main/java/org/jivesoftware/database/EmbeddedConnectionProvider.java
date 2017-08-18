@@ -118,4 +118,17 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         destroy();
         super.finalize();
     }
+
+    public String getDriver() {
+        return driver;
+    }
+    public String getServerURL() {
+        return serverURL;
+    }
+    public String getUsername() {
+        return "sa";
+    }
+    public String getPassword() {
+        return "";
+    }
 }

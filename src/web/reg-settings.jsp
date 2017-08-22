@@ -27,6 +27,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.net.SASLAuthentication" %>
+<%@ page import="org.jivesoftware.openfire.user.UserManager" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -158,6 +159,7 @@
     }
     blockedIPs = buf2.toString();
 
+    pageContext.setAttribute( "readOnly",           UserManager.getUserProvider().isReadOnly() );
     pageContext.setAttribute( "inbandEnabled",      inbandEnabled );
     pageContext.setAttribute( "canChangePassword",  canChangePassword );
     pageContext.setAttribute( "anonLogin",          anonLogin );
@@ -183,16 +185,9 @@
 
 <% if (save) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="reg.settings.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <% } %>
 
@@ -201,13 +196,16 @@
     <fmt:message key="reg.settings.inband_account" var="inband_account_boxtitle"/>
     <admin:contentBox title="${inband_account_boxtitle}">
         <p><fmt:message key="reg.settings.inband_account_info" /></p>
+        <c:if test="${readOnly}">
+            <admin:infoBox type="info"><fmt:message key="reg.settings.inband_account_readonly" /></admin:infoBox>
+        </c:if>
         <table cellpadding="3" cellspacing="0" border="0">
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''}></td>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
                 <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'}></td>
+                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
                 <td width="99%"><label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label></td>
             </tr>
         </table>
@@ -216,13 +214,16 @@
     <fmt:message key="reg.settings.change_password" var="change_password_boxtitle"/>
     <admin:contentBox title="${change_password_boxtitle}">
 	    <p><fmt:message key="reg.settings.change_password_info" /></p>
+        <c:if test="${readOnly}">
+            <admin:infoBox type="info"><fmt:message key="reg.settings.change_password_readonly" /></admin:infoBox>
+        </c:if>
         <table cellpadding="3" cellspacing="0" border="0">
             <tr>
-                <td width="1%"><input type="radio" name="canChangePassword" value="true" id="rb03" ${canChangePassword ? 'checked' : ''}></td>
+                <td width="1%"><input type="radio" name="canChangePassword" value="true" id="rb03" ${canChangePassword ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
                 <td width="99%"><label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="canChangePassword" value="false" id="rb04" ${canChangePassword ? '' : 'checked'}></td>
+                <td width="1%"><input type="radio" name="canChangePassword" value="false" id="rb04" ${canChangePassword ? '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
                 <td width="99%"><label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label></td>
             </tr>
         </table>

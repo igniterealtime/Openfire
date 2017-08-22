@@ -442,20 +442,32 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return null;
     }
 
-    public boolean isInbandRegEnabled() {
-        return registrationEnabled;
+    public boolean isInbandRegEnabled()
+    {
+        return registrationEnabled && !UserManager.getUserProvider().isReadOnly();
     }
 
-    public void setInbandRegEnabled(boolean allowed) {
+    public void setInbandRegEnabled(boolean allowed)
+    {
+        if ( allowed && UserManager.getUserProvider().isReadOnly() )
+        {
+            Log.warn( "Enabling in-band registration has no effect, as the user provider for this system is read-only." );
+        }
         registrationEnabled = allowed;
         JiveGlobals.setProperty("register.inband", registrationEnabled ? "true" : "false");
     }
 
-    public boolean canChangePassword() {
-        return canChangePassword;
+    public boolean canChangePassword()
+    {
+        return canChangePassword && !UserManager.getUserProvider().isReadOnly();
     }
 
-    public void setCanChangePassword(boolean allowed) {
+    public void setCanChangePassword(boolean allowed)
+    {
+        if ( allowed && UserManager.getUserProvider().isReadOnly() )
+        {
+            Log.warn( "Allowing password changes has no effect, as the user provider for this system is read-only." );
+        }
         canChangePassword = allowed;
         JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
     }

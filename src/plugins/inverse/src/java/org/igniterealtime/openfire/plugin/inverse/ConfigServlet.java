@@ -46,6 +46,7 @@ public class ConfigServlet extends HttpServlet
     {
         Log.trace( "Processing doGet()" );
 
+        final boolean inbandRegEnabled = XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled();
         final String defaultDomain = JiveGlobals.getProperty( "inverse.config.default_domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
         final boolean lockedDomain = JiveGlobals.getBooleanProperty( "inverse.config.locked_domain", false );
         final String endpoint = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/http-bind/";
@@ -60,10 +61,18 @@ public class ConfigServlet extends HttpServlet
         config.put( "i18n", language.getCode() );
         config.put( lockedDomain ? "locked_domain" : "default_domain", defaultDomain );
 
-        if ( XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled() )
+        if ( inbandRegEnabled )
         {
             config.put( "registration_domain", defaultDomain );
         }
+
+        // When the domain that inVerse is locked to does not support IBB, there is no point in showing the
+        // 'registration' taballowing registration. Disallowing registration explicitly will suppress the tab.
+        if ( !inbandRegEnabled && lockedDomain )
+        {
+            config.put( "allow_registration", false );
+        }
+
         config.put( "domain_placeholder", defaultDomain );
         config.put( "bosh_service_url", endpoint );
         config.put( "debug", debug );

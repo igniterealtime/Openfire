@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 
 import org.jivesoftware.database.bugfix.OF33;
@@ -367,14 +368,19 @@ public class SchemaManager {
                             DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.db2) {
                         command.deleteCharAt(command.length() - 1);
                     }
-                    PreparedStatement pstmt = null;
+                    /*
+                     * PreparedStatements are not useful at this Point, because no parameters are set. They also prevent the 
+                     * creation of trigger in orcale, so use simple statements
+                     * (see http://docs.oracle.com/cd/E11882_01/java.112/e16548/oraint.htm#CHDIIDBE)
+                     */
+                    Statement stmt = null;
                     try {
                         String cmdString = command.toString();
                         if (autoreplace)  {
                             cmdString = cmdString.replaceAll("jiveVersion", "ofVersion");
                         }
-                        pstmt = con.prepareStatement(cmdString);
-                        pstmt.execute();
+                        stmt = con.createStatement();
+                        stmt.execute(cmdString);
                     }
                     catch (SQLException e) {
                         // Lets show what failed
@@ -382,7 +388,7 @@ public class SchemaManager {
                         throw e;
                     }
                     finally {
-                        DbConnectionManager.closeStatement(pstmt);
+                        DbConnectionManager.closeStatement(stmt);
                     }
                 }
             }

@@ -139,7 +139,7 @@
             <version>1.3.2</version>
         </dependency>
         <dependency>
-            <groupId>dwr</groupId>
+            <groupId>org.directwebremoting</groupId>
             <artifactId>dwr</artifactId>
         </dependency>
     </dependencies>

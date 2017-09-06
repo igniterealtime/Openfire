@@ -156,7 +156,7 @@
     }
 
     function startDownload(url, id) {
-        downloader.installPlugin(downloadComplete, url, id);
+        downloader.installPlugin(url, id, downloadComplete);
     }
 
     function downloadComplete(status) {
@@ -185,7 +185,7 @@
     }
 
 
-    DWREngine.setErrorHandler(handleError);
+    dwr.engine.setErrorHandler(handleError);
 
     function handleError(error) {
     }

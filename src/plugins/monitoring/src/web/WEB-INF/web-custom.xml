@@ -5,24 +5,15 @@
          version="3.1">
     <!-- Servlets -->
     <servlet>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.plugin.JerseyWrapper</servlet-class>
+    </servlet>
+
+    <servlet>
         <servlet-name>GraphServlet</servlet-name>
         <servlet-class>org.jivesoftware.openfire.reporting.graph.GraphServlet</servlet-class>
     </servlet>
 
-    <servlet>
-        <description>Direct Web Remoter Servlet</description>
-        <display-name>DWR Servlet</display-name>
-        <servlet-name>dwr-invoker</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.reporting.MonitoringDWR</servlet-class>
-        <init-param>
-            <param-name>logLevel</param-name>
-            <param-value>FATAL</param-value>
-        </init-param>
-        <init-param>
-            <param-name>skipDefaultConfig</param-name>
-            <param-value>true</param-value>
-        </init-param>
-    </servlet>
     <servlet>
         <servlet-name>ConversationServlet</servlet-name>
         <servlet-class>org.jivesoftware.openfire.archive.ConversationPDFServlet</servlet-class>
@@ -37,11 +28,9 @@
         <servlet-name>ConversationServlet</servlet-name>
         <url-pattern>/conversation</url-pattern>
     </servlet-mapping>
-
-
     <servlet-mapping>
-        <servlet-name>dwr-invoker</servlet-name>
-        <url-pattern>/dwr/*</url-pattern>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
-
 </web-app>
+

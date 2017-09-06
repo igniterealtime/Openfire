@@ -27,14 +27,16 @@
 <head>
 <title><fmt:message key="archive.settings.title"/></title>
 <meta name="pageID" content="archiving-settings"/>
-<script src="dwr/engine.js" type="text/javascript"></script>
-<script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/conversations.js" type="text/javascript"></script>
 <link rel="stylesheet" type="text/css" href="style/style.css">
 <script type="text/javascript">
     // Calls a getBuildProgress
     function getBuildProgress() {
-        conversations.getBuildProgress(showBuildProgress);
+        new Ajax.Request('/plugins/monitoring/api/buildprogress', {
+        	method: 'get',
+        	onSuccess: function(transport) {
+        		showBuildProgress(transport.responseText.evalJSON());
+        	}
+        });
     }
 
     function showBuildProgress(progress) {
@@ -52,6 +54,8 @@
             // Effect.Fade('rebuildElement');
         }
     }
+    
+    //# sourceURL=archiving-settings.jsp 
 </script>
 <style type="text/css">
     .small-label {

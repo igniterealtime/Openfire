@@ -105,7 +105,7 @@ public class SessionController {
 				session.setUsername("Anonymous");
 			}
 
-			session.setRessource(clientSession.getAddress().getResource());
+			session.setResource(clientSession.getAddress().getResource());
 			
 			if (clientSession instanceof LocalClientSession) {
 				  session.setNode("Local");

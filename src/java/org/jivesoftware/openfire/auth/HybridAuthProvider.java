@@ -249,4 +249,10 @@ public class HybridAuthProvider implements AuthProvider {
     public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
         throw new UnsupportedOperationException();
     }
+
+    boolean isProvider(final Class<? extends AuthProvider> clazz) {
+        return (primaryProvider != null && clazz.isAssignableFrom(primaryProvider.getClass()))
+            || (secondaryProvider != null && clazz.isAssignableFrom(secondaryProvider.getClass()))
+            ||(tertiaryProvider != null && clazz.isAssignableFrom(tertiaryProvider.getClass()));
+    }
 }

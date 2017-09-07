@@ -666,11 +666,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
     public void addOutgoingDomainPair(String localDomain, String remoteDomain) {
-        outgoingDomainPairs.add(new DomainPair(localDomain, remoteDomain));
         boolean found = false;
         for (DomainPair domainPair : outgoingDomainPairs) {
             if (domainPair.getRemote().equals(remoteDomain)) found = true;
         }
+        outgoingDomainPairs.add(new DomainPair(localDomain, remoteDomain));
         if (!found) {
             XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, remoteDomain, null, true), this);
         }

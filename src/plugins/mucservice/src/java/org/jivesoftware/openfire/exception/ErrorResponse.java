@@ -5,17 +5,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "error")
 public class ErrorResponse {
 
-	private String ressource;
+	private String resource;
 	private String message;
 	private String exception;
 	private String exceptionStack;
 
-	public String getRessource() {
-		return ressource;
+	public String getResource() {
+		return resource;
 	}
 
-	public void setRessource(String ressource) {
-		this.ressource = ressource;
+	public void setResource(String resource) {
+		this.resource = resource;
 	}
 
 	public String getMessage() {

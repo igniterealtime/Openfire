@@ -27,7 +27,7 @@ public class RESTExceptionMapper implements ExceptionMapper<MUCServiceException>
 	 */
 	public Response toResponse(MUCServiceException exception) {
 		ErrorResponse errorResponse = new ErrorResponse();
-		errorResponse.setRessource(exception.getRessource());
+		errorResponse.setResource(exception.getResource());
 		errorResponse.setMessage(exception.getMessage());
 		errorResponse.setException(exception.getException());
 		return Response.status(Response.Status.NOT_FOUND).entity(errorResponse).type(MediaType.APPLICATION_XML).build();

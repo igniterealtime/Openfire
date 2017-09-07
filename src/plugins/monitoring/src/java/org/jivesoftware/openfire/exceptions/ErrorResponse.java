@@ -8,8 +8,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "error")
 public class ErrorResponse {
 
-	/** The ressource. */
-	private String ressource;
+	/** The resource. */
+	private String resource;
 
 	/** The message. */
 	private String message;
@@ -21,22 +21,22 @@ public class ErrorResponse {
 	private String exceptionStack;
 
 	/**
-	 * Gets the ressource.
+	 * Gets the resource.
 	 *
-	 * @return the ressource
+	 * @return the resource
 	 */
-	public String getRessource() {
-		return ressource;
+	public String getResource() {
+		return resource;
 	}
 
 	/**
-	 * Sets the ressource.
+	 * Sets the resource.
 	 *
-	 * @param ressource
-	 *            the new ressource
+	 * @param resource
+	 *            the new resource
 	 */
-	public void setRessource(String ressource) {
-		this.ressource = ressource;
+	public void setResource(String resource) {
+		this.resource = resource;
 	}
 
 	/**

@@ -10,8 +10,8 @@ public class ServiceException extends Exception {
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 4351720088030656859L;
 
-	/** The ressource. */
-	private String ressource;
+	/** The resource. */
+	private String resource;
 
 	/** The exception. */
 	private String exception;
@@ -23,13 +23,13 @@ public class ServiceException extends Exception {
 	 * Instantiates a new service exception.
 	 *
 	 * @param msg the msg
-	 * @param ressource the ressource
+	 * @param resource the resource
 	 * @param exception the exception
 	 * @param status the status
 	 */
-	public ServiceException(String msg, String ressource, String exception, Status status) {
+	public ServiceException(String msg, String resource, String exception, Status status) {
 		super(msg);
-		this.ressource = ressource;
+		this.resource = resource;
 		this.exception = exception;
 		this.status = status;
 	}
@@ -38,35 +38,35 @@ public class ServiceException extends Exception {
 	 * Instantiates a new service exception.
 	 *
 	 * @param msg the msg
-	 * @param ressource the ressource
+	 * @param resource the resource
 	 * @param exception the exception
 	 * @param status the status
 	 * @param cause the cause
 	 */
-	public ServiceException(String msg, String ressource, String exception, Status status, Throwable cause) {
+	public ServiceException(String msg, String resource, String exception, Status status, Throwable cause) {
 		super(msg, cause);
-		this.ressource = ressource;
+		this.resource = resource;
 		this.exception = exception;
 		this.status = status;
 	}
 
 	/**
-	 * Gets the ressource.
+	 * Gets the resource.
 	 * 
-	 * @return the ressource
+	 * @return the resource
 	 */
-	public String getRessource() {
-		return ressource;
+	public String getResource() {
+		return resource;
 	}
 
 	/**
-	 * Sets the ressource.
+	 * Sets the resource.
 	 * 
-	 * @param ressource
-	 *            the new ressource
+	 * @param resource
+	 *            the new resource
 	 */
-	public void setRessource(String ressource) {
-		this.ressource = ressource;
+	public void setResource(String resource) {
+		this.resource = resource;
 	}
 
 	/**

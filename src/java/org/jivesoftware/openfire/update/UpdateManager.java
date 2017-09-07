@@ -73,7 +73,7 @@ public class UpdateManager extends BasicModule {
     /**
      * URL of the servlet (JSP) that provides the "check for update" service.
      */
-    private static String updateServiceURL = "http://www.igniterealtime.org/projects/openfire/versions.jsp";
+    private static String updateServiceURL = "https://www.igniterealtime.org/projects/openfire/versions.jsp";
 
     /**
      * Information about the available server update.
@@ -267,33 +267,56 @@ public class UpdateManager extends BasicModule {
             hc.setProxy(getProxyHost(), getProxyPort());
             httpClient.setHostConfiguration(hc);
         }
-        GetMethod getMethod = new GetMethod(url);
-        //execute the method
-        try {
-            int statusCode = httpClient.executeMethod(getMethod);
-            if (statusCode == 200) {
-                //get the resonse as an InputStream
-                try (InputStream in = getMethod.getResponseBodyAsStream()) {
-                    String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-                    installed = XMPPServer.getInstance().getPluginManager()
-                            .installPlugin(in, pluginFilename);
-                }
-                if (installed) {
-                    // Remove the plugin from the list of plugins to update
-                    for (Update update : pluginUpdates) {
-                        if (update.getURL().equals(url)) {
-                            update.setDownloaded(true);
-                        }
-                    }
-                    // Save response in a file for later retrieval
-                    saveLatestServerInfo();
-                }
-            }
-        }
-        catch (IOException e) {
-            Log.warn("Error downloading new plugin version", e);
+        
+        if (isKnownPlugin(url)) {
+			GetMethod getMethod = new GetMethod(url);
+			//execute the method
+			try {
+			    int statusCode = httpClient.executeMethod(getMethod);
+			    if (statusCode == 200) {
+			        //get the resonse as an InputStream
+			        try (InputStream in = getMethod.getResponseBodyAsStream()) {
+			            String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+			            installed = XMPPServer.getInstance().getPluginManager()
+			                    .installPlugin(in, pluginFilename);
+			        }
+			        if (installed) {
+			            // Remove the plugin from the list of plugins to update
+			            for (Update update : pluginUpdates) {
+			                if (update.getURL().equals(url)) {
+			                    update.setDownloaded(true);
+			                }
+			            }
+			            // Save response in a file for later retrieval
+			            saveLatestServerInfo();
+			        }
+			    }
+			}
+			catch (IOException e) {
+			    Log.warn("Error downloading new plugin version", e);
+			}
+        } else {
+        	Log.error("Invalid plugin download URL: " +url);
         }
         return installed;
+    }
+    
+    /**
+     * Check if the plugin URL is in the known list of available plugins.
+     * 
+     * i.e. that it's an approved download source.
+     * 
+     * @param url The URL of the plugin to download.
+     * @return true if the URL is in the list. Otherwise false.
+     */
+    private boolean isKnownPlugin(String url) {
+    	for (String pluginName : availablePlugins.keySet()) {
+    		if (availablePlugins.get(pluginName).getDownloadURL().toString().equals(url)) {
+                return true;
+    		}
+    	}
+        
+        return false;
     }
 
     /**

@@ -12,18 +12,6 @@ public class DomainPair {
         this.remote = remote;
     }
 
-    public int hashCode() {
-        return toString().hashCode();
-    }
-
-    public boolean equals(Object other) {
-        if (other instanceof DomainPair) {
-            DomainPair domainPair = (DomainPair)other;
-            return domainPair.local.equals(this.local) && domainPair.remote.equals(this.remote);
-        }
-        return false;
-    }
-
     public String toString() {
         return "{" + local + " -> " + remote + "}";
     }
@@ -34,5 +22,23 @@ public class DomainPair {
 
     public String getRemote() {
         return remote;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DomainPair that = (DomainPair) o;
+
+        if (!local.equals(that.local)) return false;
+        return remote.equals(that.remote);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = local.hashCode();
+        result = 31 * result + remote.hashCode();
+        return result;
     }
 }

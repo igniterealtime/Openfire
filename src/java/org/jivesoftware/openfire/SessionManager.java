@@ -41,20 +41,7 @@ import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ClientSessionInfo;
-import org.jivesoftware.openfire.session.ComponentSession;
-import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
-import org.jivesoftware.openfire.session.GetSessionsCountTask;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalComponentSession;
-import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -1321,9 +1308,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         public void onConnectionClose(Object handback) {
             OutgoingServerSession session = (OutgoingServerSession)handback;
             // Remove all the hostnames that were registered for this server session
-            for (String hostname : session.getHostnames()) {
+            for (DomainPair domainPair : session.getOutgoingDomainPairs()) {
                 // Remove the route to the session using the hostname
-                server.getRoutingTable().removeServerRoute(new JID(hostname));
+                server.getRoutingTable().removeServerRoute(new JID(null, domainPair.getRemote(), null, true));
             }
         }
     }

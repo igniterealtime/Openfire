@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -85,8 +82,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      */
     private static Pattern pattern = Pattern.compile("[a-zA-Z]");
 
-    private Collection<String> authenticatedDomains = new HashSet<>();
-    private final Collection<String> hostnames = new HashSet<>();
     private OutgoingServerSocketReader socketReader;
     private Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
 
@@ -200,11 +195,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 if (session != null) {
                     log.debug( "Created a new session." );
 
-                    // Add the validated domain as an authenticated domain
-                    session.addAuthenticatedDomain(localDomain);
-                    // Add the new domain to the list of names that the server may have
-                    session.addHostname(remoteDomain);
-                    // Notify the SessionManager that a new session has been created
+                    session.addOutgoingDomainPair(localDomain, remoteDomain);
                     sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                     log.debug( "Authentication successful." );
                     return true;
@@ -572,11 +563,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
 	boolean canProcess(Packet packet) {
-        String senderDomain = packet.getFrom().getDomain();
+        final String senderDomain = packet.getFrom().getDomain();
+        final String recipDomain = packet.getTo().getDomain();
         boolean processed = true;
-        if (!getAuthenticatedDomains().contains(senderDomain)) {
+        if (!checkOutgoingDomainPair(senderDomain, recipDomain)) {
             synchronized (("Auth::" + senderDomain).intern()) {
-                if (!getAuthenticatedDomains().contains(senderDomain) &&
+                if (!checkOutgoingDomainPair(senderDomain, recipDomain) &&
                         !authenticateSubdomain(senderDomain, packet.getTo().getDomain())) {
                     // Return error since sender domain was not validated by remote server
                     processed = false;
@@ -601,15 +593,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         if (!usingServerDialback) {
             // Using SASL so just assume that the domain was validated
             // (note: this may not be correct)
-            addAuthenticatedDomain(localDomain);
-            addHostname(remoteDomain);
+            addOutgoingDomainPair(localDomain, remoteDomain);
             return true;
         }
         ServerDialback method = new ServerDialback(getConnection(), localDomain);
         if (method.authenticateDomain(socketReader, localDomain, remoteDomain, getStreamID().getID())) {
             // Add the validated domain as an authenticated domain
-            addAuthenticatedDomain(localDomain);
-            addHostname(remoteDomain);
             addOutgoingDomainPair(localDomain, remoteDomain);
             return true;
         }
@@ -670,43 +659,30 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-    public Collection<String> getAuthenticatedDomains() {
-        return Collections.unmodifiableCollection(authenticatedDomains);
-    }
-
-    @Override
-    public void addAuthenticatedDomain(String domain) {
-        authenticatedDomains.add(domain);
-    }
-
-    @Override
-    public Collection<String> getHostnames() {
-        synchronized (hostnames) {
-            return Collections.unmodifiableCollection(hostnames);
-        }
-    }
-
-    @Override
-    public void addHostname(String hostname) {
-        synchronized (hostnames) {
-            hostnames.add(hostname);
-        }
-        // Add a new route for this new session
-        XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, hostname, null, true), this);
-    }
-
-    @Override
 	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }
 
+    @Override
     public void addOutgoingDomainPair(String localDomain, String remoteDomain) {
         outgoingDomainPairs.add(new DomainPair(localDomain, remoteDomain));
+        boolean found = false;
+        for (DomainPair domainPair : outgoingDomainPairs) {
+            if (domainPair.getRemote().equals(remoteDomain)) found = true;
+        }
+        if (!found) {
+            XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, remoteDomain, null, true), this);
+        }
     }
 
     @Override
     public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
          return outgoingDomainPairs.contains(new DomainPair(localDomain, remoteDomain));
+    }
+
+    @Override
+    public Collection<DomainPair> getOutgoingDomainPairs() {
+        return outgoingDomainPairs;
     }
 }

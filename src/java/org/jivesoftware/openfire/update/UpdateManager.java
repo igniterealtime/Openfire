@@ -73,7 +73,7 @@ public class UpdateManager extends BasicModule {
     /**
      * URL of the servlet (JSP) that provides the "check for update" service.
      */
-    private static String updateServiceURL = "https://www.igniterealtime.org/projects/openfire/versions.jsp";
+    private static String updateServiceURL = "http://www.igniterealtime.org/projects/openfire/versions.jsp";
 
     /**
      * Information about the available server update.

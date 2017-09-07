@@ -332,8 +332,7 @@ public class PubSubEngine {
                     // If it is a PEP service & publisher is service owner -
                     // auto create nodes.
                     Element childElement = iq.getChildElement();
-                    Element createElement = publishElement.element("publish");
-                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement);
+                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, publishElement);
 
                     if (response.newNode == null) {
                         // New node creation failed. Since pep#auto-create is advertised 

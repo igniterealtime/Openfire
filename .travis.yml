@@ -3,6 +3,7 @@ language: java
 jdk:
   - oraclejdk8
 env:
+  - ANT_OPTS='-Xmx1G'
   - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean compile"
   - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean test"
   - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean openfire"

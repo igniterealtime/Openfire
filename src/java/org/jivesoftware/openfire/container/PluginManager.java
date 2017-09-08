@@ -38,6 +38,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
 
 /**
  * Manages plugins.
@@ -184,16 +186,19 @@ public class PluginManager
         try
         {
             // If pluginFilename is a path instead of a simple file name, we only want the file name
-            int index = pluginFilename.lastIndexOf( File.separator );
-            if ( index != -1 )
-            {
-                pluginFilename = pluginFilename.substring( index + 1 );
-            }
+        	pluginFilename = Paths.get(pluginFilename).getFileName().toString();
             // Absolute path to the plugin file
             Path absolutePath = pluginDirectory.resolve( pluginFilename );
             Path partFile = pluginDirectory.resolve( pluginFilename + ".part" );
             // Save input stream contents to a temp file
             Files.copy( in, partFile, StandardCopyOption.REPLACE_EXISTING );
+
+            // Check if zip file, else ZipException caught below.
+            try (JarFile file = new JarFile(partFile.toFile())) {
+            } catch (ZipException e) {
+            	Files.deleteIfExists(partFile);
+            	throw e;
+            };
 
             // Rename temp file to .jar
             Files.move( partFile, absolutePath, StandardCopyOption.REPLACE_EXISTING );

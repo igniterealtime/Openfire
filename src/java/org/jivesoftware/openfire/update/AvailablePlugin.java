@@ -20,6 +20,9 @@
 
 package org.jivesoftware.openfire.update;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Plugin available at igniterealtime.org. The plugin may or may not be locally installed.
  *
@@ -198,6 +201,24 @@ public class AvailablePlugin {
             return -1L;
         }
         return Long.parseLong(fileSize);
+    }
+
+    /**
+     * URL from where the latest version of the plugin can be downloaded.
+     *
+     * @return download URL.
+     */
+    // This implementation is a backport from master to the 4.1 branch, of an API change that was part of OF-1353.
+    // OF-1020 needs this API. This specific implementation should not live outside of the 4.1 branch.
+    public URL getDownloadURL() {
+        try
+        {
+            return new URL( url );
+        }
+        catch ( MalformedURLException e )
+        {
+            return null;
+        }
     }
 
     /**

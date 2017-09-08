@@ -1,5 +1,7 @@
-<%@ page import="org.jivesoftware.openfire.pubsub.Node,
-				org.jivesoftware.openfire.pubsub.NodeSubscription,
+<%@ page import="java.util.Arrays,
+                 org.jivesoftware.openfire.pubsub.Node,
+                 org.jivesoftware.openfire.pubsub.LeafNode,
+                 org.jivesoftware.openfire.pubsub.PublishedItem,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.CookieUtils,
@@ -45,14 +47,16 @@
 
     // Delete specified subscription ID
     if (deleteID != null) {
-        NodeSubscription subscription = node.getSubscription(deleteID);
-        if (subscription != null) {
+        PublishedItem pi = node.getPublishedItem(deleteID);
+        if (pi != null) {
+            LeafNode lNode = (LeafNode) node;
 
-            node.cancelSubscription(subscription);
+            lNode.deleteItems(Arrays.asList(pi));
+
 	        // Log the event
-	        webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
+	        webManager.logEvent("Delete item ID: " + deleteID +  ", from node ID: " + nodeID, "Publisher: " + pi.getPublisher().toBareJID());
 	        // Done, so redirect
-	        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deletesuccess=true&owner=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
+	        response.sendRedirect("pubsub-node-items.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deletesuccess=true&owner=" + URLEncoder.encode(pi.getPublisher().toBareJID(), "UTF-8"));
 	        return;
         }
     }
@@ -63,8 +67,8 @@
 
 <html>
 <head>
-<title><fmt:message key="pubsub.node.subscribers.title"/></title>
-<meta name="subPageID" content="pubsub-node-subscribers"/>
+<title><fmt:message key="pubsub.node.items.title"/></title>
+<meta name="subPageID" content="pubsub-node-items"/>
 <meta name="extraParams" content="<%= "nodeID="+URLEncoder.encode(nodeID, "UTF-8")+"&create=false" %>"/>
 </head>
 <body>
@@ -80,7 +84,7 @@
         <tbody>
             <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
             <td class="jive-icon-label">
-            <fmt:message key="pubsub.node.subscribers.deleted">
+            <fmt:message key="pubsub.node.items.deleted">
                 <fmt:param value="<%= StringUtils.escapeForXML(owner) %>"/>
             </fmt:message>
             </td></tr>
@@ -119,40 +123,36 @@
 
     <br>
     <p>
-        <fmt:message key="pubsub.node.subscribers.table.info" />
+        <fmt:message key="pubsub.node.items.table.info" />
     </p>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <thead>
         <tr>
-            <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
-            <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
-            <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
-            <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.items.id" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.items.publisher" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.items.created" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.items.payload" /></th>
             <th scope="col"><fmt:message key="global.delete" /></th>
         </tr>
     </thead>
     <tbody>
-        <% for (NodeSubscription subscription : node.getAllSubscriptions()) { %>
+        <% for (PublishedItem item : node.getPublishedItems()) { %>
         <tr>
             <td>
-            <%= StringUtils.escapeHTMLTags(subscription.getOwner().toBareJID()) %>
+            <%= StringUtils.escapeHTMLTags(item.getID()) %>
             </td>
             <td>
-            <% if(subscription.getJID().getResource() != null) { %>
-                <%= StringUtils.escapeHTMLTags(subscription.getJID().getResource()) %>
-            <% } %>
+            <%= StringUtils.escapeHTMLTags(item.getPublisher().toBareJID()) %>
             <td>
-            <%= StringUtils.escapeHTMLTags(subscription.getState().name()) %>
+            <%= dateFormatter.format(item.getCreationDate()) %>
             </td>
             <td>
-            <% if(subscription.getExpire() != null) { %>
-                <%= dateFormatter.format(subscription.getExpire()) %>
-            <% } %>
+            <%= StringUtils.escapeHTMLTags(item.getPayloadXML()) %>
             </td>
             <td>
-            <a href="pubsub-node-subscribers.jsp?nodeID=<%= URLEncoder.encode(nodeID, "UTF-8") %>&deleteID=<%= URLEncoder.encode(subscription.getID(), "UTF-8") %>&csrf=${csrf}"
+            <a href="pubsub-node-items.jsp?nodeID=<%= URLEncoder.encode(nodeID, "UTF-8") %>&deleteID=<%= URLEncoder.encode(item.getID(), "UTF-8") %>&csrf=${csrf}"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
             </td>

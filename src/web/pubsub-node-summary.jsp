@@ -139,7 +139,9 @@
             <%= StringUtils.escapeHTMLTags(node.getDescription()) %>
         </td>
         <td width="1%" align="center">
-            <%= node.getPublishedItems().size() %>
+            <a href="pubsub-node-items.jsp?nodeID=<%= URLEncoder.encode(node.getNodeID(), "UTF-8") %>">
+                <%= node.getPublishedItems().size() %>
+            </a>
         </td>
         <td width="1%" align="center">
             <a href="pubsub-node-subscribers.jsp?nodeID=<%= URLEncoder.encode(node.getNodeID(), "UTF-8") %>">

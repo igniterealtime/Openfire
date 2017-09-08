@@ -510,6 +510,11 @@
                 <!-- Node Options -->
                 <sidebar id="sidebar-node-options" name="${sidebar.sidebar-node-options}">
 
+                    <!-- Published Items -->
+                    <item id="pubsub-node-items" name="${sidebar.pubsub-node-items}"
+                          url="pubsub-node-items.jsp"
+                          description="${sidebar.pubsub-node-items.descr}"/>
+
                     <!-- Node Subscribers -->
                     <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
                           url="pubsub-node-subscribers.jsp"

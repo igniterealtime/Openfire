@@ -153,9 +153,6 @@
 <meta name="pageID" content="archive-search"/>
 <script src="/js/prototype.js" type="text/javascript"></script>
 <script src="/js/scriptaculous.js" type="text/javascript"></script>
-<script src="dwr/engine.js" type="text/javascript"></script>
-<script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/conversations.js" type="text/javascript"></script>
 <script type="text/javascript" language="javascript" src="scripts/tooltips/domLib.js"></script>
 <script type="text/javascript" language="javascript" src="scripts/tooltips/domTT.js"></script>
 
@@ -380,7 +377,13 @@
 
     function showConversation(conv) {
         selectedConversation = conv;
-        conversations.getConversationInfo(showConv, conv, true);
+        
+        new Ajax.Request('/plugins/monitoring/api/conversations/' +conv, {
+        	method: 'get',
+        	onSuccess: function(transport) {
+        		showConv(transport.responseText.evalJSON());
+        	}
+        });
     }
 
     function showConv(results) {
@@ -424,6 +427,8 @@
             ele.style.backgroundColor = "#ffffff";
         }
     }
+    
+  //# sourceURL=archive-search.jsp
 </script>
 <script type="text/javascript" src="/js/behaviour.js"></script>
 <script type="text/javascript">

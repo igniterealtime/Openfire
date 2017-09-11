@@ -119,7 +119,7 @@
 
     <servlet>
         <servlet-name>dwr-invoker</servlet-name>
-        <servlet-class>uk.ltd.getahead.dwr.DWRServlet</servlet-class>
+        <servlet-class>org.directwebremoting.servlet.DwrServlet</servlet-class>
     </servlet>
 
     <servlet>

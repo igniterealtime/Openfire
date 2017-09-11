@@ -30,9 +30,6 @@
         <meta name="pageID" content="active-conversations"/>
         <script src="/js/prototype.js" type="text/javascript"></script>
         <script src="/js/scriptaculous.js" type="text/javascript"></script>
-        <script src="/plugins/monitoring/dwr/engine.js" type="text/javascript" ></script>
-        <script src="/plugins/monitoring/dwr/util.js" type="text/javascript" ></script>
-        <script src="/plugins/monitoring/dwr/interface/conversations.js" type="text/javascript"></script>
     </head>
     <body>
 
@@ -40,20 +37,15 @@
 	@import "style/style.css";
 </style>
 <script type="text/javascript">
-DWREngine.setErrorHandler(handleError);
-window.onerror = handleError;
-function handleError() {
-    // swallow errors: probably caused by the server being down
-}
-
 var peConversations = new PeriodicalExecuter(conversationUpdater, 10);
 
 function conversationUpdater() {
-    try {
-        conversations.getConversations(updateConversations, true);
-    } catch(err) {
-        // swallow errors
-    }
+    new Ajax.Request('/plugins/monitoring/api/conversations', {
+    	method: 'get',
+    	onSuccess: function(transport) {
+    		updateConversations(transport.responseText.evalJSON());
+    	}
+    });
 }
 
 function updateConversations(data) {
@@ -126,6 +118,7 @@ function updateConversations(data) {
     $('activeConversations').innerHTML = counter;
 }
 
+//# sourceURL=conversations.jsp
 </script>
 
 <!-- <a href="#" onclick="conversationUpdater(); return false;">click me</a> -->

@@ -10,6 +10,7 @@
 <%@ page import="org.jivesoftware.openfire.server.RemoteServerManager" %>
 <%@ page import="org.jivesoftware.openfire.server.RemoteServerConfiguration" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.S2STestService" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -31,6 +32,8 @@
     boolean serverBlocked = request.getParameter( "serverBlocked" ) != null;
     boolean permissionUpdate = request.getParameter( "permissionUpdate" ) != null;
     String configToDelete = ParamUtils.getParameter( request, "deleteConf" );
+    String s2sTestingDomain = ParamUtils.getParameter( request, "server2server-testing-domain" );
+    boolean s2sTest = request.getParameter("s2s-test") != null && s2sTestingDomain != null;
 
     final Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
@@ -50,7 +53,17 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
-    if ( update && errors.isEmpty() )
+    if ( s2sTest )
+    {
+        Map<String, String> results = new S2STestService(s2sTestingDomain).run();
+
+        pageContext.setAttribute("s2sDomain", s2sTestingDomain);
+        pageContext.setAttribute("s2sTest", true);
+        pageContext.setAttribute("stanzas", results.get("stanzas"));
+        pageContext.setAttribute("logs", results.get("logs"));
+        pageContext.setAttribute("certs", results.get("certs"));
+    }
+    else if ( update && errors.isEmpty() )
     {
         // plaintext
         final boolean plaintextEnabled = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
@@ -494,6 +507,45 @@
     </form>
 </admin:contentBox>
 <!-- END 'Not Allowed to Connect' -->
+
+<!-- BEGIN 'S2S Testing' -->
+<fmt:message key="server2server.settings.testing.boxtitle" var="s2sTitle"/>
+<admin:contentBox title="${s2sTitle}">
+    <form action="connection-settings-socket-s2s.jsp" method="post">
+	    <table cellpadding="3" cellspacing="0" border="0">
+	        <tr valign="middle">
+	            <td width="1%" nowrap><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.host"/></label></td>
+	            <td width="99%">
+                    <input type="text" name="server2server-testing-domain" id="server2server-testing-domain" value="${s2sDomain}">
+                    <input type="submit" name="s2s-test" value="<fmt:message key="global.test" />">
+	            </td>
+	        </tr>
+
+	        <c:if test="${s2sTest}">
+	          <tr valign="middle">
+	            <td width="1%" nowrap><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
+	            <td width="99%">
+	              <textarea name="server2server-testing-stanzas" style="width: 100%" rows="12"><c:out value="${stanzas}" /></textarea>
+	            </td>
+	          </tr>
+	          <tr valign="middle">
+	            <td width="1%" nowrap><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
+	            <td width="99%">
+	              <textarea name="server2server-testing-certs" style="width: 100%" rows="12"><c:out value="${certs}" /></textarea>
+	            </td>
+	          </tr>
+	          <tr valign="middle">
+	            <td width="1%" nowrap><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
+	            <td width="99%">
+	              <textarea name="server2server-testing-logs" style="width: 100%" rows="12"><c:out value="${logs}" /></textarea>
+	            </td>
+	          </tr>
+	        </c:if>
+
+	    </table>
+	</form>
+</admin:contentBox>
+<!-- END 'S2S Testing' -->
 
 </body>
 </html>

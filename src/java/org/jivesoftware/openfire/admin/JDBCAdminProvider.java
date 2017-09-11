@@ -49,7 +49,13 @@ import org.xmpp.packet.JID;
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
  * <li><tt>jdbcAdminProvider.getAdminsSQL = SELECT user FROM myAdmins</tt></li>
  * </ul>
- *
+ * <p>
+ * If you want to be able to update the admin users via the UI, add the following properties:
+ * <ul>
+ * <li><tt>jdbcAdminProvider.insertAdminsSQL = INSERT INTO myAdmins (user) VALUES (?)</tt></li>
+ * <li><tt>jdbcAdminProvider.deleteAdminsSQL = DELETE FROM myAdmins WHERE user = ?</tt></li>
+ * </ul>
+ * <p>
  * In order to use the configured JDBC connection provider do not use a JDBC
  * connection string, set the following property
  *
@@ -65,6 +71,8 @@ public class JDBCAdminProvider implements AdminProvider {
     private static final Logger Log = LoggerFactory.getLogger(JDBCAdminProvider.class);
 
     private final String getAdminsSQL;
+    private final String insertAdminsSQL;
+    private final String deleteAdminsSQL;
     private final String xmppDomain;
     private final boolean useConnectionProvider;
 
@@ -84,14 +92,15 @@ public class JDBCAdminProvider implements AdminProvider {
 
         // Load database statement for reading admin list
         getAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.getAdminsSQL");
+        insertAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.insertAdminsSQL", "");
+        deleteAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.deleteAdminsSQL", "");
 
         // Load the JDBC driver and connection string
         if (!useConnectionProvider) {
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
                 Class.forName(jdbcDriver).newInstance();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
                 return;
             }
@@ -106,7 +115,7 @@ public class JDBCAdminProvider implements AdminProvider {
         ResultSet rs = null;
 
         List<JID> jids = new ArrayList<>();
-
+        synchronized (getAdminsSQL) {
         try {
             con = getConnection();
             pstmt = con.prepareStatement(getAdminsSQL);
@@ -116,24 +125,51 @@ public class JDBCAdminProvider implements AdminProvider {
                 jids.add(new JID(name + "@" + xmppDomain));
             }
             return jids;
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
-        finally {
+        } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        }
+    }
+
+    private void changeAdmins(final Connection con, final String sql, final List<JID> admins) throws SQLException {
+        if (!admins.isEmpty()) {
+            try (final PreparedStatement pstmt = con.prepareStatement(sql)) {
+                for (final JID jid : admins) {
+                    pstmt.setString(1, jid.getNode());
+                    pstmt.execute();
+                }
+            }
         }
     }
 
     @Override
-    public void setAdmins(List<JID> admins) {
-        // Reject the operation since the provider is read-only
-        throw new UnsupportedOperationException();
+    public void setAdmins(List<JID> newAdmins) {
+        if (isReadOnly()) {
+            // Reject the operation since the provider is read-only
+            throw new UnsupportedOperationException();
+        }
+
+        synchronized (getAdminsSQL) {
+            final List<JID> currentAdmins = getAdmins();
+            // Get a list of everyone in the new list not in the current list
+            final List<JID> adminsToAdd = new ArrayList<>(newAdmins);
+            adminsToAdd.removeAll(currentAdmins);
+            // Get a list of everyone in the current list not in the new list
+            currentAdmins.removeAll(newAdmins);
+            try (final Connection con = getConnection()) {
+                changeAdmins(con, insertAdminsSQL, adminsToAdd);
+                changeAdmins(con, deleteAdminsSQL, currentAdmins);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public boolean isReadOnly() {
-        return true;
+        return insertAdminsSQL.isEmpty() || deleteAdminsSQL.isEmpty();
     }
 
     private Connection getConnection() throws SQLException {

@@ -10,8 +10,8 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
-    boolean cancel = request.getParameter("cancel") != null;
-    boolean delete = request.getParameter("delete") != null;
+    boolean cancel = ParamUtils.getParameter(request,"cancel") != null;
+    boolean delete = ParamUtils.getParameter(request,"delete") != null;
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -49,25 +49,30 @@
         response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true");
         return;
     }
+
+    pageContext.setAttribute("node", node);
+
 %>
 
 <html>
     <head>
         <title><fmt:message key="pubsub.node.delete.title"/></title>
         <meta name="subPageID" content="pubsub-node-delete"/>
-        <meta name="extraParams" content="<%= "nodeID="+URLEncoder.encode(nodeID, "UTF-8") %>"/>
+        <meta name="extraParams" content="nodeID=${node.nodeID}"/>
     </head>
     <body>
 
 <p>
-<fmt:message key="pubsub.node.delete.info" />
-<b><a href="pubsub-node-edit-form.jsp?nodeID=<%= URLEncoder.encode(nodeID, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(nodeID) %></a></b>
- <fmt:message key="pubsub.node.delete.detail" />
+    <fmt:message key="pubsub.node.delete.info" />
+        <b>
+            <c:out value="${node.nodeID}"/>
+        </b>
+    <fmt:message key="pubsub.node.delete.detail" />
 </p>
 
 <form action="pubsub-node-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-	<input type="hidden" name="nodeID" value="<%= StringUtils.escapeForXML(nodeID) %>">
+	<input type="hidden" name="nodeID" value="${node.nodeID}">
 
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>
@@ -79,7 +84,7 @@
                 <fmt:message key="pubsub.node.delete.node_id" />
             </td>
             <td>
-                <%= StringUtils.escapeHTMLTags(nodeID) %>
+                <c:out value="${node.nodeID}"/>
             </td>
         </tr>
         <tr>

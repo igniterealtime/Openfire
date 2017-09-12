@@ -33,8 +33,22 @@
 
     // paginator vars
     int numPages = (int)Math.ceil((double)nodeCount/(double)range);
+
+    if(start > nodeCount) {
+        start=nodeCount;
+    }
+
     int curPage = (start/range) + 1;
     int maxNodeIndex = (start+range <= nodeCount ? start+range : nodeCount);
+
+    pageContext.setAttribute("nodeCount", nodeCount);
+    pageContext.setAttribute("numPages", numPages);
+    pageContext.setAttribute("start", start);
+    pageContext.setAttribute("range", range);
+    pageContext.setAttribute("curPage", curPage);
+    pageContext.setAttribute("maxNodeIndex", maxNodeIndex);
+    pageContext.setAttribute("nodes", nodes.subList(start, maxNodeIndex));
+
 %>
 <html>
     <head>
@@ -47,8 +61,7 @@
 <fmt:message key="pubsub.node.summary.info" />
 </p>
 
-<%  if (request.getParameter("deletesuccess") != null) { %>
-
+<c:if test="${param.deletesuccess}">
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -59,39 +72,38 @@
     </tbody>
     </table>
     </div><br>
-
-<%  } %>
+</c:if>
 
 <p>
-<fmt:message key="pubsub.node.summary.total_nodes" />: <%= nodeCount %>,
-<%  if (numPages > 1) { %>
+<fmt:message key="pubsub.node.summary.total_nodes" />: <c:out value="${nodeCount}"/>
+<c:if test="${numPages gt 1}">
 
-    <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (maxNodeIndex) %>,
+    <fmt:message key="global.showing" /> <c:out value="${start+1}"/>-<c:out value="${maxNodeIndex}"/>
 
-<%  } %>
+</c:if>
 
 <fmt:message key="pubsub.node.summary.sorted_id" />
 
 </p>
 
-<%  if (numPages > 1) { %>
-
+<c:if test="${numPages gt 1}">
     <p>
     <fmt:message key="global.pages" />:
     [
-    <%  for (int i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="pubsub-node-summary.jsp?start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
+    <c:forEach begin="1" end="${numPages}" varStatus="loop">
+        <c:url value="pubsub-node-summary.jsp" var="url">
+            <c:param name="start" value="${(loop.index-1)*range}" />
+        </c:url>
+        <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
+            <c:out value="${loop.index}"/>
+        </a>
+        <c:if test="${loop.index < numPages}">
+            &nbsp;
+        </c:if>
+    </c:forEach>
     ]
     </p>
-
-<%  } %>
+</c:if>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -108,78 +120,79 @@
 </thead>
 <tbody>
 
-<%  // Print the list of rooms
-    Iterator<Node> nodesPage = nodes.subList(start, maxNodeIndex).iterator();
-    if (!nodesPage.hasNext()) {
-%>
+<c:if test="${nodeCount lt 1}">
     <tr>
         <td align="center" colspan="7">
             <fmt:message key="pubsub.node.summary.no_nodes" />
         </td>
     </tr>
+</c:if>
 
-<%
-    }
-    int i = start;
-    while (nodesPage.hasNext()) {
-        Node node = nodesPage.next();
-        i++;
-%>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+<c:forEach var="node" items="${nodes}" varStatus="loop">
+
+    <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
         <td width="1%">
-            <%= i %>
+            <c:out value="${loop.index}"/>
         </td>
         <td width="1%" valign="middle">
-            <%=  StringUtils.escapeHTMLTags(node.getNodeID()) %>
+            <c:out value="${node.getNodeID()}"/>
         </td>
         <td width="1%" valign="middle">
-            <%=  StringUtils.escapeHTMLTags(node.getName()) %>
+            <c:out value="${node.getName()}"/>
         </td>
         <td valign="middle">
-            <%= StringUtils.escapeHTMLTags(node.getDescription()) %>
+            <c:out value="${node.getDescription()}"/>
         </td>
         <td width="1%" align="center">
-            <a href="pubsub-node-items.jsp?nodeID=<%= URLEncoder.encode(node.getNodeID(), "UTF-8") %>">
-                <%= node.getPublishedItems().size() %>
+            <c:url value="pubsub-node-items.jsp" var="url">
+                <c:param name="nodeID" value="${node.getNodeID()}" />
+            </c:url>
+            <a href="${url}">
+                <c:out value="${node.getPublishedItems().size()}" />
             </a>
         </td>
         <td width="1%" align="center">
-            <a href="pubsub-node-subscribers.jsp?nodeID=<%= URLEncoder.encode(node.getNodeID(), "UTF-8") %>">
-                <%= node.getAllSubscriptions().size() %>
+            <c:url value="pubsub-node-subscribers.jsp" var="url">
+                <c:param name="nodeID" value="${node.getNodeID()}" />
+            </c:url>
+            <a href="${url}">
+                <c:out value="${node.getAllSubscriptions().size()}" />
             </a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="pubsub-node-delete.jsp?nodeID=<%= URLEncoder.encode(node.getNodeID(), "UTF-8") %>"
-             title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+            <c:url value="pubsub-node-delete.jsp" var="url">
+                <c:param name="nodeID" value="${node.getNodeID()}" />
+            </c:url>
+            <a href="${url}" title="<fmt:message key="global.click_delete" />">
+                <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+            </a>
         </td>
     </tr>
+</c:forEach>
 
-<%
-    }
-%>
 </tbody>
 </table>
 </div>
 
-<%  if (numPages > 1) { %>
-
+<c:if test="${numPages gt 1}">
+    <br>
     <p>
     <fmt:message key="global.pages" />:
     [
-    <%  for (i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="pubsub-node-summary.jsp?start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
+    <c:forEach begin="1" end="${numPages}" varStatus="loop">
+        <c:url value="pubsub-node-summary.jsp" var="url">
+            <c:param name="start" value="${(loop.index-1)*range}" />
+        </c:url>
+        <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
+            <c:out value="${loop.index}"/>
+        </a>
+        <c:if test="${loop.index < numPages}">
+            &nbsp;
+        </c:if>
+    </c:forEach>
     ]
     </p>
-
-<%  } %>
+</c:if>
 
     </body>
 </html>

@@ -21,8 +21,6 @@
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
 	String deleteID = ParamUtils.getParameter(request,"deleteID");
-	String deleteSuccess = request.getParameter("deletesuccess");
-	String owner = request.getParameter("owner");
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -33,9 +31,6 @@
         }
     }
 
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
 
     // Load the node object
     Node node = webManager.getPubSubManager().getNode(nodeID);
@@ -56,20 +51,25 @@
 	        // Log the event
 	        webManager.logEvent("Delete item ID: " + deleteID +  ", from node ID: " + nodeID, "Publisher: " + pi.getPublisher().toBareJID());
 	        // Done, so redirect
-	        response.sendRedirect("pubsub-node-items.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deletesuccess=true&owner=" + URLEncoder.encode(pi.getPublisher().toBareJID(), "UTF-8"));
+	        response.sendRedirect("pubsub-node-items.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deleteSuccess=true&owner=" + URLEncoder.encode(pi.getPublisher().toBareJID(), "UTF-8"));
 	        return;
         }
     }
 
-    // Formatter for dates
-    DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    pageContext.setAttribute("node", node);
+
 %>
 
 <html>
 <head>
 <title><fmt:message key="pubsub.node.items.title"/></title>
 <meta name="subPageID" content="pubsub-node-items"/>
-<meta name="extraParams" content="<%= "nodeID="+URLEncoder.encode(nodeID, "UTF-8")+"&create=false" %>"/>
+<meta name="extraParams" content="nodeID=${node.nodeID}&create=false"/>
 </head>
 <body>
 
@@ -77,7 +77,7 @@
     <fmt:message key="pubsub.node.summary.table.info" />
     </p>
 
-    <%  if (deleteSuccess != null) { %>
+    <c:if test="${param.deleteSuccess}">
 
         <div class="jive-success">
         <table cellpadding="0" cellspacing="0" border="0">
@@ -85,14 +85,14 @@
             <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
             <td class="jive-icon-label">
             <fmt:message key="pubsub.node.items.deleted">
-                <fmt:param value="<%= StringUtils.escapeForXML(owner) %>"/>
+                <fmt:param value="${param.owner}"/>
             </fmt:message>
             </td></tr>
         </tbody>
         </table>
         </div><br>
 
-    <%  } %>
+    </c:if>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -109,13 +109,13 @@
     </thead>
     <tbody>
         <tr>
-            <td><%= StringUtils.escapeHTMLTags(node.getNodeID()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(node.getName()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(node.getDescription()) %></td>
-            <td><%= node.getPublishedItems().size()%></td>
-            <td><%= node.getAllSubscriptions().size()%></td>
-            <td><%= dateFormatter.format(node.getCreationDate()) %></td>
-            <td><%= dateFormatter.format(node.getModificationDate()) %></td>
+            <td><c:out value="${node.getNodeID()}"/></td>
+            <td><c:out value="${node.getName()}"/></td>
+            <td><c:out value="${node.getDescription()}"/></td>
+            <td><c:out value="${node.getPublishedItems().size()}"/></td>
+            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
         </tr>
     </tbody>
     </table>
@@ -138,26 +138,32 @@
         </tr>
     </thead>
     <tbody>
-        <% for (PublishedItem item : node.getPublishedItems()) { %>
+        <c:forEach var="item" items="${node.getPublishedItems()}">
         <tr>
             <td>
-            <%= StringUtils.escapeHTMLTags(item.getID()) %>
+            <c:out value="${item.getID()}"/>
             </td>
             <td>
-            <%= StringUtils.escapeHTMLTags(item.getPublisher().toBareJID()) %>
-            <td>
-            <%= dateFormatter.format(item.getCreationDate()) %>
+            <c:out value="${item.getPublisher().toBareJID()}"/>
             </td>
             <td>
-            <%= StringUtils.escapeHTMLTags(item.getPayloadXML()) %>
+            <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${item.getCreationDate()}" />
             </td>
             <td>
-            <a href="pubsub-node-items.jsp?nodeID=<%= URLEncoder.encode(nodeID, "UTF-8") %>&deleteID=<%= URLEncoder.encode(item.getID(), "UTF-8") %>&csrf=${csrf}"
-             title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+            <c:out value="${item.getPayloadXML()}"/>
             </td>
+            <td width="1%" align="center" style="border-right:1px #ccc solid;">
+               <c:url value="pubsub-node-items.jsp" var="url">
+                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="deleteID" value="${item.getID()}" />
+                    <c:param name="csrf" value="${csrf}" />
+                </c:url>
+                <a href="${url}" title="<fmt:message key="global.click_delete" />">
+                    <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                </a>
+	        </td>
         </tr>
-        <% } %>
+        </c:forEach>
     </tbody>
     </table>
     </div>

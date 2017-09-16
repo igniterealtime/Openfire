@@ -160,8 +160,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         /**
          * Operations of outgoing server sessions
          */
-        getAuthenticatedDomains,
-        getHostnames,
+        getOutgoingDomainPairs,
         isUsingServerDialback,
 
         /**

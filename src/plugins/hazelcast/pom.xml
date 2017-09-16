@@ -8,7 +8,7 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>hazelcast</artifactId>
-    <version>2.2.1</version>
+    <version>2.2.3</version>
     <name>Hazelcast Plugin</name>
     <description>Adds clustering support</description>
 

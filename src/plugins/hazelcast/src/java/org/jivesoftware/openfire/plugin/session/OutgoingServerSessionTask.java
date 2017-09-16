@@ -49,11 +49,8 @@ public class OutgoingServerSessionTask extends RemoteSessionTask {
 
     public void run() {
         super.run();
-        if (operation == Operation.getAuthenticatedDomains) {
-            result = ((OutgoingServerSession) getSession()).getAuthenticatedDomains();
-        }
-        else if (operation == Operation.getHostnames) {
-            result = ((OutgoingServerSession) getSession()).getHostnames();
+        if (operation == Operation.getOutgoingDomainPairs) {
+            result = ((OutgoingServerSession) getSession()).getOutgoingDomainPairs();
         }
         else if (operation == Operation.isUsingServerDialback) {
             result = ((OutgoingServerSession) getSession()).isUsingServerDialback();

@@ -272,6 +272,11 @@ public class SocketConnection implements Connection {
     }
 
     @Override
+    public void reinit(LocalSession owner) {
+        session = owner;
+    }
+
+    @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);

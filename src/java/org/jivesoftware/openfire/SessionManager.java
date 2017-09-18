@@ -1223,6 +1223,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         public void onConnectionClose(Object handback) {
             try {
                 LocalClientSession session = (LocalClientSession) handback;
+                if (session.getDetached()) {
+                    Log.debug("Closing session is detached already.");
+                    return;
+                }
+                if (session.getStreamManager().getResume()) {
+                    Log.debug("Closing session has SM enabled; detaching.");
+                    session.setDetached();
+                    return;
+                }
                 try {
                     if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&
                             routingTable.hasClientRoute(session.getAddress())) {

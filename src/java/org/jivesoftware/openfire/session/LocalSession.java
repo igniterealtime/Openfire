@@ -77,7 +77,7 @@ public abstract class LocalSession implements Session {
     /**
      * The connection that this session represents.
      */
-    protected final Connection conn;
+    protected Connection conn;
 
     protected SessionManager sessionManager;
 
@@ -120,8 +120,43 @@ public abstract class LocalSession implements Session {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
-        this.streamManager = new StreamManager(conn);
+        this.streamManager = new StreamManager(this);
         this.language = language;
+    }
+
+    /**
+     * Returns true if the session is detached (that is, if the underlying connection
+     * has been closed.
+     *
+     * @return true if session detached
+     */
+    public boolean getDetached() {
+        return this.conn == null;
+    }
+
+    /**
+     * Set the session to detached mode, indicating that the underlying connection
+     * has been closed.
+     */
+    public void setDetached() {
+        this.conn = null;
+    }
+
+    /**
+     * Reattach the session to a new connection. The connection must already be
+     * initialized as a running XML Stream, normally by having run through XEP-0198
+     * resumption.
+     */
+    public void reattach(Connection connection, long h) {
+        Connection temp = this.conn;
+        this.conn = null;
+        if (temp != null && !temp.isClosed()) {
+            temp.close();
+        }
+        this.conn = connection;
+        this.conn.reinit(this);
+        this.status = STATUS_AUTHENTICATED;
+        this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
     }
 
     /**
@@ -176,6 +211,10 @@ public abstract class LocalSession implements Session {
      * @param status The new status code for this session
      */
     public void setStatus(int status) {
+        if (status == STATUS_CLOSED && this.streamManager.getResume()) {
+            Log.debug("Suppressing close.");
+            return;
+        }
         this.status = status;
     }
 
@@ -375,6 +414,7 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
+        if (conn == null) return;
         conn.close();
     }
 

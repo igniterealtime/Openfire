@@ -175,6 +175,11 @@ public abstract class VirtualConnection implements Connection {
         this.session = session;
     }
 
+    @Override
+    public void reinit(LocalSession session) {
+        this.session = session;
+    }
+
     /**
      * Closes the session, the virtual connection and notifies listeners that the connection
      * has been closed.

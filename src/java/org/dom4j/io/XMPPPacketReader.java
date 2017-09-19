@@ -368,11 +368,24 @@ public class XMPPPacketReader {
                     // Do not include the namespace if this is the start tag of a new packet
                     // This avoids including "jabber:client", "jabber:server" or
                     // "jabber:component:accept"
+                    boolean allContent = false; // Is this all in the stream's content namespace?
                     if ("jabber:client".equals(qname.getNamespaceURI()) ||
                             "jabber:server".equals(qname.getNamespaceURI()) ||
                             "jabber:connectionmanager".equals(qname.getNamespaceURI()) ||
                             "jabber:component:accept".equals(qname.getNamespaceURI()) ||
                             "http://jabber.org/protocol/httpbind".equals(qname.getNamespaceURI())) {
+                        // Need to walk the parents back to ensure that all namespaces are the content namespace.
+                        Element tmpParent = parent;
+                        allContent = true;
+                        while (tmpParent != null) {
+                            if (!tmpParent.getNamespaceURI().equals(qname.getNamespaceURI())) {
+                                allContent = false;
+                                break;
+                            }
+                            tmpParent = tmpParent.getParent();
+                        }
+                    }
+                    if (allContent) {
                         newElement = df.createElement(pp.getName());
                     }
                     else {

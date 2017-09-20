@@ -1,9 +1,11 @@
 package org.jivesoftware.util;
 
 import java.security.cert.Certificate;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +25,7 @@ import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
@@ -167,12 +170,27 @@ public class S2STestService {
 			Log.info("Successfully negotiated TLS connection.");
 			Certificate[] certificates = session.getPeerCertificates();
 			for (Certificate certificate : certificates) {
-				certs.append(((X509Certificate) certificate).getSubjectDN());
-				certs.append('\n');
-				certs.append("-----BEGIN CERTIFICATE-----\n");
+				X509Certificate x509cert = (X509Certificate) certificate;
+				certs.append("--\nSubject: ");
+				certs.append(x509cert.getSubjectDN());
+				
+				List<String> subjectAltNames = new SANCertificateIdentityMapping().mapIdentity(x509cert);
+				if (!subjectAltNames.isEmpty()) {
+					certs.append("\nSubject Alternative Names: ");
+					for (String subjectAltName : subjectAltNames) {
+						certs.append("\n  ");
+						certs.append(subjectAltName);
+					}
+				}
+				
+				certs.append("\nNot Before: ");
+				certs.append(x509cert.getNotBefore());
+				certs.append("\nNot After: ");
+				certs.append(x509cert.getNotAfter());
+				certs.append("\n\n-----BEGIN CERTIFICATE-----\n");
 				certs.append(DatatypeConverter.printBase64Binary(
 						certificate.getPublicKey().getEncoded()).replaceAll("(.{64})", "$1\n"));
-				certs.append("\n-----END CERTIFICATE-----\n");
+				certs.append("\n-----END CERTIFICATE-----\n\n");
 			}
 		}
 		return certs.toString();

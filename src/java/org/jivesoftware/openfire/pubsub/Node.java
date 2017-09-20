@@ -1043,6 +1043,8 @@ public abstract class Node {
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.itemreply"));
+            formField.addOption(null, ItemReplyPolicy.owner.name());
+            formField.addOption(null, ItemReplyPolicy.publisher.name());
         }
         if (replyPolicy != null) {
             formField.addValue(replyPolicy.name());

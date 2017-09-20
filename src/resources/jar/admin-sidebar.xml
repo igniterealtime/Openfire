@@ -285,6 +285,12 @@
 
         <!-- PubSub Node Administration -->
         <sidebar id="sidebar-pubsub" name="${sidebar.sidebar-pubsub}">
+
+            <!-- PubSub Service -->
+            <item id="pubsub-service-summary" name="${sidebar.pubsub-service-summary}"
+                  url="pubsub-service-summary.jsp"
+                  description="${sidebar.pubsub-service-summary.descr}"/>
+
             <!-- PubSub Node Summary -->
             <item id="pubsub-node-summary" name="${sidebar.pubsub-node-summary}"
                   url="pubsub-node-summary.jsp"
@@ -307,6 +313,11 @@
                     <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
                           url="pubsub-node-subscribers.jsp"
                           description="${sidebar.pubsub-node-subscribers.descr}"/>
+
+                    <!-- Edit Node -->
+                    <item id="pubsub-node-edit" name="${sidebar.pubsub-node-edit}"
+                          url="pubsub-node-edit.jsp"
+                          description="${sidebar.pubsub-node-edit.descr}"/>
 
                     <!-- Delete Node -->
                     <item id="pubsub-node-delete" name="${sidebar.pubsub-node-delete}"

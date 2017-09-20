@@ -315,17 +315,27 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return sysadmins;
     }
 
+    public void setSysadmins(Collection<String> userJIDs) {
+        sysadmins.clear();
+        for (String JID : userJIDs) {
+            sysadmins.add(JID.trim().toLowerCase());
+        }
+        updateSysadminProperty();
+    }
+
     public void addSysadmin(String userJID) {
         sysadmins.add(userJID.trim().toLowerCase());
         // Update the config.
-        String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
+        updateSysadminProperty();
     }
 
     public void removeSysadmin(String userJID) {
         sysadmins.remove(userJID.trim().toLowerCase());
         // Update the config.
+        updateSysadminProperty();
+    }
+
+    private void updateSysadminProperty() {
         String[] jids = new String[sysadmins.size()];
         jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
@@ -345,19 +355,29 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(nodeCreationRestricted));
     }
 
+    public void setUserAllowedToCreate(Collection<String> userJIDs) {
+        allowedToCreate.clear();
+        for (String JID : userJIDs) {
+            allowedToCreate.add(JID.trim().toLowerCase());
+        }
+        updateUserAllowedToCreateProperty();
+    }
+
     public void addUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create nodes.
         allowedToCreate.add(userJID.trim().toLowerCase());
         // Update the config.
-        String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
+        updateUserAllowedToCreateProperty();
     }
 
     public void removeUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create nodes.
         allowedToCreate.remove(userJID.trim().toLowerCase());
         // Update the config.
+        updateUserAllowedToCreateProperty();
+    }
+
+    private void updateUserAllowedToCreateProperty() {
         String[] jids = new String[allowedToCreate.size()];
         jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));

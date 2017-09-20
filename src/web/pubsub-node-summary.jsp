@@ -44,6 +44,7 @@
         webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
+    boolean PEPMode = false;
     PubSubServiceInfo pubSubServiceInfo;
     if ( owner == null )
     {
@@ -51,6 +52,7 @@
     }
     else if ( new PEPServiceManager().getPEPService( owner.toBareJID() ) != null )
     {
+        PEPMode = true;
         pubSubServiceInfo = new PEPServiceInfo( owner );
     }
     else
@@ -94,6 +96,7 @@
     pageContext.setAttribute("maxNodeIndex", maxNodeIndex);
     pageContext.setAttribute("nodes", nodes.subList(start, maxNodeIndex));
     pageContext.setAttribute("owner", owner );
+    pageContext.setAttribute("PEPMode", PEPMode);
 
 %>
 <html>
@@ -171,6 +174,9 @@
         <th nowrap><fmt:message key="pubsub.node.summary.items" /></th>
         <th nowrap><fmt:message key="pubsub.node.summary.affiliates" /></th>
         <th nowrap><fmt:message key="pubsub.node.summary.subscribers" /></th>
+        <c:if test="${not PEPMode}" >
+            <th nowrap><fmt:message key="global.edit" /></th>
+        </c:if>
         <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
@@ -178,7 +184,7 @@
 
 <c:if test="${nodeCount lt 1}">
     <tr>
-        <td align="center" colspan="7">
+        <td align="center" colspan="${PEPMode ? 8 : 9}">
             <fmt:message key="pubsub.node.summary.table.no_nodes" />
         </td>
     </tr>
@@ -226,6 +232,16 @@
                 <c:out value="${node.getAllSubscriptions().size()}" />
             </a>
         </td>
+        <c:if test="${not PEPMode}" >
+	        <td width="1%" align="center">
+	            <c:url value="pubsub-node-edit.jsp" var="url">
+	                <c:param name="nodeID" value="${node.getNodeID()}" />
+	            </c:url>
+	            <a href="${url}" title="<fmt:message key="global.click_edit" />">
+	                <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
+	            </a>
+	        </td>
+        </c:if>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">
                 <c:param name="nodeID" value="${node.getNodeID()}" />

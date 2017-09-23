@@ -1,21 +1,6 @@
 package org.jivesoftware.util;
 
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.DatatypeConverter;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.WriterAppender;
+import org.apache.log4j.*;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -29,8 +14,17 @@ import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+
+import javax.xml.bind.DatatypeConverter;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs server to server test.
@@ -75,19 +69,24 @@ public class S2STestService {
             outgoingServerSession.close();
         }
 
+        final IQ pingRequest = new IQ( Type.get );
+        pingRequest.setChildElement( "ping", IQPingHandler.NAMESPACE );
+        pingRequest.setFrom( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+        pingRequest.setTo( domain );
+
         // Intercept logging.
         final StringBuilder logs = new StringBuilder();
         Appender appender = interceptLogging(logs);
 
         // Intercept packets.
-        PacketInterceptor interceptor = new S2SInterceptor();
+        final PacketInterceptor interceptor = new S2SInterceptor( pingRequest );
         InterceptorManager.getInstance().addInterceptor(interceptor);
 
         // Send ping.
         try
         {
             Log.info( "Sending server to server ping request to " + domain );
-            sendPing();
+            XMPPServer.getInstance().getIQRouter().route( pingRequest );
 
             // Wait for success or exceed socket 5s timeout.
             waitUntil.tryAcquire( 6, TimeUnit.SECONDS );
@@ -165,17 +164,6 @@ public class S2STestService {
     }
 
     /**
-     * Sends a server to server ping request.
-     */
-    private void sendPing() {
-        final IQ pingRequest = new IQ(Type.get);
-        pingRequest.setChildElement("ping", IQPingHandler.NAMESPACE);
-        pingRequest.setFrom(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-        pingRequest.setTo(domain);
-        XMPPServer.getInstance().getIQRouter().route(pingRequest);
-    }
-
-    /**
      * @return A String representation of the certificate chain for the connection to the domain under test.
      */
     private String getCertificates() {
@@ -217,6 +205,16 @@ public class S2STestService {
     private class S2SInterceptor implements PacketInterceptor {
         private StringBuilder xml = new StringBuilder();
 
+        private final IQ ping;
+
+        /**
+         * @param ping The IQ ping request that was used to initiate the test.
+         */
+        public S2SInterceptor( IQ ping )
+        {
+            this.ping = ping;
+        }
+
         /**
          * Keeps a log of the XMPP traffic, releasing the wait lock on response received.
          */
@@ -224,14 +222,20 @@ public class S2STestService {
         public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
                 throws PacketRejectedException {
             if (!processed
-                    && (domain.equals(packet.getFrom().getDomain()) || domain.equals(packet.getTo().getDomain()))) {
+                    && (ping.getTo().getDomain().equals(packet.getFrom().getDomain()) || ping.getTo().getDomain().equals(packet.getTo().getDomain()))) {
+
+                // Log all traffic to and from the domain.
                 xml.append(packet.toXML());
                 xml.append('\n');
 
-                // If we've received our IQ response, stop waiting.
-                if (domain.equals(packet.getFrom().getDomain()) && "result".equals(packet.getElement().attributeValue("type"))) {
-                    Log.info("Successful server to server response received.");
-                    waitUntil.release();
+                // If we've received our IQ response, stop the test.
+                if ( packet instanceof IQ )
+                {
+                    final IQ iq = (IQ) packet;
+                    if ( iq.isResponse() && ping.getID().equals( iq.getID() ) && ping.getTo().equals( iq.getFrom() ) ) {
+                        Log.info("Successful server to server response received.");
+                        waitUntil.release();
+                    }
                 }
             }
         }

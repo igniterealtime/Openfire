@@ -1,7 +1,6 @@
 package org.jivesoftware.util;
 
 import java.security.cert.Certificate;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
@@ -85,25 +84,30 @@ public class S2STestService {
         InterceptorManager.getInstance().addInterceptor(interceptor);
 
         // Send ping.
-        Log.info("Sending server to server ping request to " +domain);
-        sendPing();
+        try
+        {
+            Log.info( "Sending server to server ping request to " + domain );
+            sendPing();
 
-        // Wait for success or exceed socket 5s timeout.
-        waitUntil.tryAcquire(6, TimeUnit.SECONDS);
+            // Wait for success or exceed socket 5s timeout.
+            waitUntil.tryAcquire( 6, TimeUnit.SECONDS );
 
-        // Check on the connection status.
-        logSessionStatus();
+            // Check on the connection status.
+            logSessionStatus();
 
-        // Prepare response.
-        results.put("certs", getCertificates());
-        results.put("stanzas", interceptor.toString());
-        results.put("logs", logs.toString());
+            // Prepare response.
+            results.put( "certs", getCertificates() );
+            results.put( "stanzas", interceptor.toString() );
+            results.put( "logs", logs.toString() );
 
-        // Cleanup
-        InterceptorManager.getInstance().removeInterceptor(interceptor);
-        Logger.getRootLogger().removeAppender(appender);
-
-        return results;
+            return results;
+        }
+        finally
+        {
+            // Cleanup
+            InterceptorManager.getInstance().removeInterceptor( interceptor );
+            Logger.getRootLogger().removeAppender( appender );
+        }
     }
 
     /**

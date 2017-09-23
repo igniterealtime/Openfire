@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.LoggingEvent;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
@@ -63,7 +64,17 @@ public class S2STestService {
 		Map<String, String> results = new HashMap<>();
 
 		// Tear down existing routes.
-		XMPPServer.getInstance().getRoutingTable().removeServerRoute(new JID(domain));
+		final SessionManager sessionManager = SessionManager.getInstance();
+		for (final Session incomingServerSession : sessionManager.getIncomingServerSessions( domain ) )
+		{
+			incomingServerSession.close();
+		}
+
+		final Session outgoingServerSession = sessionManager.getOutgoingServerSession( domain );
+		if ( outgoingServerSession != null )
+		{
+			outgoingServerSession.close();
+		}
 
 		// Intercept logging.
 		final StringBuilder logs = new StringBuilder();

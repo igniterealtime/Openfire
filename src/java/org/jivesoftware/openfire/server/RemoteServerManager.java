@@ -153,7 +153,7 @@ public class RemoteServerManager {
 
     /**
      * Returns the number of milliseconds to wait to connect to a remote server or read
-     * data from a remote server. Default timeout value is 20 seconds. Configure the
+     * data from a remote server. Default timeout value is 120 seconds. Configure the
      * <tt>xmpp.server.read.timeout</tt> global property to override the default value.
      *
      * @return the number of milliseconds to wait to connect to a remote server or read

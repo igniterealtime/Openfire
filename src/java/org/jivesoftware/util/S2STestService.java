@@ -8,6 +8,7 @@ import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -88,8 +89,8 @@ public class S2STestService {
             Log.info( "Sending server to server ping request to " + domain );
             XMPPServer.getInstance().getIQRouter().route( pingRequest );
 
-            // Wait for success or exceed socket 5s timeout.
-            waitUntil.tryAcquire( 6, TimeUnit.SECONDS );
+            // Wait for success or exceed socket timeout.
+            waitUntil.tryAcquire( RemoteServerManager.getSocketTimeout(), TimeUnit.MILLISECONDS );
 
             // Check on the connection status.
             logSessionStatus();

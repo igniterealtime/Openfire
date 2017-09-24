@@ -4,7 +4,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.pubsub.PubSubManager" %>
+<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceManager" %>
 <%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -20,7 +20,7 @@
         webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
-    PubSubManager pubSubManager = webManager.getPubSubManager();
+    PubSubServiceManager pubSubManager = webManager.getPubSubManager();
     List<Node> nodes = pubSubManager.getLeafNodes();
 
     Collections.sort(nodes, new Comparator<Node>() {

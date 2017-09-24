@@ -2,26 +2,26 @@ package org.jivesoftware.openfire.pubsub;
 
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.container.BasicModule;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 
-public class PubSubManager {
+public class PubSubServiceManager
+{
 
     private static final class NodeManagerContainer {
-        private static final PubSubManager instance = new PubSubManager();
+        private static final PubSubServiceManager instance = new PubSubServiceManager();
     }
 
-    public static PubSubManager getInstance() {
+    public static PubSubServiceManager getInstance() {
         return NodeManagerContainer.instance;
     }
 
 	private PubSubService pubSubService;
 
-	private PubSubManager() {
+	private PubSubServiceManager() {
 		pubSubService = XMPPServer.getInstance().getPubSubModule();
 	}
 

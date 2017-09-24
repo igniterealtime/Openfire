@@ -20,8 +20,8 @@
         webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
-    PubSubServiceManager pubSubManager = webManager.getPubSubManager();
-    List<Node> nodes = pubSubManager.getLeafNodes();
+    PubSubServiceManager pubSubServiceManager = webManager.getPubSubManager();
+    List<Node> nodes = pubSubServiceManager.getLeafNodes();
 
     Collections.sort(nodes, new Comparator<Node>() {
         public int compare(Node node1, Node node2) {

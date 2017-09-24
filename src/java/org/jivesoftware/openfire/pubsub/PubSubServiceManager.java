@@ -12,8 +12,12 @@ public class PubSubServiceManager
 {
 	private PubSubService pubSubService;
 
-	public PubSubServiceManager() {
-		pubSubService = XMPPServer.getInstance().getPubSubModule();
+	public PubSubServiceManager( PubSubService pubSubService ) {
+	    if ( pubSubService == null )
+        {
+            throw new IllegalArgumentException( "Argument 'pubSubService' cannot be null." );
+        }
+        this.pubSubService = pubSubService;
 	}
 
 	public Collection<Node> getNodes() {

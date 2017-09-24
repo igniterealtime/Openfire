@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.pubsub.PubSubManager;
 import org.jivesoftware.openfire.pubsub.PubSubServiceManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
@@ -126,7 +127,7 @@ public class WebManager extends WebBean {
     }
 
     public PubSubServiceManager getPubSubManager() {
-        return new PubSubServiceManager();
+        return new PubSubManager();
     }
 
     /**

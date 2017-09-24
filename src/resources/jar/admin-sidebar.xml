@@ -431,6 +431,10 @@
                   url="user-message.jsp"
                   description="${sidebar.user-message.descr}"/>
 
+            <item id="server-connectiontest" name="${sidebar.server-connectiontest}"
+                  url="server-connectiontest.jsp"
+                  description="${sidebar.server-connectiontest.descr}"/>
+
         </sidebar>
     </tab>
 

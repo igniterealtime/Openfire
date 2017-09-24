@@ -1,17 +1,13 @@
-<%@ page import="java.util.Arrays,
+<%@ page import="org.jivesoftware.openfire.pubsub.LeafNode,
                  org.jivesoftware.openfire.pubsub.Node,
-                 org.jivesoftware.openfire.pubsub.LeafNode,
                  org.jivesoftware.openfire.pubsub.PublishedItem,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
                  java.net.URLEncoder,
-                 java.text.DateFormat"
+                 java.util.Arrays"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.muc.NotAllowedException" %>
-<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -33,7 +29,7 @@
 
 
     // Load the node object
-    Node node = webManager.getPubSubManager().getNode(nodeID);
+    Node node = webManager.getPubSubInfo().getNode( nodeID);
     if (node == null) {
         // The requested node does not exist so return to the list of the existing node
         response.sendRedirect("pubsub-node-summary.jsp");

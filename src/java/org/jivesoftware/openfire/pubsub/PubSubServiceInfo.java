@@ -1,18 +1,14 @@
 package org.jivesoftware.openfire.pubsub;
 
-
-import org.jivesoftware.openfire.XMPPServer;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-
-public class PubSubServiceManager
+public class PubSubServiceInfo
 {
 	private PubSubService pubSubService;
 
-	public PubSubServiceManager( PubSubService pubSubService ) {
+	public PubSubServiceInfo( PubSubService pubSubService ) {
 	    if ( pubSubService == null )
         {
             throw new IllegalArgumentException( "Argument 'pubSubService' cannot be null." );

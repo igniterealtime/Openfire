@@ -1,11 +1,11 @@
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.openfire.pubsub.Node,
-                 java.util.*,
-                 java.net.URLEncoder"
+<%@ page import="org.jivesoftware.openfire.pubsub.Node,
+                 org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
+                 org.jivesoftware.util.ParamUtils,
+                 java.util.Collections"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceManager" %>
-<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.util.Comparator" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -20,8 +20,8 @@
         webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
-    PubSubServiceManager pubSubServiceManager = webManager.getPubSubManager();
-    List<Node> nodes = pubSubServiceManager.getLeafNodes();
+    PubSubServiceInfo pubSubServiceInfo = webManager.getPubSubInfo();
+    List<Node> nodes = pubSubServiceInfo.getLeafNodes();
 
     Collections.sort(nodes, new Comparator<Node>() {
         public int compare(Node node1, Node node2) {

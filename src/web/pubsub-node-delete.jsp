@@ -1,8 +1,8 @@
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.openfire.pubsub.Node,
-                 java.net.URLEncoder"
+<%@ page import="org.jivesoftware.openfire.pubsub.Node,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
-%>
+%><%@ page import="org.jivesoftware.util.StringUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -34,7 +34,7 @@
     }
 
     // Load the node object
-	Node node = webManager.getPubSubManager().getNode(nodeID);
+	Node node = webManager.getPubSubInfo().getNode( nodeID);
 
     // Handle a node delete:
     if (delete) {

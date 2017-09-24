@@ -24,9 +24,9 @@ import org.jivesoftware.openfire.XMPPServer;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class PubSubManager extends PubSubServiceManager
+public class PubSubInfo extends PubSubServiceInfo
 {
-    public PubSubManager()
+    public PubSubInfo()
     {
         super( XMPPServer.getInstance().getPubSubModule() );
     }

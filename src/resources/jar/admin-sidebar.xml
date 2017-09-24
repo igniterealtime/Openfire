@@ -282,7 +282,35 @@
                   url="media-proxy.jsp"
                   description="${sidebar.media-proxy.descr}"/>
         </sidebar>
-                
+
+        <!-- PubSub Node Administration -->
+        <sidebar id="sidebar-pubsub" name="${sidebar.sidebar-pubsub}">
+            <!-- PubSub Node Summary -->
+            <item id="pubsub-node-summary" name="${sidebar.pubsub-node-summary}"
+                  url="pubsub-node-summary.jsp"
+                  description="${sidebar.pubsub-node-summary.descr}">
+
+                <!-- Node Options -->
+                <sidebar id="sidebar-node-options" name="${sidebar.sidebar-node-options}">
+
+                    <!-- Published Items -->
+                    <item id="pubsub-node-items" name="${sidebar.pubsub-node-items}"
+                          url="pubsub-node-items.jsp"
+                          description="${sidebar.pubsub-node-items.descr}"/>
+
+                    <!-- Node Subscribers -->
+                    <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
+                          url="pubsub-node-subscribers.jsp"
+                          description="${sidebar.pubsub-node-subscribers.descr}"/>
+
+                    <!-- Delete Node -->
+                    <item id="pubsub-node-delete" name="${sidebar.pubsub-node-delete}"
+                          url="pubsub-node-delete.jsp"
+                          description="${sidebar.pubsub-node-delete.descr}"/>
+                </sidebar>
+            </item>
+        </sidebar>
+
     </tab>
 
     <!-- Users/Groups -->
@@ -494,38 +522,6 @@
             <item id="muc-service-create" name="${sidebar.muc-service-create}"
                   url="muc-service-create.jsp"
                   description="${sidebar.muc-service-create.descr}"/>
-        </sidebar>
-    </tab>
-
-    <!-- PubSub Admin-->
-    <tab id="tab-pubsub" name="${tab.tab-pubsub}" url="pubsub-node-summary.jsp" description="${tab.tab-pubsub.descr}">
-
-        <!-- PubSub Node Administration -->
-        <sidebar id="sidebar-pubsub-nodes" name="${sidebar.sidebar-pubsub-nodes}">
-            <!-- PubSub Node Summary -->
-            <item id="pubsub-node-summary" name="${sidebar.pubsub-node-summary}"
-                  url="pubsub-node-summary.jsp"
-                  description="${sidebar.pubsub-node-summary.descr}">
-
-                <!-- Node Options -->
-                <sidebar id="sidebar-node-options" name="${sidebar.sidebar-node-options}">
-
-                    <!-- Published Items -->
-                    <item id="pubsub-node-items" name="${sidebar.pubsub-node-items}"
-                          url="pubsub-node-items.jsp"
-                          description="${sidebar.pubsub-node-items.descr}"/>
-
-                    <!-- Node Subscribers -->
-                    <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
-                          url="pubsub-node-subscribers.jsp"
-                          description="${sidebar.pubsub-node-subscribers.descr}"/>
-
-                    <!-- Delete Node -->
-                    <item id="pubsub-node-delete" name="${sidebar.pubsub-node-delete}"
-                          url="pubsub-node-delete.jsp"
-                          description="${sidebar.pubsub-node-delete.descr}"/>
-                </sidebar>
-            </item>
         </sidebar>
     </tab>
 

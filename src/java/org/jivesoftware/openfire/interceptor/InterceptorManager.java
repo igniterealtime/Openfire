@@ -253,7 +253,7 @@ public class InterceptorManager {
             // Do nothing
             return;
         }
-        String username = session.getAddress().getNode();
+        String username = session != null ? session.getAddress().getNode() : null;
         if (username != null && server.isLocal(session.getAddress())) {
             Collection<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
             if (userInterceptors != null && !userInterceptors.isEmpty()) {

@@ -16,17 +16,18 @@
 
 package org.jivesoftware.openfire.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketInterceptor;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
@@ -279,9 +280,11 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     !server.isLocal(to) && !XMPPServer.getInstance().matchesComponent(to)) {
                 // Do nothing since the sender and receiver of the packet that failed to reach a remote
                 // server are not local users. This prevents endless loops if the FROM or TO address
-                // are non-existen addresses
+                // are non-existent addresses
                 return;
             }
+
+            final Set<Packet> replies = new HashSet<>();
 
             // TODO Send correct error condition: timeout or not_found depending on the real error
             try {
@@ -292,7 +295,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setFrom(to);
                     reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+
+                    replies.add( reply );
                 }
                 else if (packet instanceof Presence) {
                 	// workaround for OF-23. "undo" the 'setFrom' to a bare JID 
@@ -310,8 +314,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 	                    reply.setTo(route);
 	                    reply.setFrom(to);
 	                    reply.setError(PacketError.Condition.remote_server_not_found);
-	                    routingTable.routePacket(reply.getTo(), reply, true);
-                	}
+
+	                    replies.add( reply );
+                    }
                 }
                 else if (packet instanceof Message) {
                     Message reply = new Message();
@@ -321,7 +326,25 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     reply.setType(((Message)packet).getType());
                     reply.setThread(((Message)packet).getThread());
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+
+                    replies.add( reply );
+                }
+
+                // Send all replies.
+                final SessionManager sessionManager = SessionManager.getInstance();
+                for ( final Packet reply : replies )
+                {
+                    try
+                    {
+                        final ClientSession session = sessionManager.getSession( reply.getTo() );
+                        InterceptorManager.getInstance().invokeInterceptors( reply, session, false, false );
+                        routingTable.routePacket( reply.getTo(), reply, true );
+                        InterceptorManager.getInstance().invokeInterceptors( reply, session, false, true );
+                    }
+                    catch ( PacketRejectedException ex )
+                    {
+                        Log.debug( "Reply got rejected by an interceptor: ", reply, ex );
+                    }
                 }
             }
             catch (Exception e) {

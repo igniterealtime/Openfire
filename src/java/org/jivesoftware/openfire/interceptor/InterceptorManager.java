@@ -16,18 +16,18 @@
 
 package org.jivesoftware.openfire.interceptor;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Packet;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.session.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.Packet;
 
 /**
  * An InterceptorManager manages the list of global interceptors and per-user
@@ -227,27 +227,8 @@ public class InterceptorManager {
             throws PacketRejectedException
     {
         // Invoke the global interceptors for this packet
-        // Checking if collection is empty to prevent creating an iterator of
-        // a CopyOnWriteArrayList that is an expensive operation
-        if (!globalInterceptors.isEmpty()) {
-            for (PacketInterceptor interceptor : globalInterceptors) {
-                try {
-                    interceptor.interceptPacket(packet, session, read, processed);
-                }
-                catch (PacketRejectedException e) {
-                    if (processed) {
-                        Log.error("Post interceptor cannot reject packet.", e);
-                    }
-                    else {
-                        // Throw this exception since we don't really want to catch it
-                        throw e;
-                    }
-                }
-                catch (Throwable e) {
-                    Log.error("Error in interceptor: " + interceptor + " while intercepting: " + packet, e);
-                }
-            }
-        }
+        invokeInterceptors( globalInterceptors, packet, session, read, processed );
+
         // Invoke the interceptors that are related to the address of the session
         if (usersInterceptors.isEmpty()) {
             // Do nothing
@@ -256,24 +237,51 @@ public class InterceptorManager {
         String username = session != null ? session.getAddress().getNode() : null;
         if (username != null && server.isLocal(session.getAddress())) {
             Collection<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
-            if (userInterceptors != null && !userInterceptors.isEmpty()) {
-                for (PacketInterceptor interceptor : userInterceptors) {
-                    try {
-                        interceptor.interceptPacket(packet, session, read, processed);
-                    }
-                    catch (PacketRejectedException e) {
-                        if (processed) {
-                            Log.error("Post interceptor cannot reject packet.", e);
-                        }
-                        else {
-                            // Throw this exception since we don't really want to catch it
-                            throw e;
-                        }
-                    }
-                    catch (Throwable e) {
-                        Log.error("Error in interceptor: " + interceptor + " while intercepting: " + packet, e);
-                    }
+            invokeInterceptors( userInterceptors, packet, session, read, processed );
+        }
+    }
+
+    /**
+     * Invokes a collection of interceptors for the provided packet.
+     *
+     * @param interceptors The interceptors to be triggered (can be null, can be empty).
+     * @param packet       the packet that has been read or is about to be sent.
+     * @param session      the session that received the packet or that the packet
+     *                     will be sent to.
+     * @param read         true indicates that the packet was read. When false, the packet
+     *                     is being sent to a user.
+     * @param processed    true if the packet has already processed (incoming or outgoing).
+     *                     If the packet hasn't already been processed, this flag will be false.
+     * @throws PacketRejectedException if the packet should be prevented from being processed.
+     */
+    protected static void invokeInterceptors( Collection<PacketInterceptor> interceptors, Packet packet, Session session, boolean read, boolean processed ) throws PacketRejectedException
+    {
+        if ( interceptors == null || interceptors.isEmpty() )
+        {
+            return;
+        }
+
+        for ( final PacketInterceptor interceptor : interceptors )
+        {
+            try
+            {
+                interceptor.interceptPacket( packet, session, read, processed );
+            }
+            catch ( PacketRejectedException e )
+            {
+                if ( processed )
+                {
+                    Log.error( "Post interceptor cannot reject packet.", e );
                 }
+                else
+                {
+                    // Throw this exception since we don't really want to catch it
+                    throw e;
+                }
+            }
+            catch ( Throwable e )
+            {
+                Log.error( "Error in interceptor: " + interceptor + " while intercepting: " + packet, e );
             }
         }
     }

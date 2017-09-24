@@ -91,7 +91,7 @@
     pageContext.setAttribute("csrf", csrfParam);
 
     pageContext.setAttribute("node", node);
-
+    pageContext.setAttribute("owner", owner );
 %>
 
 <html>
@@ -194,9 +194,7 @@
                     <c:param name="nodeID" value="${node.getNodeID()}" />
                     <c:param name="deleteID" value="${item.getID()}" />
                     <c:param name="csrf" value="${csrf}" />
-                    <c:if test="${not empty owner}">
-                        <c:param name="owner">${admin:urlEncode(owner)}</c:param>
-                    </c:if>
+                    <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}"/>
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">

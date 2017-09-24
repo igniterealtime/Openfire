@@ -35,6 +35,8 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.pubsub.PubSubInfo;
+import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.user.User;
@@ -122,6 +124,10 @@ public class WebManager extends WebBean {
 
     public XMPPServerInfo getServerInfo() {
         return getXMPPServer().getServerInfo();
+    }
+
+    public PubSubServiceInfo getPubSubInfo() {
+        return new PubSubInfo();
     }
 
     /**

@@ -282,7 +282,35 @@
                   url="media-proxy.jsp"
                   description="${sidebar.media-proxy.descr}"/>
         </sidebar>
-                
+
+        <!-- PubSub Node Administration -->
+        <sidebar id="sidebar-pubsub" name="${sidebar.sidebar-pubsub}">
+            <!-- PubSub Node Summary -->
+            <item id="pubsub-node-summary" name="${sidebar.pubsub-node-summary}"
+                  url="pubsub-node-summary.jsp"
+                  description="${sidebar.pubsub-node-summary.descr}">
+
+                <!-- Node Options -->
+                <sidebar id="sidebar-node-options" name="${sidebar.sidebar-node-options}">
+
+                    <!-- Published Items -->
+                    <item id="pubsub-node-items" name="${sidebar.pubsub-node-items}"
+                          url="pubsub-node-items.jsp"
+                          description="${sidebar.pubsub-node-items.descr}"/>
+
+                    <!-- Node Subscribers -->
+                    <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
+                          url="pubsub-node-subscribers.jsp"
+                          description="${sidebar.pubsub-node-subscribers.descr}"/>
+
+                    <!-- Delete Node -->
+                    <item id="pubsub-node-delete" name="${sidebar.pubsub-node-delete}"
+                          url="pubsub-node-delete.jsp"
+                          description="${sidebar.pubsub-node-delete.descr}"/>
+                </sidebar>
+            </item>
+        </sidebar>
+
     </tab>
 
     <!-- Users/Groups -->
@@ -312,7 +340,12 @@
                     <!-- User Groups -->
                     <item id="user-groups" name="${sidebar.user-groups}"
                           url="user-groups.jsp"
-                          description="${sidebar.user-groups.descr}"/>      
+                          description="${sidebar.user-groups.descr}"/>
+
+                    <!-- PEP Node Administration -->
+                    <item id="user-pep-node-summary" name="${sidebar.user-pep-node-summary}"
+                          url="pubsub-node-summary.jsp"
+                          description="${sidebar.user-pep-node-summary.descr}"/>
 
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"
@@ -500,8 +533,8 @@
     <!-- Plugins -->
     <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}">
 
-        <!-- Group Chat Settings -->
-        <sidebar id="sidebar-plugin-adamin" name="${sidebar.sidebar-plugin-admin}">
+        <!-- Plugin Admin -->
+        <sidebar id="sidebar-plugin-admin" name="${sidebar.sidebar-plugin-admin}">
 
             <!-- Plugins -->
             <item id="plugin-settings" name="${sidebar.plugin-settings}"

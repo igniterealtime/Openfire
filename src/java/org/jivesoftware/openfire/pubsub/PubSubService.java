@@ -35,7 +35,7 @@ import java.util.Map;
  * The separation between <code>PubSubService</code> and <code>PubSubEngine</code> allows to
  * reuse the handling of packets and at the same time be able to create different pubsub
  * services with different configurations. Examples of different pubsub services are:
- * JEP-60: Publish-Subscribe and JEP-163: Personal Eventing Protocol.
+ * XEP-60: Publish-Subscribe and XEP-163: Personal Eventing Protocol.
  *
  * @author Matt Tucker
  */

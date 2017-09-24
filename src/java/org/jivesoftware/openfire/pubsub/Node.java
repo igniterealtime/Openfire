@@ -1811,7 +1811,7 @@ public abstract class Node {
      * @return the subscription whose subscription ID matches the specified ID or <tt>null</tt>
      *         if none was found.
      */
-    NodeSubscription getSubscription(String subscriptionID) {
+    public NodeSubscription getSubscription(String subscriptionID) {
         return subscriptionsByID.get(subscriptionID);
     }
 

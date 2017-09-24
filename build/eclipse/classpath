@@ -32,7 +32,6 @@
 	<classpathentry kind="src" output="work/plugins-dev/userCreation/target/classes" path="src/plugins/userCreation/src/java"/>
 	<classpathentry kind="src" output="work/plugins-dev/userImportExport/target/classes" path="src/plugins/userImportExport/src/java"/>
 	<classpathentry kind="src" output="work/plugins-dev/userservice/target/classes" path="src/plugins/userservice/src/java"/>
-	<classpathentry kind="src" output="work/plugins-dev/websocket/target/classes" path="src/plugins/websocket/src/java"/>
 	<classpathentry kind="src" output="work/plugins-dev/xmldebugger/target/classes" path="src/plugins/xmldebugger/src/java"/>
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/test/throttletest/src"/>
@@ -125,12 +124,13 @@
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-fileupload.jar"/>
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-io.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="src/plugins/stunserver/lib/jstun-0.6.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/stunserver/lib/jstun-0.7.4.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-jmx.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/mina-integration-jmx.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcpg-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcpkix-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcprov-jdk15on.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/commons-pool2.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-servlets.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/spdy-client.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/spdy-core.jar"/>
@@ -161,7 +161,6 @@
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/rayo-core-2.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/netty-3.5.1.Final.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/freetts.jar"/>
-	<classpathentry kind="lib" path="src/plugins/websocket/lib/commons-pool2-2.3.jar"/>
 	<classpathentry kind="lib" path="src/plugins/hazelcast/lib/hazelcast-3.5.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/codecLib_dtmf.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/jspeex.jar"/>

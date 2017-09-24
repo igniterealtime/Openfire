@@ -10,18 +10,9 @@ import java.util.List;
 
 public class PubSubServiceManager
 {
-
-    private static final class NodeManagerContainer {
-        private static final PubSubServiceManager instance = new PubSubServiceManager();
-    }
-
-    public static PubSubServiceManager getInstance() {
-        return NodeManagerContainer.instance;
-    }
-
 	private PubSubService pubSubService;
 
-	private PubSubServiceManager() {
+	public PubSubServiceManager() {
 		pubSubService = XMPPServer.getInstance().getPubSubModule();
 	}
 

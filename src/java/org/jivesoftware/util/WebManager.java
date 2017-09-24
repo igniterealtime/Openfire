@@ -126,7 +126,7 @@ public class WebManager extends WebBean {
     }
 
     public PubSubServiceManager getPubSubManager() {
-        return PubSubServiceManager.getInstance();
+        return new PubSubServiceManager();
     }
 
     /**

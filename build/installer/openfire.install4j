@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="6.1.5" transformSequenceNumber="5">
+<install4j version="6.1.4" transformSequenceNumber="5">
   <directoryPresets config="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" />
   <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/release" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:VERSION_MAJOR}_${compiler:VERSION_MINOR}_${compiler:VERSION_REVISION}" compression="9" lzmaCompression="true" pack200Compression="false" excludeSignedFromPacking="true" commonExternalFiles="false" createMd5Sums="true" shrinkRuntime="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:VERSION_MAJOR}.${compiler:VERSION_MINOR}.${compiler:VERSION_REVISION}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" macVolumeId="419a18ebe125f2bf" javaMinVersion="1.5" javaMaxVersion="" allowBetaVM="true" jdkMode="runtimeJre" jdkName="">
     <languages skipLanguageSelection="false" languageSelectionInPrincipalLanguage="false">
@@ -867,8 +867,6 @@
       </autoUpdate>
     </windows>
   </mediaSets>
-  <buildIds buildAll="false">
-    <mediaSet refId="3" />
-  </buildIds>
+  <buildIds buildAll="false" />
   <buildOptions verbose="false" faster="false" disableSigning="false" disableJreBundling="false" debug="false" />
 </install4j>

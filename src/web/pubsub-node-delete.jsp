@@ -2,16 +2,30 @@
                  org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
-%><%@ page import="org.jivesoftware.util.StringUtils"%>
+%>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.net.URLDecoder" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
+<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceInfo" %>
+<%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
     boolean cancel = ParamUtils.getParameter(request,"cancel") != null;
     boolean delete = ParamUtils.getParameter(request,"delete") != null;
+    String ownerString = ParamUtils.getParameter( request, "owner" );
+    JID owner = null;
+    if (ownerString != null)
+    {
+        owner = new JID( URLDecoder.decode( ownerString, "UTF-8" )).asBareJID();
+    }
+
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -34,7 +48,16 @@
     }
 
     // Load the node object
-	Node node = webManager.getPubSubInfo().getNode( nodeID);
+    PubSubServiceInfo pubSubServiceInfo;
+    if ( owner == null )
+    {
+        pubSubServiceInfo = webManager.getPubSubInfo();
+    }
+    else
+    {
+        pubSubServiceInfo = new PEPServiceInfo( owner );
+    }
+    Node node = pubSubServiceInfo.getNode( nodeID );
 
     // Handle a node delete:
     if (delete) {
@@ -46,7 +69,7 @@
             webManager.logEvent("destroyed PubSub Node " + nodeID, "reason = " + reason );
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true");
+        response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true&owner=" + (owner != null ? URLEncoder.encode( owner.toBareJID(), "UTF-8") : "") );
         return;
     }
 

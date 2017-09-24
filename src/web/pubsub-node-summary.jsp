@@ -6,21 +6,40 @@
 %>
 <%@ page import="java.util.Comparator" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
+<%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("pubsub-node-summary", 15));
+    String ownerString = ParamUtils.getParameter( request, "owner" );
+    JID owner = null;
+    if (ownerString != null)
+    {
+        owner = new JID( URLDecoder.decode( ownerString, "UTF-8" )).asBareJID();
+    }
 
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
-    PubSubServiceInfo pubSubServiceInfo = webManager.getPubSubInfo();
+    PubSubServiceInfo pubSubServiceInfo;
+    if ( owner == null )
+    {
+        pubSubServiceInfo = webManager.getPubSubInfo();
+    }
+    else
+    {
+        pubSubServiceInfo = new PEPServiceInfo( owner );
+    }
+
     List<Node> nodes = pubSubServiceInfo.getLeafNodes();
 
     Collections.sort(nodes, new Comparator<Node>() {
@@ -48,6 +67,7 @@
     pageContext.setAttribute("curPage", curPage);
     pageContext.setAttribute("maxNodeIndex", maxNodeIndex);
     pageContext.setAttribute("nodes", nodes.subList(start, maxNodeIndex));
+    pageContext.setAttribute("owner", owner );
 
 %>
 <html>
@@ -93,6 +113,9 @@
     <c:forEach begin="1" end="${numPages}" varStatus="loop">
         <c:url value="pubsub-node-summary.jsp" var="url">
             <c:param name="start" value="${(loop.index-1)*range}" />
+            <c:if test="${not empty owner}">
+                <c:param name="owner">${admin:urlEncode(owner)}</c:param>
+            </c:if>
         </c:url>
         <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
             <c:out value="${loop.index}"/>

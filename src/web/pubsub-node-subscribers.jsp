@@ -6,15 +6,26 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="java.net.URLDecoder" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
+<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceInfo" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
 	String deleteID = ParamUtils.getParameter(request,"deleteID");
+    String ownerString = ParamUtils.getParameter( request, "owner" );
+    JID owner = null;
+    if (ownerString != null)
+    {
+        owner = new JID( URLDecoder.decode( ownerString, "UTF-8" )).asBareJID();
+    }
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -26,7 +37,17 @@
     }
 
     // Load the node object
-    Node node = webManager.getPubSubInfo().getNode( nodeID);
+    PubSubServiceInfo pubSubServiceInfo;
+    if ( owner == null )
+    {
+        pubSubServiceInfo = webManager.getPubSubInfo();
+    }
+    else
+    {
+        pubSubServiceInfo = new PEPServiceInfo( owner );
+    }
+
+    Node node = pubSubServiceInfo.getNode( nodeID );
     if (node == null) {
         // The requested node does not exist so return to the list of the existing node
         response.sendRedirect("pubsub-node-summary.jsp");
@@ -42,7 +63,7 @@
 	        // Log the event
 	        webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
 	        // Done, so redirect
-	        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deleteSuccess=true&owner=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
+	        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8") + "&deleteSuccess=true&owner=" + (owner != null ? URLEncoder.encode(owner.toBareJID(), "UTF-8") : "") + "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
 	        return;
         }
     }
@@ -75,7 +96,7 @@
             <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
             <td class="jive-icon-label">
             <fmt:message key="pubsub.node.subscribers.deleted">
-                <fmt:param value="${param.owner}"/>
+                <fmt:param value="${param.ownerOfDeleted}"/>
             </fmt:message>
             </td></tr>
         </tbody>
@@ -147,6 +168,9 @@
                     <c:param name="nodeID" value="${node.getNodeID()}" />
                     <c:param name="deleteID" value="${subscription.getID()}" />
                     <c:param name="csrf" value="${csrf}" />
+                    <c:if test="${not empty owner}">
+                        <c:param name="owner">${admin:urlEncode(owner)}</c:param>
+                    </c:if>
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">

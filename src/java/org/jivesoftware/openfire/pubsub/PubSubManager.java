@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PubSubManager extends BasicModule {
+public class PubSubManager {
 
     private static final class NodeManagerContainer {
         private static final PubSubManager instance = new PubSubManager();
@@ -22,7 +22,6 @@ public class PubSubManager extends BasicModule {
 	private PubSubService pubSubService;
 
 	private PubSubManager() {
-		super("PubSub Manager");
 		pubSubService = XMPPServer.getInstance().getPubSubModule();
 	}
 

@@ -9,6 +9,7 @@
 <%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
 <%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceInfo" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -20,10 +21,23 @@
     boolean cancel = ParamUtils.getParameter(request,"cancel") != null;
     boolean delete = ParamUtils.getParameter(request,"delete") != null;
     String ownerString = ParamUtils.getParameter( request, "owner" );
+    if ( ownerString == null )
+    {
+        ownerString = ParamUtils.getParameter( request, "username" );
+    }
+
     JID owner = null;
     if (ownerString != null)
     {
-        owner = new JID( URLDecoder.decode( ownerString, "UTF-8" )).asBareJID();
+        final String ownerValue = URLDecoder.decode( ownerString, "UTF-8" );
+        if ( ownerValue.contains( "@" ) )
+        {
+            owner = new JID( ownerValue ).asBareJID();
+        }
+        else
+        {
+            owner = XMPPServer.getInstance().createJID( ownerValue, null );
+        }
     }
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
@@ -80,8 +94,16 @@
 <html>
     <head>
         <title><fmt:message key="pubsub.node.delete.title"/></title>
-        <meta name="subPageID" content="pubsub-node-delete"/>
-        <meta name="extraParams" content="nodeID=${node.nodeID}"/>
+        <c:choose>
+            <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
+                <meta name="subPageID" content="user-pep-node-summary"/>
+                <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${node.nodeID}" />
+            </c:when>
+            <c:otherwise>
+                <meta name="subPageID" content="pubsub-node-delete"/>
+                <meta name="extraParams" content="nodeID=${node.nodeID}"/>
+            </c:otherwise>
+        </c:choose>
     </head>
     <body>
 

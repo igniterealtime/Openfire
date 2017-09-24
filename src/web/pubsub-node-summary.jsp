@@ -9,6 +9,9 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
 <%@ page import="java.net.URLDecoder" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.pep.PEPService" %>
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -20,10 +23,22 @@
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("pubsub-node-summary", 15));
     String ownerString = ParamUtils.getParameter( request, "owner" );
+    if ( ownerString == null )
+    {
+        ownerString = ParamUtils.getParameter( request, "username" );
+    }
     JID owner = null;
     if (ownerString != null)
     {
-        owner = new JID( URLDecoder.decode( ownerString, "UTF-8" )).asBareJID();
+        final String ownerValue = URLDecoder.decode( ownerString, "UTF-8" );
+        if ( ownerValue.contains( "@" ) )
+        {
+            owner = new JID( ownerValue ).asBareJID();
+        }
+        else
+        {
+            owner = XMPPServer.getInstance().createJID( ownerValue, null );
+        }
     }
 
     if (request.getParameter("range") != null) {
@@ -35,12 +50,24 @@
     {
         pubSubServiceInfo = webManager.getPubSubInfo();
     }
-    else
+    else if ( new PEPServiceManager().getPEPService( owner.toBareJID() ) != null )
     {
         pubSubServiceInfo = new PEPServiceInfo( owner );
     }
+    else
+    {
+        pubSubServiceInfo = null;
+    }
 
-    List<Node> nodes = pubSubServiceInfo.getLeafNodes();
+    List<Node> nodes;
+    if ( pubSubServiceInfo != null )
+    {
+        nodes = pubSubServiceInfo.getLeafNodes();
+    }
+    else
+    {
+        nodes = Collections.emptyList();
+    }
 
     Collections.sort(nodes, new Comparator<Node>() {
         public int compare(Node node1, Node node2) {
@@ -73,7 +100,15 @@
 <html>
     <head>
         <title><fmt:message key="pubsub.node.summary.title"/></title>
-        <meta name="pageID" content="pubsub-node-summary"/>
+        <c:choose>
+            <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
+                <meta name="subPageID" content="user-pep-node-summary"/>
+                <meta name="extraParams" content="username=${admin:urlEncode( owner.node)}" />
+            </c:when>
+            <c:otherwise>
+                <meta name="pageID" content="pubsub-node-summary"/>
+            </c:otherwise>
+        </c:choose>
     </head>
     <body>
 

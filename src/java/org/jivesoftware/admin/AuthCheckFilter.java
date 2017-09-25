@@ -33,6 +33,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public class AuthCheckFilter implements Filter {
 
     private ServletContext context;
     private String defaultLoginPage;
+    private ServletRequestAuthenticator servletRequestAuthenticator;
 
     /**
      * Adds a new string that when present in the requested URL will skip
@@ -122,6 +124,20 @@ public class AuthCheckFilter implements Filter {
                 excludes.add(tok);
             }
         }
+        final String servletRequestAuthenticatorClassName = getServletRequestAuthenticatorClassName();
+        if (!servletRequestAuthenticatorClassName.isEmpty()) {
+            try {
+                final Class clazz = ClassUtils.forName(servletRequestAuthenticatorClassName);
+                servletRequestAuthenticator = (ServletRequestAuthenticator) clazz.newInstance();
+            } catch (final Exception e) {
+                Log.error("Error loading ServletRequestAuthenticator: " + servletRequestAuthenticatorClassName, e);
+                servletRequestAuthenticator = null;
+            }
+        }
+    }
+
+    public static String getServletRequestAuthenticatorClassName() {
+        return JiveGlobals.getProperty("adminConsole.servlet-request-authenticator", "").trim();
     }
 
     @Override
@@ -147,13 +163,13 @@ public class AuthCheckFilter implements Filter {
         for (String exclude : excludes) {
             if (testURLPassesExclude(url, exclude)) {
                 doExclude = true;
-                break;   
+                break;
             }
         }
         if (!doExclude) {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
-            if (manager.getUser() == null) {
+            if (manager.getUser() == null && (servletRequestAuthenticator == null || !servletRequestAuthenticator.authenticateRequest(request))) {
                 response.sendRedirect(getRedirectURL(request, loginPage, null));
                 return;
             }

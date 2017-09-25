@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import com.sun.jndi.ldap.LdapCtxFactory;
+
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -82,6 +84,7 @@ import java.util.regex.Pattern;
 public class LdapManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
+    private static final String DEFAULT_LDAP_CONTEXT_FACTORY = LdapCtxFactory.class.getName();
 
     private static LdapManager instance;
     static {
@@ -409,12 +412,12 @@ public class LdapManager {
             catch (ClassNotFoundException cnfe) {
                 Log.error("Initial context factory class failed to load: " + initialContextFactory +
                         ".  Using default initial context factory class instead.");
-                initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
+                initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
             }
         }
         // Use default value if none was set.
         else {
-            initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
+            initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
         }
 
         StringBuilder buf = new StringBuilder();

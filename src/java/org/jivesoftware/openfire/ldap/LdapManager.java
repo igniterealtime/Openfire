@@ -84,6 +84,10 @@ import java.util.regex.Pattern;
 public class LdapManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
+    // Determine the name of the default LDAP context factory.
+    // NOTE: Extracting the name from the class rather than hard coding it allows the compiler to detect the use of this
+    // internal class and emit an appropriate warning ("warning: LdapCtxFactory is internal proprietary API and may be removed in a future release")
+    // This is deliberate, to highlight use of classes that may be removed in the future.
     private static final String DEFAULT_LDAP_CONTEXT_FACTORY = LdapCtxFactory.class.getName();
 
     private static LdapManager instance;

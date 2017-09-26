@@ -348,7 +348,7 @@ public abstract class Node {
     private void removeAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
         // Get the current affiliation of the specified JID
         NodeAffiliate affiliate = getAffiliate(jid);
-        // Check if the current affiliatin of the user is the one to remove
+        // Check if the current affiliation of the user is the one to remove
         if (affiliate != null && affiliation == affiliate.getAffiliation()) {
             removeAffiliation(affiliate);
         }
@@ -415,6 +415,16 @@ public abstract class Node {
         } else {
             return subscriptionsByJID.values();
         }
+    }
+
+    /**
+     * Returns all affiliates of the node.
+     *
+     * @return All affiliates of the node.
+     */
+    public Collection<NodeAffiliate> getAllAffiliates() {
+
+        return affiliates;
     }
 
     /**

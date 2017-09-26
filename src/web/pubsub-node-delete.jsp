@@ -82,7 +82,7 @@
             webManager.logEvent("destroyed PubSub Node " + nodeID, "reason = " + reason );
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true"
+        response.sendRedirect("pubsub-node-summary.jsp?deleteSuccess=true"
             + (owner != null ? "&owner=" + URLEncoder.encode( owner.toBareJID(), "UTF-8") : "") );
         return;
     }

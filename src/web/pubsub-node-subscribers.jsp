@@ -137,6 +137,7 @@
             <th scope="col"><fmt:message key="pubsub.node.summary.name" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.description" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.items" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.summary.affiliates" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.subscribers" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.created" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.modified" /></th>
@@ -148,6 +149,7 @@
             <td><c:out value="${node.getName()}"/></td>
             <td><c:out value="${node.getDescription()}"/></td>
             <td><c:out value="${node.getPublishedItems().size()}"/></td>
+            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
             <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
             <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
             <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
@@ -167,12 +169,21 @@
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
             <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.subscribers.affiliation" /></th>
             <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
             <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
             <th scope="col"><fmt:message key="global.delete" /></th>
         </tr>
     </thead>
     <tbody>
+        <c:if test="${empty node.getAllSubscriptions()}">
+        <tr>
+            <td align="center" colspan="6">
+                <fmt:message key="pubsub.node.subscribers.table.no_subscribers" />
+            </td>
+        </tr>
+        </c:if>
+
         <c:forEach var="subscription" items="${node.getAllSubscriptions()}">
         <tr>
             <td>
@@ -180,6 +191,9 @@
             </td>
             <td>
             <c:out value="${subscription.getJID().getResource()}"/>
+            </td>
+            <td>
+            <c:out value="${subscription.getAffiliate().getAffiliation().name()}"/>
             </td>
             <td>
             <c:out value="${subscription.getState().name()}"/>

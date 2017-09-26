@@ -298,6 +298,11 @@
                           url="pubsub-node-items.jsp"
                           description="${sidebar.pubsub-node-items.descr}"/>
 
+                    <!-- Node Affiliates -->
+                    <item id="pubsub-node-affiliates" name="${sidebar.pubsub-node-affiliates}"
+                          url="pubsub-node-affiliates.jsp"
+                          description="${sidebar.pubsub-node-affiliates.descr}"/>
+
                     <!-- Node Subscribers -->
                     <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
                           url="pubsub-node-subscribers.jsp"

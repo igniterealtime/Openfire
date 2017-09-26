@@ -141,6 +141,7 @@
             <th scope="col"><fmt:message key="pubsub.node.summary.name" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.description" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.items" /></th>
+            <th scope="col"><fmt:message key="pubsub.node.summary.affiliates" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.subscribers" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.created" /></th>
             <th scope="col"><fmt:message key="pubsub.node.summary.modified" /></th>
@@ -152,6 +153,7 @@
             <td><c:out value="${node.getName()}"/></td>
             <td><c:out value="${node.getDescription()}"/></td>
             <td><c:out value="${node.getPublishedItems().size()}"/></td>
+            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
             <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
             <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
             <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
@@ -177,6 +179,13 @@
         </tr>
     </thead>
     <tbody>
+        <c:if test="${empty node.getPublishedItems()}">
+        <tr>
+            <td align="center" colspan="5">
+                <fmt:message key="pubsub.node.items.table.no_items" />
+            </td>
+        </tr>
+        </c:if>
         <c:forEach var="item" items="${node.getPublishedItems()}">
         <tr>
             <td>

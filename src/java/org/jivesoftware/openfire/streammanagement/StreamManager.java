@@ -293,6 +293,10 @@ public class StreamManager {
 	 */
 	private void sendServerRequest() {
 		if(isEnabled()) {
+		    if (session.getConnection() == null) {
+		        Log.debug("Session is detached, won't request an ack.");
+		        return;
+            }
 			String request = String.format("<r xmlns='%s' />", namespace);
 			session.deliverRawText( request );
 		}

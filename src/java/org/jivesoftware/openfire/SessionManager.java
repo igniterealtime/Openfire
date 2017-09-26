@@ -1536,6 +1536,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
+    public void setSessionDetachTime(int idleTime) {
+        if (getSessionDetachTime() == idleTime) {
+            return;
+        }
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.session.detach.timeout", Integer.toString(idleTime));
+    }
+
+    public int getSessionDetachTime() {
+        return JiveGlobals.getIntProperty("xmpp.session.detach.timeout", 10 * 60 * 1000);
+    }
+
     public Cache<String, ClientSessionInfo> getSessionInfoCache() {
         return sessionInfoCache;
     }

@@ -92,6 +92,13 @@ class LocalSessionManager {
     private final Map<StreamID, LocalIncomingServerSession> incomingServerSessions =
             new ConcurrentHashMap<>();
 
+    /**
+     * Sessions contained in this Map are (client?) sessions which are detached.
+     * Sessions remaining here too long will be reaped, but they will be checked
+     * to see if they have in fact resumed since.
+     */
+    private final Map<StreamID, LocalSession> detachedSessions = new ConcurrentHashMap<>();
+
 
     public Map<String, LocalClientSession> getPreAuthenticatedSessions() {
         return preAuthenticatedSessions;
@@ -171,6 +178,34 @@ class LocalSessionManager {
             }
             final long deadline = System.currentTimeMillis() - idleTime;
             for (LocalIncomingServerSession session : incomingServerSessions.values()) {
+                try {
+                    if (session.getLastActiveDate().getTime() < deadline) {
+                        session.close();
+                    }
+                }
+                catch (Throwable e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Task that closes detached client sessions.
+     */
+    private class ClientCleanupTask extends TimerTask {
+        /**
+         * Close detached client sessions that haven't seen activity in more than
+         * 30 minutes by default.
+         */
+        @Override
+        public void run() {
+            int idleTime = SessionManager.getInstance().getSessionDetachTime();
+            if (idleTime == -1) {
+                return;
+            }
+            final long deadline = System.currentTimeMillis() - idleTime;
+            for (LocalSession session : detachedSessions.values()) {
                 try {
                     if (session.getLastActiveDate().getTime() < deadline) {
                         session.close();

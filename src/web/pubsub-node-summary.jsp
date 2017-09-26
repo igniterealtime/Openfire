@@ -115,7 +115,7 @@
 <fmt:message key="pubsub.node.summary.info" />
 </p>
 
-<c:if test="${param.deletesuccess}">
+<c:if test="${param.deleteSuccess}">
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -169,6 +169,7 @@
         <th nowrap><fmt:message key="pubsub.node.summary.name" /></th>
         <th nowrap><fmt:message key="pubsub.node.summary.description" /></th>
         <th nowrap><fmt:message key="pubsub.node.summary.items" /></th>
+        <th nowrap><fmt:message key="pubsub.node.summary.affiliates" /></th>
         <th nowrap><fmt:message key="pubsub.node.summary.subscribers" /></th>
         <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
@@ -178,7 +179,7 @@
 <c:if test="${nodeCount lt 1}">
     <tr>
         <td align="center" colspan="7">
-            <fmt:message key="pubsub.node.summary.no_nodes" />
+            <fmt:message key="pubsub.node.summary.table.no_nodes" />
         </td>
     </tr>
 </c:if>
@@ -192,7 +193,7 @@
         <td width="1%" valign="middle">
             <c:out value="${node.getNodeID()}"/>
         </td>
-        <td width="1%" valign="middle">
+        <td nowrap width="1%" valign="middle">
             <c:out value="${node.getName()}"/>
         </td>
         <td valign="middle">
@@ -205,6 +206,15 @@
             </c:url>
             <a href="${url}">
                 <c:out value="${node.getPublishedItems().size()}" />
+            </a>
+        </td>
+        <td width="1%" align="center">
+            <c:url value="pubsub-node-affiliates.jsp" var="url">
+                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:param name="owner" value="${owner}" />
+            </c:url>
+            <a href="${url}">
+                <c:out value="${node.getAllAffiliates().size()}" />
             </a>
         </td>
         <td width="1%" align="center">

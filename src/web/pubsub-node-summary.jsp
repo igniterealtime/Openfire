@@ -1,21 +1,21 @@
-<%@ page import="org.jivesoftware.openfire.pubsub.Node,
+<%@ page import="org.jivesoftware.openfire.pep.PEPService,
+                 org.jivesoftware.openfire.pep.PEPServiceInfo,
+                 org.jivesoftware.openfire.pep.PEPServiceManager,
+                 org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
+                 org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.ParamUtils,
-                 java.util.Collections"
+                 org.xmpp.packet.JID,
+                 java.util.Collections,
+                 java.util.Comparator,
+                 java.util.List"
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.Comparator" %>
-<%@ page import="java.util.List" %>
-<%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
-<%@ page import="java.net.URLDecoder" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPService" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -30,14 +30,13 @@
     JID owner = null;
     if (ownerString != null)
     {
-        final String ownerValue = URLDecoder.decode( ownerString, "UTF-8" );
-        if ( ownerValue.contains( "@" ) )
+        if ( ownerString.contains( "@" ) )
         {
-            owner = new JID( ownerValue ).asBareJID();
+            owner = new JID( ownerString ).asBareJID();
         }
         else
         {
-            owner = XMPPServer.getInstance().createJID( ownerValue, null );
+            owner = XMPPServer.getInstance().createJID( ownerString, null );
         }
     }
 
@@ -103,7 +102,7 @@
         <c:choose>
             <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
                 <meta name="subPageID" content="user-pep-node-summary"/>
-                <meta name="extraParams" content="username=${admin:urlEncode( owner.node)}" />
+                <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}" />
             </c:when>
             <c:otherwise>
                 <meta name="pageID" content="pubsub-node-summary"/>
@@ -148,7 +147,7 @@
     <c:forEach begin="1" end="${numPages}" varStatus="loop">
         <c:url value="pubsub-node-summary.jsp" var="url">
             <c:param name="start" value="${(loop.index-1)*range}" />
-            <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}"/>
+            <c:param name="owner" value="${owner}"/>
         </c:url>
         <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
             <c:out value="${loop.index}"/>
@@ -202,7 +201,7 @@
         <td width="1%" align="center">
             <c:url value="pubsub-node-items.jsp" var="url">
                 <c:param name="nodeID" value="${node.getNodeID()}" />
-                <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}" />
+                <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}">
                 <c:out value="${node.getPublishedItems().size()}" />
@@ -211,7 +210,7 @@
         <td width="1%" align="center">
             <c:url value="pubsub-node-subscribers.jsp" var="url">
                 <c:param name="nodeID" value="${node.getNodeID()}" />
-                <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}" />
+                <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}">
                 <c:out value="${node.getAllSubscriptions().size()}" />
@@ -220,7 +219,7 @@
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">
                 <c:param name="nodeID" value="${node.getNodeID()}" />
-                <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}" />
+                <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}" title="<fmt:message key="global.click_delete" />">
                 <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
@@ -241,7 +240,7 @@
     <c:forEach begin="1" end="${numPages}" varStatus="loop">
         <c:url value="pubsub-node-summary.jsp" var="url">
             <c:param name="start" value="${(loop.index-1)*range}" />
-            <c:param name="owner" value="${not empty owner ? admin:urlEncode(owner) : ''}" />
+            <c:param name="owner" value="${owner}" />
         </c:url>
         <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
             <c:out value="${loop.index}"/>

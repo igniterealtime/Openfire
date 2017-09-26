@@ -1,19 +1,19 @@
-<%@ page import="org.jivesoftware.openfire.pubsub.Node,
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+                 org.jivesoftware.openfire.pubsub.Node,
+                 org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
+                 org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.CookieUtils,
-                 org.jivesoftware.util.ParamUtils"
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.xmpp.packet.JID,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="java.net.URLDecoder" %>
-<%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo" %>
-<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceInfo" %>
-<%@ page import="java.net.URLEncoder" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -29,14 +29,13 @@
     JID owner = null;
     if (ownerString != null)
     {
-        final String ownerValue = URLDecoder.decode( ownerString, "UTF-8" );
-        if ( ownerValue.contains( "@" ) )
+        if ( ownerString.contains( "@" ) )
         {
-            owner = new JID( ownerValue ).asBareJID();
+            owner = new JID( ownerString ).asBareJID();
         }
         else
         {
-            owner = XMPPServer.getInstance().createJID( ownerValue, null );
+            owner = XMPPServer.getInstance().createJID( ownerString, null );
         }
     }
 
@@ -57,7 +56,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-summary.jsp");
+        response.sendRedirect("pubsub-node-summary.jsp"+ (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
         return;
     }
 
@@ -83,11 +82,13 @@
             webManager.logEvent("destroyed PubSub Node " + nodeID, "reason = " + reason );
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true&owner=" + (owner != null ? URLEncoder.encode( owner.toBareJID(), "UTF-8") : "") );
+        response.sendRedirect("pubsub-node-summary.jsp?deletesuccess=true"
+            + (owner != null ? "&owner=" + URLEncoder.encode( owner.toBareJID(), "UTF-8") : "") );
         return;
     }
 
     pageContext.setAttribute("node", node);
+    pageContext.setAttribute("owner", owner);
 
 %>
 
@@ -97,11 +98,11 @@
         <c:choose>
             <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
                 <meta name="subPageID" content="user-pep-node-summary"/>
-                <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${node.nodeID}" />
+                <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${admin:urlEncode(node.nodeID)}" />
             </c:when>
             <c:otherwise>
                 <meta name="subPageID" content="pubsub-node-delete"/>
-                <meta name="extraParams" content="nodeID=${node.nodeID}"/>
+                <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
             </c:otherwise>
         </c:choose>
     </head>
@@ -118,6 +119,7 @@
 <form action="pubsub-node-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
 	<input type="hidden" name="nodeID" value="${node.nodeID}">
+	<input type="hidden" name="owner" value="${owner}">
 
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>

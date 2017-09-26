@@ -35,11 +35,12 @@
 <%!
     static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
+	static final String ALL = "all";
     static final String ERROR = "error";
     static final String INFO = "info";
     static final String WARN = "warn";
     static final String DEBUG = "debug";
-    static final String DEFAULT = ERROR;
+    static final String DEFAULT = ALL;
 
     static final String ASCENDING = "asc";
     static final String DESCENDING = "desc";
@@ -87,7 +88,7 @@
     {
         // Get the cookie associated with the log files
         HashMap cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
-        String[] logs = {"error", "info", "warn", "debug"};
+        String[] logs = {"all", "error", "info", "warn", "debug"};
         HashMap<String,String> newCookie = new HashMap<String,String>();
         HashMap<String,String> updates = new HashMap<String,String>();
         for (String log : logs) {
@@ -151,7 +152,10 @@
 
     if (clearLog && log != null) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            if ("error".equals(log)) {
+            if ("all".equals(log)) {
+                Log.rotateAllLogFile();
+            }
+            else if ("error".equals(log)) {
                 Log.rotateErrorLogFile();
             }
             else if ("warn".equals(log)) {
@@ -268,6 +272,14 @@ IFRAME {
 <tbody>
     <tr>
         <td class="jive-spacer" width="1%">&nbsp;</td>
+        <td class="jive-tab<%= (("all".equals(log))?"-active":"") %>" width="1%">
+            <a href="logviewer.jsp?log=all"
+            ><fmt:message key="logviewer.all" /></a>
+            <span class="new">
+            <%= ((newlogs.containsKey("all"))?"*":"") %>
+            </span>
+        </td>
+        <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("error".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=error"
             ><fmt:message key="logviewer.error" /></a>
@@ -383,6 +395,7 @@ IFRAME {
                                 <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
                                  ><fmt:message key="logviewer.clear" /></a>
                             </td>
+                            <%  if (! "all".equals(log)) { %>
                             <td class="icon">
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_mark" />"></a>
                             </td>
@@ -390,6 +403,7 @@ IFRAME {
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"
                                  ><fmt:message key="logviewer.mark" /></a>
                             </td>
+                            <% } %>
                         </tr>
                     </tbody>
                     </table>

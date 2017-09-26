@@ -307,6 +307,13 @@ public class Log {
         emptyFile(logFile);
     }
 
+    public static void rotateAllLogFile() {
+        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
+        File logFile = new File(Log.getLogDirectory(), "all.log");
+        emptyFile(logFile);
+    }
+
+    
     /**
      * Returns the directory that log files exist in. The directory name will
      * have a File.separator as the last character in the string.

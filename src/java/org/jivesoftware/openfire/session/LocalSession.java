@@ -139,6 +139,7 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
+        this.sessionManager.addDetached(this);
         this.conn = null;
     }
 
@@ -156,6 +157,7 @@ public abstract class LocalSession implements Session {
         this.conn = connection;
         this.conn.reinit(this);
         this.status = STATUS_AUTHENTICATED;
+        this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
     }
 

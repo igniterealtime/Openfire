@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class ScramSha1SaslServer implements SaslServer {
     private String serverFirstMessage;
     private String clientFirstMessageBare;
     private SecureRandom random = new SecureRandom();
-    
+
     private enum State {
     	INITIAL,
     	IN_PROGRESS,
@@ -149,14 +150,9 @@ public class ScramSha1SaslServer implements SaslServer {
         String clientNonce = m.group(7);
         nonce = clientNonce + UUID.randomUUID().toString();
 
-        try {
-			serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getSalt(username)),
-					getIterations(username));
-		} catch (UserNotFoundException e) {
-            throw new SaslException(e.getMessage(), e);
-		}
-        
- return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
+        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getSalt(username)),
+                getIterations(username));
+        return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -332,8 +328,13 @@ public class ScramSha1SaslServer implements SaslServer {
     /**
      * Retrieve the iteration count from the database for a given username.
      */
-    private int getIterations(final String username) throws UserNotFoundException {
-    	return AuthFactory.getIterations(username);
+    private int getIterations(final String username) {
+        try {
+            return AuthFactory.getIterations(username);
+        } catch (UserNotFoundException e) {
+            return JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
+                ScramUtils.DEFAULT_ITERATION_COUNT);
+        }
     }
     
     /**

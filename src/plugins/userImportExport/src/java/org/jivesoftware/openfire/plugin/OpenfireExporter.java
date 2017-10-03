@@ -232,11 +232,11 @@ public class OpenfireExporter implements InExporter {
         }
       }
 
-      if ((userName != null) && (password != null)) {
+      if (userName != null) {
         try {
           userName = Stringprep.nodeprep(userName);
 
-          if (isUserProviderReadOnly) {
+          if (!isUserProviderReadOnly && (password != null)) {
             userManager.createUser(userName, password, name, email);
           }
 

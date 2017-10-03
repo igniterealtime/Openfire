@@ -6,7 +6,7 @@
 
 
 	<name>GoJara</name>
-	<description>ProtoXEP-xxxx: Remote Roster Management support
+	<description>XEP-0321: Remote Roster Management support
 	</description>
 	<author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
 	<version>2.2.0</version>

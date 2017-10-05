@@ -78,6 +78,8 @@
         if (affiliate != null) {
             JID jid = new JID(affiliateJID);
 
+            String oldAffiliation = affiliate.getAffiliation().name();
+
             switch(NodeAffiliate.Affiliation.valueOf(affiliation)) {
 	            case outcast:
 	                node.addOutcast(jid);
@@ -105,7 +107,7 @@
             }
 
             // Log the event
-            webManager.logEvent("changed affiliation between Node: " + nodeID + ", and JID: " + affiliate, "Changed to " + affiliation);
+            webManager.logEvent("Changed affiliation between Node: " + nodeID + ", and JID: " + affiliateJID, "Changed from " + oldAffiliation +" to " + affiliation);
         }
         // Done, so redirect
         response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID+"&updateSuccess=true&affiliateJID="+affiliateJID);
@@ -235,7 +237,7 @@
 		<br>
 		<br>
 
-	    <input type="submit" name="update" value="<fmt:message key="pubsub.node.affiliates.edit.update" />">
+	    <input type="submit" name="update" value="<fmt:message key="global.update" />">
 	    <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 	</form>
 

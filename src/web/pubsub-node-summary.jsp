@@ -194,7 +194,7 @@
 
     <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
         <td width="1%">
-            <c:out value="${loop.index}"/>
+            <c:out value="${start + 1 + loop.index}"/>
         </td>
         <td width="1%" valign="middle">
             <c:out value="${node.getNodeID()}"/>

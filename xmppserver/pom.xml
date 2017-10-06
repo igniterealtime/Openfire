@@ -345,7 +345,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.4-1201-jdbc4</version>
+            <version>42.1.4.jre7</version>
         </dependency>
 
         <!-- Test Scope -->

@@ -406,7 +406,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Load the list of JIDs that are sysadmins of the PubSub service
         String property = JiveGlobals.getProperty("xmpp.pubsub.sysadmin.jid");
         String[] jids;
-        if (property != null) {
+        if (property != null && !property.isEmpty()) {
             jids = property.split(",");
             for (String jid : jids) {
                 sysadmins.add(jid.trim().toLowerCase());
@@ -415,7 +415,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         nodeCreationRestricted = JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", false);
         // Load the list of JIDs that are allowed to create nodes
         property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
-        if (property != null) {
+        if (property != null && !property.isEmpty()) {
             jids = property.split(",");
             for (String jid : jids) {
                 allowedToCreate.add(jid.trim().toLowerCase());

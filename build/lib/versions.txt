@@ -73,7 +73,7 @@ ognl.jar                            | 3.0.5 (Apache Mina 2.0.7)                 
 mysql.jar                           | 5.1.42                                                       | GPL
 objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
 pack200task.jar                     | August 5, 2004                                               | LGPL
-postgres.jar                        | 9.4-1201.jdbc4                                               | BSD (http://jdbc.postgresql.org/license.html)
+postgres.jar                        | 42.1.4 JDBC 41 jre7                                          | BSD (http://jdbc.postgresql.org/license.html)
 proxool.jar                         | 0.9.0RC3+ (see note #1)                                      | Apache 1.1 (http://proxool.sourceforge.net/licence.html)
 rome.jar                            | 0.9                                                          | Apache 2.0
 rome-fetcher.jar                    | 0.9                                                          | Apache 2.0

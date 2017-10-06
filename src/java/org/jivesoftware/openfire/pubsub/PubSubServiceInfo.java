@@ -149,40 +149,37 @@ public class PubSubServiceInfo {
         for (FormField field : form.getFields()) {
 
             if (excludedFields == null || !excludedFields.contains(field.getVariable())) {
+
+                FormField completedField = completedForm.addField(field.getVariable(), field.getLabel(), field.getType());
+
                 switch (field.getType()) {
                 case boolean_type:
-                    FormField boolField = completedForm.addField(field.getVariable(), field.getLabel(),
-                            field.getType());
-                    boolField.addValue(ParamUtils.getBooleanParameter(request, field.getVariable()));
+                    completedField.addValue(ParamUtils.getBooleanParameter(request, field.getVariable()));
                     break;
                 case jid_multi:
-                    FormField multiJidField = completedForm.addField(field.getVariable(), field.getLabel(),
-                            field.getType());
                     for (String param : ParamUtils.getParameters(request, field.getVariable())) {
-                        multiJidField.addValue(param);
+                        completedField.addValue(param);
                     }
                     break;
                 case list_multi:
-                    FormField multiListField = completedForm.addField(field.getVariable(), field.getLabel(),
-                            field.getType());
                     for (String param : ParamUtils.getParameters(request, field.getVariable())) {
-                        multiListField.addValue(param);
+                        completedField.addValue(param);
                     }
                     break;
                 case list_single:
-                    FormField listField = completedForm.addField(field.getVariable(), field.getLabel(),
-                            field.getType());
-                    listField.addValue(ParamUtils.getParameter(request, field.getVariable()));
+                    completedField.addValue(ParamUtils.getParameter(request, field.getVariable()));
                     break;
                 case text_single:
-                    FormField textField = completedForm.addField(field.getVariable(), field.getLabel(),
-                            field.getType());
-                    textField.addValue(ParamUtils.getParameter(request, field.getVariable()));
+                    completedField.addValue(ParamUtils.getParameter(request, field.getVariable()));
                     break;
                 default:
-                    completedForm.addField(field.getVariable(), field.getLabel(), field.getType());
                     break;
                 }
+
+                for(FormField.Option option: field.getOptions()) {
+                    completedField.addOption(option.getLabel(), option.getValue());
+                }
+
             }
         }
         return completedForm;

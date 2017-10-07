@@ -19,6 +19,7 @@ RUN apt-get update -qq \
     && apt-get install -yqq sudo \
     && adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group openfire \
     && chmod 755 /sbin/entrypoint.sh \
+    && chown -R openfire:openfire ${OPENFIRE_DIR} \
     && mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \
     && mv ${OPENFIRE_DIR}/plugins ${OPENFIRE_DIR}/plugins_org \
     && mv ${OPENFIRE_DIR}/resources/security ${OPENFIRE_DIR}/resources/security_org \

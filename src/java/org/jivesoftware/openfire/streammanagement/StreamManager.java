@@ -258,7 +258,7 @@ public class StreamManager {
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
-        if (!otherSession.getDetached()) {
+        if (!otherSession.isDetached()) {
             otherSession.setDetached();
         }
         // If we're all happy, disconnect this session.
@@ -293,7 +293,7 @@ public class StreamManager {
 	 */
 	private void sendServerRequest() {
 		if(isEnabled()) {
-		    if (session.getConnection() == null) {
+		    if (session.isDetached()) {
 		        Log.debug("Session is detached, won't request an ack.");
 		        return;
             }

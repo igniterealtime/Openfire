@@ -139,7 +139,9 @@ class LocalRoutingTable {
                     LocalSession session = (LocalSession) route;
                     try {
                         // Notify connected client that the server is being shut down
-                        session.getConnection().systemShutdown();
+                        if (!session.isDetached()) {
+                            session.getConnection().systemShutdown();
+                        }
                     }
                     catch (Throwable t) {
                         // Ignore.

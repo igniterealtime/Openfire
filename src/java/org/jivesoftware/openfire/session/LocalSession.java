@@ -130,7 +130,7 @@ public abstract class LocalSession implements Session {
      *
      * @return true if session detached
      */
-    public boolean getDetached() {
+    public boolean isDetached() {
         return this.conn == null;
     }
 
@@ -192,6 +192,13 @@ public abstract class LocalSession implements Session {
      * @return The connection for this session
      */
     public Connection getConnection() {
+        if (conn == null) {
+            try {
+                conn.isClosed(); // This generates an NPE deliberately.
+            } catch (NullPointerException e) {
+                Log.error("Attempt to read connection of detached session: ", e);
+            }
+        }
         return conn;
     }
 

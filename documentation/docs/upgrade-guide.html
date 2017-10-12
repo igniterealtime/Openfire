@@ -40,6 +40,14 @@
         <li>Start Openfire (when using a service, start it manually).</li>
     </ol>
 	<p><b>Since 4.1.5 the installer will stop and reinstall the service and then start it again automatically.</b></p>
+    
+<h3>Windows EXE (upgrading from x86 to x64 version)</h3>
+    <ol>
+        <li>(fastest option) When running the x64 installer point it to the current installation folder of Openfire (by default C:\Program files (x86)\Openfire). If you have Openfire service installed (version prior 4.1.5), stop it first. During the installation it will install/reinstall the service and on the last step you will have to choose whether to run it.</li>
+        <li>(safest option) When running the x64 installer point it to a new installation folder (by default C:\Program Files\Openfire). If you have Openfire service installed (version prior 4.1.5), stop it first. During the installation it will install/reinstall the service. On the last step check not to start the service. Copy the /conf, /embedded-db (if using this database), /plugins, /resources/security from the old installation folder to the new one. Manually start the services via Services control page.</li>
+    </ol><br>
+            
+    <p>The upgrade guide has been tested against 4.1.4 and newer versions. It should work for older versions, but the results may be different for very old versions. You won't have to stop the service before the upgrade since the version 4.1.5. It will stop and reinstall it automatically.</p>
 
 <h3>RPM - RedHat based unix systems (RHEL, CentOS, Fedora, etc)</h3>
     <ol>

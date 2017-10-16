@@ -106,10 +106,9 @@
             errors.put("propValueLength","");
         }
         if (errors.size() == 0) {
-        	JiveGlobals.setPropertyEncrypted(propName, encrypt);
-            JiveGlobals.setProperty(propName, propValue);
+            JiveGlobals.setProperty(propName, propValue, encrypt);
             // Log the event
-            webManager.logEvent("set server property "+propName, propName+" = "+propValue);
+            webManager.logEvent("set server property "+propName, propName+" = " + (encrypt ? "********" : propValue));
             response.sendRedirect("server-properties.jsp?success=true");
             return;
         }

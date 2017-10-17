@@ -169,8 +169,9 @@
     <tr>
         <th width="39%" nowrap><fmt:message key="system.cache.head.name" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.max" /></th>
+        <th width="10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.current" /></th>
-        <th width="20%" nowrap><fmt:message key="system.cache.head.percent" /></th>
+        <th width="10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
         <th width="20%" nowrap><fmt:message key="system.cache.head.effectiveness" /></th>
         <th width="1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
@@ -213,6 +214,13 @@
         <td class="c2">
             <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
                 <%= mbFormat.format(totalMem) %> MB
+            <% } else { %>
+                <fmt:message key="global.unlimited" />
+            <% } %>
+        </td>
+        <td class="c2">
+            <% if (cache.getMaxLifetime() != -1) { %>
+                <%= cache.getMaxLifetime() %> ms
             <% } else { %>
                 <fmt:message key="global.unlimited" />
             <% } %>

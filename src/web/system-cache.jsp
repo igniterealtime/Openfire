@@ -220,7 +220,7 @@
         </td>
         <td class="c2">
             <% if (cache.getMaxLifetime() != -1) { %>
-                <%= cache.getMaxLifetime() %> ms
+                <%= StringUtils.getFullElapsedTime(cache.getMaxLifetime()) %>
             <% } else { %>
                 <fmt:message key="global.unlimited" />
             <% } %>

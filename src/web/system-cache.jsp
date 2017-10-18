@@ -100,7 +100,6 @@
 
 <% // Get parameters
     boolean doClearCache = request.getParameter("clear") != null;
-    int refresh = ParamUtils.getIntParameter(request, "refresh", -1);
     int[] cacheIDs = ParamUtils.getIntParameters(request, "cacheID", -1);
 
     // Get the list of existing caches
@@ -120,7 +119,9 @@
     // Clear one or multiple caches if requested.
     if (doClearCache) {
         for (int cacheID : cacheIDs) {
-            caches[cacheID].clear();
+            final Cache cache = caches[cacheID];
+            cache.clear();
+            webManager.logEvent(String.format("Cleared cache '%s'", cache.getName()), null);
         }
     }
 

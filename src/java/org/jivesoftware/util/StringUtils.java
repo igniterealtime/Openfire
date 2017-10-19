@@ -844,6 +844,54 @@ public final class StringUtils {
     /**
      * Returns a textual representation for the time that has elapsed.
      *
+     * @param delta the elapsed time in milliseconds
+     * @return textual representation for the time that has elapsed.
+     */
+    public static String getFullElapsedTime(final long delta) {
+        if (delta < JiveConstants.SECOND) {
+            return String.format("%d %s", delta, delta == 1 ? LocaleUtils.getLocalizedString("global.millisecond") : LocaleUtils.getLocalizedString("global.milliseconds"));
+        } else if (delta < JiveConstants.MINUTE) {
+            final long millis = delta % JiveConstants.SECOND;
+            final long seconds = delta / JiveConstants.SECOND;
+            final String secondsString = String.format("%d %s", seconds, seconds == 1 ? LocaleUtils.getLocalizedString("global.second") : LocaleUtils.getLocalizedString("global.seconds"));
+            if (millis > 0) {
+                return secondsString + ", " + getFullElapsedTime(millis);
+            } else {
+                return secondsString;
+            }
+        } else if (delta < JiveConstants.HOUR) {
+            final long millis = delta % JiveConstants.MINUTE;
+            final long minutes = delta / JiveConstants.MINUTE;
+            final String minutesString = String.format("%d %s", minutes, minutes == 1 ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            if (millis > 0) {
+                return minutesString + ", " + getFullElapsedTime(millis);
+            } else {
+                return minutesString;
+            }
+        } else if (delta < JiveConstants.DAY) {
+            final long millis = delta % JiveConstants.HOUR;
+            final long hours = delta / JiveConstants.HOUR;
+            final String daysString = String.format("%d %s", hours, hours == 1 ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
+            if (millis > 0) {
+                return daysString + ", " + getFullElapsedTime(millis);
+            } else {
+                return daysString;
+            }
+        } else {
+            final long millis = delta % JiveConstants.DAY;
+            final long days = delta / JiveConstants.DAY;
+            final String daysString = String.format("%d %s", days, days == 1 ? LocaleUtils.getLocalizedString("global.day") : LocaleUtils.getLocalizedString("global.days"));
+            if (millis > 0) {
+                return daysString + ", " + getFullElapsedTime(millis);
+            } else {
+                return daysString;
+            }
+        }
+    }
+
+    /**
+     * Returns a textual representation for the time that has elapsed.
+     *
      * @param delta the elapsed time.
      * @return textual representation for the time that has elapsed.
      */

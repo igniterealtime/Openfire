@@ -1,6 +1,8 @@
 package org.jivesoftware.util;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -55,4 +57,39 @@ public class StringUtilsTest {
         	//assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
         }
 	}
+
+    @Test
+    public void testElapsedTimeInMilliseconds() throws Exception {
+        assertThat(StringUtils.getFullElapsedTime(0), is("0 ms"));
+        assertThat(StringUtils.getFullElapsedTime(1), is("1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(250), is("250 ms"));
+    }
+
+    @Test
+    public void testElapsedTimeInSeconds() throws Exception {
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND), is("1 second"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND + 1), is("1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND * 30 + 30), is("30 seconds, 30 ms"));
+    }
+
+    @Test
+    public void testElapsedTimeInMinutes() throws Exception {
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE), is("1 minute"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE * 30 + JiveConstants.SECOND * 30), is("30 minutes, 30 seconds"));
+    }
+
+    @Test
+    public void testElapsedTimeInHours() throws Exception {
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR), is("1 hour"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR + JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 hour, 1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR * 10 + JiveConstants.MINUTE * 30), is("10 hours, 30 minutes"));
+    }
+
+    @Test
+    public void testElapsedTimeInDays() throws Exception {
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY), is("1 day"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY + JiveConstants.HOUR + JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 day, 1 hour, 1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY * 10 + JiveConstants.HOUR * 10), is("10 days, 10 hours"));
+    }
 }

@@ -50,6 +50,7 @@ import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
@@ -323,6 +324,152 @@ public class XMPPServer {
         xmppServerInfo = new XMPPServerInfoImpl(new Date());
 
         initialized = true;
+
+        if (setupMode && "true".equals(JiveGlobals.getXMLProperty("autosetup.run"))) {
+            this.runAutoSetup();
+            JiveGlobals.deleteXMLProperty("autosetup");
+            JiveGlobals.deleteProperty("autosetup");
+        }
+    }
+
+    void runAutoSetup() {
+        // steps from setup-datasource-standard.jsp
+        // do this first so that other changes persist
+        if ("standard".equals(JiveGlobals.getXMLProperty("autosetup.database.mode"))) {
+            JiveGlobals.setXMLProperty("database.defaultProvider.driver", JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.driver"));
+            JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.serverURL"));
+            JiveGlobals.setXMLProperty("database.defaultProvider.username", JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.username"));
+            JiveGlobals.setXMLProperty("database.defaultProvider.password", JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.password"));
+
+            int minConnections;
+            int maxConnections;
+            double connectionTimeout;
+
+            try {
+                minConnections = Integer.parseInt(
+                    JiveGlobals.getXMLProperty("database.defaultProvider.minConnections"));
+            }
+            catch (Exception e) {
+                minConnections = 5;
+            }
+            try {
+                maxConnections = Integer.parseInt(
+                    JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
+            }
+            catch (Exception e) {
+                maxConnections = 25;
+            }
+            try {
+                connectionTimeout = Double.parseDouble(
+                    JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout"));
+            }
+            catch (Exception e) {
+                connectionTimeout = 1.0;
+            }
+
+            JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
+                Integer.toString(minConnections));
+            JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
+                Integer.toString(maxConnections));
+            JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
+                Double.toString(connectionTimeout));
+        }
+
+        // mark setup as done, so that other things can be written to the DB
+        JiveGlobals.setXMLProperty("setup","true");
+
+        // steps from index.jsp
+        String localeCode = JiveGlobals.getXMLProperty("autosetup.locale");
+        logger.warn("Setting locale to" + localeCode);
+        JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
+
+        // steps from setup-host-settings.jsp
+        JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
+        JiveGlobals.setXMLProperty("xmpp.fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
+        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty("xmpp.fqdn");
+
+        JiveGlobals.setProperty("xmpp.socket.ssl.active", JiveGlobals.getXMLProperty("autosetup.xmpp.socket.ssl.active", "true"));
+        JiveGlobals.setProperty("xmpp.auth.anonymous", JiveGlobals.getXMLProperty("autosetup.xmpp.auth.anonymous", "false"));
+
+        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
+        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
+
+
+        // steps from setup-profile-settings.jsp
+        if ("default".equals(JiveGlobals.getXMLProperty("autosetup.authprovider.mode", "default"))) {
+            JiveGlobals.setXMLProperty("connectionProvider.className",
+                "org.jivesoftware.database.DefaultConnectionProvider");
+
+            JiveGlobals.setProperty("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
+                org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
+            JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
+                org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
+            JiveGlobals.setProperty("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
+                org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
+            JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
+                org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
+            JiveGlobals.setProperty("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
+                org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
+            JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
+                org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
+            JiveGlobals.setProperty("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
+                org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+
+            // make configurable?
+            JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+        }
+
+        // steps from setup-admin-settings.jsp
+        try {
+            User adminUser = UserManager.getInstance().getUser("admin");
+            adminUser.setPassword(JiveGlobals.getXMLProperty("autosetup.admin.password"));
+            adminUser.setEmail(JiveGlobals.getXMLProperty("autosetup.admin.email"));
+            Date now = new Date();
+            adminUser.setCreationDate(now);
+            adminUser.setModificationDate(now);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.warn("There was an unexpected error encountered when "
+                + "setting the new admin information. Please check your error "
+                + "logs and try to remedy the problem.");
+        }
+
+        // finish setup
+        this.finalSetupSteps();
+        setupMode = false;
+    }
+
+    private void finalSetupSteps() {
+        for (String propName : JiveGlobals.getXMLPropertyNames()) {
+            if (JiveGlobals.getProperty(propName) == null) {
+                JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+            }
+        }
+        // Set default SASL SCRAM-SHA-1 iteration count
+        JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
+
+        // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
+        CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
+        try {
+            certificateStoreManager = new CertificateStoreManager();
+            certificateStoreManager.initialize( this );
+            certificateStoreManager.start();
+            final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
+            identityStore.ensureDomainCertificates( "DSA", "RSA" );
+
+        } catch (Exception e) {
+            logger.error("Error generating self-signed certificates", e);
+        } finally {
+            if (certificateStoreManager != null)
+            {
+                certificateStoreManager.stop();
+                certificateStoreManager.destroy();
+            }
+        }
+
+        // Initialize list of admins now (before we restart Jetty)
+        AdminManager.getInstance().getAdminAccounts();
     }
 
     /**
@@ -334,39 +481,13 @@ public class XMPPServer {
         if (!setupMode) {
             return;
         }
+
+        this.finalSetupSteps();
+
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Iterate through all the provided XML properties and set the ones that haven't
             // already been touched by setup prior to this method being called.
-            for (String propName : JiveGlobals.getXMLPropertyNames()) {
-                if (JiveGlobals.getProperty(propName) == null) {
-                    JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
-                }
-            }
-            // Set default SASL SCRAM-SHA-1 iteration count
-            JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
-
-            // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
-            CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
-            try {
-                certificateStoreManager = new CertificateStoreManager();
-                certificateStoreManager.initialize( this );
-                certificateStoreManager.start();
-                final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
-                identityStore.ensureDomainCertificates( "DSA", "RSA" );
-
-            } catch (Exception e) {
-                logger.error("Error generating self-signed certificates", e);
-            } finally {
-                if (certificateStoreManager != null)
-                {
-                    certificateStoreManager.stop();
-                    certificateStoreManager.destroy();
-                }
-            }
-
-            // Initialize list of admins now (before we restart Jetty)
-            AdminManager.getInstance().getAdminAccounts();
 
             Thread finishSetup = new Thread() {
                 @Override

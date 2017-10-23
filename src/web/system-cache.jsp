@@ -3,6 +3,8 @@
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="java.text.DecimalFormat"%>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%--
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
@@ -125,6 +127,7 @@
         }
     }
 
+    NumberFormat numberFormatter = NumberFormat.getNumberInstance(JiveGlobals.getLocale());
     // decimal formatter for cache values
     DecimalFormat mbFormat = new DecimalFormat("#0.00");
     DecimalFormat percentFormat = new DecimalFormat("#0.0");
@@ -228,7 +231,7 @@
             <% } %>
         </td>
         <td class="c3" style="text-align: right; padding-right:0;">
-            <%=entries%>&nbsp;
+            <%=numberFormatter.format(entries)%>&nbsp;
         </td>
         <td class="c3" style="text-align: left; padding-left:0;">
             / <%= mbFormat.format(memUsed)%> MB
@@ -241,7 +244,7 @@
             <% } %>
         </td>
         <td class="c4" style="text-align: right; padding-right:0;">
-            <%=hits%>/<%=(hits + misses)%>&nbsp;
+            <%=numberFormatter.format(hits)%>/<%=numberFormatter.format(hits + misses)%>&nbsp;
         </td>
         <td class="c4" style="text-align: left; padding-left:0;">
             (<%=hitPercent%>)

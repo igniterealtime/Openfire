@@ -16,10 +16,10 @@ Bug Reporting
 Only a few users have access for for filling bugs in the tracker. New
 users should:
 
-1. Create a forums account (only e-mail is a requirement, you can skip all the other fields).
-2. Login to a forum account
-3. Press New in your toolbar and choose Discussion
-4. Choose the [Openfire Dev forum](http://community.igniterealtime.org/community/developers/openfire_dev) of Openfire and add the tag 'bug_report' to your new post
+1. Create a Discourse account
+2. Login to a Discourse account
+3. Click on the New Topic button
+4. Choose the [Openfire Dev category](https://discourse.igniterealtime.org/c/openfire/openfire-dev) and provide a detailed description of the bug.
 
 Please search for your issues in the bug tracker before reporting.
 
@@ -27,6 +27,7 @@ Resources
 ---------
 
 - Documentation: http://www.igniterealtime.org/projects/openfire/documentation.jsp
+- Community: https://discourse.igniterealtime.org/c/openfire
 - Bug Tracker: http://issues.igniterealtime.org/browse/OF
 - Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
 

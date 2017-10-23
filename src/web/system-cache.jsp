@@ -1,7 +1,7 @@
-<%@ page import="org.jivesoftware.util.cache.Cache"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.CookieUtils"%>
+<%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%--
   -
@@ -171,9 +171,9 @@
         <th width="39%" nowrap><fmt:message key="system.cache.head.name" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.max" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
-        <th width="10%" nowrap><fmt:message key="system.cache.head.current" /></th>
+        <th width="10%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.current" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
-        <th width="20%" nowrap><fmt:message key="system.cache.head.effectiveness" /></th>
+        <th width="20%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
         <th width="1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
 </thead>
@@ -185,6 +185,7 @@
         if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) {
             overallTotal += (double)cache.getMaxCacheSize();
         }
+        int entries = cache.size();
         memUsed = (double)cache.getCacheSize()/(1024*1024);
         totalMem = (double)cache.getMaxCacheSize()/(1024*1024);
         freeMem = 100 - 100*memUsed/totalMem;
@@ -226,8 +227,11 @@
                 <fmt:message key="global.unlimited" />
             <% } %>
         </td>
-        <td class="c3">
-            <%= mbFormat.format(memUsed)%> MB
+        <td class="c3" style="text-align: right; padding-right:0;">
+            <%=entries%>&nbsp;
+        </td>
+        <td class="c3" style="text-align: left; padding-left:0;">
+            / <%= mbFormat.format(memUsed)%> MB
         </td>
         <td class="c3">
             <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
@@ -236,8 +240,11 @@
                 N/A
             <% } %>
         </td>
-        <td class="c4">
-            <%= hitPercent%>
+        <td class="c4" style="text-align: right; padding-right:0;">
+            <%=hits%>/<%=(hits + misses)%>&nbsp;
+        </td>
+        <td class="c4" style="text-align: left; padding-left:0;">
+            (<%=hitPercent%>)
         </td>
 
         <td width="1%" class="c5">
@@ -256,7 +263,7 @@
     <td class="c2">
         <%= mbFormat.format(overallTotal/(1024.0*1024.0)) %> MB
     </td>
-    <td align="right" colspan="4">
+    <td align="right" colspan="7">
         <input type="submit" name="clear" value="<fmt:message key="system.cache.clear-selected" />" disabled>
     </td>
 </tr>

@@ -157,7 +157,7 @@ public class JustMarriedPlugin implements Plugin {
 
 						RosterItem justCreated = otherRoster.createRosterItem(
 								XMPPServer.getInstance().createJID(newUser.getUsername(), null),
-								oldUserOnOthersRoster.getNickname(), oldUserOnOthersRoster.getGroups(), true, true);
+								oldUserOnOthersRoster.getName(), oldUserOnOthersRoster.getGroups(), true, true);
 						justCreated.setAskStatus(oldUserOnOthersRoster.getAskStatus());
 						justCreated.setRecvStatus(oldUserOnOthersRoster.getRecvStatus());
 						justCreated.setSubStatus(oldUserOnOthersRoster.getSubStatus());

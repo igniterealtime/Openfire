@@ -1213,11 +1213,11 @@ public class LdapManager {
                 groupDN = getEnclosedDN(groupDN);
             }
             return groupDN;
-        }
-        catch (Exception e) {
-            if (debug) {
-                Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
-            }
+        } catch (final GroupNotFoundException e) {
+            Log.trace("LdapManager: GroupNotFoundException thrown", e);
+            throw e;
+        } catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
             throw e;
         }
         finally {

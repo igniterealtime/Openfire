@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
@@ -40,7 +41,6 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -194,16 +194,11 @@ public class SASLAuthentication {
             if (mech.equals("EXTERNAL")) {
                 boolean trustedCert = false;
                 if (session.isSecure()) {
-                    final LocalClientSession localClientSession = (LocalClientSession)session;
-                    final Connection connection = localClientSession.getConnection();
-                    final KeyStore keyStore = connection.getConfiguration().getIdentityStore().getStore();
-                    final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
-                    final X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), keyStore, trustStore);
-                    if (trusted != null) {
-                        trustedCert = true;
-                    }
+                    final Connection connection   = ( (LocalClientSession) session ).getConnection();
+                    final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
+                    trustedCert = trustStore.isTrusted( connection.getPeerCertificates() );
                 }
-                if (trustedCert == false) {
+                if ( !trustedCert ) {
                     continue; // Do not offer EXTERNAL.
                 }
             }
@@ -218,9 +213,8 @@ public class SASLAuthentication {
         final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
         if (session.isSecure()) {
             final Connection connection   = session.getConnection();
-            final KeyStore keyStore       = connection.getConfiguration().getIdentityStore().getStore();
-            final KeyStore trustStore     = session.getConnection().getConfiguration().getTrustStore().getStore();
-            final X509Certificate trusted = CertificateManager.getEndEntityCertificate( session.getConnection().getPeerCertificates(), keyStore, trustStore );
+            final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
+            final X509Certificate trusted = trustStore.getEndEntityCertificate( session.getConnection().getPeerCertificates() );
 
             boolean haveTrustedCertificate = trusted != null;
             if (trusted != null && session.getDefaultIdentity() != null) {
@@ -409,9 +403,8 @@ public class SASLAuthentication {
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
-        final KeyStore keyStore   = certificateStoreManager.getIdentityStore( connectionType ).getStore();
-        final KeyStore trustStore = certificateStoreManager.getTrustStore( connectionType ).getStore();
-        final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
+        final TrustStore trustStore = certificateStoreManager.getTrustStore( connectionType );
+        final X509Certificate trusted = trustStore.getEndEntityCertificate( chain );
         if (trusted != null) {
             return verifyCertificate(trusted, hostname);
         }

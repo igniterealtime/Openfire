@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.net.SocketSendingTracker;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -40,8 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.*;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener
@@ -576,50 +575,22 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // Certificates events
     // #####################################################################
 
-    public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+    @Override
+    public void storeContentChanged( CertificateStore store )
+    {
         // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
         for ( final ConnectionListener listener : getListeners() )
         {
-            // TODO determine by purpose exactly what needs and what need not be restarted.
-            try
+            if ( listener.getIdentityStoreConfiguration().equals( store.getConfiguration() ) || listener.getTrustStoreConfiguration().equals( store.getConfiguration() ) )
             {
-                listener.restart();
-            }
-            catch ( RuntimeException ex )
-            {
-                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
-            }
-        }
-    }
-
-    public void certificateDeleted(KeyStore keyStore, String alias) {
-        // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
-        for ( final ConnectionListener listener : getListeners() )
-        {
-            // TODO determine by purpose exactly what needs and what need not be restarted.
-            try
-            {
-                listener.restart();
-            }
-            catch ( RuntimeException ex )
-            {
-                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
-            }
-        }
-    }
-
-    public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
-        // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
-        for ( final ConnectionListener listener : getListeners() )
-        {
-            // TODO determine by purpose exactly what needs and what need not be restarted.
-            try
-            {
-                listener.restart();
-            }
-            catch ( RuntimeException ex )
-            {
-                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
+                try
+                {
+                    listener.reloadConfiguration();
+                }
+                catch ( RuntimeException ex )
+                {
+                    Log.error( "An exception occurred while reloading listener " + listener + ". The reason for the reload was a certificate store change.", ex );
+                }
             }
         }
     }

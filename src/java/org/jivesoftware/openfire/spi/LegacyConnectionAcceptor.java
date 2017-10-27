@@ -87,8 +87,16 @@ public class LegacyConnectionAcceptor extends ConnectionAcceptor
     }
 
     @Override
-    boolean isIdle()
+    public synchronized boolean isIdle()
     {
         return socketAcceptThread != null; // We're not tracking actual sessions. This is a best effort response.
+    }
+
+    @Override
+    public synchronized void reconfigure( ConnectionConfiguration configuration )
+    {
+        this.configuration = configuration;
+
+        // nothing can be reloaded in this implementation.
     }
 }

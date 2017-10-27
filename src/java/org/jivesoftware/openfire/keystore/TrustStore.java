@@ -82,7 +82,140 @@ public class TrustStore extends CertificateStore
         {
             reload(); // re-initialize store.
         }
-
-        // TODO Notify listeners that a new certificate has been added.
     }
+
+    /**
+     * Decide whether or not to trust the given supplied certificate chain. For certain failures, we SHOULD generate
+     * an exception - revocations and the like, but we currently do not.
+     *
+     * @param chain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @return true if the content of this trust store allows the chain to be trusted, otherwise false.
+     */
+    public boolean isTrusted( Certificate chain[] )
+    {
+        return getEndEntityCertificate( chain ) != null;
+    }
+
+    /**
+     * Decide whether or not to trust the given supplied certificate chain, returning the
+     * End Entity Certificate in this case where it can, and null otherwise.
+     * A self-signed certificate will, for example, return null.
+     * For certain failures, we SHOULD generate an exception - revocations and the like,
+     * but we currently do not.
+     *
+     * @param chain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @return trusted end-entity certificate, or null.
+     */
+    public X509Certificate getEndEntityCertificate( Certificate chain[] )
+    {
+        if ( chain == null || chain.length == 0 )
+        {
+            return null;
+        }
+
+        final X509Certificate first = (X509Certificate) chain[ 0 ];
+        try
+        {
+            first.checkValidity();
+        }
+        catch ( CertificateException e )
+        {
+            Log.warn( "EE Certificate not valid: " + e.getMessage() );
+            return null;
+        }
+
+        if ( chain.length == 1 && first.getSubjectX500Principal().equals( first.getIssuerX500Principal() ) )
+        {
+            // Chain is single cert, and self-signed.
+            try
+            {
+                if ( store.getCertificateAlias( first ) != null )
+                {
+                    // Interesting case: trusted self-signed cert.
+                    return first;
+                }
+            }
+            catch ( KeyStoreException e )
+            {
+                Log.warn( "Keystore error while looking for self-signed cert; assuming untrusted." );
+            }
+            return null;
+        }
+
+        final List<Certificate> allCerts = new ArrayList<>();
+        try
+        {
+            // Add the trusted certs.
+            for ( Enumeration<String> aliases = store.aliases(); aliases.hasMoreElements(); )
+            {
+                String alias = aliases.nextElement();
+                if ( store.isCertificateEntry( alias ) )
+                {
+                    X509Certificate cert = (X509Certificate) store.getCertificate( alias );
+                    allCerts.add( cert );
+                }
+            }
+
+            // Finally, add all the certs in the chain:
+            allCerts.addAll( Arrays.asList( chain ) );
+
+            final CertStore cs = CertStore.getInstance( "Collection", new CollectionCertStoreParameters( allCerts ) );
+            final X509CertSelector selector = new X509CertSelector();
+            selector.setCertificate( first );
+            // / selector.setSubject(first.getSubjectX500Principal());
+
+            final PKIXBuilderParameters params = new PKIXBuilderParameters( store, selector );
+            params.addCertStore( cs );
+            params.setDate( new Date() );
+            params.setRevocationEnabled( false );
+
+            /* Code here is the right way to do things. */
+            final CertPathBuilder pathBuilder = CertPathBuilder.getInstance( CertPathBuilder.getDefaultType() );
+            final CertPath cp = pathBuilder.build( params ).getCertPath();
+
+            /*
+             * This section is an alternative to using CertPathBuilder which is not as complete (or safe), but will emit
+             * much better errors. If things break, swap around the code.
+             *
+             **** COMMENTED OUT. ****
+             *
+            final List<X509Certificate> ls = new ArrayList<>();
+            for ( final Certificate cert : chain )
+            {
+                ls.add( (X509Certificate) cert );
+            }
+
+            for ( X509Certificate last = ls.get( ls.size() - 1 );
+                  !last.getIssuerX500Principal().equals( last.getSubjectX500Principal() );
+                  last = ls.get( ls.size() - 1 ) )
+            {
+                final X509CertSelector sel = new X509CertSelector();
+                sel.setSubject( last.getIssuerX500Principal() );
+                ls.add( (X509Certificate) cs.getCertificates( sel ).toArray()[ 0 ] );
+            }
+            final CertPath cp = CertificateFactory.getInstance( "X.509" ).generateCertPath( ls );
+             ****** END ALTERNATIVE. ****
+             */
+
+            // Not entirely sure if I need to do this with CertPathBuilder. Can't hurt.
+            final CertPathValidator pathValidator = CertPathValidator.getInstance( "PKIX" );
+            pathValidator.validate( cp, params );
+
+            return (X509Certificate) cp.getCertificates().get( 0 );
+        }
+        catch ( CertPathBuilderException e )
+        {
+            Log.warn( "Path builder exception while validating certificate chain:", e );
+        }
+        catch ( CertPathValidatorException e )
+        {
+            Log.warn( "Path exception while validating certificate chain:", e );
+        }
+        catch ( Exception e )
+        {
+            Log.warn( "Unkown exception while validating certificate chain:" + e.getMessage() );
+        }
+        return null;
+    }
+
 }

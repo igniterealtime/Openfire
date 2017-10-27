@@ -27,6 +27,10 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -169,9 +173,64 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
      * @return false when this instance is started and is currently being used to serve connections (otherwise true)
      */
     @Override
-    public boolean isIdle()
+    public synchronized boolean isIdle()
     {
         return this.socketAcceptor != null && this.socketAcceptor.getManagedSessionCount() == 0;
+    }
+
+    @Override
+    public synchronized void reconfigure( ConnectionConfiguration configuration )
+    {
+        this.configuration = configuration;
+
+        if ( socketAcceptor == null )
+        {
+            return; // reconfig will occur when acceptor is started.
+        }
+
+        final DefaultIoFilterChainBuilder filterChain = socketAcceptor.getFilterChain();
+
+        if ( filterChain.contains( ConnectionManagerImpl.EXECUTOR_FILTER_NAME ) )
+        {
+            final ExecutorFilter executorFilter = (ExecutorFilter) filterChain.get( ConnectionManagerImpl.EXECUTOR_FILTER_NAME );
+            ( (ThreadPoolExecutor) executorFilter.getExecutor()).setCorePoolSize( ( configuration.getMaxThreadPoolSize() / 4 ) + 1 );
+            ( (ThreadPoolExecutor) executorFilter.getExecutor()).setMaximumPoolSize( ( configuration.getMaxThreadPoolSize() ) );
+        }
+
+        if ( configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode )
+        {
+            // add or replace TLS filter (that's used only for 'direct-TLS')
+            try
+            {
+                final SslFilter sslFilter = encryptionArtifactFactory.createServerModeSslFilter();
+                if ( filterChain.contains( ConnectionManagerImpl.TLS_FILTER_NAME ) )
+                {
+                    filterChain.replace( ConnectionManagerImpl.TLS_FILTER_NAME, sslFilter );
+                }
+                else
+                {
+                    filterChain.addAfter( ConnectionManagerImpl.EXECUTOR_FILTER_NAME, ConnectionManagerImpl.TLS_FILTER_NAME, sslFilter );
+                }
+            }
+            catch ( KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e )
+            {
+                Log.error( "An exception occurred while reloading the TLS configuration.", e );
+            }
+        }
+        else
+        {
+            // The acceptor is in 'startTLS' mode. Remove TLS filter (that's used only for 'direct-TLS')
+            if ( filterChain.contains( ConnectionManagerImpl.TLS_FILTER_NAME ) )
+            {
+                filterChain.remove( ConnectionManagerImpl.TLS_FILTER_NAME );
+            }
+        }
+
+        if ( configuration.getMaxBufferSize() > 0 )
+        {
+            socketAcceptor.getSessionConfig().setMaxReadBufferSize( configuration.getMaxBufferSize() );
+            Log.debug( "Throttling read buffer for connections to max={} bytes", configuration.getMaxBufferSize() );
+        }
     }
 
     public synchronized int getPort()

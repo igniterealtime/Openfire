@@ -44,6 +44,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -413,25 +414,9 @@ public class AdminConsolePlugin implements Plugin {
     private class CertificateListener implements CertificateEventListener {
 
         @Override
-        public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
-            // If new certificate is RSA then (re)start the HTTPS service
-            if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
-                restartNeeded = true;
-            }
-        }
-
-        @Override
-        public void certificateDeleted(KeyStore keyStore, String alias) {
+        public void storeContentChanged( CertificateStore store )
+        {
             restartNeeded = true;
-        }
-
-        @Override
-        public void certificateSigned(KeyStore keyStore, String alias,
-                                      List<X509Certificate> certificates) {
-            // If new certificate is RSA then (re)start the HTTPS service
-            if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
-                restartNeeded = true;
-            }
         }
     }
 }

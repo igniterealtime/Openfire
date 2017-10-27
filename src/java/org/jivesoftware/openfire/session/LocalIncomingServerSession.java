@@ -367,12 +367,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         if (chain == null || chain.length == 0) {
         	usingSelfSigned = true;
         } else {
-        	try {
-				usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
-			} catch (KeyStoreException ex) {
-				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
-				usingSelfSigned = true;
-			}
+            usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
         }
         
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {

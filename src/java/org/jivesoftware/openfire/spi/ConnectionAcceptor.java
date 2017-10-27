@@ -10,7 +10,7 @@ package org.jivesoftware.openfire.spi;
  */
 public abstract class ConnectionAcceptor
 {
-    protected final ConnectionConfiguration configuration;
+    protected ConnectionConfiguration configuration;
 
     /**
      * Constructs a new instance which will accept new connections based on the provided configuration.
@@ -37,7 +37,7 @@ public abstract class ConnectionAcceptor
      * An invocation of this method on an instance that is already started should have no effect (to the extend that the
      * instance should continue to accept connections without interruption or configuration changes).
      */
-    abstract void start();
+    abstract public void start();
 
     /**
      * Halts connection acceptation and gracefully releases resources.
@@ -47,12 +47,25 @@ public abstract class ConnectionAcceptor
      * Instances of this class do not support configuration changes (see class documentation). As a result, there is no
      * requirement that an instance that is stopped after it was running can successfully be restarted.
      */
-    abstract void stop();
+    abstract public void stop();
 
     /**
      * Determines if this instance is currently in a state where it is actively serving connections.
      *
      * @return false when this instance is started and is currently being used to serve connections (otherwise true)
      */
-    abstract boolean isIdle();
+    abstract public boolean isIdle();
+
+    /**
+     * Reloads the acceptor configuration, without causing a disconnect of already established connections.
+     *
+     * A best-effort reload will be attempted. Configuration changes that require a restart of connections,
+     * such as the bind-address and port, will not be applied.
+     *
+     * The configuration that's provided will replace the existing configuration. A restart of the connection
+     * acceptor after this method was invoked will apply all configuration changes.
+     *
+     * @param configuration The configuration for connections to be accepted (cannot be null).
+     */
+    abstract public void reconfigure( ConnectionConfiguration configuration );
 }

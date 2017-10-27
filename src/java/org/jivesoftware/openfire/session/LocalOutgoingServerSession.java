@@ -129,6 +129,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 return false;
             }
             session = sessionManager.getOutgoingServerSession(remoteDomain);
+            if ( !session.isUsingServerDialback() )
+            {
+                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", remoteDomain );
+                session = null;
+            }
 
             if (session == null)
             {
@@ -591,10 +596,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     @Override
     public boolean authenticateSubdomain(String localDomain, String remoteDomain) {
         if (!usingServerDialback) {
-            // Using SASL so just assume that the domain was validated
-            // (note: this may not be correct)
-            addOutgoingDomainPair(localDomain, remoteDomain);
-            return true;
+            /*
+             * We cannot do this reliably; but this code should be unreachable.
+             */
+            return false;
         }
         ServerDialback method = new ServerDialback(getConnection(), localDomain);
         if (method.authenticateDomain(socketReader, localDomain, remoteDomain, getStreamID().getID())) {

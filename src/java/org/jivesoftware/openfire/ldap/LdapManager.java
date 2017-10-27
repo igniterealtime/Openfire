@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.ldap;
 
 import com.sun.jndi.ldap.LdapCtxFactory;
-
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -35,12 +34,25 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import javax.naming.ldap.*;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
+import javax.naming.ldap.SortControl;
+import javax.naming.ldap.StartTlsRequest;
+import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1057,11 +1069,11 @@ public class LdapManager {
                 userDN = getEnclosedDN(userDN);
             }
             return userDN;
-        }
-        catch (Exception e) {
-            if (debug) {
-                Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
-            }
+        } catch (final UserNotFoundException e) {
+            Log.trace("LdapManager: UserNotFoundException thrown", e);
+            throw e;
+        } catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
             throw e;
         }
         finally {
@@ -1201,11 +1213,11 @@ public class LdapManager {
                 groupDN = getEnclosedDN(groupDN);
             }
             return groupDN;
-        }
-        catch (Exception e) {
-            if (debug) {
-                Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
-            }
+        } catch (final GroupNotFoundException e) {
+            Log.trace("LdapManager: GroupNotFoundException thrown", e);
+            throw e;
+        } catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
             throw e;
         }
         finally {

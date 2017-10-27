@@ -129,7 +129,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 return false;
             }
             session = sessionManager.getOutgoingServerSession(remoteDomain);
-            if ( !session.isUsingServerDialback() )
+            if (session != null && !session.isUsingServerDialback() )
             {
                 log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", remoteDomain );
                 session = null;

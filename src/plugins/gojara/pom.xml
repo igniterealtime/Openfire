@@ -10,7 +10,7 @@
     <artifactId>gojara</artifactId>
     <version>2.2.0</version>
     <name>Gojara Plugin</name>
-    <description>ProtoXEP-xxxx: Remote Roster Management support</description>
+    <description>XEP-0321: Remote Roster Management support</description>
 
     <developers>
         <developer>

@@ -28,14 +28,14 @@ import org.xmpp.packet.JID;
 /**
  * @author Holger Bergunde
  * @author axel.frederik.brand
- * 
+ *
  *         This class is the basic reprasentation for the GoJara plugin. It is
  *         the entry point for openfire to start or stop this plugin.
- * 
- *         GoJara has been developed to support XEP-xxx Remote Roster
+ *
+ *         GoJara has been developed to support XEP-0321 Remote Roster Management
  *         Management. Further information: <a
  *         href="http://jkaluza.fedorapeople.org/remote-roster.html">Here</a>
- * 
+ *
  *         RemoteRoster enables Spectrum IM support for Openfire. Currently only
  *         2.3, 2.4 and 2.5 implemented. 2.1 and 2.2 of the protocol standard is
  *         not supported by Spectrum IM
@@ -52,7 +52,7 @@ public class RemoteRosterPlugin implements Plugin {
 	private InternalComponentManager compManager = InternalComponentManager.getInstance();
 	private TransportSessionManager transportSessionManager = TransportSessionManager.getInstance();
 	private GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
-	
+
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		pluginManager = manager;
 		iManager.addInterceptor(mainInterceptor);
@@ -73,7 +73,7 @@ public class RemoteRosterPlugin implements Plugin {
 			 * Check if the unregistered component contains to one of our
 			 * package interceptors
 			 */
-			
+
 			public void componentUnregistered(JID componentJID) {
 					mainInterceptor.removeTransport(componentJID.toString());
 			}
@@ -82,12 +82,12 @@ public class RemoteRosterPlugin implements Plugin {
 			 * If there is a new external Component, check if it is a gateway
 			 * and add create a package interceptor if it is enabled
 			 */
-			
+
 			public void componentRegistered(JID componentJID) {
 				_waitingForIQResponse.add(componentJID.getDomain());
 			}
 
-			
+
 			public void componentInfoReceived(IQ iq) {
 				String from = iq.getFrom().getDomain();
 				// Waiting for this external component sending an IQ response to

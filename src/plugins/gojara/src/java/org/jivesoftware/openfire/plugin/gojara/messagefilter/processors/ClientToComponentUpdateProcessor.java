@@ -10,18 +10,18 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 /**
- * This class implements the XEP-xxx Remote Roster Management standard
+ * This class implements the XEP-0321 Remote Roster Management standard
  * "2.4 Client sends user update". Part of command pattern used in
  * {@link MainInterceptor}
- * 
+ *
  * Further information: <a
  * href="http://jkaluza.fedorapeople.org/remote-roster.html#sect-id215516"
  * >Here</a>
- * 
- * @author Holger Bergunde 
+ *
+ * @author Holger Bergunde
  *
  * Example IQ:
- * <iq id="FSwIU-68" type="set" from="user@example/resource"> 
+ * <iq id="FSwIU-68" type="set" from="user@example/resource">
  * <query xmlns="jabber:iq:roster"> <item jid="123456789@subdomain" name="wulschti" subscription="both">
  * <group>General</group> </item> </query> </iq>
  */

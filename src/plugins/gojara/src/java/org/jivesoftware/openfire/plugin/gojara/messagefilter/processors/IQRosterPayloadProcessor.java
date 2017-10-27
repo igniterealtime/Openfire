@@ -23,14 +23,14 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 /**
- * This class implements the XEP-xxx Remote Roster Management standard "2.3 Server or component requests user's roster".
+ * This class implements the XEP-0321 Remote Roster Management standard "2.3 Server or component requests user's roster".
  * Part of command pattern used in {@link RemoteRosterInterceptor}
- * 
+ *
  * Further information: <a href="http://jkaluza.fedorapeople.org/remote-roster.html#sect-id215516" >Here</a>
- * 
+ *
  * @author Holger Bergunde
  * @author axel.frederik.brand
- * 
+ *
  */
 public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 
@@ -169,7 +169,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 
 	/**
 	 * Searches the users roster for a specific subdomain and deletes all contacts that contain subdomain
-	 * 
+	 *
 	 * @param username
 	 * @param subdomain
 	 */

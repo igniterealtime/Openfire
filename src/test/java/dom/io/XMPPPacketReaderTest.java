@@ -55,9 +55,7 @@ public class XMPPPacketReaderTest
         final String input = "<stream:stream to='example.com' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'><message from='juliet@example.com' to='romeo@example.net' xml:lang='en'><body>Art thou not Romeo, and a Montague?</body></message></stream:stream>";
 
         // Execute system under test.
-        System.out.println("** " + input);
         final Document result = packetReader.read( new StringReader( input ) );
-        System.out.println("** " + result.asXML());
 
         // Verify result.
         Assert.assertFalse( result.asXML().contains( "jabber:client" ) );
@@ -78,9 +76,7 @@ public class XMPPPacketReaderTest
         final String input = "<stream:stream to='example.com' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'><message xmlns='jabber:client' from='juliet@example.com' to='romeo@example.net' xml:lang='en'><body>Art thou not Romeo, and a Montague?</body></message></stream:stream>";
 
         // Execute system under test.
-        System.out.println("** " + input);
         final Document result = packetReader.read( new StringReader( input ) );
-        System.out.println("** " + result.asXML());
 
         // Verify result.
         Assert.assertFalse( result.asXML().contains( "jabber:client" ) );
@@ -109,9 +105,7 @@ public class XMPPPacketReaderTest
             "  </message>" +
             "</stream:stream>";
 
-        System.out.println("** " + input);
         final Document result = packetReader.read( new StringReader( input ) );
-        System.out.println("** " + result.asXML());
 
         // Verify result.
         Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
@@ -141,9 +135,7 @@ public class XMPPPacketReaderTest
                 "  </message>" +
                 "</stream:stream>";
 
-        System.out.println("** " + input);
         final Document result = packetReader.read( new StringReader( input ) );
-        System.out.println("** " + result.asXML());
 
         // Verify result.
         Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
@@ -163,9 +155,7 @@ public class XMPPPacketReaderTest
             "      <message xmlns='jabber:client'/>" +
             "    </other>" +
             "  </message>";
-        System.out.println("** " + input);
         final Document result = packetReader.read( new StringReader( input ) );
-        System.out.println("** " + result.asXML());
 
         // Verify result.
         Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );

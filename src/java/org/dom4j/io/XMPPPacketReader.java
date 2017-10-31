@@ -377,14 +377,39 @@ public class XMPPPacketReader {
                     QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
                     Element newElement;
 
-                    // Do not qualify stanza element with certain namespaces. This makes those stanzas re-usable between,
-                    // for example, c2s and s2s. This code prevents such qualification only for elements that have no
-                    // default namespace declared
-                    final boolean defaultNamespaceDeclared = parent == null || !parent.getNamespaceForPrefix("").getURI().equals("");
-                    if ( !defaultNamespaceDeclared && IGNORED_NAMESPACE_ON_STANZA.contains( qname.getNamespaceURI() ) ) {
+                    // Strip namespace from all default-namespaced elements if
+                    // all ancestors have the same namespace and it's a content
+                    // namespace.
+                    boolean dropNamespace = false;
+                    System.out.println("* Processing start element {" + pp.getNamespace() + "}" + pp.getName());
+                    if (pp.getPrefix() == null && IGNORED_NAMESPACE_ON_STANZA.contains(qname.getNamespaceURI())) {
+                        System.out.println("Prefix null on element " + qname.getName() + " in ns " + qname.getNamespaceURI());
+                        // Default namespaced element which is in a content namespace,
+                        // so we'll drop. Example, stanzas, <message><body/></message>
+                        dropNamespace = true;
+                        for (Element el = parent; el != null; el = el.getParent()) {
+                            final String defaultNS = el.getNamespaceForPrefix("").getURI();
+                            System.out.println("  Parent defaultNS is " + defaultNS);
+                            if (defaultNS.equals("")) {
+                                // We've cleared this one already, just bail.
+                                System.out.println("  --> Stop; dropNS");
+                                break;
+                            }
+                            if (!defaultNS.equals(qname.getNamespaceURI())) {
+                                // But if there's an ancestor element, we shouldn't drop
+                                // after all. Example: forwarded message.
+                                dropNamespace = false;
+                                System.out.println("  --> Stop; NOT dropNS");
+                                break;
+                            }
+                        }
+                    }
+                    if ( dropNamespace ) {
+                        System.out.println("New element, no namespace");
                         newElement = df.createElement(pp.getName());
                     }
                     else {
+                        System.out.println("New element, with namespace");
                         newElement = df.createElement(qname);
                     }
                     int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
@@ -392,11 +417,16 @@ public class XMPPPacketReader {
                     for (int i = nsStart; i < nsEnd; i++) {
                         final String namespacePrefix = pp.getNamespacePrefix( i );
                         final String namespaceUri = pp.getNamespaceUri( i );
+                        System.out.println("Considering {" + namespacePrefix + "} -> {" + namespaceUri + "}");
                         if ( namespacePrefix != null ) {
-                            newElement.addNamespace( namespacePrefix, namespaceUri );
-                        } else if ( !( pp.getDepth() <= 2 && IGNORED_NAMESPACE_ON_STANZA.contains(namespaceUri) ) ) {
+                            newElement.addNamespace(namespacePrefix, namespaceUri);
+                            System.out.println("  Copying.");
+                        } else if ( parent == null && IGNORED_NAMESPACE_ON_STANZA.contains( namespaceUri ) ) {
+                            // Don't copy.
+                        } else if ( !(dropNamespace && namespaceUri.equals( qname.getNamespaceURI() ) ) ) {
                             // Do not include certain default namespace on the root-element ('stream') or stanza level. This makes stanzas re-usable between, for example, c2s and s2s.
                             newElement.addNamespace( "", namespaceUri );
+                            System.out.println("  Copying no prefix.");
                         }
                     }
                     for (int i = 0; i < pp.getAttributeCount(); i++) {

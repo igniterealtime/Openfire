@@ -24,7 +24,11 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -503,6 +507,12 @@ public class PluginMetadataHelper
             if ( Files.exists( pluginConfig ) )
             {
                 final SAXReader saxReader = new SAXReader();
+                saxReader.setEntityResolver(new EntityResolver() {
+                    @Override
+                    public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+                        throw new IOException("External entity denied: " + publicId + " // " + systemId);
+                    }
+                });
                 saxReader.setEncoding( "UTF-8" );
                 final Document pluginXML = saxReader.read( pluginConfig.toFile() );
                 final Element element = (Element) pluginXML.selectSingleNode( xpath );

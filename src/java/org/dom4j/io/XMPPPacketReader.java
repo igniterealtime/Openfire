@@ -377,11 +377,29 @@ public class XMPPPacketReader {
                     QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
                     Element newElement;
 
-                    // Do not qualify stanza element with certain namespaces. This makes those stanzas re-usable between,
-                    // for example, c2s and s2s. This code prevents such qualification only for elements that have no
-                    // default namespace declared
-                    final boolean defaultNamespaceDeclared = parent == null || !parent.getNamespaceForPrefix("").getURI().equals("");
-                    if ( !defaultNamespaceDeclared && IGNORED_NAMESPACE_ON_STANZA.contains( qname.getNamespaceURI() ) ) {
+                    // Strip namespace from all default-namespaced elements if
+                    // all ancestors have the same namespace and it's a content
+                    // namespace.
+                    boolean dropNamespace = false;
+                    if (pp.getPrefix() == null && IGNORED_NAMESPACE_ON_STANZA.contains(qname.getNamespaceURI())) {
+                        // Default namespaced element which is in a content namespace,
+                        // so we'll drop. Example, stanzas, <message><body/></message>
+                        dropNamespace = true;
+                        for (Element el = parent; el != null; el = el.getParent()) {
+                            final String defaultNS = el.getNamespaceForPrefix("").getURI();
+                            if (defaultNS.equals("")) {
+                                // We've cleared this one already, just bail.
+                                break;
+                            }
+                            if (!defaultNS.equals(qname.getNamespaceURI())) {
+                                // But if there's an ancestor element, we shouldn't drop
+                                // after all. Example: forwarded message.
+                                dropNamespace = false;
+                                break;
+                            }
+                        }
+                    }
+                    if ( dropNamespace ) {
                         newElement = df.createElement(pp.getName());
                     }
                     else {
@@ -393,8 +411,10 @@ public class XMPPPacketReader {
                         final String namespacePrefix = pp.getNamespacePrefix( i );
                         final String namespaceUri = pp.getNamespaceUri( i );
                         if ( namespacePrefix != null ) {
-                            newElement.addNamespace( namespacePrefix, namespaceUri );
-                        } else if ( !( pp.getDepth() <= 2 && IGNORED_NAMESPACE_ON_STANZA.contains(namespaceUri) ) ) {
+                            newElement.addNamespace(namespacePrefix, namespaceUri);
+                        } else if ( parent == null && IGNORED_NAMESPACE_ON_STANZA.contains( namespaceUri ) ) {
+                            // Don't copy.
+                        } else if ( !(dropNamespace && namespaceUri.equals( qname.getNamespaceURI() ) ) ) {
                             // Do not include certain default namespace on the root-element ('stream') or stanza level. This makes stanzas re-usable between, for example, c2s and s2s.
                             newElement.addNamespace( "", namespaceUri );
                         }

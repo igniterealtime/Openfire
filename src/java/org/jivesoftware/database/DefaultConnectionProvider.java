@@ -295,6 +295,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return testSQL;
     }
 
+    public int getTestTimeout() {
+        return testTimeout;
+    }
+
     public long getTimeBetweenEvictionRunsMillis() {
         return connectionPool.getTimeBetweenEvictionRunsMillis();
     }

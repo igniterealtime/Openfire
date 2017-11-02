@@ -261,6 +261,14 @@
     </tr>
     <tr>
         <td class="c1">
+            <fmt:message key="server.db.test_timeout" />
+        </td>
+        <td class="c2">
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getTestTimeout())%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
             <fmt:message key="server.db.connections" />
         </td>
         <td class="c2">

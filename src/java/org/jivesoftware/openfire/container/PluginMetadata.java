@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.container;
 
+import org.jivesoftware.util.JavaSpecVersion;
 import org.jivesoftware.util.Version;
 
 import java.net.URL;
@@ -84,6 +85,11 @@ public class PluginMetadata
     private final Version priorToServerVersion;
 
     /**
+     * Minimum Java (specification) version (inclusive( required by this plugin as specified in plugin.xml.
+     */
+    private final JavaSpecVersion minJavaVersion;
+
+    /**
      * Constructs a metadata object based on a plugin.
      *
      * The plugin must be installed in Openfire.
@@ -104,8 +110,9 @@ public class PluginMetadata
                 PluginMetadataHelper.getReadme( pluginDir ),
                 PluginMetadataHelper.getLicense( pluginDir ),
                 PluginMetadataHelper.getMinServerVersion( pluginDir ),
-                PluginMetadataHelper.getPriorToServerVersion( pluginDir )
-        );
+                PluginMetadataHelper.getPriorToServerVersion( pluginDir ),
+                PluginMetadataHelper.getMinJavaVersion( pluginDir )
+                );
     }
 
     /**
@@ -129,13 +136,15 @@ public class PluginMetadata
                 PluginMetadataHelper.getReadme( plugin ),
                 PluginMetadataHelper.getLicense( plugin ),
                 PluginMetadataHelper.getMinServerVersion( plugin ),
-                PluginMetadataHelper.getPriorToServerVersion( plugin )
+                PluginMetadataHelper.getPriorToServerVersion( plugin ),
+                PluginMetadataHelper.getMinJavaVersion( plugin )
+
         );
     }
 
     public PluginMetadata( String name, String canonicalName, String description, Version version, String author,
                            URL icon, URL changelog, URL readme, String license,
-                           Version minServerVersion, Version priorToServerVersion )
+                           Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion )
     {
         this.name = name;
         this.canonicalName = canonicalName;
@@ -148,6 +157,7 @@ public class PluginMetadata
         this.license = license;
         this.minServerVersion = minServerVersion;
         this.priorToServerVersion = priorToServerVersion;
+        this.minJavaVersion = minJavaVersion;
     }
 
     public String getName()
@@ -203,6 +213,11 @@ public class PluginMetadata
     public Version getPriorToServerVersion()
     {
         return priorToServerVersion;
+    }
+
+    public JavaSpecVersion getMinJavaVersion()
+    {
+        return minJavaVersion;
     }
 
     public String getHashCode() {

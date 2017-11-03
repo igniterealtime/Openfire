@@ -222,7 +222,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         final MapConfig mapConfig = hazelcast.getConfig().getMapConfig(name);
         mapConfig.setTimeToLiveSeconds(hazelcastLifetimeInSeconds);
         mapConfig.setMaxSizeConfig(new MaxSizeConfig(hazelcastMaxCacheSize, MaxSizeConfig.MaxSizePolicy.USED_HEAP_SIZE));
-        return new ClusteredCache(name, hazelcast.getMap(name));
+        return new ClusteredCache(name, hazelcast.getMap(name), hazelcastLifetimeInSeconds);
     }
 
     public void destroyCache(Cache cache) {

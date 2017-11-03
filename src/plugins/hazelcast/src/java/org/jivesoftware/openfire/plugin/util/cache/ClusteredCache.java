@@ -44,6 +44,7 @@ public class ClusteredCache implements Cache {
      * The map is used for distributed operations such as get, put, etc.
      */
     protected IMap map;
+    private final int hazelcastLifetimeInSeconds;
     private String name;
     private long numberOfGets = 0;
 
@@ -52,9 +53,11 @@ public class ClusteredCache implements Cache {
      *
      * @param name a name for the cache, which should be unique per vm.
      * @param cache the cache implementation
+     * @param hazelcastLifetimeInSeconds the lifetime of cache entries
      */
-    protected ClusteredCache(String name, IMap cache) {
+    protected ClusteredCache(String name, IMap cache, final int hazelcastLifetimeInSeconds) {
         map = cache;
+        this.hazelcastLifetimeInSeconds = hazelcastLifetimeInSeconds;
         setName(name);
     }
 
@@ -81,7 +84,7 @@ public class ClusteredCache implements Cache {
 
     public Object put(Object key, Object object) {
     	if (object == null) { return null; }
-        return map.put(key, object);
+        return map.put(key, object, hazelcastLifetimeInSeconds, TimeUnit.SECONDS);
     }
 
     public Object get(Object key) {

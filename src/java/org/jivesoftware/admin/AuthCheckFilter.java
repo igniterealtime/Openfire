@@ -33,6 +33,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
@@ -45,11 +48,62 @@ import org.slf4j.LoggerFactory;
 public class AuthCheckFilter implements Filter {
 
 	private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
+    private static AuthCheckFilter instance;
 
     private static Set<String> excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    private final AdminManager adminManager;
+    private final LoginLimitManager loginLimitManager;
+    private final ServletRequestAuthenticator servletRequestAuthenticator;
+
     private ServletContext context;
     private String defaultLoginPage;
+
+    public AuthCheckFilter() {
+        this(AdminManager.getInstance(), LoginLimitManager.getInstance(), JiveGlobals.getProperty("adminConsole.servlet-request-authenticator", "").trim());
+    }
+
+    /* Exposed for test use only */
+    AuthCheckFilter(final AdminManager adminManager, final LoginLimitManager loginLimitManager, final String servletRequestAuthenticatorClassName) {
+        this.adminManager = adminManager;
+        this.loginLimitManager = loginLimitManager;
+        AuthCheckFilter.instance = this;
+        ServletRequestAuthenticator authenticator = null;
+        if (!servletRequestAuthenticatorClassName.isEmpty()) {
+            try {
+                final Class clazz = ClassUtils.forName(servletRequestAuthenticatorClassName);
+                authenticator = (ServletRequestAuthenticator) clazz.newInstance();
+            } catch (final Exception e) {
+                Log.error("Error loading ServletRequestAuthenticator: " + servletRequestAuthenticatorClassName, e);
+            }
+        }
+        this.servletRequestAuthenticator = authenticator;
+    }
+
+    /**
+     * Returns a singleton instance of the AuthCheckFilter.
+     *
+     * @return an instance.
+     */
+    public static AuthCheckFilter getInstance() {
+        return instance;
+    }
+
+    /**
+     * Indicates if the currently-installed ServletRequestAuthenticator is an instance of a specific class.
+     *
+     * @param clazz the class to check
+     * @return {@code true} if the currently-installed ServletRequestAuthenticator is an instance of clazz, otherwise {@code false}.
+     */
+    public static boolean isServletRequestAuthenticatorInstanceOf(Class<? extends ServletRequestAuthenticator> clazz) {
+        final AuthCheckFilter instance = getInstance();
+        if (instance == null) {
+            // We've not yet been instantiated
+            return false;
+        }
+        final ServletRequestAuthenticator authenticator = instance.servletRequestAuthenticator;
+        return authenticator != null && clazz.isAssignableFrom(authenticator.getClass());
+    }
 
     /**
      * Adds a new string that when present in the requested URL will skip
@@ -147,18 +201,42 @@ public class AuthCheckFilter implements Filter {
         for (String exclude : excludes) {
             if (testURLPassesExclude(url, exclude)) {
                 doExclude = true;
-                break;   
+                break;
             }
         }
         if (!doExclude) {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
-            if (manager.getUser() == null) {
+            if (manager.getUser() == null && !authUserFromRequest(request)) {
                 response.sendRedirect(getRedirectURL(request, loginPage, null));
                 return;
             }
         }
         chain.doFilter(req, res);
+    }
+
+    private boolean authUserFromRequest(final HttpServletRequest request) {
+
+        final String userFromRequest = servletRequestAuthenticator == null ? null : servletRequestAuthenticator.authenticateRequest(request);
+        if (userFromRequest == null) {
+            // The user is not authenticated
+            return false;
+        }
+
+        if (!adminManager.isUserAdmin(userFromRequest, true)) {
+            // The user is not authorised
+            Log.warn("The user '" + userFromRequest + "' is not an Openfire administrator.");
+            return false;
+        }
+
+        // We're authenticated and authorised, so record the login,
+        loginLimitManager.recordSuccessfulAttempt(userFromRequest, request.getRemoteAddr());
+
+        // Set the auth token
+        request.getSession().setAttribute("jive.admin.authToken", new AuthToken(userFromRequest));
+
+        // And proceed
+        return true;
     }
 
     @Override

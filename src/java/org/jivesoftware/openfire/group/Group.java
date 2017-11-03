@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -62,8 +63,8 @@ public class Group implements Cacheable, Externalizable {
 
     private String name;
     private String description;
-    private Set<JID> members;
-    private Set<JID> administrators;
+    private ConcurrentSkipListSet<JID> members;
+    private ConcurrentSkipListSet<JID> administrators;
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -74,7 +75,7 @@ public class Group implements Cacheable, Externalizable {
     /**
      * Constructs a new group. Note: this constructor is intended for implementors of the
      * {@link GroupProvider} interface. To create a new group, use the
-     * {@link GroupManager#createGroup(String)} method. 
+     * {@link GroupManager#createGroup(String)} method.
      *
      * @param name the name.
      * @param description the description.
@@ -88,8 +89,8 @@ public class Group implements Cacheable, Externalizable {
         this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
-        this.members = new HashSet<>(members);
-        this.administrators = new HashSet<>(administrators);
+        this.members = new ConcurrentSkipListSet<>(members);
+        this.administrators = new ConcurrentSkipListSet<>(administrators);
     }
 
     /**
@@ -110,11 +111,11 @@ public class Group implements Cacheable, Externalizable {
         this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
-        this.members = new HashSet<>(members);
-        this.administrators = new HashSet<>(administrators);
+        this.members = new ConcurrentSkipListSet<>(members);
+        this.administrators = new ConcurrentSkipListSet<>(administrators);
 
         this.properties = provider.loadProperties(this);
-        
+
         // Apply the given properties to the group
         for (Map.Entry<String, String> property : properties.entrySet()) {
             if (!property.getValue().equals(this.properties.get(property.getKey()))) {
@@ -134,7 +135,7 @@ public class Group implements Cacheable, Externalizable {
      * Returns a JID for the group based on the group name. This
      * instance will be of class GroupJID to distinguish it from
      * other types of JIDs in the system.
-     * 
+     *
      * This method is synchronized to ensure each group has only
      * a single JID instance created via lazy instantiation.
      *
@@ -288,7 +289,7 @@ public class Group implements Cacheable, Externalizable {
      * @return true if the specified user is a group user.
      */
     public boolean isUser(JID user) {
-        // Make sure that we are always checking bare JIDs 
+        // Make sure that we are always checking bare JIDs
         if (user != null && user.getResource() != null) {
             user = user.asBareJID();
         }
@@ -502,16 +503,16 @@ public class Group implements Cacheable, Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             description = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        members= new HashSet<>();
-        administrators = new HashSet<>();
+        members= new ConcurrentSkipListSet<>();
+        administrators = new ConcurrentSkipListSet<>();
         ExternalizableUtil.getInstance().readSerializableCollection(in, members, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
     }
-    
+
 	/**
 	 * Search for a JID within a group. If the given haystack is not resolvable
 	 * to a group, this method returns false.
-	 * 
+	 *
 	 * @param needle A JID, possibly a member/admin of the given group
 	 * @param haystack Presumably a Group, a Group name, or a JID that represents a Group
 	 * @return true if the JID (needle) is found in the group (haystack)
@@ -520,10 +521,10 @@ public class Group implements Cacheable, Externalizable {
 		Group group = resolveFrom(haystack);
 		return (group != null && group.isUser(needle));
 	}
-    
+
 	/**
 	 * Attempt to resolve the given object into a Group.
-	 * 
+	 *
 	 * @param proxy Presumably a Group, a Group name, or a JID that represents a Group
 	 * @return The corresponding group, or null if the proxy cannot be resolved as a group
 	 */
@@ -543,5 +544,5 @@ public class Group implements Cacheable, Externalizable {
 		}
 		return result;
 	}
-    
+
 }

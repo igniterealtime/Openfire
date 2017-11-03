@@ -32,6 +32,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
+import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.jivesoftware.util.AlreadyExistsException;
@@ -243,6 +244,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                 vcard.add(avatarElement);
             }
         }
+
+        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_LOAD, PhotoResizer.PROPERTY_RESIZE_ON_LOAD_DEFAULT ) )
+        {
+            PhotoResizer.resizeAvatar( vcard );
+        }
+
         Log.debug("LdapVCardProvider: Returning vcard");
         return vcard;
     }

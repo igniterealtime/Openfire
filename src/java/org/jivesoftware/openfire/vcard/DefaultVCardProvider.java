@@ -28,6 +28,7 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +99,12 @@ public class DefaultVCardProvider implements VCardProvider {
                 }
                 DbConnectionManager.closeConnection(rs, pstmt, con);
             }
+
+            if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_LOAD, PhotoResizer.PROPERTY_RESIZE_ON_LOAD_DEFAULT ) )
+            {
+                PhotoResizer.resizeAvatar( vCardElement );
+            }
+
             return vCardElement;
         }
     }
@@ -107,6 +114,11 @@ public class DefaultVCardProvider implements VCardProvider {
         if (loadVCard(username) != null) {
             // The user already has a vCard
             throw new AlreadyExistsException("Username " + username + " already has a vCard");
+        }
+
+        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+        {
+            PhotoResizer.resizeAvatar( vCardElement );
         }
 
         Connection con = null;
@@ -133,6 +145,12 @@ public class DefaultVCardProvider implements VCardProvider {
             // The user already has a vCard
             throw new NotFoundException("Username " + username + " does not have a vCard");
         }
+
+        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+        {
+            PhotoResizer.resizeAvatar( vCardElement );
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

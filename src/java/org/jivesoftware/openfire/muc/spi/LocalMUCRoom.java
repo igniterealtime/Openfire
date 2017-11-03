@@ -585,9 +585,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                     // Nickname is already used, and not by the same JID
                     throw new UserAlreadyExistsException();
                 }
-                // Is this client already joined?
-                if (occupantsByFullJID.containsKey(user.getAddress())) {
-                    clientOnlyJoin = true; // This user is already an occupant. The client thinks it isn't. (Or else this is a broken gmail).
+                // Is this client already joined with this nickname?
+                for (MUCRole mucRole : occupants) {
+                    if (mucRole.getUserAddress().equals(user.getAddress())) {
+                        clientOnlyJoin = true;
+                        break;
+                    }
                 }
             }
             // If the room is password protected and the provided password is incorrect raise a

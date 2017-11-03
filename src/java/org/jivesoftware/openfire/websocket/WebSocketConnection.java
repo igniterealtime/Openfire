@@ -23,6 +23,8 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -131,4 +133,10 @@ public class WebSocketConnection extends VirtualConnection
 	public boolean isCompressed() {
 		return XmppWebSocket.isCompressionEnabled();
 	}
+
+	@Override
+    public void reinit(LocalSession session) {
+        this.socket.setXmppSession((LocalClientSession)session);
+        super.reinit(session);
+    }
 }

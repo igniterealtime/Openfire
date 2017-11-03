@@ -161,10 +161,16 @@ public class XmppWebSocket {
             closeStream(null);
         }
         if (xmppSession != null) {
-            xmppSession.close();
-            SessionManager.getInstance().removeSession(xmppSession);
+            if (!xmppSession.getStreamManager().getResume()) {
+                xmppSession.close();
+                SessionManager.getInstance().removeSession(xmppSession);
+            }
             xmppSession = null;
         }
+    }
+
+    public void setXmppSession(LocalClientSession session) {
+        this.xmppSession = session;
     }
 
     /**
@@ -206,6 +212,7 @@ public class XmppWebSocket {
         try {
             String tag = stanza.getName();
             if (STREAM_FOOTER.equals(tag)) {
+                xmppSession.getStreamManager().formalClose();
                 closeStream(null);
             } else if ("auth".equals(tag)) {
                 // User is trying to authenticate using SASL

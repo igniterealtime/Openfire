@@ -104,6 +104,10 @@ public abstract class StanzaHandler {
         this.connection = connection;
     }
 
+    public void setSession(LocalSession session) {
+        this.session = session;
+    }
+
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
 
         boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
@@ -147,6 +151,7 @@ public abstract class StanzaHandler {
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
             if (session != null) {
+                session.getStreamManager().formalClose();
                 session.close();
             }
             return;
@@ -189,7 +194,7 @@ public abstract class StanzaHandler {
                 waitingCompressionACK = true;
             }
         } else if (isStreamManagementStanza(doc)) {
-            session.getStreamManager().process( doc, session.getAddress() );
+            session.getStreamManager().process( doc );
         }
         else {
             process(doc);

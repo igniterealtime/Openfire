@@ -143,7 +143,9 @@ class LocalSessionManager {
             for (LocalSession session : sessions) {
                 try {
                     // Notify connected client that the server is being shut down
-                    session.getConnection().systemShutdown();
+                    if (!session.isDetached()) {
+                        session.getConnection().systemShutdown();
+                    }
                 }
                 catch (Throwable t) {
                     // Ignore.

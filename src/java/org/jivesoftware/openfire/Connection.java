@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
@@ -48,6 +49,14 @@ public interface Connection extends Closeable {
      * @param session the session that owns this connection
      */
     void init( LocalSession session );
+
+    /**
+     * Reinitializes the connection to switch to a different session. This allows for
+     * XEP-0198 resumption and transport-switching.
+     *
+     * @param session The new session now owning the connection.
+     */
+    void reinit( LocalSession session );
 
     /**
      * Returns the raw IP address of this <code>InetAddress</code>

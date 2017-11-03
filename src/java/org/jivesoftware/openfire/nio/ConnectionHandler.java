@@ -44,8 +44,8 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 	private static final Logger Log = LoggerFactory.getLogger(ConnectionHandler.class);
 
     static final String XML_PARSER = "XML-PARSER";
-    protected static final String HANDLER = "HANDLER";
-    protected static final String CONNECTION = "CONNECTION";
+    static final String HANDLER = "HANDLER";
+    static final String CONNECTION = "CONNECTION";
 
     private static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
             {

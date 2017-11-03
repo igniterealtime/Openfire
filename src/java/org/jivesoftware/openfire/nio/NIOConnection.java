@@ -42,6 +42,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -263,6 +264,17 @@ public class NIOConnection implements Connection {
     @Override
     public void init(LocalSession owner) {
         session = owner;
+    }
+
+    @Override
+    public void reinit(LocalSession owner) {
+        session = owner;
+        StanzaHandler stanzaHandler = getStanzaHandler();
+        stanzaHandler.setSession(owner);
+    }
+
+    protected StanzaHandler getStanzaHandler() {
+        return (StanzaHandler)ioSession.getAttribute(ConnectionHandler.HANDLER);
     }
 
     @Override

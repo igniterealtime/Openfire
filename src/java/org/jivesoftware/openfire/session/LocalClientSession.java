@@ -948,8 +948,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
 	public void deliver(Packet packet) throws UnauthorizedException {
-
-        conn.deliver(packet);
+        if (conn != null) {
+            conn.deliver(packet);
+        }
         streamManager.sentStanza(packet);
     }
 

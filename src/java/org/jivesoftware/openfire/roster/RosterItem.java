@@ -283,7 +283,7 @@ public class RosterItem implements Cacheable, Externalizable {
                 new LinkedList<>(item.getGroups()));
     }
 
-    private static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
+    public static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
         if (item.getAsk() == org.xmpp.packet.Roster.Ask.subscribe) {
             return RosterItem.ASK_SUBSCRIBE;
         }
@@ -295,7 +295,7 @@ public class RosterItem implements Cacheable, Externalizable {
         }
     }
 
-    private static RosterItem.SubType getSubType(org.xmpp.packet.Roster.Item item) {
+    public static RosterItem.SubType getSubType(org.xmpp.packet.Roster.Item item) {
         if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.to) {
             return RosterItem.SUB_TO;
         }

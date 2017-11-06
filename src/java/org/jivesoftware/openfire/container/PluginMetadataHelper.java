@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JavaSpecVersion;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,6 +314,41 @@ public class PluginMetadataHelper
         }
 
         return new Version( value );
+    }
+
+    /**
+     * Returns the minimum Java specification version this plugin needs to run. The value is retrieved from the
+     * plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * Note that this method will return data only for plugins that have successfully been installed. To obtain data
+     * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
+     * argument.
+     *
+     * @param plugin The plugin (cannot be null)
+     * @return the plugin's minimum Java version (possibly null).
+     */
+    public static JavaSpecVersion getMinJavaVersion( Plugin plugin )
+    {
+        return getMinJavaVersion( XMPPServer.getInstance().getPluginManager().getPluginPath( plugin ) );
+    }
+
+    /**
+     * Returns the minimum Java specification version this plugin needs to run. The value is retrieved from the
+     * plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     *
+     * @param pluginDir the path of the plugin directory.
+     * @return the plugin's minimum Java version (possibly null).
+     */
+    public static JavaSpecVersion getMinJavaVersion( Path pluginDir )
+    {
+        final String value = getElementValue( pluginDir, "/plugin/minJavaVersion" );
+
+        if ( value == null || value.trim().isEmpty() )
+        {
+            return null;
+        }
+
+        return new JavaSpecVersion( value );
     }
 
     /**

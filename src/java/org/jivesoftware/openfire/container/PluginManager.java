@@ -23,6 +23,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JavaSpecVersion;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Version;
@@ -448,6 +449,18 @@ public class PluginManager
                 if ( !metadata.getPriorToServerVersion().isNewerThan( compareVersion ) )
                 {
                     Log.warn( "Ignoring plugin '{}': compatible with server versions up to but excluding {}. Current server version is {}.", canonicalName, metadata.getPriorToServerVersion(), currentServerVersion );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
+                }
+            }
+
+            // See if the plugin specifies a minimum version of Java required to run.
+            if ( metadata.getMinJavaVersion() != null )
+            {
+                final JavaSpecVersion runtimeVersion = new JavaSpecVersion( System.getProperty( "java.specification.version" ) );
+                if ( metadata.getMinJavaVersion().isNewerThan( runtimeVersion ) )
+                {
+                    Log.warn( "Ignoring plugin '{}': requires Java specification version {}. Openfire is currently running in Java {}.", canonicalName, metadata.getMinJavaVersion(), System.getProperty( "java.specification.version" ) );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
                     return false;
                 }

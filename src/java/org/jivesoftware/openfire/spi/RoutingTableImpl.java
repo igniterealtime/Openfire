@@ -468,7 +468,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         DomainPair pair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
-		byte[] nodeID = serversCache.get(pair.toString());
+		byte[] nodeID = serversCache.get(pair);
 		if (nodeID != null) {
 		    if (server.getNodeID().equals(nodeID)) {
 		        // This is a route to a remote server connected from this node
@@ -786,7 +786,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
             if (locator != null) {
                 // Check if the session is hosted by other cluster node
-                byte[] nodeID = serversCache.get(jids.toString());
+                byte[] nodeID = serversCache.get(jids);
                 if (nodeID != null) {
                     session = locator.getOutgoingServerSession(nodeID, jids);
                 }
@@ -835,8 +835,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public boolean hasServerRoute(JID jid) {
-        return serversCache.containsKey(jid.getDomain());
+    public boolean hasServerRoute(DomainPair pair) {
+        return serversCache.containsKey(pair);
     }
 
     @Override

@@ -130,6 +130,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 return false;
             }
             session = sessionManager.getOutgoingServerSession(domainPair);
+            if (session != null && session.checkOutgoingDomainPair(localDomain, remoteDomain))
+            {
+                // Do nothing since the domain has already been authenticated.
+                log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
+                return true;
+            }
             if (session != null && !session.isUsingServerDialback() )
             {
                 log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", domainPair );
@@ -672,15 +678,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
     public void addOutgoingDomainPair(String localDomain, String remoteDomain) {
-        boolean found = false;
-        for (DomainPair domainPair : outgoingDomainPairs) {
-            if (domainPair.getRemote().equals(remoteDomain)) found = true;
-        }
         final DomainPair domainPair = new DomainPair(localDomain, remoteDomain);
         outgoingDomainPairs.add(domainPair);
-        if (!found) {
-            XMPPServer.getInstance().getRoutingTable().addServerRoute(domainPair, this);
-        }
+        XMPPServer.getInstance().getRoutingTable().addServerRoute(domainPair, this);
     }
 
     @Override

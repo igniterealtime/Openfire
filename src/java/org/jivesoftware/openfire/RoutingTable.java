@@ -194,10 +194,10 @@ public interface RoutingTable {
      * as long as a node has a connection to the remote server a true value will be
      * returned.
      *
-     * @param jid JID that specifies the remote server address.
+     * @param pair DomainPair that specifies the local/remote server address.
      * @return true if an outgoing server session exists to the specified remote server.
      */
-    boolean hasServerRoute(JID jid);
+    boolean hasServerRoute(DomainPair pair);
 
     /**
      * Returns true if an internal or external component is hosting the specified address.

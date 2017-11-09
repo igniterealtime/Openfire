@@ -9,6 +9,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -56,6 +57,7 @@ public class S2STestService {
     public Map<String, String> run() throws Exception {
         waitUntil = new Semaphore(0);
         Map<String, String> results = new HashMap<>();
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
 
         // Tear down existing routes.
         final SessionManager sessionManager = SessionManager.getInstance();
@@ -64,7 +66,7 @@ public class S2STestService {
             incomingServerSession.close();
         }
 
-        final Session outgoingServerSession = sessionManager.getOutgoingServerSession( domain );
+        final Session outgoingServerSession = sessionManager.getOutgoingServerSession( pair );
         if ( outgoingServerSession != null )
         {
             outgoingServerSession.close();
@@ -72,7 +74,7 @@ public class S2STestService {
 
         final IQ pingRequest = new IQ( Type.get );
         pingRequest.setChildElement( "ping", IQPingHandler.NAMESPACE );
-        pingRequest.setFrom( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+        pingRequest.setFrom( pair.getLocal() );
         pingRequest.setTo( domain );
 
         // Intercept logging.
@@ -145,7 +147,8 @@ public class S2STestService {
      * Logs the status of the session.
      */
     private void logSessionStatus() {
-        OutgoingServerSession session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(domain);
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
+        OutgoingServerSession session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
         if (session != null) {
             int connectionStatus = session.getStatus();
             switch(connectionStatus) {
@@ -168,7 +171,8 @@ public class S2STestService {
      * @return A String representation of the certificate chain for the connection to the domain under test.
      */
     private String getCertificates() {
-        Session session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(domain);
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
+        Session session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
         StringBuilder certs = new StringBuilder();
         if (session != null) {
             Log.info("Successfully negotiated TLS connection.");

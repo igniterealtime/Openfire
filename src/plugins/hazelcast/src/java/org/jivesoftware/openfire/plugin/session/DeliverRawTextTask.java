@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.plugin.session;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
@@ -50,6 +51,7 @@ public class DeliverRawTextTask implements ClusterTask<Void> {
             this.sessionType = SessionType.client;
         }
         else if (remoteSession instanceof RemoteOutgoingServerSession) {
+            Log.error("OutgoingServerSession used with DeliverRawTextTask; should be using DeliverRawTextServerTask: " + remoteSession);
             this.sessionType = SessionType.outgoingServer;
         }
         else if (remoteSession instanceof RemoteComponentSession) {
@@ -114,7 +116,8 @@ public class DeliverRawTextTask implements ClusterTask<Void> {
             return SessionManager.getInstance().getConnectionMultiplexerSession(address);
         }
         else if (sessionType == SessionType.outgoingServer) {
-            return SessionManager.getInstance().getOutgoingServerSession(address.getDomain());
+            Log.error("Trying to write raw data to a server session across the cluster: " + address.toString());
+            return null;
         }
         else if (sessionType == SessionType.incomingServer) {
             return SessionManager.getInstance().getIncomingServerSession(streamID);

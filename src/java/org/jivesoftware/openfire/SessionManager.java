@@ -897,11 +897,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * OutgoingServerSession an only send packets to the remote server but are not capable of
      * receiving packets from the remote server.
      *
-     * @param hostname the name of the remote server.
+     * @param pair DomainPair describing the local and remote servers.
      * @return a session that was originated from this server to a remote server.
      */
-    public OutgoingServerSession getOutgoingServerSession(String hostname) {
-        return routingTable.getServerRoute(new JID(null, hostname, null, true));
+    public OutgoingServerSession getOutgoingServerSession(DomainPair pair) {
+        return routingTable.getServerRoute(pair);
+    }
+    public List<OutgoingServerSession> getOutgoingServerSessions(String host) {
+        List<OutgoingServerSession> sessions = new LinkedList<>();
+        for (DomainPair pair : routingTable.getServerRoutes()) {
+            if (pair.getRemote().equals(host)) {
+                sessions.add(routingTable.getServerRoute(pair));
+            }
+        }
+        return sessions;
     }
 
     public Collection<ClientSession> getSessions(String username) {
@@ -1057,6 +1066,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      */
     public Collection<String> getOutgoingServers() {
         return routingTable.getServerHostnames();
+    }
+    public Collection<DomainPair> getOutgoingDomainPairs() {
+        return routingTable.getServerRoutes();
     }
 
     /**
@@ -1344,7 +1356,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             // Remove all the hostnames that were registered for this server session
             for (DomainPair domainPair : session.getOutgoingDomainPairs()) {
                 // Remove the route to the session using the hostname
-                server.getRoutingTable().removeServerRoute(new JID(null, domainPair.getRemote(), null, true));
+                server.getRoutingTable().removeServerRoute(domainPair);
             }
         }
     }

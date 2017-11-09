@@ -26,6 +26,7 @@
 <%@ page import="java.util.Calendar" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -46,7 +47,7 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(hostname);
-    OutgoingServerSession outSession = sessionManager.getOutgoingServerSession(hostname);
+    List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(hostname);
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
@@ -81,10 +82,10 @@
             <fmt:message key="server.session.label.connection" />
         </td>
         <td>
-        <% if (!inSessions.isEmpty() && outSession == null) { %>
+        <% if (!inSessions.isEmpty() && outSessions.isEmpty()) { %>
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
             <fmt:message key="server.session.connection.incoming" />
-        <% } else if (inSessions.isEmpty() && outSession != null) { %>
+        <% } else if (inSessions.isEmpty() && !outSessions.isEmpty()) { %>
             <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
             <fmt:message key="server.session.connection.outgoing" />
         <% } else { %>
@@ -103,10 +104,10 @@
                 <%= inSessions.get(0).getHostAddress() %>
                 /
                 <%= inSessions.get(0).getHostName() %>
-	        <% } else if (outSession != null) { %>
-	            <%= outSession.getHostAddress() %>
+	        <% } else if (!outSessions.isEmpty()) { %>
+	            <%= outSessions.get(0).getHostAddress() %>
 	            /
-	            <%= outSession.getHostName() %>
+	            <%= outSessions.get(0).getHostName() %>
 	        <% }
 	       } catch (java.net.UnknownHostException e) { %>
                 Invalid session/connection
@@ -170,8 +171,8 @@
     <br>
 <%  } %>
 
-<%  // Show details of the incoming session
-    if (outSession != null) {
+<%  // Show details of the outgoing sessiona
+    for (OutgoingServerSession outSession : outSessions) {
 %>
     <b><fmt:message key="server.session.details.outgoing_session" /></b>
     <div class="jive-table">

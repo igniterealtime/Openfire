@@ -106,6 +106,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      */
     public static boolean authenticateDomain(final String localDomain, final String remoteDomain) {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate local domain: '" + localDomain + "' to remote domain: '" + remoteDomain + "']" );
+        final DomainPair domainPair = new DomainPair(localDomain, remoteDomain);
 
         log.debug( "Start domain authentication ..." );
         if (remoteDomain == null || remoteDomain.length() == 0 || remoteDomain.trim().indexOf(' ') > -1) {
@@ -128,10 +129,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 log.warn( "Unable to authenticate: a SessionManager instance is not available. This should not occur unless Openfire is starting up or shutting down." );
                 return false;
             }
-            session = sessionManager.getOutgoingServerSession(remoteDomain);
+            session = sessionManager.getOutgoingServerSession(domainPair);
             if (session != null && !session.isUsingServerDialback() )
             {
-                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", remoteDomain );
+                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", domainPair );
                 session = null;
             }
 
@@ -145,7 +146,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     for ( String otherRemoteDomain : incomingSession.getValidatedDomains() )
                     {
                         // See if there's an outgoing session to any of the (other) domains hosted by the remote domain.
-                        session = sessionManager.getOutgoingServerSession( otherRemoteDomain );
+                        session = sessionManager.getOutgoingServerSession( new DomainPair(localDomain, otherRemoteDomain) );
                         if (session != null)
                         {
                             log.debug( "An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain );
@@ -675,9 +676,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         for (DomainPair domainPair : outgoingDomainPairs) {
             if (domainPair.getRemote().equals(remoteDomain)) found = true;
         }
-        outgoingDomainPairs.add(new DomainPair(localDomain, remoteDomain));
+        final DomainPair domainPair = new DomainPair(localDomain, remoteDomain);
+        outgoingDomainPairs.add(domainPair);
         if (!found) {
-            XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, remoteDomain, null, true), this);
+            XMPPServer.getInstance().getRoutingTable().addServerRoute(domainPair, this);
         }
     }
 

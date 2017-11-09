@@ -25,11 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -48,27 +44,30 @@ class LocalRoutingTable {
 	
 	private static final Logger Log = LoggerFactory.getLogger(LocalRoutingTable.class);
 
-    Map<String, RoutableChannelHandler> routes = new ConcurrentHashMap<>();
+    Map<DomainPair, RoutableChannelHandler> routes = new ConcurrentHashMap<>();
 
     /**
      * Adds a route of a local {@link RoutableChannelHandler}
      *
-     * @param address the string representation of the JID associated to the route.
+     * @param pair DomainPair associated to the route.
      * @param route the route hosted by this node.
      * @return true if the element was added or false if was already present.
      */
-    boolean addRoute(String address, RoutableChannelHandler route) {
-        return routes.put(address, route) != route;
+    boolean addRoute(DomainPair pair, RoutableChannelHandler route) {
+        return routes.put(pair, route) != route;
     }
 
     /**
      * Returns the route hosted by this node that is associated to the specified address.
      *
-     * @param address the string representation of the JID associated to the route.
+     * @param pair DomainPair associated to the route.
      * @return the route hosted by this node that is associated to the specified address.
      */
-    RoutableChannelHandler getRoute(String address) {
-        return routes.get(address);
+    RoutableChannelHandler getRoute(DomainPair pair) {
+        return routes.get(pair);
+    }
+    RoutableChannelHandler getRoute(JID jid) {
+        return routes.get(new DomainPair("", jid.toString()));
     }
 
     /**
@@ -119,10 +118,10 @@ class LocalRoutingTable {
     /**
      * Removes a route of a local {@link RoutableChannelHandler}
      *
-     * @param address the string representation of the JID associated to the route.
+     * @param pair DomainPair associated to the route.
      */
-    void removeRoute(String address) {
-        routes.remove(address);
+    void removeRoute(DomainPair pair) {
+        routes.remove(pair);
     }
 
     public void start() {
@@ -154,8 +153,11 @@ class LocalRoutingTable {
         }
     }
 
+    public boolean isLocalRoute(DomainPair pair) {
+        return routes.containsKey(pair);
+    }
     public boolean isLocalRoute(JID jid) {
-        return routes.containsKey(jid.toString());
+        return routes.containsKey(new DomainPair("", jid.toString()));
     }
 
     /**

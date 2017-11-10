@@ -954,10 +954,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeServerRoute(DomainPair route) {
         String address = route.toString();
         boolean removed = false;
-        Lock lock = CacheFactory.getLock(address, serversCache);
+        Lock lock = CacheFactory.getLock(route, serversCache);
         try {
             lock.lock();
-            removed = serversCache.remove(address) != null;
+            removed = serversCache.remove(route) != null;
         }
         finally {
             lock.unlock();

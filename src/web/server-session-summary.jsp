@@ -196,7 +196,7 @@
         for (String host : hostnames) {
             count++;
             List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);
-            Collection<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(host);
+            List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(host);
             if (inSessions.isEmpty() && outSessions.isEmpty()) {
                 // If the connections were just closed then skip this host
                 continue;

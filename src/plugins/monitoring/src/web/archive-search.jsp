@@ -48,19 +48,19 @@
     int numPages = 1;
     int curPage = (start / range) + 1;
 
-    if (anyText.equals(participant1)) {
+    if (anyText.equalsIgnoreCase(participant1)) {
         participant1 = null;
     }
 
-    if (anyText.equals(participant2)) {
+    if (anyText.equalsIgnoreCase(participant2)) {
         participant2 = null;
     }
 
-    if (anyText.equals(startDate)) {
+    if (anyText.equalsIgnoreCase(startDate)) {
         startDate = null;
     }
 
-    if (anyText.equals(endDate)) {
+    if (anyText.equalsIgnoreCase(endDate)) {
         endDate = null;
     }
 
@@ -471,7 +471,7 @@
         '.textfield' : function(el) {
             el.onblur = function() {
                 var va = el.value;
-                if (va.length == 0 || va == 'Any') {
+                if (va.length == 0 || va == 'Any' || va == 'any') {
                     this.style.backgroundColor = '#efefef';
                     el.value = "<%= anyText%>";
                 }

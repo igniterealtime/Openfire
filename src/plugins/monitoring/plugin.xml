@@ -5,8 +5,8 @@
     <name>Monitoring Service</name>
     <description>Monitors conversations and statistics of the server.</description>
     <author>IgniteRealtime // Jive Software</author>
-    <version>1.5.7</version>
-    <date>5/19/2017</date>
+    <version>1.5.8</version>
+    <date>11/13/2017</date>
     <minServerVersion>4.1.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>4</databaseVersion>

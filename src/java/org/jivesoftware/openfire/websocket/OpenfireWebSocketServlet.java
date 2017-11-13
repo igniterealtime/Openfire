@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,9 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         if (XmppWebSocket.isCompressionEnabled()) {
             factory.getExtensionFactory().register("permessage-deflate", PerMessageDeflateExtension.class);
         }
+        final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
+        factory.getPolicy().setMaxTextMessageBufferSize(messageSize * 5);
+        factory.getPolicy().setMaxTextMessageSize(messageSize);
         factory.setCreator(new WebSocketCreator() {
             @Override
             public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)

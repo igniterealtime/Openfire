@@ -1,4 +1,4 @@
-package org.igniterealtime.openfire.plugin.avatarresizer;
+package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.Base64;
@@ -21,9 +21,22 @@ import java.util.Iterator;
 /**
  * Image resizing utility methods.
  */
-public class Resizer
+public class PhotoResizer
 {
-    private static final Logger Log = LoggerFactory.getLogger( Resizer.class );
+    private static final Logger Log = LoggerFactory.getLogger( PhotoResizer.class );
+
+    // Property that, when 'true' causes avatars that are being loaded from backend storage to be resized, prior to be
+    // processed and send to entities.
+    public static final String PROPERTY_RESIZE_ON_LOAD = "avatar.resize.enable-on-load";
+    public static final boolean PROPERTY_RESIZE_ON_LOAD_DEFAULT = true;
+
+    // Property that, when 'true' causes avatars that are being stored in backend storage to be resized.
+    public static final String PROPERTY_RESIZE_ON_CREATE = "avatar.resize.enable-on-create";
+    public static final boolean PROPERTY_RESIZE_ON_CREATE_DEFAULT = false;
+
+    // Property that controls the target dimension, in pixels.
+    public static final String PROPERTY_TARGETDIMENSION = "avatar.resize.targetdimension";
+    public static final int PROPERTY_TARGETDIMENSION_DEFAULT = 96;
 
     public static void resizeAvatar( final Element vCardElement )
     {
@@ -63,7 +76,7 @@ public class Resizer
         final byte[] original = Base64.decode( element.getTextTrim() );
 
         // Crop and shrink, if needed.
-        final int targetDimension = JiveGlobals.getIntProperty( "avatar.resize.targetdimension", 96 );
+        final int targetDimension = JiveGlobals.getIntProperty( PROPERTY_TARGETDIMENSION, PROPERTY_TARGETDIMENSION_DEFAULT );
         final byte[] resized = cropAndShrink( original, targetDimension, iw );
 
         // If a resized image was created, replace to original avatar in the VCard.

@@ -9,7 +9,6 @@
 
     <modules>
         <module>openfire-plugin-assembly-descriptor</module>
-        <module>avatarResizer</module>
         <module>bookmarks</module>
         <module>broadcast</module>
         <module>callbackOnOffline</module>

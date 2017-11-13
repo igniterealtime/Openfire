@@ -261,13 +261,16 @@
             <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
         </td>
         <td width="23%">
-            <% long logoutTime = presenceManager.getLastActivity(user);
-                if (logoutTime > -1) {
+            <% if (presenceManager.isAvailable(user)) { %>
+            <fmt:message key="session.details.online" />
+            <% } else {
+                 long logoutTime = presenceManager.getLastActivity(user);
+                 if (logoutTime > -1) {
                     out.println(StringUtils.getElapsedTime(logoutTime));
-                }
-                else {
-                    out.println("&nbsp;");
-                } %>
+                 } else { %>
+            <fmt:message key="user.properties.never_logged_in" />
+            <%   }
+               }%>
         </td>
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>

@@ -69,7 +69,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         }
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
         factory.getPolicy().setMaxTextMessageBufferSize(messageSize * 5);
-        factory.getPolicy().setMaxTextMessageSize(messageSize * 5);
+        factory.getPolicy().setMaxTextMessageSize(messageSize);
         factory.setCreator(new WebSocketCreator() {
             @Override
             public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)

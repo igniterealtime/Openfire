@@ -185,13 +185,13 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
                 if (RosterManager.isRosterVersioningEnabled()) {
                     String clientVersion = packet.getChildElement().attributeValue("ver");
-                    String latestVersion = cachedRoster.getLatestRosterVersion();
+                    String latestVersion = String.valueOf( cachedRoster.hashCode() );
                     // Whether or not the roster has been modified since the version ID enumerated by the client, ...
                     if (!latestVersion.equals(clientVersion)) {
                         // ... the server MUST either return the complete roster
                         // (including a 'ver' attribute that signals the latest version)
                         returnPacket = cachedRoster.getReset();
-                        returnPacket.getChildElement().addAttribute("ver", cachedRoster.getLatestRosterVersion());
+                        returnPacket.getChildElement().addAttribute("ver", latestVersion );
                     } else {
                         // ... or return an empty IQ-result
                         returnPacket = new org.xmpp.packet.IQ();

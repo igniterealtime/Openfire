@@ -79,7 +79,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return true if the roster versioning is enabled.
      */
     public static boolean isRosterVersioningEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.client.roster.versioning.active", false);
+        return JiveGlobals.getBooleanProperty("xmpp.client.roster.versioning.active", true);
     }
 
     public RosterManager() {

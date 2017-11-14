@@ -422,7 +422,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getIdentities(name, node, senderJID);
                 }
-                if (name != null && name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     // Answer identity of the server
                     synchronized (identities) {
                         if (identities.isEmpty()) {
@@ -441,6 +441,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         }
                     }
                     return identities.iterator();
+                }
+                else if (node != null) {
+                    return XMPPServer.getInstance().getIQPEPHandler().getIdentities(name, node, senderJID);
                 }
                 else {
                     if (SessionManager.getInstance().isAnonymousRoute(name)) {
@@ -461,6 +464,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getFeatures(name, node, senderJID);
                 }
+                if (node != null && name != null) {
+                    return XMPPServer.getInstance().getIQPEPHandler().getFeatures(name, node, senderJID);
+                }
                 // Answer features of the server
                 return new HashSet<>(serverFeatures.keySet()).iterator();
             }
@@ -472,14 +478,24 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         // Redirect the request to the disco info provider of the specified node
                         return serverNodeProviders.get(node).hasInfo(name, node, senderJID);
                     }
+                    if (name != null) {
+                        return XMPPServer.getInstance().getIQPEPHandler().hasInfo(name, node, senderJID);
+                    }
                     // Unknown node
                     return false;
                 }
                 try {
                     // True if it is an info request of the server, a registered user or an
                     // anonymous user. We now support disco of user's bare JIDs
-                    return name == null || UserManager.getInstance().getUser(name) != null ||
-                            SessionManager.getInstance().isAnonymousRoute(name);
+                    if (name == null) return true;
+                    if (UserManager.getInstance().getUser(name) != null ||
+                            SessionManager.getInstance().isAnonymousRoute(name)) {
+                        if (node == null) {
+                            return true;
+                        }
+                        return XMPPServer.getInstance().getIQPEPHandler().hasInfo(name, node, senderJID);
+                    }
+                    return false;
                 }
                 catch (UserNotFoundException e) {
                     return false;
@@ -491,6 +507,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getExtendedInfo(name, node, senderJID);
+                }
+                if (node != null && name != null) {
+                    return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfo(name, node, senderJID);
                 }
                 return null;
             }

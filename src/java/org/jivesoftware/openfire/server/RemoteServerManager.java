@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -90,9 +91,12 @@ public class RemoteServerManager {
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             session.close();
         }
-        Session session = SessionManager.getInstance().getOutgoingServerSession(domain);
-        if (session != null) {
-            session.close();
+        // Can't just lookup a single remote server anymore, so check them all.
+        for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
+            if (domainPair.getRemote().equals(domain)) {
+                Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
+                session.close();
+            }
         }
     }
 
@@ -348,9 +352,9 @@ public class RemoteServerManager {
                 }
             }
         }
-        for (String hostname : SessionManager.getInstance().getOutgoingServers()) {
-            if (!canAccess(hostname)) {
-                Session session = SessionManager.getInstance().getOutgoingServerSession(hostname);
+        for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
+            if (!canAccess(domainPair.getRemote())) {
+                Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 session.close();
             }
         }

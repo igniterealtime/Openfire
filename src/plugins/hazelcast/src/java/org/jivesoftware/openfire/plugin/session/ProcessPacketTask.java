@@ -21,6 +21,7 @@ import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
@@ -135,7 +136,8 @@ public class ProcessPacketTask implements ClusterTask<Void> {
             return SessionManager.getInstance().getConnectionMultiplexerSession(address);
         }
         else if (sessionType == SessionType.outgoingServer) {
-            return SessionManager.getInstance().getOutgoingServerSession(address.getDomain());
+            final DomainPair pair = new DomainPair(packet.getFrom().getDomain(), address.getDomain());
+            return SessionManager.getInstance().getOutgoingServerSession(pair);
         }
         else if (sessionType == SessionType.incomingServer) {
             return SessionManager.getInstance().getIncomingServerSession(streamID);

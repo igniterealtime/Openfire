@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
@@ -261,7 +262,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 lock.unlock();
             }
             if (created) {
-                if (!routingTable.hasServerRoute(packet.getTo())) {
+                if (!routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain()))) {
                     throw new Exception("Route created but not found!!!");
                 }
                 // A connection to the remote server was created so get the route and send the packet

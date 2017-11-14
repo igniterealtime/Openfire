@@ -87,5 +87,5 @@ public interface RemoteSessionLocator {
      * @param address the address that uniquely identifies the session.
      * @return a session surrogate of an incoming server session hosted by a remote cluster node.
      */
-    OutgoingServerSession getOutgoingServerSession(byte[] nodeID, JID address);
+    OutgoingServerSession getOutgoingServerSession(byte[] nodeID, DomainPair address);
 }

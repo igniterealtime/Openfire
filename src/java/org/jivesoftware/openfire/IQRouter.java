@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
@@ -314,7 +315,7 @@ public class IQRouter extends BasicModule {
         try {
             // Check for registered components, services or remote servers
             if (recipientJID != null &&
-                    (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(recipientJID))) {
+                    (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), recipientJID.getDomain())))) {
                 // A component/service/remote server was found that can handle the Packet
                 routingTable.routePacket(recipientJID, packet, false);
                 return;

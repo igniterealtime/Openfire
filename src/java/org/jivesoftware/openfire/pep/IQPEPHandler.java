@@ -16,10 +16,7 @@
 
 package org.jivesoftware.openfire.pep;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,18 +27,11 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterEventDispatcher;
@@ -93,7 +83,7 @@ import org.xmpp.packet.Presence;
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener,
-        RosterEventListener, UserEventListener {
+        RosterEventListener, UserEventListener, DiscoInfoProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
 
@@ -653,6 +643,76 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing
+    }
+
+    // DiscoInfoProvider
+
+    /*
+     * With all these, there are basically two axes of binary choice.
+     * Either the PEPService exists already - in which case we can defer to it,
+     * or else it doesn't, in which case we should use the generic engine.
+     *
+     * In either case, we might be being asked for a node, or the root. If we're
+     * asked for a node when the PEPService doesn't exist that's an error. Otherwise
+     * if we're asked for the root we can safely defer to the generic engine.
+     */
+
+    @Override
+    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+
+        if (node != null && pepService != null) {
+            Node pubNode = pepService.getNode(node);
+            if (pubNode == null) return null;
+            // Answer the identity of a given node
+            Element identity = DocumentHelper.createElement("identity");
+            identity.addAttribute("category", "pubsub");
+            identity.addAttribute("type", pubNode.isCollectionNode() ? "collection" : "leaf");
+
+            List<Element> identities = new LinkedList<>();
+            identities.add(identity);
+            return identities.iterator();
+        } else if (node != null) {
+            return null;
+        } else {
+            PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+            return pubsub.getIdentities(null, null, senderJID);
+        }
+    }
+
+    @Override
+    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
+        if (node == null) {
+            PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+            return pubsub.getFeatures(null, null, senderJID);
+        } else {
+            List<String> features = new LinkedList<>();
+            features.add("http://jabber.org/protocol/pubsub");
+            return features.iterator();
+        }
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+        if (node != null) {
+            // Answer the extended info of a given node
+            Node pubNode = pepService.getNode(node);
+            // Get the metadata data form
+            return pubNode.getMetadataForm();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasInfo(String name, String node, JID senderJID) {
+        if (node == null) return true;
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+
+        return pepService.getNode(node) != null;
     }
 
     private class GetNotificationsOnInitialPresence implements Runnable {

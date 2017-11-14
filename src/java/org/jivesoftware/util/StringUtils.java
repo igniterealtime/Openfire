@@ -524,7 +524,7 @@ public final class StringUtils {
      * array index.
      */
     private static char[] numbersAndLetters = ("0123456789abcdefghijklmnopqrstuvwxyz" +
-            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").toCharArray();
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ").toCharArray();
 
     /**
      * Returns a random String of numbers and letters (lower and upper case)
@@ -544,7 +544,7 @@ public final class StringUtils {
         // Create a char buffer to put random letters and numbers in.
         char[] randBuffer = new char[length];
         for (int i = 0; i < randBuffer.length; i++) {
-            randBuffer[i] = numbersAndLetters[randGen.nextInt(71)];
+            randBuffer[i] = numbersAndLetters[randGen.nextInt(numbersAndLetters.length - 1)];
         }
         return new String(randBuffer);
     }

@@ -42,7 +42,9 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -686,6 +688,13 @@ public class Roster implements Cacheable, Externalizable {
     private void broadcast(org.xmpp.packet.Roster roster) {
         JID recipient = server.createJID(username, null, true);
         roster.setTo(recipient);
+
+        // When roster versioning is enabled, the server MUST include 
+        // the updated roster version with each roster push.
+        if (RosterManager.isRosterVersioningEnabled()) {
+            String newRosterVersion = incrementRosterVersion();
+            roster.getChildElement().addAttribute("ver", newRosterVersion);
+        }
         if (sessionManager == null) {
             sessionManager = SessionManager.getInstance();
         }
@@ -1149,5 +1158,22 @@ public class Roster implements Cacheable, Externalizable {
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         ExternalizableUtil.getInstance().readExternalizableMap(in, rosterItems, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readStringsMap(in, implicitFrom);
+    }
+
+    private synchronized String incrementRosterVersion() {
+        String latestRosterVersion = getLatestRosterVersion();
+        String newRosterVersion = Long.toString(Long.parseLong(latestRosterVersion) + 1);
+        try {
+            User user = UserManager.getInstance().getUser(username);
+            user.getProperties().put("roster.version", newRosterVersion);
+        } catch (UserNotFoundException e) {
+        }
+        
+        return newRosterVersion;
+    }
+
+    public String getLatestRosterVersion() {
+        String latestVersion = User.getPropertyValue(username, "roster.version");
+        return latestVersion != null ? latestVersion : "0";
     }
 }

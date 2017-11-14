@@ -303,14 +303,14 @@ public class Roster implements Cacheable, Externalizable {
 				Collection<Group> groupsWithProp = GroupManager
 						.getInstance()
 						.search("sharedRoster.displayName", groupDisplayName);
-				Iterator<Group> itr = groupsWithProp.iterator();
-            	while(itr.hasNext()) {
-            		Group group = itr.next();
-            		String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            		if(showInRoster != null && !showInRoster.equals("nobody")) {
-            			throw new SharedGroupException("Cannot add an item to a shared group");
-            		}
-            	}
+                for ( Group group : groupsWithProp )
+                {
+                    String showInRoster = group.getProperties().get( "sharedRoster.showInRoster" );
+                    if ( showInRoster != null && !showInRoster.equals( "nobody" ) )
+                    {
+                        throw new SharedGroupException( "Cannot add an item to a shared group" );
+                    }
+                }
             }
         }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();

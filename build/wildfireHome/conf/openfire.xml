@@ -13,7 +13,7 @@
         </prop>
 
     Most properties are stored in the Openfire database. A
-	property viewer and editor is included in the admin console.
+    property viewer and editor is included in the admin console.
 -->
 <!-- root element, all properties must be under this element -->
 <jive> 

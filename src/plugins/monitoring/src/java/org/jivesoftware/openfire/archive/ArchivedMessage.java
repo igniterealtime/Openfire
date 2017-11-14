@@ -56,8 +56,8 @@ public class ArchivedMessage {
     }
 
     public ArchivedMessage(long conversationID, JID fromJID, JID toJID, Date sentDate, String body, String stanza, boolean roomEvent) {
-    	this(conversationID, fromJID, toJID, sentDate, body, roomEvent);
-    	this.stanza = stanza;
+        this(conversationID, fromJID, toJID, sentDate, body, roomEvent);
+        this.stanza = stanza;
     }
 
     /**
@@ -111,7 +111,7 @@ public class ArchivedMessage {
      * @return string encoded message stanza.
      */
     public String getStanza() {
-    	return stanza;
+        return stanza;
     }
 
     /**

@@ -37,7 +37,7 @@ public class RtpSenderPacket extends RtpPacket {
      * Initialize an Rtp sender packet.
      */
     public RtpSenderPacket(int encoding, int sampleRate, int channels) {
-	super(encoding, sampleRate, channels);
+    super(encoding, sampleRate, channels);
 
         //
         // Initialize RTP header
@@ -53,10 +53,10 @@ public class RtpSenderPacket extends RtpPacket {
 
         long now = System.currentTimeMillis();
 
-	buffer[8]  = (byte)((now >> 24) & 0xff); // Synchronization Source SSRC id
-	buffer[9]  = (byte)((now >> 16) & 0xff);
-	buffer[10] = (byte)((now >> 8) & 0xff);
-	buffer[11] = (byte)(now & 0xff);
+    buffer[8]  = (byte)((now >> 24) & 0xff); // Synchronization Source SSRC id
+    buffer[9]  = (byte)((now >> 16) & 0xff);
+    buffer[10] = (byte)((now >> 8) & 0xff);
+    buffer[11] = (byte)(now & 0xff);
     }
 
     /**
@@ -68,17 +68,17 @@ public class RtpSenderPacket extends RtpPacket {
      * with the number of PACKET_PERIOD samples (rounded up).
      */
     public void setComfortPayload() {
-	buffer[1] = COMFORT_PAYLOAD;
+    buffer[1] = COMFORT_PAYLOAD;
 
-	setLength(RtpPacket.HEADER_SIZE + 1);
+    setLength(RtpPacket.HEADER_SIZE + 1);
 
-	comfortPayloadSentCount++;
+    comfortPayloadSentCount++;
 
-	timeComfortPayloadSent = System.currentTimeMillis();
+    timeComfortPayloadSent = System.currentTimeMillis();
     }
 
     public void setComfortNoiseLevel(byte comfortNoiseLevel) {
-	buffer[RtpPacket.DATA] = comfortNoiseLevel;
+    buffer[RtpPacket.DATA] = comfortNoiseLevel;
     }
 
     /**
@@ -97,7 +97,7 @@ public class RtpSenderPacket extends RtpPacket {
      * time stamp to multiple members.
      */
     public void updateRtpHeader(int size) {
-	rtpSequenceNumber++;
+    rtpSequenceNumber++;
         buffer[0] = (byte)0x80;           // version 2
         buffer[1] &= ~MARK_BIT;   	  // clear MARK bit
         buffer[2] = (byte)((rtpSequenceNumber >> 8) & 0xff);
@@ -106,7 +106,7 @@ public class RtpSenderPacket extends RtpPacket {
         /*
          * adjust RTP header time stamp
          */
-	adjustRtpTimestamp(size - HEADER_SIZE);
+    adjustRtpTimestamp(size - HEADER_SIZE);
     }
 
     /**
@@ -128,13 +128,13 @@ public class RtpSenderPacket extends RtpPacket {
          * number of samples by which the RTP timestamp must
          * be adjusted.
          */
-	if (timeComfortPayloadSent == 0) {
-	    Logger.error("RtpSenderPacket:  timeComfortPayloadSent is 0!");
-	    return;
-	}
+    if (timeComfortPayloadSent == 0) {
+        Logger.error("RtpSenderPacket:  timeComfortPayloadSent is 0!");
+        return;
+    }
 
-	adjustRtpTimestamp(System.currentTimeMillis() - timeComfortPayloadSent);
-	timeComfortPayloadSent = 0;
+    adjustRtpTimestamp(System.currentTimeMillis() - timeComfortPayloadSent);
+    timeComfortPayloadSent = 0;
     }
 
     /*
@@ -144,17 +144,17 @@ public class RtpSenderPacket extends RtpPacket {
      */
     public void adjustRtpTimestamp(long elapsed) {
         int adjustment = (int)
-	    (elapsed * (getDataSize() / RtpPacket.PACKET_PERIOD));
+        (elapsed * (getDataSize() / RtpPacket.PACKET_PERIOD));
 
         adjustment = ((adjustment + getDataSize() - 1) / getDataSize()) *
             getDataSize();
 
         buffer[1] |= MARK_BIT; 
-	adjustRtpTimestamp(adjustment);
+    adjustRtpTimestamp(adjustment);
     }
 
     private void adjustRtpTimestamp(int adjustment) {
-	rtpTimestamp += adjustment;
+    rtpTimestamp += adjustment;
 
         buffer[4] = (byte)((rtpTimestamp >> 24) & 0xff);
         buffer[5] = (byte)((rtpTimestamp >> 16) & 0xff);
@@ -163,37 +163,37 @@ public class RtpSenderPacket extends RtpPacket {
     }
 
     public void incrementPacketsSent() {
-	packetsSent++;
+    packetsSent++;
     }
 
     public long getPacketsSent() {
-	return packetsSent;
+    return packetsSent;
     }
 
     public long getComfortPayloadSentCount() {
-	return comfortPayloadSentCount;
+    return comfortPayloadSentCount;
     }
 
     /*
      * Make sure sequence number wraps properly.
      */
     public static void main(String[] args) {
-	RtpSenderPacket packet = new RtpSenderPacket(
-	    PCM_ENCODING, 8000, 1);
+    RtpSenderPacket packet = new RtpSenderPacket(
+        PCM_ENCODING, 8000, 1);
 
-	Logger.logLevel = 5;
+    Logger.logLevel = 5;
 
-	short expected = packet.rtpSequenceNumber;
+    short expected = packet.rtpSequenceNumber;
 
-	while (true) {
-	    if (packet.rtpSequenceNumber != expected) {
-		Logger.println("expected " + expected
-		    + " got " + packet.rtpSequenceNumber);
-	    }
+    while (true) {
+        if (packet.rtpSequenceNumber != expected) {
+        Logger.println("expected " + expected
+            + " got " + packet.rtpSequenceNumber);
+        }
 
-	    packet.rtpSequenceNumber++;
-	    expected = packet.rtpSequenceNumber;
-	}
+        packet.rtpSequenceNumber++;
+        expected = packet.rtpSequenceNumber;
+    }
     }
 
 }

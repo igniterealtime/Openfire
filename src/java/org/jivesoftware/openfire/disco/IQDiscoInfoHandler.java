@@ -65,7 +65,7 @@ import java.util.concurrent.locks.Lock;
 public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
     public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
-	private Map<String, DiscoInfoProvider> entities = new HashMap<>();
+    private Map<String, DiscoInfoProvider> entities = new HashMap<>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
     private Cache<String, Set<NodeID>> serverFeatures;
     private List<Element> serverIdentities = new ArrayList<>();
@@ -91,12 +91,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
     @Override
-	public IQ handleIQ(IQ packet) {
+    public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
@@ -140,29 +140,29 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 boolean hasResultSetManagementFeature = false;
                 
                 while (features.hasNext()) {
-					final String feature = features.next();
-					queryElement.addElement("feature").addAttribute("var", feature);
-					if (feature.equals(NAMESPACE_DISCO_INFO)) {
-						hasDiscoInfoFeature = true;
-					} else if (feature.equals("http://jabber.org/protocol/disco#items")) {
-						hasDiscoItemsFeature = true;
-					} else if (feature.equals(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)) {
-						hasResultSetManagementFeature = true;
-					}
+                    final String feature = features.next();
+                    queryElement.addElement("feature").addAttribute("var", feature);
+                    if (feature.equals(NAMESPACE_DISCO_INFO)) {
+                        hasDiscoInfoFeature = true;
+                    } else if (feature.equals("http://jabber.org/protocol/disco#items")) {
+                        hasDiscoItemsFeature = true;
+                    } else if (feature.equals(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)) {
+                        hasResultSetManagementFeature = true;
+                    }
                 }
 
-				if (hasDiscoItemsFeature && !hasResultSetManagementFeature) {
-					// IQDiscoItemsHandler provides result set management
-					// support.
-					queryElement.addElement("feature").addAttribute("var",
-							ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
-				}
+                if (hasDiscoItemsFeature && !hasResultSetManagementFeature) {
+                    // IQDiscoItemsHandler provides result set management
+                    // support.
+                    queryElement.addElement("feature").addAttribute("var",
+                            ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
+                }
                 
                 if (!hasDiscoInfoFeature) {
-					// XEP-0030 requires that every entity that supports service
-					// discovery broadcasts the disco#info feature.
-					queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
-				}
+                    // XEP-0030 requires that every entity that supports service
+                    // discovery broadcasts the disco#info feature.
+                    queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
+                }
                 
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
                 DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
@@ -309,7 +309,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);

@@ -48,10 +48,10 @@ import org.xmpp.packet.JID;
  */
 public class MUCPersistenceManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
-	
-	// property name for optional number of days to limit persistent MUC history during reload (OF-764)
-	private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
+    private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
+    
+    // property name for optional number of days to limit persistent MUC history during reload (OF-764)
+    private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -264,7 +264,7 @@ public class MUCPersistenceManager {
             pstmt.setLong(1, room.getID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
-            	// might be a group JID
+                // might be a group JID
                 JID affiliationJID = GroupJID.fromString(rs.getString(1));
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
                 try {
@@ -294,7 +294,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                	room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
+                    room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);
@@ -648,7 +648,7 @@ public class MUCPersistenceManager {
                     final String jidValue = resultSet.getString(2);
                     final JID affiliationJID;
                     try {
-                    	// might be a group JID
+                        // might be a group JID
                         affiliationJID = GroupJID.fromString(jidValue);
                     } catch (IllegalArgumentException ex) {
                         Log.warn("An illegal JID ({}) was found in the database, "
@@ -704,9 +704,9 @@ public class MUCPersistenceManager {
                         continue;
                     }
                     try {
-                    	// might be a group JID
-                    	affiliationJID = GroupJID.fromString(resultSet.getString(2));
-                    	room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
+                        // might be a group JID
+                        affiliationJID = GroupJID.fromString(resultSet.getString(2));
+                        room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
                     } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }
@@ -819,7 +819,7 @@ public class MUCPersistenceManager {
     public static void saveAffiliationToDB(MUCRoom room, JID jid, String nickname,
             MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
     {
-    	final String affiliationJid = jid.toBareJID();
+        final String affiliationJid = jid.toBareJID();
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -973,7 +973,7 @@ public class MUCPersistenceManager {
     public static void removeAffiliationFromDB(MUCRoom room, JID jid,
             MUCRole.Affiliation oldAffiliation)
     {
-    	final String affiliationJID = jid.toBareJID();
+        final String affiliationJID = jid.toBareJID();
         if (room.isPersistent() && room.wasSavedToDB()) {
             if (MUCRole.Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
@@ -1097,13 +1097,13 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name) {    	
-    	final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
-    	if (oldProps != null) {
-    		return oldProps.get(name);
-    	} else {
-    		return newProps.get(name);
-    	}
+        final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
+        if (oldProps != null) {
+            return oldProps.get(name);
+        } else {
+            return newProps.get(name);
+        }
     }
 
     /**
@@ -1116,12 +1116,12 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name, String defaultValue) {
-    	final String value = getProperty(subdomain, name);
-    	if (value != null) {
-    		return value;
-    	} else {
-    		return defaultValue;
-    	}
+        final String value = getProperty(subdomain, name);
+        if (value != null) {
+            return value;
+        } else {
+            return defaultValue;
+        }
     }
 
     /**
@@ -1217,11 +1217,11 @@ public class MUCPersistenceManager {
      * @return a List of all immediate children property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain, String parent) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
         return new ArrayList<>(properties.getChildrenNames(parent));
     }
 
@@ -1237,11 +1237,11 @@ public class MUCPersistenceManager {
      * @return all child property values for the given parent.
      */
     public static List<String> getProperties(String subdomain, String parent) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
         List<String> values = new ArrayList<>();
@@ -1262,11 +1262,11 @@ public class MUCPersistenceManager {
      * @return a List of all property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
         return new ArrayList<>(properties.getPropertyNames());
     }
 

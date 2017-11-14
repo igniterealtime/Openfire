@@ -16,29 +16,29 @@ import org.slf4j.LoggerFactory;
 @Provider
 public class RESTExceptionMapper implements ExceptionMapper<ServiceException> {
 
-	/** The log. */
-	private static Logger LOG = LoggerFactory.getLogger(RESTExceptionMapper.class);
+    /** The log. */
+    private static Logger LOG = LoggerFactory.getLogger(RESTExceptionMapper.class);
 
-	/**
-	 * Instantiates a new REST exception mapper.
-	 */
-	public RESTExceptionMapper() {
-	}
+    /**
+     * Instantiates a new REST exception mapper.
+     */
+    public RESTExceptionMapper() {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see javax.ws.rs.ext.ExceptionMapper#toResponse(java.lang.Throwable)
-	 */
-	public Response toResponse(ServiceException exception) {
-		ErrorResponse errorResponse = new ErrorResponse();
-		errorResponse.setResource(exception.getResource());
-		errorResponse.setMessage(exception.getMessage());
-		errorResponse.setException(exception.getException());
-		LOG.error(
-				exception.getException() + ": " + exception.getMessage() + " with resource "
-						+ exception.getResource(), exception.getException());
-		return Response.status(exception.getStatus()).entity(errorResponse).type(MediaType.APPLICATION_XML).build();
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see javax.ws.rs.ext.ExceptionMapper#toResponse(java.lang.Throwable)
+     */
+    public Response toResponse(ServiceException exception) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setResource(exception.getResource());
+        errorResponse.setMessage(exception.getMessage());
+        errorResponse.setException(exception.getException());
+        LOG.error(
+                exception.getException() + ": " + exception.getMessage() + " with resource "
+                        + exception.getResource(), exception.getException());
+        return Response.status(exception.getStatus()).entity(errorResponse).type(MediaType.APPLICATION_XML).build();
+    }
 
 }

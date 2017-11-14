@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthCheckFilter implements Filter {
 
-	private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
+    private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
     private static AuthCheckFilter instance;
 
     private static Set<String> excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());

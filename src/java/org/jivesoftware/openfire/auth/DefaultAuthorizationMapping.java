@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultAuthorizationMapping implements AuthorizationMapping {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationMapping.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationMapping.class);
 
     private Vector<String> approvedRealms;
 

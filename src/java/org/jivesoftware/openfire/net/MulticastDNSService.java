@@ -46,7 +46,7 @@ import java.util.TimerTask;
  */
 public class MulticastDNSService extends BasicModule {
 
-	private static final Logger Log = LoggerFactory.getLogger(MulticastDNSService.class);
+    private static final Logger Log = LoggerFactory.getLogger(MulticastDNSService.class);
 
     private JmDNS jmdns;
 
@@ -88,19 +88,19 @@ public class MulticastDNSService extends BasicModule {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
        
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         // If the service isn't enabled, return.
         if (!JiveGlobals.getBooleanProperty("multicastDNS.enabled", false) ) {
             return;     
         }
         TimerTask startService = new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 int clientPortNum = -1;
                 int componentPortNum = -1;
                 final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
@@ -137,7 +137,7 @@ public class MulticastDNSService extends BasicModule {
 
 
     @Override
-	public void stop() {
+    public void stop() {
         if (jmdns != null) {
             try {
                 jmdns.close();
@@ -149,7 +149,7 @@ public class MulticastDNSService extends BasicModule {
     }
 
     @Override
-	public void destroy() {
+    public void destroy() {
         if (jmdns != null) {
             jmdns = null;
         }

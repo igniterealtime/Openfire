@@ -51,7 +51,7 @@ public class DirectOutgoingCallHandler implements SipListener {
     /** Creates a new instance of DirectOutgoingCallHandler */
     public DirectOutgoingCallHandler(CallParticipant cp) {
         callParticipant = cp;
-	sipUtil = new SipUtil();
+    sipUtil = new SipUtil();
     }
 
     /**
@@ -210,21 +210,21 @@ public class DirectOutgoingCallHandler implements SipListener {
     }
 
     public void processDialogTerminated(DialogTerminatedEvent dte) {
-	if (Logger.logLevel >= Logger.LOG_SIP) {
+    if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processDialogTerminated called");
-	}
+    }
     }
 
     public void  processTransactionTerminated(TransactionTerminatedEvent tte) {
-	if (Logger.logLevel >= Logger.LOG_SIP) {
+    if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processTransactionTerminated called");
-	}
+    }
     }
 
     public void  processIOException(IOExceptionEvent ioee) {
-	if (Logger.logLevel >= Logger.LOG_SIP) {
+    if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processTransactionTerminated called");
-	}
+    }
     }
 
 }

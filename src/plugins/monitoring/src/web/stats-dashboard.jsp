@@ -124,14 +124,14 @@
     }
 
     conv-users, conv-messages {
-	    float: left;
+        float: left;
         display: block;
-	    text-decoration: none;
+        text-decoration: none;
     }
 </style>
 
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 
@@ -152,10 +152,10 @@ var currentTimePeriod = '<%= timePeriod %>';
 
 function statsUpdater() {
     new Ajax.Request('/plugins/monitoring/api/stats/updated?timePeriod=' +currentTimePeriod, {
-    	method: 'get',
-    	onSuccess: function(transport) {
-    		updateStats(transport.responseText.evalJSON());
-    	}
+        method: 'get',
+        onSuccess: function(transport) {
+            updateStats(transport.responseText.evalJSON());
+        }
     });
 }
 
@@ -217,10 +217,10 @@ function startupConversations() {
 
 function conversationUpdater() {
     new Ajax.Request('/plugins/monitoring/api/stats/latest?count=6&mostRecentConversationID=' +lastConversationID, {
-    	method: 'get',
-    	onSuccess: function() {
-    		updateConversations(transport.responseText.evalJSON());
-    	}
+        method: 'get',
+        onSuccess: function() {
+            updateConversations(transport.responseText.evalJSON());
+        }
     });
 }
 

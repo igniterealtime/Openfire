@@ -187,7 +187,7 @@ public class PluginManager
         try
         {
             // If pluginFilename is a path instead of a simple file name, we only want the file name
-        	pluginFilename = Paths.get(pluginFilename).getFileName().toString();
+            pluginFilename = Paths.get(pluginFilename).getFileName().toString();
             // Absolute path to the plugin file
             Path absolutePath = pluginDirectory.resolve( pluginFilename );
             Path partFile = pluginDirectory.resolve( pluginFilename + ".part" );
@@ -197,8 +197,8 @@ public class PluginManager
             // Check if zip file, else ZipException caught below.
             try (JarFile file = new JarFile(partFile.toFile())) {
             } catch (ZipException e) {
-            	Files.deleteIfExists(partFile);
-            	throw e;
+                Files.deleteIfExists(partFile);
+                throw e;
             };
 
             // Rename temp file to .jar

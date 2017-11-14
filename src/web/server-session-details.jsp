@@ -104,12 +104,12 @@
                 <%= inSessions.get(0).getHostAddress() %>
                 /
                 <%= inSessions.get(0).getHostName() %>
-	        <% } else if (!outSessions.isEmpty()) { %>
-	            <%= outSessions.get(0).getHostAddress() %>
-	            /
-	            <%= outSessions.get(0).getHostName() %>
-	        <% }
-	       } catch (java.net.UnknownHostException e) { %>
+            <% } else if (!outSessions.isEmpty()) { %>
+                <%= outSessions.get(0).getHostAddress() %>
+                /
+                <%= outSessions.get(0).getHostName() %>
+            <% }
+           } catch (java.net.UnknownHostException e) { %>
                 Invalid session/connection
         <% } %>
         </td>

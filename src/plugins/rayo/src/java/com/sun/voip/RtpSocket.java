@@ -61,42 +61,42 @@ public class RtpSocket {
     private static int rtpTimeout = 330;	// 330 seconds (5 1/2 minutes)
 
     static {
-	String s = System.getProperty("com.sun.voip.RTP_TIMEOUT");
+    String s = System.getProperty("com.sun.voip.RTP_TIMEOUT");
 
-	if (s != null) {
-	    int timeout = rtpTimeout;
+    if (s != null) {
+        int timeout = rtpTimeout;
 
-	    try {
-	        timeout = Integer.parseInt(s);
+        try {
+            timeout = Integer.parseInt(s);
 
-		if (timeout < 0) {
-		    Logger.println("Invalid RTP Timeout, using "
-			+ rtpTimeout);
-		} else {
-		    rtpTimeout = timeout;
-		}
-	    } catch (NumberFormatException e) {
-		Logger.println("Invalid RTP Timeout, using "
-		    + rtpTimeout);
-	    }
-	}
+        if (timeout < 0) {
+            Logger.println("Invalid RTP Timeout, using "
+            + rtpTimeout);
+        } else {
+            rtpTimeout = timeout;
+        }
+        } catch (NumberFormatException e) {
+        Logger.println("Invalid RTP Timeout, using "
+            + rtpTimeout);
+        }
+    }
     }
     
     public RtpSocket(InetAddress ia, int port) throws SocketException {
-	int p = port;
+    int p = port;
 
-	if ((p & 1) != 0) {
-	    p++;
-	    Logger.println("Port number must be even, using " + p);
-	}
+    if ((p & 1) != 0) {
+        p++;
+        Logger.println("Port number must be even, using " + p);
+    }
 
         while (true) {
             try {
-		rtpDatagramSocket = new DatagramSocket(p, ia);
+        rtpDatagramSocket = new DatagramSocket(p, ia);
 
                 /*
                  * RTP/RTCP ports come in pairs and we need an even port number
-		 * for RTP.
+         * for RTP.
                  */
                 if ((rtpDatagramSocket.getLocalPort() & 1) != 0) {
                     continue;       // got an odd port number, try again
@@ -104,82 +104,82 @@ public class RtpSocket {
 
                 try {
                     rtcpDatagramSocket = new DatagramSocket(
-			rtpDatagramSocket.getLocalPort() + 1, ia);
+            rtpDatagramSocket.getLocalPort() + 1, ia);
 
-		    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
                         Logger.println(
-		    	    "RtpSocket:  listening for RTP data at local port " 
-		            + rtpDatagramSocket.getLocalPort());
-		    }
+                    "RtpSocket:  listening for RTP data at local port " 
+                    + rtpDatagramSocket.getLocalPort());
+            }
                     break;
                 } catch (SocketException e) {
-		    /*
-		     * odd port number is in use, try again.
-		     */
-		    if (p != 0) {
-			p += 2;
-		    }
+            /*
+             * odd port number is in use, try again.
+             */
+            if (p != 0) {
+            p += 2;
+            }
                 } catch (Exception e) {
                     rtpDatagramSocket.close();
                     Logger.error(
-			"RtpSocket:  Unable to create control socket! " 
-			+ e.getMessage());
+            "RtpSocket:  Unable to create control socket! " 
+            + e.getMessage());
                     throw e;
                 }
-	    } catch (SocketException e) {
-	        /*
-	         * port number is in use, try again.
-	         */
-		if (p != 0) {
-		    p += 2;
-		}
-		continue;
+        } catch (SocketException e) {
+            /*
+             * port number is in use, try again.
+             */
+        if (p != 0) {
+            p += 2;
+        }
+        continue;
             } catch (Exception e) {
                 Logger.error("RtpSocket:  Unable to create RTP/RTCP sockets! " 
-	            + e.getMessage());
+                + e.getMessage());
                 throw new SocketException(
-		    "RtpSocket:  Unable to create RTP/RTCP sockets!");
+            "RtpSocket:  Unable to create RTP/RTCP sockets!");
             }
-	}
+    }
 
-	if (p != port) {
-	    System.out.println("RtpSocket:  Desired port " + port 
-		+ " is in use.  Using " + p + " instead.");
-	}
+    if (p != port) {
+        System.out.println("RtpSocket:  Desired port " + port 
+        + " is in use.  Using " + p + " instead.");
+    }
 
-	try {
-	    rtpDatagramSocket.setReceiveBufferSize(MAX_RECEIVE_BUFFER);
+    try {
+        rtpDatagramSocket.setReceiveBufferSize(MAX_RECEIVE_BUFFER);
         } catch (SocketException e) {
             Logger.error("RtpSocket:  Unable to set receive buffer size! "
-	        + e.getMessage());
+            + e.getMessage());
 
-	    throw e;
-	}
+        throw e;
+    }
 
-	try {
-	    rtpDatagramSocket.setSendBufferSize(MAX_SEND_BUFFER);
+    try {
+        rtpDatagramSocket.setSendBufferSize(MAX_SEND_BUFFER);
         } catch (SocketException e) {
             Logger.error("RtpSocket:  Unable to set send buffer size! "
-	        + e.getMessage());
+            + e.getMessage());
 
-	    throw e;
-	}
+        throw e;
+    }
 
-	try {
-	    rtpDatagramSocket.setSoTimeout(0);
+    try {
+        rtpDatagramSocket.setSoTimeout(0);
         } catch (SocketException e) {
             Logger.error("RtpSocket:  Unable to set socket timeout! "
-	        + e.getMessage());
+            + e.getMessage());
 
-	    throw e;
-	}
+        throw e;
+    }
     }
 
     public void startRtcpReceiver() {
-	/*
-	 * Start the RTCP receiver
-	 */
-	rtcpReceiver = new RtcpReceiver(rtcpDatagramSocket, true);
+    /*
+     * Start the RTCP receiver
+     */
+    rtcpReceiver = new RtcpReceiver(rtcpDatagramSocket, true);
     }
 
     /**
@@ -188,12 +188,12 @@ public class RtpSocket {
      * @return InetSocketAddress local address and port for the socket
      */
     public InetSocketAddress getInetSocketAddress() {
-	return new InetSocketAddress(rtpDatagramSocket.getLocalAddress(),
-	    rtpDatagramSocket.getLocalPort());
+    return new InetSocketAddress(rtpDatagramSocket.getLocalAddress(),
+        rtpDatagramSocket.getLocalPort());
     }
 
     public DatagramSocket getDatagramSocket() {
-	return rtpDatagramSocket;
+    return rtpDatagramSocket;
     }
 
     /**
@@ -210,12 +210,12 @@ public class RtpSocket {
      * @param p the RtpPacket into which to place the incoming data.
      */
     public int receive(RtpPacket p) throws IOException {
-	if (rtpDatagramSocket == null) {
-	    throw new IOException("RtpSocket receive failed, socket closed");
-	}
+    if (rtpDatagramSocket == null) {
+        throw new IOException("RtpSocket receive failed, socket closed");
+    }
 
-	rtpDatagramSocket.receive(p.getDatagramPacket());
-	return p.getDatagramPacket().getLength();
+    rtpDatagramSocket.receive(p.getDatagramPacket());
+    return p.getDatagramPacket().getLength();
     }
 
     /**
@@ -227,22 +227,22 @@ public class RtpSocket {
      * @param RtpPacket the packet to be sent
      */
     public void send(RtpPacket p) throws IOException {
-	if (rtpDatagramSocket == null) {
-	    throw new IOException("RtpSocket send failed, socket closed");
-	}
+    if (rtpDatagramSocket == null) {
+        throw new IOException("RtpSocket send failed, socket closed");
+    }
 
-	rtpDatagramSocket.send(p.getDatagramPacket());
+    rtpDatagramSocket.send(p.getDatagramPacket());
     }
 
     /**
      * Send an Rtcp packet
      */
     public void send(RtcpPacket p) throws IOException {
-	if (rtcpDatagramSocket == null) {
-	    throw new IOException("RtcpSocket send failed, socket closed");
-	}
+    if (rtcpDatagramSocket == null) {
+        throw new IOException("RtcpSocket send failed, socket closed");
+    }
 
-	rtcpDatagramSocket.send(p.getDatagramPacket());
+    rtcpDatagramSocket.send(p.getDatagramPacket());
     }
 
     /**
@@ -252,10 +252,10 @@ public class RtpSocket {
      */
     public void setSoTimeout(int timeout) throws SocketException {
         if (rtpDatagramSocket == null) {
-	    throw new SocketException("rtpDatagramSocket is null");
-	}
+        throw new SocketException("rtpDatagramSocket is null");
+    }
 
-	rtpDatagramSocket.setSoTimeout(timeout);
+    rtpDatagramSocket.setSoTimeout(timeout);
     }
 
     public boolean isClosed() {
@@ -267,85 +267,85 @@ public class RtpSocket {
     }
 
     public void flushSocket() {
-	if (rtpDatagramSocket == null) {
-	    return;
-	}
+    if (rtpDatagramSocket == null) {
+        return;
+    }
 
-	flushSocket(rtpDatagramSocket);
+    flushSocket(rtpDatagramSocket);
     }
 
     public static void flushSocket(DatagramSocket socket) {
-	/*
-	 * Flush the socket
-	 */
-	int len = RtpPacket.getDataSize(
-	    RtpPacket.PCM_ENCODING, RtpPacket.MAX_SAMPLE_RATE, 2);
+    /*
+     * Flush the socket
+     */
+    int len = RtpPacket.getDataSize(
+        RtpPacket.PCM_ENCODING, RtpPacket.MAX_SAMPLE_RATE, 2);
 
-	len += RtpPacket.HEADER_SIZE;
+    len += RtpPacket.HEADER_SIZE;
 
         byte[] data = new byte[len];
 
-	DatagramPacket packet = new DatagramPacket(data, len);
+    DatagramPacket packet = new DatagramPacket(data, len);
 
         int count = 0;
 
-	try {
-	    socket.setSoTimeout(1);
+    try {
+        socket.setSoTimeout(1);
 
-	    while (true) {
-	        try {
+        while (true) {
+            try {
                     socket.receive(packet);
-		    count++;
-	        } catch (SocketTimeoutException e) {
-		    break;
-	        } catch (IOException e) {
-		    Logger.println("Error flushing socket " + e.getMessage());
-		    break;
-		}
+            count++;
+            } catch (SocketTimeoutException e) {
+            break;
+            } catch (IOException e) {
+            Logger.println("Error flushing socket " + e.getMessage());
+            break;
+        }
             }
-	} catch (SocketException e) {
-	    Logger.println("Can't flush receiver socket!");
-	}
+    } catch (SocketException e) {
+        Logger.println("Can't flush receiver socket!");
+    }
 
-	if (count > 0) {
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Packets flushed:  " + count);
-	    }
-	}
+    if (count > 0) {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Packets flushed:  " + count);
+        }
+    }
 
-	try {
-	    socket.setSoTimeout(0);
-	} catch (SocketException e) {
-	    Logger.println("Can't set socket timeout to 0!");
-	}
+    try {
+        socket.setSoTimeout(0);
+    } catch (SocketException e) {
+        Logger.println("Can't set socket timeout to 0!");
+    }
     }
 
     public static int getRtpTimeout() {
-	return rtpTimeout;
+    return rtpTimeout;
     }
 
     public static void setRtpTimeout(int rtpTimeout) {
-	RtpSocket.rtpTimeout = rtpTimeout;
+    RtpSocket.rtpTimeout = rtpTimeout;
     }
 
     public DatagramSocket getRtcpDatagramSocket() {
-	return rtcpDatagramSocket;
+    return rtcpDatagramSocket;
     }
-	
+    
     /**
      * Close the RTP socket, stop the RtcpReceiver and close the RTCP socket.
      */
     public void close() {
-	if (rtpDatagramSocket != null) {
-	    rtpDatagramSocket.close();
-	    rtpDatagramSocket = null;
-	}
+    if (rtpDatagramSocket != null) {
+        rtpDatagramSocket.close();
+        rtpDatagramSocket = null;
+    }
 
-	if (rtcpReceiver != null) {
-	    rtcpReceiver.end();
-	    rtcpDatagramSocket.close();
-	    rtcpReceiver = null;
-	}
+    if (rtcpReceiver != null) {
+        rtcpReceiver.end();
+        rtcpDatagramSocket.close();
+        rtcpReceiver = null;
+    }
     }
 
 }

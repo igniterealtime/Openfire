@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MUCServiceProperties implements Map<String, String> {
 
-	private static final Logger Log = LoggerFactory.getLogger(MUCServiceProperties.class);
+    private static final Logger Log = LoggerFactory.getLogger(MUCServiceProperties.class);
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofMucServiceProp WHERE serviceID=?";
     private static final String INSERT_PROPERTY = "INSERT INTO ofMucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";

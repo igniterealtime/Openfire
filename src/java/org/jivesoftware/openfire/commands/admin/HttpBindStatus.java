@@ -36,22 +36,22 @@ import java.util.List;
  */
 public class HttpBindStatus extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#status-http-bind";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Current Http Bind Status";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 0;
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -90,17 +90,17 @@ public class HttpBindStatus extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         // no stages, do nothing.
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.emptyList();
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return null;
     }
 

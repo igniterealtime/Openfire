@@ -17,30 +17,30 @@ import org.jivesoftware.openfire.plugin.UserServicePluginNG;
 @Path("userService/users/{username}/groups")
 public class UserGroupService {
 
-	private UserServicePluginNG plugin;
+    private UserServicePluginNG plugin;
 
-	@PostConstruct
-	public void init() {
-		plugin = UserServicePluginNG.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        plugin = UserServicePluginNG.getInstance();
+    }
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public UserGroupsEntity getUserGroups(@PathParam("username") String username) throws ServiceException {
-		return new UserGroupsEntity(plugin.getUserGroups(username));
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public UserGroupsEntity getUserGroups(@PathParam("username") String username) throws ServiceException {
+        return new UserGroupsEntity(plugin.getUserGroups(username));
+    }
 
-	@POST
-	public Response addUserToGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
-			throws ServiceException {
-		plugin.addUserToGroups(username, userGroupsEntity);
-		return Response.status(Response.Status.CREATED).build();
-	}
+    @POST
+    public Response addUserToGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
+            throws ServiceException {
+        plugin.addUserToGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.CREATED).build();
+    }
 
-	@DELETE
-	public Response deleteUserFromGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
-			throws ServiceException {
-		plugin.deleteUserFromGroups(username, userGroupsEntity);
-		return Response.status(Response.Status.OK).build();
-	}
+    @DELETE
+    public Response deleteUserFromGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
+            throws ServiceException {
+        plugin.deleteUserFromGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.OK).build();
+    }
 }

@@ -18,8 +18,8 @@ import net.sf.kraken.roster.TransportBuddyManager;
  * @author Daniel Henninger
  */
 public class SimpleBuddy extends TransportBuddy {
-	private SimplePresence presence;
-	private Dialog         outgoingDialog;
+    private SimplePresence presence;
+    private Dialog         outgoingDialog;
 
     public PseudoRosterItem pseudoRosterItem = null;
 
@@ -29,21 +29,21 @@ public class SimpleBuddy extends TransportBuddy {
         this.setNickname(rosterItem.getNickname());
         this.setGroups(rosterItem.getGroups());
 
-		presence = new SimplePresence();
-		presence.setTupleStatus(SimplePresence.TupleStatus.CLOSED);
-		
-		outgoingDialog = null;
-	}
+        presence = new SimplePresence();
+        presence.setTupleStatus(SimplePresence.TupleStatus.CLOSED);
+        
+        outgoingDialog = null;
+    }
 
-	public void updatePresence(String newPresence) throws Exception {
-		presence.parse(newPresence);
-	}
-	
-	public void setOutgoingDialog(Dialog outgoingDialog) {
-		this.outgoingDialog = outgoingDialog;
-	}
-	
-	public Dialog getOutgoingDialog() {
-		return outgoingDialog;
-	}
+    public void updatePresence(String newPresence) throws Exception {
+        presence.parse(newPresence);
+    }
+    
+    public void setOutgoingDialog(Dialog outgoingDialog) {
+        this.outgoingDialog = outgoingDialog;
+    }
+    
+    public Dialog getOutgoingDialog() {
+        return outgoingDialog;
+    }
 }

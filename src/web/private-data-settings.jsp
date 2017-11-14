@@ -81,39 +81,39 @@
 <!-- BEGIN 'Set Private Data Policy' -->
 <form action="private-data-settings.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="private.data.settings.policy" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="privateEnabled" value="true" id="rb01"
-					 <%= (privateEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="private.data.settings.enable_storage" /></b> -
-					<fmt:message key="private.data.settings.enable_storage_info" />
-					</label>
-				</td>
-			</tr>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="privateEnabled" value="false" id="rb02"
-					 <%= (!privateEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb02">
-					<b><fmt:message key="private.data.settings.disable_storage" /></b> -
-					<fmt:message key="private.data.settings.disable_storage_info" />
-					</label>
-				</td>
-			</tr>
-		</tbody>
-		</table>
-	</div>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="private.data.settings.policy" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="privateEnabled" value="true" id="rb01"
+                     <%= (privateEnabled ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="private.data.settings.enable_storage" /></b> -
+                    <fmt:message key="private.data.settings.enable_storage_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="privateEnabled" value="false" id="rb02"
+                     <%= (!privateEnabled ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                    <b><fmt:message key="private.data.settings.disable_storage" /></b> -
+                    <fmt:message key="private.data.settings.disable_storage_info" />
+                    </label>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END 'Set Private Data Policy' -->

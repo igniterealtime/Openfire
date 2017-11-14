@@ -207,7 +207,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read() throws IOException {
+        public int read() throws IOException {
             int readByte = originalStream.read();
             if (readByte > -1) {
                 incrementIncomingCounter(1);
@@ -216,7 +216,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read(byte b[]) throws IOException {
+        public int read(byte b[]) throws IOException {
             int bytes = originalStream.read(b);
             if (bytes > -1) {
                 incrementIncomingCounter(bytes);
@@ -225,7 +225,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read(byte b[], int off, int len) throws IOException {
+        public int read(byte b[], int off, int len) throws IOException {
             int bytes = originalStream.read(b, off, len);
             if (bytes > -1) {
                 incrementIncomingCounter(bytes);
@@ -234,32 +234,32 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int available() throws IOException {
+        public int available() throws IOException {
             return originalStream.available();
         }
 
         @Override
-		public void close() throws IOException {
+        public void close() throws IOException {
             originalStream.close();
         }
 
         @Override
-		public synchronized void mark(int readlimit) {
+        public synchronized void mark(int readlimit) {
             originalStream.mark(readlimit);
         }
 
         @Override
-		public boolean markSupported() {
+        public boolean markSupported() {
             return originalStream.markSupported();
         }
 
         @Override
-		public synchronized void reset() throws IOException {
+        public synchronized void reset() throws IOException {
             originalStream.reset();
         }
 
         @Override
-		public long skip(long n) throws IOException {
+        public long skip(long n) throws IOException {
             return originalStream.skip(n);
         }
     }
@@ -278,7 +278,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(int b) throws IOException {
+        public void write(int b) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
@@ -286,7 +286,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(byte b[]) throws IOException {
+        public void write(byte b[]) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
@@ -294,7 +294,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(byte b[], int off, int len) throws IOException {
+        public void write(byte b[], int off, int len) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b, off, len);
             // update outgoingCounter
@@ -302,12 +302,12 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void close() throws IOException {
+        public void close() throws IOException {
             originalStream.close();
         }
 
         @Override
-		public void flush() throws IOException {
+        public void flush() throws IOException {
             originalStream.flush();
         }
     }

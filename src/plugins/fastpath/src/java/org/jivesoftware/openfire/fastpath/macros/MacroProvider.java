@@ -33,8 +33,8 @@ import com.thoughtworks.xstream.XStream;
 
 public class MacroProvider implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(MacroProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(MacroProvider.class);
+    
     public boolean handleGet(IQ packet) {
         Element iq = packet.getChildElement();
         String name = iq.getName();

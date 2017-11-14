@@ -76,7 +76,7 @@ import org.slf4j.LoggerFactory;
  */
 public class GroupEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(GroupEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(GroupEventDispatcher.class);
 
     private static List<GroupEventListener> listeners =
             new CopyOnWriteArrayList<>();

@@ -300,46 +300,46 @@ public class LocalMUCRole implements MUCRole {
         }
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((nick == null) ? 0 : nick.hashCode());
-		result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
-		result = prime * result + ((room == null) ? 0 : room.hashCode());
-		result = prime * result + ((user == null) ? 0 : user.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((nick == null) ? 0 : nick.hashCode());
+        result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
+        result = prime * result + ((room == null) ? 0 : room.hashCode());
+        result = prime * result + ((user == null) ? 0 : user.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LocalMUCRole other = (LocalMUCRole) obj;
-		if (nick == null) {
-			if (other.nick != null)
-				return false;
-		} else if (!nick.equals(other.nick))
-			return false;
-		if (rJID == null) {
-			if (other.rJID != null)
-				return false;
-		} else if (!rJID.equals(other.rJID))
-			return false;
-		if (room == null) {
-			if (other.room != null)
-				return false;
-		} else if (!room.equals(other.room))
-			return false;
-		if (user == null) {
-			if (other.user != null)
-				return false;
-		} else if (!user.equals(other.user))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LocalMUCRole other = (LocalMUCRole) obj;
+        if (nick == null) {
+            if (other.nick != null)
+                return false;
+        } else if (!nick.equals(other.nick))
+            return false;
+        if (rJID == null) {
+            if (other.rJID != null)
+                return false;
+        } else if (!rJID.equals(other.rJID))
+            return false;
+        if (room == null) {
+            if (other.room != null)
+                return false;
+        } else if (!room.equals(other.room))
+            return false;
+        if (user == null) {
+            if (other.user != null)
+                return false;
+        } else if (!user.equals(other.user))
+            return false;
+        return true;
+    }
 }

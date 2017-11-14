@@ -85,7 +85,7 @@ import org.slf4j.LoggerFactory;
  */
 public class UserEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(UserEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(UserEventDispatcher.class);
 
     private static List<UserEventListener> listeners =
             new CopyOnWriteArrayList<>();

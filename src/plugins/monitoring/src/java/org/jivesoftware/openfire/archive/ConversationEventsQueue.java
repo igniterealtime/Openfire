@@ -54,7 +54,7 @@ public class ConversationEventsQueue {
         // Schedule a task to do conversation archiving.
         TimerTask sendTask = new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 // Move queued events to a temp place
                 List<ConversationEvent> eventsToSend = new ArrayList<ConversationEvent>();
                 synchronized (chatEvents) {

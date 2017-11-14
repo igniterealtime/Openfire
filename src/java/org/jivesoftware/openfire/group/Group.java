@@ -54,7 +54,7 @@ import org.xmpp.packet.JID;
  */
 public class Group implements Cacheable, Externalizable {
 
-	private static final Logger Log = LoggerFactory.getLogger(Group.class);
+    private static final Logger Log = LoggerFactory.getLogger(Group.class);
 
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
@@ -126,7 +126,7 @@ public class Group implements Cacheable, Externalizable {
         Iterator<String> oldProps = this.properties.keySet().iterator();
         while (oldProps.hasNext()) {
             if (!properties.containsKey(oldProps.next())) {
-            	oldProps.remove();
+                oldProps.remove();
             }
         }
     }
@@ -142,9 +142,9 @@ public class Group implements Cacheable, Externalizable {
      * @return A JID for the group.
      */
     public synchronized GroupJID getJID() {
-    	if (jid == null) {
-    		jid = new GroupJID(getName());
-    	}
+        if (jid == null) {
+            jid = new GroupJID(getName());
+        }
         return jid;
     }
 
@@ -230,7 +230,7 @@ public class Group implements Cacheable, Externalizable {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return name;
     }
 
@@ -257,8 +257,8 @@ public class Group implements Cacheable, Externalizable {
      * @return a read-only Collection of the group administrators + members.
      */
     public Collection<JID> getAll() {
-    	Set<JID> everybody = new HashSet<>(administrators);
-    	everybody.addAll(members);
+        Set<JID> everybody = new HashSet<>(administrators);
+        everybody.addAll(members);
         return Collections.unmodifiableSet(everybody);
     }
 
@@ -313,7 +313,7 @@ public class Group implements Cacheable, Externalizable {
 
     @Override
     public int getCachedSize()
-	    throws CannotCalculateSizeException {
+        throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
         int size = 0;
@@ -333,12 +333,12 @@ public class Group implements Cacheable, Externalizable {
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return name.hashCode();
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -364,7 +364,7 @@ public class Group implements Cacheable, Externalizable {
         }
 
         @Override
-		public Iterator<JID> iterator() {
+        public Iterator<JID> iterator() {
             return new Iterator<JID>() {
 
                 Iterator<JID> iter = users.iterator();
@@ -413,12 +413,12 @@ public class Group implements Cacheable, Externalizable {
         }
 
         @Override
-		public int size() {
+        public int size() {
             return users.size();
         }
 
         @Override
-		public boolean add(JID user) {
+        public boolean add(JID user) {
             // Do nothing if the provider is read-only.
             if (provider.isReadOnly()) {
                 return false;
@@ -446,7 +446,7 @@ public class Group implements Cacheable, Externalizable {
                 if (adminCollection) {
                     params.put("admin", user.toString());
                     if (alreadyGroupUser) {
-                    	params.put("member", user.toString());
+                        params.put("member", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.member_removed, params);
                     }
@@ -456,7 +456,7 @@ public class Group implements Cacheable, Externalizable {
                 else {
                     params.put("member", user.toString());
                     if (alreadyGroupUser) {
-                    	params.put("admin", user.toString());
+                        params.put("admin", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.admin_removed, params);
                     }
@@ -509,40 +509,40 @@ public class Group implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
     }
 
-	/**
-	 * Search for a JID within a group. If the given haystack is not resolvable
-	 * to a group, this method returns false.
-	 *
-	 * @param needle A JID, possibly a member/admin of the given group
-	 * @param haystack Presumably a Group, a Group name, or a JID that represents a Group
-	 * @return true if the JID (needle) is found in the group (haystack)
-	 */
-	public static boolean search(JID needle, Object haystack) {
-		Group group = resolveFrom(haystack);
-		return (group != null && group.isUser(needle));
-	}
+    /**
+     * Search for a JID within a group. If the given haystack is not resolvable
+     * to a group, this method returns false.
+     *
+     * @param needle A JID, possibly a member/admin of the given group
+     * @param haystack Presumably a Group, a Group name, or a JID that represents a Group
+     * @return true if the JID (needle) is found in the group (haystack)
+     */
+    public static boolean search(JID needle, Object haystack) {
+        Group group = resolveFrom(haystack);
+        return (group != null && group.isUser(needle));
+    }
 
-	/**
-	 * Attempt to resolve the given object into a Group.
-	 *
-	 * @param proxy Presumably a Group, a Group name, or a JID that represents a Group
-	 * @return The corresponding group, or null if the proxy cannot be resolved as a group
-	 */
-	public static Group resolveFrom(Object proxy) {
-		Group result = null;
-		try {
-			GroupManager groupManger = GroupManager.getInstance();
-			if (proxy instanceof JID) {
-				result = groupManger.getGroup((JID)proxy);
-			} else if (proxy instanceof String) {
-				result = groupManger.getGroup((String)proxy);
-			} else if (proxy instanceof Group) {
-				result = (Group) proxy;
-			}
-		} catch (GroupNotFoundException gnfe) {
-			// ignore
-		}
-		return result;
-	}
+    /**
+     * Attempt to resolve the given object into a Group.
+     *
+     * @param proxy Presumably a Group, a Group name, or a JID that represents a Group
+     * @return The corresponding group, or null if the proxy cannot be resolved as a group
+     */
+    public static Group resolveFrom(Object proxy) {
+        Group result = null;
+        try {
+            GroupManager groupManger = GroupManager.getInstance();
+            if (proxy instanceof JID) {
+                result = groupManger.getGroup((JID)proxy);
+            } else if (proxy instanceof String) {
+                result = groupManger.getGroup((String)proxy);
+            } else if (proxy instanceof Group) {
+                result = (Group) proxy;
+            }
+        } catch (GroupNotFoundException gnfe) {
+            // ignore
+        }
+        return result;
+    }
 
 }

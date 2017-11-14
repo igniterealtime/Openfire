@@ -16,8 +16,8 @@ package com.rayo.core.verb;
 
 public class TalkCommand extends AbstractVerbCommand {
 
-	public TalkCommand()
-	{
+    public TalkCommand()
+    {
 
-	}
+    }
 }

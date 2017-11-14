@@ -41,8 +41,8 @@ import org.xmpp.packet.JID;
  * @author Gaston Dombiak
  */
 class LocalRoutingTable {
-	
-	private static final Logger Log = LoggerFactory.getLogger(LocalRoutingTable.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(LocalRoutingTable.class);
 
     Map<DomainPair, RoutableChannelHandler> routes = new ConcurrentHashMap<>();
 
@@ -168,7 +168,7 @@ class LocalRoutingTable {
          * Close outgoing server sessions that have been idle for a long time.
          */
         @Override
-		public void run() {
+        public void run() {
             // Do nothing if this feature is disabled
             int idleTime = SessionManager.getInstance().getServerSessionIdleTime();
             if (idleTime == -1) {

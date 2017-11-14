@@ -66,6 +66,6 @@ class CredentialsCache {
      */
     CredentialsCacheEntry remove(String realm) {
         return (CredentialsCacheEntry)this.authenticatedRealms.remove(realm);
-	}
+    }
 
 }

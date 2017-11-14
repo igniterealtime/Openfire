@@ -35,13 +35,13 @@ import org.slf4j.LoggerFactory;
  * @author Gaston Dombiak
  */
 public class StalledSessionsFilter extends IoFilterAdapter {
-	
-	private static final Logger Log = LoggerFactory.getLogger(StalledSessionsFilter.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(StalledSessionsFilter.class);
 
     private static final int bytesCap = JiveGlobals.getIntProperty("session.stalled.cap", 5242880);
 
     @Override
-	public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
+    public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
             throws Exception {
         if (!session.isClosing()) {
             // Get number of pending requests

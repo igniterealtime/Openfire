@@ -324,19 +324,19 @@
 
     var lastRegistrationID;
 
-	function logoutSession(registrationID)
-	{
-		 ConfigManager.logoutSession(registrationID, cb_logoutSession);
-	}
-	
-	function cb_logoutSession(registrationID)
-	{
-		if(registrationID > 0)
-		{
-			document.getElementById('registrationUsername'+registrationID).parentNode.className = document.getElementById('registrationUsername'+registrationID).parentNode.className.replace(/on/g,'off');
-			document.getElementById('registrationLogoff'+registrationID).innerHTML='';
-		}
-	}
+    function logoutSession(registrationID)
+    {
+         ConfigManager.logoutSession(registrationID, cb_logoutSession);
+    }
+    
+    function cb_logoutSession(registrationID)
+    {
+        if(registrationID > 0)
+        {
+            document.getElementById('registrationUsername'+registrationID).parentNode.className = document.getElementById('registrationUsername'+registrationID).parentNode.className.replace(/on/g,'off');
+            document.getElementById('registrationLogoff'+registrationID).innerHTML='';
+        }
+    }
 
     function deleteRegistration(registrationID) {
         lastRegistrationID = registrationID;
@@ -460,55 +460,55 @@
 
 <!-- BEGIN add registration -->
 <div class="jive-gateway-addregBtn" id="jiveAddRegButton">
-	<a href="" onClick="toggleAdd(); return false" id="jiveAddRegLink"><fmt:message key="gateway.web.registrations.addnewreg" /></a>
+    <a href="" onClick="toggleAdd(); return false" id="jiveAddRegLink"><fmt:message key="gateway.web.registrations.addnewreg" /></a>
 </div>
 <div class="jive-gateway-addreg" id="jiveAddRegPanel" style="display: none;">
-	<div class="jive-gateway-addregPad">
-		<form action="" name="jive-addRegistration" onSubmit="return false">
+    <div class="jive-gateway-addregPad">
+        <form action="" name="jive-addRegistration" onSubmit="return false">
         <input type="hidden" name="action" value="add" />
-		<div class="jive-registrations-addJid">
-			<input type="text" name="newRegistrationUser" id="newRegistrationUser" size="12" maxlength="50" value=""><br>
-			<strong><fmt:message key="gateway.web.registrations.jid" /></strong>
-		</div>
-		<div class="jive-registrations-addGateway">
-			<select name="newRegistrationType" id="newRegistrationType" size="1">
-			<option value="0" SELECTED> -- <fmt:message key="gateway.web.registrations.select"/> -- </option>
-			<% if (trEnabled.get("aim")) { %> <option value="aim"><fmt:message key="gateway.aim.shortservice" /></option> <% } %>
+        <div class="jive-registrations-addJid">
+            <input type="text" name="newRegistrationUser" id="newRegistrationUser" size="12" maxlength="50" value=""><br>
+            <strong><fmt:message key="gateway.web.registrations.jid" /></strong>
+        </div>
+        <div class="jive-registrations-addGateway">
+            <select name="newRegistrationType" id="newRegistrationType" size="1">
+            <option value="0" SELECTED> -- <fmt:message key="gateway.web.registrations.select"/> -- </option>
+            <% if (trEnabled.get("aim")) { %> <option value="aim"><fmt:message key="gateway.aim.shortservice" /></option> <% } %>
             <% if (trEnabled.get("facebook")) { %> <option value="facebook"><fmt:message key="gateway.facebook.shortservice" /></option> <% } %>
             <% if (trEnabled.get("gadugadu")) { %> <option value="gadugadu"><fmt:message key="gateway.gadugadu.shortservice" /></option> <% } %>
             <% if (trEnabled.get("gtalk")) { %> <option value="gtalk"><fmt:message key="gateway.gtalk.shortservice" /></option> <% } %>
-			<% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
-			<% if (trEnabled.get("irc")) { %> <option value="irc"><fmt:message key="gateway.irc.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("icq")) { %> <option value="icq"><fmt:message key="gateway.icq.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("irc")) { %> <option value="irc"><fmt:message key="gateway.irc.shortservice" /></option> <% } %>
             <% if (trEnabled.get("livejournal")) { %> <option value="livejournal"><fmt:message key="gateway.livejournal.shortservice" /></option> <% } %>
-			<% if (trEnabled.get("msn")) { %> <option value="msn"><fmt:message key="gateway.msn.shortservice" /></option> <% } %>
+            <% if (trEnabled.get("msn")) { %> <option value="msn"><fmt:message key="gateway.msn.shortservice" /></option> <% } %>
             <% if (trEnabled.get("myspaceim")) { %> <option value="myspaceim"><fmt:message key="gateway.myspaceim.shortservice" /></option> <% } %>
             <% if (trEnabled.get("qq")) { %> <option value="qq"><fmt:message key="gateway.qq.shortservice" /></option> <% } %>
             <% if (trEnabled.get("renren")) { %> <option value="renren"><fmt:message key="gateway.renren.shortservice" /></option> <% } %>
             <% if (trEnabled.get("sametime")) { %> <option value="sametime"><fmt:message key="gateway.sametime.shortservice" /></option> <% } %>
             <% if (trEnabled.get("simple")) { %> <option value="simple"><fmt:message key="gateway.simple.shortservice" /></option> <% } %>
             <% if (trEnabled.get("xmpp")) { %> <option value="xmpp"><fmt:message key="gateway.xmpp.shortservice" /></option> <% } %>
-			<% if (trEnabled.get("yahoo")) { %> <option value="yahoo"><fmt:message key="gateway.yahoo.shortservice" /></option> <% } %>
-			</select><br>
-			<strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
-		</div>
-		<div class="jive-registrations-addUsername">
-			<input type="text" name="newRegistrationLegacyUsername" id="newRegistrationLegacyUsername" size="12" maxlength="50" value=""><br>
-			<strong><fmt:message key="gateway.web.registrations.username" /></strong>
-		</div>
-		<div class="jive-registrations-addPassword">
-			<input type="password" name="newRegistrationLegacyPassword" id="newRegistrationLegacyPassword" size="12" maxlength="50" value=""><br>
-			<strong><fmt:message key="gateway.web.registrations.password" /></strong>
-		</div>
+            <% if (trEnabled.get("yahoo")) { %> <option value="yahoo"><fmt:message key="gateway.yahoo.shortservice" /></option> <% } %>
+            </select><br>
+            <strong><fmt:message key="gateway.web.registrations.gateway" /></strong>
+        </div>
+        <div class="jive-registrations-addUsername">
+            <input type="text" name="newRegistrationLegacyUsername" id="newRegistrationLegacyUsername" size="12" maxlength="50" value=""><br>
+            <strong><fmt:message key="gateway.web.registrations.username" /></strong>
+        </div>
+        <div class="jive-registrations-addPassword">
+            <input type="password" name="newRegistrationLegacyPassword" id="newRegistrationLegacyPassword" size="12" maxlength="50" value=""><br>
+            <strong><fmt:message key="gateway.web.registrations.password" /></strong>
+        </div>
         <div class="jive-registrations-addNickname">
             <input type="text" name="newRegistrationLegacyNickname" id="newRegistrationLegacyNickname" size="12" maxlength="50" value=""><br>
             <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
         </div>
         <div class="jive-registrations-addButtons">
-			<input type="submit" name="Submit" value="<fmt:message key="global.add" />" class="savechanges" onClick="addRegistration(); return false"> &nbsp;
-			<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleAdd();">
-		</div>
-		</form>
-	</div>
+            <input type="submit" name="Submit" value="<fmt:message key="global.add" />" class="savechanges" onClick="addRegistration(); return false"> &nbsp;
+            <input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleAdd();">
+        </div>
+        </form>
+    </div>
 </div>
 <!-- END add registration -->
 
@@ -518,30 +518,30 @@
 <div class="jive-registrations">
 
 
-	<!-- BEGIN results -->
-	<div class="jive-registrations-results">
-		<fmt:message key="gateway.web.registrations.registrations" />: <fmt:message key="gateway.web.registrations.xofy"><fmt:param value="<%=(start+1)%>"/><fmt:param value="<%=topRange%>"/><fmt:param value="<%=resCount%>"/></fmt:message>
-	</div>
-	<!-- END results -->
+    <!-- BEGIN results -->
+    <div class="jive-registrations-results">
+        <fmt:message key="gateway.web.registrations.registrations" />: <fmt:message key="gateway.web.registrations.xofy"><fmt:param value="<%=(start+1)%>"/><fmt:param value="<%=topRange%>"/><fmt:param value="<%=resCount%>"/></fmt:message>
+    </div>
+    <!-- END results -->
 
 
-	<!-- BEGIN results size (num per page) -->
-	<div class="jive-registrations-resultsSize"><form action="kraken-registrations.jsp" method="get">
-		<select name="range" id="range" size="1" onchange="this.form.submit()">
+    <!-- BEGIN results size (num per page) -->
+    <div class="jive-registrations-resultsSize"><form action="kraken-registrations.jsp" method="get">
+        <select name="range" id="range" size="1" onchange="this.form.submit()">
                 <%  for (int rangePreset : RANGE_PRESETS) { %>
 
                     <option value="<%= rangePreset %>"<%= (rangePreset== range ? "selected" : "") %>><%= rangePreset %></option>
 
                 <%  } %>
-		</select>
-		<span><fmt:message key="gateway.web.registrations.perpage" /></span>
-	</form></div>
-	<!-- END results size -->
+        </select>
+        <span><fmt:message key="gateway.web.registrations.perpage" /></span>
+    </form></div>
+    <!-- END results size -->
 
 
-	<!-- BEGIN pagination -->
-	<div class="jive-registrations-pagination">
-		<strong><fmt:message key="gateway.web.registrations.page" />:</strong> &nbsp;
+    <!-- BEGIN pagination -->
+    <div class="jive-registrations-pagination">
+        <strong><fmt:message key="gateway.web.registrations.page" />:</strong> &nbsp;
             <%
                 if (numPages > 1 && ((curPage) > 1)) {
             %>
@@ -567,14 +567,14 @@
             <%
                 }
             %>
-	</div>
-	<!-- END pagination -->
-	
-	
-	<!-- BEGIN gateway filter -->
-	<form action="kraken-registrations.jsp" name="jive-filterForm">
-	<div class="jive-gateway-filter" id="jiveGatewayFilters">
-		<div>
+    </div>
+    <!-- END pagination -->
+    
+    
+    <!-- BEGIN gateway filter -->
+    <form action="kraken-registrations.jsp" name="jive-filterForm">
+    <div class="jive-gateway-filter" id="jiveGatewayFilters">
+        <div>
             <strong><fmt:message key="gateway.web.registrations.filterby" />:</strong>
             <div>
             <label for="filterAIMcheckbox">
@@ -654,7 +654,7 @@
                 <!--<span><fmt:message key="gateway.yahoo.shortservice" /></span>-->
             </label>
             </div>
-		</div>
+        </div>
         <div class="jive-gateway-filter-textentryline">
             <div class="jive-gateway-filter-textentry">
                 <input type="text" name="filterUser" id="filterUser" size="12" maxlength="50" value="<%= (filtervars.containsKey("filterUser") ? filtervars.get("filterUser") : "") %>">
@@ -671,27 +671,27 @@
             <input type="submit" name="submit" value="<fmt:message key="gateway.web.registrations.update" />" class="filterBtn">
         </div>
     </div>
-	</form>
-	<!-- END gateway filter -->
+    </form>
+    <!-- END gateway filter -->
 
 
     <!-- BEGIN registrations table -->
-	<table cellpadding="0" cellspacing="0">
-	<thead>
-		<tr>
-			<th width="20" class="border-left">&nbsp;</th>
-			<th width="10%"><fmt:message key="gateway.web.registrations.user" /></th>
+    <table cellpadding="0" cellspacing="0">
+    <thead>
+        <tr>
+            <th width="20" class="border-left">&nbsp;</th>
+            <th width="10%"><fmt:message key="gateway.web.registrations.user" /></th>
             <% if (ClusterManager.isClusteringStarted()) { %>
             <th width="15%"><fmt:message key="gateway.web.registrations.node" /></th>
             <% } %>
             <th><fmt:message key="gateway.web.registrations.serviceusername" /></th>
-			<th><fmt:message key="gateway.web.registrations.lastlogin" /></th>
-			<th width="1%"><div align="center"><fmt:message key="gateway.web.registrations.edit" /></div></th>
-			<th width="1%" class="border-right"><fmt:message key="gateway.web.registrations.remove" /></th>
-		</tr>
-	</thead>
-	<tbody>
-		
+            <th><fmt:message key="gateway.web.registrations.lastlogin" /></th>
+            <th width="1%"><div align="center"><fmt:message key="gateway.web.registrations.edit" /></div></th>
+            <th width="1%" class="border-right"><fmt:message key="gateway.web.registrations.remove" /></th>
+        </tr>
+    </thead>
+    <tbody>
+        
 <%
     int cnt = 0;
     for (regResult result : regResults) {
@@ -699,51 +699,51 @@
         if (cnt < (start+1)) { continue; }
         if (cnt > (start+range)) { continue; }
 %>
-		<tr id="jiveRegistration<%= result.id %>">
-			<td align="center">
-			<img src="images/im_<%= result.status %>.gif" alt="<%= result.linestatus %>" border="0"></td>
-			<td><%= result.jid.getNode() %></td>
+        <tr id="jiveRegistration<%= result.id %>">
+            <td align="center">
+            <img src="images/im_<%= result.status %>.gif" alt="<%= result.linestatus %>" border="0"></td>
+            <td><%= result.jid.getNode() %></td>
             <% if (ClusterManager.isClusteringStarted()) { %>
             <td><%= result.clusterNode != null ? result.clusterNode : "&nbsp;" %></td>
             <% } %>
             <td><span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %><%= ((result.sessionActive) ? "on" : "off") %>"><span id="registrationUsername<%= result.id %>"><%= result.username %></span><% if(result.sessionActive){ %><span id="registrationLogoff<%= result.id %>"> [<a href="javascript:noop()" onclick="logoutSession(<%= result.id %>)">logout</a>]</span> <% } %></span></td>
-			<td><%= result.lastLogin %></td>
-			<td align="center"><a href="javascript:noop()" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>toggleEdit(<%= result.id %>); return false<% } %>"><img src="images/edit-16x16.gif" alt="<fmt:message key="global.edit" />" border="0"></a></td>
+            <td><%= result.lastLogin %></td>
+            <td align="center"><a href="javascript:noop()" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to modify registrations.'); return false;<% } else { %>toggleEdit(<%= result.id %>); return false<% } %>"><img src="images/edit-16x16.gif" alt="<fmt:message key="global.edit" />" border="0"></a></td>
             <td align="center"><a href="javascript:noop()" onClick="<% if (!trEnabled.get(result.type)) { %>alert('You must enable this transport to delete registrations.'); return false;<% } else { %>if (confirm('<fmt:message key="gateway.web.registrations.confirmdelete" />')) { deleteRegistration('<%= result.id %>'); return false; } else { return false; }<% } %>"><img src="images/delete-16x16.gif" alt="<fmt:message key="global.delete" />" border="0"></a></td>
-		</tr>
-		<tr id="jiveRegistrationEdit<%= result.id %>" style="display: none">
-			<td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>
-			<td><%= result.jid %></td>
-			<td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="" onSubmit="return false">
-			<span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
-				<div class="jive-registrations-editUsername">
-				<input type="text" name="gatewayUsername<%= result.id %>" id="gatewayUsername<%= result.id %>"size="12" maxlength="50" value="<%= result.username %>"><br>
-				<strong><fmt:message key="gateway.web.registrations.username" /></strong>
-				</div>
-				<div class="jive-registrations-editPassword">
-				<input type="password" name="gatewayPassword<%= result.id %>" id="gatewayPassword<%= result.id %>"size="12" maxlength="50" value="********"><br>
-				<strong><fmt:message key="gateway.web.registrations.password" /></strong>
-				</div>
+        </tr>
+        <tr id="jiveRegistrationEdit<%= result.id %>" style="display: none">
+            <td align="center"><img src="images/im_<%= result.status %>.gif" alt="<%= result.status %>" border="0"></td>
+            <td><%= result.jid %></td>
+            <td colspan="4"><form method="post" id="editRegistration<%= result.id %>" name="editRegistration<%= result.id %>" action="" onSubmit="return false">
+            <span class="jive-gateway-<%= result.linestatus %> jive-gateway-<%= result.type.toUpperCase() %>on">
+                <div class="jive-registrations-editUsername">
+                <input type="text" name="gatewayUsername<%= result.id %>" id="gatewayUsername<%= result.id %>"size="12" maxlength="50" value="<%= result.username %>"><br>
+                <strong><fmt:message key="gateway.web.registrations.username" /></strong>
+                </div>
+                <div class="jive-registrations-editPassword">
+                <input type="password" name="gatewayPassword<%= result.id %>" id="gatewayPassword<%= result.id %>"size="12" maxlength="50" value="********"><br>
+                <strong><fmt:message key="gateway.web.registrations.password" /></strong>
+                </div>
                 <div class="jive-registrations-editNickname">
                 <input type="text" name="gatewayNickname<%= result.id %>%>" id="gatewayNickname<%= result.id %>" size="12" maxlength="50" value="<%= result.nickname %>"><br>
                 <strong><fmt:message key="gateway.web.registrations.nickname" /></strong>
                 </div>
                 <div class="jive-registrations-editButtons">
-				<input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />" class="savechanges" onClick="updateRegistration('<%= result.id %>'); return false" /> &nbsp;
-				<input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleEdit(<%= result.id %>);" />
-				</div>
-			</span>
-			</form></td>
-		</tr>
+                <input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />" class="savechanges" onClick="updateRegistration('<%= result.id %>'); return false" /> &nbsp;
+                <input type="reset" name="reset" value="<fmt:message key="global.cancel" />" class="cancel" onClick="toggleEdit(<%= result.id %>);" />
+                </div>
+            </span>
+            </form></td>
+        </tr>
 <%
     }
 %>
-	</tbody>
-	</table>
-	<!-- BEGIN registrations table -->
+    </tbody>
+    </table>
+    <!-- BEGIN registrations table -->
 
 
-	<!-- BEGIN pagination -->
+    <!-- BEGIN pagination -->
     <div class="jive-registrations-pagination">
         <strong><fmt:message key="gateway.web.registrations.page" />:</strong> &nbsp;
             <%
@@ -772,7 +772,7 @@
                 }
             %>
     </div>
-	<!-- END pagination -->
+    <!-- END pagination -->
 
 
 </div>

@@ -61,7 +61,7 @@ import org.slf4j.LoggerFactory;
 @JiveID(55)
 public class Bookmark {
 
-	private static final Logger Log = LoggerFactory.getLogger(Bookmark.class);
+    private static final Logger Log = LoggerFactory.getLogger(Bookmark.class);
 
     private static final String INSERT_BOOKMARK =
             "INSERT INTO ofBookmark(bookmarkID, bookmarkType, bookmarkName, bookmarkValue, " +
@@ -70,8 +70,8 @@ public class Bookmark {
             "INSERT INTO ofBookmarkPerm(bookmarkID, bookmarkType, name) VALUES(?,?,?)";
     private static final String LOAD_BOOKMARK_PERMISSIONS =
             "SELECT bookmarkType, name FROM ofBookmarkPerm WHERE bookmarkID=?";
-	//    private static final String SAVE_BOOKMARK_PERMISSIONS =
-	//            "UPDATE ofBookmarkPerm SET bookmarkType=?, name=? WHERE bookmarkID=?";
+    //    private static final String SAVE_BOOKMARK_PERMISSIONS =
+    //            "UPDATE ofBookmarkPerm SET bookmarkType=?, name=? WHERE bookmarkID=?";
     private static final String DELETE_BOOKMARK_PERMISSIONS =
             "DELETE from ofBookmarkPerm WHERE bookmarkID=?";
     private static final String SAVE_BOOKMARK =

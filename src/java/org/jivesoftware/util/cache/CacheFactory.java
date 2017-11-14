@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("rawtypes")
 public class CacheFactory {
 
-	private static final Logger log = LoggerFactory.getLogger(CacheFactory.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheFactory.class);
 
     public static String LOCAL_CACHE_PROPERTY_NAME = "cache.clustering.local.class";
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
@@ -62,8 +62,8 @@ public class CacheFactory {
     /**
      * Storage for all caches that get created.
      */
-	private static Map<String, Cache> caches = new ConcurrentHashMap<>();
-	private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
+    private static Map<String, Cache> caches = new ConcurrentHashMap<>();
+    private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
     
     private static String localCacheFactoryClass;
     private static String clusteredCacheFactoryClass;
@@ -382,10 +382,10 @@ public class CacheFactory {
         Cache cache = caches.remove(name);
         if (cache != null) {
             if (localOnly.contains(name)) {
-            	localOnly.remove(name);
-            	localCacheFactoryStrategy.destroyCache(cache);
+                localOnly.remove(name);
+                localCacheFactoryStrategy.destroyCache(cache);
             } else {
-            	cacheFactoryStrategy.destroyCache(cache);
+                cacheFactoryStrategy.destroyCache(cache);
             }
         }
     }
@@ -406,19 +406,19 @@ public class CacheFactory {
      */
     public static synchronized Lock getLock(Object key, Cache cache) {
         if (localOnly.contains(cache.getName())) {
-        	return localCacheFactoryStrategy.getLock(key, cache);
+            return localCacheFactoryStrategy.getLock(key, cache);
         } else {
-        	return cacheFactoryStrategy.getLock(key, cache);
+            return cacheFactoryStrategy.getLock(key, cache);
         }
     }
 
     @SuppressWarnings("unchecked")
     private static <T extends Cache> T wrapCache(T cache, String name) {
-    	if ("Routing Components Cache".equals(name)) {
+        if ("Routing Components Cache".equals(name)) {
             cache = (T) new ComponentCacheWrapper(cache);
-    	} else {
+        } else {
             cache = (T) new CacheWrapper(cache);
-    	}
+        }
         cache.setName(name);
 
         caches.put(name, cache);
@@ -435,16 +435,16 @@ public class CacheFactory {
      * this JVM to join a cluster.
      */
     public static boolean isClusteringAvailable() {
-    	if (clusteredCacheFactoryStrategy == null) {
-	        try {
-	        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(
-	        			clusteredCacheFactoryClass, true,
-	        			getClusteredCacheStrategyClassLoader()).newInstance();
-	        } catch (NoClassDefFoundError | Exception e) {
-	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
-	        }
+        if (clusteredCacheFactoryStrategy == null) {
+            try {
+                clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(
+                        clusteredCacheFactoryClass, true,
+                        getClusteredCacheStrategyClassLoader()).newInstance();
+            } catch (NoClassDefFoundError | Exception e) {
+                log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
+            }
         }
-    	return (clusteredCacheFactoryStrategy != null);
+        return (clusteredCacheFactoryStrategy != null);
     }
 
     /**
@@ -523,7 +523,7 @@ public class CacheFactory {
      * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
      */
     public static int getMaxClusterNodes() {
-    	return cacheFactoryStrategy.getMaxClusterNodes();
+        return cacheFactoryStrategy.getMaxClusterNodes();
     }
     
     /**
@@ -534,12 +534,12 @@ public class CacheFactory {
      * @return Synchronized time for all cluster members
      */
     public static long getClusterTime() {
-    	// use try/catch here for backward compatibility with older plugin(s)
-    	try { return cacheFactoryStrategy.getClusterTime(); }
-    	catch (AbstractMethodError ame) {
-    		log.warn("Cluster time not available; check for update to hazelcast/clustering plugin");
-    		return localCacheFactoryStrategy.getClusterTime();
-    	}
+        // use try/catch here for backward compatibility with older plugin(s)
+        try { return cacheFactoryStrategy.getClusterTime(); }
+        catch (AbstractMethodError ame) {
+            log.warn("Cluster time not available; check for update to hazelcast/clustering plugin");
+            return localCacheFactoryStrategy.getClusterTime();
+        }
     }
     
     /**
@@ -598,7 +598,7 @@ public class CacheFactory {
      * @return The info for the cluster node or null if not found
      */
     public static ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
-    	return cacheFactoryStrategy.getClusterNodeInfo(nodeID);
+        return cacheFactoryStrategy.getClusterNodeInfo(nodeID);
     }
 
     public static String getPluginName() {
@@ -607,11 +607,11 @@ public class CacheFactory {
 
     public static synchronized void initialize() throws InitializationException {
         try {
-        	localCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+            localCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
             cacheFactoryStrategy = localCacheFactoryStrategy;
         } catch (Exception e) {
-        	log.error("Failed to instantiate local cache factory strategy: " + localCacheFactoryClass, e);
-        	 throw new InitializationException(e);
+            log.error("Failed to instantiate local cache factory strategy: " + localCacheFactoryClass, e);
+             throw new InitializationException(e);
         }
     }
 
@@ -626,14 +626,14 @@ public class CacheFactory {
         }
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {
-        	if (log.isDebugEnabled()) {
-        		StringBuffer pluginLoaderDetails = new StringBuffer("Clustering plugin class loader: ");
-        		pluginLoaderDetails.append(pluginLoader.getClass().getName());
-        		for (URL url : pluginLoader.getURLs()) {
-        			pluginLoaderDetails.append("\n\t").append(url.toExternalForm());
-        		}
-        		log.debug(pluginLoaderDetails.toString());
-        	}
+            if (log.isDebugEnabled()) {
+                StringBuffer pluginLoaderDetails = new StringBuffer("Clustering plugin class loader: ");
+                pluginLoaderDetails.append(pluginLoader.getClass().getName());
+                for (URL url : pluginLoader.getURLs()) {
+                    pluginLoaderDetails.append("\n\t").append(url.toExternalForm());
+                }
+                log.debug(pluginLoaderDetails.toString());
+            }
             return pluginLoader;
         }
         else {
@@ -643,9 +643,9 @@ public class CacheFactory {
     }
 
     public static void startClustering() {
-    	if (isClusteringAvailable()) {
-    		clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
-    	}
+        if (isClusteringAvailable()) {
+            clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
+        }
         if (clusteringStarting) {
             if (statsThread == null) {
                 // Start a timing thread with 1 second of accuracy.
@@ -653,7 +653,7 @@ public class CacheFactory {
                     private volatile boolean destroyed = false;
 
                     @Override
-					public void run() {
+                    public void run() {
                         XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                             @Override
                             public void serverStarted() {}
@@ -713,8 +713,8 @@ public class CacheFactory {
 
     public static void stopClustering() {
         // Stop the cluster
-    	clusteredCacheFactoryStrategy.stopCluster();
-    	clusteredCacheFactoryStrategy = null;
+        clusteredCacheFactoryStrategy.stopCluster();
+        clusteredCacheFactoryStrategy = null;
         // Set the strategy to local
         cacheFactoryStrategy = localCacheFactoryStrategy;
     }
@@ -723,7 +723,7 @@ public class CacheFactory {
      * Notification message indicating that this JVM has joined a cluster.
      */
     @SuppressWarnings("unchecked")
-	public static synchronized void joinedCluster() {
+    public static synchronized void joinedCluster() {
         cacheFactoryStrategy = clusteredCacheFactoryStrategy;
         // Loop through local caches and switch them to clustered cache (copy content)
         for (Cache cache : getAllCaches()) {
@@ -743,7 +743,7 @@ public class CacheFactory {
      * Notification message indicating that this JVM has left the cluster.
      */
     @SuppressWarnings("unchecked")
-	public static synchronized void leftCluster() {
+    public static synchronized void leftCluster() {
         clusteringStarted = false;
         cacheFactoryStrategy = localCacheFactoryStrategy;
 
@@ -755,7 +755,7 @@ public class CacheFactory {
             Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             standaloneCache.putAll(cache);
             cacheWrapper.setWrappedCache(standaloneCache);
-    	}
+        }
         log.info("Clustering stopped; cache migration complete");
     }
 }

@@ -23,7 +23,7 @@ package com.jcumulus.server.rtmfp.flow;
 public enum H
 {
 
-	Null, Boolean, Integer, Number, String, Date, Array, Object, ByteArray, Dictionary, RawObjectContent, End;
+    Null, Boolean, Integer, Number, String, Date, Array, Object, ByteArray, Dictionary, RawObjectContent, End;
 
 
     public static final byte m = 5;

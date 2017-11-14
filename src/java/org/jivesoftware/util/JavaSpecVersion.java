@@ -103,7 +103,7 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
      * @param otherVersion a verion to comapr against
      */
     public boolean isNewerThan(JavaSpecVersion otherVersion) {
-    	return this.compareTo(otherVersion) > 0;
+        return this.compareTo(otherVersion) > 0;
     }
 
     @Override

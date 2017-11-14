@@ -42,7 +42,7 @@ public class DynamicAddressChannel extends Channel implements Runnable, Datagram
     }
 
     @Override
-	boolean handle(DatagramPacket packet) {
+    boolean handle(DatagramPacket packet) {
         // Relay Destination
         if (c++ < 100) { // 100 packets are enough to discover relay address
             this.setHost(packet.getAddress());

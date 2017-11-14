@@ -55,7 +55,7 @@ import org.xmpp.packet.Presence;
 
 public class AuditorImpl implements Auditor {
 
-	private static final Logger Log = LoggerFactory.getLogger(AuditorImpl.class);
+    private static final Logger Log = LoggerFactory.getLogger(AuditorImpl.class);
 
     private AuditManager auditManager;
     private File currentAuditFile;
@@ -304,75 +304,75 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-	/* if this new logic still causes problems one may want to 
-	* use log4j or change the file format from YYYYmmdd-nnn to YYYYmmdd-HHMM */
-	/**
-	* Sets <b>xmlWriter</b> so this class can use it to write audit logs<br>
-	* The audit filename <b>currentAuditFile</b> will be `jive.audit-YYYYmmdd-nnn.log´<br>
-	* `nnn´ will be reset to `000´ when a new log file is created the next day <br>
-	* `nnn´ will be increased for log files which belong to the same day<br>
-	* <b>WARNING:</b> If log files of the current day are deleted and the server is restarted then
-	* the value of `nnn´ may be random (it's calculated by `Math.max(files.length, filesIndex);´
-	* with `filesIndex=0´ and  `files.length=nr(existing jive.audit-YYYYmmdd-???.log files)´ - 
-	* if there are 10 audit files (033-043) then nnn will be 10 instead of 44).<br>
-	* If  `nnn=999´ then all audit data will be written to this file till the next day.<br>
-	* @param auditDate
-	* @throws IOException
-	*/
-	private void createAuditFile(Date auditDate) throws IOException {
-		final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
-		if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
-   		// Set limit date after which we need to rollover the audit file (based on the date)
-   		Calendar calendar = Calendar.getInstance();
-   		calendar.setTime(auditDate);
-   		calendar.set(Calendar.HOUR_OF_DAY, 23);
-   		calendar.set(Calendar.MINUTE, 59);
-   		calendar.set(Calendar.SECOND, 59);
-   		calendar.set(Calendar.MILLISECOND, 999);
-   		currentDateLimit = calendar.getTime();
-   		filesIndex = 0;
-   	}
-   	// Get list of existing audit files
-   	FilenameFilter filter = new FilenameFilter() {
-  		@Override
-  		public boolean accept(File dir, String name) {
-   			return name.startsWith(filePrefix) && name.endsWith(".log");
-   		}
-   	};
-   	File[] files = baseFolder.listFiles(filter);
-   	// if some daily files were already deleted then files.length will be smaller than filesIndex
-   	// see also WARNING above
-   	filesIndex = Math.max(files.length, filesIndex);
-		if (filesIndex >= maxTotalFilesDay)
-		{
-			// don't close this file, continue auditing to it
-			return;
-		}
-		File tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
-		if ( (filesIndex == maxTotalFilesDay-1) && !tmpAuditFile.exists() ) 
-		{
-			Log.warn("Creating last audit file for this date: " + dateFormat.format(auditDate));
-		}
-		while ( (filesIndex<(maxTotalFilesDay-1)) && (tmpAuditFile.exists()) )
-		{
-			Log.debug("Audit file '"+ tmpAuditFile.getName() +"' does already exist.");
-			filesIndex++;
-			tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
-		}
-		currentAuditFile = tmpAuditFile;
-		close();
-		// always append to an existing file (after restart)
-		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile, true), StandardCharsets.UTF_8));
-		writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
-		xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
-	}
+    /* if this new logic still causes problems one may want to 
+    * use log4j or change the file format from YYYYmmdd-nnn to YYYYmmdd-HHMM */
+    /**
+    * Sets <b>xmlWriter</b> so this class can use it to write audit logs<br>
+    * The audit filename <b>currentAuditFile</b> will be `jive.audit-YYYYmmdd-nnn.log´<br>
+    * `nnn´ will be reset to `000´ when a new log file is created the next day <br>
+    * `nnn´ will be increased for log files which belong to the same day<br>
+    * <b>WARNING:</b> If log files of the current day are deleted and the server is restarted then
+    * the value of `nnn´ may be random (it's calculated by `Math.max(files.length, filesIndex);´
+    * with `filesIndex=0´ and  `files.length=nr(existing jive.audit-YYYYmmdd-???.log files)´ - 
+    * if there are 10 audit files (033-043) then nnn will be 10 instead of 44).<br>
+    * If  `nnn=999´ then all audit data will be written to this file till the next day.<br>
+    * @param auditDate
+    * @throws IOException
+    */
+    private void createAuditFile(Date auditDate) throws IOException {
+        final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
+        if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
+        // Set limit date after which we need to rollover the audit file (based on the date)
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(auditDate);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        currentDateLimit = calendar.getTime();
+        filesIndex = 0;
+    }
+    // Get list of existing audit files
+    FilenameFilter filter = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.startsWith(filePrefix) && name.endsWith(".log");
+        }
+    };
+    File[] files = baseFolder.listFiles(filter);
+    // if some daily files were already deleted then files.length will be smaller than filesIndex
+    // see also WARNING above
+    filesIndex = Math.max(files.length, filesIndex);
+        if (filesIndex >= maxTotalFilesDay)
+        {
+            // don't close this file, continue auditing to it
+            return;
+        }
+        File tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
+        if ( (filesIndex == maxTotalFilesDay-1) && !tmpAuditFile.exists() ) 
+        {
+            Log.warn("Creating last audit file for this date: " + dateFormat.format(auditDate));
+        }
+        while ( (filesIndex<(maxTotalFilesDay-1)) && (tmpAuditFile.exists()) )
+        {
+            Log.debug("Audit file '"+ tmpAuditFile.getName() +"' does already exist.");
+            filesIndex++;
+            tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
+        }
+        currentAuditFile = tmpAuditFile;
+        close();
+        // always append to an existing file (after restart)
+        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile, true), StandardCharsets.UTF_8));
+        writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
+        xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
+    }
 
     /**
      * Saves the queued entries to an XML file and checks that very old files are deleted.
      */
     private class SaveQueuedPacketsTask extends TimerTask {
         @Override
-		public void run() {
+        public void run() {
             try {
                 // Ensure that saved audit logs are not too old
                 ensureMaxDays();

@@ -41,7 +41,7 @@ import org.xmpp.packet.PacketError;
  */
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
 
     protected PacketDeliverer deliverer;
     protected SessionManager sessionManager;
@@ -112,7 +112,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     public abstract IQHandlerInfo getInfo();
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();

@@ -41,7 +41,7 @@
     String groupchatJID = request.getParameter("groupchatJID");
 
     boolean autojoin = ParamUtils.getBooleanParameter(request,"autojoin");
-	boolean nameAsNick = ParamUtils.getBooleanParameter(request,"nameasnick");
+    boolean nameAsNick = ParamUtils.getBooleanParameter(request,"nameasnick");
 
     String users = request.getParameter("users");
     String groups = request.getParameter("groups");
@@ -173,23 +173,23 @@
                 if (isRSS) {
                     bookmark.setProperty("rss", "true");
                 }
-				else {
-	            bookmark.deleteProperty("rss");
-				}
+                else {
+                bookmark.deleteProperty("rss");
+                }
             }
             else {
                 if (autojoin) {
                     bookmark.setProperty("autojoin", "true");
                 }
-					else {
-	            	bookmark.deleteProperty("autojoin");
-				}
-				if (nameAsNick) {
-					bookmark.setProperty("nameasnick", "true");
-				}
-					else {
-	            	bookmark.deleteProperty("nameasnick");
-				}
+                    else {
+                    bookmark.deleteProperty("autojoin");
+                }
+                if (nameAsNick) {
+                    bookmark.setProperty("nameasnick", "true");
+                }
+                    else {
+                    bookmark.deleteProperty("nameasnick");
+                }
             }
         }
     }

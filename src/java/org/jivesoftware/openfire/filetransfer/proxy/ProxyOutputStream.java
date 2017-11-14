@@ -31,7 +31,7 @@ public class ProxyOutputStream extends DataOutputStream {
     }
 
     @Override
-	public synchronized void write(byte b[], int off, int len) throws IOException {
+    public synchronized void write(byte b[], int off, int len) throws IOException {
         super.write(b, off, len);
         amountTransferred.addAndGet(len);
     }

@@ -48,9 +48,9 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+    public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
-    	if (enabled && message instanceof IoBuffer) {
+        if (enabled && message instanceof IoBuffer) {
             logBuffer(session, (IoBuffer) message, "RECV");
         }
         // Pass the message to the next filter
@@ -73,7 +73,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
+    public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
         if (enabled && writeRequest.getMessage() instanceof IoBuffer) {
             logBuffer(session, (IoBuffer) writeRequest.getMessage(), "SENT");
         }
@@ -99,7 +99,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
         // Keep track of sessions using this filter
         sessions.add(session);
         if (enabled) {
@@ -110,7 +110,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
         // Update list of sessions using this filter
         sessions.remove(session);
         if (enabled) {

@@ -37,7 +37,7 @@ import javax.net.ssl.SSLHandshakeException;
  */
 abstract class SocketReadingMode {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

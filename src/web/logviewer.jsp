@@ -35,7 +35,7 @@
 <%!
     static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
-	static final String ALL = "all";
+    static final String ALL = "all";
     static final String ERROR = "error";
     static final String INFO = "info";
     static final String WARN = "warn";

@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteServerManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(RemoteServerManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(RemoteServerManager.class);
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofRemoteServerConf (xmppDomain,remotePort,permission) VALUES (?,?,?)";

@@ -47,7 +47,7 @@ import org.xmpp.packet.Packet;
  */
 public class Channel<T extends Packet> {
 
-	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
+    private static final Logger Log = LoggerFactory.getLogger(Channel.class);
 
     private String name;
     private ChannelHandler<T> channelHandler;

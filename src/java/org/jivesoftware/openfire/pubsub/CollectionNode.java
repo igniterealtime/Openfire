@@ -70,7 +70,7 @@ public class CollectionNode extends Node {
 
 
     @Override
-	protected void configure(FormField field) throws NotAcceptableException {
+    protected void configure(FormField field) throws NotAcceptableException {
         List<String> values;
         if ("pubsub#leaf_node_association_policy".equals(field.getVariable()) ||
             "pubsub#children_association_policy".equals(field.getVariable())) {
@@ -80,7 +80,7 @@ public class CollectionNode extends Node {
             }
         }
         else if ("pubsub#leaf_node_association_whitelist".equals(field.getVariable()) ||
-        		"pubsub#children_association_whitelist".equals(field.getVariable())) {
+                "pubsub#children_association_whitelist".equals(field.getVariable())) {
             // Get the new list of users that may add leaf nodes to this collection node
             associationTrusted = new ArrayList<>();
             for (String value : field.getValues()) {
@@ -93,49 +93,49 @@ public class CollectionNode extends Node {
             }
         }
         else if ("pubsub#leaf_nodes_max".equals(field.getVariable()) ||
-        		"pubsub#children_max".equals(field.getVariable())) {
+                "pubsub#children_max".equals(field.getVariable())) {
             values = field.getValues();
             maxLeafNodes = values.size() > 0 ? Integer.parseInt(values.get(0)) : -1;
         }
         else if ("pubsub#children".endsWith(field.getVariable())) {
-        	values = field.getValues();
-        	ArrayList<Node> childrenNodes = new ArrayList<>(values.size());
-        	
-        	// Check all nodes for their existence 
-        	for (String nodeId : values)
-			{
-            	Node childNode = service.getNode(nodeId);
-            	
-            	if (childNode == null)
-            	{
-            		throw new NotAcceptableException("Child node does not exist");
-            	}
-              	childrenNodes.add(childNode);
-			}
-        	// Remove any children not in the new list.
-        	ArrayList<Node> toRemove = new ArrayList<>(nodes.values());
-        	toRemove.removeAll(childrenNodes);
-        	
-        	for (Node node : toRemove)
-			{
-				removeChildNode(node);
-			}
-        	
-        	// Set the parent on the children.
-        	for (Node node : childrenNodes)
-			{
-        		node.changeParent(this);
-			}
+            values = field.getValues();
+            ArrayList<Node> childrenNodes = new ArrayList<>(values.size());
+            
+            // Check all nodes for their existence 
+            for (String nodeId : values)
+            {
+                Node childNode = service.getNode(nodeId);
+                
+                if (childNode == null)
+                {
+                    throw new NotAcceptableException("Child node does not exist");
+                }
+                childrenNodes.add(childNode);
+            }
+            // Remove any children not in the new list.
+            ArrayList<Node> toRemove = new ArrayList<>(nodes.values());
+            toRemove.removeAll(childrenNodes);
+            
+            for (Node node : toRemove)
+            {
+                removeChildNode(node);
+            }
+            
+            // Set the parent on the children.
+            for (Node node : childrenNodes)
+            {
+                node.changeParent(this);
+            }
         }
     }
 
     @Override
-	void postConfigure(DataForm completedForm) {
+    void postConfigure(DataForm completedForm) {
         //Do nothing.
     }
 
     @Override
-	protected void addFormFields(DataForm form, boolean isEditing) {
+    protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
         FormField typeField = form.getField("pubsub#node_type");
@@ -272,7 +272,7 @@ public class CollectionNode extends Node {
     }
 
     @Override
-	protected void deletingNode() {
+    protected void deletingNode() {
         // Update child nodes to use the parent node of this node as the new parent node
         for (Node node : getNodes()) {
             node.changeParent(parent);
@@ -311,7 +311,7 @@ public class CollectionNode extends Node {
     }
 
     @Override
-	public boolean isCollectionNode() {
+    public boolean isCollectionNode() {
         return true;
     }
 
@@ -324,7 +324,7 @@ public class CollectionNode extends Node {
      *         node.
      */
     @Override
-	public boolean isChildNode(Node child) {
+    public boolean isChildNode(Node child) {
         return nodes.containsKey(child.getNodeID());
     }
 
@@ -337,7 +337,7 @@ public class CollectionNode extends Node {
      *         a descendant of the children nodes.
      */
     @Override
-	public boolean isDescendantNode(Node child) {
+    public boolean isDescendantNode(Node child) {
         if (isChildNode(child)) {
             return true;
         }
@@ -350,7 +350,7 @@ public class CollectionNode extends Node {
     }
 
     @Override
-	public Collection<Node> getNodes() {
+    public Collection<Node> getNodes() {
         return nodes.values();
     }
 

@@ -119,7 +119,7 @@ public class WorkgroupForm {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return (key);
         }
     }

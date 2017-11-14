@@ -1,7 +1,7 @@
 <%@ page import="java.util.*,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.user.*,
-				org.jivesoftware.openfire.plugin.ContentFilterPlugin,
+                org.jivesoftware.openfire.plugin.ContentFilterPlugin,
                  org.jivesoftware.util.*"
 %>
 <%@ page import="java.util.regex.Pattern"%>
@@ -23,8 +23,8 @@
     //match options
     boolean allowOnMatch = ParamUtils.getBooleanParameter(request, "allowonmatch");
     String [] maskChecked = ParamUtils.getParameters(request, "maskenabled");
-	boolean maskEnabled = maskChecked.length > 0;
-   	String mask =  ParamUtils.getParameter(request, "mask");
+    boolean maskEnabled = maskChecked.length > 0;
+    String mask =  ParamUtils.getParameter(request, "mask");
 
     //rejection options
     boolean rejectionNotificationEnabled = ParamUtils.getBooleanParameter(request, "rejectionnotificationenabled");
@@ -39,7 +39,7 @@
     boolean includeOriginalEnabled = notificationOptions.contains("notificationincludeoriginal");
     
     //get handle to plugin
-	ContentFilterPlugin plugin = (ContentFilterPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("contentfilter");
+    ContentFilterPlugin plugin = (ContentFilterPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("contentfilter");
 
     //input validation
     Map<String, String> errors = new HashMap<String, String>();
@@ -54,60 +54,60 @@
                     Pattern.compile(aData);
                 }
             } catch (java.util.regex.PatternSyntaxException e) {
-    			    errors.put("patternSyntaxException", e.getMessage());
-    			}
-    		}
-    		    	
-	    	if (mask == null) {
-	    	    errors.put("missingMask", "missingMask");
-	    	}
-    	
-	    	if (rejectionMsg == null) {
-	    	    errors.put("missingRejectionMsg", "missingRejectionMsg");
-	    	}
-    	
-	    	if (contactName == null) {
-		    errors.put("missingContactName", "missingContactName");
-		} else {
-		    contactName = contactName.trim().toLowerCase();
-		    try  {
-		        User user = UserManager.getInstance().getUser(contactName);
-		        if (notificationByEmailEnabled) {
-		            //verify that the user has an email address
-		            if (user.getEmail() == null) {
-		                errors.put("userEmailNotConfigured", "userEmailNotConfigured");
-		            }
-		            //verify that the email server is configured
-		            if (!JiveGlobals.getBooleanProperty("mail.configured", false)) {
-		                errors.put("mailServerNotConfigured", "mailServerNotConfigured");
-		            }
-		        }
-			} catch (UserNotFoundException unfe) {
-			    errors.put("userNotFound", "userNotFound");
-			}
-		}
-		
-		if (!notificationByIMEnabled && !notificationByEmailEnabled) {
-		    errors.put("notificationFormatNotConfigured", "notificationFormatNotConfigured");
-		}
-	    	       	    	    
-	    if (errors.size() == 0) {
-		    plugin.setPatternsEnabled(patternsEnabled);
-		    plugin.setPatterns(patterns);
-		    plugin.setFilterStatusEnabled(filterStatusEnabled);
-		    plugin.setAllowOnMatch(allowOnMatch);
-		    plugin.setMaskEnabled(maskEnabled);
-		    plugin.setMask(mask);
-	        plugin.setViolationNotificationEnabled(notificationEnabled);
-	        plugin.setViolationContact(contactName);
-	        plugin.setViolationNotificationByIMEnabled(notificationByIMEnabled);
-	        plugin.setViolationNotificationByEmailEnabled(notificationByEmailEnabled);
-	        plugin.setViolationIncludeOriginalPacketEnabled(includeOriginalEnabled);           
-	        plugin.setRejectionNotificationEnabled(rejectionNotificationEnabled);
-	        plugin.setRejectionMessage(rejectionMsg);            
-	        response.sendRedirect("contentfilter-props-edit-form.jsp?success=true");
-	        return;
-	    }
+                    errors.put("patternSyntaxException", e.getMessage());
+                }
+            }
+                    
+            if (mask == null) {
+                errors.put("missingMask", "missingMask");
+            }
+        
+            if (rejectionMsg == null) {
+                errors.put("missingRejectionMsg", "missingRejectionMsg");
+            }
+        
+            if (contactName == null) {
+            errors.put("missingContactName", "missingContactName");
+        } else {
+            contactName = contactName.trim().toLowerCase();
+            try  {
+                User user = UserManager.getInstance().getUser(contactName);
+                if (notificationByEmailEnabled) {
+                    //verify that the user has an email address
+                    if (user.getEmail() == null) {
+                        errors.put("userEmailNotConfigured", "userEmailNotConfigured");
+                    }
+                    //verify that the email server is configured
+                    if (!JiveGlobals.getBooleanProperty("mail.configured", false)) {
+                        errors.put("mailServerNotConfigured", "mailServerNotConfigured");
+                    }
+                }
+            } catch (UserNotFoundException unfe) {
+                errors.put("userNotFound", "userNotFound");
+            }
+        }
+        
+        if (!notificationByIMEnabled && !notificationByEmailEnabled) {
+            errors.put("notificationFormatNotConfigured", "notificationFormatNotConfigured");
+        }
+                                
+        if (errors.size() == 0) {
+            plugin.setPatternsEnabled(patternsEnabled);
+            plugin.setPatterns(patterns);
+            plugin.setFilterStatusEnabled(filterStatusEnabled);
+            plugin.setAllowOnMatch(allowOnMatch);
+            plugin.setMaskEnabled(maskEnabled);
+            plugin.setMask(mask);
+            plugin.setViolationNotificationEnabled(notificationEnabled);
+            plugin.setViolationContact(contactName);
+            plugin.setViolationNotificationByIMEnabled(notificationByIMEnabled);
+            plugin.setViolationNotificationByEmailEnabled(notificationByEmailEnabled);
+            plugin.setViolationIncludeOriginalPacketEnabled(includeOriginalEnabled);           
+            plugin.setRejectionNotificationEnabled(rejectionNotificationEnabled);
+            plugin.setRejectionMessage(rejectionMsg);            
+            response.sendRedirect("contentfilter-props-edit-form.jsp?success=true");
+            return;
+        }
     } else if (reset) {
       plugin.reset();
       response.sendRedirect("contentfilter-props-edit-form.jsp?success=true");
@@ -154,8 +154,8 @@ Use the form below to edit content filter settings.<br>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-	        <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-	        <td class="jive-icon-label">Settings updated successfully.</td>
+            <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">Settings updated successfully.</td>
         </tr>
     </tbody>
     </table>
@@ -167,8 +167,8 @@ Use the form below to edit content filter settings.<br>
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        	<td class="jive-icon-label">Error saving the settings.</td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">Error saving the settings.</td>
         </tr>
     </tbody>
     </table>
@@ -188,8 +188,8 @@ Use the form below to edit content filter settings.<br>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-    	<tr>
-    	    <td width="1%">
+        <tr>
+            <td width="1%">
             <input type="radio" name="patternsenabled" value="false" id="not01"
              <%= ((patternsEnabled) ? "" : "checked") %>>
         </td>
@@ -206,29 +206,29 @@ Use the form below to edit content filter settings.<br>
             <label for="not02"><b>Enabled</b></label> - Packets will be filtered.
         </td>
     </tr>
-    	<tr>
-        	<td>&nbsp;</td>
-        	<td align="left">Patterns:&nbsp;</td>
+        <tr>
+            <td>&nbsp;</td>
+            <td align="left">Patterns:&nbsp;</td>
     </tr>
     <tr>
         <td>&nbsp;</td>
-	    <td>
-	        <textarea rows="10" cols="100" name="patterns"><%= (patterns != null ? patterns : "") %></textarea>
-	        	<% if (errors.containsKey("missingPatterns")) { %>
-	            <span class="jive-error-text">
-	                <br>Please enter comma separated, regular expressions.
-	            </span>
-	            <% } else if (errors.containsKey("patternSyntaxException")) { %>
-	            <span class="jive-error-text">
-	                <br>Invalid regular expression: <%= errors.get("patternSyntaxException") %>. Please try again.
-	            </span>
-	            <% } %>
-	    </td>
-	</tr>
-	<tr>
-		<td>&nbsp;</td>
+        <td>
+            <textarea rows="10" cols="100" name="patterns"><%= (patterns != null ? patterns : "") %></textarea>
+                <% if (errors.containsKey("missingPatterns")) { %>
+                <span class="jive-error-text">
+                    <br>Please enter comma separated, regular expressions.
+                </span>
+                <% } else if (errors.containsKey("patternSyntaxException")) { %>
+                <span class="jive-error-text">
+                    <br>Invalid regular expression: <%= errors.get("patternSyntaxException") %>. Please try again.
+                </span>
+                <% } %>
+        </td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td>
         <td><input type="checkbox" name="filterstatus" value="filterstatus" <%= filterStatusEnabled ? "checked" : "" %>/>Filter users presence status.</td>
-	</tr>
+    </tr>
     </tbody>
     </table>
     </div>
@@ -246,7 +246,7 @@ Use the form below to edit content filter settings.<br>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-    	<tr>
+        <tr>
             <td width="1%">
             <input type="radio" name="allowonmatch" value="false" id="not03"
              <%= ((allowOnMatch) ? "" : "checked") %>>
@@ -265,21 +265,21 @@ Use the form below to edit content filter settings.<br>
             </td>
         </tr>
         <tr>
-        	<td>&nbsp;</td>
-	        <td align="left">Mask:&nbsp;
-	        <input type="text" size="100" maxlength="100" name="mask" 
-	        	value="<%= (mask != null ? mask : "") %>">
-	        	<% if (errors.containsKey("missingMask")) { %>
-	            <span class="jive-error-text">
-	                <br>Please enter a mask.
-	            </span>
-	            <% } %>
-	        </td>
-	    </tr>
-	    <tr>
-		<td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td align="left">Mask:&nbsp;
+            <input type="text" size="100" maxlength="100" name="mask" 
+                value="<%= (mask != null ? mask : "") %>">
+                <% if (errors.containsKey("missingMask")) { %>
+                <span class="jive-error-text">
+                    <br>Please enter a mask.
+                </span>
+                <% } %>
+            </td>
+        </tr>
+        <tr>
+        <td>&nbsp;</td>
         <td><input type="checkbox" name="maskenabled" value="maskenabled" <%= maskEnabled ? "checked" : "" %>/>Enable mask.</td>
-	</tr>
+    </tr>
     </tbody>
     </table>
     </div>
@@ -298,7 +298,7 @@ Use the form below to edit content filter settings.<br>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-    	<tr>
+        <tr>
             <td width="1%">
             <input type="radio" name="rejectionnotificationenabled" value="false" id="not05"
              <%= ((rejectionNotificationEnabled) ? "" : "checked") %>>
@@ -317,17 +317,17 @@ Use the form below to edit content filter settings.<br>
             </td>
         </tr>
          <tr>
-        	<td>&nbsp;</td>
-	        <td align="left">Rejection message:&nbsp;
-	        <input type="text" size="100" maxlength="100" name="rejectionMsg" 
-	        	value="<%= (rejectionMsg != null ? rejectionMsg : "") %>">
-	        	<% if (errors.containsKey("missingRejectionMsg")) { %>
-	            <span class="jive-error-text">
-	                <br>Please enter a rejection message.
-	            </span>
-	            <% } %>
-	        </td>
-	    </tr>
+            <td>&nbsp;</td>
+            <td align="left">Rejection message:&nbsp;
+            <input type="text" size="100" maxlength="100" name="rejectionMsg" 
+                value="<%= (rejectionMsg != null ? rejectionMsg : "") %>">
+                <% if (errors.containsKey("missingRejectionMsg")) { %>
+                <span class="jive-error-text">
+                    <br>Please enter a rejection message.
+                </span>
+                <% } %>
+            </td>
+        </tr>
     </tbody>
     </table>
     </div>
@@ -345,7 +345,7 @@ Use the form below to edit content filter settings.<br>
     
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
-    	<tr>
+        <tr>
             <td width="1%">
             <input type="radio" name="notificationenabled" value="false" id="not07"
              <%= ((notificationEnabled) ? "" : "checked") %>>
@@ -364,41 +364,41 @@ Use the form below to edit content filter settings.<br>
             </td>
         </tr>        
         <tr>
-        	    <td>&nbsp;</td>
-	        <td align="left">Username:&nbsp
+                <td>&nbsp;</td>
+            <td align="left">Username:&nbsp
                 <input type="text" size="20" maxlength="100" name="contactname" value="<%= (contactName != null ? contactName : "") %>">@<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>
-		        <% if (errors.containsKey("missingContactName")) { %>
-		            <span class="jive-error-text">
-		            <br>Please enter a username.
-		            </span>
-		        <% } else if (errors.containsKey("userNotFound")) { %>
-		            <span class="jive-error-text">
-		            <br>Could not find user. Please try again.
-		            </span>
-		        <% } %>
-	        </td>
-	    </tr>
-	    <tr>
-	        <td>&nbsp;</td>
-	        <td>
+                <% if (errors.containsKey("missingContactName")) { %>
+                    <span class="jive-error-text">
+                    <br>Please enter a username.
+                    </span>
+                <% } else if (errors.containsKey("userNotFound")) { %>
+                    <span class="jive-error-text">
+                    <br>Could not find user. Please try again.
+                    </span>
+                <% } %>
+            </td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>
                 <input type="checkbox" name="notificationcb" value="notificationbyim" <%= notificationByIMEnabled ? "checked" : "" %>/>Notify by IM.
                 <input type="checkbox" name="notificationcb" value="notificationbyemail" <%= notificationByEmailEnabled ? "checked" : "" %>/>Notify by Email.
-	            <input type="checkbox" name="notificationcb" value="notificationincludeoriginal" <%= includeOriginalEnabled ? "checked" : "" %>/>Include original packet.
-	            <% if (errors.containsKey("mailServerNotConfigured")) { %>
-		            <span class="jive-error-text">
-		            <br>Error, sending an email will fail because the mail server is not setup. Please go to the <a href="/system-email.jsp">mail settings page</a> and set the mail host.
-		            </span>
-		        <% } else if (errors.containsKey("userEmailNotConfigured")) { %>
-		            <span class="jive-error-text">
-		            <br>Please configure <a href="/user-properties.jsp?username=<%= contactName %>"><%= contactName %>'s</a> email address.
-		            </span>
-		        <% } else if (errors.containsKey("notificationFormatNotConfigured")) { %>
-		            <span class="jive-error-text">
-		            <br>Users must be notified by IM and/or Email.
-		            </span>
-		        <% } %>
-	        </td>
-	    </tr>
+                <input type="checkbox" name="notificationcb" value="notificationincludeoriginal" <%= includeOriginalEnabled ? "checked" : "" %>/>Include original packet.
+                <% if (errors.containsKey("mailServerNotConfigured")) { %>
+                    <span class="jive-error-text">
+                    <br>Error, sending an email will fail because the mail server is not setup. Please go to the <a href="/system-email.jsp">mail settings page</a> and set the mail host.
+                    </span>
+                <% } else if (errors.containsKey("userEmailNotConfigured")) { %>
+                    <span class="jive-error-text">
+                    <br>Please configure <a href="/user-properties.jsp?username=<%= contactName %>"><%= contactName %>'s</a> email address.
+                    </span>
+                <% } else if (errors.containsKey("notificationFormatNotConfigured")) { %>
+                    <span class="jive-error-text">
+                    <br>Users must be notified by IM and/or Email.
+                    </span>
+                <% } %>
+            </td>
+        </tr>
     </tbody>
     </table>
     </div>

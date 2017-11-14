@@ -52,8 +52,8 @@ import org.xmpp.packet.StreamError;
  */
 public class SparkManager implements Component {
 
-	private static final Logger Log = LoggerFactory.getLogger(SparkManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SparkManager.class);
+    
     private static final String INVALID_DISCONNECTS_KEY = "disconnects";
     private static final String SPARK_CLIENTS_KEY = "spark";
 
@@ -426,7 +426,7 @@ public class SparkManager implements Component {
         // Check for LOGIN ANONYMOUSLY feature        
         boolean anonymousloginEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("anonymouslogin.enabled", "true"));
         if (anonymousloginEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "anonymous-login");
+            responseElement.addElement("feature").addAttribute("var", "anonymous-login");
         }
 
         // Check for LOGOUT & EXIT feature
@@ -468,13 +468,13 @@ public class SparkManager implements Component {
         // Check for PREFERENCES MENU feature        
         boolean preferencesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("preferences.enabled", "true"));
         if (preferencesEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "preferences-menu");
+            responseElement.addElement("feature").addAttribute("var", "preferences-menu");
         }
 
         // Check for PRESENCE STATUS CHANGE feature        
         boolean presenceEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("presence.enabled", "true"));
         if (presenceEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "presence-status");
+            responseElement.addElement("feature").addAttribute("var", "presence-status");
         }
 
         // Check for PROFILE & AVATAR EDITING feature
@@ -498,19 +498,19 @@ public class SparkManager implements Component {
         // Check for VIEW NOTES feature        
         boolean viewnotesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("viewnotes.enabled", "true"));
         if (viewnotesEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "view-notes");
+            responseElement.addElement("feature").addAttribute("var", "view-notes");
         }
 
         // Check for VIEW TASK LIST feature        
         boolean viewtasklistEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("viewtasklist.enabled", "true"));
         if (viewtasklistEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "view-tasks");
+            responseElement.addElement("feature").addAttribute("var", "view-tasks");
         }
         
         // Check for START A CHAT feature        
         boolean startachatEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("startachat.enabled", "true"));
         if (startachatEnabled) {
-        	responseElement.addElement("feature").addAttribute("var", "start-a-chat");
+            responseElement.addElement("feature").addAttribute("var", "start-a-chat");
         }
 
     }
@@ -548,7 +548,7 @@ public class SparkManager implements Component {
                 // TODO: responded the IQ version request.
                 taskEngine.schedule(new TimerTask() {
                     @Override
-					public void run() {
+                    public void run() {
                         requestSoftwareVersion(session);
                     }
                 }, 5000);
@@ -621,7 +621,7 @@ public class SparkManager implements Component {
         // Disconnect user after 5 seconds.
         taskEngine.schedule(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 // Include the not-authorized error in the response
                 StreamError error = new StreamError(StreamError.Condition.policy_violation);
                 session.deliverRawText(error.toXML());

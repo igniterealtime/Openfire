@@ -17,16 +17,16 @@
 
 
 <%
-	// webManager.init(request, response, session, application, out);
-	boolean componentSet = request.getParameter("component") != null;
-	String component = "";
-	if (componentSet) {
-		component = request.getParameter("component");
-	}
+    // webManager.init(request, response, session, application, out);
+    boolean componentSet = request.getParameter("component") != null;
+    String component = "";
+    if (componentSet) {
+        component = request.getParameter("component");
+    }
 
-	Date currentDate = new Date(System.currentTimeMillis());
-	String now = currentDate.getHours() + ":" + currentDate.getMinutes() + "." + currentDate.getSeconds()
-			+ "   " + currentDate.getDate() + "." + currentDate.getMonth() + "." + currentDate.getYear();
+    Date currentDate = new Date(System.currentTimeMillis());
+    String now = currentDate.getHours() + ":" + currentDate.getMinutes() + "." + currentDate.getSeconds()
+            + "   " + currentDate.getDate() + "." + currentDate.getMonth() + "." + currentDate.getYear();
 %>
 
 <html>
@@ -43,35 +43,35 @@
 </head>
 
 <body>
-	<div class="div-main">
-		<div class="header">
-			Live statistics for
-			<%=componentSet ? component : "NOT SET"%></div>
-		<div class="graph">Here should appear your stats</div>
+    <div class="div-main">
+        <div class="header">
+            Live statistics for
+            <%=componentSet ? component : "NOT SET"%></div>
+        <div class="graph">Here should appear your stats</div>
 
-		<table id="logTable">
-			<thead>
-				<tr>
-					<th>Date</th>
-					<th>Type</th>
-					<th>From</th>
-					<th>To</th>
-				</tr>
-			</thead>
-			<tbody class="tableBegin">
-			</tbody>
-			<tfoot>
-				<tr>
-					<td colspan="2">Live logging since <%=now%>
-					</td>
-					<td colspan="2"><form id="limitForm">
-							<input type="text" id="tableLimit">
-						</form></td>
-				</tr>
-			</tfoot>
-		</table>
-	</div>
-	<span id="logSince" style="visibility: hidden;"><%=System.currentTimeMillis()%></span>
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>From</th>
+                    <th>To</th>
+                </tr>
+            </thead>
+            <tbody class="tableBegin">
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2">Live logging since <%=now%>
+                    </td>
+                    <td colspan="2"><form id="limitForm">
+                            <input type="text" id="tableLimit">
+                        </form></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <span id="logSince" style="visibility: hidden;"><%=System.currentTimeMillis()%></span>
 
 </body>
 

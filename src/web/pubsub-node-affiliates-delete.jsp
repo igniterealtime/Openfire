@@ -68,7 +68,7 @@
     }
 
     // Load the node object
-	Node node = pubSubServiceInfo.getNode(nodeID);
+    Node node = pubSubServiceInfo.getNode(nodeID);
     NodeAffiliate affiliate = node.getAffiliate(new JID(affiliateJID));
 
     // Handle a affiliate delete:
@@ -81,18 +81,18 @@
             }
 
             switch(affiliate.getAffiliation()) {
-	            case outcast:
-	                node.removeOutcast(jid);
-	                break;
-	            case publisher:
-	                node.removePublisher(jid);
-	                break;
-	            case owner:
-	                node.removeOwner(jid);
-	                break;
-	            case none:
-	                //None affiliation will have been removed as a result of removing the subscriptions.
-	                break;
+                case outcast:
+                    node.removeOutcast(jid);
+                    break;
+                case publisher:
+                    node.removePublisher(jid);
+                    break;
+                case owner:
+                    node.removeOwner(jid);
+                    break;
+                case none:
+                    //None affiliation will have been removed as a result of removing the subscriptions.
+                    break;
             }
 
             // Log the event
@@ -131,27 +131,27 @@
     </head>
     <body>
 
-	<p>
-	    <fmt:message key="pubsub.node.affiliates.delete.info" />
-	</p>
+    <p>
+        <fmt:message key="pubsub.node.affiliates.delete.info" />
+    </p>
 
     <div class="jive-table">
-	    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-		    <thead>
-		        <tr>
-		            <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
-		            <th scope="col"><fmt:message key="pubsub.node.affiliates.jid" /></th>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.affiliates.jid" /></th>
                     <th scope="col"><fmt:message key="pubsub.node.affiliates.affiliation" /></th>
-		        </tr>
-		    </thead>
-		    <tbody>
-		        <tr>
-		            <td><c:out value="${node.getNodeID()}"/></td>
-		            <td><c:out value="${affiliate.getJID().toBareJID()}"/></td>
-		            <td><c:out value="${affiliate.getAffiliation().name()}"/></td>
-		        </tr>
-		    </tbody>
-	    </table>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><c:out value="${node.getNodeID()}"/></td>
+                    <td><c:out value="${affiliate.getJID().toBareJID()}"/></td>
+                    <td><c:out value="${affiliate.getAffiliation().name()}"/></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <br>
     <br>
@@ -163,36 +163,36 @@
         <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <thead>
                 <tr>
-		            <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
-		            <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
-		            <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
-		            <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
                 </tr>
             </thead>
             <tbody>
                 <c:if test="${empty affiliate.getSubscriptions()}">
-			        <tr>
-			            <td align="center" colspan="4">
-			                <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
-			            </td>
-			        </tr>
+                    <tr>
+                        <td align="center" colspan="4">
+                            <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
+                        </td>
+                    </tr>
                 </c:if>
-		        <c:forEach var="subscription" items="${affiliate.getSubscriptions()}">
-			        <tr>
-			            <td>
-			            <c:out value="${subscription.getOwner().toBareJID()}"/>
-			            </td>
-			            <td>
-			            <c:out value="${subscription.getJID().getResource()}"/>
-			            </td>
-			            <td>
-			            <c:out value="${subscription.getState().name()}"/>
-			            </td>
-			            <td>
-			            <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.getExpire()}" />
-			            </td>
-			        </tr>
-		        </c:forEach>
+                <c:forEach var="subscription" items="${affiliate.getSubscriptions()}">
+                    <tr>
+                        <td>
+                        <c:out value="${subscription.getOwner().toBareJID()}"/>
+                        </td>
+                        <td>
+                        <c:out value="${subscription.getJID().getResource()}"/>
+                        </td>
+                        <td>
+                        <c:out value="${subscription.getState().name()}"/>
+                        </td>
+                        <td>
+                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.getExpire()}" />
+                        </td>
+                    </tr>
+                </c:forEach>
             </tbody>
         </table>
     </div>
@@ -202,15 +202,15 @@
         <fmt:message key="pubsub.node.affiliates.delete.info3" />
     </p>
 
-	<form action="pubsub-node-affiliates-delete.jsp">
-	    <input type="hidden" name="csrf" value="${csrf}">
-		<input type="hidden" name="nodeID" value="${node.nodeID}">
-		<input type="hidden" name="owner" value="${owner}">
-		<input type="hidden" name="affiliateJID" value="${affiliate.getJID().toBareJID()}">
+    <form action="pubsub-node-affiliates-delete.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="nodeID" value="${node.nodeID}">
+        <input type="hidden" name="owner" value="${owner}">
+        <input type="hidden" name="affiliateJID" value="${affiliate.getJID().toBareJID()}">
 
-	    <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
-	    <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
-	</form>
+        <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
+        <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+    </form>
 
     </body>
 </html>

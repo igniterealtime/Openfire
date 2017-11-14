@@ -104,80 +104,80 @@
 <!-- BEGIN 'Set Conflict Policy' -->
 <form action="session-conflict.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="session.conflict.policy" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="middle">
-				<td valign="top" width="1%">
-					<input type="radio" name="kickPolicy" value="0" id="rb01"
-					 <%= ((kickPolicy==0) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01"><b><fmt:message key="session.conflict.always_kick" /></b></label> -
-					<fmt:message key="session.conflict.always_kick_info" />
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td valign="top" width="1%">
-					<input type="radio" name="kickPolicy" value="<%= SessionManager.NEVER_KICK %>" id="rb02"
-					 <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb02"><b><fmt:message key="session.conflict.never_kick" /></b></label> -
-					<fmt:message key="session.conflict.never_kick_info" />
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td valign="top" width="1%">
-					<input type="radio" name="kickPolicy" value="1" id="rb04"
-					 <%= ((kickPolicy==1) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb04"><b><fmt:message key="session.conflict.allow_one" /></b></label> -
-					<fmt:message key="session.conflict.resource_conflict" />
-				</td>
-			</tr>
-	<%  // Figure out if the kick policy is neither 0 nor SessionManager.NEVER_KICK:
-		boolean assignedKickPolicy = false;
-		if (kickPolicy != 0 && kickPolicy != 1 && kickPolicy != SessionManager.NEVER_KICK) {
-		   assignedKickPolicy = true;
-		}
-	%>
-			<tr valign="middle">
-				<td valign="top" width="1%">
-					<input type="radio" name="kickPolicy" value="<%= Integer.MAX_VALUE %>" id="rb03"
-					 onfocus="this.form.kickValue.focus();"
-					 <%= ((assignedKickPolicy) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb03"><b><fmt:message key="session.conflict.kick_value" /></b></label> -
-					<fmt:message key="session.conflict.kick_value_info" />
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="session.conflict.policy" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="middle">
+                <td valign="top" width="1%">
+                    <input type="radio" name="kickPolicy" value="0" id="rb01"
+                     <%= ((kickPolicy==0) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01"><b><fmt:message key="session.conflict.always_kick" /></b></label> -
+                    <fmt:message key="session.conflict.always_kick_info" />
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td valign="top" width="1%">
+                    <input type="radio" name="kickPolicy" value="<%= SessionManager.NEVER_KICK %>" id="rb02"
+                     <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02"><b><fmt:message key="session.conflict.never_kick" /></b></label> -
+                    <fmt:message key="session.conflict.never_kick_info" />
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td valign="top" width="1%">
+                    <input type="radio" name="kickPolicy" value="1" id="rb04"
+                     <%= ((kickPolicy==1) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb04"><b><fmt:message key="session.conflict.allow_one" /></b></label> -
+                    <fmt:message key="session.conflict.resource_conflict" />
+                </td>
+            </tr>
+    <%  // Figure out if the kick policy is neither 0 nor SessionManager.NEVER_KICK:
+        boolean assignedKickPolicy = false;
+        if (kickPolicy != 0 && kickPolicy != 1 && kickPolicy != SessionManager.NEVER_KICK) {
+           assignedKickPolicy = true;
+        }
+    %>
+            <tr valign="middle">
+                <td valign="top" width="1%">
+                    <input type="radio" name="kickPolicy" value="<%= Integer.MAX_VALUE %>" id="rb03"
+                     onfocus="this.form.kickValue.focus();"
+                     <%= ((assignedKickPolicy) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb03"><b><fmt:message key="session.conflict.kick_value" /></b></label> -
+                    <fmt:message key="session.conflict.kick_value_info" />
 
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%">
-					&nbsp;
-				</td>
-				<td width="99%">
-					<%  if (errors.get("kickValue") != null) { %>
-						<span class="jive-error-text">
-						<fmt:message key="session.conflict.enter_value" />
-						</span><br>
-					<%  } %>
-					<input type="text" name="kickValue" value="<%= ((assignedKickPolicy) ? ""+kickPolicy : "") %>"
-					 size="5" maxlength="10"
-					 onclick="this.form.kickPolicy[3].checked=true;">
-				</td>
-			</tr>
-		</tbody>
-		</table>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%">
+                    &nbsp;
+                </td>
+                <td width="99%">
+                    <%  if (errors.get("kickValue") != null) { %>
+                        <span class="jive-error-text">
+                        <fmt:message key="session.conflict.enter_value" />
+                        </span><br>
+                    <%  } %>
+                    <input type="text" name="kickValue" value="<%= ((assignedKickPolicy) ? ""+kickPolicy : "") %>"
+                     size="5" maxlength="10"
+                     onclick="this.form.kickPolicy[3].checked=true;">
+                </td>
+            </tr>
+        </tbody>
+        </table>
 
 
-	</div>
+    </div>
 <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END 'Set Conflict Policy' -->

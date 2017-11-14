@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OutgoingServerSocketReader {
 
-	private static final Logger Log = LoggerFactory.getLogger(OutgoingServerSocketReader.class);
+    private static final Logger Log = LoggerFactory.getLogger(OutgoingServerSocketReader.class);
 
     private OutgoingServerSession session;
     private boolean open = true;
@@ -94,7 +94,7 @@ public class OutgoingServerSocketReader {
         // Create a thread that will read and store DOM Elements.
         Thread thread = new Thread("Outgoing Server Reader") {
             @Override
-			public void run() {
+            public void run() {
                 while (open) {
                     Element doc;
                     try {

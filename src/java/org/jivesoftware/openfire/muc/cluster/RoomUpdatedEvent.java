@@ -57,13 +57,13 @@ public class RoomUpdatedEvent extends MUCRoomTask<Void> {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         room.writeExternal(out);
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         room = new LocalMUCRoom();
         room.readExternal(in);

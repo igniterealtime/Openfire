@@ -28,7 +28,7 @@ import org.xmpp.packet.JID;
  */
 public final class ChatHistoryUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatHistoryUtils.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatHistoryUtils.class);
 
     private static final String ALL_SESSION_TIMES =
             "SELECT startTime, endTime FROM fpSession";

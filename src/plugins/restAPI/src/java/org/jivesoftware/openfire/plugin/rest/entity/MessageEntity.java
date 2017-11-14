@@ -9,32 +9,32 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "message")
 public class MessageEntity {
 
-	/** The body. */
-	private String body;
+    /** The body. */
+    private String body;
 
-	/**
-	 * Instantiates a new message entity.
-	 */
-	public MessageEntity() {
-	}
+    /**
+     * Instantiates a new message entity.
+     */
+    public MessageEntity() {
+    }
 
-	/**
-	 * Gets the body.
-	 *
-	 * @return the body
-	 */
-	@XmlElement
-	public String getBody() {
-		return body;
-	}
+    /**
+     * Gets the body.
+     *
+     * @return the body
+     */
+    @XmlElement
+    public String getBody() {
+        return body;
+    }
 
-	/**
-	 * Sets the body.
-	 *
-	 * @param body
-	 *            the new body
-	 */
-	public void setBody(String body) {
-		this.body = body;
-	}
+    /**
+     * Sets the body.
+     *
+     * @param body
+     *            the new body
+     */
+    public void setBody(String body) {
+        this.body = body;
+    }
 }

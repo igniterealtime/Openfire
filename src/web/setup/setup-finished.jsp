@@ -14,8 +14,8 @@
 <%@ page import="java.util.List" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -68,15 +68,15 @@
     </head>
 <body onload="setTimeout('toggleDivs()', 1500);">
 
-	<h1>
-	<fmt:message key="setup.finished.title" />
-	</h1>
+    <h1>
+    <fmt:message key="setup.finished.title" />
+    </h1>
 
-	<p>
-	<fmt:message key="setup.finished.info">
-	    <fmt:param value="${localizedTitle}" />
-	</fmt:message>
-	</p>
+    <p>
+    <fmt:message key="setup.finished.info">
+        <fmt:param value="${localizedTitle}" />
+    </fmt:message>
+    </p>
 
 <%
     boolean useAdmin = false;
@@ -111,13 +111,13 @@
 %>
 
 <br><br>
-	<div id="loginlink" style="display:none;" class="jive_setup_launchAdmin">
-		<a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
-	</div>
+    <div id="loginlink" style="display:none;" class="jive_setup_launchAdmin">
+        <a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
+    </div>
 
-	<div id="logintext" class="jive_setup_launchAdmin">
-		<fmt:message key="setup.finished.wait" /> <img src="../images/working-16x16.gif" alt="<fmt:message key="setup.finished.wait" />" width="16" height="16">
-	</div>
+    <div id="logintext" class="jive_setup_launchAdmin">
+        <fmt:message key="setup.finished.wait" /> <img src="../images/working-16x16.gif" alt="<fmt:message key="setup.finished.wait" />" width="16" height="16">
+    </div>
 
 </body>
 </html>

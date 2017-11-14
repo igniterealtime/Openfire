@@ -49,7 +49,7 @@ import org.xmpp.packet.JID;
  */
 public class AgentManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(AgentManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(AgentManager.class);
 
     private static final String LOAD_AGENTS =
             "SELECT agentID FROM fpAgent";

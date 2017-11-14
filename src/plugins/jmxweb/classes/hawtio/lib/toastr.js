@@ -148,8 +148,8 @@
 
             function notify(map) {
                 var
-					options = getOptions(),
-					iconClass = map.iconClass || options.iconClass;
+                    options = getOptions(),
+                    iconClass = map.iconClass || options.iconClass;
 
                 if (typeof (map.optionsOverride) !== 'undefined') {
                     options = $.extend(options, map.optionsOverride);
@@ -160,18 +160,18 @@
 
                 $container = getContainer(options);
                 var
-					intervalId = null,
-					$toastElement = $('<div/>'),
-					$titleElement = $('<div/>'),
-					$messageElement = $('<div/>'),
-				    $closeElement = $(options.closeHtml),
-					response = {
-					    toastId: toastId,
-					    state: 'visible',
-					    startTime: new Date(),
-					    options: options,
-					    map: map
-					};
+                    intervalId = null,
+                    $toastElement = $('<div/>'),
+                    $titleElement = $('<div/>'),
+                    $messageElement = $('<div/>'),
+                    $closeElement = $(options.closeHtml),
+                    response = {
+                        toastId: toastId,
+                        state: 'visible',
+                        startTime: new Date(),
+                        options: options,
+                        map: map
+                    };
 
                 if (map.iconClass) {
                     $toastElement.addClass(options.toastClass).addClass(iconClass);
@@ -201,8 +201,8 @@
 
 
                 $toastElement[options.showMethod](
-				    { duration: options.showDuration, easing: options.showEasing, complete: options.onShown }
-				);
+                    { duration: options.showDuration, easing: options.showEasing, complete: options.onShown }
+                );
                 if (options.timeOut > 0) {
                     intervalId = setTimeout(hideToast, options.timeOut);
                 }
@@ -247,7 +247,7 @@
                             }
                             response.state = 'hidden';
                             response.endTime = new Date(),
-							publish(response);
+                            publish(response);
                         }
                     });
                 }
@@ -261,8 +261,8 @@
                 function stickAround() {
                     clearTimeout(intervalId);
                     $toastElement.stop(true, true)[options.showMethod](
-						{ duration: options.showDuration, easing: options.showEasing }
-					);
+                        { duration: options.showDuration, easing: options.showEasing }
+                    );
                 }
             }
             function getContainer(options) {
@@ -272,8 +272,8 @@
                     return $container;
                 }
                 $container = $('<div/>')
-					.attr('id', options.containerId)
-					.addClass(options.positionClass);
+                    .attr('id', options.containerId)
+                    .addClass(options.positionClass);
                 $container.appendTo($(options.target));
                 return $container;
             }

@@ -46,22 +46,22 @@ public class RtcpReceiver extends Thread {
      * and ports for the two socket must be an even/odd pair.
      */
     public RtcpReceiver(DatagramSocket rtcpSocket, boolean loneChannel) {
-	this.rtcpSocket = rtcpSocket;
+    this.rtcpSocket = rtcpSocket;
 
-	if (loneChannel) {
-	    timeLastReceivedMap = new HashMap();
-	}
+    if (loneChannel) {
+        timeLastReceivedMap = new HashMap();
+    }
 
         stunServerImpl = new StunServerImpl();
 
-	setName("RtcpReceiver-" + rtcpSocket.getLocalPort());
-	setPriority(Thread.NORM_PRIORITY);
+    setName("RtcpReceiver-" + rtcpSocket.getLocalPort());
+    setPriority(Thread.NORM_PRIORITY);
         start();
     }
 
     public void end() {
-	done = true;
-	rtcpSocket.close();
+    done = true;
+    rtcpSocket.close();
     }
 
     private HashMap<String, Long> timeLastReceivedMap;
@@ -80,50 +80,50 @@ public class RtcpReceiver extends Thread {
             try {
                 rtcpSocket.receive(packet);
 
-		if (Logger.logLevel >= Logger.LOG_INFO) {
-		    Logger.println("Got RTCP Packet from " + packet.getSocketAddress());
-		}
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Got RTCP Packet from " + packet.getSocketAddress());
+        }
 
-		byte[] data = packet.getData();
+        byte[] data = packet.getData();
 
-		RtcpPacket rtcpPacket = null;
+        RtcpPacket rtcpPacket = null;
 
-		if (isStunBindingRequest(data) == true) {
+        if (isStunBindingRequest(data) == true) {
                     stunServerImpl.processStunRequest(rtcpSocket, packet);
                     continue;
                 }
 
-		if ((data[1] & 0xff) == 200) {
-	            rtcpPacket = new RtcpSenderPacket(packet);
-		    ((RtcpSenderPacket)rtcpPacket).printReport();
-		} else if ((data[1] & 0xff) == 201) {
-	    	    rtcpPacket = new RtcpReceiverPacket(packet);
-		    ((RtcpReceiverPacket)rtcpPacket).printReport();
-		} else {
-	    	    Util.dump("unknown RTCP packet", data, 0, 16);
-		}
+        if ((data[1] & 0xff) == 200) {
+                rtcpPacket = new RtcpSenderPacket(packet);
+            ((RtcpSenderPacket)rtcpPacket).printReport();
+        } else if ((data[1] & 0xff) == 201) {
+                rtcpPacket = new RtcpReceiverPacket(packet);
+            ((RtcpReceiverPacket)rtcpPacket).printReport();
+        } else {
+                Util.dump("unknown RTCP packet", data, 0, 16);
+        }
 
-		if (rtcpPacket != null) {
-		    timeLastReceived = System.currentTimeMillis();
+        if (rtcpPacket != null) {
+            timeLastReceived = System.currentTimeMillis();
 
-		    if (timeLastReceivedMap != null) {
-			if (Logger.logLevel >= Logger.LOG_INFO) {
-			    Logger.println("Updated map for " + packet.getSocketAddress() 
-			        + " " + timeLastReceived);
-			}
+            if (timeLastReceivedMap != null) {
+            if (Logger.logLevel >= Logger.LOG_INFO) {
+                Logger.println("Updated map for " + packet.getSocketAddress() 
+                    + " " + timeLastReceived);
+            }
 
-		        synchronized (timeLastReceivedMap) {
-			    timeLastReceivedMap.put(packet.getSocketAddress().toString(),
-			        new Long(timeLastReceived));
-		        }
-		    }
-		}
+                synchronized (timeLastReceivedMap) {
+                timeLastReceivedMap.put(packet.getSocketAddress().toString(),
+                    new Long(timeLastReceived));
+                }
+            }
+        }
             } catch (Exception e) {
                 if (!done) {
                     Logger.error("RtcpReceiver:  receive failed! " 
-			+ e.getMessage());
-		    end();
-		}
+            + e.getMessage());
+            end();
+        }
             }
         }
     }
@@ -139,42 +139,42 @@ public class RtcpReceiver extends Thread {
     }
 
     public long secondsSinceLastReport(InetSocketAddress isa) {
-	if (timeLastReceivedMap != null && isa == null) {
-	    return 0;
-	}
+    if (timeLastReceivedMap != null && isa == null) {
+        return 0;
+    }
 
-	long now = System.currentTimeMillis();
+    long now = System.currentTimeMillis();
 
-	if (timeLastReceivedMap == null) {
-	    if (timeLastReceived == 0) {
-		timeLastReceived = now;
-	    }
+    if (timeLastReceivedMap == null) {
+        if (timeLastReceived == 0) {
+        timeLastReceived = now;
+        }
 
-	    long elapsed = now - timeLastReceived;
+        long elapsed = now - timeLastReceived;
 
-	    timeLastReceived = now;
-	    return elapsed;
-	}
+        timeLastReceived = now;
+        return elapsed;
+    }
 
-	Long t;
+    Long t;
 
-	synchronized (timeLastReceivedMap) {
+    synchronized (timeLastReceivedMap) {
             t = timeLastReceivedMap.get(isa.toString());
-	}
+    }
 
-	if (t == null) {
-	    synchronized (timeLastReceivedMap) {
+    if (t == null) {
+        synchronized (timeLastReceivedMap) {
                 if (Logger.logLevel >= Logger.LOG_INFO) {
-		    Logger.println("Putting " + isa);
-		}
+            Logger.println("Putting " + isa);
+        }
 
-	        timeLastReceivedMap.put(isa.toString(), new Long(now));
-	    }
-	    
-	    return 0;
-	}
+            timeLastReceivedMap.put(isa.toString(), new Long(now));
+        }
+        
+        return 0;
+    }
 
-	return (now - t.longValue()) / 1000;
+    return (now - t.longValue()) / 1000;
     }
 
 }

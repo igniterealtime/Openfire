@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BeanUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
+    private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
 
     /**
      * The date format recognized for parsing/formattig dates.

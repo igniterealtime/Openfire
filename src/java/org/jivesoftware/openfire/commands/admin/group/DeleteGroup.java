@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class DeleteGroup extends AdHocCommand {
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Delete group");
         form.addInstruction("Fill out this form to delete a group.");
@@ -58,7 +58,7 @@ public class DeleteGroup extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
@@ -84,27 +84,27 @@ public class DeleteGroup extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#delete-group";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Delete group";
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 }

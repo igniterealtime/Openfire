@@ -16,8 +16,8 @@ package com.rayo.core.verb;
 
 public class TakeOffSpeakerCommand extends AbstractVerbCommand {
 
-	public TakeOffSpeakerCommand()
-	{
+    public TakeOffSpeakerCommand()
+    {
 
-	}
+    }
 }

@@ -32,15 +32,15 @@ import org.xmpp.packet.*;
  */
 public class StreamManager {
 
-	private final Logger Log;
-	private boolean resume = false;
+    private final Logger Log;
+    private boolean resume = false;
     public static class UnackedPacket {
-		public final long x;
+        public final long x;
         public final Date timestamp = new Date();
         public final Packet packet;
         
         public UnackedPacket(long x, Packet p) {
-			this.x = x;
+            this.x = x;
             packet = p;
         }
     }
@@ -58,7 +58,7 @@ public class StreamManager {
      */
     private final LocalSession session;
 
-	/**
+    /**
      * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
      */
     private String namespace;
@@ -70,7 +70,7 @@ public class StreamManager {
     private long serverProcessedStanzas = 0;
 
     /**
- 	 * Count of how many stanzas/packets
+     * Count of how many stanzas/packets
      * sent from the server that the client has processed
      */
     private long clientProcessedStanzas = 0;
@@ -83,17 +83,17 @@ public class StreamManager {
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     public StreamManager(LocalSession session) {
-		String address;
-		try {
-			address = session.getConnection().getHostAddress();
-		}
-		catch ( UnknownHostException e )
-		{
-			address = null;
-		}
+        String address;
+        try {
+            address = session.getConnection().getHostAddress();
+        }
+        catch ( UnknownHostException e )
+        {
+            address = null;
+        }
 
-		this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
-    	this.session = session;
+        this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
+        this.session = session;
     }
 
     /**
@@ -106,38 +106,38 @@ public class StreamManager {
     }
 
     /**
-	 * Processes a stream management element.
-	 *
-	 * @param element The stream management element to be processed.
-	 */
-	public void process( Element element )
-	{
-		switch(element.getName()) {
-			case "enable":
-			    String resumeString = element.attributeValue("resume");
-			    boolean resume = false;
-			    if (resumeString != null) {
-			        if (resumeString.equalsIgnoreCase("true") || resumeString.equalsIgnoreCase("yes") || resumeString.equals("1")) {
-			            resume = true;
+     * Processes a stream management element.
+     *
+     * @param element The stream management element to be processed.
+     */
+    public void process( Element element )
+    {
+        switch(element.getName()) {
+            case "enable":
+                String resumeString = element.attributeValue("resume");
+                boolean resume = false;
+                if (resumeString != null) {
+                    if (resumeString.equalsIgnoreCase("true") || resumeString.equalsIgnoreCase("yes") || resumeString.equals("1")) {
+                        resume = true;
                     }
                 }
-				enable( element.getNamespace().getStringValue(), resume );
-				break;
+                enable( element.getNamespace().getStringValue(), resume );
+                break;
             case "resume":
                 long h = new Long(element.attributeValue("h"));
                 String previd = element.attributeValue("previd");
                 startResume( element.getNamespaceURI(), previd, h);
                 break;
-			case "r":
-				sendServerAcknowledgement();
-				break;
-			case "a":
-				processClientAcknowledgement( element);
-				break;
-			default:
-				sendUnexpectedError();
-		}
-	}
+            case "r":
+                sendServerAcknowledgement();
+                break;
+            case "a":
+                processClientAcknowledgement( element);
+                break;
+            default:
+                sendUnexpectedError();
+        }
+    }
 
     /**
      * Should this session be allowed to resume?
@@ -145,7 +145,7 @@ public class StreamManager {
      *
      * @return True if the session is allowed to resume.
      */
-	private boolean allowResume() {
+    private boolean allowResume() {
         boolean allow = false;
         // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
@@ -159,53 +159,53 @@ public class StreamManager {
         return allow;
     }
 
-	/**
-	 * Attempts to enable Stream Management for the entity identified by the provided JID.
-	 *
-	 * @param namespace The namespace that defines what version of SM is to be enabled.
+    /**
+     * Attempts to enable Stream Management for the entity identified by the provided JID.
+     *
+     * @param namespace The namespace that defines what version of SM is to be enabled.
      * @param resume Whether the client is requesting a resumable session.
-	 */
-	private void enable( String namespace, boolean resume )
-	{
+     */
+    private void enable( String namespace, boolean resume )
+    {
 
 
-	    boolean offerResume = allowResume();
-		// Ensure that resource binding has occurred.
+        boolean offerResume = allowResume();
+        // Ensure that resource binding has occurred.
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             this.namespace = namespace;
             sendUnexpectedError();
             return;
         }
 
-		String smId = null;
+        String smId = null;
 
-		synchronized ( this )
-		{
-			// Do nothing if already enabled
-			if ( isEnabled() )
-			{
-				sendUnexpectedError();
-				return;
-			}
-			this.namespace = namespace;
+        synchronized ( this )
+        {
+            // Do nothing if already enabled
+            if ( isEnabled() )
+            {
+                sendUnexpectedError();
+                return;
+            }
+            this.namespace = namespace;
 
-			this.resume = resume && offerResume;
-			if ( this.resume ) {
-			    // Create SM-ID.
+            this.resume = resume && offerResume;
+            if ( this.resume ) {
+                // Create SM-ID.
                 smId = StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID());
             }
-		}
+        }
 
-		// Send confirmation to the requestee.
+        // Send confirmation to the requestee.
         Element enabled = new DOMElement(QName.get("enabled", namespace));
-		if (this.resume) {
+        if (this.resume) {
             enabled.addAttribute("resume", "true");
             enabled.addAttribute( "id", smId);
         }
-		session.deliverRawText(enabled.asXML());
-	}
+        session.deliverRawText(enabled.asXML());
+    }
 
-	private void startResume(String namespace, String previd, long h) {
+    private void startResume(String namespace, String previd, long h) {
         this.namespace = namespace;
         // Ensure that resource binding has NOT occurred.
         if (!allowResume() ) {
@@ -275,40 +275,40 @@ public class StreamManager {
      * session from being detached.
      */
     public void formalClose() {
-	    this.resume = false;
+        this.resume = false;
     }
 
-	/**
+    /**
      * Sends XEP-0198 acknowledgement &lt;a /&gt; to client from server
      */
-	public void sendServerAcknowledgement() {
-		if(isEnabled()) {
-			String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
-			session.deliverRawText( ack );
-		}
-	}
+    public void sendServerAcknowledgement() {
+        if(isEnabled()) {
+            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
+            session.deliverRawText( ack );
+        }
+    }
 
-	/**
-	 * Sends XEP-0198 request <r /> to client from server
-	 */
-	private void sendServerRequest() {
-		if(isEnabled()) {
-		    if (session.isDetached()) {
-		        Log.debug("Session is detached, won't request an ack.");
-		        return;
+    /**
+     * Sends XEP-0198 request <r /> to client from server
+     */
+    private void sendServerRequest() {
+        if(isEnabled()) {
+            if (session.isDetached()) {
+                Log.debug("Session is detached, won't request an ack.");
+                return;
             }
-			String request = String.format("<r xmlns='%s' />", namespace);
-			session.deliverRawText( request );
-		}
-	}
+            String request = String.format("<r xmlns='%s' />", namespace);
+            session.deliverRawText( request );
+        }
+    }
 
-	/**
-	 * Send an error if a XEP-0198 stanza is received at an unexpected time.
-	 * e.g. before resource-binding has completed.
-	 */
-	private void sendUnexpectedError() {
-	    sendError(new PacketError( PacketError.Condition.unexpected_request ));
-	}
+    /**
+     * Send an error if a XEP-0198 stanza is received at an unexpected time.
+     * e.g. before resource-binding has completed.
+     */
+    private void sendUnexpectedError() {
+        sendError(new PacketError( PacketError.Condition.unexpected_request ));
+    }
 
     /**
      * Send a generic failed error.
@@ -329,7 +329,7 @@ public class StreamManager {
      *
      * @param h Last handled stanza to be acknowledged.
      */
-	private void processClientAcknowledgement(long h) {
+    private void processClientAcknowledgement(long h) {
         synchronized (this) {
 
             if ( !unacknowledgedServerStanzas.isEmpty() && h > unacknowledgedServerStanzas.getLast().x ) {
@@ -363,87 +363,87 @@ public class StreamManager {
         }
     }
 
-	/**
-	 * Receive and process acknowledgement packet from client
-	 * @param ack XEP-0198 acknowledgement <a /> stanza to process
-	 */
-	private void processClientAcknowledgement(Element ack) {
-		if(isEnabled()) {
-			if (ack.attribute("h") != null) {
-				final long h = Long.valueOf(ack.attributeValue("h"));
+    /**
+     * Receive and process acknowledgement packet from client
+     * @param ack XEP-0198 acknowledgement <a /> stanza to process
+     */
+    private void processClientAcknowledgement(Element ack) {
+        if(isEnabled()) {
+            if (ack.attribute("h") != null) {
+                final long h = Long.valueOf(ack.attributeValue("h"));
 
-				Log.debug( "Received acknowledgement from client: h={}", h );
-				processClientAcknowledgement(h);
-			}
-		}
-	}
+                Log.debug( "Received acknowledgement from client: h={}", h );
+                processClientAcknowledgement(h);
+            }
+        }
+    }
 
-	/**
-	 * Registers that Openfire sends a stanza to the client (which is expected to be acknowledged later).
-	 * @param packet The stanza that is sent.
-	 */
-	public void sentStanza(Packet packet) {
+    /**
+     * Registers that Openfire sends a stanza to the client (which is expected to be acknowledged later).
+     * @param packet The stanza that is sent.
+     */
+    public void sentStanza(Packet packet) {
 
-		if(isEnabled()) {
-			final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
-			final int size;
+        if(isEnabled()) {
+            final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
+            final int size;
 
-			synchronized (this)
-			{
-				// The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
-				final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
-				unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
+            synchronized (this)
+            {
+                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
+                final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+                unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
 
-				size = unacknowledgedServerStanzas.size();
+                size = unacknowledgedServerStanzas.size();
 
-				Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
+                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
 
-				// Prevent keeping to many stanzas in memory.
-				if ( size > getMaximumUnacknowledgedStanzas() )
-				{
-					Log.warn( "To many stanzas go unacknowledged for this connection. Clearing queue and disabling functionality." );
-					namespace = null;
-					unacknowledgedServerStanzas.clear();
-					return;
-				}
-			}
+                // Prevent keeping to many stanzas in memory.
+                if ( size > getMaximumUnacknowledgedStanzas() )
+                {
+                    Log.warn( "To many stanzas go unacknowledged for this connection. Clearing queue and disabling functionality." );
+                    namespace = null;
+                    unacknowledgedServerStanzas.clear();
+                    return;
+                }
+            }
 
-			// When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
-			if ( size % requestFrequency == 0 ) {
-				Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
-				sendServerRequest();
-			}
-		}
+            // When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
+            if ( size % requestFrequency == 0 ) {
+                Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
+                sendServerRequest();
+            }
+        }
 
-	}
+    }
 
-	public void onClose(PacketRouter router, JID serverAddress) {
-		// Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
-		synchronized (this) {
-			if(isEnabled()) {
-				namespace = null; // disable stream management.
-				for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
-					if (unacked.packet instanceof Message) {
-						Message m = (Message) unacked.packet;
-						if (m.getExtension("delay", "urn:xmpp:delay") == null) {
-							Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-							delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-							delayInformation.addAttribute("from", serverAddress.toBareJID());
-						}
-						router.route(unacked.packet);
-					}
-				}
-			}
-		}
+    public void onClose(PacketRouter router, JID serverAddress) {
+        // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
+        synchronized (this) {
+            if(isEnabled()) {
+                namespace = null; // disable stream management.
+                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                    if (unacked.packet instanceof Message) {
+                        Message m = (Message) unacked.packet;
+                        if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+                            Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+                            delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                            delayInformation.addAttribute("from", serverAddress.toBareJID());
+                        }
+                        router.route(unacked.packet);
+                    }
+                }
+            }
+        }
 
-	}
+    }
 
-	public void onResume(JID serverAddress, long h) {
-	    Log.debug("Agreeing to resume");
-	    Element resumed = new DOMElement(QName.get("resumed", namespace));
-	    resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
-	    resumed.addAttribute("h", Long.toString(clientProcessedStanzas));
-	    session.getConnection().deliverRawText(resumed.asXML());
+    public void onResume(JID serverAddress, long h) {
+        Log.debug("Agreeing to resume");
+        Element resumed = new DOMElement(QName.get("resumed", namespace));
+        resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
+        resumed.addAttribute("h", Long.toString(clientProcessedStanzas));
+        session.getConnection().deliverRawText(resumed.asXML());
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
         Log.debug("Processing remaining unacked stanzas");
@@ -481,31 +481,31 @@ public class StreamManager {
         }
     }
 
-	/**
-	 * Determines whether Stream Management enabled for session this
-	 * manager belongs to.
-	 * @return true when stream management is enabled, otherwise false.
-	 */
-	public boolean isEnabled() {
-		return namespace != null;
-	}
+    /**
+     * Determines whether Stream Management enabled for session this
+     * manager belongs to.
+     * @return true when stream management is enabled, otherwise false.
+     */
+    public boolean isEnabled() {
+        return namespace != null;
+    }
 
-	/**
-	 * Increments the count of stanzas processed by the server since
-	 * Stream Management was enabled.
-	 */
-	public void incrementServerProcessedStanzas() {
-		if(isEnabled()) {
-			this.serverProcessedStanzas++;
-		}
-	}
+    /**
+     * Increments the count of stanzas processed by the server since
+     * Stream Management was enabled.
+     */
+    public void incrementServerProcessedStanzas() {
+        if(isEnabled()) {
+            this.serverProcessedStanzas++;
+        }
+    }
 
-	/**
-	 * The maximum amount of stanzas we keep, waiting for ack.
-	 * @return The maximum number of stanzas.
-	 */
-	private int getMaximumUnacknowledgedStanzas()
-	{
-		return JiveGlobals.getIntProperty( "stream.management.max-unacked", 10000 );
-	}
+    /**
+     * The maximum amount of stanzas we keep, waiting for ack.
+     * @return The maximum number of stanzas.
+     */
+    private int getMaximumUnacknowledgedStanzas()
+    {
+        return JiveGlobals.getIntProperty( "stream.management.max-unacked", 10000 );
+    }
 }

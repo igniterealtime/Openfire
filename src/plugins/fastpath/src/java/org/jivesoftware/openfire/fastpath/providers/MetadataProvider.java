@@ -44,8 +44,8 @@ import org.xmpp.packet.PacketError;
  */
 public class MetadataProvider implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(MetadataProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(MetadataProvider.class);
+    
     /**
      * Returns true if the IQ packet name equals "generic-metadata".
      *

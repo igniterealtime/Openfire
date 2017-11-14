@@ -59,7 +59,7 @@ import org.xmpp.packet.Packet;
  */
 public class NIOConnection implements Connection {
 
-	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
+    private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
     private ConnectionConfiguration configuration;
 
     /**
@@ -279,7 +279,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-    	return state.get() == State.CLOSED;
+        return state.get() == State.CLOSED;
     }
 
     @Override
@@ -290,7 +290,7 @@ public class NIOConnection implements Connection {
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-        	backupDeliverer.deliver(packet);
+            backupDeliverer.deliver(packet);
         }
         else {
             boolean errorDelivering = false;
@@ -365,7 +365,7 @@ public class NIOConnection implements Connection {
     }
 
     @Deprecated
-	@Override
+    @Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         startTLS( clientMode );
     }
@@ -465,17 +465,17 @@ public class NIOConnection implements Connection {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " MINA Session: " + ioSession;
     }
 
     private static class ThreadLocalEncoder extends ThreadLocal<CharsetEncoder> {
 
         @Override
-		protected CharsetEncoder initialValue() {
+        protected CharsetEncoder initialValue() {
             return StandardCharsets.UTF_8.newEncoder()
-				.onMalformedInput(CodingErrorAction.REPORT)
-				.onUnmappableCharacter(CodingErrorAction.REPORT);
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
         }
     }
 }

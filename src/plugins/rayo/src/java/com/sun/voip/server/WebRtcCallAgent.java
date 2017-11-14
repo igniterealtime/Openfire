@@ -40,40 +40,40 @@ public class WebRtcCallAgent extends CallSetupAgent
     public WebRtcCallAgent(CallHandler callHandler)
     {
 
-		super(callHandler);
+        super(callHandler);
 
-		cp = callHandler.getCallParticipant();
+        cp = callHandler.getCallParticipant();
 
-		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
+        mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
-		memberSender = callHandler.getMemberSender();
-		memberSender.setChannel(cp.getChannel());
-		memberReceiver = callHandler.getMemberReceiver();
+        memberSender = callHandler.getMemberSender();
+        memberSender.setChannel(cp.getChannel());
+        memberReceiver = callHandler.getMemberReceiver();
 
-		callHandler.setEndpointAddress(null, (byte) (cp.getMediaPreference() == "PCM/48000/2" ? 111 : 0), (byte)0, (byte)0);
+        callHandler.setEndpointAddress(null, (byte) (cp.getMediaPreference() == "PCM/48000/2" ? 111 : 0), (byte)0, (byte)0);
 
-	}
+    }
 
-	public void initiateCall() throws IOException
-	{
-		try {
-			setState(CallState.ESTABLISHED);
+    public void initiateCall() throws IOException
+    {
+        try {
+            setState(CallState.ESTABLISHED);
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			Logger.println("Call " + cp + ":  WebRtcCallAgent: initiateCall exception " + e);
-			e.printStackTrace();
-		}
-	}
+            Logger.println("Call " + cp + ":  WebRtcCallAgent: initiateCall exception " + e);
+            e.printStackTrace();
+        }
+    }
 
-	public String getSdp()
-	{
-		return null;
+    public String getSdp()
+    {
+        return null;
     }
 
     public void setRemoteMediaInfo(String sdp)
     {
-		return;
+        return;
     }
 
     public void terminateCall()

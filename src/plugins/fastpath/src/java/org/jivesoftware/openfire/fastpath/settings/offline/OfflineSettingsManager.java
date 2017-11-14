@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
  */
 public class OfflineSettingsManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(OfflineSettingsManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(OfflineSettingsManager.class);
+    
     private static final String GET_OFFLINE_SETTTINGS =
             "SELECT redirectPage, emailAddress, subject, offlineText FROM " +
             "fpOfflineSetting WHERE workgroupID=?";

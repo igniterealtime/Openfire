@@ -34,17 +34,17 @@
     <body>
 
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 <script type="text/javascript">
 var peConversations = new PeriodicalExecuter(conversationUpdater, 10);
 
 function conversationUpdater() {
     new Ajax.Request('/plugins/monitoring/api/conversations', {
-    	method: 'get',
-    	onSuccess: function(transport) {
-    		updateConversations(transport.responseText.evalJSON());
-    	}
+        method: 'get',
+        onSuccess: function(transport) {
+            updateConversations(transport.responseText.evalJSON());
+        }
     });
 }
 

@@ -40,127 +40,127 @@ public class TickerTest {
     }
 
     private void usage() {
-	System.out.println("Usage:  java com.sun.voip.TickerTest "
-	+ "\t\t-t <tick period in milliseconds> [-d <duration in seconds>]"
-	+ "\t\t[-s <stat frequency in ticker calls>] [-c TickerClassName]");
+    System.out.println("Usage:  java com.sun.voip.TickerTest "
+    + "\t\t-t <tick period in milliseconds> [-d <duration in seconds>]"
+    + "\t\t[-s <stat frequency in ticker calls>] [-c TickerClassName]");
 
-	System.exit(1);
+    System.exit(1);
     }
 
     public static void main(String args[]) {
-	TickerTest tickerTest = new TickerTest();
+    TickerTest tickerTest = new TickerTest();
 
-	try {
-	    tickerTest.initialize(args);
-	} catch (TickerException e) {
-	    System.out.println(e.getMessage());
-	    System.exit(1);
-	}
+    try {
+        tickerTest.initialize(args);
+    } catch (TickerException e) {
+        System.out.println(e.getMessage());
+        System.exit(1);
+    }
 
-	tickerTest.runTest();
+    tickerTest.runTest();
     }
 
     private void initialize(String[] args) throws TickerException {
-	for (int i = 0; i < args.length; i++) {
-	    if (args[i].equalsIgnoreCase("-t")) {
-		i++;
+    for (int i = 0; i < args.length; i++) {
+        if (args[i].equalsIgnoreCase("-t")) {
+        i++;
 
-		timePeriod = getIntArg(args, i);
-	    } else if (args[i].equalsIgnoreCase("-d")) {
-		i++;
+        timePeriod = getIntArg(args, i);
+        } else if (args[i].equalsIgnoreCase("-d")) {
+        i++;
 
-		duration = getIntArg(args, i);
-	    } else if (args[i].equalsIgnoreCase("-s")) {
-		i++;
-		
-		statFrequency = getIntArg(args, i);
-	    } else if (args[i].equalsIgnoreCase("-c")) {
-		i++;
+        duration = getIntArg(args, i);
+        } else if (args[i].equalsIgnoreCase("-s")) {
+        i++;
+        
+        statFrequency = getIntArg(args, i);
+        } else if (args[i].equalsIgnoreCase("-c")) {
+        i++;
 
-		if (i >= args.length) {
-	    	    usage();
-	   	}
+        if (i >= args.length) {
+                usage();
+        }
 
-		tickerClassName = args[i];
-	    } else {
-		usage();
-	    }
-	}
+        tickerClassName = args[i];
+        } else {
+        usage();
+        }
+    }
 
-	if (timePeriod == 0) {
-	    timePeriod = 20;
-	}
+    if (timePeriod == 0) {
+        timePeriod = 20;
+    }
 
-	if (duration == 0) {
-	    duration = 10;
-	}
+    if (duration == 0) {
+        duration = 10;
+    }
 
-	if (statFrequency == 0) {
-	    statFrequency = 200;
-	}
+    if (statFrequency == 0) {
+        statFrequency = 200;
+    }
 
-	if (tickerClassName == null) {
-	    tickerClassName = "com.sun.voip.TickerSleep";
-	}
+    if (tickerClassName == null) {
+        tickerClassName = "com.sun.voip.TickerSleep";
+    }
 
-	TickerFactory tickerFactory = TickerFactory.getInstance();
+    TickerFactory tickerFactory = TickerFactory.getInstance();
 
         ticker = tickerFactory.createTicker(tickerClassName, "TickerTest");
     }
 
     private void runTest() {
-	Logger.println("Running ticker test with " + tickerClassName);
+    Logger.println("Running ticker test with " + tickerClassName);
 
-	long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
 
-	long elapsed = 0;
+    long elapsed = 0;
 
-	int n = 0;
+    int n = 0;
 
-	ticker.arm(timePeriod, timePeriod);
+    ticker.arm(timePeriod, timePeriod);
 
-	while (elapsed < duration * 1000) {
-	    try {
-	        ticker.tick();
-	    } catch (TickerException e) {
-		Logger.println("tick() failed! " + e.getMessage());
-		System.exit(1);
-	    }
+    while (elapsed < duration * 1000) {
+        try {
+            ticker.tick();
+        } catch (TickerException e) {
+        Logger.println("tick() failed! " + e.getMessage());
+        System.exit(1);
+        }
 
-	    elapsed = System.currentTimeMillis() - start;
+        elapsed = System.currentTimeMillis() - start;
 
-	    n++;
+        n++;
 
-	    if ((n % statFrequency) == 0) {
-		ticker.printStatistics();
-	    }
-	}
+        if ((n % statFrequency) == 0) {
+        ticker.printStatistics();
+        }
+    }
 
-	ticker.disarm();
+    ticker.disarm();
     }
 
     private int getIntArg(String[] args, int i) {
-	if (i >= args.length) {
-	    usage();
-	}
+    if (i >= args.length) {
+        usage();
+    }
 
-	int n = 0;
+    int n = 0;
 
-	try {
-	    n = Integer.parseInt(args[i]);
+    try {
+        n = Integer.parseInt(args[i]);
 
-	    if (n <= 0) {	
-		Logger.println("Number must be positive:  " + args[i]);
-		System.exit(1);
-	    }
+        if (n <= 0) {	
+        Logger.println("Number must be positive:  " + args[i]);
+        System.exit(1);
+        }
 
-	} catch (NumberFormatException e) {
-	    Logger.println("Invalid integer " + args[i]
-		+ " " + e.getMessage());
-	    System.exit(1);
-	}
+    } catch (NumberFormatException e) {
+        Logger.println("Invalid integer " + args[i]
+        + " " + e.getMessage());
+        System.exit(1);
+    }
 
-	return n;
+    return n;
     }
 
 }

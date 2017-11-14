@@ -33,8 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public class WorkgroupEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupEventDispatcher.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupEventDispatcher.class);
+    
     private static List<WorkgroupEventListener> listeners =
             new CopyOnWriteArrayList<WorkgroupEventListener>();
 

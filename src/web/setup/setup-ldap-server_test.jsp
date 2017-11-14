@@ -55,24 +55,24 @@
     }
 %>
     <!-- BEGIN connection settings test panel -->
-	<div class="jive-testPanel">
-		<div class="jive-testPanel-content">
-		
-			<div align="right" class="jive-testPanel-close">
-				<a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
-			</div>
-			
-			
-			<h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.server.test.title-desc" /></span></h2>
+    <div class="jive-testPanel">
+        <div class="jive-testPanel-content">
+        
+            <div align="right" class="jive-testPanel-close">
+                <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
+            </div>
+            
+            
+            <h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.server.test.title-desc" /></span></h2>
             <% if (success) { %>
             <h4 class="jive-testSuccess"><fmt:message key="setup.ldap.server.test.status-success" /></h4>
 
-			<p><fmt:message key="setup.ldap.server.test.status-success.detail" /></p>
+            <p><fmt:message key="setup.ldap.server.test.status-success.detail" /></p>
             <% } else { %>
             <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
             <p><%= errorDetail %></p>
             <% } %>
             
         </div>
-	</div>
-	<!-- END connection settings test panel -->
+    </div>
+    <!-- END connection settings test panel -->

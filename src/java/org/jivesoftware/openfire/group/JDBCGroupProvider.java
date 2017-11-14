@@ -67,7 +67,7 @@ import org.xmpp.packet.JID;
  */
 public class JDBCGroupProvider extends AbstractGroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
     private String connectionString;
 

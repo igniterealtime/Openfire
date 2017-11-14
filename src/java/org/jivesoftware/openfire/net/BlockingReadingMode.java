@@ -42,7 +42,7 @@ import com.jcraft.jzlib.ZInputStream;
  */
 class BlockingReadingMode extends SocketReadingMode {
 
-	private static final Logger Log = LoggerFactory.getLogger(BlockingReadingMode.class);
+    private static final Logger Log = LoggerFactory.getLogger(BlockingReadingMode.class);
 
     public BlockingReadingMode(Socket socket, SocketReader socketReader) {
         super(socket, socketReader);
@@ -53,7 +53,7 @@ class BlockingReadingMode extends SocketReadingMode {
      * packets to the appropriate router.
      */
     @Override
-	public void run() {
+    public void run() {
         try {
             socketReader.reader.getXPPParser().setInput(new InputStreamReader(
                     ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
@@ -167,7 +167,7 @@ class BlockingReadingMode extends SocketReadingMode {
     }
 
     @Override
-	protected void tlsNegotiated() throws XmlPullParserException, IOException {
+    protected void tlsNegotiated() throws XmlPullParserException, IOException {
         XmlPullParser xpp = socketReader.reader.getXPPParser();
         // Reset the parser to use the new reader
         xpp.setInput(new InputStreamReader(
@@ -180,7 +180,7 @@ class BlockingReadingMode extends SocketReadingMode {
     }
 
     @Override
-	protected void saslSuccessful() throws XmlPullParserException, IOException {
+    protected void saslSuccessful() throws XmlPullParserException, IOException {
         MXParser xpp = socketReader.reader.getXPPParser();
         // Reset the parser since a new stream header has been sent from the client
         xpp.resetInput();
@@ -193,7 +193,7 @@ class BlockingReadingMode extends SocketReadingMode {
     }
 
     @Override
-	protected boolean compressClient(Element doc) throws XmlPullParserException, IOException {
+    protected boolean compressClient(Element doc) throws XmlPullParserException, IOException {
         boolean answer = super.compressClient(doc);
         if (answer) {
             XmlPullParser xpp = socketReader.reader.getXPPParser();
@@ -215,7 +215,7 @@ class BlockingReadingMode extends SocketReadingMode {
     }
 
     @Override
-	protected void compressionSuccessful() throws XmlPullParserException, IOException {
+    protected void compressionSuccessful() throws XmlPullParserException, IOException {
         XmlPullParser xpp = socketReader.reader.getXPPParser();
         // Skip the opening stream sent by the client
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {

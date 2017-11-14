@@ -47,8 +47,8 @@ import java.util.StringTokenizer;
  * @author Iain Shigeoka
  */
 public class MessageRouter extends BasicModule {
-	
-	private static Logger log = LoggerFactory.getLogger(MessageRouter.class); 
+    
+    private static Logger log = LoggerFactory.getLogger(MessageRouter.class); 
 
     private OfflineMessageStrategy messageStrategy;
     private RoutingTable routingTable;
@@ -226,7 +226,7 @@ public class MessageRouter extends BasicModule {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         messageStrategy = server.getOfflineMessageStrategy();
         routingTable = server.getRoutingTable();

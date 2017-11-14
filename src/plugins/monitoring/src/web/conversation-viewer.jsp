@@ -54,7 +54,7 @@
     <title>Conversation Viewer</title>
 
     <style type="text/css">
-	    @import "style/style.css";
+        @import "style/style.css";
     </style>
 </head>
 

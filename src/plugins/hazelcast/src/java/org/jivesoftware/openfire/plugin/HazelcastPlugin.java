@@ -51,7 +51,7 @@ public class HazelcastPlugin implements Plugin {
         });
     }
 
-	private void initializeClustering() {
+    private void initializeClustering() {
         logger.info("All plugins have initialized; initializing clustering");
         // Check if another cluster is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
@@ -59,7 +59,7 @@ public class HazelcastPlugin implements Plugin {
             public boolean accept(File pathname) {
                 String fileName = pathname.getName().toLowerCase();
                 return (fileName.equalsIgnoreCase("enterprise.jar") || 
-                		fileName.equalsIgnoreCase("coherence.jar"));
+                        fileName.equalsIgnoreCase("coherence.jar"));
             }
         });
         if (jars.length > 0) {
@@ -68,13 +68,13 @@ public class HazelcastPlugin implements Plugin {
             throw new IllegalStateException("Clustering plugin configuration conflict (Coherence)");
         }
         ClusterManager.startup();
-	}
+    }
 
     public void destroyPlugin() {
         // Shutdown is initiated by XMPPServer before unloading plugins
-    	if (!XMPPServer.getInstance().isShuttingDown()) {
-    		ClusterManager.shutdown();
-    	}
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            ClusterManager.shutdown();
+        }
     }
 
 }

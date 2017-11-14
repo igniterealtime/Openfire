@@ -25,23 +25,23 @@ public class Config implements MUCEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(Config.class);
 
-	private MultiUserChatManager mucManager;
-	private HashMap<String, Conference> conferences;
-	private HashMap<String, Conference> confExtensions;
+    private MultiUserChatManager mucManager;
+    private HashMap<String, Conference> conferences;
+    private HashMap<String, Conference> confExtensions;
 
-	private ArrayList<ProxyCredentials> registrations;
-	private ArrayList<String> registrars;
-	private HashMap<String, ProxyCredentials> sipExtensions;
+    private ArrayList<ProxyCredentials> registrations;
+    private ArrayList<String> registrars;
+    private HashMap<String, ProxyCredentials> sipExtensions;
 
-	private static Config singletonConfig;
-	public static boolean sipPlugin = false;
+    private static Config singletonConfig;
+    public static boolean sipPlugin = false;
 
-	private String privateHost = JiveGlobals.getProperty("voicebridge.default.private.host", "127.0.0.1");
-	private String publicHost = JiveGlobals.getProperty("voicebridge.default.public.host", "127.0.0.1");
-	private String conferenceExten = JiveGlobals.getProperty("voicebridge.default.conf.exten", "default");
-	private String defaultProxy = JiveGlobals.getProperty("voicebridge.default.proxy.name", null);
-	private String defaultProtocol = JiveGlobals.getProperty("voicebridge.default.protocol", "udp");
-	private String defaultSIPPort = JiveGlobals.getProperty("voicebridge.default.sip.port", "5060");
+    private String privateHost = JiveGlobals.getProperty("voicebridge.default.private.host", "127.0.0.1");
+    private String publicHost = JiveGlobals.getProperty("voicebridge.default.public.host", "127.0.0.1");
+    private String conferenceExten = JiveGlobals.getProperty("voicebridge.default.conf.exten", "default");
+    private String defaultProxy = JiveGlobals.getProperty("voicebridge.default.proxy.name", null);
+    private String defaultProtocol = JiveGlobals.getProperty("voicebridge.default.protocol", "udp");
+    private String defaultSIPPort = JiveGlobals.getProperty("voicebridge.default.sip.port", "5060");
 
     private boolean prefixPhoneNumber = true;
     private String internationalPrefix = "00";  // for international calls
@@ -50,69 +50,69 @@ public class Config implements MUCEventListener {
     private int internalExtenLength = 5;
 
 
-	private Config() {
+    private Config() {
 
-	}
+    }
 
-	public void initialise()
-	{
-		conferences 	= new HashMap<String, Conference>();
-		confExtensions 	= new HashMap<String, Conference>();
-		sipExtensions 	= new HashMap<String, ProxyCredentials>();
+    public void initialise()
+    {
+        conferences 	= new HashMap<String, Conference>();
+        confExtensions 	= new HashMap<String, Conference>();
+        sipExtensions 	= new HashMap<String, ProxyCredentials>();
 
-		registrations = new ArrayList<ProxyCredentials>();
-    	registrars = new ArrayList<String>();
+        registrations = new ArrayList<ProxyCredentials>();
+        registrars = new ArrayList<String>();
 
-    	MUCEventDispatcher.addListener(this);
+        MUCEventDispatcher.addListener(this);
 
-		try {
-			Log.info(String.format("VoiceBridge read site configuration"));
+        try {
+            Log.info(String.format("VoiceBridge read site configuration"));
 
-			mucManager 	= XMPPServer.getInstance().getMultiUserChatManager();
+            mucManager 	= XMPPServer.getInstance().getMultiUserChatManager();
 
-			if (mucManager.getMultiUserChatService("conference") != null)
-			{
-				List<MUCRoom> rooms = mucManager.getMultiUserChatService("conference").getChatRooms();
+            if (mucManager.getMultiUserChatService("conference") != null)
+            {
+                List<MUCRoom> rooms = mucManager.getMultiUserChatService("conference").getChatRooms();
 
-				for (MUCRoom room : rooms)
-				{
-					createConference(room);
-				}
-			}
+                for (MUCRoom room : rooms)
+                {
+                    createConference(room);
+                }
+            }
 
-			String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", null);
+            String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", null);
 
-			if (defaultProxy != null)
-			{
-				if (username != null)
-				{
-					if (JiveGlobals.getBooleanProperty("voicebridge.register.all.users", false))
-					{
-						processRegistrations();
+            if (defaultProxy != null)
+            {
+                if (username != null)
+                {
+                    if (JiveGlobals.getBooleanProperty("voicebridge.register.all.users", false))
+                    {
+                        processRegistrations();
 
-					} else {
-						processDefaultRegistration(username);
-					}
+                    } else {
+                        processDefaultRegistration(username);
+                    }
 
-					Log.info(String.format("VoiceBridge sip plugin assumed available"));
-					sipPlugin = true;
+                    Log.info(String.format("VoiceBridge sip plugin assumed available"));
+                    sipPlugin = true;
 
-				} else {
+                } else {
 
-					registerWithDefaultProxy();
-				}
-			}
+                    registerWithDefaultProxy();
+                }
+            }
 
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-	}
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
 
 
-	public void terminate()
-	{
-		MUCEventDispatcher.removeListener(this);
-	}
+    public void terminate()
+    {
+        MUCEventDispatcher.removeListener(this);
+    }
 
 
     // ------------------------------------------------------------------------
@@ -122,257 +122,257 @@ public class Config implements MUCEventListener {
     // ------------------------------------------------------------------------
 
 
-	private void registerWithDefaultProxy()
-	{
-		ProxyCredentials sipAccount = new ProxyCredentials();
+    private void registerWithDefaultProxy()
+    {
+        ProxyCredentials sipAccount = new ProxyCredentials();
 
-		try {
-			String name = defaultProxy;
-			String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", "admin");
-			String sipusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipusername", name);
-			String authusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
-			String displayname = JiveGlobals.getProperty("voicebridge.default.proxy.sipdisplayname", name);
-			String password = JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", name);
-			String server = JiveGlobals.getProperty("voicebridge.default.proxy.sipserver");
-			String stunServer = JiveGlobals.getProperty("voicebridge.default.proxy.stunserver", server);
-			String stunPort = JiveGlobals.getProperty("voicebridge.default.proxy.stunport");
+        try {
+            String name = defaultProxy;
+            String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", "admin");
+            String sipusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipusername", name);
+            String authusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
+            String displayname = JiveGlobals.getProperty("voicebridge.default.proxy.sipdisplayname", name);
+            String password = JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", name);
+            String server = JiveGlobals.getProperty("voicebridge.default.proxy.sipserver");
+            String stunServer = JiveGlobals.getProperty("voicebridge.default.proxy.stunserver", server);
+            String stunPort = JiveGlobals.getProperty("voicebridge.default.proxy.stunport");
             String voicemail = JiveGlobals.getProperty("voicebridge.default.proxy.voicemail", name);
             String outboundproxy = JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", server);
 
             sipAccount.setName(name);
-			sipAccount.setXmppUserName(username);
-			sipAccount.setUserName(sipusername);
-			sipAccount.setAuthUserName(authusername);
-			sipAccount.setUserDisplay(displayname);
-			sipAccount.setPassword(password.toCharArray());
-			sipAccount.setHost(server);
+            sipAccount.setXmppUserName(username);
+            sipAccount.setUserName(sipusername);
+            sipAccount.setAuthUserName(authusername);
+            sipAccount.setUserDisplay(displayname);
+            sipAccount.setPassword(password.toCharArray());
+            sipAccount.setHost(server);
             sipAccount.setProxy(outboundproxy);
             sipAccount.setRealm(server);
 
             sipExtensions.put(username, sipAccount);
 
-			InetAddress inetAddress = InetAddress.getByName(sipAccount.getHost());
-			registrars.add(sipAccount.getHost());
-			registrations.add(sipAccount);
+            InetAddress inetAddress = InetAddress.getByName(sipAccount.getHost());
+            registrars.add(sipAccount.getHost());
+            registrations.add(sipAccount);
 
-			Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", sipAccount.getXmppUserName(), sipAccount.getUserName(), sipAccount.getHost()));
+            Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", sipAccount.getXmppUserName(), sipAccount.getUserName(), sipAccount.getHost()));
 
         } catch (Exception e) {
-			Log.info("registerWithDefaultProxy " + e);
-		}
-	}
+            Log.info("registerWithDefaultProxy " + e);
+        }
+    }
 
-	private void processDefaultRegistration(String username)
-	{
-		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser WHERE USERNAME = '" + username + "'";
-		Connection con = null;
-		PreparedStatement pstmt = null;
+    private void processDefaultRegistration(String username)
+    {
+        String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser WHERE USERNAME = '" + username + "'";
+        Connection con = null;
+        PreparedStatement pstmt = null;
 
-		try {
-			con = DbConnectionManager.getConnection();
-			pstmt = DbConnectionManager.createScrollablePreparedStatement(con, sql);
-			ResultSet rs = pstmt.executeQuery();
-			DbConnectionManager.scrollResultSet(rs, 0);
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = DbConnectionManager.createScrollablePreparedStatement(con, sql);
+            ResultSet rs = pstmt.executeQuery();
+            DbConnectionManager.scrollResultSet(rs, 0);
 
-			if (rs.next())
-			{
-				ProxyCredentials credentials = read(rs);
-				credentials.setName(defaultProxy);
+            if (rs.next())
+            {
+                ProxyCredentials credentials = read(rs);
+                credentials.setName(defaultProxy);
 
-				try {
-					InetAddress inetAddress = InetAddress.getByName(credentials.getHost());
-					registrars.add(credentials.getHost());
-					registrations.add(credentials);
+                try {
+                    InetAddress inetAddress = InetAddress.getByName(credentials.getHost());
+                    registrars.add(credentials.getHost());
+                    registrations.add(credentials);
 
-					Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
+                    Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
 
-				} catch (Exception e) {
-					Log.info(String.format("processDefaultRegistration Bad Address  %s ", credentials.getHost()));
-				}
-			}
-			rs.close();
-			pstmt.close();
-			con.close();
+                } catch (Exception e) {
+                    Log.info(String.format("processDefaultRegistration Bad Address  %s ", credentials.getHost()));
+                }
+            }
+            rs.close();
+            pstmt.close();
+            con.close();
 
-		} catch (SQLException e) {
-			Log.info("processDefaultRegistration " + e);
-		}
-	}
+        } catch (SQLException e) {
+            Log.info("processDefaultRegistration " + e);
+        }
+    }
 
-	private void processRegistrations()
-	{
-		String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser ORDER BY USERNAME";
-		Connection con = null;
-		PreparedStatement pstmt = null;
+    private void processRegistrations()
+    {
+        String sql = "SELECT username, sipusername, sipauthuser, sipdisplayname, sippassword, sipserver, enabled, status, stunserver, stunport, usestun, voicemail, outboundproxy, promptCredentials FROM ofSipUser ORDER BY USERNAME";
+        Connection con = null;
+        PreparedStatement pstmt = null;
 
-		try {
-			con = DbConnectionManager.getConnection();
-			pstmt = DbConnectionManager.createScrollablePreparedStatement(con, sql);
-			ResultSet rs = pstmt.executeQuery();
-			DbConnectionManager.scrollResultSet(rs, 0);
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = DbConnectionManager.createScrollablePreparedStatement(con, sql);
+            ResultSet rs = pstmt.executeQuery();
+            DbConnectionManager.scrollResultSet(rs, 0);
 
-			while (rs.next())
-			{
-				ProxyCredentials credentials = read(rs);
+            while (rs.next())
+            {
+                ProxyCredentials credentials = read(rs);
 
-				try {
-					InetAddress inetAddress = InetAddress.getByName(credentials.getHost());
-					registrars.add(credentials.getHost());
-					registrations.add(credentials);
+                try {
+                    InetAddress inetAddress = InetAddress.getByName(credentials.getHost());
+                    registrars.add(credentials.getHost());
+                    registrations.add(credentials);
 
-					Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
+                    Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
 
-				} catch (Exception e) {
-					Log.info(String.format("processRegistrations Bad Address  %s ", credentials.getHost()));
-				}
-			}
-			rs.close();
-			pstmt.close();
-			con.close();
+                } catch (Exception e) {
+                    Log.info(String.format("processRegistrations Bad Address  %s ", credentials.getHost()));
+                }
+            }
+            rs.close();
+            pstmt.close();
+            con.close();
 
 
-		} catch (SQLException e) {
-			Log.info("processRegistrations " + e);
-		}
-	}
+        } catch (SQLException e) {
+            Log.info("processRegistrations " + e);
+        }
+    }
 
-	private ProxyCredentials read(ResultSet rs)
-	{
-		ProxyCredentials sipAccount = new ProxyCredentials();
+    private ProxyCredentials read(ResultSet rs)
+    {
+        ProxyCredentials sipAccount = new ProxyCredentials();
 
-		try {
-			String username = rs.getString("username");
-			String sipusername = rs.getString("sipusername");
-			String authusername = rs.getString("sipauthuser");
-			String displayname = rs.getString("sipdisplayname");
-			String password = rs.getString("sippassword");
-			String server = rs.getString("sipserver");
-			String stunServer = rs.getString("stunserver");
-			String stunPort = rs.getString("stunport");
+        try {
+            String username = rs.getString("username");
+            String sipusername = rs.getString("sipusername");
+            String authusername = rs.getString("sipauthuser");
+            String displayname = rs.getString("sipdisplayname");
+            String password = rs.getString("sippassword");
+            String server = rs.getString("sipserver");
+            String stunServer = rs.getString("stunserver");
+            String stunPort = rs.getString("stunport");
             String voicemail = rs.getString("voicemail");
             String outboundproxy = rs.getString("outboundproxy");
 
             sipAccount.setName(username);
-			sipAccount.setXmppUserName(username);
-			sipAccount.setUserName(sipusername);
-			sipAccount.setAuthUserName(authusername);
-			sipAccount.setUserDisplay(displayname);
-			sipAccount.setPassword(password.toCharArray());
-			sipAccount.setHost(server);
+            sipAccount.setXmppUserName(username);
+            sipAccount.setUserName(sipusername);
+            sipAccount.setAuthUserName(authusername);
+            sipAccount.setUserDisplay(displayname);
+            sipAccount.setPassword(password.toCharArray());
+            sipAccount.setHost(server);
             sipAccount.setProxy(outboundproxy);
             sipAccount.setRealm(server);
 
             sipExtensions.put(username, sipAccount);
 
         } catch (SQLException e) {
-			Log.info("ProxyCredentials " + e);
-		}
+            Log.info("ProxyCredentials " + e);
+        }
 
-		return sipAccount;
-	}
+        return sipAccount;
+    }
 
-	public static void updateStatus(String username, String status) throws SQLException {
+    public static void updateStatus(String username, String status) throws SQLException {
 
-		if (sipPlugin)
-		{
-			String sql = "UPDATE ofSipUser SET status = ?, enabled = ? WHERE username = ?";
+        if (sipPlugin)
+        {
+            String sql = "UPDATE ofSipUser SET status = ?, enabled = ? WHERE username = ?";
 
-			Connection con = null;
-			PreparedStatement psmt = null;
+            Connection con = null;
+            PreparedStatement psmt = null;
 
-			try {
+            try {
 
-				con = DbConnectionManager.getConnection();
-				psmt = con.prepareStatement(sql);
+                con = DbConnectionManager.getConnection();
+                psmt = con.prepareStatement(sql);
 
-				psmt.setString(1, status);
-				psmt.setInt(2, 1);
-				psmt.setString(3, username);
+                psmt.setString(1, status);
+                psmt.setInt(2, 1);
+                psmt.setString(3, username);
 
-				psmt.executeUpdate();
+                psmt.executeUpdate();
 
 
-			} catch (SQLException e) {
-				Log.info("updateStatus " + e);
+            } catch (SQLException e) {
+                Log.info("updateStatus " + e);
 
-			} finally {
-				DbConnectionManager.closeConnection(psmt, con);
-			}
-		}
-	}
+            } finally {
+                DbConnectionManager.closeConnection(psmt, con);
+            }
+        }
+    }
 
     public static void createCallRecord(String username, String addressFrom, String addressTo, long datetime, int duration, String calltype)  {
 
-		if (sipPlugin)
-		{
-			Log.info("createCallRecord " + username + " " + addressFrom + " " + addressTo + " " + datetime);
+        if (sipPlugin)
+        {
+            Log.info("createCallRecord " + username + " " + addressFrom + " " + addressTo + " " + datetime);
 
-			String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
 
-			Connection con = null;
-			PreparedStatement psmt = null;
-			ResultSet rs = null;
+            Connection con = null;
+            PreparedStatement psmt = null;
+            ResultSet rs = null;
 
-			try {
-				con = DbConnectionManager.getConnection();
-				psmt = con.prepareStatement(sql);
-				psmt.setString(1, username);
-				psmt.setString(2, addressFrom);
-				psmt.setString(3, addressTo);
-				psmt.setLong(4, datetime);
-				psmt.setInt(5, duration);
-				psmt.setString(6, calltype);
+            try {
+                con = DbConnectionManager.getConnection();
+                psmt = con.prepareStatement(sql);
+                psmt.setString(1, username);
+                psmt.setString(2, addressFrom);
+                psmt.setString(3, addressTo);
+                psmt.setLong(4, datetime);
+                psmt.setInt(5, duration);
+                psmt.setString(6, calltype);
 
-				psmt.executeUpdate();
+                psmt.executeUpdate();
 
-			} catch (SQLException e) {
-				Log.error(e.getMessage(), e);
-			} finally {
-				DbConnectionManager.closeConnection(rs, psmt, con);
-			}
-		}
+            } catch (SQLException e) {
+                Log.error(e.getMessage(), e);
+            } finally {
+                DbConnectionManager.closeConnection(rs, psmt, con);
+            }
+        }
     }
 
-	public static void updateCallRecord(long datetime, int duration) {
+    public static void updateCallRecord(long datetime, int duration) {
 
-		if (sipPlugin)
-		{
-			Log.info("updateCallRecord " + datetime + " " + duration);
+        if (sipPlugin)
+        {
+            Log.info("updateCallRecord " + datetime + " " + duration);
 
-			String sql = "UPDATE ofSipPhoneLog SET duration = ? WHERE datetime = ?";
+            String sql = "UPDATE ofSipPhoneLog SET duration = ? WHERE datetime = ?";
 
-			Connection con = null;
-			PreparedStatement psmt = null;
+            Connection con = null;
+            PreparedStatement psmt = null;
 
-			try {
+            try {
 
-				con = DbConnectionManager.getConnection();
-				psmt = con.prepareStatement(sql);
+                con = DbConnectionManager.getConnection();
+                psmt = con.prepareStatement(sql);
 
-				psmt.setInt(1, duration);
-				psmt.setLong(2, datetime);
-				psmt.executeUpdate();
+                psmt.setInt(1, duration);
+                psmt.setLong(2, datetime);
+                psmt.executeUpdate();
 
 
-			} catch (SQLException e) {
-				Log.error(e.getMessage(), e);
+            } catch (SQLException e) {
+                Log.error(e.getMessage(), e);
 
-			} finally {
-				DbConnectionManager.closeConnection(psmt, con);
-			}
-		}
-	}
+            } finally {
+                DbConnectionManager.closeConnection(psmt, con);
+            }
+        }
+    }
 
     public ProxyCredentials getProxyCredentialsByUser(String username)
     {
-		ProxyCredentials sip = null;
+        ProxyCredentials sip = null;
 
-		if (sipExtensions.containsKey(username))
-		{
-			sip = sipExtensions.get(username);
-		}
+        if (sipExtensions.containsKey(username))
+        {
+            sip = sipExtensions.get(username);
+        }
 
-		return sip;
+        return sip;
     }
 
 
@@ -383,266 +383,266 @@ public class Config implements MUCEventListener {
     // ------------------------------------------------------------------------
 
 
-	private void createConference(MUCRoom room)
-	{
-		Conference conference = new Conference();
-		conference.id = room.getName();
-		conference.pin = room.getPassword();
+    private void createConference(MUCRoom room)
+    {
+        Conference conference = new Conference();
+        conference.id = room.getName();
+        conference.pin = room.getPassword();
 
-		if (conference.pin != null && conference.pin.length() == 0)
-			conference.pin = null;
+        if (conference.pin != null && conference.pin.length() == 0)
+            conference.pin = null;
 
-		conference.exten = room.getDescription();
+        conference.exten = room.getDescription();
 
-		int pos = conference.exten.indexOf(":");
+        int pos = conference.exten.indexOf(":");
 
-		if (pos > 0)
-			conference.exten = conference.exten.substring(0, pos);
-		else
-			conference.exten = null;
+        if (pos > 0)
+            conference.exten = conference.exten.substring(0, pos);
+        else
+            conference.exten = null;
 
-		if (conference.exten != null && conference.exten.length() > 0)
-		{
-			confExtensions.put(conference.exten, conference);
-		}
+        if (conference.exten != null && conference.exten.length() > 0)
+        {
+            confExtensions.put(conference.exten, conference);
+        }
 
-		conferences.put(conference.id, conference);
+        conferences.put(conference.id, conference);
 
-		Log.info(String.format("VoiceBridge create  conference: %s with pin %s extension %s", conference.id, conference.pin, conference.exten));
-	}
+        Log.info(String.format("VoiceBridge create  conference: %s with pin %s extension %s", conference.id, conference.pin, conference.exten));
+    }
 
-	private void destroyConference(MUCRoom room)
-	{
-		if (conferences.containsKey(room.getName()))
-		{
-			Conference conference1 = conferences.remove(room.getName());
-			conference1 = null;
+    private void destroyConference(MUCRoom room)
+    {
+        if (conferences.containsKey(room.getName()))
+        {
+            Conference conference1 = conferences.remove(room.getName());
+            conference1 = null;
 
-			Conference conference2 = confExtensions.remove(room.getName());
-			conference2 = null;
+            Conference conference2 = confExtensions.remove(room.getName());
+            conference2 = null;
 
-			Log.info(String.format("VoiceBridge destroy conference: %s", room.getName()));
-		}
-	}
+            Log.info(String.format("VoiceBridge destroy conference: %s", room.getName()));
+        }
+    }
 
-	public static Config getInstance() {
+    public static Config getInstance() {
 
-		if (singletonConfig == null) {
+        if (singletonConfig == null) {
 
-			singletonConfig = new Config();
-		}
+            singletonConfig = new Config();
+        }
 
-		return singletonConfig;
-	}
+        return singletonConfig;
+    }
 
-	public boolean isValidConference(String id)
-	{
-		return conferences.containsKey(id);
-	}
+    public boolean isValidConference(String id)
+    {
+        return conferences.containsKey(id);
+    }
 
-	public boolean isValidConferenceExten(String id)
-	{
-		return confExtensions.containsKey(id);
-	}
+    public boolean isValidConferenceExten(String id)
+    {
+        return confExtensions.containsKey(id);
+    }
 
-	public boolean isValidConferencePin(String id, String pin)
-	{
-		boolean valid = false;
+    public boolean isValidConferencePin(String id, String pin)
+    {
+        boolean valid = false;
 
-		if (conferences.containsKey(id))
-		{
-			Conference conf = conferences.get(id);
-			valid = conf.pin == null || pin.equals(conf.pin);
-		}
+        if (conferences.containsKey(id))
+        {
+            Conference conf = conferences.get(id);
+            valid = conf.pin == null || pin.equals(conf.pin);
+        }
 
-		return valid;
-	}
+        return valid;
+    }
 
     public Conference getConferenceByPhone(String phoneNo)
     {
-		Conference conf = null;
+        Conference conf = null;
 
-		if (conferences.containsKey(phoneNo))
-		{
-			conf = conferences.get(phoneNo);
+        if (conferences.containsKey(phoneNo))
+        {
+            conf = conferences.get(phoneNo);
 
-		} else if (confExtensions.containsKey(phoneNo))	{
+        } else if (confExtensions.containsKey(phoneNo))	{
 
-			conf = confExtensions.get(phoneNo);
-		}
+            conf = confExtensions.get(phoneNo);
+        }
 
-		return conf;
+        return conf;
     }
 
     public String getMeetingCode(String phoneNo)
     {
-		String id = null;
+        String id = null;
 
-		if (conferences.containsKey(phoneNo))
-		{
-			Conference conf = conferences.get(phoneNo);
-			id = conf.id;
+        if (conferences.containsKey(phoneNo))
+        {
+            Conference conf = conferences.get(phoneNo);
+            id = conf.id;
 
-		} else if (confExtensions.containsKey(phoneNo))	{
+        } else if (confExtensions.containsKey(phoneNo))	{
 
-			Conference conf = confExtensions.get(phoneNo);
-			id = conf.id;
-		}
+            Conference conf = confExtensions.get(phoneNo);
+            id = conf.id;
+        }
 
-		return id;
+        return id;
     }
 
     public String getPassCode(String meetingId, String phoneNo)
     {
-		String pin = null;
+        String pin = null;
 
-		if (confExtensions.containsKey(phoneNo))
-		{
-			Conference conf = confExtensions.get(phoneNo);
-			pin = conf.pin;
+        if (confExtensions.containsKey(phoneNo))
+        {
+            Conference conf = confExtensions.get(phoneNo);
+            pin = conf.pin;
 
-		} else if (conferences.containsKey(meetingId)) {
+        } else if (conferences.containsKey(meetingId)) {
 
-			Conference conf = conferences.get(meetingId);
-			pin = conf.pin;
-		}
+            Conference conf = conferences.get(meetingId);
+            pin = conf.pin;
+        }
 
-		return pin;
+        return pin;
     }
 
-	public String getPrivateHost()
-	{
-		return privateHost;
-	}
+    public String getPrivateHost()
+    {
+        return privateHost;
+    }
 
-	public String getPublicHost()
-	{
-		return publicHost;
-	}
+    public String getPublicHost()
+    {
+        return publicHost;
+    }
 
     public void setConferenceExten(String conferenceExten)
     {
-		this.conferenceExten = conferenceExten;
+        this.conferenceExten = conferenceExten;
     }
 
     public String getConferenceExten()
     {
-		return conferenceExten;
+        return conferenceExten;
     }
 
     public void setInternalExtenLength(int internalExtenLength)
     {
-		this.internalExtenLength = internalExtenLength;
+        this.internalExtenLength = internalExtenLength;
     }
 
     public int getInternalExtenLength()
     {
-		return internalExtenLength;
+        return internalExtenLength;
     }
 
     public void setOutsideLinePrefix(String outsideLinePrefix)
     {
-		this.outsideLinePrefix = outsideLinePrefix;
+        this.outsideLinePrefix = outsideLinePrefix;
     }
 
     public String getOutsideLinePrefix()
     {
-		return outsideLinePrefix;
+        return outsideLinePrefix;
     }
 
     public void setLongDistancePrefix(String longDistancePrefix)
     {
-		this.longDistancePrefix = longDistancePrefix;
+        this.longDistancePrefix = longDistancePrefix;
     }
 
     public String getLongDistancePrefix()
     {
-		return longDistancePrefix;
+        return longDistancePrefix;
     }
 
 
     public void setInternationalPrefix(String internationalPrefix)
     {
-		this.internationalPrefix = internationalPrefix;
+        this.internationalPrefix = internationalPrefix;
     }
 
     public String getInternationalPrefix()
     {
-		return internationalPrefix;
+        return internationalPrefix;
     }
 
 
     public void setPrefixPhoneNumber(boolean prefixPhoneNumber)
     {
-		this.prefixPhoneNumber = prefixPhoneNumber;
+        this.prefixPhoneNumber = prefixPhoneNumber;
     }
 
     public boolean prefixPhoneNumber()
     {
-		return prefixPhoneNumber;
+        return prefixPhoneNumber;
     }
 
-	public String getDefaultProxy()
-	{
-		return defaultProxy;
-	}
-	public String getDefaultProtocol()
-	{
-		return defaultProtocol;
-	}
-	public String getDefaultSIPPort()
-	{
-		return defaultSIPPort;
-	}
+    public String getDefaultProxy()
+    {
+        return defaultProxy;
+    }
+    public String getDefaultProtocol()
+    {
+        return defaultProtocol;
+    }
+    public String getDefaultSIPPort()
+    {
+        return defaultSIPPort;
+    }
 
-	public ArrayList<String> getRegistrars()
-	{
-		return registrars;
-	}
+    public ArrayList<String> getRegistrars()
+    {
+        return registrars;
+    }
 
 
-	public ArrayList<ProxyCredentials> getRegistrations()
-	{
-		return registrations;
-	}
+    public ArrayList<ProxyCredentials> getRegistrations()
+    {
+        return registrations;
+    }
 
     public String formatPhoneNumber(String phoneNumber, String location)
     {
-		if (phoneNumber == null) {
-			return null;
-		}
-		/*
-		 * It's a softphone number.  Leave it as is.
-		 */
+        if (phoneNumber == null) {
+            return null;
+        }
+        /*
+         * It's a softphone number.  Leave it as is.
+         */
 
-		if (phoneNumber.indexOf("sip:") == 0)
-		{
-			/*
-			 * There is a problem where Meeting Central gives
-			 * us a phone number with only "sip:" which isn't valid.
-			 * Check for that here.
-			 * XXX
-			 */
-			if (phoneNumber.length() < 5) {
-			return null;
-			}
+        if (phoneNumber.indexOf("sip:") == 0)
+        {
+            /*
+             * There is a problem where Meeting Central gives
+             * us a phone number with only "sip:" which isn't valid.
+             * Check for that here.
+             * XXX
+             */
+            if (phoneNumber.length() < 5) {
+            return null;
+            }
 
-			return phoneNumber;
-		}
+            return phoneNumber;
+        }
 
-		if (phoneNumber.indexOf("@") >= 0)
-		{
-			return "sip:" + phoneNumber;
-		}
+        if (phoneNumber.indexOf("@") >= 0)
+        {
+            return "sip:" + phoneNumber;
+        }
 
-		/*
-		 * If number starts with "Id-" it's a callId.  Leave it as is.
-		 */
+        /*
+         * If number starts with "Id-" it's a callId.  Leave it as is.
+         */
 
-		if (phoneNumber.indexOf("Id-") == 0)
-		{
-			return phoneNumber;
-		}
+        if (phoneNumber.indexOf("Id-") == 0)
+        {
+            return phoneNumber;
+        }
 
         /*
          * Get rid of white space in the phone number
@@ -656,50 +656,50 @@ public class Config implements MUCEventListener {
 
         phoneNumber = phoneNumber.replaceAll("-", "");
 
-		/*
-		 * For Jon Kaplan who likes to use "." as a phone number separator!
-		 */
+        /*
+         * For Jon Kaplan who likes to use "." as a phone number separator!
+         */
 
-		phoneNumber = phoneNumber.replaceAll("\\.", "");
+        phoneNumber = phoneNumber.replaceAll("\\.", "");
 
-		if (phoneNumber.length() == 0)
-		{
-			return null;
-		}
+        if (phoneNumber.length() == 0)
+        {
+            return null;
+        }
 
-		if (prefixPhoneNumber == false) {
-			return phoneNumber;
-		}
+        if (prefixPhoneNumber == false) {
+            return phoneNumber;
+        }
 
-		/*
-		 * Replace leading "+" (from namefinder) with appropriate numbers.
-		 * +1 is a US number and becomes outsideLinePrefix.
-		 * +<anything else> is considered to be an international number and
-		 * becomes internationalPrefix.
-		 */
+        /*
+         * Replace leading "+" (from namefinder) with appropriate numbers.
+         * +1 is a US number and becomes outsideLinePrefix.
+         * +<anything else> is considered to be an international number and
+         * becomes internationalPrefix.
+         */
 
-		if (phoneNumber.charAt(0) == '+')
-		{
-			if (phoneNumber.charAt(1) == '1')
-			{
-				phoneNumber = outsideLinePrefix + phoneNumber.substring(1);
+        if (phoneNumber.charAt(0) == '+')
+        {
+            if (phoneNumber.charAt(1) == '1')
+            {
+                phoneNumber = outsideLinePrefix + phoneNumber.substring(1);
 
-			} else {
-				phoneNumber = outsideLinePrefix + internationalPrefix + phoneNumber.substring(1);
-			}
+            } else {
+                phoneNumber = outsideLinePrefix + internationalPrefix + phoneNumber.substring(1);
+            }
 
-		} else if (phoneNumber.charAt(0) == 'x' || phoneNumber.charAt(0) == 'X') {
+        } else if (phoneNumber.charAt(0) == 'x' || phoneNumber.charAt(0) == 'X') {
 
-			phoneNumber = phoneNumber.substring(1);
-		}
+            phoneNumber = phoneNumber.substring(1);
+        }
 
-		if (phoneNumber.length() == internalExtenLength)
-		{
-			/*
-			 * This is an internal extension.  Determine if it needs
-			 * a prefix of "70".
-			 */
-	   		//phoneNumber = PhoneNumberPrefix.getPrefix(location) + phoneNumber;
+        if (phoneNumber.length() == internalExtenLength)
+        {
+            /*
+             * This is an internal extension.  Determine if it needs
+             * a prefix of "70".
+             */
+            //phoneNumber = PhoneNumberPrefix.getPrefix(location) + phoneNumber;
 
         } else if (phoneNumber.length() > 7) {
             /*
@@ -739,7 +739,7 @@ public class Config implements MUCEventListener {
                     {
                         /*
                          * international prefix is already there, just prepend
-			 			 * outsideLinePrefix
+                         * outsideLinePrefix
                          */
                          phoneNumber = outsideLinePrefix + phoneNumber;
 
@@ -756,22 +756,22 @@ public class Config implements MUCEventListener {
 
     public void roomCreated(JID roomJID)
     {
-		MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
+        MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
 
         if (mucRoom != null)
         {
-			createConference(mucRoom);
-		}
+            createConference(mucRoom);
+        }
     }
 
     public void roomDestroyed(JID roomJID)
     {
-		MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
+        MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
 
         if (mucRoom != null)
         {
-			destroyConference(mucRoom);
-		}
+            destroyConference(mucRoom);
+        }
     }
 
     public void occupantJoined(JID roomJID, JID user, String nickname)
@@ -799,16 +799,16 @@ public class Config implements MUCEventListener {
 
     }
 
-	public void privateMessageRecieved(JID a, JID b, Message message)
-	{
+    public void privateMessageRecieved(JID a, JID b, Message message)
+    {
 
-	}
+    }
 
-	private class Conference
-	{
-		public String pin = null;
-		public String id = null;
-		public String exten = null;
+    private class Conference
+    {
+        public String pin = null;
+        public String id = null;
+        public String exten = null;
 
-	}
+    }
 }

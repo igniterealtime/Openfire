@@ -50,43 +50,43 @@ public class SdpInfo {
     private boolean transmitMediaInfoOk;
 
     public SdpInfo(String remoteHost, int remotePort,
-	    byte telephoneEventPayload, Vector supportedMedia,
-	    MediaInfo mediaInfo, boolean preferredMediaSpecified) {
+        byte telephoneEventPayload, Vector supportedMedia,
+        MediaInfo mediaInfo, boolean preferredMediaSpecified) {
 
-	this.remoteHost = remoteHost;
-	this.remotePort = remotePort;
-	this.telephoneEventPayload = telephoneEventPayload;
-	this.supportedMedia = supportedMedia;
-	this.mediaInfo = mediaInfo;
-	this.preferredMediaSpecified = preferredMediaSpecified;
+    this.remoteHost = remoteHost;
+    this.remotePort = remotePort;
+    this.telephoneEventPayload = telephoneEventPayload;
+    this.supportedMedia = supportedMedia;
+    this.mediaInfo = mediaInfo;
+    this.preferredMediaSpecified = preferredMediaSpecified;
     }
 
     public void setSdp(String sdp) {
-	this.sdp = sdp;
+    this.sdp = sdp;
     }
 
     public String getSdp() {
-	return sdp;
+    return sdp;
     }
 
     public void setRemoteHost(String remoteHost) {
-	this.remoteHost = remoteHost;
+    this.remoteHost = remoteHost;
     }
 
     public String getRemoteHost() {
-	return remoteHost;
+    return remoteHost;
     }
 
     public void setRemotePort(int remotePort) {
-	this.remotePort = remotePort;
+    this.remotePort = remotePort;
     }
 
     public int getRemotePort() {
-	return remotePort;
+    return remotePort;
     }
 
     public byte getTelephoneEventPayload() {
-	return telephoneEventPayload;
+    return telephoneEventPayload;
     }
 
     public void setUserName(String userName) {
@@ -98,177 +98,177 @@ public class SdpInfo {
     }
 
     public void setCallId(String callId) {
-	this.callId = callId;
+    this.callId = callId;
     }
 
     public String getCallId() {
-	return callId;
+    return callId;
     }
 
     public void setConferenceId(String conferenceId) {
-	this.conferenceId = conferenceId;
+    this.conferenceId = conferenceId;
     }
 
     public String getConferenceId() {
-	return conferenceId;
+    return conferenceId;
     }
 
     public void setDistributedBridge() {
-	isDistributedBridge = true;
+    isDistributedBridge = true;
     }
 
     public boolean isDistributedBridge() {
-	return isDistributedBridge;
+    return isDistributedBridge;
     }
 
     public void setRtcpAddress(InetSocketAddress rtcpAddress) {
-	this.rtcpAddress = rtcpAddress;
+    this.rtcpAddress = rtcpAddress;
     }
 
     public InetSocketAddress getRtcpAddress() {
-	return rtcpAddress;
+    return rtcpAddress;
     }
 
     public void setMediaInfo(MediaInfo mediaInfo) {
-	this.mediaInfo = mediaInfo;
+    this.mediaInfo = mediaInfo;
     }
 
     public MediaInfo getMediaInfo() {
-	return mediaInfo;
+    return mediaInfo;
     }
 
     public void setTransmitMediaInfoOk(boolean transmitMediaInfoOk) {
-	this.transmitMediaInfoOk = transmitMediaInfoOk;
+    this.transmitMediaInfoOk = transmitMediaInfoOk;
     }
 
     public boolean getTransmitMediaInfoOk() {
-	return transmitMediaInfoOk;
+    return transmitMediaInfoOk;
     }
 
     public void setTransmitMediaInfo(MediaInfo transmitMediaInfo) {
-	this.transmitMediaInfo = transmitMediaInfo;
+    this.transmitMediaInfo = transmitMediaInfo;
     }
 
     public MediaInfo getTransmitMediaInfo() {
-	if (transmitMediaInfo == null || mediaInfo.getPayload() ==
-		RtpPacket.PCMU_PAYLOAD) {
+    if (transmitMediaInfo == null || mediaInfo.getPayload() ==
+        RtpPacket.PCMU_PAYLOAD) {
 
-	    return mediaInfo;
-	}
+        return mediaInfo;
+    }
 
-	int transmitSampleRate = transmitMediaInfo.getSampleRate();
+    int transmitSampleRate = transmitMediaInfo.getSampleRate();
 
-	if (transmitSampleRate > mediaInfo.getSampleRate()) {
-	    transmitSampleRate = mediaInfo.getSampleRate();
-	}
+    if (transmitSampleRate > mediaInfo.getSampleRate()) {
+        transmitSampleRate = mediaInfo.getSampleRate();
+    }
 
-	int transmitChannels = transmitMediaInfo.getChannels();
+    int transmitChannels = transmitMediaInfo.getChannels();
 
-	if (transmitChannels > mediaInfo.getChannels()) {
-	    transmitChannels = mediaInfo.getChannels();
-	}
+    if (transmitChannels > mediaInfo.getChannels()) {
+        transmitChannels = mediaInfo.getChannels();
+    }
 
-	try {
-	    transmitMediaInfo = MediaInfo.findMediaInfo(
-		transmitMediaInfo.getEncoding(),
-		transmitSampleRate, transmitChannels);
-	} catch (IOException e) {
-	    Logger.println(e.getMessage());
-	    Logger.println("Using transmit media info " + transmitMediaInfo);
-	}
+    try {
+        transmitMediaInfo = MediaInfo.findMediaInfo(
+        transmitMediaInfo.getEncoding(),
+        transmitSampleRate, transmitChannels);
+    } catch (IOException e) {
+        Logger.println(e.getMessage());
+        Logger.println("Using transmit media info " + transmitMediaInfo);
+    }
 
-	return transmitMediaInfo;
+    return transmitMediaInfo;
     }
 
     public boolean preferredMediaSpecified() {
-	return preferredMediaSpecified;
+    return preferredMediaSpecified;
     }
 
     public void setSynchronizationSource(int synchronizationSource) {
-	Logger.println("Setting sync to " + synchronizationSource);
-	this.synchronizationSource = synchronizationSource;
+    Logger.println("Setting sync to " + synchronizationSource);
+    this.synchronizationSource = synchronizationSource;
     }
 
     public int getSynchronizationSource() {
-	return synchronizationSource;
+    return synchronizationSource;
     }
 
     public boolean isSupported(MediaInfo mediaInfo) {
-	try {
-	    getMediaInfo(mediaInfo.getSampleRate(), mediaInfo.getChannels(),
-		mediaInfo.getEncoding());
-	} catch (IOException e) {
-	    return false;
-	}
+    try {
+        getMediaInfo(mediaInfo.getSampleRate(), mediaInfo.getChannels(),
+        mediaInfo.getEncoding());
+    } catch (IOException e) {
+        return false;
+    }
 
-	return true;
+    return true;
     }
 
     public MediaInfo getMediaInfo(int sampleRate, int channels, int encoding)
-	    throws IOException {
+        throws IOException {
 
-	if (supportedMedia != null) {
-	    for (int i = 0; i < supportedMedia.size(); i++) {
-	        MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
+    if (supportedMedia != null) {
+        for (int i = 0; i < supportedMedia.size(); i++) {
+            MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
 
-	        if (mediaInfo.getSampleRate() == sampleRate &&
-		        mediaInfo.getChannels() == channels &&
-		        mediaInfo.getEncoding() == encoding) {
+            if (mediaInfo.getSampleRate() == sampleRate &&
+                mediaInfo.getChannels() == channels &&
+                mediaInfo.getEncoding() == encoding) {
 
-		    return mediaInfo;
-	        }
-	    }
-	}
+            return mediaInfo;
+            }
+        }
+    }
 
-	throw new IOException("No Suitable media for "
-	    + encoding + "/" + sampleRate + "/" + channels);
+    throw new IOException("No Suitable media for "
+        + encoding + "/" + sampleRate + "/" + channels);
     }
 
     public MediaInfo findBestMediaInfo(Vector otherSupportedMedia,  MediaInfo otherMediaPreference) throws IOException {
 
-	MediaInfo best = null;
+    MediaInfo best = null;
 
         for (int i = 0; i < otherSupportedMedia.size(); i++) {
-	    MediaInfo m = (MediaInfo) otherSupportedMedia.elementAt(i);
+        MediaInfo m = (MediaInfo) otherSupportedMedia.elementAt(i);
 
-	    if (!isSupported(m)) {
-		continue;
-	    }
+        if (!isSupported(m)) {
+        continue;
+        }
 
-	    if (otherMediaPreference != null) {
-		if (m.getSampleRate() > otherMediaPreference.getSampleRate() ||
-		        m.getChannels() > otherMediaPreference.getChannels()) {
+        if (otherMediaPreference != null) {
+        if (m.getSampleRate() > otherMediaPreference.getSampleRate() ||
+                m.getChannels() > otherMediaPreference.getChannels()) {
 
-		    continue;
-		}
-	    }
+            continue;
+        }
+        }
 
-	    if (best == null || isBetter(m, best)) {
-		best = m;
-	    }
-	}
+        if (best == null || isBetter(m, best)) {
+        best = m;
+        }
+    }
 
-	if (best == null) {
-	   throw new IOException("No supported Media!");
-	}
+    if (best == null) {
+       throw new IOException("No supported Media!");
+    }
 
-	return best;
+    return best;
     }
 
     private boolean isBetter(MediaInfo m1, MediaInfo m2) {
-	if (m1.getSampleRate() > m2.getSampleRate() &&
-	        m1.getChannels() >= m2.getChannels()) {
+    if (m1.getSampleRate() > m2.getSampleRate() &&
+            m1.getChannels() >= m2.getChannels()) {
 
-	    return true;
-	}
+        return true;
+    }
 
-	if (m1.getSampleRate() == m2.getSampleRate() &&
-		m1.getChannels() > m2.getChannels()) {
+    if (m1.getSampleRate() == m2.getSampleRate() &&
+        m1.getChannels() > m2.getChannels()) {
 
-	    return true;
-	}
+        return true;
+    }
 
-	return false;
+    return false;
     }
 
 }

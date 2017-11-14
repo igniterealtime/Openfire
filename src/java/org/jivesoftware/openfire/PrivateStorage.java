@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PrivateStorage extends BasicModule implements UserEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PrivateStorage.class);
+    private static final Logger Log = LoggerFactory.getLogger(PrivateStorage.class);
 
     private static final String LOAD_PRIVATE =
         "SELECT privateData FROM ofPrivate WHERE username=? AND name=? AND namespace=?";
@@ -224,7 +224,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -238,7 +238,7 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();

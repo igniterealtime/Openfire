@@ -38,12 +38,12 @@ public class SpeexDecoder {
     private boolean bigEndian = true;
 
     public SpeexDecoder(int sampleRate, int channels) throws SpeexException {
-	this.sampleRate = sampleRate;
-	this.channels = channels;
+    this.sampleRate = sampleRate;
+    this.channels = channels;
 
         speexDecoder = new org.xiph.speex.SpeexDecoder();
 
-	int mode = 0;
+    int mode = 0;
 
         String s = " Narrow Band";
 
@@ -57,14 +57,14 @@ public class SpeexDecoder {
             mode++;         // ultra wide band
         }
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("Initializing Speex Decoder using "
                 + sampleRate + "/" + channels);
-	}
+    }
 
         if (speexDecoder.init(mode, sampleRate, channels, true) == false) {
             throw new SpeexException(
-		"Speex decoder initialization failed!");
+        "Speex decoder initialization failed!");
         }
 
         try {
@@ -83,26 +83,26 @@ public class SpeexDecoder {
     public int[] decodeToIntArray(byte[] data, int offset, int length) 
             throws SpeexException {
 
-	byte[] byteData = decodeToByteArray(data, offset, length);
+    byte[] byteData = decodeToByteArray(data, offset, length);
 
-	return AudioConversion.bytesToInts(byteData);
+    return AudioConversion.bytesToInts(byteData);
     }
 
     public byte[] decodeToByteArray(byte[] data, int offset, int length) 
             throws SpeexException {
 
-	if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
-	    Util.dump("decode input:  offset " + offset 
-		+ " length " + length, data, 0, offset + length);
- 	}
+    if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
+        Util.dump("decode input:  offset " + offset 
+        + " length " + length, data, 0, offset + length);
+    }
 
         long start = CurrentTime.getTime();
 
-	try {
+    try {
             speexDecoder.processData(data, offset, length);
-	} catch (java.io.StreamCorruptedException e) {
-	    throw new SpeexException(e.getMessage());
-	}
+    } catch (java.io.StreamCorruptedException e) {
+        throw new SpeexException(e.getMessage());
+    }
 
         int decodedLength = speexDecoder.getProcessedDataByteSize();
 
@@ -111,39 +111,39 @@ public class SpeexDecoder {
             throw new SpeexException("Decoded length negative");
         }
 
-	byte[] byteData = new byte[decodedLength];
+    byte[] byteData = new byte[decodedLength];
 
         speexDecoder.getProcessedData(byteData, 0);
 
-	if (bigEndian == false) {
-	    /*
-	     * The latest version of Speex only understands little endian
-	     */
-	    for (int i = 0; i < byteData.length; i += 2) {
-	        byte b = byteData[i];
+    if (bigEndian == false) {
+        /*
+         * The latest version of Speex only understands little endian
+         */
+        for (int i = 0; i < byteData.length; i += 2) {
+            byte b = byteData[i];
 
-	        byteData[i] = byteData[i + 1];
-	        byteData[i + 1] = b;
-	    }
-	}
+            byteData[i] = byteData[i + 1];
+            byteData[i + 1] = b;
+        }
+    }
 
         decodes++;
         decodeTime += (CurrentTime.getTime() - start);
 
-	return byteData;
+    return byteData;
     }
 
     public int getDecodes() {
-	return decodes;
+    return decodes;
     }
 
     public long getDecodeTime() {
-	return decodeTime;
+    return decodeTime;
     }
 
     public void resetStatistics() {
-	decodes = 0;
-	decodeTime = 0;
+    decodes = 0;
+    decodeTime = 0;
     }
 
 }

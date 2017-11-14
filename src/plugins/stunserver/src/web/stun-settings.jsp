@@ -57,7 +57,7 @@
 </script>
 
 <%
-	STUNService stunService = (STUNService) XMPPServer.getInstance().getPluginManager().getPlugin("stunserver");
+    STUNService stunService = (STUNService) XMPPServer.getInstance().getPluginManager().getPlugin("stunserver");
 
     boolean save = request.getParameter("save") != null;
     boolean add = request.getParameter("add") != null;

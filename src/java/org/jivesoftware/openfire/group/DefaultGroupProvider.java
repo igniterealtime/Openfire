@@ -38,7 +38,7 @@ import org.xmpp.packet.JID;
  */
 public class DefaultGroupProvider extends AbstractGroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultGroupProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultGroupProvider.class);
 
     private static final String INSERT_GROUP =
         "INSERT INTO ofGroup (groupName, description) VALUES (?, ?)";

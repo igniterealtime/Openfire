@@ -50,8 +50,8 @@ import org.slf4j.LoggerFactory;
  */
 public class WordMatchRouter extends RequestRouter {
 
-	private static final Logger Log = LoggerFactory.getLogger(WordMatchRouter.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WordMatchRouter.class);
+    
     private boolean stemmingEnabled;
     private Analyzer analyzer;
 
@@ -106,7 +106,7 @@ public class WordMatchRouter extends RequestRouter {
     }
 
     @Override
-	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         return false;
     }
 
@@ -182,7 +182,7 @@ public class WordMatchRouter extends RequestRouter {
      */
     private class StemmingAnalyzer extends Analyzer {
         @Override
-		public final TokenStream tokenStream(String fieldName, Reader reader) {
+        public final TokenStream tokenStream(String fieldName, Reader reader) {
             // Apply stop words and porter stemmer using a lower-case tokenizer.
             TokenStream stream = new StopFilter(new LowerCaseTokenizer(reader),
                 StandardAnalyzer.STOP_WORDS);

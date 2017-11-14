@@ -48,9 +48,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQRouter extends BasicModule {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQRouter.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQRouter.class);
 
-	private RoutingTable routingTable;
+    private RoutingTable routingTable;
     private MulticastRouter multicastRouter;
     private String serverName;
     private List<IQHandler> iqHandlers = new ArrayList<>();
@@ -187,64 +187,64 @@ public class IQRouter extends BasicModule {
     }
 
     /**
-	 * Adds an {@link IQResultListener} that will be invoked when an IQ result
-	 * is sent to the server itself and is of type result or error. This is a
-	 * nice way for the server to send IQ packets to other XMPP entities and be
-	 * waked up when a response is received back.<p>
+     * Adds an {@link IQResultListener} that will be invoked when an IQ result
+     * is sent to the server itself and is of type result or error. This is a
+     * nice way for the server to send IQ packets to other XMPP entities and be
+     * waked up when a response is received back.<p>
      *
-	 * Once an IQ result was received, the listener will be invoked and removed
-	 * from the list of listeners.<p>
-	 *
-	 * If no result was received within one minute, the timeout method of the
-	 * listener will be invoked and the listener will be removed from the list
-	 * of listeners.
+     * Once an IQ result was received, the listener will be invoked and removed
+     * from the list of listeners.<p>
      *
-	 * @param id
-	 *            the id of the IQ packet being sent from the server to an XMPP
-	 *            entity.
-	 * @param listener
-	 *            the IQResultListener that will be invoked when an answer is
-	 *            received
+     * If no result was received within one minute, the timeout method of the
+     * listener will be invoked and the listener will be removed from the list
+     * of listeners.
+     *
+     * @param id
+     *            the id of the IQ packet being sent from the server to an XMPP
+     *            entity.
+     * @param listener
+     *            the IQResultListener that will be invoked when an answer is
+     *            received
      */
     public void addIQResultListener(String id, IQResultListener listener) {
         addIQResultListener(id, listener, 60 * 1000);
     }
 
     /**
-	 * Adds an {@link IQResultListener} that will be invoked when an IQ result
-	 * is sent to the server itself and is of type result or error. This is a
-	 * nice way for the server to send IQ packets to other XMPP entities and be
-	 * waked up when a response is received back.<p>
-	 *
-	 * Once an IQ result was received, the listener will be invoked and removed
-	 * from the list of listeners.<p>
-	 *
-	 * If no result was received within the specified amount of milliseconds,
-	 * the timeout method of the listener will be invoked and the listener will
-	 * be removed from the list of listeners.<p>
-	 *
-	 * Note that the listener will remain active for <em>at least</em> the
-	 * specified timeout value. The listener will not be removed at the exact
-	 * moment it times out. Instead, purging of timed out listeners is a
-	 * periodic scheduled job.
-	 *
-	 * @param id
-	 *            the id of the IQ packet being sent from the server to an XMPP
-	 *            entity.
-	 * @param listener
-	 *            the IQResultListener that will be invoked when an answer is
-	 *            received.
-	 * @param timeoutmillis
-	 *            The amount of milliseconds after which waiting for a response
-	 *            should be stopped.
-	 */
+     * Adds an {@link IQResultListener} that will be invoked when an IQ result
+     * is sent to the server itself and is of type result or error. This is a
+     * nice way for the server to send IQ packets to other XMPP entities and be
+     * waked up when a response is received back.<p>
+     *
+     * Once an IQ result was received, the listener will be invoked and removed
+     * from the list of listeners.<p>
+     *
+     * If no result was received within the specified amount of milliseconds,
+     * the timeout method of the listener will be invoked and the listener will
+     * be removed from the list of listeners.<p>
+     *
+     * Note that the listener will remain active for <em>at least</em> the
+     * specified timeout value. The listener will not be removed at the exact
+     * moment it times out. Instead, purging of timed out listeners is a
+     * periodic scheduled job.
+     *
+     * @param id
+     *            the id of the IQ packet being sent from the server to an XMPP
+     *            entity.
+     * @param listener
+     *            the IQResultListener that will be invoked when an answer is
+     *            received.
+     * @param timeoutmillis
+     *            The amount of milliseconds after which waiting for a response
+     *            should be stopped.
+     */
     public void addIQResultListener(String id, IQResultListener listener, long timeoutmillis) {
         resultListeners.put(id, listener);
         resultTimeout.put(id, System.currentTimeMillis() + timeoutmillis);
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         TaskEngine.getInstance().scheduleAtFixedRate(new TimeoutTask(), 5000, 5000);
         serverName = server.getServerInfo().getXMPPDomain();
@@ -372,14 +372,14 @@ public class IQRouter extends BasicModule {
             }
             else {
 
-				// RFC 6121 8.5.1.  No Such User http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser
-				// If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
-				// If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
-				if (recipientJID != null && recipientJID.getNode() != null && serverName.equals(recipientJID.getDomain()) && !userManager.isRegisteredUser(recipientJID.getNode()) && sessionManager.getSession(recipientJID) == null && (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType())) {
-					// For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
-					sendErrorPacket(packet, PacketError.Condition.service_unavailable);
-					return;
-				}
+                // RFC 6121 8.5.1.  No Such User http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser
+                // If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
+                // If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
+                if (recipientJID != null && recipientJID.getNode() != null && serverName.equals(recipientJID.getDomain()) && !userManager.isRegisteredUser(recipientJID.getNode()) && sessionManager.getSession(recipientJID) == null && (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType())) {
+                    // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
+                    sendErrorPacket(packet, PacketError.Condition.service_unavailable);
+                    return;
+                }
 
                 ClientSession session = sessionManager.getSession(packet.getFrom());
                 boolean isAcceptable = true;
@@ -423,9 +423,9 @@ public class IQRouter extends BasicModule {
             return;
         }
         if (originalPacket.getFrom() == null) {
-        	if (Log.isDebugEnabled()) {
-        		Log.debug("Original IQ has no sender for reply; dropped: " + originalPacket.toXML());
-        	}
+            if (Log.isDebugEnabled()) {
+                Log.debug("Original IQ has no sender for reply; dropped: " + originalPacket.toXML());
+            }
             return;
         }
         IQ reply = IQ.createResultIQ(originalPacket);
@@ -484,13 +484,13 @@ public class IQRouter extends BasicModule {
     }
 
     /**
-	 * Timer task that will remove Listeners that wait for results to IQ stanzas
-	 * that have timed out. Time out values can be set to each listener
-	 * individually by adjusting the timeout value in the third parameter of
-	 * {@link IQRouter#addIQResultListener(String, IQResultListener, long)}.
-	 *
-	 * @author Guus der Kinderen, guus@nimbuzz.com
-	 */
+     * Timer task that will remove Listeners that wait for results to IQ stanzas
+     * that have timed out. Time out values can be set to each listener
+     * individually by adjusting the timeout value in the third parameter of
+     * {@link IQRouter#addIQResultListener(String, IQResultListener, long)}.
+     *
+     * @author Guus der Kinderen, guus@nimbuzz.com
+     */
     private class TimeoutTask extends TimerTask {
 
         /**
@@ -528,5 +528,5 @@ public class IQRouter extends BasicModule {
                 it.remove();
             }
         }
-	}
+    }
 }

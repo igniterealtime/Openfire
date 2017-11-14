@@ -62,7 +62,7 @@ import com.jcraft.jzlib.ZOutputStream;
  */
 public class SocketConnection implements Connection {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
     private static Map<SocketConnection, String> instances =
             new ConcurrentHashMap<>();
@@ -336,7 +336,7 @@ public class SocketConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-    	return state.get() == State.CLOSED;
+        return state.get() == State.CLOSED;
     }
 
     @Override
@@ -499,40 +499,40 @@ public class SocketConnection implements Connection {
      * the connection and its session.
      */
     private void close(boolean force) {
-    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
-    		
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            
             if (session != null) {
                 session.setStatus(Session.STATUS_CLOSED);
             }
 
             if (!force) {
-	            boolean allowedToWrite = false;
-	            try {
-	                requestWriting();
-	                allowedToWrite = true;
-	                // Register that we started sending data on the connection
-	                writeStarted();
-	                writer.write("</stream:stream>");
-	                if (flashClient) {
-	                    writer.write('\0');
-	                }
-	                writer.flush();
-	            }
-	            catch (Exception e) {
-	                Log.debug("Failed to deliver stream close tag: " + e.getMessage());
-	            }
-	            
-	            // Register that we finished sending data on the connection
-	            writeFinished();
-	            if (allowedToWrite) {
-	                releaseWriting();
-	            }
+                boolean allowedToWrite = false;
+                try {
+                    requestWriting();
+                    allowedToWrite = true;
+                    // Register that we started sending data on the connection
+                    writeStarted();
+                    writer.write("</stream:stream>");
+                    if (flashClient) {
+                        writer.write('\0');
+                    }
+                    writer.flush();
+                }
+                catch (Exception e) {
+                    Log.debug("Failed to deliver stream close tag: " + e.getMessage());
+                }
+                
+                // Register that we finished sending data on the connection
+                writeFinished();
+                if (allowedToWrite) {
+                    releaseWriting();
+                }
             }
                 
             closeConnection();
             notifyCloseListeners();
             
-    	}
+        }
     }
 
     @Override
@@ -724,7 +724,7 @@ public class SocketConnection implements Connection {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " socket: " + socket + " session: " + session;
     }
 

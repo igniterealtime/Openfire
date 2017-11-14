@@ -41,7 +41,7 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.title"));
         form.addInstruction(
@@ -62,7 +62,7 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         List<String> nodeIDs = data.getData().get("pubsub#node");
         if (nodeIDs.isEmpty()) {
@@ -106,32 +106,32 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/pubsub#get-pending";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.label");
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         // User has permission if he is an owner of at least one node or is a sysadmin
         for (Node node : service.getNodes()) {
             if (!node.isCollectionNode() && node.isAdmin(requester)) {

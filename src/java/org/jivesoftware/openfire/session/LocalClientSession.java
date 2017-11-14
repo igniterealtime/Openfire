@@ -53,7 +53,7 @@ import org.xmpp.packet.StreamError;
  */
 public class LocalClientSession extends LocalSession implements ClientSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
@@ -862,7 +862,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already secured
         if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
@@ -902,8 +902,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
             // Offer XEP-0198 stream management capabilities if enabled.
             if(JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true)) {
-            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
-            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
+                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
         }
         return sb.toString();
@@ -938,7 +938,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return true if the specified packet must be blocked.
      */
     @Override
-	public boolean canProcess(Packet packet) {
+    public boolean canProcess(Packet packet) {
 
         PrivacyList list = getActiveList();
         if (list != null) {
@@ -954,7 +954,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	public void deliver(Packet packet) throws UnauthorizedException {
+    public void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null) {
             conn.deliver(packet);
         }
@@ -962,7 +962,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " presence: " + presence;
     }
 }

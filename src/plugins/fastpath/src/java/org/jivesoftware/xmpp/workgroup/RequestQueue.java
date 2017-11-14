@@ -57,8 +57,8 @@ import org.xmpp.packet.Presence;
  */
 public class RequestQueue {
 
-	private static final Logger Log = LoggerFactory.getLogger(RequestQueue.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(RequestQueue.class);
+    
     private static final String LOAD_QUEUE =
             "SELECT name, description, priority, maxchats, minchats, overflow, backupQueue FROM " +
             "fpQueue WHERE queueID=?";

@@ -130,7 +130,7 @@ public final class Version implements Comparable<Version> {
      * @return The version as a string
      */
     public String getVersionString() {
-    	if (versionString == null) {
+        if (versionString == null) {
             StringBuilder sb = new StringBuilder();
             sb.append(major).append('.').append(minor).append('.').append(micro);
             if (status != ReleaseStatus.Release || statusVersion != -1) {
@@ -140,7 +140,7 @@ public final class Version implements Comparable<Version> {
                 }
             }
             versionString = sb.toString();
-    	}
+        }
         return versionString;
     }
 
@@ -205,7 +205,7 @@ public final class Version implements Comparable<Version> {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return status;
         }
     }
@@ -216,7 +216,7 @@ public final class Version implements Comparable<Version> {
      * @param otherVersion a verion to comapr against
      */
     public boolean isNewerThan(Version otherVersion) {
-    	return this.compareTo(otherVersion) > 0;
+        return this.compareTo(otherVersion) > 0;
     }
 
     @Override

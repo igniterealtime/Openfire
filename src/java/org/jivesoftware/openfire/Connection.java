@@ -32,7 +32,7 @@ import org.xmpp.packet.Packet;
  * @author Iain Shigeoka
  */
 public interface Connection extends Closeable {
-	
+    
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -104,23 +104,23 @@ public interface Connection extends Closeable {
      */
     String getHostName() throws UnknownHostException;
 
-	/**
-	 * Returns the local underlying {@link javax.security.cert.X509Certificate}
-	 * chain for the connection.
-	 * 
-	 * @return an ordered array of certificates, with the local certificate
-	 *         first followed by any certificate authorities. If no certificates
-	 *         is present for the connection, then <tt>null</tt> is returned.
-	 */
+    /**
+     * Returns the local underlying {@link javax.security.cert.X509Certificate}
+     * chain for the connection.
+     * 
+     * @return an ordered array of certificates, with the local certificate
+     *         first followed by any certificate authorities. If no certificates
+     *         is present for the connection, then <tt>null</tt> is returned.
+     */
     Certificate[] getLocalCertificates();
 
-	/**
-	 * Returns the underlying {@link javax.security.cert.X509Certificate} for
-	 * the connection of the peer.
-	 * 
-	 * @return an ordered array of peer certificates, with the peer's own
-	 *         certificate first followed by any certificate authorities.
-	 */
+    /**
+     * Returns the underlying {@link javax.security.cert.X509Certificate} for
+     * the connection of the peer.
+     * 
+     * @return an ordered array of peer certificates, with the peer's own
+     *         certificate first followed by any certificate authorities.
+     */
     Certificate[] getPeerCertificates();
 
     /**

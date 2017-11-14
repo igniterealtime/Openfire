@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
 
     private static List<SessionEventListener> listeners =
             new CopyOnWriteArrayList<>();

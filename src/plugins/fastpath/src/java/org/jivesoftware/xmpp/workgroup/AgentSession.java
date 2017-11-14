@@ -52,7 +52,7 @@ import org.xmpp.packet.Presence;
  */
 public class AgentSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(AgentSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(AgentSession.class);
 
     private static final FastDateFormat UTC_FORMAT = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("GMT+0"));
 
@@ -324,7 +324,7 @@ public class AgentSession {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return "AI-" + Integer.toHexString(hashCode()) +
             " JID " + address.toString() +
             " CC " + Integer.toString(chatInfos.size()) +
@@ -441,7 +441,7 @@ public class AgentSession {
     }
 
     @Override
-	public boolean equals(Object o) {
+    public boolean equals(Object o) {
         boolean match = false;
         if (o instanceof AgentSession) {
             match = ((AgentSession)o).getJID().equals(address);

@@ -47,7 +47,7 @@ import org.xmpp.packet.Presence;
  */
 public class ComponentStanzaHandler extends StanzaHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(ComponentStanzaHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(ComponentStanzaHandler.class);
 
     public ComponentStanzaHandler(PacketRouter router, Connection connection) {
         super(router, connection);
@@ -59,7 +59,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
         String tag = doc.getName();
         if ("handshake".equals(tag)) {
             // External component is trying to authenticate
@@ -133,7 +133,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processIQ(IQ packet) throws UnauthorizedException {
+    protected void processIQ(IQ packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
@@ -158,7 +158,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processPresence(Presence packet) throws UnauthorizedException {
+    protected void processPresence(Presence packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             Presence reply = new Presence();
@@ -173,7 +173,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processMessage(Message packet) throws UnauthorizedException {
+    protected void processMessage(Message packet) throws UnauthorizedException {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             Message reply = new Message();
@@ -188,27 +188,27 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	void startTLS() throws Exception {
+    void startTLS() throws Exception {
         connection.startTLS(false);
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:component:accept";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return false;
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         return false;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession

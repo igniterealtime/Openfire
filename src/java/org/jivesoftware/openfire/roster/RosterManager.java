@@ -227,7 +227,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return the list of shared groups whose visibility is public.
      */
     public Collection<Group> getPublicSharedGroups() {
-    	return GroupManager.getInstance().getPublicSharedGroups();
+        return GroupManager.getInstance().getPublicSharedGroups();
     }
 
     /**
@@ -375,7 +375,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         this.routingTable = server.getRoutingTable();
@@ -780,7 +780,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     private Collection<Group> getVisibleGroups(Group groupToCheck) {
-    	return GroupManager.getInstance().getVisibleGroups(groupToCheck);
+        return GroupManager.getInstance().getVisibleGroups(groupToCheck);
     }
 
     /**
@@ -975,7 +975,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         // Add this module as a user event listener so we can update
         // rosters when users are created or deleted
@@ -985,7 +985,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(this);

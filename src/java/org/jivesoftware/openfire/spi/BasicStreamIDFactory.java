@@ -69,12 +69,12 @@ public class BasicStreamIDFactory implements StreamIDFactory {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return id;
         }
 
         @Override
-		public int hashCode() {
+        public int hashCode() {
             return id.hashCode();
         }
 

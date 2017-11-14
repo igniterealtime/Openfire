@@ -36,7 +36,7 @@ public class A extends com.jcumulus.server.rtmfp.publisher.E
 {
     static enum _A
     {
-		IDLE, PUBLISHING, PLAYING
+        IDLE, PUBLISHING, PLAYING
     }
 
     private static final Logger _ = Logger.getLogger(E.class);

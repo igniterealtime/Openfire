@@ -37,8 +37,8 @@ public class LowPassFilter {
     private int[] previousSamples;	
 
     public LowPassFilter(String id, int sampleRate, int channels) {
-	this.id = id;
-	this.channels = channels;
+    this.id = id;
+    this.channels = channels;
     }
 
     public void reset() {
@@ -46,149 +46,149 @@ public class LowPassFilter {
     }
 
     public void printStatistics() {
-	if (lpfCount == 0) {
-	    return;
-	}
+    if (lpfCount == 0) {
+        return;
+    }
 
-	String s = "";
+    String s = "";
 
-	if (id != null) {
+    if (id != null) {
             s += id + ":  ";
-	}
+    }
 
-	double avg = (double) totalLpfTime / lpfCount;
+    double avg = (double) totalLpfTime / lpfCount;
 
-	avg = (avg / CurrentTime.getTimeUnitsPerSecond()) * 1000;
+    avg = (avg / CurrentTime.getTimeUnitsPerSecond()) * 1000;
 
-	Logger.writeFile(s + avg + "ms avg low pass filter time");
+    Logger.writeFile(s + avg + "ms avg low pass filter time");
     }
 
     private static final int MAX_NAVG = 50;
 
     public static void setNAvg(int nAvg) {
-	if (nAvg > MAX_NAVG) {
-	    nAvg = MAX_NAVG;
-	}
+    if (nAvg > MAX_NAVG) {
+        nAvg = MAX_NAVG;
+    }
 
-	LowPassFilter.nAvg = nAvg;
+    LowPassFilter.nAvg = nAvg;
 
-	Logger.println("nAvg set to " + nAvg);
+    Logger.println("nAvg set to " + nAvg);
 
-	double x = Math.exp(-2 * Math.PI * (nAvg / 500D));
-	a0 = 1 - x;
-	b1 = x;
+    double x = Math.exp(-2 * Math.PI * (nAvg / 500D));
+    a0 = 1 - x;
+    b1 = x;
 
-	Logger.println("SP:  cutoff = " + (nAvg / 500D) + " a0 " + a0
-	    + " b1 " + b1);
+    Logger.println("SP:  cutoff = " + (nAvg / 500D) + " a0 " + a0
+        + " b1 " + b1);
     }
 
     public static int getNAvg() {
-	return nAvg;
+    return nAvg;
     }
 
     public static void setLpfVolumeAdjustment(double lpfVolumeAdjustment) {
-	LowPassFilter.lpfVolumeAdjustment = lpfVolumeAdjustment;
+    LowPassFilter.lpfVolumeAdjustment = lpfVolumeAdjustment;
     }
 
     public static double getLpfVolumeAdjustment() {
-	return lpfVolumeAdjustment;
+    return lpfVolumeAdjustment;
     }
 
     /*
      * Low pass filter using moving average
      */
     public byte[] lpf(byte[] inSamples) {
-	int length = inSamples.length & ~1;	// round down
+    int length = inSamples.length & ~1;	// round down
 
-	int[] ints = new int[length / 2];
+    int[] ints = new int[length / 2];
 
-	AudioConversion.bytesToInts(inSamples, 0, length, ints);
+    AudioConversion.bytesToInts(inSamples, 0, length, ints);
 
-	ints = lpf(ints);
+    ints = lpf(ints);
 
-	byte[] bytes = new byte[ints.length * 2];
+    byte[] bytes = new byte[ints.length * 2];
 
-	AudioConversion.intsToBytes(ints, bytes, 0);
+    AudioConversion.intsToBytes(ints, bytes, 0);
 
-	return bytes;
+    return bytes;
     }
 
     public int[] lpf(int[] inSamples) {
-	long start = CurrentTime.getTime();
-	
-	if (nAvg > inSamples.length / channels) {
-	    nAvg = inSamples.length / channels;
-	}
+    long start = CurrentTime.getTime();
+    
+    if (nAvg > inSamples.length / channels) {
+        nAvg = inSamples.length / channels;
+    }
 
-	if (nAvg < 2) {
-	    return inSamples;
-	}
+    if (nAvg < 2) {
+        return inSamples;
+    }
 
-	if (previousSamples == null || 
-		previousSamples.length != (nAvg -1) * channels) {
+    if (previousSamples == null || 
+        previousSamples.length != (nAvg -1) * channels) {
 
-	    previousSamples = new int[(nAvg - 1) * channels];
-	}
+        previousSamples = new int[(nAvg - 1) * channels];
+    }
 
-	int[] outSamples = new int[inSamples.length];
+    int[] outSamples = new int[inSamples.length];
 
-	/*
-	 * Save next set of previous samples
-	 */
-	int[] p = new int[previousSamples.length];
+    /*
+     * Save next set of previous samples
+     */
+    int[] p = new int[previousSamples.length];
 
-	System.arraycopy(inSamples, inSamples.length - p.length,
-	    p, 0, p.length);
+    System.arraycopy(inSamples, inSamples.length - p.length,
+        p, 0, p.length);
 
-	if (debug) {
-	    Util.dump("previous", previousSamples, 0, previousSamples.length);
-	    Util.dump("inSamples", inSamples, 0, inSamples.length);
-	}
+    if (debug) {
+        Util.dump("previous", previousSamples, 0, previousSamples.length);
+        Util.dump("inSamples", inSamples, 0, inSamples.length);
+    }
 
-	/*
-	 * Calculate volume level adjustment.  Averaging reduces the
-	 * volume level and we try to compensate for that.
-	 */
-	double volumeAdjustment = 1.0D + (lpfVolumeAdjustment * nAvg);
+    /*
+     * Calculate volume level adjustment.  Averaging reduces the
+     * volume level and we try to compensate for that.
+     */
+    double volumeAdjustment = 1.0D + (lpfVolumeAdjustment * nAvg);
 
-	/*
-	 * Calculate sum of nAvg samples using the previous samples
-	 * plus the first sample of inSamples.
-	 */
-	int sum1 = 0;
-	int sum2 = 0;
+    /*
+     * Calculate sum of nAvg samples using the previous samples
+     * plus the first sample of inSamples.
+     */
+    int sum1 = 0;
+    int sum2 = 0;
 
-	int ix = 0;
+    int ix = 0;
 
         for (int i = 0; i < nAvg - 1; i++) {
             sum1 += previousSamples[ix];
 
-	    ix++;
+        ix++;
 
             if (channels == 2) {
                 sum2 += previousSamples[ix];
-		ix++;
+        ix++;
             }
         }
 
-	if (debug) {
-	    Logger.println("First sum " + sum1);
-	}
+    if (debug) {
+        Logger.println("First sum " + sum1);
+    }
 
-	/*
-	 * Handle first nAvg - 1 samples special because
-	 * they involve previous samples.
-	 * After that, just the inSamples are used.
-	 */
-	ix = 0;
+    /*
+     * Handle first nAvg - 1 samples special because
+     * they involve previous samples.
+     * After that, just the inSamples are used.
+     */
+    ix = 0;
 
-	for (int i = 0; i < nAvg - 1; i++) {
+    for (int i = 0; i < nAvg - 1; i++) {
             sum1 += inSamples[ix];
 
-	    if (debug) {
-		Logger.println("Adding ix " + ix + " " + inSamples[ix]
-		    + " sum1 " + sum1);
-	    }
+        if (debug) {
+        Logger.println("Adding ix " + ix + " " + inSamples[ix]
+            + " sum1 " + sum1);
+        }
 
             /*
              * Set sample to be the average of the last nAvg samples.
@@ -198,13 +198,13 @@ public class LowPassFilter {
 
             sum1 -= previousSamples[ix];
 
-	    if (debug) {
-		Logger.println("subtracting previous ix " + ix + " " 
-		    + previousSamples[ix] + " sum1 " + sum1
-		    + " avg " + (sum1 / nAvg));
-	    }
+        if (debug) {
+        Logger.println("subtracting previous ix " + ix + " " 
+            + previousSamples[ix] + " sum1 " + sum1
+            + " avg " + (sum1 / nAvg));
+        }
 
-	    ix++;
+        ix++;
 
             if (channels == 2) {
                 sum2 += inSamples[ix];
@@ -215,60 +215,60 @@ public class LowPassFilter {
                 sum2 -= previousSamples[ix];
                 ix++;
             }
-	}
+    }
 
-	int indexToSubtract = 0;
+    int indexToSubtract = 0;
 
-	while (ix < inSamples.length) {
-	    sum1 += inSamples[ix];
+    while (ix < inSamples.length) {
+        sum1 += inSamples[ix];
 
-	    if (debug) {
-		Logger.println("Adding ix " + ix + " " + inSamples[ix]
-		    + " sum1 " + sum1);
-	    }
-	
+        if (debug) {
+        Logger.println("Adding ix " + ix + " " + inSamples[ix]
+            + " sum1 " + sum1);
+        }
+    
             /*
              * Set sample to be the average of the last nAvg samples.
              */
             outSamples[ix] = AudioConversion.clip(
-		(int) (volumeAdjustment * sum1 / nAvg));
+        (int) (volumeAdjustment * sum1 / nAvg));
 
-	    sum1 -= inSamples[indexToSubtract];
+        sum1 -= inSamples[indexToSubtract];
 
-	    if (debug) {
-		Logger.println("subtracting ix " + ix + " " 
-		    + inSamples[ix] + " sum1 " + sum1
-		    + " avg " + (sum1 / nAvg));
-	    }
-
-	    ix++;
-	    indexToSubtract++;
-
-            if (channels == 2) {
-		sum2 += inSamples[ix];
-
-                outSamples[ix] = AudioConversion.clip(
-		    (int) (volumeAdjustment * sum2 / nAvg));
-
-		sum2 -= inSamples[indexToSubtract];
-
-		ix++;
-	        indexToSubtract++;
-	    }
+        if (debug) {
+        Logger.println("subtracting ix " + ix + " " 
+            + inSamples[ix] + " sum1 " + sum1
+            + " avg " + (sum1 / nAvg));
         }
 
-	//verify(inSamples, outSamples);
+        ix++;
+        indexToSubtract++;
 
-	previousSamples = p;
+            if (channels == 2) {
+        sum2 += inSamples[ix];
 
-	totalLpfTime += (CurrentTime.getTime() - start);
-	lpfCount++;
+                outSamples[ix] = AudioConversion.clip(
+            (int) (volumeAdjustment * sum2 / nAvg));
 
-	if (debug) {
-	    Util.dump("outSamples", outSamples, 0, outSamples.length);
-	}
+        sum2 -= inSamples[indexToSubtract];
 
-	return outSamples;
+        ix++;
+            indexToSubtract++;
+        }
+        }
+
+    //verify(inSamples, outSamples);
+
+    previousSamples = p;
+
+    totalLpfTime += (CurrentTime.getTime() - start);
+    lpfCount++;
+
+    if (debug) {
+        Util.dump("outSamples", outSamples, 0, outSamples.length);
+    }
+
+    return outSamples;
     }
 
     /*
@@ -284,30 +284,30 @@ public class LowPassFilter {
     private static double x;
 
     public static void setX(double x) {
-	setParams(x, y);
+    setParams(x, y);
     }
  
     private static double y;
 
     public static void setY(double y) {
-	setParams(x, y);
+    setParams(x, y);
     }
  
     public static void setParams(double x, double y) {
-	LowPassFilter.x = x;
-	LowPassFilter.y = y;
+    LowPassFilter.x = x;
+    LowPassFilter.y = y;
 
-	if (x == 0 && y == 0) {
-	    Logger.println("Disabling Low Pass RC filter");
-	    return;
-	}
+    if (x == 0 && y == 0) {
+        Logger.println("Disabling Low Pass RC filter");
+        return;
+    }
 
-	double xx = Math.exp(-2 * Math.PI * (x / 2));
-	a0 = 1 - xx;
-	b1 = xx;
+    double xx = Math.exp(-2 * Math.PI * (x / 2));
+    a0 = 1 - xx;
+    b1 = xx;
 
-	Logger.println("SP:  cutoff = " + (x / 2) + " a0 " + a0
-	    + " b1 " + b1);
+    Logger.println("SP:  cutoff = " + (x / 2) + " a0 " + a0
+        + " b1 " + b1);
 
         int cutoff = (int) (x * 127);
         int resonance = (int) (y * 127);
@@ -315,15 +315,15 @@ public class LowPassFilter {
         c = Math.pow(0.5, (128 - cutoff) / 16.0);
         r = Math.pow(0.5, (resonance + 24) / 16.0);
 
-	Logger.println("setParams:  x = " + x + " y = " + y
-	    + " cutoff = " + cutoff + " resonance = " + resonance
-	    + " c = " + c + " r = " + r);
+    Logger.println("setParams:  x = " + x + " y = " + y
+        + " cutoff = " + cutoff + " resonance = " + resonance
+        + " c = " + c + " r = " + r);
     } 
 
     public byte[] lpfRC(byte[] inSamples) {
-	if (x == 0 && y == 0) {
-	    return inSamples;
-	}
+    if (x == 0 && y == 0) {
+        return inSamples;
+    }
 
         int length = inSamples.length & ~1;     // round down
 
@@ -341,53 +341,53 @@ public class LowPassFilter {
     }
 
     public int[] lpfRC(int[] inSamples) {
-	if (x == 0 && y == 0) {
-	    return inSamples;
-	}
+    if (x == 0 && y == 0) {
+        return inSamples;
+    }
 
-	int[] outSamples = new int[inSamples.length];
+    int[] outSamples = new int[inSamples.length];
 
         double v0 = 0;
 
         double v1 = 0;
 
-	double v2 = 0;
+    double v2 = 0;
 
-	double v3 = 0;
+    double v3 = 0;
 
-	int i = 0;
+    int i = 0;
 
-	while (i < inSamples.length) {
+    while (i < inSamples.length) {
             v0 = (double) 
-		((1 - r * c) * v0 - c * v1 + c * ((double)inSamples[i]));
+        ((1 - r * c) * v0 - c * v1 + c * ((double)inSamples[i]));
 
-	    v1 = (double) ((1 - r * c) * v1 + c * v0);
+        v1 = (double) ((1 - r * c) * v1 + c * v0);
 
-	    outSamples[i] = (int) (v1);
+        outSamples[i] = (int) (v1);
 
-	    i++;
+        i++;
 
-	    if (channels == 2) {
+        if (channels == 2) {
                 v2 = (double) 
-		    ((1 - r * c) * v2 - c * v3 + c * ((double)inSamples[i]));
+            ((1 - r * c) * v2 - c * v3 + c * ((double)inSamples[i]));
 
-	        v3 = (double) ((1 - r * c) * v3 + c * v2);
+            v3 = (double) ((1 - r * c) * v3 + c * v2);
 
-	        outSamples[i] = (int) (v3);
-	        i++;
-	    }
+            outSamples[i] = (int) (v3);
+            i++;
+        }
         }
 
-	return outSamples;
+    return outSamples;
     }
 
     private static double a0;
     private static double b1;
 
     public byte[] lpfSP(byte[] inSamples) {
-	if (a0 == 0) {
-	    return inSamples;
-	}
+    if (a0 == 0) {
+        return inSamples;
+    }
 
         int length = inSamples.length & ~1;     // round down
 
@@ -407,18 +407,18 @@ public class LowPassFilter {
     int[] lastOutSamples;
 
     public int[] lpfSP(int[] inSamples) {
-	if (a0 == 0) {
-	    return inSamples;
-	}
+    if (a0 == 0) {
+        return inSamples;
+    }
 
-	if (Logger.logLevel == -123) {
-	    Logger.println("a0 " + a0 + " b1 " + b1);
-	    Logger.logLevel = 3;
-	}
+    if (Logger.logLevel == -123) {
+        Logger.println("a0 " + a0 + " b1 " + b1);
+        Logger.logLevel = 3;
+    }
 
         int[] outSamples = new int[inSamples.length];
 
-	if (lastOutSamples != null) {
+    if (lastOutSamples != null) {
             outSamples[0] = (int) (
                 (a0 * inSamples[0]) + (b1 * lastOutSamples[0]));
 
@@ -426,88 +426,88 @@ public class LowPassFilter {
                 outSamples[1] = (int) (
                     (a0 * inSamples[1]) + (b1 * lastOutSamples[1]));
             }
-	} else {
-	    lastOutSamples = new int[channels];
-	    outSamples[0] = inSamples[0];
+    } else {
+        lastOutSamples = new int[channels];
+        outSamples[0] = inSamples[0];
 
-	    if (channels == 2) {
-	        outSamples[1] = inSamples[1];
-	    }
-	}
+        if (channels == 2) {
+            outSamples[1] = inSamples[1];
+        }
+    }
 
-	int i = channels;
+    int i = channels;
 
-	while (i < inSamples.length) {
-	    outSamples[i] = (int) (
-		(a0 * inSamples[i]) + (b1 * outSamples[i - channels]));
+    while (i < inSamples.length) {
+        outSamples[i] = (int) (
+        (a0 * inSamples[i]) + (b1 * outSamples[i - channels]));
 
-	    i++;
+        i++;
 
-	    if (channels == 2) {
-	        outSamples[i] = (int) 
-		    ((a0 * inSamples[i]) 
-		    + (b1 * outSamples[i - channels]));
+        if (channels == 2) {
+            outSamples[i] = (int) 
+            ((a0 * inSamples[i]) 
+            + (b1 * outSamples[i - channels]));
 
-		i++;
-	    }
+        i++;
+        }
         }
 
-	lastOutSamples[0] = outSamples[inSamples.length - channels];
+    lastOutSamples[0] = outSamples[inSamples.length - channels];
 
-	if (channels == 2) {
-	    lastOutSamples[1] = outSamples[inSamples.length - channels + 1];
-	}
+    if (channels == 2) {
+        lastOutSamples[1] = outSamples[inSamples.length - channels + 1];
+    }
 
-	return outSamples;
+    return outSamples;
     }
 
     private void verify(int[] inSamples, int[] outSamples) {
-	for (int i = nAvg; i < inSamples.length - nAvg; i++) {
-	    int sum = 0;
+    for (int i = nAvg; i < inSamples.length - nAvg; i++) {
+        int sum = 0;
 
-	    for (int j = 0; j < nAvg; j++) {
-	        sum += inSamples[i + j];
-	    }
+        for (int j = 0; j < nAvg; j++) {
+            sum += inSamples[i + j];
+        }
 
-	    if ((sum / nAvg) != outSamples[i + nAvg - 1]) {
-	        Util.dump("bad avg at " + i, inSamples, 0, 8);
-		Util.dump("out ", outSamples, 0, 8);
-		break;
-	    }
-	}
+        if ((sum / nAvg) != outSamples[i + nAvg - 1]) {
+            Util.dump("bad avg at " + i, inSamples, 0, 8);
+        Util.dump("out ", outSamples, 0, 8);
+        break;
+        }
+    }
     }
 
     /*
      * sin(x) / x
      */
     private static final double[] filterKernel = {
-	0D,
-	0.10929240478705181D,
-	0.23387232094715982D,
-	0.3678830105717742D,
-	0.5045511524271046D,
-	0.6366197723675814D,
-	0.756826728640657D,
-	0.8583936913341398D,
-	0.935489283788639D,
-	0.983631643083466D,
-	1D,
-	0.983631643083466D,
-	0.935489283788639D,
-	0.8583936913341398D,
-	0.756826728640657D,
-	0.6366197723675814D,
-	0.5045511524271046D,
-	0.3678830105717742D,
-	0.23387232094715982D,
-	0.10929240478705181D,
-	0D,
+    0D,
+    0.10929240478705181D,
+    0.23387232094715982D,
+    0.3678830105717742D,
+    0.5045511524271046D,
+    0.6366197723675814D,
+    0.756826728640657D,
+    0.8583936913341398D,
+    0.935489283788639D,
+    0.983631643083466D,
+    1D,
+    0.983631643083466D,
+    0.935489283788639D,
+    0.8583936913341398D,
+    0.756826728640657D,
+    0.6366197723675814D,
+    0.5045511524271046D,
+    0.3678830105717742D,
+    0.23387232094715982D,
+    0.10929240478705181D,
+    0D,
     };
 
     public int[] lpfxxx(int[] inSamples) {
-	long start = CurrentTime.getTime();
+    long start = CurrentTime.getTime();
 
-	if (previousSamples == null ||
+    if (previousSamples == null ||
                 previousSamples.length != (nAvg -1) * channels) {
 
             previousSamples = new int[(nAvg - 1) * channels];
@@ -521,61 +521,61 @@ public class LowPassFilter {
         System.arraycopy(inSamples, inSamples.length - p.length,
             p, 0, p.length);
 
-	int[] in = new int[previousSamples.length + inSamples.length];
+    int[] in = new int[previousSamples.length + inSamples.length];
 
-	for (int i = 0; i < previousSamples.length; i++) {
-	    in[i] = previousSamples[i];
-	}
+    for (int i = 0; i < previousSamples.length; i++) {
+        in[i] = previousSamples[i];
+    }
 
-	for (int i = 0; i < inSamples.length; i++) {
-	    in[previousSamples.length + i] = inSamples[i];
-	}
+    for (int i = 0; i < inSamples.length; i++) {
+        in[previousSamples.length + i] = inSamples[i];
+    }
 
-	previousSamples = p;
+    previousSamples = p;
 
-	int[] out = new int[in.length + filterKernel.length - 1];
+    int[] out = new int[in.length + filterKernel.length - 1];
 
-	/*
-	 * Do the convolution.
- 	 */
-	for (int i = 0; i < in.length; i++) {
-	    for (int j = 0; j < filterKernel.length; j++) {
-		out[i + j] += (int) (in[i] * filterKernel[j]);
-	    }
-	}
+    /*
+     * Do the convolution.
+     */
+    for (int i = 0; i < in.length; i++) {
+        for (int j = 0; j < filterKernel.length; j++) {
+        out[i + j] += (int) (in[i] * filterKernel[j]);
+        }
+    }
 
-	int[] outSamples = new int[inSamples.length];
+    int[] outSamples = new int[inSamples.length];
 
-	System.arraycopy(out, ((filterKernel.length - 1) / 2), 
-	    outSamples, 0, inSamples.length);
+    System.arraycopy(out, ((filterKernel.length - 1) / 2), 
+        outSamples, 0, inSamples.length);
 
         totalLpfTime += (CurrentTime.getTime() - start);
         lpfCount++;
 
-	if (debug) {
+    if (debug) {
             Util.dump("outSamples", outSamples, 0, outSamples.length);
         }
 
-	return outSamples;
+    return outSamples;
     }
-	
+    
     private static boolean debug = false;
 
     public static void main(String[] args) {
-	LowPassFilter lpf = new LowPassFilter("test", 8000, 1);
+    LowPassFilter lpf = new LowPassFilter("test", 8000, 1);
 
-	debug = true;
+    debug = true;
 
-	byte[] buf = new byte[320];
+    byte[] buf = new byte[320];
 
-	for (int i = 0; i < buf.length; i += 2) {
-	    buf[i] = (byte) (((i / 2) >> 8) & 0xff);
-	    buf[i + 1] = (byte) ((i / 2) & 0xff);
-	}
+    for (int i = 0; i < buf.length; i += 2) {
+        buf[i] = (byte) (((i / 2) >> 8) & 0xff);
+        buf[i + 1] = (byte) ((i / 2) & 0xff);
+    }
 
-	LowPassFilter.setNAvg(3);
-	LowPassFilter.setLpfVolumeAdjustment(0.0);
-	lpf.lpf(buf);
+    LowPassFilter.setNAvg(3);
+    LowPassFilter.setLpfVolumeAdjustment(0.0);
+    lpf.lpf(buf);
     }
     
 }

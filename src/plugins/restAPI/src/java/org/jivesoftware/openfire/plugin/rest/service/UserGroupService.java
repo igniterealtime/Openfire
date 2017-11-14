@@ -17,46 +17,46 @@ import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 @Path("restapi/v1/users/{username}/groups")
 public class UserGroupService {
 
-	private UserServiceController plugin;
+    private UserServiceController plugin;
 
-	@PostConstruct
-	public void init() {
-		plugin = UserServiceController.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        plugin = UserServiceController.getInstance();
+    }
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public UserGroupsEntity getUserGroups(@PathParam("username") String username) throws ServiceException {
-		return new UserGroupsEntity(plugin.getUserGroups(username));
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public UserGroupsEntity getUserGroups(@PathParam("username") String username) throws ServiceException {
+        return new UserGroupsEntity(plugin.getUserGroups(username));
+    }
 
-	@POST
-	public Response addUserToGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
-			throws ServiceException {
-		plugin.addUserToGroups(username, userGroupsEntity);
-		return Response.status(Response.Status.CREATED).build();
-	}
-	
-	@POST
-	@Path("/{groupName}")
-	public Response addUserToGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
-			throws ServiceException {
-		plugin.addUserToGroup(username, groupName);
-		return Response.status(Response.Status.CREATED).build();
-	}
-	
-	@DELETE
-	@Path("/{groupName}")
-	public Response deleteUserFromGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
-			throws ServiceException {
-		plugin.deleteUserFromGroup(username, groupName);
-		return Response.status(Response.Status.OK).build();
-	}
+    @POST
+    public Response addUserToGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
+            throws ServiceException {
+        plugin.addUserToGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.CREATED).build();
+    }
+    
+    @POST
+    @Path("/{groupName}")
+    public Response addUserToGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
+            throws ServiceException {
+        plugin.addUserToGroup(username, groupName);
+        return Response.status(Response.Status.CREATED).build();
+    }
+    
+    @DELETE
+    @Path("/{groupName}")
+    public Response deleteUserFromGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
+            throws ServiceException {
+        plugin.deleteUserFromGroup(username, groupName);
+        return Response.status(Response.Status.OK).build();
+    }
 
-	@DELETE
-	public Response deleteUserFromGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
-			throws ServiceException {
-		plugin.deleteUserFromGroups(username, userGroupsEntity);
-		return Response.status(Response.Status.OK).build();
-	}
+    @DELETE
+    public Response deleteUserFromGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)
+            throws ServiceException {
+        plugin.deleteUserFromGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.OK).build();
+    }
 }

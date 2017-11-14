@@ -576,7 +576,7 @@ else if (deleted) { %>
 %>
 
 <div style="<%= edit ? "display:none;" : "" %>" class="jive-contentBox">
-	  <h4>Create New Routing Rule</h4>
+      <h4>Create New Routing Rule</h4>
 
     <table cellspacing="0" cellpadding="3">
         <form action="workgroup-queues.jsp" method="post">

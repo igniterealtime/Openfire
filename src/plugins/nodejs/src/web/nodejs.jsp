@@ -15,7 +15,7 @@
 
     if (update)
     {                        
-	String path = request.getParameter("path"); 	
+    String path = request.getParameter("path"); 	
         JiveGlobals.setProperty("org.ifsoft.nodejs.openfire.path", path);                 
         
     }
@@ -45,14 +45,14 @@
             </tr>
             </thead>
             <tbody>  
-	    <tr>
-		<td align="left" width="150">
-		    <fmt:message key="config.page.configuration.path"/>
-		</td>
-		<td><input type="text" size="50" maxlength="100" name="path"
-			   value="<%= JiveGlobals.getProperty("org.ifsoft.nodejs.openfire.path", plugin.getPath()) %>">
-		</td>
-	    </tr>            
+        <tr>
+        <td align="left" width="150">
+            <fmt:message key="config.page.configuration.path"/>
+        </td>
+        <td><input type="text" size="50" maxlength="100" name="path"
+               value="<%= JiveGlobals.getProperty("org.ifsoft.nodejs.openfire.path", plugin.getPath()) %>">
+        </td>
+        </tr>            
             </tbody>
         </table>
     </p>
@@ -75,23 +75,23 @@
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-	<th nowrap><fmt:message key="config.page.configuration.node.process" /></th>
-	<th nowrap><fmt:message key="config.page.configuration.node.path" /></th>	
-	<th nowrap><fmt:message key="config.page.configuration.node.home" /></th>
+    <th nowrap><fmt:message key="config.page.configuration.node.process" /></th>
+    <th nowrap><fmt:message key="config.page.configuration.node.path" /></th>	
+    <th nowrap><fmt:message key="config.page.configuration.node.home" /></th>
     </tr>
 </thead>
 <tbody>    
 
     <%
-    	List<String> properties = JiveGlobals.getPropertyNames();    
-    	
-    	for (String n : properties) 
-    	{        	
-		if (n.indexOf("js.") == 0 && n.indexOf(".path") != n.length() - 5) 
-		{
-        		String v = JiveGlobals.getProperty(n);
-        		String p = StringUtils.replace(StringUtils.escapeHTMLTags(v), "\n", "");
-			String h = JiveGlobals.getProperty(n + ".path", JiveGlobals.getProperty("org.ifsoft.nodejs.openfire.path", plugin.getPath()));		
+        List<String> properties = JiveGlobals.getPropertyNames();    
+        
+        for (String n : properties) 
+        {        	
+        if (n.indexOf("js.") == 0 && n.indexOf(".path") != n.length() - 5) 
+        {
+                String v = JiveGlobals.getProperty(n);
+                String p = StringUtils.replace(StringUtils.escapeHTMLTags(v), "\n", "");
+            String h = JiveGlobals.getProperty(n + ".path", JiveGlobals.getProperty("org.ifsoft.nodejs.openfire.path", plugin.getPath()));		
     %>
     
     <tr>
@@ -126,8 +126,8 @@
     </tr>
 
     <% 
-    		}   
-    	}
+            }   
+        }
     %>
 
 </tbody>

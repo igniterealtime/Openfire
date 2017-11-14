@@ -53,7 +53,7 @@ import org.xmpp.packet.JID;
  */
 public class DefaultUserProvider implements UserProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
             "SELECT salt, serverKey, storedKey, iterations, name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
@@ -297,10 +297,10 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_NAME);
             if (name == null || name.matches("\\s*")) {
-            	pstmt.setNull(1, Types.VARCHAR);
+                pstmt.setNull(1, Types.VARCHAR);
             } 
             else {
-            	pstmt.setString(1, name);
+                pstmt.setString(1, name);
             }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
@@ -321,10 +321,10 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_EMAIL);
             if (email == null || email.matches("\\s*")) {
-            	pstmt.setNull(1, Types.VARCHAR);
+                pstmt.setNull(1, Types.VARCHAR);
             } 
             else {
-            	pstmt.setString(1, email);
+                pstmt.setString(1, email);
             }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
@@ -453,7 +453,7 @@ public class DefaultUserProvider implements UserProvider {
                 DbConnectionManager.limitRowsAndFetchSize(pstmt, startIndex, numResults);
                 for (int i=1; i<=queries; i++)
                 {
-                	pstmt.setString(i, query);
+                    pstmt.setString(i, query);
                 }
                 rs = pstmt.executeQuery();
                 // Scroll to the start index.

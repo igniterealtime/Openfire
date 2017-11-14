@@ -32,35 +32,35 @@ import org.jivesoftware.util.*;
 
 public class EmailSenderUtility{
     private static Logger Log = LoggerFactory.getLogger("JmxWebPlugin:EmailSenderUtility");
-   	private static final String SSL_FACTORY = "org.jivesoftware.util.SimpleSSLSocketFactory";
+    private static final String SSL_FACTORY = "org.jivesoftware.util.SimpleSSLSocketFactory";
 
 
     public void sendEmail() {
         ByteArrayOutputStream outputStream = null;
         try {
-        	String host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
-        	String port = JiveGlobals.getProperty("mail.smtp.port", "25");
-        	String username = JiveGlobals.getProperty("mail.smtp.username");
-       	 	String password = JiveGlobals.getProperty("mail.smtp.password");
-        	String debugEnabled = JiveGlobals.getProperty("mail.debug");
-        	boolean sslEnabled = JiveGlobals.getBooleanProperty("mail.smtp.ssl", true);
+            String host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
+            String port = JiveGlobals.getProperty("mail.smtp.port", "25");
+            String username = JiveGlobals.getProperty("mail.smtp.username");
+            String password = JiveGlobals.getProperty("mail.smtp.password");
+            String debugEnabled = JiveGlobals.getProperty("mail.debug");
+            boolean sslEnabled = JiveGlobals.getBooleanProperty("mail.smtp.ssl", true);
 
             Properties props = new Properties();
             props.put("mail.smtp.host", host);
             props.put("mail.smtp.auth", port);
-        	props.setProperty("mail.smtp.sendpartial", "true");
-        	props.setProperty("mail.debug", debugEnabled);
+            props.setProperty("mail.smtp.sendpartial", "true");
+            props.setProperty("mail.debug", debugEnabled);
 
-			if (sslEnabled) {
-				// Register with security provider.
-				Security.setProperty("ssl.SocketFactory.provider", SSL_FACTORY);
-				props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
-				props.setProperty("mail.smtp.socketFactory.fallback", "true");
-			}
+            if (sslEnabled) {
+                // Register with security provider.
+                Security.setProperty("ssl.SocketFactory.provider", SSL_FACTORY);
+                props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
+                props.setProperty("mail.smtp.socketFactory.fallback", "true");
+            }
 
-			if (username != null) {
-				props.put("mail.smtp.auth", "true");
-			}
+            if (username != null) {
+                props.put("mail.smtp.auth", "true");
+            }
 
             Session session = Session.getInstance(props);
             outputStream = new ByteArrayOutputStream();
@@ -102,14 +102,14 @@ public class EmailSenderUtility{
             msg.setSubject("MONITORING REPORT - " + new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
             msg.setContent(multipart);
 
-			if (username != null)
-			{
-				URLName url = new URLName("smtp", host, Integer.parseInt(port), "", username, password);
-            	Transport transport = new com.sun.mail.smtp.SMTPTransport(session, url);
-            	transport.connect(host, Integer.parseInt(port), username, password);
+            if (username != null)
+            {
+                URLName url = new URLName("smtp", host, Integer.parseInt(port), "", username, password);
+                Transport transport = new com.sun.mail.smtp.SMTPTransport(session, url);
+                transport.connect(host, Integer.parseInt(port), username, password);
                 transport.sendMessage(msg, msg.getRecipients(MimeMessage.RecipientType.TO));
 
-		   } else Transport.send(msg);
+           } else Transport.send(msg);
 
         } catch (Exception e) {
             e.printStackTrace();

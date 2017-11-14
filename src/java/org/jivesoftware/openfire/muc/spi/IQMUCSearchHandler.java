@@ -39,352 +39,352 @@ import java.util.*;
  */
 public class IQMUCSearchHandler
 {
-	/**
-	 * The MUC-server to extend with jabber:iq:search functionality.
-	 */
-	private final MultiUserChatService mucService;
+    /**
+     * The MUC-server to extend with jabber:iq:search functionality.
+     */
+    private final MultiUserChatService mucService;
 
-	/**
-	 * Creates a new instance of the search provider.
-	 * 
-	 * @param mucService
-	 *            The server for which to return search results.
-	 */
-	public IQMUCSearchHandler(MultiUserChatService mucService)
-	{
-		this.mucService = mucService;
-	}
+    /**
+     * Creates a new instance of the search provider.
+     * 
+     * @param mucService
+     *            The server for which to return search results.
+     */
+    public IQMUCSearchHandler(MultiUserChatService mucService)
+    {
+        this.mucService = mucService;
+    }
 
-	/**
-	 * Utility method that returns a 'jabber:iq:search' child element filled
-	 * with a blank dataform.
-	 * 
-	 * @return Element, named 'query', escaped by the 'jabber:iq:search'
-	 *         namespace, filled with a blank dataform.
-	 */
-	private static Element getDataElement()
-	{
-		final DataForm searchForm = new DataForm(DataForm.Type.form);
-		searchForm.setTitle("Chat Rooms Search");
-		searchForm.addInstruction("Instructions");
+    /**
+     * Utility method that returns a 'jabber:iq:search' child element filled
+     * with a blank dataform.
+     * 
+     * @return Element, named 'query', escaped by the 'jabber:iq:search'
+     *         namespace, filled with a blank dataform.
+     */
+    private static Element getDataElement()
+    {
+        final DataForm searchForm = new DataForm(DataForm.Type.form);
+        searchForm.setTitle("Chat Rooms Search");
+        searchForm.addInstruction("Instructions");
 
-		final FormField typeFF = searchForm.addField();
-		typeFF.setVariable("FORM_TYPE");
-		typeFF.setType(FormField.Type.hidden);
-		typeFF.addValue("jabber:iq:search");
+        final FormField typeFF = searchForm.addField();
+        typeFF.setVariable("FORM_TYPE");
+        typeFF.setType(FormField.Type.hidden);
+        typeFF.addValue("jabber:iq:search");
 
-		final FormField nameFF = searchForm.addField();
-		nameFF.setVariable("name");
-		nameFF.setType(FormField.Type.text_single);
-		nameFF.setLabel("Name");
-		nameFF.setRequired(false);
+        final FormField nameFF = searchForm.addField();
+        nameFF.setVariable("name");
+        nameFF.setType(FormField.Type.text_single);
+        nameFF.setLabel("Name");
+        nameFF.setRequired(false);
 
-		final FormField matchFF = searchForm.addField();
-		matchFF.setVariable("name_is_exact_match");
-		matchFF.setType(FormField.Type.boolean_type);
-		matchFF.setLabel("Name must match exactly");
-		matchFF.setRequired(false);
+        final FormField matchFF = searchForm.addField();
+        matchFF.setVariable("name_is_exact_match");
+        matchFF.setType(FormField.Type.boolean_type);
+        matchFF.setLabel("Name must match exactly");
+        matchFF.setRequired(false);
 
-		final FormField subjectFF = searchForm.addField();
-		subjectFF.setVariable("subject");
-		subjectFF.setType(FormField.Type.text_single);
-		subjectFF.setLabel("Subject");
-		subjectFF.setRequired(false);
+        final FormField subjectFF = searchForm.addField();
+        subjectFF.setVariable("subject");
+        subjectFF.setType(FormField.Type.text_single);
+        subjectFF.setLabel("Subject");
+        subjectFF.setRequired(false);
 
-		final FormField userAmountFF = searchForm.addField();
-		userAmountFF.setVariable("num_users");
-		userAmountFF.setType(FormField.Type.text_single);
-		userAmountFF.setLabel("Number of users");
-		userAmountFF.setRequired(false);
+        final FormField userAmountFF = searchForm.addField();
+        userAmountFF.setVariable("num_users");
+        userAmountFF.setType(FormField.Type.text_single);
+        userAmountFF.setLabel("Number of users");
+        userAmountFF.setRequired(false);
 
-		final FormField maxUsersFF = searchForm.addField();
-		maxUsersFF.setVariable("num_max_users");
-		maxUsersFF.setType(FormField.Type.text_single);
-		maxUsersFF.setLabel("Max number allowed of users");
-		maxUsersFF.setRequired(false);
+        final FormField maxUsersFF = searchForm.addField();
+        maxUsersFF.setVariable("num_max_users");
+        maxUsersFF.setType(FormField.Type.text_single);
+        maxUsersFF.setLabel("Max number allowed of users");
+        maxUsersFF.setRequired(false);
 
-		final FormField includePasswordProtectedFF = searchForm.addField();
-		includePasswordProtectedFF.setVariable("include_password_protected");
-		includePasswordProtectedFF.setType(FormField.Type.boolean_type);
-		includePasswordProtectedFF.setLabel("Include password protected rooms");
-		includePasswordProtectedFF.setRequired(false);
+        final FormField includePasswordProtectedFF = searchForm.addField();
+        includePasswordProtectedFF.setVariable("include_password_protected");
+        includePasswordProtectedFF.setType(FormField.Type.boolean_type);
+        includePasswordProtectedFF.setLabel("Include password protected rooms");
+        includePasswordProtectedFF.setRequired(false);
 
-		final Element probeResult = DocumentHelper.createElement(QName.get(
-			"query", "jabber:iq:search"));
-		probeResult.add(searchForm.getElement());
-		return probeResult;
-	}
+        final Element probeResult = DocumentHelper.createElement(QName.get(
+            "query", "jabber:iq:search"));
+        probeResult.add(searchForm.getElement());
+        return probeResult;
+    }
 
-	/**
-	 * Constructs an answer on a IQ stanza that contains a search request. The
-	 * answer will be an IQ stanza of type 'result' or 'error'.
-	 * 
-	 * @param iq
-	 *            The IQ stanza that is the search request.
-	 * @return An answer to the provided request.
-	 */
-	public IQ handleIQ(IQ iq)
-	{
-		final IQ reply = IQ.createResultIQ(iq);
-		final Element formElement = iq.getChildElement().element(
-			QName.get("x", "jabber:x:data"));
-		if (formElement == null)
-		{
-			reply.setChildElement(getDataElement());
-			return reply;
-		}
+    /**
+     * Constructs an answer on a IQ stanza that contains a search request. The
+     * answer will be an IQ stanza of type 'result' or 'error'.
+     * 
+     * @param iq
+     *            The IQ stanza that is the search request.
+     * @return An answer to the provided request.
+     */
+    public IQ handleIQ(IQ iq)
+    {
+        final IQ reply = IQ.createResultIQ(iq);
+        final Element formElement = iq.getChildElement().element(
+            QName.get("x", "jabber:x:data"));
+        if (formElement == null)
+        {
+            reply.setChildElement(getDataElement());
+            return reply;
+        }
 
-		// parse params from request.
-		final DataForm df = new DataForm(formElement);
-		boolean name_is_exact_match = false;
-		String subject = null;
-		int numusers = -1;
-		int numaxusers = -1;
-		boolean includePasswordProtectedRooms = true;
+        // parse params from request.
+        final DataForm df = new DataForm(formElement);
+        boolean name_is_exact_match = false;
+        String subject = null;
+        int numusers = -1;
+        int numaxusers = -1;
+        boolean includePasswordProtectedRooms = true;
 
-		final Set<String> names = new HashSet<>();
-		for (final FormField field : df.getFields()) 
-		{
-			if (field.getVariable().equals("name"))
-			{
-				names.add(field.getFirstValue());
-			}
-		}
+        final Set<String> names = new HashSet<>();
+        for (final FormField field : df.getFields()) 
+        {
+            if (field.getVariable().equals("name"))
+            {
+                names.add(field.getFirstValue());
+            }
+        }
 
-		final FormField matchFF = df.getField("name_is_exact_match");
-		if (matchFF != null)
-		{
-			final String b = matchFF.getFirstValue();
-			if (b != null)
-			{
-				name_is_exact_match = b.equals("1")
-						|| b.equalsIgnoreCase("true")
-						|| b.equalsIgnoreCase("yes");
-			}
-		}
+        final FormField matchFF = df.getField("name_is_exact_match");
+        if (matchFF != null)
+        {
+            final String b = matchFF.getFirstValue();
+            if (b != null)
+            {
+                name_is_exact_match = b.equals("1")
+                        || b.equalsIgnoreCase("true")
+                        || b.equalsIgnoreCase("yes");
+            }
+        }
 
-		final FormField subjectFF = df.getField("subject");
-		if (subjectFF != null)
-		{
-			subject = subjectFF.getFirstValue();
-		}
+        final FormField subjectFF = df.getField("subject");
+        if (subjectFF != null)
+        {
+            subject = subjectFF.getFirstValue();
+        }
 
-		try
-		{
-			final FormField userAmountFF = df.getField("num_users");
-			if (userAmountFF != null)
-			{
+        try
+        {
+            final FormField userAmountFF = df.getField("num_users");
+            if (userAmountFF != null)
+            {
                 String value = userAmountFF.getFirstValue();
                 if (value != null && !"".equals(value)) {
                     numusers = Integer.parseInt(value);
                 }
-			}
+            }
 
-			final FormField maxUsersFF = df.getField("num_max_users");
-			if (maxUsersFF != null)
-			{
+            final FormField maxUsersFF = df.getField("num_max_users");
+            if (maxUsersFF != null)
+            {
                 String value = maxUsersFF.getFirstValue();
                 if (value != null && !"".equals(value)) {
                     numaxusers = Integer.parseInt(value);
                 }
             }
-		}
-		catch (NumberFormatException e)
-		{
-			reply.setError(PacketError.Condition.bad_request);
-			return reply;
-		}
+        }
+        catch (NumberFormatException e)
+        {
+            reply.setError(PacketError.Condition.bad_request);
+            return reply;
+        }
 
-		final FormField includePasswordProtectedRoomsFF = df.getField("include_password_protected");
-		if (includePasswordProtectedRoomsFF != null)
-		{
-			final String b = includePasswordProtectedRoomsFF.getFirstValue();
-			if (b != null)
-			{
-				if (b.equals("0") || b.equalsIgnoreCase("false")
-						|| b.equalsIgnoreCase("no"))
-				{
-					includePasswordProtectedRooms = false;
-				}
-			}
-		}
+        final FormField includePasswordProtectedRoomsFF = df.getField("include_password_protected");
+        if (includePasswordProtectedRoomsFF != null)
+        {
+            final String b = includePasswordProtectedRoomsFF.getFirstValue();
+            if (b != null)
+            {
+                if (b.equals("0") || b.equalsIgnoreCase("false")
+                        || b.equalsIgnoreCase("no"))
+                {
+                    includePasswordProtectedRooms = false;
+                }
+            }
+        }
 
-		// search for chatrooms matching the request params.
-		final List<MUCRoom> mucs = new ArrayList<>();
-		for (MUCRoom room : mucService.getChatRooms())
-		{
-			boolean find = false;
+        // search for chatrooms matching the request params.
+        final List<MUCRoom> mucs = new ArrayList<>();
+        for (MUCRoom room : mucService.getChatRooms())
+        {
+            boolean find = false;
 
-			if (names.size() > 0)
-			{
-				for (final String name : names)
-				{
-					if (name_is_exact_match)
-					{
-						if (name.equalsIgnoreCase(room.getNaturalLanguageName()))
-						{
-							find = true;
-							break;
-						}
-					}
-					else
-					{
-						if (room.getNaturalLanguageName().toLowerCase().indexOf(
-							name.toLowerCase()) != -1)
-						{
-							find = true;
-							break;
-						}
-					}
-				}
-			}
+            if (names.size() > 0)
+            {
+                for (final String name : names)
+                {
+                    if (name_is_exact_match)
+                    {
+                        if (name.equalsIgnoreCase(room.getNaturalLanguageName()))
+                        {
+                            find = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (room.getNaturalLanguageName().toLowerCase().indexOf(
+                            name.toLowerCase()) != -1)
+                        {
+                            find = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
-			if (subject != null
-					&& room.getSubject().toLowerCase().indexOf(
-						subject.toLowerCase()) != -1)
-			{
-				find = true;
-			}
+            if (subject != null
+                    && room.getSubject().toLowerCase().indexOf(
+                        subject.toLowerCase()) != -1)
+            {
+                find = true;
+            }
 
-			if (numusers > -1 && room.getParticipants().size() < numusers)
-			{
-				find = false;
-			}
+            if (numusers > -1 && room.getParticipants().size() < numusers)
+            {
+                find = false;
+            }
 
-			if (numaxusers > -1 && room.getMaxUsers() < numaxusers)
-			{
-				find = false;
-			}
+            if (numaxusers > -1 && room.getMaxUsers() < numaxusers)
+            {
+                find = false;
+            }
 
-			if (!includePasswordProtectedRooms && room.isPasswordProtected())
-			{
-				find = false;
-			}
+            if (!includePasswordProtectedRooms && room.isPasswordProtected())
+            {
+                find = false;
+            }
 
-			if (find && canBeIncludedInResult(room))
-			{
-				mucs.add(room);
-			}
-		}
+            if (find && canBeIncludedInResult(room))
+            {
+                mucs.add(room);
+            }
+        }
 
-		final ResultSet<MUCRoom> searchResults = new ResultSetImpl<>(
-			sortByUserAmount(mucs));
+        final ResultSet<MUCRoom> searchResults = new ResultSetImpl<>(
+            sortByUserAmount(mucs));
 
-		// See if the requesting entity would like to apply 'result set
-		// management'
-		final Element set = iq.getChildElement().element(
-			QName.get("set", ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT));
-		final List<MUCRoom> mucrsm;
+        // See if the requesting entity would like to apply 'result set
+        // management'
+        final Element set = iq.getChildElement().element(
+            QName.get("set", ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT));
+        final List<MUCRoom> mucrsm;
 
-		// apply RSM only if the element exists, and the (total) results
-		// set is not empty.
-		final boolean applyRSM = set != null && !mucs.isEmpty();
+        // apply RSM only if the element exists, and the (total) results
+        // set is not empty.
+        final boolean applyRSM = set != null && !mucs.isEmpty();
 
-		if (applyRSM)
-		{
-			if (!ResultSet.isValidRSMRequest(set))
-			{
-				reply.setError(Condition.bad_request);
-				return reply;
-			}
+        if (applyRSM)
+        {
+            if (!ResultSet.isValidRSMRequest(set))
+            {
+                reply.setError(Condition.bad_request);
+                return reply;
+            }
 
-			try
-			{
-				mucrsm = searchResults.applyRSMDirectives(set);
-			}
-			catch (NullPointerException e)
-			{
-				final IQ itemNotFound = IQ.createResultIQ(iq);
-				itemNotFound.setError(Condition.item_not_found);
-				return itemNotFound;
-			}
-		}
-		else
-		{
-			// if no rsm, all found rooms are part of the result.
-			mucrsm = new ArrayList<>(searchResults);
-		}
+            try
+            {
+                mucrsm = searchResults.applyRSMDirectives(set);
+            }
+            catch (NullPointerException e)
+            {
+                final IQ itemNotFound = IQ.createResultIQ(iq);
+                itemNotFound.setError(Condition.item_not_found);
+                return itemNotFound;
+            }
+        }
+        else
+        {
+            // if no rsm, all found rooms are part of the result.
+            mucrsm = new ArrayList<>(searchResults);
+        }
 
-		final Element res = DocumentHelper.createElement(QName.get("query",
-			"jabber:iq:search"));
+        final Element res = DocumentHelper.createElement(QName.get("query",
+            "jabber:iq:search"));
 
-		final DataForm resultform = new DataForm(DataForm.Type.result);
-		boolean atLeastoneResult = false;
-		for (MUCRoom room : mucrsm)
-		{
-			final Map<String, Object> fields = new HashMap<>();
-			fields.put("name", room.getNaturalLanguageName());
-			fields.put("subject", room.getSubject());
-			fields.put("num_users", room.getOccupantsCount());
-			fields.put("num_max_users", room.getMaxUsers());
-			fields.put("is_password_protected", room.isPasswordProtected());
-			fields.put("is_member_only", room.isMembersOnly());
-			fields.put("jid", room.getRole().getRoleAddress().toString());
+        final DataForm resultform = new DataForm(DataForm.Type.result);
+        boolean atLeastoneResult = false;
+        for (MUCRoom room : mucrsm)
+        {
+            final Map<String, Object> fields = new HashMap<>();
+            fields.put("name", room.getNaturalLanguageName());
+            fields.put("subject", room.getSubject());
+            fields.put("num_users", room.getOccupantsCount());
+            fields.put("num_max_users", room.getMaxUsers());
+            fields.put("is_password_protected", room.isPasswordProtected());
+            fields.put("is_member_only", room.isMembersOnly());
+            fields.put("jid", room.getRole().getRoleAddress().toString());
             resultform.addItemFields(fields);
-			atLeastoneResult = true;
-		}
-		if (atLeastoneResult)
-		{
-			resultform.addReportedField("name", "Name", FormField.Type.text_single);
-			resultform.addReportedField("subject", "Subject", FormField.Type.text_single);
-			resultform.addReportedField("num_users", "Number of users", FormField.Type.text_single);
-			resultform.addReportedField("num_max_users", "Max number allowed of users", FormField.Type.text_single);
-			resultform.addReportedField("is_password_protected", "Is a password protected room.", FormField.Type.boolean_type);
-			resultform.addReportedField("is_member_only", "Is a member only room.", FormField.Type.boolean_type);
-			resultform.addReportedField("jid", "JID", FormField.Type.jid_single);
-		}
+            atLeastoneResult = true;
+        }
+        if (atLeastoneResult)
+        {
+            resultform.addReportedField("name", "Name", FormField.Type.text_single);
+            resultform.addReportedField("subject", "Subject", FormField.Type.text_single);
+            resultform.addReportedField("num_users", "Number of users", FormField.Type.text_single);
+            resultform.addReportedField("num_max_users", "Max number allowed of users", FormField.Type.text_single);
+            resultform.addReportedField("is_password_protected", "Is a password protected room.", FormField.Type.boolean_type);
+            resultform.addReportedField("is_member_only", "Is a member only room.", FormField.Type.boolean_type);
+            resultform.addReportedField("jid", "JID", FormField.Type.jid_single);
+        }
                 res.add(resultform.getElement());
-		if (applyRSM)
-		{
-			res.add(searchResults.generateSetElementFromResults(mucrsm));
-		}
+        if (applyRSM)
+        {
+            res.add(searchResults.generateSetElementFromResults(mucrsm));
+        }
 
-		reply.setChildElement(res);
+        reply.setChildElement(res);
 
-		return reply;
-	}
+        return reply;
+    }
 
-	/**
-	 * Sorts the provided list in such a way that the MUC with the most users
-	 * will be the first one in the list.
-	 * 
-	 * @param mucs
-	 *            The unordered list that will be sorted.
+    /**
+     * Sorts the provided list in such a way that the MUC with the most users
+     * will be the first one in the list.
+     * 
+     * @param mucs
+     *            The unordered list that will be sorted.
      * @return The sorted list of MUC rooms.
-	 */
-	private static List<MUCRoom> sortByUserAmount(List<MUCRoom> mucs)
-	{
-		Collections.sort(mucs, new Comparator<MUCRoom>()
-		{
-			@Override
-			public int compare(MUCRoom o1, MUCRoom o2)
-			{
-				return o2.getOccupantsCount() - o1.getOccupantsCount();
-			}
-		});
+     */
+    private static List<MUCRoom> sortByUserAmount(List<MUCRoom> mucs)
+    {
+        Collections.sort(mucs, new Comparator<MUCRoom>()
+        {
+            @Override
+            public int compare(MUCRoom o1, MUCRoom o2)
+            {
+                return o2.getOccupantsCount() - o1.getOccupantsCount();
+            }
+        });
 
-		return mucs;
-	}
+        return mucs;
+    }
 
-	/**
-	 * Checks if the room may be included in search results. This is almost
-	 * identical to {@link MultiUserChatServiceImpl#canDiscoverRoom(org.jivesoftware.openfire.muc.MUCRoom, org.xmpp.packet.JID)},
-	 * but that method is private and cannot be re-used here.
-	 * 
-	 * @param room
-	 *            The room to check
-	 * @return ''true'' if the room may be included in search results, ''false''
-	 *         otherwise.
-	 */
-	private static boolean canBeIncludedInResult(MUCRoom room)
-	{
-		// Check if locked rooms may be discovered
-		final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty(room.getMUCService().getServiceName(), "discover.locked", true);
+    /**
+     * Checks if the room may be included in search results. This is almost
+     * identical to {@link MultiUserChatServiceImpl#canDiscoverRoom(org.jivesoftware.openfire.muc.MUCRoom, org.xmpp.packet.JID)},
+     * but that method is private and cannot be re-used here.
+     * 
+     * @param room
+     *            The room to check
+     * @return ''true'' if the room may be included in search results, ''false''
+     *         otherwise.
+     */
+    private static boolean canBeIncludedInResult(MUCRoom room)
+    {
+        // Check if locked rooms may be discovered
+        final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty(room.getMUCService().getServiceName(), "discover.locked", true);
 
-		if (!discoverLocked && room.isLocked())
-		{
-			return false;
-		}
-		return room.isPublicRoom();
-	}
+        if (!discoverLocked && room.isLocked())
+        {
+            return false;
+        }
+        return room.isPublicRoom();
+    }
 }

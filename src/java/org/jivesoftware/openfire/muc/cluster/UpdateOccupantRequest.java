@@ -87,7 +87,7 @@ public class UpdateOccupantRequest extends MUCRoomTask<Element> {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
         ExternalizableUtil.getInstance().writeInt(out, role);
@@ -98,7 +98,7 @@ public class UpdateOccupantRequest extends MUCRoomTask<Element> {
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         role = ExternalizableUtil.getInstance().readInt(in);

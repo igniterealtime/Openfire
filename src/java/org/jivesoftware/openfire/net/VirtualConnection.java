@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class VirtualConnection implements Connection {
 
-	private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
+    private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
     protected LocalSession session;
 
@@ -86,7 +86,7 @@ public abstract class VirtualConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-    	return state.get() == State.CLOSED;
+        return state.get() == State.CLOSED;
     }
 
     @Override
@@ -186,8 +186,8 @@ public abstract class VirtualConnection implements Connection {
      */
     @Override
     public void close() {
-    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
-    		
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            
             if (session != null) {
                 session.setStatus(Session.STATUS_CLOSED);
             }

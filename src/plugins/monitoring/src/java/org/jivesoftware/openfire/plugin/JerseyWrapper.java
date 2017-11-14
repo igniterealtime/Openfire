@@ -16,46 +16,46 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
  */
 public class JerseyWrapper extends ServletContainer {
 
-	private static final long serialVersionUID = 4807992231163442643L;
+    private static final long serialVersionUID = 4807992231163442643L;
 
-	/** The Constant RESOURCE_CONFIG_CLASS_KEY. */
-	private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
+    /** The Constant RESOURCE_CONFIG_CLASS_KEY. */
+    private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
 
-	/** The Constant RESOURCE_CONFIG_CLASS. */
-	private static final String RESOURCE_CONFIG_CLASS = "com.sun.jersey.api.core.PackagesResourceConfig";
+    /** The Constant RESOURCE_CONFIG_CLASS. */
+    private static final String RESOURCE_CONFIG_CLASS = "com.sun.jersey.api.core.PackagesResourceConfig";
 
-	/** The config. */
-	private static Map<String, Object> config;
+    /** The config. */
+    private static Map<String, Object> config;
 
-	/** The prc. */
-	private static PackagesResourceConfig prc;
+    /** The prc. */
+    private static PackagesResourceConfig prc;
 
-	static {
-		config = new HashMap<String, Object>();
-		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
-		config.put("com.sun.jersey.api.json.POJOMappingFeature", true);
-		prc = new PackagesResourceConfig(JerseyWrapper.class.getPackage().getName());
-		prc.setPropertiesAndFeatures(config);
+    static {
+        config = new HashMap<String, Object>();
+        config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
+        config.put("com.sun.jersey.api.json.POJOMappingFeature", true);
+        prc = new PackagesResourceConfig(JerseyWrapper.class.getPackage().getName());
+        prc.setPropertiesAndFeatures(config);
 
-		prc.getClasses().add(MonitoringAPI.class);
+        prc.getClasses().add(MonitoringAPI.class);
 
-		prc.getClasses().add(RESTExceptionMapper.class);
-	}
+        prc.getClasses().add(RESTExceptionMapper.class);
+    }
 
-	/**
-	 * Instantiates a new jersey wrapper.
-	 */
-	public JerseyWrapper() {
-		super(prc);
-	}
+    /**
+     * Instantiates a new jersey wrapper.
+     */
+    public JerseyWrapper() {
+        super(prc);
+    }
 
-	@Override
-	public void init(ServletConfig servletConfig) throws ServletException {
-		super.init(servletConfig);
-	}
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
+        super.init(servletConfig);
+    }
 
-	@Override
-	public void destroy() {
-		super.destroy();
-	}
+    @Override
+    public void destroy() {
+        super.destroy();
+    }
 }

@@ -46,7 +46,7 @@ public class FormUtils {
         else if (WorkgroupForm.FormEnum.dropdown_box == answerType) {
             builder.append("<select name=\"").append(name).append("\">");
             if (items != null) {
-            	for(String item : items) {
+                for(String item : items) {
                     builder.append("<option value=\"").append(item).append("\">").append(item)
                             .append("</option>");
                 }

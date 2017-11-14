@@ -76,7 +76,7 @@ import org.xmpp.packet.PacketError;
  */
 public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQRosterHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQRosterHandler.class);
 
     private IQHandlerInfo info;
 
@@ -106,7 +106,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @return The reply or null if no reply
      */
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             IQ returnPacket;
             org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
@@ -343,7 +343,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         userManager = server.getUserManager();
@@ -351,7 +351,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 

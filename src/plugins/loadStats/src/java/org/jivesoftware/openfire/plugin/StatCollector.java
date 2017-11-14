@@ -71,7 +71,7 @@ public class StatCollector extends TimerTask {
     }
 
     @Override
-	public void run() {
+    public void run() {
         try {
             // Collect content
             StringBuilder sb = new StringBuilder();

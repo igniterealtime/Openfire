@@ -44,8 +44,8 @@ import org.xmpp.packet.Packet;
  */
 public abstract class InterceptorManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(InterceptorManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(InterceptorManager.class);
+    
     private List<PacketInterceptor> availableInterceptors =
             new CopyOnWriteArrayList<PacketInterceptor>();
 

@@ -69,7 +69,7 @@ import org.slf4j.LoggerFactory;
  */
 public class POP3AuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
 
     private Cache<String, String> authCache = null;
     private String host = null;

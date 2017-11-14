@@ -20,7 +20,7 @@
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-	String deleteID = ParamUtils.getParameter(request,"deleteID");
+    String deleteID = ParamUtils.getParameter(request,"deleteID");
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
     {
@@ -73,14 +73,14 @@
         if (subscription != null) {
 
             node.cancelSubscription(subscription);
-	        // Log the event
-	        webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
-	        // Done, so redirect
-	        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8")
-	            + "&deleteSuccess=true"
-	            + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
-	            + "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
-	        return;
+            // Log the event
+            webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
+            // Done, so redirect
+            response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8")
+                + "&deleteSuccess=true"
+                + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
+                + "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
+            return;
         }
     }
 

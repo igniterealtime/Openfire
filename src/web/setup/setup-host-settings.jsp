@@ -14,8 +14,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -64,7 +64,7 @@
             // ensure the same key value was provided twice
                 String repeat = ParamUtils.getParameter(request, "encryptionKey1");
                 if (!encryptionKey.equals(repeat)) {
-                	errors.put("encryptionKey", "encryptionKey");
+                    errors.put("encryptionKey", "encryptionKey");
                 }
             }
         } else {
@@ -133,18 +133,18 @@
 <body>
 
 
-	<h1>
-	<fmt:message key="setup.host.settings.title" />
-	</h1>
+    <h1>
+    <fmt:message key="setup.host.settings.title" />
+    </h1>
 
-	<p>
-	<fmt:message key="setup.host.settings.info" />
-	</p>
+    <p>
+    <fmt:message key="setup.host.settings.info" />
+    </p>
 
-	<!-- BEGIN jive-contentBox -->
-	<div class="jive-contentBox">
+    <!-- BEGIN jive-contentBox -->
+    <div class="jive-contentBox">
 
-		<form action="setup-host-settings.jsp" name="f" method="post">
+        <form action="setup-host-settings.jsp" name="f" method="post">
 
 <table cellpadding="3" cellspacing="0" border="0">
 <tr valign="top">
@@ -154,7 +154,7 @@
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="domain"
          value="<%= ((domain != null) ? domain : "") %>">
-	    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.domain.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.domain.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("domain") != null) { %>
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_domain" />
@@ -240,13 +240,13 @@
 <br><br>
 
 
-		<div align="right">
-			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-		</div>
-	</form>
+        <div align="right">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+        </div>
+    </form>
 
-	</div>
-	<!-- END jive-contentBox -->
+    </div>
+    <!-- END jive-contentBox -->
 
 
 <script language="JavaScript" type="text/javascript">

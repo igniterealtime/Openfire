@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AdminConsole {
 
-	private static final Logger Log = LoggerFactory.getLogger(AdminConsole.class);
+    private static final Logger Log = LoggerFactory.getLogger(AdminConsole.class);
 
     private static Element coreModel;
     private static Map<String,Element> overrideModels;

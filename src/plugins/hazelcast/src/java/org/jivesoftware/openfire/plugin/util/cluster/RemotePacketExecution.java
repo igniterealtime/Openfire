@@ -61,7 +61,7 @@ public class RemotePacketExecution implements ClusterTask<Void> {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-    	ExternalizableUtil.getInstance().writeSerializable(out, recipient);
+        ExternalizableUtil.getInstance().writeSerializable(out, recipient);
         if (packet instanceof IQ) {
             ExternalizableUtil.getInstance().writeInt(out, 1);
         }

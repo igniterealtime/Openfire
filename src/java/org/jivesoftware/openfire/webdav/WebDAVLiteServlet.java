@@ -57,7 +57,7 @@ import org.xmpp.packet.JID;
  */
 public class WebDAVLiteServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(WebDAVLiteServlet.class);
+    private static final Logger Log = LoggerFactory.getLogger(WebDAVLiteServlet.class);
 
     // Storage directory under the Openfire install root
     private static String WEBDAV_SUBDIR = "mucFiles";

@@ -14,29 +14,29 @@ import org.xmpp.packet.Packet;
  */
 public class StatisticsProcessor extends AbstractRemoteRosterProcessor{
 
-	private DatabaseManager _db;
-	
-	public StatisticsProcessor() {
-		Log.info("Created StatisticsProcessor");
-		_db = DatabaseManager.getInstance();
-	}
+    private DatabaseManager _db;
+    
+    public StatisticsProcessor() {
+        Log.info("Created StatisticsProcessor");
+        _db = DatabaseManager.getInstance();
+    }
 
-	/**
-	 * At this Point we Already know:
-	 * neither of both JIDS is malformed (Package wouldn't have been intercepted)
-	 * Package is incoming & processed
-	 * 
-	 * Either From or To contains the watched,passed subdomain
-	 * From does not Equal To (This way we exclude PING sent by spectrum To spectrum
-	 * From AND To are NOT empty (null), this way we exclude packets sent to server itself...change Maininterceptor if we want to change this
-	 * 
-	 */
-	@Override
-	public void process(Packet packet, String subdomain, String to, String from)
-			throws PacketRejectedException {
-		
-		String type = packet.getClass().getName();
-		_db.addNewLogEntry(subdomain, type, from, to);
-	}
+    /**
+     * At this Point we Already know:
+     * neither of both JIDS is malformed (Package wouldn't have been intercepted)
+     * Package is incoming & processed
+     * 
+     * Either From or To contains the watched,passed subdomain
+     * From does not Equal To (This way we exclude PING sent by spectrum To spectrum
+     * From AND To are NOT empty (null), this way we exclude packets sent to server itself...change Maininterceptor if we want to change this
+     * 
+     */
+    @Override
+    public void process(Packet packet, String subdomain, String to, String from)
+            throws PacketRejectedException {
+        
+        String type = packet.getClass().getName();
+        _db.addNewLogEntry(subdomain, type, from, to);
+    }
 
 }

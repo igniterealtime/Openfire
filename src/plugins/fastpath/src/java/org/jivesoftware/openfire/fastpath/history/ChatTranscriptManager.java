@@ -57,7 +57,7 @@ import org.xmpp.packet.JID;
  */
 public class ChatTranscriptManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatTranscriptManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatTranscriptManager.class);
 
     private static final String GET_WORKGROUP_SESSIONS =
             "SELECT sessionID, userID, startTime, endTime, queueWaitTime, state " +

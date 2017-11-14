@@ -32,39 +32,39 @@ public class SampleRateConverter {
     private Resampler resampler;
 
     public SampleRateConverter(String id, int inSampleRate, int inChannels,
-	    int outSampleRate, int outChannels) throws IOException {
+        int outSampleRate, int outChannels) throws IOException {
 
-	if (inSampleRate < outSampleRate) {
-	    resampler = new Upsampler(id, inSampleRate, inChannels,
-		outSampleRate, outChannels);
-	} else {
-	    resampler = new Downsampler(id, inSampleRate, inChannels,
-		outSampleRate, outChannels);
-	}
+    if (inSampleRate < outSampleRate) {
+        resampler = new Upsampler(id, inSampleRate, inChannels,
+        outSampleRate, outChannels);
+    } else {
+        resampler = new Downsampler(id, inSampleRate, inChannels,
+        outSampleRate, outChannels);
+    }
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("New Sample Rate Converter:  from " 
-	        + inSampleRate + "/" + inChannels + " to " 
-	        + outSampleRate + "/" + outChannels);
-	}
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("New Sample Rate Converter:  from " 
+            + inSampleRate + "/" + inChannels + " to " 
+            + outSampleRate + "/" + outChannels);
+    }
     }
 
     public void reset() {
-	resampler.reset();
+    resampler.reset();
     }
 
     public byte[] resample(byte[] inSamples, int offset, int length) 
-	    throws IOException {
+        throws IOException {
 
-	return resampler.resample(inSamples, offset, length);
+    return resampler.resample(inSamples, offset, length);
     }
 
     public int[] resample(int[] inSamples) throws IOException {
-	return resampler.resample(inSamples);
+    return resampler.resample(inSamples);
     }
 
     public void printStatistics() {
-	resampler.printStatistics();
+    resampler.printStatistics();
     }
 
 }

@@ -206,10 +206,10 @@ public class MINAStatCollector {
         IoSessionStat sessStat = ( IoSessionStat ) session.removeAttribute( KEY );
 
         if (sessStat != null) {
-	        totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
-	        totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
-	        totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
-	        totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
+            totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
+            totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
+            totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
+            totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
         }
     }
 
@@ -220,28 +220,28 @@ public class MINAStatCollector {
      */
     public long getTotalProcessedSessions()
     {
-    	return totalProcessedSessions.longValue();
+        return totalProcessedSessions.longValue();
     }
 
-	public long getBytesRead()
-	{
-		return totalBytesRead.get();
-	}
+    public long getBytesRead()
+    {
+        return totalBytesRead.get();
+    }
 
-	public long getBytesWritten()
-	{
-		return totalBytesWritten.get();
-	}
+    public long getBytesWritten()
+    {
+        return totalBytesWritten.get();
+    }
 
-	public long getMsgRead()
-	{
-		return totalMsgRead.get();
-	}
+    public long getMsgRead()
+    {
+        return totalMsgRead.get();
+    }
 
-	public long getMsgWritten()
-	{
-		return totalMsgWritten.get();
-	}
+    public long getMsgWritten()
+    {
+        return totalMsgWritten.get();
+    }
 
     public long getScheduledWrites() {
         return totalScheduledWrites.get();
@@ -252,9 +252,9 @@ public class MINAStatCollector {
     }
 
     public long getSessionCount()
-	{
-		return polledSessions.size();
-	}
+    {
+        return polledSessions.size();
+    }
 
     private class Worker extends Thread
     {
@@ -267,10 +267,10 @@ public class MINAStatCollector {
         }
 
         /*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.lang.Thread#run()
-		 */
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Thread#run()
+         */
         @Override 
         public void run()
         {
@@ -294,7 +294,7 @@ public class MINAStatCollector {
 
                 for (IoSession session : polledSessions)
                 {
-                	// upadating individual session statistics
+                    // upadating individual session statistics
                     IoSessionStat sessStat = ( IoSessionStat ) session.getAttribute( KEY );
 
                     long currentTimestamp = System.currentTimeMillis();

@@ -14,12 +14,12 @@
     
     <!-- UI extension -->
     <adminconsole>		
-		<tab id="tab-server">
-			<sidebar id="sidebar-server-settings">
-				<item id="contentfilter-props-edit-form" name="Content Filter"
-					url="contentfilter-props-edit-form.jsp"
-					description="Click to configure content filter" />
-			</sidebar>
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="contentfilter-props-edit-form" name="Content Filter"
+                    url="contentfilter-props-edit-form.jsp"
+                    description="Click to configure content filter" />
+            </sidebar>
         </tab>
     </adminconsole>
     

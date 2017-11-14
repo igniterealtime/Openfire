@@ -51,7 +51,7 @@ import org.xmpp.packet.JID;
  */
 public class LdapAuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(LdapAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(LdapAuthProvider.class);
 
     private LdapManager manager;
     private Cache<String, String> authCache = null;

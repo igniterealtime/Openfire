@@ -52,7 +52,7 @@ import org.xmpp.packet.*;
  */
 public abstract class LocalSession implements Session {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalSession.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -90,10 +90,10 @@ public abstract class LocalSession implements Session {
     private long serverPacketCount = 0;
 
     /**
-	 * Session temporary data. All data stored in this <code>Map</code> disapear when session
-	 * finishes.
-	 */
-	private final Map<String, Object> sessionData = new HashMap<>();
+     * Session temporary data. All data stored in this <code>Map</code> disapear when session
+     * finishes.
+     */
+    private final Map<String, Object> sessionData = new HashMap<>();
 
     /**
      * XEP-0198 Stream Manager
@@ -306,31 +306,31 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-	 * Saves given session data. Data are saved to temporary storage only and are accessible during
-	 * this session life only and only from this session instance.
-	 *
-	 * @param key a <code>String</code> value of stored data key ID.
-	 * @param value a <code>Object</code> value of data stored in session.
-	 * @see #getSessionData(String)
-	 */
-	public void setSessionData(String key, Object value) {
+     * Saves given session data. Data are saved to temporary storage only and are accessible during
+     * this session life only and only from this session instance.
+     *
+     * @param key a <code>String</code> value of stored data key ID.
+     * @param value a <code>Object</code> value of data stored in session.
+     * @see #getSessionData(String)
+     */
+    public void setSessionData(String key, Object value) {
         synchronized (sessionData) {
             sessionData.put(key, value);
         }
     }
 
-	/**
-	 * Retrieves session data. This method gives access to temporary session data only. You can
-	 * retrieve earlier saved data giving key ID to receive needed value. Please see
-	 * {@link #setSessionData(String, Object)}  description for more details.
-	 *
-	 * @param key a <code>String</code> value of stored data ID.
-	 * @return a <code>Object</code> value of data for given key.
-	 * @see #setSessionData(String, Object)
-	 */
-	public Object getSessionData(String key) {
+    /**
+     * Retrieves session data. This method gives access to temporary session data only. You can
+     * retrieve earlier saved data giving key ID to receive needed value. Please see
+     * {@link #setSessionData(String, Object)}  description for more details.
+     *
+     * @param key a <code>String</code> value of stored data ID.
+     * @return a <code>Object</code> value of data for given key.
+     * @see #setSessionData(String, Object)
+     */
+    public Object getSessionData(String key) {
         synchronized (sessionData) {
-    		return sessionData.get(key);
+            return sessionData.get(key);
         }
     }
 
@@ -352,7 +352,7 @@ public abstract class LocalSession implements Session {
      * @return The StreamManager for the session.
      */
     public StreamManager getStreamManager() {
-    	return streamManager;
+        return streamManager;
     }
 
     @Override
@@ -458,7 +458,7 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
     }
 

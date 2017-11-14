@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PluginServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
+    private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
 
     private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
@@ -71,17 +71,17 @@ public class PluginServlet extends HttpServlet {
     static {
         servlets = new ConcurrentHashMap<>();
     }
-	
-	public static final String PLUGINS_WEBROOT = "/plugins/";
+    
+    public static final String PLUGINS_WEBROOT = "/plugins/";
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
         servletConfig = config;
     }
 
     @Override
-	public void service(HttpServletRequest request, HttpServletResponse response)
+    public void service(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
@@ -317,49 +317,49 @@ public class PluginServlet extends HttpServlet {
         }
     }
 
-	/**
-	 * Registers a live servlet for a plugin programmatically, does not
-	 * initialize the servlet.
-	 * 
-	 * @param pluginManager the plugin manager
-	 * @param plugin the owner of the servlet
-	 * @param servlet the servlet.
-	 * @param relativeUrl the relative url where the servlet should be bound
-	 * @return the effective url that can be used to initialize the servlet
-	 */
-	public static String registerServlet(PluginManager pluginManager,
-			Plugin plugin, GenericServlet servlet, String relativeUrl)
-			throws ServletException {
+    /**
+     * Registers a live servlet for a plugin programmatically, does not
+     * initialize the servlet.
+     * 
+     * @param pluginManager the plugin manager
+     * @param plugin the owner of the servlet
+     * @param servlet the servlet.
+     * @param relativeUrl the relative url where the servlet should be bound
+     * @return the effective url that can be used to initialize the servlet
+     */
+    public static String registerServlet(PluginManager pluginManager,
+            Plugin plugin, GenericServlet servlet, String relativeUrl)
+            throws ServletException {
 
-		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
-		PluginServlet.pluginManager = pluginManager;
-		if (servlet == null) {
-			throw new ServletException("Servlet is missing");
-		}
-		String pluginServletUrl = pluginName + relativeUrl;
-		servlets.put((pluginName + relativeUrl).toLowerCase(), servlet);
-		return PLUGINS_WEBROOT + pluginServletUrl;
-		
-	}
+        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        PluginServlet.pluginManager = pluginManager;
+        if (servlet == null) {
+            throw new ServletException("Servlet is missing");
+        }
+        String pluginServletUrl = pluginName + relativeUrl;
+        servlets.put((pluginName + relativeUrl).toLowerCase(), servlet);
+        return PLUGINS_WEBROOT + pluginServletUrl;
+        
+    }
 
-	/**
-	 * Unregister a live servlet for a plugin programmatically. Does not call
-	 * the servlet destroy method.
-	 * 
-	 * @param plugin the owner of the servlet
-	 * @param url the relative url where servlet has been bound
-	 * @return the unregistered servlet, so that it can be destroyed
-	 */
-	public static GenericServlet unregisterServlet(Plugin plugin, String url)
-			throws ServletException {
-		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
-		if (url == null) {
-			throw new ServletException("Servlet URL is missing");
-		}
-		String fullUrl = pluginName + url;
-		GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
-		return servlet;
-	}
+    /**
+     * Unregister a live servlet for a plugin programmatically. Does not call
+     * the servlet destroy method.
+     * 
+     * @param plugin the owner of the servlet
+     * @param url the relative url where servlet has been bound
+     * @return the unregistered servlet, so that it can be destroyed
+     */
+    public static GenericServlet unregisterServlet(Plugin plugin, String url)
+            throws ServletException {
+        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        if (url == null) {
+            throw new ServletException("Servlet URL is missing");
+        }
+        String fullUrl = pluginName + url;
+        GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
+        return servlet;
+    }
     
     /**
      * Handles a request for a JSP page. It checks to see if a servlet is mapped

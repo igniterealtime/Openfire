@@ -40,30 +40,30 @@ public class DefaultConnectionProviderBeanInfo extends JiveBeanInfo {
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.util.JiveBeanInfo#getBeanClass()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.util.JiveBeanInfo#getBeanClass()
+     */
     @Override
     public Class getBeanClass() {
         return org.jivesoftware.database.DefaultConnectionProvider.class;
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.util.JiveBeanInfo#getPropertyNames()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.util.JiveBeanInfo#getPropertyNames()
+     */
     @Override
     public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.util.JiveBeanInfo#getName()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.util.JiveBeanInfo#getName()
+     */
     @Override
     public String getName() {
         return "DefaultConnectionProvider";

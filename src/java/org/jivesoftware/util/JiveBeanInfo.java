@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class JiveBeanInfo implements BeanInfo {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveBeanInfo.class);
+    private static final Logger Log = LoggerFactory.getLogger(JiveBeanInfo.class);
 
     private ResourceBundle bundle;
 

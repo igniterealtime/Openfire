@@ -97,7 +97,7 @@ import org.xmpp.packet.Presence;
  */
 public class PresenceUpdateHandler extends BasicModule implements ChannelHandler, ClusterEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceUpdateHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceUpdateHandler.class);
 
     public static final String PRESENCE_CACHE_NAME = "Directed Presences";
 
@@ -467,15 +467,15 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
         if (localServer.isLocal(from)) {
             // Remove the registry of directed presences of this user
-        	Collection<DirectedPresence> directedPresences = null;
-        	
-        	Lock lock = CacheFactory.getLock(from.toString(), directedPresencesCache);
-        	try {
-        		lock.lock();
-        		directedPresences = directedPresencesCache.remove(from.toString());
-        	} finally {
-        		lock.unlock();
-        	}
+            Collection<DirectedPresence> directedPresences = null;
+            
+            Lock lock = CacheFactory.getLock(from.toString(), directedPresencesCache);
+            try {
+                lock.lock();
+                directedPresences = directedPresencesCache.remove(from.toString());
+            } finally {
+                lock.unlock();
+            }
             
             if (directedPresences != null) {
                 // Iterate over all the entities that the user sent a directed presence
@@ -530,7 +530,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         rosterManager = server.getRosterManager();
@@ -558,18 +558,18 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 continue;
             }
 
-        	// TODO perhaps we should not lock for every entry. Instead, lock it
-			// once (using a LOCK_ALL global key), and handle iterations in
-			// one go. We should first make sure that this doesn't lead to
-			// deadlocks though! The tryLock() mechanism could be used to first
+            // TODO perhaps we should not lock for every entry. Instead, lock it
+            // once (using a LOCK_ALL global key), and handle iterations in
+            // one go. We should first make sure that this doesn't lead to
+            // deadlocks though! The tryLock() mechanism could be used to first
             // try one approach, but fall back on the other approach.
             Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
-        	try {
-        		lock.lock();
-        		directedPresencesCache.put(entry.getKey(), entry.getValue());
-        	} finally {
-        		lock.unlock();
-        	}
+            try {
+                lock.lock();
+                directedPresencesCache.put(entry.getKey(), entry.getValue());
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
@@ -591,18 +591,18 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 }    
 
                 
-            	// TODO perhaps we should not lock for every entry. Instead, lock it
-    			// once (using a LOCK_ALL global key), and handle iterations in
-    			// one go. We should first make sure that this doesn't lead to
-    			// deadlocks though! The tryLock() mechanism could be used to first
+                // TODO perhaps we should not lock for every entry. Instead, lock it
+                // once (using a LOCK_ALL global key), and handle iterations in
+                // one go. We should first make sure that this doesn't lead to
+                // deadlocks though! The tryLock() mechanism could be used to first
                 // try one approach, but fall back on the other approach.
                 Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
-            	try {
-            		lock.lock();
-            		directedPresencesCache.put(entry.getKey(), entry.getValue());
-            	} finally {
-            		lock.unlock();
-            	}
+                try {
+                    lock.lock();
+                    directedPresencesCache.put(entry.getKey(), entry.getValue());
+                } finally {
+                    lock.unlock();
+                }
             }
         }
     }

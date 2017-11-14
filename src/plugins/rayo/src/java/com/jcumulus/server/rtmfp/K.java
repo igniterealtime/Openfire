@@ -101,8 +101,8 @@ public class K
     }
 
     public static enum Encryption  {
-		DECRYPT, ENCRYPT
-	}
+        DECRYPT, ENCRYPT
+    }
 
 
 }

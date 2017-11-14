@@ -151,7 +151,7 @@
 <script src="dwr/interface/downloader.js" type="text/javascript"></script>
 
 <script type="text/javascript" >
-	dwr.engine.setErrorHandler(handleError);
+    dwr.engine.setErrorHandler(handleError);
 
     function handleError(error) {
     }
@@ -189,7 +189,7 @@
     border-style: solid;
     border-width: 1px 1px 1px 1px;
     padding: 5px;
-	-moz-border-radius: 3px;
+    -moz-border-radius: 3px;
 }
 
 .light-gray-border-bottom {

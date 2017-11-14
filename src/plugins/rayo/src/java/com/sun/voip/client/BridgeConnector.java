@@ -54,77 +54,77 @@ public class BridgeConnector extends Thread {
     }
 
     public BridgeConnector(String serverName, int serverPort) 
-	    throws IOException {
+        throws IOException {
 
-	this(serverName, serverPort, 0);
+    this(serverName, serverPort, 0);
     }
 
     public BridgeConnector(String serverName, int serverPort, int timeout) 
-	    throws IOException {
+        throws IOException {
 
-	if (serverName == null) {
-	    serverName = System.getProperty(
-		"com.sun.voip.server.BRIDGE_SERVER_NAME", 
-		"escher.east.sun.com");
-	}
+    if (serverName == null) {
+        serverName = System.getProperty(
+        "com.sun.voip.server.BRIDGE_SERVER_NAME", 
+        "escher.east.sun.com");
+    }
 
-	if (serverPort == 0) {
-	    serverPort = Integer.getInteger(
-	        "com.sun.voip.server.Bridge.PORT", 6666).intValue();
-	}
+    if (serverPort == 0) {
+        serverPort = Integer.getInteger(
+            "com.sun.voip.server.Bridge.PORT", 6666).intValue();
+    }
 
-	InetSocketAddress isa = new InetSocketAddress(serverName, serverPort);
+    InetSocketAddress isa = new InetSocketAddress(serverName, serverPort);
 
-	if (isa.isUnresolved()) {
-	    throw new IOException("BridgeConnector can't resolve hostname " 
-		+ serverName);
-	}
+    if (isa.isUnresolved()) {
+        throw new IOException("BridgeConnector can't resolve hostname " 
+        + serverName);
+    }
 
-	Logger.println("Connecting to remote host " + serverName
-	    + ", port " + serverPort);
+    Logger.println("Connecting to remote host " + serverName
+        + ", port " + serverPort);
 
-	//
-	// Open a tcp connection to the remote host at the well-known port.
-	//
-	socket = new Socket();
+    //
+    // Open a tcp connection to the remote host at the well-known port.
+    //
+    socket = new Socket();
 
-	socket.connect(isa, timeout);
+    socket.connect(isa, timeout);
 
         output = socket.getOutputStream();
 
         bufferedReader = new BufferedReader(
-	    new InputStreamReader(socket.getInputStream()));
+        new InputStreamReader(socket.getInputStream()));
 
-	start();
+    start();
 
-	synchronized(this) {
-	    try {
-		wait();
-	    } catch(InterruptedException e) {
-	    }
-	}
+    synchronized(this) {
+        try {
+        wait();
+        } catch(InterruptedException e) {
+        }
+    }
     }
 
     public Socket getSocket() {
-	return socket;
+    return socket;
     }
 
     public void sendCommand(String command) throws IOException {
-	if (socket == null || connected == false) {
-	    throw new IOException("BridgeConnector:  not connected");
-	}
+    if (socket == null || connected == false) {
+        throw new IOException("BridgeConnector:  not connected");
+    }
 
-	command += "\n";
+    command += "\n";
 
-	output.write(command.getBytes());
+    output.write(command.getBytes());
     }
 
     private Vector listeners = new Vector();
 
     public void addCallEventListener(CallEventListener listener) {
-	synchronized(listeners) {
-	    listeners.add(listener);
-	}
+    synchronized(listeners) {
+        listeners.add(listener);
+    }
     }
 
     public void removeCallEventListener(CallEventListener listener) {
@@ -134,89 +134,89 @@ public class BridgeConnector extends Thread {
     }
 
     private void callEventNotification(CallEvent event) {
-	this.event = event;
+    this.event = event;
 
-	synchronized(this) {
-	    notifyAll();
-	}
+    synchronized(this) {
+        notifyAll();
+    }
 
-	Logger.println(event.toString());
+    Logger.println(event.toString());
 
-	synchronized(listeners) {
-	    for (int i = 0; i < listeners.size(); i++) {
-		CallEventListener listener = (CallEventListener)
-		    listeners.get(i);
+    synchronized(listeners) {
+        for (int i = 0; i < listeners.size(); i++) {
+        CallEventListener listener = (CallEventListener)
+            listeners.get(i);
 
-		listener.callEventNotification(event);
-	    }
-	}
+        listener.callEventNotification(event);
+        }
+    }
     }
 
     private boolean done;
 
     public void done() {
-	if (done) {
-	    return;
-	}
-
-	done = true;
-
-	if (socket != null) {
-	    try {
-	        socket.close();
-	    } catch (IOException e) {
-		Logger.println("Close failed for socket " + socket
-		    + " " + e.getMessage());
-	    }
-
-	    socket = null;
-	}
-	
-	if (bufferedReader != null) {
-	    try {
-	        bufferedReader.close();
-	    } catch (IOException e) {
-		Logger.println("Close failed for bufferedReader for socket " 
-		    + socket + " " + e.getMessage());
-	    }
-
-	    bufferedReader = null;
-	}
+    if (done) {
+        return;
     }
-	
-    public void run() {
-	connected = true;
 
-	while (!done) {
-	    String s = null;
+    done = true;
 
-	    try {
-                s = bufferedReader.readLine();
-	    } catch (IOException e) {
-		if (done == false) {
-	 	    System.err.println("can't read socket! " 
-			+ socket + " " + e.getMessage());
-		}
-		break;
-	    }
-
-	    if (s == null && done == false) {
-	 	Logger.println("can't read socket! " + socket);
-		break;
-	    }
-
-	    callEventNotification(new CallEvent(s));
+    if (socket != null) {
+        try {
+            socket.close();
+        } catch (IOException e) {
+        Logger.println("Close failed for socket " + socket
+            + " " + e.getMessage());
         }
 
-	connected = false;
+        socket = null;
+    }
+    
+    if (bufferedReader != null) {
+        try {
+            bufferedReader.close();
+        } catch (IOException e) {
+        Logger.println("Close failed for bufferedReader for socket " 
+            + socket + " " + e.getMessage());
+        }
+
+        bufferedReader = null;
+    }
+    }
+    
+    public void run() {
+    connected = true;
+
+    while (!done) {
+        String s = null;
+
+        try {
+                s = bufferedReader.readLine();
+        } catch (IOException e) {
+        if (done == false) {
+            System.err.println("can't read socket! " 
+            + socket + " " + e.getMessage());
+        }
+        break;
+        }
+
+        if (s == null && done == false) {
+        Logger.println("can't read socket! " + socket);
+        break;
+        }
+
+        callEventNotification(new CallEvent(s));
+        }
+
+    connected = false;
     }
 
     public String toString() {
-	if (socket != null && connected) {
-	    return socket.toString();
-	}
+    if (socket != null && connected) {
+        return socket.toString();
+    }
 
-	return "not connected";
+    return "not connected";
     }
 
 }

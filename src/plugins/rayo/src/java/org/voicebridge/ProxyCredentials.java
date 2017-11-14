@@ -99,6 +99,6 @@ public class ProxyCredentials
 
     public char[] getPassword() {
         return password;
-	}
+    }
 
 }

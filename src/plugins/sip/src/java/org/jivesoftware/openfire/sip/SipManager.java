@@ -40,8 +40,8 @@ import org.xmpp.component.ComponentManagerFactory;
  */
 public class SipManager implements Plugin, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(SipManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SipManager.class);
+    
     private String serviceName;
 
     private ComponentManager componentManager;

@@ -29,13 +29,13 @@ public class JMXManager {
     private static final Logger Log = LoggerFactory.getLogger(JMXManager.class);
 
     private static final String XMPP_JMX_ENABLED = "xmpp.jmx.enabled";
-	private static final String XMPP_JMX_SECURE = "xmpp.jmx.secure";
-	private static final String XMPP_JMX_PORT = "xmpp.jmx.port";
-	
-	public static final int DEFAULT_PORT = Registry.REGISTRY_PORT;
-	
-	private static JMXManager instance = null;
-	
+    private static final String XMPP_JMX_SECURE = "xmpp.jmx.secure";
+    private static final String XMPP_JMX_PORT = "xmpp.jmx.port";
+    
+    public static final int DEFAULT_PORT = Registry.REGISTRY_PORT;
+    
+    private static JMXManager instance = null;
+    
     private MBeanContainer mbContainer;
     private ConnectorServer jmxServer;
 
@@ -50,8 +50,8 @@ public class JMXManager {
      * @return true if the JMX connector requires authentication
      */
     public static boolean isSecure() {
-		return JiveGlobals.getBooleanProperty(XMPP_JMX_SECURE, true);
-	}
+        return JiveGlobals.getBooleanProperty(XMPP_JMX_SECURE, true);
+    }
     
     public static void setSecure(boolean secure) {
         JiveGlobals.setProperty("xmpp.jmx.secure", String.valueOf(secure));
@@ -67,13 +67,13 @@ public class JMXManager {
      * 
      * @return Port number for the JMX connector
      */
-	public static int getPort() {
-		return JiveGlobals.getIntProperty(XMPP_JMX_PORT, DEFAULT_PORT);
-	}
-	
-	public static void setPort(int port) {
-	    JiveGlobals.setProperty("xmpp.jmx.port", String.valueOf(port));
-	}
+    public static int getPort() {
+        return JiveGlobals.getIntProperty(XMPP_JMX_PORT, DEFAULT_PORT);
+    }
+    
+    public static void setPort(int port) {
+        JiveGlobals.setProperty("xmpp.jmx.port", String.valueOf(port));
+    }
 
     /**
      * Returns true if JMX support is enabled. This option can be 
@@ -85,81 +85,81 @@ public class JMXManager {
      * 
      * @return true if JMX support is enabled
      */
-	public static boolean isEnabled() {
-		return JiveGlobals.getBooleanProperty(XMPP_JMX_ENABLED, false);
-	}
-	
-	public static void setEnabled(boolean enabled) {
-	    JiveGlobals.setProperty("xmpp.jmx.enabled", String.valueOf(enabled));
-	}
+    public static boolean isEnabled() {
+        return JiveGlobals.getBooleanProperty(XMPP_JMX_ENABLED, false);
+    }
+    
+    public static void setEnabled(boolean enabled) {
+        JiveGlobals.setProperty("xmpp.jmx.enabled", String.valueOf(enabled));
+    }
 
-	public static JMXManager getInstance() {
-		if (instance == null) {
-			instance = new JMXManager();
-			if (isEnabled()) {
-				instance.start();
-			}
-		}
-		return instance;
-	}
+    public static JMXManager getInstance() {
+        if (instance == null) {
+            instance = new JMXManager();
+            if (isEnabled()) {
+                instance.start();
+            }
+        }
+        return instance;
+    }
 
-	private void start() {
+    private void start() {
 
-		setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
-		int jmxPort = JMXManager.getPort();
-		String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
-		Map<String, Object> env = new HashMap<>();
-		if (JMXManager.isSecure()) {
-    		env.put("jmx.remote.authenticator", new JMXAuthenticator() {
-				@Override
-				public Subject authenticate(Object credentials) {
-    	            if (!(credentials instanceof String[])) {
-    	                if (credentials == null) {
-    	                    throw new SecurityException("Credentials required");
-    	                }
-    	                throw new SecurityException("Credentials should be String[]");
-    	            }
-    	            final String[] aCredentials = (String[]) credentials;
-    	            if (aCredentials.length < 2) {
-    	                throw new SecurityException("Credentials should have at least two elements");
-    	            }
-    	            String username = aCredentials[0];
-    	            String password = aCredentials[1];
+        setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
+        int jmxPort = JMXManager.getPort();
+        String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
+        Map<String, Object> env = new HashMap<>();
+        if (JMXManager.isSecure()) {
+            env.put("jmx.remote.authenticator", new JMXAuthenticator() {
+                @Override
+                public Subject authenticate(Object credentials) {
+                    if (!(credentials instanceof String[])) {
+                        if (credentials == null) {
+                            throw new SecurityException("Credentials required");
+                        }
+                        throw new SecurityException("Credentials should be String[]");
+                    }
+                    final String[] aCredentials = (String[]) credentials;
+                    if (aCredentials.length < 2) {
+                        throw new SecurityException("Credentials should have at least two elements");
+                    }
+                    String username = aCredentials[0];
+                    String password = aCredentials[1];
 
-    	            try {
-    	            	AuthFactory.authenticate(username, password);
-    	            } catch (Exception ex) {
-    	            	Log.error("Authentication failed for " + username);
-    	            	throw new SecurityException();
-    	            }
+                    try {
+                        AuthFactory.authenticate(username, password);
+                    } catch (Exception ex) {
+                        Log.error("Authentication failed for " + username);
+                        throw new SecurityException();
+                    }
 
-    	            if (AdminManager.getInstance().isUserAdmin(username, true)) {
-    	                return new Subject(true,
-    	                                   Collections.singleton(new JMXPrincipal(username)),
-    	                                   Collections.EMPTY_SET,
-    	                                   Collections.EMPTY_SET);
-    	            } else {
-    	                Log.error("Authorization failed for " + username);
-    	                throw new SecurityException();
-    	            }
-    	        }
-    		});
-		}
-		
-		try {
-			jmxServer = new ConnectorServer(new JMXServiceURL("rmi", null, jmxPort, jmxUrl), 
-					env, "org.eclipse.jetty.jmx:name=rmiconnectorserver");
-			jmxServer.start();
-		} catch (Exception e) {
-			Log.error("Failed to start JMX connector", e);
-		}
-	}
-	
-	public MBeanContainer getContainer() {
-		return mbContainer;
-	}
+                    if (AdminManager.getInstance().isUserAdmin(username, true)) {
+                        return new Subject(true,
+                                           Collections.singleton(new JMXPrincipal(username)),
+                                           Collections.EMPTY_SET,
+                                           Collections.EMPTY_SET);
+                    } else {
+                        Log.error("Authorization failed for " + username);
+                        throw new SecurityException();
+                    }
+                }
+            });
+        }
+        
+        try {
+            jmxServer = new ConnectorServer(new JMXServiceURL("rmi", null, jmxPort, jmxUrl), 
+                    env, "org.eclipse.jetty.jmx:name=rmiconnectorserver");
+            jmxServer.start();
+        } catch (Exception e) {
+            Log.error("Failed to start JMX connector", e);
+        }
+    }
+    
+    public MBeanContainer getContainer() {
+        return mbContainer;
+    }
 
-	public void setContainer(MBeanContainer mbContainer) {
-		this.mbContainer = mbContainer;
-	}
+    public void setContainer(MBeanContainer mbContainer) {
+        this.mbContainer = mbContainer;
+    }
 }

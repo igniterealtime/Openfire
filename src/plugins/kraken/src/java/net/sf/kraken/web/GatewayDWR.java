@@ -89,10 +89,10 @@ public class GatewayDWR extends DWRServlet {
     
     @Override
     protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
-	    throws IOException, ServletException {
+        throws IOException, ServletException {
 
-		super.doPost(new MyServletRequestWrapper(httpServletRequest), httpServletResponse);
-	}
+        super.doPost(new MyServletRequestWrapper(httpServletRequest), httpServletResponse);
+    }
     
     /**
      * Custom HTTP request wrapper that overrides the path to use

@@ -60,8 +60,8 @@ import org.xmpp.packet.Presence;
  */
 public class WorkgroupPresence {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
+    
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
             .getInstance(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 

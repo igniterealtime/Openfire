@@ -30,12 +30,12 @@ import java.io.FilenameFilter;
 public class Uninstaller extends UninstallAction {
 
     @Override
-	public int getPercentOfTotalInstallation() {
+    public int getPercentOfTotalInstallation() {
         return 0;
     }
 
     @Override
-	public boolean performAction(Context context, ProgressInterface progressInterface) {
+    public boolean performAction(Context context, ProgressInterface progressInterface) {
         final File installationDirectory = context.getInstallationDirectory();
 
         File libDirectory = new File(installationDirectory, "lib");

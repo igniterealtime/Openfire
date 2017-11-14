@@ -121,7 +121,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     private SpeexDecoder speexDecoder;
 
-	private long opusDecoder = 0;
+    private long opusDecoder = 0;
     private final int opusSampleRate = 48000;
     private final int frameSizeInMillis = 20;
     private final int outputFrameSize = 2;
@@ -183,71 +183,71 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
 
 
-	public void setChannel(IChannel relayChannel)
-	{
-		this.relayChannel = relayChannel;
-	}
+    public void setChannel(IChannel relayChannel)
+    {
+        this.relayChannel = relayChannel;
+    }
 
     public MemberReceiver(ConferenceMember member, CallParticipant cp, DatagramChannel datagramChannel) throws IOException
     {
 
-	this.member = member;
-	this.cp = cp;
-	this.datagramChannel = datagramChannel;
+    this.member = member;
+    this.cp = cp;
+    this.datagramChannel = datagramChannel;
 
-	synchronized (memberNumberLock) {
-	    myMemberNumber = memberNumber++;
-	}
+    synchronized (memberNumberLock) {
+        myMemberNumber = memberNumber++;
+    }
 
-	encryptionKey = cp.getEncryptionKey();
-	encryptionAlgorithm = cp.getEncryptionAlgorithm();
+    encryptionKey = cp.getEncryptionKey();
+    encryptionAlgorithm = cp.getEncryptionAlgorithm();
 
-	if (encryptionKey != null) {
-	    try {
-		if (encryptionKey.length() < 8) {
-		    encryptionKey +=
-			String.valueOf(System.currentTimeMillis());
-		}
+    if (encryptionKey != null) {
+        try {
+        if (encryptionKey.length() < 8) {
+            encryptionKey +=
+            String.valueOf(System.currentTimeMillis());
+        }
 
-		if (encryptionKey.length() > 8 &&
-			encryptionAlgorithm.equals("DES")) {
+        if (encryptionKey.length() > 8 &&
+            encryptionAlgorithm.equals("DES")) {
 
-		    encryptionKey = encryptionKey.substring(0, 8);
-		}
+            encryptionKey = encryptionKey.substring(0, 8);
+        }
 
-		byte[] keyBytes = encryptionKey.getBytes();
-		SecretKeySpec secretKey = new SecretKeySpec(keyBytes,
-		    encryptionAlgorithm);
+        byte[] keyBytes = encryptionKey.getBytes();
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes,
+            encryptionAlgorithm);
 
-	        decryptCipher = Cipher.getInstance(encryptionAlgorithm);
-	        decryptCipher.init(Cipher.DECRYPT_MODE, secretKey);
+            decryptCipher = Cipher.getInstance(encryptionAlgorithm);
+            decryptCipher.init(Cipher.DECRYPT_MODE, secretKey);
 
-		Logger.println("Call " + cp + " Voice data will be decrypted "
-		    + "using " + encryptionAlgorithm);
-	    } catch (Exception e) {
-		Logger.println("Call " + cp
-		    + " Crypto initialization failed " + e.getMessage());
+        Logger.println("Call " + cp + " Voice data will be decrypted "
+            + "using " + encryptionAlgorithm);
+        } catch (Exception e) {
+        Logger.println("Call " + cp
+            + " Crypto initialization failed " + e.getMessage());
                 throw new IOException(" Crypto initialization failed "
-		    + e.getMessage());
-	    }
-	}
+            + e.getMessage());
+        }
+    }
 
-	timeStarted = Logger.getDate();
+    timeStarted = Logger.getDate();
     }
 
     public ConferenceMember getMember()
     {
-		return member;
+        return member;
     }
 
     public MediaInfo getMediaInfo()
     {
-		return myMediaInfo;
+        return myMediaInfo;
     }
 
     public byte getTelephoneEventPayload()
     {
-		return telephoneEventPayload;
+        return telephoneEventPayload;
     }
 
     /*
@@ -255,36 +255,36 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      */
     public void traceCall(boolean traceCall)
     {
-		this.traceCall = traceCall;
+        this.traceCall = traceCall;
     }
 
     public boolean traceCall()
     {
-		return traceCall;
+        return traceCall;
     }
 
     public String getPerformanceData() throws IOException {
-	if (done) {
-	    throw new IOException("Call " + cp + " has ended");
-	}
+    if (done) {
+        throw new IOException("Call " + cp + " has ended");
+    }
 
-	String s = "PacketsReceived=" + packetsReceived;
+    String s = "PacketsReceived=" + packetsReceived;
 
-	s += ":MissingPackets=" + packet.getOutOfSequencePackets();
+    s += ":MissingPackets=" + packet.getOutOfSequencePackets();
 
-	s += ":JitterBufferSize=" + jitterManager.getJitterBufferSize();
+    s += ":JitterBufferSize=" + jitterManager.getJitterBufferSize();
 
-	return s;
+    return s;
     }
 
     public void setCnThresh(int cnThresh) {
-	if (speechDetector == null) {
-	    Logger.println("Can't set cnThresh because there is no "
-		+ "speech detector");
-	    return;
-	}
+    if (speechDetector == null) {
+        Logger.println("Can't set cnThresh because there is no "
+        + "speech detector");
+        return;
+    }
 
-	speechDetector.setCnThresh(cnThresh);
+    speechDetector.setCnThresh(cnThresh);
     }
 
     public void setPowerThresholdLimit(float powerThresholdLimit) {
@@ -298,61 +298,61 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     }
 
     public String getMemberState() {
-	if (initializationDone == false) {
-	    return "";
-	}
+    if (initializationDone == false) {
+        return "";
+    }
 
-	String s = "";
+    String s = "";
 
-	if (callHandler != null) {
-	    s += "\tBridge receive address for data from call "
-	        + callHandler.getReceiveAddress() + "\n";
-	}
+    if (callHandler != null) {
+        s += "\tBridge receive address for data from call "
+            + callHandler.getReceiveAddress() + "\n";
+    }
 
-	s += "\tJoinConfirmationReceived " + joinConfirmationReceived + "\n";
-	s += "\tTelephone Event Payload " + telephoneEventPayload + "\n";
-	s += "\tIsAutoMuted " + isAutoMuted + "\n";
-	s += "\tIsMuted " + cp.isMuted() + "\n";
-	s += "\tIsConferenceMuted " + cp.isConferenceMuted() + "\n";
-	s += "\tIsConferenceSilenced " + cp.isConferenceSilenced() + "\n";
-	s += "\tReadyToReceiveData " + readyToReceiveData() + "\n";
+    s += "\tJoinConfirmationReceived " + joinConfirmationReceived + "\n";
+    s += "\tTelephone Event Payload " + telephoneEventPayload + "\n";
+    s += "\tIsAutoMuted " + isAutoMuted + "\n";
+    s += "\tIsMuted " + cp.isMuted() + "\n";
+    s += "\tIsConferenceMuted " + cp.isConferenceMuted() + "\n";
+    s += "\tIsConferenceSilenced " + cp.isConferenceSilenced() + "\n";
+    s += "\tReadyToReceiveData " + readyToReceiveData() + "\n";
 
-	s += "\tInput volume ";
+    s += "\tInput volume ";
 
-	s += inputVolume + " ";
+    s += inputVolume + " ";
 
-	s += "\n";
+    s += "\n";
 
         s += "\tSeconds since last Rtcp report "
-	    + rtcpReceiver.secondsSinceLastReport(member.getRtcpAddress()) + "\n";
+        + rtcpReceiver.secondsSinceLastReport(member.getRtcpAddress()) + "\n";
 
-	s += "\tMilliseconds since last packet received "
-	    + (System.currentTimeMillis() - timeCurrentPacketReceived + "\n");
-	s += "\tMedia packets received " + mediaPacketsReceived + "\n";
-	s += "\tMin jitter size " + jitterManager.getMinJitterBufferSize()
-	    + " packets\n";
-	s += "\tMax jitter size " + jitterManager.getMaxJitterBufferSize()
-	    + " packets\n";
-	s += "\tJitter Buffer size " + jitterManager.getJitterBufferSize()
-	    + "\n";
-	s += "\tPacketLossConcealment class name "
-	    + jitterManager.getPlcClassName() + "\n";
+    s += "\tMilliseconds since last packet received "
+        + (System.currentTimeMillis() - timeCurrentPacketReceived + "\n");
+    s += "\tMedia packets received " + mediaPacketsReceived + "\n";
+    s += "\tMin jitter size " + jitterManager.getMinJitterBufferSize()
+        + " packets\n";
+    s += "\tMax jitter size " + jitterManager.getMaxJitterBufferSize()
+        + " packets\n";
+    s += "\tJitter Buffer size " + jitterManager.getJitterBufferSize()
+        + "\n";
+    s += "\tPacketLossConcealment class name "
+        + jitterManager.getPlcClassName() + "\n";
 
-	s += "\tWhispering in " + whisperGroup.toAbbreviatedString() + "\n";
+    s += "\tWhispering in " + whisperGroup.toAbbreviatedString() + "\n";
 
-	s += "\tComfort Payload Received " + gotComfortPayload + "\n";
-	s += "\tForced to defer mixing " + forcedToDeferMixing + "\n";
+    s += "\tComfort Payload Received " + gotComfortPayload + "\n";
+    s += "\tForced to defer mixing " + forcedToDeferMixing + "\n";
 
-	synchronized (forwardMemberList) {
-	    if (forwardMemberList.size() > 0) {
-		s += "\tForwarding data to\n";
-		for (MemberSender memberSender : forwardMemberList) {
-		    s += "\t\t" + memberSender + "\n";
-		}
-	    }
-	}
+    synchronized (forwardMemberList) {
+        if (forwardMemberList.size() > 0) {
+        s += "\tForwarding data to\n";
+        for (MemberSender memberSender : forwardMemberList) {
+            s += "\t\t" + memberSender + "\n";
+        }
+        }
+    }
 
-	return s;
+    return s;
     }
 
     /**
@@ -361,235 +361,235 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      * listens for data.
      */
     public void initialize(ConferenceManager conferenceManager, CallHandler callHandler, byte mediaPayload,
-	    byte telephoneEventPayload, RtcpReceiver rtcpReceiver) {
+        byte telephoneEventPayload, RtcpReceiver rtcpReceiver) {
 
-	this.conferenceManager = conferenceManager;
-	this.telephoneEventPayload = telephoneEventPayload;
+    this.conferenceManager = conferenceManager;
+    this.telephoneEventPayload = telephoneEventPayload;
     this.rtcpReceiver = rtcpReceiver;
     this.callHandler = callHandler;
 
-	Logger.writeFile("Call " + cp  + " MemberReceiver initialization started..." + cp.getProtocol());
+    Logger.writeFile("Call " + cp  + " MemberReceiver initialization started..." + cp.getProtocol());
 
-	conferenceWhisperGroup =  conferenceManager.getWGManager().getConferenceWhisperGroup();
+    conferenceWhisperGroup =  conferenceManager.getWGManager().getConferenceWhisperGroup();
 
-	MediaInfo conferenceMediaInfo = conferenceManager.getMediaInfo();
+    MediaInfo conferenceMediaInfo = conferenceManager.getMediaInfo();
 
-	int outSampleRate = conferenceMediaInfo.getSampleRate();
-	int outChannels = conferenceMediaInfo.getChannels();
+    int outSampleRate = conferenceMediaInfo.getSampleRate();
+    int outChannels = conferenceMediaInfo.getChannels();
 
-	jitterManager = new JitterManager("Call " + cp.toString());
+    jitterManager = new JitterManager("Call " + cp.toString());
 
-	if (cp.voiceDetection()) {
+    if (cp.voiceDetection()) {
 
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-			Logger.println("Call " + cp + " starting speech Detector...");
-		}
-			speechDetector = new SpeechDetector(this.toString(), conferenceMediaInfo);
-	}
-
-
-
-	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
-	{
-	    conferenceManager.getConferenceReceiver().addMember(this);
-
-		if (cp.getJoinConfirmationTimeout() == 0)
-		{
-			joinConfirmationReceived = true;
-			readyToReceiveData = true;
-			playJoinTreatment();
-		}
-
-	} else {
-
-		try {
-			myMediaInfo = SdpManager.findMediaInfo(mediaPayload);
-		} catch (ParseException e) {
-			Logger.println("Call " + cp + " Invalid mediaPayload "
-			+ mediaPayload);
-
-			callHandler.cancelRequest("Invalid mediaPayload " + mediaPayload);
-			return;
-		}
-
-		Logger.println("My media info:  " + myMediaInfo);
-
-		int inSampleRate = myMediaInfo.getSampleRate();
-		int inChannels = myMediaInfo.getChannels();
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Call " + cp + " starting speech Detector...");
+        }
+            speechDetector = new SpeechDetector(this.toString(), conferenceMediaInfo);
+    }
 
 
-		//if (cp.getPhoneNumber().indexOf("@") >= 0) {
-			ConferenceReceiver conferenceReceiver = conferenceManager.getConferenceReceiver();
-			conferenceManager.getConferenceReceiver().addMember(this);
-		//}
 
-		/*
-		 * For input treatments, the treatment manager does the resampling.
-		 */
-		if (cp.getInputTreatment() == null) {
-			if (inSampleRate != outSampleRate || inChannels != outChannels) {
-				try {
-				Logger.println("Call " + cp
-					+ " resample received data from " + inSampleRate + "/"
-					+ inChannels + " to " + outSampleRate
-					+ "/" + outChannels);
+    if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
+    {
+        conferenceManager.getConferenceReceiver().addMember(this);
 
-					inSampleRateConverter = new SampleRateConverter(
-					this.toString(), inSampleRate, inChannels,
-					outSampleRate, outChannels);
-				} catch (IOException e) {
-					callHandler.cancelRequest(e.getMessage());
-				return;
-				}
-			}
-		}
+        if (cp.getJoinConfirmationTimeout() == 0)
+        {
+            joinConfirmationReceived = true;
+            readyToReceiveData = true;
+            playJoinTreatment();
+        }
 
-		packet = new RtpReceiverPacket(cp.toString(), myMediaInfo.getEncoding(), inSampleRate, inChannels);
+    } else {
 
-		if (initializationDone) {
-			/*
-			 * This is a re-initialize
-			 */
-			return;
-		}
+        try {
+            myMediaInfo = SdpManager.findMediaInfo(mediaPayload);
+        } catch (ParseException e) {
+            Logger.println("Call " + cp + " Invalid mediaPayload "
+            + mediaPayload);
 
-		//if (telephoneEventPayload == 0 && (cp.dtmfDetection() || cp.getJoinConfirmationTimeout() != 0)) {
+            callHandler.cancelRequest("Invalid mediaPayload " + mediaPayload);
+            return;
+        }
 
-			Logger.println("Call " + cp + " starting dtmf Detector..." + telephoneEventPayload + " " + cp.dtmfDetection());
+        Logger.println("My media info:  " + myMediaInfo);
 
-			dtmfDecoder = new DtmfDecoder(this, myMediaInfo);
-		//}
+        int inSampleRate = myMediaInfo.getSampleRate();
+        int inChannels = myMediaInfo.getChannels();
 
-		if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
-				try {
-					speexDecoder = new SpeexDecoder(inSampleRate, inChannels);
-					Logger.println("Call " + cp + " created SpeexDecoder");
-				} catch (SpeexException e) {
-					Logger.println("Call " + cp + e.getMessage());
-					callHandler.cancelRequest(e.getMessage());
-					return;
-				}
 
-		} else 	if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
+        //if (cp.getPhoneNumber().indexOf("@") >= 0) {
+            ConferenceReceiver conferenceReceiver = conferenceManager.getConferenceReceiver();
+            conferenceManager.getConferenceReceiver().addMember(this);
+        //}
 
-			try {
-            	opusDecoder = Opus.decoder_create(opusSampleRate, opusChannels);
+        /*
+         * For input treatments, the treatment manager does the resampling.
+         */
+        if (cp.getInputTreatment() == null) {
+            if (inSampleRate != outSampleRate || inChannels != outChannels) {
+                try {
+                Logger.println("Call " + cp
+                    + " resample received data from " + inSampleRate + "/"
+                    + inChannels + " to " + outSampleRate
+                    + "/" + outChannels);
 
-				if (opusDecoder == 0)
-				{
-					Logger.println("Call " + cp + " OPUS decoder creation error ");
-					callHandler.cancelRequest("OPUS decoder creation error ");
-					return;
-				}
+                    inSampleRateConverter = new SampleRateConverter(
+                    this.toString(), inSampleRate, inChannels,
+                    outSampleRate, outChannels);
+                } catch (IOException e) {
+                    callHandler.cancelRequest(e.getMessage());
+                return;
+                }
+            }
+        }
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+        packet = new RtpReceiverPacket(cp.toString(), myMediaInfo.getEncoding(), inSampleRate, inChannels);
 
-		}
+        if (initializationDone) {
+            /*
+             * This is a re-initialize
+             */
+            return;
+        }
 
-		if (cp.getJoinConfirmationTimeout() == 0) {
-				joinConfirmationReceived = true;
-			readyToReceiveData = true;
-			playJoinTreatment();
-		}
+        //if (telephoneEventPayload == 0 && (cp.dtmfDetection() || cp.getJoinConfirmationTimeout() != 0)) {
 
-		if (cp.getInputTreatment() != null &&
-			cp.getInputTreatment().length() > 0) {
+            Logger.println("Call " + cp + " starting dtmf Detector..." + telephoneEventPayload + " " + cp.dtmfDetection());
 
-			String absolutePath = cp.getInputTreatment();
+            dtmfDecoder = new DtmfDecoder(this, myMediaInfo);
+        //}
 
-			try {
-			if (cp.getRecordDirectory() != null) {
-					absolutePath = Recorder.getAbsolutePath(cp.getRecordDirectory(),
-					cp.getInputTreatment());
-			}
+        if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
+                try {
+                    speexDecoder = new SpeexDecoder(inSampleRate, inChannels);
+                    Logger.println("Call " + cp + " created SpeexDecoder");
+                } catch (SpeexException e) {
+                    Logger.println("Call " + cp + e.getMessage());
+                    callHandler.cancelRequest(e.getMessage());
+                    return;
+                }
 
-				if (Logger.logLevel >= Logger.LOG_INFO) {
-					Logger.println("Call " + cp
-				+ " New input treatment:  " + absolutePath);
-				}
+        } else 	if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
 
-			synchronized (this) {
-					new InputTreatment(this, absolutePath,
-					0, conferenceMediaInfo.getSampleRate(),
-					conferenceMediaInfo.getChannels());
-			}
-			} catch (IOException e) {
-				e.printStackTrace();
+            try {
+                opusDecoder = Opus.decoder_create(opusSampleRate, opusChannels);
 
-			Logger.println("MemberReceiver:  Invalid input treatment "
-				+ absolutePath + ":  " + e.getMessage());
+                if (opusDecoder == 0)
+                {
+                    Logger.println("Call " + cp + " OPUS decoder creation error ");
+                    callHandler.cancelRequest("OPUS decoder creation error ");
+                    return;
+                }
 
-				callHandler.cancelRequest("Invalid input treatment "
-				+ absolutePath + ":  " + e.getMessage());
-				return;
-			}
-		}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-		String forwardingCallId = cp.getForwardingCallId();
+        }
 
-		if (forwardingCallId != null) {
-			CallHandler forwardingCall = CallHandler.findCall(forwardingCallId);
+        if (cp.getJoinConfirmationTimeout() == 0) {
+                joinConfirmationReceived = true;
+            readyToReceiveData = true;
+            playJoinTreatment();
+        }
 
-			if (forwardingCall == null) {
-			Logger.println("Invalid forwardingCallId:  " + forwardingCallId);
-			callHandler.cancelRequest("Invalid forwardingCallId:  "
-				+ forwardingCallId);
-			return;
-			}
+        if (cp.getInputTreatment() != null &&
+            cp.getInputTreatment().length() > 0) {
 
-			ConferenceMember m = forwardingCall.getMember();
+            String absolutePath = cp.getInputTreatment();
 
-			m.getMemberReceiver().addForwardMember(member.getMemberSender());
+            try {
+            if (cp.getRecordDirectory() != null) {
+                    absolutePath = Recorder.getAbsolutePath(cp.getRecordDirectory(),
+                    cp.getInputTreatment());
+            }
 
-			/*
-			 * If the source of the data is an input treatment, there
-			 * is no need to have the forwarding call receive data
-			 * from the remote side.
-			 */
-			if (cp.getInputTreatment() != null) {
-			m.setConferenceMuted(true);
-			}
-		}
-	}
+                if (Logger.logLevel >= Logger.LOG_INFO) {
+                    Logger.println("Call " + cp
+                + " New input treatment:  " + absolutePath);
+                }
 
-	initializationDone = true;
+            synchronized (this) {
+                    new InputTreatment(this, absolutePath,
+                    0, conferenceMediaInfo.getSampleRate(),
+                    conferenceMediaInfo.getChannels());
+            }
+            } catch (IOException e) {
+                e.printStackTrace();
 
-	Logger.writeFile("Call " + cp  + " MemberReceiver initialization done...");
+            Logger.println("MemberReceiver:  Invalid input treatment "
+                + absolutePath + ":  " + e.getMessage());
+
+                callHandler.cancelRequest("Invalid input treatment "
+                + absolutePath + ":  " + e.getMessage());
+                return;
+            }
+        }
+
+        String forwardingCallId = cp.getForwardingCallId();
+
+        if (forwardingCallId != null) {
+            CallHandler forwardingCall = CallHandler.findCall(forwardingCallId);
+
+            if (forwardingCall == null) {
+            Logger.println("Invalid forwardingCallId:  " + forwardingCallId);
+            callHandler.cancelRequest("Invalid forwardingCallId:  "
+                + forwardingCallId);
+            return;
+            }
+
+            ConferenceMember m = forwardingCall.getMember();
+
+            m.getMemberReceiver().addForwardMember(member.getMemberSender());
+
+            /*
+             * If the source of the data is an input treatment, there
+             * is no need to have the forwarding call receive data
+             * from the remote side.
+             */
+            if (cp.getInputTreatment() != null) {
+            m.setConferenceMuted(true);
+            }
+        }
+    }
+
+    initializationDone = true;
+
+    Logger.writeFile("Call " + cp  + " MemberReceiver initialization done...");
     }
 
     public void addForwardMember(MemberSender memberSender) {
-	synchronized (forwardMemberList) {
-	    if (forwardMemberList.contains(memberSender)) {
-		Logger.println("Already forwarding data to " + memberSender);
-		return;
-	    }
+    synchronized (forwardMemberList) {
+        if (forwardMemberList.contains(memberSender)) {
+        Logger.println("Already forwarding data to " + memberSender);
+        return;
+        }
 
-	    forwardMemberList.add(memberSender);
-	}
+        forwardMemberList.add(memberSender);
+    }
     }
 
     public void removeForwardMember(MemberSender memberSender) {
-	synchronized (forwardMemberList) {
-	    forwardMemberList.remove(memberSender);
-	}
+    synchronized (forwardMemberList) {
+        forwardMemberList.remove(memberSender);
+    }
     }
 
     public void treatmentDoneNotification(TreatmentManager treatmentManager) {
-	treatmentDoneNotification(treatmentManager.getId());
+    treatmentDoneNotification(treatmentManager.getId());
     }
 
     public void treatmentDoneNotification(String treatment) {
         synchronized (conferenceManager) {
             if (Logger.logLevel >= Logger.LOG_MOREINFO) {
                 Logger.println("Input Treatment done " + treatment);
-	    }
+        }
 
-	    if (callHandler == null) {
-		Logger.println("Call " + cp + " treatment done but no call handler.");
-		return;
-	    }
+        if (callHandler == null) {
+        Logger.println("Call " + cp + " treatment done but no call handler.");
+        return;
+        }
 
             CallEvent callEvent = new CallEvent(CallEvent.TREATMENT_DONE);
             callEvent.setTreatmentId(treatment);
@@ -599,47 +599,47 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     public void restartInputTreatment() {
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Call " + cp + " restartInputTreatment "
-		+ cp.getInputTreatment());
-	}
+        Logger.println("Call " + cp + " restartInputTreatment "
+        + cp.getInputTreatment());
+    }
 
-	if (whisperGroup == null) {
-	    Logger.println("Call " + cp + " restartInputTreatment wg is null!");
-	    return;
-	}
+    if (whisperGroup == null) {
+        Logger.println("Call " + cp + " restartInputTreatment wg is null!");
+        return;
+    }
 
-	synchronized (this) {
-	    if (cp.getInputTreatment() != null &&
-		    cp.getInputTreatment().length() > 0) {
+    synchronized (this) {
+        if (cp.getInputTreatment() != null &&
+            cp.getInputTreatment().length() > 0) {
 
-		try {
-		    MediaInfo conferenceMediaInfo =
-			conferenceManager.getMediaInfo();
+        try {
+            MediaInfo conferenceMediaInfo =
+            conferenceManager.getMediaInfo();
 
-	    	    String absolutePath = cp.getInputTreatment();
+                String absolutePath = cp.getInputTreatment();
 
-		    if (cp.getRecordDirectory() != null) {
-	    	        absolutePath = Recorder.getAbsolutePath(
-			    cp.getRecordDirectory(), cp.getInputTreatment());
-		    }
+            if (cp.getRecordDirectory() != null) {
+                    absolutePath = Recorder.getAbsolutePath(
+                cp.getRecordDirectory(), cp.getInputTreatment());
+            }
 
-	            if (Logger.logLevel >= Logger.LOG_INFO) {
-		        Logger.println("Call " + cp + " new input treatment "
-			    + absolutePath);
-		    }
+                if (Logger.logLevel >= Logger.LOG_INFO) {
+                Logger.println("Call " + cp + " new input treatment "
+                + absolutePath);
+            }
 
-	            new InputTreatment(this, absolutePath, 0,
-			conferenceMediaInfo.getSampleRate(),
+                new InputTreatment(this, absolutePath, 0,
+            conferenceMediaInfo.getSampleRate(),
                         conferenceMediaInfo.getChannels());
-	        } catch (IOException e) {
-	            Logger.println(cp + " Unable to restart input treatment "
-			+ cp.getInputTreatment() + ": " + e.getMessage());
-	    	    callHandler.cancelRequest(
-			"unable to restart input treatment "
-		        + cp.getInputTreatment() + ": " + e.getMessage());
-	        }
-	    }
-	}
+            } catch (IOException e) {
+                Logger.println(cp + " Unable to restart input treatment "
+            + cp.getInputTreatment() + ": " + e.getMessage());
+                callHandler.cancelRequest(
+            "unable to restart input treatment "
+                + cp.getInputTreatment() + ": " + e.getMessage());
+            }
+        }
+    }
     }
 
     private InputTreatment iTreatment;
@@ -648,165 +648,165 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     class InputTreatment extends Thread {
 
-	TreatmentManager treatmentManager;
-	TreatmentDoneListener treatmentDoneListener;
-	private String treatment;
-	private int repeatCount;
-	private int sampleRate;
-	private int channels;
+    TreatmentManager treatmentManager;
+    TreatmentDoneListener treatmentDoneListener;
+    private String treatment;
+    private int repeatCount;
+    private int sampleRate;
+    private int channels;
 
-	public InputTreatment(TreatmentDoneListener treatmentDoneListener,
-		String treatment, int repeatCount, int sampleRate,
-		int channels) {
+    public InputTreatment(TreatmentDoneListener treatmentDoneListener,
+        String treatment, int repeatCount, int sampleRate,
+        int channels) {
 
-	    this.treatmentDoneListener = treatmentDoneListener;
+        this.treatmentDoneListener = treatmentDoneListener;
             this.treatment = treatment;
             this.repeatCount = repeatCount;
             this.sampleRate = sampleRate;
             this.channels = channels;
 
-	    start();
+        start();
 
- 	}
+    }
 
-	public TreatmentManager getTreatmentManager() {
-	    return treatmentManager;
-  	}
+    public TreatmentManager getTreatmentManager() {
+        return treatmentManager;
+    }
 
-	public void done() {
-	    if (treatmentManager == null) {
-		return;
-	    }
+    public void done() {
+        if (treatmentManager == null) {
+        return;
+        }
 
-	    treatmentManager.removeTreatmentDoneListener(treatmentDoneListener);
+        treatmentManager.removeTreatmentDoneListener(treatmentDoneListener);
 
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("Calling stoptreatment for " + treatmentManager);
-	    }
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Calling stoptreatment for " + treatmentManager);
+        }
 
-	    treatmentManager.stopTreatment();
-	}
+        treatmentManager.stopTreatment();
+    }
 
         public void run() {
-	    synchronized (lock) {
-	        if (iTreatment != null) {
-		    if (iTreatment.getTreatmentManager() != null) {
-	                if (Logger.logLevel >= Logger.LOG_INFO) {
-		            Logger.println("Stopping previous input treatment "
-			        + iTreatment.getTreatmentManager().getId());
-			}
-		        iTreatment.done();
-		    } else {
-		        try {
-			    synchronized (iTreatment) {
-		                iTreatment.wait();
-			    }
-	                    if (Logger.logLevel >= Logger.LOG_INFO) {
-		                Logger.println(
-			            "Stopping previous input treatment after waiting "
-			            + iTreatment.getTreatmentManager().getId());
-			    }
+        synchronized (lock) {
+            if (iTreatment != null) {
+            if (iTreatment.getTreatmentManager() != null) {
+                    if (Logger.logLevel >= Logger.LOG_INFO) {
+                    Logger.println("Stopping previous input treatment "
+                    + iTreatment.getTreatmentManager().getId());
+            }
+                iTreatment.done();
+            } else {
+                try {
+                synchronized (iTreatment) {
+                        iTreatment.wait();
+                }
+                        if (Logger.logLevel >= Logger.LOG_INFO) {
+                        Logger.println(
+                        "Stopping previous input treatment after waiting "
+                        + iTreatment.getTreatmentManager().getId());
+                }
 
-		            iTreatment.done();
-		        } catch (InterruptedException e) {
-		        }
-		    }
-	        }
+                    iTreatment.done();
+                } catch (InterruptedException e) {
+                }
+            }
+            }
 
-	        iTreatment = this;
-	    }
+            iTreatment = this;
+        }
 
-	    Logger.println("Trying to create treatment manager for "
-		+ treatment);
+        Logger.println("Trying to create treatment manager for "
+        + treatment);
 
-	    try {
-	        treatmentManager = new TreatmentManager(
-		    treatment, repeatCount, sampleRate, channels);
-	    } catch (IOException e) {
+        try {
+            treatmentManager = new TreatmentManager(
+            treatment, repeatCount, sampleRate, channels);
+        } catch (IOException e) {
                 Logger.println("MemberReceiver:  Invalid input treatment "
                     + treatment + ":  " + e.getMessage());
 
                 callHandler.cancelRequest("Invalid input treatment "
                     + treatment + ":  " + e.getMessage());
 
-		synchronized (this) {
-		    notifyAll();
-		}
+        synchronized (this) {
+            notifyAll();
+        }
 
-		return;
-	    }
+        return;
+        }
 
-	    treatmentManager.addTreatmentDoneListener(treatmentDoneListener);
+        treatmentManager.addTreatmentDoneListener(treatmentDoneListener);
 
-	    if (whisperGroup != null) {
-		synchronized (whisperGroup) {
-		    inputTreatment = treatmentManager;
-		}
-	    } else {
-		inputTreatment = treatmentManager;
-	    }
+        if (whisperGroup != null) {
+        synchronized (whisperGroup) {
+            inputTreatment = treatmentManager;
+        }
+        } else {
+        inputTreatment = treatmentManager;
+        }
 
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("Created treatment manager for "
-		    + treatmentManager.getId());
-	    }
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Created treatment manager for "
+            + treatmentManager.getId());
+        }
 
-	    synchronized (this) {
-		notifyAll();
-	    }
-	}
+        synchronized (this) {
+        notifyAll();
+        }
+    }
     }
 
     public void startInputTreatment(String treatment) {
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Call " + cp + " startInputTreatment");
-	}
+        Logger.println("Call " + cp + " startInputTreatment");
+    }
 
-	cp.setPhoneNumber(treatment);
-	cp.setInputTreatment(treatment);
+    cp.setPhoneNumber(treatment);
+    cp.setInputTreatment(treatment);
 
-	restartInputTreatment();
+    restartInputTreatment();
     }
 
     public void stopInputTreatment() {
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Call " + cp + " stopInputTreatment");
-	}
+        Logger.println("Call " + cp + " stopInputTreatment");
+    }
 
-	synchronized (whisperGroup) {
-	    if (inputTreatment != null) {
-	        inputTreatment.stopTreatment();
-	    }
-	}
+    synchronized (whisperGroup) {
+        if (inputTreatment != null) {
+            inputTreatment.stopTreatment();
+        }
+    }
     }
 
     private boolean datagramChannelRegistered;
 
     public SelectionKey register(Selector selector) throws IOException {
-	try {
-	    selectionKey =
-		datagramChannel.register(selector, SelectionKey.OP_READ);
-	} catch (ClosedChannelException e) {
-	    callHandler.cancelRequest("register failed, channel closed!");
-	    throw new IOException("register failed, channel closed!");
-	} catch (Exception e) {
-	    Logger.println("register exception! " + e.getMessage());
-	    throw new IOException("register exception!  " + e.getMessage());
-	}
+    try {
+        selectionKey =
+        datagramChannel.register(selector, SelectionKey.OP_READ);
+    } catch (ClosedChannelException e) {
+        callHandler.cancelRequest("register failed, channel closed!");
+        throw new IOException("register failed, channel closed!");
+    } catch (Exception e) {
+        Logger.println("register exception! " + e.getMessage());
+        throw new IOException("register exception!  " + e.getMessage());
+    }
 
-	datagramChannelRegistered = true;
-	selectionKey.attach(this);
-	return selectionKey;
+    datagramChannelRegistered = true;
+    selectionKey.attach(this);
+    return selectionKey;
     }
 
     public void unregister() {
-	if (selectionKey != null) {
-	    selectionKey.cancel();
-	    selectionKey = null;
-	}
+    if (selectionKey != null) {
+        selectionKey.cancel();
+        selectionKey = null;
+    }
     }
     public int getLinearBufferSize() {
-	return RtpPacket.HEADER_SIZE + packet.getDataSize();
+    return RtpPacket.HEADER_SIZE + packet.getDataSize();
     }
 
     /*
@@ -816,19 +816,19 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private int noDataCount;
 
     public boolean checkPacketsReceived() {
-	if (callCancelled) {
-	    return false;
-	}
+    if (callCancelled) {
+        return false;
+    }
 
-	if (callIsDead()) {
-	    return false;
-	}
+    if (callIsDead()) {
+        return false;
+    }
 
         /*
          * 3 packets should be enough for the speech detector
          * and dtmf detector to know someone isn't speaking.
-	 * After we've given the detector 60 ms of silence pakcets,
-	 * we don't need to send it any more packets.
+     * After we've given the detector 60 ms of silence pakcets,
+     * we don't need to send it any more packets.
          */
         int last = lastMediaPacketsReceived;
 
@@ -845,100 +845,100 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
              return true;
         }
 
-	/*
-	 * Reset previous samples in sampleRateConverter
-	 */
-	if (inSampleRateConverter != null) {
-	    inSampleRateConverter.reset();
-	}
+    /*
+     * Reset previous samples in sampleRateConverter
+     */
+    if (inSampleRateConverter != null) {
+        inSampleRateConverter.reset();
+    }
 
         /*
          * we haven't received any data for 3 packet periods (60 ms).
          * Make sure the speech detector knows we're not talking
          */
-	if (speechDetector != null) {
+    if (speechDetector != null) {
             if (speechDetector.reset()) {
-	        callHandler.speakingChanged(false);
-	    }
-	}
+            callHandler.speakingChanged(false);
+        }
+    }
 
         /*
          * Make sure the dtmf detector knows there's silence
          */
-	if (dtmfDecoder != null) {
+    if (dtmfDecoder != null) {
             String dtmfKeys = dtmfDecoder.noDataReceived();
 
-	    if (dtmfKeys != null) {
-		Logger.println("silence.  dtmf " + dtmfKeys);
-		processDtmfKeys(dtmfKeys);
-	    }
-	}
+        if (dtmfKeys != null) {
+        Logger.println("silence.  dtmf " + dtmfKeys);
+        processDtmfKeys(dtmfKeys);
+        }
+    }
 
-	return true;
+    return true;
     }
 
     private boolean callCancelled;
 
     private boolean callIsDead() {
 
-	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
-	{
-		return false;
-	}
+    if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
+    {
+        return false;
+    }
 
-	if (RtpSocket.getRtpTimeout() == 0) {
-	    return false;	// no timeout
-	}
+    if (RtpSocket.getRtpTimeout() == 0) {
+        return false;	// no timeout
+    }
 
-	String phoneNumber = cp.getPhoneNumber();
+    String phoneNumber = cp.getPhoneNumber();
 
-	if (phoneNumber != null && phoneNumber.indexOf("6666@") >= 0) {
-	    return false;  // don't timeout calls to the bridge.
-	}
+    if (phoneNumber != null && phoneNumber.indexOf("6666@") >= 0) {
+        return false;  // don't timeout calls to the bridge.
+    }
 
-	/*
-	 * Only do this for sip calls.  For some reason, other calls
-	 * are getting timed out if this "if" is removed.
-	 */
-	if (cp.isDistributedBridge() == true || phoneNumber.indexOf("sip:") < 0 || phoneNumber.indexOf("tel:") < 0) {
-	    return false;
-	}
+    /*
+     * Only do this for sip calls.  For some reason, other calls
+     * are getting timed out if this "if" is removed.
+     */
+    if (cp.isDistributedBridge() == true || phoneNumber.indexOf("sip:") < 0 || phoneNumber.indexOf("tel:") < 0) {
+        return false;
+    }
 
-	long rtpElapsed;
+    long rtpElapsed;
 
-	if (timeCurrentPacketReceived == 0) {
-	    rtpElapsed = 0;
-	} else {
-	    rtpElapsed = (System.currentTimeMillis() - timeCurrentPacketReceived) / 1000;
-	}
+    if (timeCurrentPacketReceived == 0) {
+        rtpElapsed = 0;
+    } else {
+        rtpElapsed = (System.currentTimeMillis() - timeCurrentPacketReceived) / 1000;
+    }
 
-	long rtcpElapsed = rtcpReceiver.secondsSinceLastReport(member.getRtcpAddress());
+    long rtcpElapsed = rtcpReceiver.secondsSinceLastReport(member.getRtcpAddress());
 
-	if (rtcpElapsed < RtpSocket.getRtpTimeout() || rtpElapsed < RtpSocket.getRtpTimeout()) {
-	    return false;
-	}
+    if (rtcpElapsed < RtpSocket.getRtpTimeout() || rtpElapsed < RtpSocket.getRtpTimeout()) {
+        return false;
+    }
 
-	//if (Logger.logLevel >= Logger.LOG_INFO) {
+    //if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("Call " + cp
                 + " time since last RTCP report " + rtcpElapsed
-		+ " time since last RTP packet received " + rtpElapsed);
+        + " time since last RTP packet received " + rtpElapsed);
         //}
 
-	/*
+    /*
          * We have not received an RTP or RTCP packet in quite some
          * time.  Assume the call is dead.
-	 *
-	 * XXX There is a gateway (10.6.4.61)
-	 * which doesn't send RTCP packets.
-	 * For now, we'll only timeout calls with "sip:" in
-	 * the phone number.
+     *
+     * XXX There is a gateway (10.6.4.61)
+     * which doesn't send RTCP packets.
+     * For now, we'll only timeout calls with "sip:" in
+     * the phone number.
          */
         Logger.println("Call " + cp
             + ":  Timeout, cancelling the call...");
         callHandler.cancelRequest("call timeout, no keepalive received");
-	callCancelled = true;
+    callCancelled = true;
 
-	return true;
+    return true;
     }
 
     /**
@@ -964,7 +964,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      * Adding and removing list elements is done synchronized on whisperGroup.
      */
     public void setDropPackets(int dropPackets) {
-	this.dropPackets = dropPackets;
+    this.dropPackets = dropPackets;
     }
 
     /*
@@ -977,339 +977,339 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private int forcedToDeferMixing;
 
     public static void deferMixing(boolean deferMixing) {
-	MemberReceiver.deferMixing = deferMixing;
+    MemberReceiver.deferMixing = deferMixing;
     }
 
     public static boolean deferMixing() {
-	return deferMixing;
+    return deferMixing;
     }
 
     private void forwardData(int[] data) {
-	for (MemberSender memberSender : forwardMemberList) {
-	     if (Logger.logLevel == -88) {
-		Logger.println("Forwarding " + data.length + " to "
-		    + memberSender);
-	     }
+    for (MemberSender memberSender : forwardMemberList) {
+         if (Logger.logLevel == -88) {
+        Logger.println("Forwarding " + data.length + " to "
+            + memberSender);
+         }
 
-	     if (memberSender.memberIsReadyForSenderData()) {
-	         memberSender.sendData(data);
-	     }
-	}
+         if (memberSender.memberIsReadyForSenderData()) {
+             memberSender.sendData(data);
+         }
+    }
     }
 
     public void receive(InetSocketAddress fromAddress, byte[] receivedData, int length) {
 
-	member.getMemberSender().setSendAddress(fromAddress);
+    member.getMemberSender().setSendAddress(fromAddress);
 
-	if (packet == null) return;
-	/*
-	 * receivedData has a 12 byte RTP header at the beginning
-	 * and length includes the RTP header.
-	 */
-	timeCurrentPacketReceived = System.currentTimeMillis();
+    if (packet == null) return;
+    /*
+     * receivedData has a 12 byte RTP header at the beginning
+     * and length includes the RTP header.
+     */
+    timeCurrentPacketReceived = System.currentTimeMillis();
 
-	packetsReceived++;
+    packetsReceived++;
 
-	if (packetsReceived == 1) {
-	    Logger.println("Call " + cp + " got first packet, length "
-		+ length);
+    if (packetsReceived == 1) {
+        Logger.println("Call " + cp + " got first packet, length "
+        + length);
 
-	    packet.setBuffer(receivedData);
+        packet.setBuffer(receivedData);
 
-	    /*
-	     * TODO:  Get the synchonization source for this call.
-	     */
-	}
+        /*
+         * TODO:  Get the synchonization source for this call.
+         */
+    }
 
-	if (cp.getInputTreatment() != null) {
-	    return;
-	}
+    if (cp.getInputTreatment() != null) {
+        return;
+    }
 
-	if (dropPackets != 0) {
-	    if ((packetsReceived % dropPackets) == 0) {
-		return;
-	    }
-	}
+    if (dropPackets != 0) {
+        if ((packetsReceived % dropPackets) == 0) {
+        return;
+        }
+    }
 
-	/*
-	 * For debugging
-	 */
-	if (traceCall || Logger.logLevel == -11) {
-	    Logger.writeFile("Call " + cp + " got packet, len " + length);
-	}
+    /*
+     * For debugging
+     */
+    if (traceCall || Logger.logLevel == -11) {
+        Logger.writeFile("Call " + cp + " got packet, len " + length);
+    }
 
-	/*
-	 * Decrypt data if it's encrypted
-	 */
-	long start = 0;
+    /*
+     * Decrypt data if it's encrypted
+     */
+    long start = 0;
 
-	if (decryptCipher != null) {
-	    if (traceCall || Logger.logLevel == -1) {
-	        start = System.nanoTime();
-	    }
+    if (decryptCipher != null) {
+        if (traceCall || Logger.logLevel == -1) {
+            start = System.nanoTime();
+        }
 
-	    receivedData = decrypt(receivedData);
+        receivedData = decrypt(receivedData);
 
-	    if (traceCall || Logger.logLevel == -1) {
-		Logger.println("Call " + cp + " decrypt time "
-		    + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
-	    }
-	}
+        if (traceCall || Logger.logLevel == -1) {
+        Logger.println("Call " + cp + " decrypt time "
+            + ((System.nanoTime() - start) / 1000000000.)
+            + " seconds");
+        }
+    }
 
-	recordPacket(receivedData, length);
+    recordPacket(receivedData, length);
 
-	packet.setBuffer(receivedData);
-	packet.setLength(length);
+    packet.setBuffer(receivedData);
+    packet.setLength(length);
 
-	byte payload = packet.getRtpPayload();
+    byte payload = packet.getRtpPayload();
 
-	int elapsedTime = (int)
-	    (timeCurrentPacketReceived - timePreviousPacketReceived);
+    int elapsedTime = (int)
+        (timeCurrentPacketReceived - timePreviousPacketReceived);
 
-	if (gotComfortPayload || packetsReceived == 1) {
-	    /*
-	     * We don't want to count the time when the remote stopped
-	     * sending to us.
-	     */
-	    packet.setMark();    // make sure MARK bit is set
+    if (gotComfortPayload || packetsReceived == 1) {
+        /*
+         * We don't want to count the time when the remote stopped
+         * sending to us.
+         */
+        packet.setMark();    // make sure MARK bit is set
 
-	    if (gotComfortPayload) {
-	        gotComfortPayload = false;
+        if (gotComfortPayload) {
+            gotComfortPayload = false;
 
-	        if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-	            Logger.println("Call " + cp
-	                + "  received packet after comfort payload");
-	        }
-	    }
-	}
+            if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Call " + cp
+                    + "  received packet after comfort payload");
+            }
+        }
+    }
 
- 	if (packet.isMarkSet() == true) {
-	    elapsedTime = RtpPacket.PACKET_PERIOD;
-	}
+    if (packet.isMarkSet() == true) {
+        elapsedTime = RtpPacket.PACKET_PERIOD;
+    }
 
         totalTime += elapsedTime;
 
-	synchronized (jitterManager) {
-	    /*
-	     * Insert place holder for this packet
-	     */
+    synchronized (jitterManager) {
+        /*
+         * Insert place holder for this packet
+         */
             jitterManager.insertPacket(packet.getRtpSequenceNumber(),
-		elapsedTime);
-	}
+        elapsedTime);
+    }
 
-	int rtpTimestampAdjustment = length - RtpPacket.HEADER_SIZE;
+    int rtpTimestampAdjustment = length - RtpPacket.HEADER_SIZE;
 
-	if (payload == RtpPacket.COMFORT_PAYLOAD || payload == 19) {
-	    /*
-	     * Asterisk seems to have a bug in which the bridge offers
-	     * 13 decimal as the comfort payload and asterisk replies with
-	     * 13 hex (19 decimal).
-	     * For now, we'll treat 19 as the comfort noise payload as well.
-	     */
-	    receiveComfortPayload(packet, elapsedTime);
+    if (payload == RtpPacket.COMFORT_PAYLOAD || payload == 19) {
+        /*
+         * Asterisk seems to have a bug in which the bridge offers
+         * 13 decimal as the comfort payload and asterisk replies with
+         * 13 hex (19 decimal).
+         * For now, we'll treat 19 as the comfort noise payload as well.
+         */
+        receiveComfortPayload(packet, elapsedTime);
 
-	    if (inSampleRateConverter != null) {
-		inSampleRateConverter.reset();
-	    }
+        if (inSampleRateConverter != null) {
+        inSampleRateConverter.reset();
+        }
 
-	    if (speechDetector != null) {
-		if (speechDetector.isSpeaking()) {
-	            callHandler.speakingChanged(false);
-		}
-	        speechDetector.reset();
-	    }
-	} else if (payload == 18) {
-	    /*
-	     * We sometimes get payload 18 which is undefined according to
-	     * the RFC.  The data looks like audio data.
-	     * But for now, we just drop the packet.
-	     */
-	     Logger.error("Call " + cp + " unexpected payload " + payload
-		+ " dropping packet ");
+        if (speechDetector != null) {
+        if (speechDetector.isSpeaking()) {
+                callHandler.speakingChanged(false);
+        }
+            speechDetector.reset();
+        }
+    } else if (payload == 18) {
+        /*
+         * We sometimes get payload 18 which is undefined according to
+         * the RFC.  The data looks like audio data.
+         * But for now, we just drop the packet.
+         */
+         Logger.error("Call " + cp + " unexpected payload " + payload
+        + " dropping packet ");
 
-	     Util.dump("bad payload 18 data", packet.getData(), 0, 16);
-	} else if (payload == myMediaInfo.getPayload()) {
-	    if (traceCall || Logger.logLevel == -1) {
-		start = System.nanoTime();
-	    }
+         Util.dump("bad payload 18 data", packet.getData(), 0, 16);
+    } else if (payload == myMediaInfo.getPayload()) {
+        if (traceCall || Logger.logLevel == -1) {
+        start = System.nanoTime();
+        }
 
-	    try {
-	        rtpTimestampAdjustment = receiveMedia(receivedData, length);
-	    } catch (SpeexException e) {
+        try {
+            rtpTimestampAdjustment = receiveMedia(receivedData, length);
+        } catch (SpeexException e) {
                 Logger.println("speex decorder failed: " + e.getMessage());
                 e.printStackTrace();
-	        callHandler.cancelRequest("Call " + cp + e.getMessage());
-		return;
-	    }
+            callHandler.cancelRequest("Call " + cp + e.getMessage());
+        return;
+        }
 
             if (traceCall || Logger.logLevel == -1) {
                 Logger.println("Call " + cp + " receiveMedia time "
                     + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
+            + " seconds");
             }
 
-	    int processTime = (int)
-		(System.currentTimeMillis() - timeCurrentPacketReceived);
+        int processTime = (int)
+        (System.currentTimeMillis() - timeCurrentPacketReceived);
 
-	    timeToProcessMediaPackets += processTime;
-	    mediaPacketsReceived++;
-	} else if (payload != 0 && payload == telephoneEventPayload) {
-	    if (cp.ignoreTelephoneEvents() == false) {
-	        receiveDtmfPayload(packet);
-	    }
-	} else {
-	    if ((badPayloads % 1000) == 0) {
-		badPayloads++;
+        timeToProcessMediaPackets += processTime;
+        mediaPacketsReceived++;
+    } else if (payload != 0 && payload == telephoneEventPayload) {
+        if (cp.ignoreTelephoneEvents() == false) {
+            receiveDtmfPayload(packet);
+        }
+    } else {
+        if ((badPayloads % 1000) == 0) {
+        badPayloads++;
 
-	        Logger.error("Call " + cp + " unexpected payload " + payload
-		    + " length " + length);
-	        Util.dump("unexpected payload", receivedData, 0, 16);
-	    }
+            Logger.error("Call " + cp + " unexpected payload " + payload
+            + " length " + length);
+            Util.dump("unexpected payload", receivedData, 0, 16);
+        }
 
-	    if (badPayloads >= 1000 && mediaPacketsReceived == 0) {
-		callHandler.cancelRequest("Call " + cp
-		    + " bad media payload being sent by call");
-	    }
-	}
+        if (badPayloads >= 1000 && mediaPacketsReceived == 0) {
+        callHandler.cancelRequest("Call " + cp
+            + " bad media payload being sent by call");
+        }
+    }
 
-	packet.updateRtpHeader(rtpTimestampAdjustment);
-	timePreviousPacketReceived = timeCurrentPacketReceived;
+    packet.updateRtpHeader(rtpTimestampAdjustment);
+    timePreviousPacketReceived = timeCurrentPacketReceived;
     }
 
     private void receiveComfortPayload(RtpReceiverPacket packet,
-	    int elapsedTime) {
+        int elapsedTime) {
 
-	comfortNoiseLevel = packet.getComfortNoiseLevel();
+    comfortNoiseLevel = packet.getComfortNoiseLevel();
 
-	if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Call " + cp
-	        + ":  received comfort payload, level " + comfortNoiseLevel
-		+ " sequence " + packet.getRtpSequenceNumber());
-	}
+    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("Call " + cp
+            + ":  received comfort payload, level " + comfortNoiseLevel
+        + " sequence " + packet.getRtpSequenceNumber());
+    }
 
-	comfortPayloadsReceived++;
+    comfortPayloadsReceived++;
 
-	if (Logger.logLevel >= Logger.LOG_DEBUG) {
-	    log(packet);
-	}
+    if (Logger.logLevel >= Logger.LOG_DEBUG) {
+        log(packet);
+    }
     }
 
     private int receiveMedia(byte[] receivedData, int length)
-	    throws SpeexException {
+        throws SpeexException {
 
-	long start = 0;
+    long start = 0;
 
-	int[] data = decodeToLinear(receivedData, length);
+    int[] data = decodeToLinear(receivedData, length);
 
-	if (inputVolume != 1.0) {
-	    callHandler.getMember().adjustVolume(data, inputVolume);
-	}
+    if (inputVolume != 1.0) {
+        callHandler.getMember().adjustVolume(data, inputVolume);
+    }
 
-	//Logger.println("Call " + cp  + " receiveMedia length " + length + " decoded int length " + data.length);
+    //Logger.println("Call " + cp  + " receiveMedia length " + length + " decoded int length " + data.length);
 
-	int numberOfSamples = data.length;
+    int numberOfSamples = data.length;
 
         if (myMediaInfo.getEncoding() == RtpPacket.PCMU_ENCODING) {
-	    /*
-	     * The cisco gateway often gives us short packets
-	     * right before a comfort payload
-	     */
-	    numberOfSamples = length - RtpPacket.HEADER_SIZE;
-	}
+        /*
+         * The cisco gateway often gives us short packets
+         * right before a comfort payload
+         */
+        numberOfSamples = length - RtpPacket.HEADER_SIZE;
+    }
 
         if (traceCall || Logger.logLevel == -1) {
             start = System.nanoTime();
         }
 
-	if (inSampleRateConverter != null) {
+    if (inSampleRateConverter != null) {
             if (traceCall || Logger.logLevel == -1) {
                 start = System.nanoTime();
             }
 
-	    /*
-	     * XXX We never downsample here because the bridge
-	     * will never advertise a sample rate higher than
-	     * that of the conference.
-	     */
-	    try {
-	        data = inSampleRateConverter.resample(data);
-		//Logger.println("length after resample " + data.length);
-	    } catch (IOException e) {
-		Logger.println("Call " + cp    + " can't resample received data " + e.getMessage());
-		callHandler.cancelRequest("Call " + cp
-		    + "can't resample received data " + e.getMessage());
+        /*
+         * XXX We never downsample here because the bridge
+         * will never advertise a sample rate higher than
+         * that of the conference.
+         */
+        try {
+            data = inSampleRateConverter.resample(data);
+        //Logger.println("length after resample " + data.length);
+        } catch (IOException e) {
+        Logger.println("Call " + cp    + " can't resample received data " + e.getMessage());
+        callHandler.cancelRequest("Call " + cp
+            + "can't resample received data " + e.getMessage());
 
-		return 0;
-	    }
+        return 0;
+        }
 
             if (traceCall || Logger.logLevel == -1) {
                 Logger.println("Call " + cp + " resample time "
                     + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
+            + " seconds");
             }
-	}
+    }
 
-	if (traceCall || Logger.logLevel == -1) {
-	    start = System.nanoTime();
-	}
+    if (traceCall || Logger.logLevel == -1) {
+        start = System.nanoTime();
+    }
 
-	/*
-	 * If there are calls to other bridges which need the data
-	 * from this member, then we send that data right now.
-	 * This reduced latency because this is before we put the
-	 * data in the jitter buffer.
- 	 */
-	forwardData(data);
+    /*
+     * If there are calls to other bridges which need the data
+     * from this member, then we send that data right now.
+     * This reduced latency because this is before we put the
+     * data in the jitter buffer.
+     */
+    forwardData(data);
 
-	/*
-	 * data is a int[] with no RTP header
-	 */
-	handleMedia(data, packet.getRtpSequenceNumber());
+    /*
+     * data is a int[] with no RTP header
+     */
+    handleMedia(data, packet.getRtpSequenceNumber());
 
-	if (traceCall || Logger.logLevel == -1) {
-	    Logger.println("Call " + cp + " handleMedia time "
-		+ ((System.nanoTime() - start) / 1000000000.)
-		+ " seconds");
-	}
+    if (traceCall || Logger.logLevel == -1) {
+        Logger.println("Call " + cp + " handleMedia time "
+        + ((System.nanoTime() - start) / 1000000000.)
+        + " seconds");
+    }
 
-	if (Logger.logLevel >= Logger.LOG_DEBUG) {
-	    log(packet);
-	}
+    if (Logger.logLevel >= Logger.LOG_DEBUG) {
+        log(packet);
+    }
 
-	return numberOfSamples;
+    return numberOfSamples;
     }
 
     private int[] decodeToLinear(byte[] receivedData, int length) throws SpeexException
     {
-		/*
-		 * receivedData has the 12 byte RTP header.
-		 */
+        /*
+         * receivedData has the 12 byte RTP header.
+         */
 
-		int[] data = new int[myMediaInfo.getSamplesPerPacket()];
+        int[] data = new int[myMediaInfo.getSamplesPerPacket()];
 
-		long start = 0;
+        long start = 0;
 
         if (myMediaInfo.getEncoding() == RtpPacket.PCMU_ENCODING)
         {
-			if (traceCall || Logger.logLevel == -1)
-			{
-				start = System.nanoTime();
-			}
+            if (traceCall || Logger.logLevel == -1)
+            {
+                start = System.nanoTime();
+            }
 
             /*
              * Convert ulaw data to linear. length is the ulaw
-	     	 * data length plus the RTP header length.
-	      	 *
-	      	 * If the incoming packet is shorter, than we expect,
-	      	 * the rest of <data> will be filled with 0 * which is PCM_SILENCE.
+             * data length plus the RTP header length.
+             *
+             * If the incoming packet is shorter, than we expect,
+             * the rest of <data> will be filled with 0 * which is PCM_SILENCE.
              */
 
             AudioConversion.ulawToLinear(receivedData, RtpPacket.HEADER_SIZE, length - RtpPacket.HEADER_SIZE, data);
 
-			if (length < 172 && Logger.logLevel >= Logger.LOG_DETAIL) {
-				Logger.println("Call " + cp + " received short packet "	+ length);
-			}
+            if (length < 172 && Logger.logLevel >= Logger.LOG_DETAIL) {
+                Logger.println("Call " + cp + " received short packet "	+ length);
+            }
 
             if (traceCall || Logger.logLevel == -1) {
                 Logger.println("Call " + cp + " ulawToLinear time " + ((System.nanoTime() - start) / 1000000000.)   + " seconds");
@@ -1317,19 +1317,19 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
         } else if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
 
-			int inputOffset = RtpPacket.HEADER_SIZE;
-			int inputLength = length - RtpPacket.HEADER_SIZE;
+            int inputOffset = RtpPacket.HEADER_SIZE;
+            int inputLength = length - RtpPacket.HEADER_SIZE;
 
-			int frameSizeInSamplesPerChannel = Opus.decoder_get_nb_samples(opusDecoder, receivedData, inputOffset, inputLength);
+            int frameSizeInSamplesPerChannel = Opus.decoder_get_nb_samples(opusDecoder, receivedData, inputOffset, inputLength);
 
-			if (frameSizeInSamplesPerChannel > 1)
-			{
-				int frameSizeInBytes = outputFrameSize * opusChannels * frameSizeInSamplesPerChannel;
+            if (frameSizeInSamplesPerChannel > 1)
+            {
+                int frameSizeInBytes = outputFrameSize * opusChannels * frameSizeInSamplesPerChannel;
 
-				byte[] output = new byte[frameSizeInBytes];
-				frameSizeInSamplesPerChannel = Opus.decode(opusDecoder, receivedData, inputOffset, inputLength, output, 0, frameSizeInSamplesPerChannel, 0);
-				data = AudioConversion.bytesToLittleEndianInts(output);
-			}
+                byte[] output = new byte[frameSizeInBytes];
+                frameSizeInSamplesPerChannel = Opus.decode(opusDecoder, receivedData, inputOffset, inputLength, output, 0, frameSizeInSamplesPerChannel, 0);
+                data = AudioConversion.bytesToLittleEndianInts(output);
+            }
 
 
         } else if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
@@ -1343,29 +1343,29 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
             if (traceCall || Logger.logLevel == -1)
             {
                 Logger.println("Call " + cp + " speex decode time " + ((System.nanoTime() - start) / 1000000000.) + " seconds");
-	    	}
+            }
 
-		} else {
-			AudioConversion.bytesToInts(receivedData, RtpPacket.HEADER_SIZE,
-			length - RtpPacket.HEADER_SIZE, data);
-		}
+        } else {
+            AudioConversion.bytesToInts(receivedData, RtpPacket.HEADER_SIZE,
+            length - RtpPacket.HEADER_SIZE, data);
+        }
 
-		return data;
+        return data;
     }
 
     public synchronized void handleVP8Video(RTPPacket videoPacket)
     {
-	    ArrayList<ConferenceMember> memberList = conferenceManager.getMemberList();
+        ArrayList<ConferenceMember> memberList = conferenceManager.getMemberList();
 
-	    for (ConferenceMember member : memberList)
-	    {
-			if (member == this.member) {
-				continue;
-			}
+        for (ConferenceMember member : memberList)
+        {
+            if (member == this.member) {
+                continue;
+            }
 
-			member.getMemberSender().handleVP8Video(videoPacket);
-	    }
-	}
+            member.getMemberSender().handleVP8Video(videoPacket);
+        }
+    }
     /*
      * data is a int[] with no RTP data and has been decoded
      * and resampled to the conference sample rate.
@@ -1373,40 +1373,40 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     public synchronized void handleWebRtcMedia(int[] data, short sequenceNumber)
     {
-		if (readyToReceiveData() == false) return;
+        if (readyToReceiveData() == false) return;
 
-		timeCurrentPacketReceived = System.currentTimeMillis();
-		int elapsedTime = (int) (timeCurrentPacketReceived - timePreviousPacketReceived);
+        timeCurrentPacketReceived = System.currentTimeMillis();
+        int elapsedTime = (int) (timeCurrentPacketReceived - timePreviousPacketReceived);
 
-		synchronized (jitterManager) {
-				jitterManager.insertPacket(sequenceNumber, elapsedTime);
-		}
+        synchronized (jitterManager) {
+                jitterManager.insertPacket(sequenceNumber, elapsedTime);
+        }
 
-		if (inputVolume != 1.0) {
-			callHandler.getMember().adjustVolume(data, inputVolume);
-		}
+        if (inputVolume != 1.0) {
+            callHandler.getMember().adjustVolume(data, inputVolume);
+        }
 
-     	handleMedia(data, sequenceNumber);
+        handleMedia(data, sequenceNumber);
 
-		timePreviousPacketReceived = timeCurrentPacketReceived;
-	}
+        timePreviousPacketReceived = timeCurrentPacketReceived;
+    }
 
 
     private void handleMedia(int[] data, short sequenceNumber)
     {
 
-	if (dtmfDecoder != null) {
-	    if (checkDtmf(data) == true) {
-		if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-		    Logger.writeFile("Call " + cp
-			+ " checkDtmf returned true, data length "
-			+ data.length);
-		}
-		return;
-	    }
-	}
+    if (dtmfDecoder != null) {
+        if (checkDtmf(data) == true) {
+        if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.writeFile("Call " + cp
+            + " checkDtmf returned true, data length "
+            + data.length);
+        }
+        return;
+        }
+    }
 
-	if (isMuted()) {
+    if (isMuted()) {
             if (speechDetector != null &&
                     cp.voiceDetectionWhileMuted() == true) {
 
@@ -1420,106 +1420,106 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
                 if (speechDetector.processData(data) == true) {
                     callHandler.speakingChanged(speechDetector.isSpeaking());
                 }
-	    }
-	    return;
+        }
+        return;
     }
 
-	if (relayChannel != null)
-	{
-		try {
-			relayChannel.pushReceiverAudio(data);
-		} catch(Exception e) {}
+    if (relayChannel != null)
+    {
+        try {
+            relayChannel.pushReceiverAudio(data);
+        } catch(Exception e) {}
 
-		return;
-	}
+        return;
+    }
 
 
-	long start = 0;
+    long start = 0;
 
-	if (traceCall || Logger.logLevel == -1) {
-	    start = System.nanoTime();
-	}
+    if (traceCall || Logger.logLevel == -1) {
+        start = System.nanoTime();
+    }
 
-	synchronized (whisperGroup) {
-	    if (traceCall || Logger.logLevel == -1) {
-		Logger.println("Call " + cp + " handleMedia lock wait time "
-		    + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
-	    }
+    synchronized (whisperGroup) {
+        if (traceCall || Logger.logLevel == -1) {
+        Logger.println("Call " + cp + " handleMedia lock wait time "
+            + ((System.nanoTime() - start) / 1000000000.)
+            + " seconds");
+        }
 
-	    if (joinConfirmationReceived == false) {
-		/*
-		 * Drop this packet.  We're still waiting for confirmation.
-		 */
-		return;
-	    }
+        if (joinConfirmationReceived == false) {
+        /*
+         * Drop this packet.  We're still waiting for confirmation.
+         */
+        return;
+        }
 
-	    synchronized (jitterManager) {
-	        jitterManager.insertPacket(sequenceNumber, data);
-	    }
+        synchronized (jitterManager) {
+            jitterManager.insertPacket(sequenceNumber, data);
+        }
 
-	    if (deferMixing == false) {
-		if (contributionValid) {
-		    forcedToDeferMixing++;
-		} else {
-	            saveCurrentContribution();
-		}
-	    }
-	}
+        if (deferMixing == false) {
+        if (contributionValid) {
+            forcedToDeferMixing++;
+        } else {
+                saveCurrentContribution();
+        }
+        }
+    }
 
-	if (speechDetector != null) {
-	    if (speechDetector.processData(data) == true) {
-		callHandler.speakingChanged(speechDetector.isSpeaking());
-	    }
+    if (speechDetector != null) {
+        if (speechDetector.processData(data) == true) {
+        callHandler.speakingChanged(speechDetector.isSpeaking());
+        }
         }
 
     }
 
     private boolean checkDtmf(int[] data) {
-	String dtmfKeys = dtmfDecoder.processData(data);
+    String dtmfKeys = dtmfDecoder.processData(data);
 
-	if (CallHandler.dtmfSuppression() == true &&
-	        cp.dtmfSuppression() == true) {
+    if (CallHandler.dtmfSuppression() == true &&
+            cp.dtmfSuppression() == true) {
 
-	    if (dtmfDecoder.dtmfDetected()) {
-		if (isAutoMuted == false) {
-		    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-		        Logger.println("Call " + cp
-			    + " dtmf detected, setting automute ");
-		    }
+        if (dtmfDecoder.dtmfDetected()) {
+        if (isAutoMuted == false) {
+            if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Call " + cp
+                + " dtmf detected, setting automute ");
+            }
 
-		    isAutoMuted = true;
-		    flushContributions();
-		}
-	    } else {
-		if (isAutoMuted == true) {
-		    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-		        Logger.println("Call " + cp + " automute now false");
-		    }
-		}
+            isAutoMuted = true;
+            flushContributions();
+        }
+        } else {
+        if (isAutoMuted == true) {
+            if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+                Logger.println("Call " + cp + " automute now false");
+            }
+        }
 
-		isAutoMuted = false;
-	    }
-	}
+        isAutoMuted = false;
+        }
+    }
 
-	if (dtmfKeys != null) {
-	    processDtmfKeys(dtmfKeys);
+    if (dtmfKeys != null) {
+        processDtmfKeys(dtmfKeys);
 
-	    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-		Logger.println("Call " + cp + " processed dtmf packet"
-		    + " with key " + dtmfKeys
-		    + " dtmfPackets " + dtmfPackets);
-	    }
+        if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("Call " + cp + " processed dtmf packet"
+            + " with key " + dtmfKeys
+            + " dtmfPackets " + dtmfPackets);
+        }
 
-	    isAutoMuted = false;
-	    return true; 	// drop this packet
-	}
+        isAutoMuted = false;
+        return true; 	// drop this packet
+    }
 
-	if (isAutoMuted) {
-	    return true;
-	}
+    if (isAutoMuted) {
+        return true;
+    }
 
-	return false;
+    return false;
     }
 
     /*
@@ -1528,143 +1528,143 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private long dtmfTimestamp = 0;
 
     private void receiveDtmfPayload(RtpReceiverPacket packet) {
-	byte[] data = packet.getData();
+    byte[] data = packet.getData();
 
-	if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Util.dump("received telephoneEventPayload", data, 0, 16);
-	}
+    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Util.dump("received telephoneEventPayload", data, 0, 16);
+    }
 
-	/*
-	 * First byte of data is the dtmf key
-	 */
-	if (packet.isDtmfEndSet()) {
-	    /*
+    /*
+     * First byte of data is the dtmf key
+     */
+    if (packet.isDtmfEndSet()) {
+        /*
              * Very strange packets come from the Cisco gateway.
              * The first several have the end bit set followed
              * by a number which don't have the bit set.
              * Fortunately, all of the packets have the same timestamp
              * so we can filter on that.
              */
-	    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Util.dump("Dtmf end set, ts " + Long.toHexString(dtmfTimestamp)
-		    + " pkt ts " + Long.toHexString(packet.getRtpTimestamp()),
-		    data, 0, 16);
-	    }
+        if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Util.dump("Dtmf end set, ts " + Long.toHexString(dtmfTimestamp)
+            + " pkt ts " + Long.toHexString(packet.getRtpTimestamp()),
+            data, 0, 16);
+        }
 
             if (dtmfTimestamp != packet.getRtpTimestamp()) {
                 dtmfTimestamp = packet.getRtpTimestamp();
 
-	        /*
-	         * Key has been released
-	         * Now it's time to process the key
-	         */
-		String dtmfKey = String.valueOf((int)data[RtpPacket.DATA]);
+            /*
+             * Key has been released
+             * Now it's time to process the key
+             */
+        String dtmfKey = String.valueOf((int)data[RtpPacket.DATA]);
 
-		if (data[RtpPacket.DATA] == 10) {
-		    dtmfKey = "*";
-		} else if (data[RtpPacket.DATA] == 11) {
-		    dtmfKey = "#";
-		}
+        if (data[RtpPacket.DATA] == 10) {
+            dtmfKey = "*";
+        } else if (data[RtpPacket.DATA] == 11) {
+            dtmfKey = "#";
+        }
 
-	        processDtmfKeys(dtmfKey);
-	    }
-	} else {
-	    /*
-	     * Key is still pressed
-	     */
-	    if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Util.dump("Got dtmf key payload key still pressed: ", data, 0, 16);
-	    }
+            processDtmfKeys(dtmfKey);
+        }
+    } else {
+        /*
+         * Key is still pressed
+         */
+        if (traceCall || Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Util.dump("Got dtmf key payload key still pressed: ", data, 0, 16);
+        }
         }
     }
 
     public static void setForwardDtmfKeys(boolean forwardDtmfKeys) {
-	MemberReceiver.forwardDtmfKeys = forwardDtmfKeys;
+    MemberReceiver.forwardDtmfKeys = forwardDtmfKeys;
     }
 
     public static boolean getForwardDtmfKeys() {
-	return forwardDtmfKeys;
+    return forwardDtmfKeys;
     }
 
     private ArrayList joinConfirmationListeners = new ArrayList();
 
     public void addJoinConfirmationListener(JoinConfirmationListener listener) {
-	synchronized (joinConfirmationListeners) {
-	    joinConfirmationListeners.add(listener);
-	}
+    synchronized (joinConfirmationListeners) {
+        joinConfirmationListeners.add(listener);
+    }
     }
 
     public void removeJoinConfirmationListener(
             JoinConfirmationListener listener) {
 
-	synchronized (joinConfirmationListeners) {
+    synchronized (joinConfirmationListeners) {
             joinConfirmationListeners.remove(listener);
         }
     }
 
     private void notifyJoinConfirmationListeners() {
-	synchronized (joinConfirmationListeners) {
-	    for (int i = 0; i < joinConfirmationListeners.size(); i++) {
-		JoinConfirmationListener listener = (JoinConfirmationListener)
-		    joinConfirmationListeners.get(i);
+    synchronized (joinConfirmationListeners) {
+        for (int i = 0; i < joinConfirmationListeners.size(); i++) {
+        JoinConfirmationListener listener = (JoinConfirmationListener)
+            joinConfirmationListeners.get(i);
 
-		listener.joinConfirmation();
-		removeJoinConfirmationListener(listener);
-	    }
-	}
+        listener.joinConfirmation();
+        removeJoinConfirmationListener(listener);
+        }
+    }
     }
 
     /*
      * This is called when the dtmfDecoder detects a dtmf key.
      */
     private void processDtmfKeys(String dtmfKeys) {
-	dtmfPackets++;
+    dtmfPackets++;
 
-	Logger.println("Call " + cp + " got dtmf key " + dtmfKeys);
+    Logger.println("Call " + cp + " got dtmf key " + dtmfKeys);
 
-	if (joinConfirmationReceived == false) {
-	    if (!dtmfKeys.equals(joinConfirmationKey)) {
-		Logger.println("Call " + cp
-		    + " jc false, dtmfKeys " + dtmfKeys
-		    + " != " + joinConfirmationKey);
-		return;
-	    }
+    if (joinConfirmationReceived == false) {
+        if (!dtmfKeys.equals(joinConfirmationKey)) {
+        Logger.println("Call " + cp
+            + " jc false, dtmfKeys " + dtmfKeys
+            + " != " + joinConfirmationKey);
+        return;
+        }
 
-	    joinConfirmationReceived = true;
-	    readyToReceiveData = true;
-	    notifyJoinConfirmationListeners();
-	    Logger.println("Call " + cp + " join confirmation received");
+        joinConfirmationReceived = true;
+        readyToReceiveData = true;
+        notifyJoinConfirmationListeners();
+        Logger.println("Call " + cp + " join confirmation received");
 
-	    playJoinTreatment();
-	} else {
-	    /*
-	     * If the member is whispering in a whisper group
-	     * forward the dtmf key to the other members.
-	     *
-	     * This is intended for outgoing calls so that
-	     * someone can call AT&T conferencing for example,
-	     * and enter the meeting code.
-	     */
-	    if (forwardDtmfKeys == true) {
-		if (whisperGroup != conferenceWhisperGroup) {
-		    Logger.writeFile("Call " + cp
-		        + " Forwarding dtmf key " + dtmfKeys);
+        playJoinTreatment();
+    } else {
+        /*
+         * If the member is whispering in a whisper group
+         * forward the dtmf key to the other members.
+         *
+         * This is intended for outgoing calls so that
+         * someone can call AT&T conferencing for example,
+         * and enter the meeting code.
+         */
+        if (forwardDtmfKeys == true) {
+        if (whisperGroup != conferenceWhisperGroup) {
+            Logger.writeFile("Call " + cp
+                + " Forwarding dtmf key " + dtmfKeys);
 
-		    whisperGroup.forwardDtmf(this, dtmfKeys);
-		}
-	    }
-	}
+            whisperGroup.forwardDtmf(this, dtmfKeys);
+        }
+        }
+    }
 
-	if (cp.dtmfDetection() == false) {
-	    /*
-	     * We enabled dtmf detection only so that the member could
-	     * confirm that it wants to join the conference.  Once confirmed,
-	     * dtmf detection is disabled only detection was explicitly enabled.
-	     */
-	    dtmfDecoder = null;
-	}
+    if (cp.dtmfDetection() == false) {
+        /*
+         * We enabled dtmf detection only so that the member could
+         * confirm that it wants to join the conference.  Once confirmed,
+         * dtmf detection is disabled only detection was explicitly enabled.
+         */
+        dtmfDecoder = null;
+    }
 
-	callHandler.dtmfKeys(dtmfKeys);
+    callHandler.dtmfKeys(dtmfKeys);
     }
 
     /**
@@ -1695,17 +1695,17 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      * sent out.
      */
     public void flushContributions() {
-	if (whisperGroup == null) {
-	    return;
-	}
+    if (whisperGroup == null) {
+        return;
+    }
     }
 
     public void setInputVolume(double inputVolume) {
-	this.inputVolume = inputVolume;
+    this.inputVolume = inputVolume;
     }
 
     public double getInputVolume() {
-	return inputVolume;
+    return inputVolume;
     }
 
     private TreatmentManager inputTreatment;
@@ -1715,87 +1715,87 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private boolean contributionValid = false;
 
     public String getSourceId() {
-	return cp.getCallId();
+    return cp.getCallId();
     }
 
     public boolean contributionIsInCommonMix() {
-	return whisperGroup != null && whisperGroup.hasCommonMix();
+    return whisperGroup != null && whisperGroup.hasCommonMix();
     }
 
     public int[] getPreviousContribution() {
-	return previousContribution;
+    return previousContribution;
     }
 
     public int[] getCurrentContribution() {
-	return currentContribution;
+    return currentContribution;
     }
 
     public void invalidateCurrentContribution() {
         synchronized (whisperGroup) {
-	    previousContribution = currentContribution;
-	    currentContribution = null;
-	    contributionValid = false;
-	}
+        previousContribution = currentContribution;
+        currentContribution = null;
+        contributionValid = false;
+    }
     }
 
     public void saveCurrentContribution() {
-	if (readyToReceiveData == false || whisperGroup == null) {
-	    previousContribution = null;
-	    currentContribution = null;
-	    return;
-	}
+    if (readyToReceiveData == false || whisperGroup == null) {
+        previousContribution = null;
+        currentContribution = null;
+        return;
+    }
 
         synchronized (whisperGroup) {
-	    if (contributionValid) {
-		return;
-	    }
+        if (contributionValid) {
+        return;
+        }
 
-	    currentContribution = null;
+        currentContribution = null;
 
-	    contributionValid = true;
+        contributionValid = true;
 
-	    if (inputTreatment == null) {
-	        synchronized (jitterManager) {
-	            try {
-	                JitterObject jo = jitterManager.getFirstPacket();
+        if (inputTreatment == null) {
+            synchronized (jitterManager) {
+                try {
+                    JitterObject jo = jitterManager.getFirstPacket();
 
-	                currentContribution = (int[]) jo.data;
-	            } catch (NoSuchElementException e) {
-	            }
-		}
-	    } else {
-		/*
-	 	 * If there's an input treatment, there's no endpoint
-		 * and therefore no member contribution other than
-		 * the input treatment
-		 */
-		inputTreatment.saveCurrentContribution();
+                    currentContribution = (int[]) jo.data;
+                } catch (NoSuchElementException e) {
+                }
+        }
+        } else {
+        /*
+         * If there's an input treatment, there's no endpoint
+         * and therefore no member contribution other than
+         * the input treatment
+         */
+        inputTreatment.saveCurrentContribution();
 
-		currentContribution = inputTreatment.getCurrentContribution();
+        currentContribution = inputTreatment.getCurrentContribution();
 
-		if (currentContribution == null) {
-		    if (Logger.logLevel >= Logger.LOG_INFO) {
-		        Logger.println("Call " + cp
-			    + " input treatment returned null");
-		    }
+        if (currentContribution == null) {
+            if (Logger.logLevel >= Logger.LOG_INFO) {
+                Logger.println("Call " + cp
+                + " input treatment returned null");
+            }
 
-	            inputTreatment = null;
-		} else {
-		    forwardData(currentContribution);
+                inputTreatment = null;
+        } else {
+            forwardData(currentContribution);
 
-		    if (inputVolume != 1) {
-	    		callHandler.getMember().adjustVolume(currentContribution, inputVolume);
-		    }
-		}
+            if (inputVolume != 1) {
+                callHandler.getMember().adjustVolume(currentContribution, inputVolume);
+            }
+        }
 
-		if (speechDetector != null) {
-		    if (currentContribution == null) {
-			if (speechDetector.reset() == true) {
-	        	    callHandler.speakingChanged(false);
-			}
-		    } else {
-	    	        if (speechDetector.processData(currentContribution) ==
-				true) {
+        if (speechDetector != null) {
+            if (currentContribution == null) {
+            if (speechDetector.reset() == true) {
+                    callHandler.speakingChanged(false);
+            }
+            } else {
+                    if (speechDetector.processData(currentContribution) ==
+                true) {
 
                             boolean isSpeaking = speechDetector.isSpeaking();
 
@@ -1804,84 +1804,84 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
                             if (isSpeaking == false) {
                                 currentContribution = null;
                             }
-			}
-		    }
-        	}
-	    }
+            }
+            }
+            }
+        }
 
-	    if (currentContribution != null) {
-        	/*
-         	 * Add this packet's data to the appropriate whisperGroup
-	         */
-		if (whisperGroup.hasCommonMix()) {
-        	    whisperGroup.addToLinearDataMix(currentContribution,
-			doNotRecord());
-		}
+        if (currentContribution != null) {
+            /*
+             * Add this packet's data to the appropriate whisperGroup
+             */
+        if (whisperGroup.hasCommonMix()) {
+                whisperGroup.addToLinearDataMix(currentContribution,
+            doNotRecord());
+        }
 
                 recordAudio(currentContribution, currentContribution.length);
 
-	        if (Logger.logLevel == -89) {
-		    Logger.println("Call " + cp
-			+ " MemberReceiver contributed");
-	        }
+            if (Logger.logLevel == -89) {
+            Logger.println("Call " + cp
+            + " MemberReceiver contributed");
             }
-	}
+            }
+    }
     }
 
     private void log(RtpReceiverPacket rtpPacket) {
-	long now = System.currentTimeMillis();
+    long now = System.currentTimeMillis();
 
-	long rtpTimestampChange = rtpPacket.getRtpTimestamp() -
-	    previousRtpTimestamp;
+    long rtpTimestampChange = rtpPacket.getRtpTimestamp() -
+        previousRtpTimestamp;
 
-	previousRtpTimestamp = rtpPacket.getRtpTimestamp();
+    previousRtpTimestamp = rtpPacket.getRtpTimestamp();
 
-	String summary = "";
-	String flags = "";
-	String badTime = " ";
-	String badTimestamp = " ";
+    String summary = "";
+    String flags = "";
+    String badTime = " ";
+    String badTimestamp = " ";
 
-	if (rtpPacket.isMarkSet()) {
-	    flags = "MARK ";
-	} else {
-	    if (packetsReceived > 1) {
-	        if (now - timePreviousPacketReceived < 15) {
-	            badTime = "-";
-		    summary = "!";
-	        } else if (now - timePreviousPacketReceived > 25) {
-	            badTime = "+";
-		    summary = "!";
-	        }
+    if (rtpPacket.isMarkSet()) {
+        flags = "MARK ";
+    } else {
+        if (packetsReceived > 1) {
+            if (now - timePreviousPacketReceived < 15) {
+                badTime = "-";
+            summary = "!";
+            } else if (now - timePreviousPacketReceived > 25) {
+                badTime = "+";
+            summary = "!";
+            }
 
-	        if (rtpTimestampChange > myMediaInfo.getSamplesPerPacket()) {
+            if (rtpTimestampChange > myMediaInfo.getSamplesPerPacket()) {
                     badTimestamp = ">";
-		    summary = "!";
+            summary = "!";
                 } else if (rtpTimestampChange < myMediaInfo.getSamplesPerPacket()) {
                     badTimestamp = "<";
-		    summary = "!";
+            summary = "!";
                 }
-	    }
-	}
+        }
+    }
 
-	if (rtpPacket.getRtpPayload() == RtpPacket.COMFORT_PAYLOAD) {
-	    flags += "COMFORT ";
-	}
+    if (rtpPacket.getRtpPayload() == RtpPacket.COMFORT_PAYLOAD) {
+        flags += "COMFORT ";
+    }
 
-	String timestamp = Integer.toHexString(
+    String timestamp = Integer.toHexString(
                 (int)(rtpPacket.getRtpTimestamp() & 0xffffffff));
 
-	if (timestamp.length() != 8) {
-	    timestamp += "       ";		// for alignment
-	}
+    if (timestamp.length() != 8) {
+        timestamp += "       ";		// for alignment
+    }
 
         Logger.writeFile("R    "
-	    + (now - timePreviousPacketReceived) + badTime
-	    + "\t" + Integer.toHexString(
-	    (int)(rtpTimestampChange & 0xffffffff))
-	    + badTimestamp
+        + (now - timePreviousPacketReceived) + badTime
+        + "\t" + Integer.toHexString(
+        (int)(rtpTimestampChange & 0xffffffff))
+        + badTimestamp
             + "\t" + Integer.toHexString(rtpPacket.getRtpSequenceNumber())
             + "\t" + timestamp
-	    + "\t" + flags + cp + " R" + summary);
+        + "\t" + flags + cp + " R" + summary);
     }
 
     /**
@@ -1890,56 +1890,56 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     public void end() {
         if (done) {
             return;
-		}
+        }
 
         done = true;
 
-		if (speechDetector != null && speechDetector.isSpeaking()) {
-				callHandler.speakingChanged(false);
-		}
+        if (speechDetector != null && speechDetector.isSpeaking()) {
+                callHandler.speakingChanged(false);
+        }
 
-		synchronized (recordingLock) {
-				if (recorder != null) {
-					recorder.done();
-					recorder = null;
-				}
-		}
+        synchronized (recordingLock) {
+                if (recorder != null) {
+                    recorder.done();
+                    recorder = null;
+                }
+        }
 
-		readyToReceiveData = false;
+        readyToReceiveData = false;
 
-		if (datagramChannelRegistered && datagramChannel != null) {
-			try {
-				datagramChannel.close();
+        if (datagramChannelRegistered && datagramChannel != null) {
+            try {
+                datagramChannel.close();
 
-			if (Logger.logLevel >= Logger.LOG_DETAIL) {
-				Logger.println("Call " + cp + " closed datagramChannel "
-					+ datagramChannel);
-			}
-			datagramChannel = null;
-			} catch (IOException e) {
-				Logger.println("Call " + cp
-				+ " exception closing datagram channel " + e.getMessage());
-			}
-		} else {
-			Logger.println("Call " + cp + " not closing datagramChannel");
-		}
+            if (Logger.logLevel >= Logger.LOG_DETAIL) {
+                Logger.println("Call " + cp + " closed datagramChannel "
+                    + datagramChannel);
+            }
+            datagramChannel = null;
+            } catch (IOException e) {
+                Logger.println("Call " + cp
+                + " exception closing datagram channel " + e.getMessage());
+            }
+        } else {
+            Logger.println("Call " + cp + " not closing datagramChannel");
+        }
 
-		if (joinConfirmationReceived == true) {
-			String leaveTreatment;
+        if (joinConfirmationReceived == true) {
+            String leaveTreatment;
 
-				/**
-				 * Play audio treatment to all conference members indicating that
-				 * a member has left the conference.
-				 */
-			if ((leaveTreatment = cp.getConferenceLeaveTreatment()) != null) {
-			try {
-					conferenceManager.addTreatment(leaveTreatment);
-			} catch (IOException e) {
-				Logger.println("Call " + cp
-				+ " failed to start leave treatment " + leaveTreatment);
-			}
-			}
-		}
+                /**
+                 * Play audio treatment to all conference members indicating that
+                 * a member has left the conference.
+                 */
+            if ((leaveTreatment = cp.getConferenceLeaveTreatment()) != null) {
+            try {
+                    conferenceManager.addTreatment(leaveTreatment);
+            } catch (IOException e) {
+                Logger.println("Call " + cp
+                + " failed to start leave treatment " + leaveTreatment);
+            }
+            }
+        }
 
         if (opusDecoder != 0)
         {
@@ -1949,94 +1949,94 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     }
 
     public void printStatistics() {
-	if (conferenceManager == null) {
-	    return;
-	}
+    if (conferenceManager == null) {
+        return;
+    }
 
-	synchronized (conferenceManager) {
-	    if (packet == null) {
-		return;
-	    }
+    synchronized (conferenceManager) {
+        if (packet == null) {
+        return;
+        }
 
             Logger.writeFile("Call " + cp + ":  "
-	        + packetsReceived + " packets received");
+            + packetsReceived + " packets received");
             Logger.writeFile("Call " + cp + ":  "
-	        + packet.getShortPackets() + " short packets");
+            + packet.getShortPackets() + " short packets");
             Logger.writeFile("Call " + cp + ":  "
-	        + packetsDropped + " packets dropped");
+            + packetsDropped + " packets dropped");
             Logger.writeFile("Call " + cp + ":  "
-	        + packet.getOutOfSequencePackets()
-		+ " out of sequence packets");
+            + packet.getOutOfSequencePackets()
+        + " out of sequence packets");
             Logger.writeFile("Call " + cp + ":  "
-		+ packet.getWrongRtpTimestamp() + " incorrect RTP timestamp");
+        + packet.getWrongRtpTimestamp() + " incorrect RTP timestamp");
             Logger.writeFile("Call " + cp + ":  " + comfortPayloadsReceived
-	        + " comfort payloads received");
-	    Logger.writeFile("Call " + cp + ":  Forced to defer mixing "
-		+ forcedToDeferMixing);
+            + " comfort payloads received");
+        Logger.writeFile("Call " + cp + ":  Forced to defer mixing "
+        + forcedToDeferMixing);
 
-	    if (packetsReceived != 0) {
+        if (packetsReceived != 0) {
                 Logger.writeFile("Call " + cp + ":  "
-		    + "total time " + totalTime);
+            + "total time " + totalTime);
 
                 Logger.writeFile("Call " + cp + ":  "
-	            + ((float)totalTime / (double)packetsReceived)
-	            + " average milliseconds between receiving packets");
+                + ((float)totalTime / (double)packetsReceived)
+                + " average milliseconds between receiving packets");
 
-		Logger.writeFile("Call " + cp + ":  "
-		    + ((float)timeToProcessMediaPackets /
-		    (float)mediaPacketsReceived)
-		    + " average milliseconds to process a media packet");
-	    }
+        Logger.writeFile("Call " + cp + ":  "
+            + ((float)timeToProcessMediaPackets /
+            (float)mediaPacketsReceived)
+            + " average milliseconds to process a media packet");
+        }
 
-	    Logger.writeFile("Call " + cp + ":  "
-		+ decryptCount + " packets decrypted");
+        Logger.writeFile("Call " + cp + ":  "
+        + decryptCount + " packets decrypted");
 
-	    if (decryptCount != 0) {
-		Logger.writeFile("Call " + cp + ":  "
-		    + (((float)decryptTime / (float)decryptCount) / 1000)
-		    + " microseconds average per decrypt");
-	    }
+        if (decryptCount != 0) {
+        Logger.writeFile("Call " + cp + ":  "
+            + (((float)decryptTime / (float)decryptCount) / 1000)
+            + " microseconds average per decrypt");
+        }
 
-	    if (speexDecoder != null) {
-		int decodes = speexDecoder.getDecodes();
-		long decodeTime = speexDecoder.getDecodeTime();
+        if (speexDecoder != null) {
+        int decodes = speexDecoder.getDecodes();
+        long decodeTime = speexDecoder.getDecodeTime();
 
-	        if (decodes > 0) {
-		    Logger.writeFile("Call " + cp + ":  "
-		        + "Average Speex decode time "
+            if (decodes > 0) {
+            Logger.writeFile("Call " + cp + ":  "
+                + "Average Speex decode time "
                         + (((float)decodeTime / decodes) / 1000000000.)
-			+ " seconds");
-		}
-	    }
+            + " seconds");
+        }
+        }
 
-	    if (inSampleRateConverter != null) {
-		inSampleRateConverter.printStatistics();
-	    }
+        if (inSampleRateConverter != null) {
+        inSampleRateConverter.printStatistics();
+        }
 
-	    if (jitterManager != null) {
-		synchronized (jitterManager) {
-	            jitterManager.printStatistics();
-		}
-	    }
+        if (jitterManager != null) {
+        synchronized (jitterManager) {
+                jitterManager.printStatistics();
+        }
+        }
 
-	    Logger.writeFile("");
+        Logger.writeFile("");
 
-	    if (dtmfDecoder != null) {
-	        dtmfDecoder.printStatistics();
+        if (dtmfDecoder != null) {
+            dtmfDecoder.printStatistics();
                 Logger.writeFile("");
-	    }
+        }
 
-	    if (speechDetector != null) {
-		speechDetector.printStatistics();
+        if (speechDetector != null) {
+        speechDetector.printStatistics();
                 Logger.writeFile("");
-	    }
+        }
 
-	    Logger.flush();
-	}
+        Logger.flush();
+    }
     }
 
     public boolean joinConfirmationReceived() {
-	return joinConfirmationReceived;
+    return joinConfirmationReceived;
     }
 
     /**
@@ -2044,56 +2044,56 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      * from the ConferenceReceiver thread.
      */
     public boolean readyToReceiveData() {
-	if (initializationDone == false) {
-	    return false;
-	}
+    if (initializationDone == false) {
+        return false;
+    }
 
-	/*
-	 * We have to allow data in so we can detect a dtmf key for
-	 * join confirmation.
-	 */
-	if (joinConfirmationReceived == false) {
-	    return true;
-	}
+    /*
+     * We have to allow data in so we can detect a dtmf key for
+     * join confirmation.
+     */
+    if (joinConfirmationReceived == false) {
+        return true;
+    }
 
         if (traceCall) {
-	    if (callHandler.isCallEstablished() == false
-	            || readyToReceiveData == false) {
+        if (callHandler.isCallEstablished() == false
+                || readyToReceiveData == false) {
 
-	        Logger.writeFile("readyToReceiveData " + readyToReceiveData +
-		    " established " + callHandler.isCallEstablished());
-	    }
-	}
+            Logger.writeFile("readyToReceiveData " + readyToReceiveData +
+            " established " + callHandler.isCallEstablished());
+        }
+    }
 
-	return callHandler.isCallEstablished() && readyToReceiveData;
+    return callHandler.isCallEstablished() && readyToReceiveData;
     }
 
     private boolean isMuted() {
-	if (whisperGroup == null) {
-	    return true;
-	}
+    if (whisperGroup == null) {
+        return true;
+    }
 
         if (whisperGroup != conferenceWhisperGroup) {
-	    if (traceCall) {
-		if (cp.isMuteWhisperGroup()) {
-		    Logger.writeFile("Call " + cp + " whispergroup muted");
-		}
-	    }
-	    return cp.isMuteWhisperGroup();
-	}
+        if (traceCall) {
+        if (cp.isMuteWhisperGroup()) {
+            Logger.writeFile("Call " + cp + " whispergroup muted");
+        }
+        }
+        return cp.isMuteWhisperGroup();
+    }
 
-	if (traceCall) {
+    if (traceCall) {
             if (isAutoMuted || cp.isMuted() || cp.isConferenceMuted() ||
-		cp.isConferenceSilenced()) {
-		Logger.writeFile("Call " + cp + " isAutoMuted " + isAutoMuted
-		    + " isMuted " + cp.isMuted()
-		    + " isConf muted " + cp.isConferenceMuted()
-		    + " isConf sileneced " + cp.isConferenceSilenced());
-	    }
-	}
+        cp.isConferenceSilenced()) {
+        Logger.writeFile("Call " + cp + " isAutoMuted " + isAutoMuted
+            + " isMuted " + cp.isMuted()
+            + " isConf muted " + cp.isConferenceMuted()
+            + " isConf sileneced " + cp.isConferenceSilenced());
+        }
+    }
 
         return isAutoMuted || cp.isMuted() || cp.isConferenceMuted() ||
-	    cp.isConferenceSilenced();
+        cp.isConferenceSilenced();
     }
 
     /**
@@ -2102,21 +2102,21 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
      * @param isMuted boolean true if member should be muted, false otherwise.
      */
     public void setMuted(boolean isMuted) {
-	if (traceCall || Logger.logLevel >= Logger.LOG_INFO) {
+    if (traceCall || Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("Call " + cp + " mute is now " + isMuted);
-	}
+    }
 
-	cp.setMuted(isMuted);
+    cp.setMuted(isMuted);
 
-	if (speechDetector == null) {
-	    return;
-	}
+    if (speechDetector == null) {
+        return;
+    }
 
-	if (isMuted) {
-	    if (speechDetector.isSpeaking()) {
+    if (isMuted) {
+        if (speechDetector.isSpeaking()) {
                 callHandler.speakingChanged(false);
-	    }
-	}
+        }
+    }
 
         speechDetector.reset();
     }
@@ -2129,7 +2129,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     public void setMuteWhisperGroup(boolean isMuteWhisperGroup) {
         if (traceCall || Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("Call " + cp + " muteWhisperGroup is now "
-		+ isMuteWhisperGroup);
+        + isMuteWhisperGroup);
         }
 
         cp.setMuteWhisperGroup(isMuteWhisperGroup);
@@ -2137,18 +2137,18 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
         if (isMuteWhisperGroup) {
             synchronized (whisperGroup) {
-		flushContributions();
-	    }
-	}
+        flushContributions();
+        }
+    }
 
         if (speechDetector == null) {
             return;
         }
 
         if (isMuteWhisperGroup) {
-	    if (speechDetector.isSpeaking()) {
+        if (speechDetector.isSpeaking()) {
                 callHandler.speakingChanged(false);
-	    }
+        }
         }
 
         speechDetector.reset();
@@ -2165,32 +2165,32 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     }
 
     public void setMinJitterBufferSize(int minJitterBufferSize) {
-	if (jitterManager == null) {
-	    return;
-	}
+    if (jitterManager == null) {
+        return;
+    }
 
-	jitterManager.setMinJitterBufferSize(minJitterBufferSize);
+    jitterManager.setMinJitterBufferSize(minJitterBufferSize);
     }
 
     public void setMaxJitterBufferSize(int maxJitterBufferSize) {
-	if (jitterManager == null) {
-	    return;
-	}
+    if (jitterManager == null) {
+        return;
+    }
 
-	jitterManager.setMaxJitterBufferSize(maxJitterBufferSize);
+    jitterManager.setMaxJitterBufferSize(maxJitterBufferSize);
     }
 
     public void setPlcClassName(String plcClassName) {
-	jitterManager.setPlcClassName(plcClassName);
+    jitterManager.setPlcClassName(plcClassName);
     }
 
     public String getPlcClassName() {
-	return jitterManager.getPlcClassName();
+    return jitterManager.getPlcClassName();
     }
 
     public InetSocketAddress getReceiveAddress() {
-	return new InetSocketAddress(Bridge.getPrivateHost(),
-	    datagramChannel.socket().getLocalPort());
+    return new InetSocketAddress(Bridge.getPrivateHost(),
+        datagramChannel.socket().getLocalPort());
     }
 
     private Recorder recorder;
@@ -2198,35 +2198,35 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private boolean recordRtp;
 
     public String getFromRecordingFile() {
-	if (recorder != null) {
-	    return recorder.getRecordPath();
-	}
+    if (recorder != null) {
+        return recorder.getRecordPath();
+    }
 
-	return null;
+    return null;
     }
 
     private void recordPacket(byte[] data, int length) {
-	if (cp.getFromRecordingFile() == null) {
-	    return;
-	}
+    if (cp.getFromRecordingFile() == null) {
+        return;
+    }
 
-	if (recordRtp == false) {
-	    return;
-	}
+    if (recordRtp == false) {
+        return;
+    }
 
-	synchronized (recordingLock) {
-	    if (recorder == null) {
-	        return;
-	    }
+    synchronized (recordingLock) {
+        if (recorder == null) {
+            return;
+        }
 
-	    try {
-	        recorder.writePacket(data, 0, length);
+        try {
+            recorder.writePacket(data, 0, length);
             } catch (IOException e) {
                 Logger.println("Unable to record data " + e.getMessage());
-	        cp.setFromRecordingFile(null);
+            cp.setFromRecordingFile(null);
                 recorder = null;
             }
-	}
+    }
     }
 
     private void recordAudio(int[] data, int length) {
@@ -2234,153 +2234,153 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
             return;
         }
 
-	if (recordRtp == true) {
-	    return;
-	}
+    if (recordRtp == true) {
+        return;
+    }
 
-	synchronized (recordingLock) {
-	    if (recorder == null) {
-	        return;
-	    }
+    synchronized (recordingLock) {
+        if (recorder == null) {
+            return;
+        }
 
             try {
                 recorder.write(data, 0, length);
             } catch (IOException e) {
                 Logger.println("Unable to record data " + e.getMessage());
-	        cp.setFromRecordingFile(null);
+            cp.setFromRecordingFile(null);
                 recorder = null;
             }
-	}
+    }
     }
 
     public boolean doNotRecord() {
-	return cp.doNotRecord();
+    return cp.doNotRecord();
     }
 
     public void setDoNotRecord(boolean doNotRecord) {
-	cp.setDoNotRecord(doNotRecord);
+    cp.setDoNotRecord(doNotRecord);
 
-	Logger.println("Call " + cp + " doNotRecord is " + doNotRecord);
+    Logger.println("Call " + cp + " doNotRecord is " + doNotRecord);
     }
 
     public void setRecordFromMember(boolean enabled, String recordingFile,
-	    String recordingType) throws IOException {
+        String recordingType) throws IOException {
 
-	if (doNotRecord()) {
-	    if (enabled) {
-		Logger.println("Call " + cp + " doesn't allow recording.");
-		enabled = false;
-	    }
-	}
+    if (doNotRecord()) {
+        if (enabled) {
+        Logger.println("Call " + cp + " doesn't allow recording.");
+        enabled = false;
+        }
+    }
 
         if (recorder != null) {
-	    recorder.done();
-	    recorder = null;
+        recorder.done();
+        recorder = null;
         }
 
-	synchronized (recordingLock) {
-	    if (enabled == false) {
-	        cp.setFromRecordingFile(null);
-		return;
-	    }
+    synchronized (recordingLock) {
+        if (enabled == false) {
+            cp.setFromRecordingFile(null);
+        return;
+        }
 
             if (recordingType == null) {
                 recordingType = "Au";
             }
 
-	    recordRtp = false;
+        recordRtp = false;
 
-	    if (recordingType.equalsIgnoreCase("Rtp")) {
+        if (recordingType.equalsIgnoreCase("Rtp")) {
                 recordRtp = true;
             }
 
             synchronized (recordingLock) {
-		MediaInfo m;
+        MediaInfo m;
 
                 try {
-		    if (recordingType.equalsIgnoreCase("Rtp")) {
+            if (recordingType.equalsIgnoreCase("Rtp")) {
                         m = SdpManager.findMediaInfo(
                             myMediaInfo.getEncoding(),
-			    myMediaInfo.getSampleRate(),
+                myMediaInfo.getSampleRate(),
                             myMediaInfo.getChannels());
-		    } else {
-			m = SdpManager.findMediaInfo(
-			    RtpPacket.PCM_ENCODING,
-			    conferenceManager.getMediaInfo().getSampleRate(),
-			    conferenceManager.getMediaInfo().getChannels());
-		    }
+            } else {
+            m = SdpManager.findMediaInfo(
+                RtpPacket.PCM_ENCODING,
+                conferenceManager.getMediaInfo().getSampleRate(),
+                conferenceManager.getMediaInfo().getChannels());
+            }
                 } catch (ParseException e) {
                     Logger.println("Can't record rtp to " + recordingFile
-			+ " " + e.getMessage());
+            + " " + e.getMessage());
                     throw new IOException(e.getMessage());
                 }
 
-		Logger.println("Recording media " + m);
+        Logger.println("Recording media " + m);
 
                 recorder = new Recorder(cp.getRecordDirectory(),
-		    recordingFile, recordingType, m);
+            recordingFile, recordingType, m);
 
                 cp.setFromRecordingFile(recordingFile);
                 cp.setFromRecordingType(recordingType);
             }
-	}
+    }
     }
 
     public WhisperGroup getWhisperGroup() {
-	return whisperGroup;
+    return whisperGroup;
     }
 
     public void setWhisperGroup(WhisperGroup whisperGroup) {
-	if (this.whisperGroup != null) {
-	    synchronized (this.whisperGroup) {
-	        flushContributions();
-	    }
-	}
+    if (this.whisperGroup != null) {
+        synchronized (this.whisperGroup) {
+            flushContributions();
+        }
+    }
 
-	this.whisperGroup = whisperGroup;
+    this.whisperGroup = whisperGroup;
     }
 
     public static void setJoinConfirmationKey(String key) {
-	joinConfirmationKey = key;
+    joinConfirmationKey = key;
     }
 
     public static String getJoinConfirmationKey() {
-	return joinConfirmationKey;
+    return joinConfirmationKey;
     }
 
     private long decryptCount;
     private long decryptTime;
 
     private byte[] decrypt(byte[] data) {
-	try {
-	    decryptCount++;
-	    long start = System.currentTimeMillis();
+    try {
+        decryptCount++;
+        long start = System.currentTimeMillis();
 
-	    byte[]clearText = decryptCipher.doFinal(data, 0, data.length);
+        byte[]clearText = decryptCipher.doFinal(data, 0, data.length);
 
-	    decryptTime += (System.currentTimeMillis() - start);
-	    return clearText;
-	} catch (Exception e) {
-	    Logger.println("Call " + cp + " Decryption failed, length "
-		+ data.length + ": " + e.getMessage());
-	    callHandler.cancelRequest("Decryption failed: "
-		+ e.getMessage());
-	    return data;
-	}
+        decryptTime += (System.currentTimeMillis() - start);
+        return clearText;
+    } catch (Exception e) {
+        Logger.println("Call " + cp + " Decryption failed, length "
+        + data.length + ": " + e.getMessage());
+        callHandler.cancelRequest("Decryption failed: "
+        + e.getMessage());
+        return data;
+    }
     }
 
     public String toString() {
-	return myMemberNumber + " ===> " + cp.toString();
+    return myMemberNumber + " ===> " + cp.toString();
     }
 
     public String toAbbreviatedString() {
-	String callId = myMemberNumber + " ===> " + cp.getCallId();
+    String callId = myMemberNumber + " ===> " + cp.getCallId();
 
-	if (callId.length() < 14) {
-	    return callId;
-	}
+    if (callId.length() < 14) {
+        return callId;
+    }
 
-	return callId.substring(0, 13);
+    return callId.substring(0, 13);
     }
 
 }

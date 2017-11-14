@@ -363,19 +363,19 @@
                 Element bottomPanel = optConfig.getRootElement().element("bottompanel");
 %>
 
-	<!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
+    <!-- BEGIN gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
     <div <%= ((!this.gwEnabled) ? " class='jive-gateway jive-gatewayDisabled'" : "class='jive-gateway'") %> id="jive<%= this.gatewayType.toString().toUpperCase() %>">
-		<label for="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox">
-			<input type="checkbox" name="kraken" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="ConfigManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true">
-			<img src="images/<%= this.gatewayType.toString().toLowerCase() %>.png" alt="" border="0">
-			<strong><%= this.description %></strong>
-		</label>
-		<div class="jive-gatewayButtons">
+        <label for="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox">
+            <input type="checkbox" name="kraken" value="<%= this.gatewayType.toString().toLowerCase() %>" id="jive<%= this.gatewayType.toString().toUpperCase() %>checkbox" <%= ((this.gwEnabled) ? "checked" : "") %> onClick="ConfigManager.toggleTransport('<%= this.gatewayType.toString().toLowerCase() %>'); checkToggle(jive<%= this.gatewayType.toString().toUpperCase() %>); return true">
+            <img src="images/<%= this.gatewayType.toString().toLowerCase() %>.png" alt="" border="0">
+            <strong><%= this.description %></strong>
+        </label>
+        <div class="jive-gatewayButtons">
             <a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>tests); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>testsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>><%= LocaleUtils.getLocalizedString("gateway.web.transports.tests", "kraken") %></a>
             <a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>options); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>><%= LocaleUtils.getLocalizedString("gateway.web.transports.options", "kraken") %></a>
-			<a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>permsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>><%= LocaleUtils.getLocalizedString("gateway.web.transports.permissions", "kraken") %></a>
-		</div>
-	</div>
+            <a href="#" onclick="togglePanel(jive<%= this.gatewayType.toString().toUpperCase() %>perms); return false" id="jive<%= this.gatewayType.toString().toUpperCase() %>permsLink" <%= ((!this.gwEnabled) ? "style='display:none'" : "") %>><%= LocaleUtils.getLocalizedString("gateway.web.transports.permissions", "kraken") %></a>
+        </div>
+    </div>
     <!-- JID display -->
     <div class="jive-gatewaySub" id="jive<%= this.gatewayType.toString().toUpperCase() %>sub" <%= ((this.gwEnabled) ? " style='display: block'" : "style='display: none'") %>>
         <div>
@@ -385,9 +385,9 @@
     <!-- Tests Window -->
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>tests" style="display: none;">
         <div>
-			<% if (this.gatewayType.toString().equals("qq")) { %>
-			<b>Tests not supported for QQ (yet).</b>
-			<% } else { %>
+            <% if (this.gatewayType.toString().equals("qq")) { %>
+            <b>Tests not supported for QQ (yet).</b>
+            <% } else { %>
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>testsform" action="" onSubmit="return false">
                 <span style="font-weight: bold"><%= LocaleUtils.getLocalizedString("gateway.web.transports.connecttohost", "kraken") %>:</span> <span id="<%= this.gatewayType.toString() %>testhost"><%= connectHost %></span><br />
                 <span style="font-weight: bold"><%= LocaleUtils.getLocalizedString("gateway.web.transports.connecttoport", "kraken") %>:</span> <span id="<%= this.gatewayType.toString() %>testport"><%= connectPort %></span><br />
@@ -395,12 +395,12 @@
                 <span id="<%= this.gatewayType.toString() %>testsresults" class="saveResultsMsg"></span>
                 <input type="submit" name="submit" value="<%= LocaleUtils.getLocalizedString("gateway.web.transports.testconnection", "kraken") %>" onclick="testConnect('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
             </form>
-			<% } %>
+            <% } %>
         </div>
     </div>
     <!-- Options Window -->
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>options" style="display: none;">
-		<div>
+        <div>
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>optionsform" action="" onSubmit="return false">
                 <table border="0" cellpadding="0" cellspacing="0">
                     <tr valign="top">
@@ -458,11 +458,11 @@
                 <input type="submit" name="submit" value="<%= LocaleUtils.getLocalizedString("gateway.web.transports.saveoptions", "kraken") %>" onclick="saveOptions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
                 <input type="reset" name="cancel" value="<%= LocaleUtils.getLocalizedString("gateway.web.transports.cancelchanges", "kraken") %>" onclick="cancelOptions('<%= this.gatewayType.toString() %>'); return true" class="jive-formButton">
             </form>
-		</div>
-	</div>
+        </div>
+    </div>
     <!-- Permissions Window -->
     <div class="jive-gatewayPanel" id="jive<%= this.gatewayType.toString().toUpperCase() %>perms" style="display: none;">
-		<div>
+        <div>
             <form id="jive<%= this.gatewayType.toString().toUpperCase() %>permsform" action=""  onSubmit="return false">
                 <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="all" onClick="hideSpecificChoices('<%= this.gatewayType.toString() %>')" <%= (this.globalPermSetting == 1 ? "checked='checked'" : "") %> /> <%= LocaleUtils.getLocalizedString("gateway.web.transports.registerall", "kraken") %><br>
                 <input type="radio" name="<%= this.gatewayType.toString() %>userreg" value="specific" onClick="showSpecificChoices('<%= this.gatewayType.toString() %>')"  <%= (this.globalPermSetting == 2 ? "checked='checked'" : "") %> /> <%= LocaleUtils.getLocalizedString("gateway.web.transports.registersome", "kraken") %><br>
@@ -490,9 +490,9 @@
                 <input type="submit" name="submit" value="<%= LocaleUtils.getLocalizedString("gateway.web.transports.savepermissions", "kraken") %>" onclick="savePermissions('<%= this.gatewayType.toString() %>'); return false" class="jive-formButton">
                 <input type="reset" name="cancel" value="<%= LocaleUtils.getLocalizedString("gateway.web.transports.cancelchanges", "kraken") %>" onclick="cancelPermissions('<%= this.gatewayType.toString() %>'); return true" class="jive-formButton">
             </form>
-		</div>
-	</div>
-	<!-- END gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
+        </div>
+    </div>
+    <!-- END gateway - <%= this.gatewayType.toString().toUpperCase() %> -->
 
 <%
             }

@@ -67,7 +67,7 @@ import org.xmpp.packet.PacketError;
  */
 public class IQvCardHandler extends IQHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
 
     private IQHandlerInfo info;
     private XMPPServer server;
@@ -79,7 +79,7 @@ public class IQvCardHandler extends IQHandler {
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
         if (type.equals(IQ.Type.set)) {
@@ -152,14 +152,14 @@ public class IQvCardHandler extends IQHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         userManager = server.getUserManager();
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 }

@@ -74,7 +74,7 @@ public interface RosterItemProvider {
     *
     * @param username the username of the user/chatbot that owns the roster items
     * @return An iterator of all RosterItems owned by the user
-	*/
-	Iterator<RosterItem> getItems(String username);
+    */
+    Iterator<RosterItem> getItems(String username);
 
 }

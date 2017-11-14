@@ -21,39 +21,39 @@ import org.xmpp.packet.Presence;
  */
 public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor {
 
-	private RosterManager _rosterManager;
+    private RosterManager _rosterManager;
 
-	public NonPersistantRosterProcessor(RosterManager rostermananger) {
-		Log.info("Created NonPersistantProcessor");
-		_rosterManager = rostermananger;
-	}
+    public NonPersistantRosterProcessor(RosterManager rostermananger) {
+        Log.info("Created NonPersistantProcessor");
+        _rosterManager = rostermananger;
+    }
 
-	@Override
-	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
-		Presence myPacket = (Presence) packet;
-		if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable)
-				&& !myPacket.getElement().getStringValue().equals("Connecting")) {
-			String username = getUsernameFromJid(to);
-			Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain + "and user " + username + " Packet: "
-					+ packet.toString());
+    @Override
+    public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
+        Presence myPacket = (Presence) packet;
+        if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable)
+                && !myPacket.getElement().getStringValue().equals("Connecting")) {
+            String username = getUsernameFromJid(to);
+            Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain + "and user " + username + " Packet: "
+                    + packet.toString());
 
-			try {
-				Roster roster = _rosterManager.getRoster(username);
-				Collection<RosterItem> items = roster.getRosterItems();
-				for (RosterItem item : items) {
-					String itemName = item.getJid().toString();
-					if (itemName.contains(subdomain)) {
-						Log.debug("Removing contact " + item.getJid().toString() + " from contact list.");
-						roster.deleteRosterItem(item.getJid(), false);
-						
-					}
-				}
+            try {
+                Roster roster = _rosterManager.getRoster(username);
+                Collection<RosterItem> items = roster.getRosterItems();
+                for (RosterItem item : items) {
+                    String itemName = item.getJid().toString();
+                    if (itemName.contains(subdomain)) {
+                        Log.debug("Removing contact " + item.getJid().toString() + " from contact list.");
+                        roster.deleteRosterItem(item.getJid(), false);
+                        
+                    }
+                }
 
-			} catch (Exception e) {
-				Log.debug("Execption occured when cleaning up the Roster.", e);
-				e.printStackTrace();
-			}
-		}
-	}
+            } catch (Exception e) {
+                Log.debug("Execption occured when cleaning up the Roster.", e);
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

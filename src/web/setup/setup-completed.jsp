@@ -16,8 +16,8 @@
 
 <!-- BEGIN jive-header -->
 <div id="jive-header">
-	<div id="jive-logo" title="openfire"></div>
-	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
+    <div id="jive-logo" title="openfire"></div>
+    <div id="jive-header-text"><fmt:message key="setup.title" /></div>
 </div>
 <!-- END jive-header -->
 
@@ -40,10 +40,10 @@
         <fmt:message key="setup.completed.run_info2" />
         </p>
 
-	    <br><br>
-		    <div class="jive_setup_launchAdmin" align="center">
-			    <a href="../index.jsp"><fmt:message key="setup.finished.login" /></a>
-		    </div>
+        <br><br>
+            <div class="jive_setup_launchAdmin" align="center">
+                <a href="../index.jsp"><fmt:message key="setup.finished.login" /></a>
+            </div>
 
 
     </td>

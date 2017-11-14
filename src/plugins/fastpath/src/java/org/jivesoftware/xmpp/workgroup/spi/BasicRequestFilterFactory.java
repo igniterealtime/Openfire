@@ -22,7 +22,7 @@ public class BasicRequestFilterFactory extends RequestFilterFactory {
     RequestFilter filter = new BasicRequestFilter();
 
     @Override
-	public RequestFilter getFilter() {
+    public RequestFilter getFilter() {
         return filter;
     }
 }

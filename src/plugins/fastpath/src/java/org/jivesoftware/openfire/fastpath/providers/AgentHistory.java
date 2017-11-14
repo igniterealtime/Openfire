@@ -39,7 +39,7 @@ import org.xmpp.packet.PacketError;
  */
 public class AgentHistory implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(AgentHistory.class);
+    private static final Logger Log = LoggerFactory.getLogger(AgentHistory.class);
 
     private static final String GET_AGENT_SESSIONS =
             "SELECT sessionID, joinTime, leftTime FROM fpAgentSession WHERE agentJID=?";

@@ -39,12 +39,12 @@ public class UserCollection extends AbstractCollection<User> {
     }
 
     @Override
-	public Iterator<User> iterator() {
+    public Iterator<User> iterator() {
         return new UserIterator();
     }
 
     @Override
-	public int size() {
+    public int size() {
         return elements.length;
     }
 

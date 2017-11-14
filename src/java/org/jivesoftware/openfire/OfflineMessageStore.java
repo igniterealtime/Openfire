@@ -60,7 +60,7 @@ import java.util.regex.Pattern;
  */
 public class OfflineMessageStore extends BasicModule implements UserEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStore.class);
+    private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStore.class);
 
     private static final String INSERT_OFFLINE =
         "INSERT INTO ofOffline (username, messageID, creationDate, messageSize, stanza) " +
@@ -204,11 +204,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         msgXML = matcher.replaceAll("");
                     }
                     try {
-                    	message = new OfflineMessage(creationDate,
+                        message = new OfflineMessage(creationDate,
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
                     } catch (DocumentException de) {
-                    	Log.error("Failed to route packet (offline message): " + msgXML, de);
-                    	continue; // skip and process remaining offline messages
+                        Log.error("Failed to route packet (offline message): " + msgXML, de);
+                        continue; // skip and process remaining offline messages
                     }
                 }
 
@@ -442,7 +442,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -456,7 +456,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();

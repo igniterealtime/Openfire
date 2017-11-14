@@ -227,7 +227,7 @@ public class XFormFieldImpl implements FormField {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return "XFormFieldImpl " + Integer.toHexString(hashCode()) + " " + getVariable() + ">" + values
                 + " o: " + (options.isEmpty() ? "no options" : options.toString());
     }

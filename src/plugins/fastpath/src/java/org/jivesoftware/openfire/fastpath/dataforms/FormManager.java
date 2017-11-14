@@ -34,9 +34,9 @@ import com.thoughtworks.xstream.XStream;
 
 
 public class FormManager {
-	
-	private static final Logger Log = LoggerFactory.getLogger(FormManager.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(FormManager.class);
+    
     private static FormManager singleton = new FormManager();
 
     private Map<Workgroup, WorkgroupForm> forms = new ConcurrentHashMap<Workgroup, WorkgroupForm>();

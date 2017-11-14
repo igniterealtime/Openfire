@@ -2,176 +2,176 @@
 /* alertbox styles (errors and warnings) */
 /* global alertbox styles */
 .alertbox {
-	display: block;
-	position: relative;
-	-moz-border-radius: 3px;
-	padding: 0px 0px 0px 0px;
-	margin: 0px 0px 0px 0px;
-	width: 735px;
-	height: auto;
-	font-size: .85em;
-	color: #000000;
-	overflow: hidden;
+    display: block;
+    position: relative;
+    -moz-border-radius: 3px;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+    width: 735px;
+    height: auto;
+    font-size: .85em;
+    color: #000000;
+    overflow: hidden;
     }
 .alertbox h3 {
-	display: block;
-	font-size: 1.1em;
-	margin: 15px 0px 5px 0px;
-	padding: 0px;
-	}
+    display: block;
+    font-size: 1.1em;
+    margin: 15px 0px 5px 0px;
+    padding: 0px;
+    }
 .alertbox p {
-	font-size: .9em;
+    font-size: .9em;
     margin: 3px 0px 10px 0px;
     }
 .alertbox a {
-	color: #000000;
-	}
+    color: #000000;
+    }
 .alertbox a:hover {
-	text-decoration: underline;
-	}
+    text-decoration: underline;
+    }
 
 .linkbtn {
-	display: block;
-	position: relative;
-	float: right;
-	z-index: 100;
-	top: 10px;
-	right: 10px;
-	}
+    display: block;
+    position: relative;
+    float: right;
+    z-index: 100;
+    top: 10px;
+    right: 10px;
+    }
 .linkbtn a {
-	font-weight: bold;
-	text-decoration: none;
-	}
+    font-weight: bold;
+    text-decoration: none;
+    }
 .linkbtn a:hover {
-	text-decoration: underline;
-	}
+    text-decoration: underline;
+    }
 
 .licenseIcon {
-	display: block;
-	position: absolute;
-	width: 22px;
-	height: 22px;
-	margin: 12px 12px 20px 12px;
-	padding: 0px 0px 0px 0px;
-	}
+    display: block;
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    margin: 12px 12px 20px 12px;
+    padding: 0px 0px 0px 0px;
+    }
 
 .licenseIconsmall {
-	display: block;
-	position: relative;
+    display: block;
+    position: relative;
     float: left;
     width: 16px;
-	height: 16px;
-	margin: 0px 5px 4px 0px;
-	padding: 0px 0px 0px 0px;
-	}
+    height: 16px;
+    margin: 0px 5px 4px 0px;
+    padding: 0px 0px 0px 0px;
+    }
 
 .licenseContent {
     display: block;
-	position: relative;
-	clear: none;
-	top: 0px;
-	left: 50px;
-	width: 670px;
-	}
+    position: relative;
+    clear: none;
+    top: 0px;
+    left: 50px;
+    width: 670px;
+    }
 
 /* alertboxsmall styles */
 .alertboxsmall {
-	display: block;
-	position: relative;
-	float: right;
-	-moz-border-radius-topleft: 3px;
-	-moz-border-radius-bottomleft: 3px;
-	padding: 0px 0px 0px 0px;
-	margin: -12px -18px 0px 0px;
-	width: 100px;
-	font-size: .85em;
-	color: #000000;
-	}
+    display: block;
+    position: relative;
+    float: right;
+    -moz-border-radius-topleft: 3px;
+    -moz-border-radius-bottomleft: 3px;
+    padding: 0px 0px 0px 0px;
+    margin: -12px -18px 0px 0px;
+    width: 100px;
+    font-size: .85em;
+    color: #000000;
+    }
 .alertboxsmall div.licenseContentsmall {
-	margin: 5px;
-	line-height: 1.2em;
-	}
+    margin: 5px;
+    line-height: 1.2em;
+    }
 .alertboxsmall div.licenseContentsmall a {
-	display: block;
-	font-weight: bold;
-	text-decoration: none;
-	color: #A85E00;
-	padding: 3px 0px 0px 0px;
-	}
+    display: block;
+    font-weight: bold;
+    text-decoration: none;
+    color: #A85E00;
+    padding: 3px 0px 0px 0px;
+    }
 .alertboxsmall div.licenseContentsmall a:hover {
-	text-decoration: underline;
-	}
+    text-decoration: underline;
+    }
 
 /* error-specific alertbox styles */
 .licenseError {
-	border: 1px solid #BB8888;
-	background: #EDB9B1 url(images/certificateimg_error.gif) no-repeat bottom right;
-	}
+    border: 1px solid #BB8888;
+    background: #EDB9B1 url(images/certificateimg_error.gif) no-repeat bottom right;
+    }
 .licenseError div.licenseIcon {
-	background: url(images/icon_error.gif) no-repeat;
-	}
+    background: url(images/icon_error.gif) no-repeat;
+    }
 .licenseError h3 {
-	color: #8C0900;
-	}
+    color: #8C0900;
+    }
 .licenseError div.linkbtn a {
-	color: #8C0900;
-	}
+    color: #8C0900;
+    }
 
 
 /* warning-specific alertbox styles */
 .licenseWarning {
-	border: 1px solid #D9B04C;
-	background: #FFE9B2 url(images/certificateimg_warning.gif) no-repeat bottom right;
+    border: 1px solid #D9B04C;
+    background: #FFE9B2 url(images/certificateimg_warning.gif) no-repeat bottom right;
     margin-bottom: 10px;
     }
 .licenseWarning div.licenseIcon {
-	background: url(images/icon_warning.gif) no-repeat;
-	}
+    background: url(images/icon_warning.gif) no-repeat;
+    }
 .licenseWarning h3 {
-	color: #CA7303;
-	}
+    color: #CA7303;
+    }
 .licenseWarning div.linkbtn a {
-	color: #A85E00;
-	}
+    color: #A85E00;
+    }
 .licenseWarningsmall div.licenseIconsmall {
-	background: url(images/icon_warning-small.gif) no-repeat;
-	}
+    background: url(images/icon_warning-small.gif) no-repeat;
+    }
 
 .licenseWarningsmall {
-	border: 1px solid #D9B04C;
-	background: #FFE9B2;
-	}
+    border: 1px solid #D9B04C;
+    background: #FFE9B2;
+    }
 
 
 
 /* license page specific styles */
 .licenseHeader {
-	display: block;
-	width: 732px;
-	overflow: hidden;
-	border: 1px solid #BBBBBB;
-	}
+    display: block;
+    width: 732px;
+    overflow: hidden;
+    border: 1px solid #BBBBBB;
+    }
 .licenseHeader strong {
-	display: block;
-	margin: 5px 10px 5px 10px;
-	}
+    display: block;
+    margin: 5px 10px 5px 10px;
+    }
 .licenseBody {
-	display: block;
-	width: 732px;
-	overflow: hidden;
-	background-color: #FFFFFF;
-	border: 1px solid #BBBBBB;
-	border-top: none;
-	margin-bottom: 25px;
-	}
+    display: block;
+    width: 732px;
+    overflow: hidden;
+    background-color: #FFFFFF;
+    border: 1px solid #BBBBBB;
+    border-top: none;
+    margin-bottom: 25px;
+    }
 .licenseBody table {
-	width: 90%;
-	margin: 10px;
-	}
+    width: 90%;
+    margin: 10px;
+    }
 .licenseBody div.licenseContents {
-	width: 710px;
-	margin: 13px;
-	}
+    width: 710px;
+    margin: 13px;
+    }
 
 #enterLicenseLink {
     display: block;
@@ -190,16 +190,16 @@
 }
 
 .licenseBody form {
-	display: block;
-	width: 680px;
+    display: block;
+    width: 680px;
     margin: 0px 0px 15px 0px;
     padding: 0px;
     text-align: right;
-	}
+    }
 .licenseBody form textarea {
-	width: 680px;
-	height: 185px;
-	margin-bottom: 5px;
+    width: 680px;
+    height: 185px;
+    margin-bottom: 5px;
     font-family: "Courier New", Courier, monospace;
     font-size: 13px;
     }
@@ -214,8 +214,8 @@
 }
 
 strong.erroritem {
-	color: #6E1F1F;
-	}
+    color: #6E1F1F;
+    }
 
 
 
@@ -248,17 +248,17 @@ table.settingsTable tr {
 /* modified the fieldset from existing */
 /* condensed border to one entry, pulled "width: 95%;" */
 fieldset {
-	display: block;
-	position: relative;
-	-moz-border-radius: 3px;
-	border: 1px solid #CCCCCC;
-	padding: 2px 0px 0px 0px;
-	margin: 0px 0px 0px 0px;
-	}
+    display: block;
+    position: relative;
+    -moz-border-radius: 3px;
+    border: 1px solid #CCCCCC;
+    padding: 2px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+    }
 fieldset legend {
-	color: #000000;
-	margin-left: 15px;
-	}
+    color: #000000;
+    margin-left: 15px;
+    }
 
 .clientscontent {
     display: block;

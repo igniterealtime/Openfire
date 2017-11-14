@@ -63,61 +63,61 @@ errorPage="error.jsp"%>
 %>
 
 <html>
-	<head>
-	  <title><fmt:message key="motd.title" /></title>
-	  <meta name="pageID" content="motd-form"/>
-	</head>
-	<body>
+    <head>
+      <title><fmt:message key="motd.title" /></title>
+      <meta name="pageID" content="motd-form"/>
+    </head>
+    <body>
 
-	<c:choose>
-		<c:when test="${not empty param.settingsSaved and empty errors}">
-			<admin:infoBox type="success"><fmt:message key="motd.saved.success" /></admin:infoBox>
-		</c:when>
-		<c:otherwise>
-			<c:forEach var="err" items="${errors}">
-				<admin:infobox type="error">
-					<c:choose>
-						<c:when test="${err.key eq 'missingMotdSubject'}"><fmt:message key="motd.subject.missing"/></c:when>
-						<c:when test="${err.key eq 'missingMotdMessage'}"><fmt:message key="motd.message.missing"/></c:when>
-						<c:otherwise>
-							<c:if test="${not empty err.value}">
-								<c:out value="${err.value}"/>
-							</c:if>
-							(<c:out value="${err.key}"/>)
-						</c:otherwise>
-					</c:choose>
-				</admin:infobox>
-			</c:forEach>
-		</c:otherwise>
-	</c:choose>
+    <c:choose>
+        <c:when test="${not empty param.settingsSaved and empty errors}">
+            <admin:infoBox type="success"><fmt:message key="motd.saved.success" /></admin:infoBox>
+        </c:when>
+        <c:otherwise>
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'missingMotdSubject'}"><fmt:message key="motd.subject.missing"/></c:when>
+                        <c:when test="${err.key eq 'missingMotdMessage'}"><fmt:message key="motd.message.missing"/></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:otherwise>
+    </c:choose>
 
-	<p><fmt:message key="motd.directions" /></p>
+    <p><fmt:message key="motd.directions" /></p>
 
-	<form action="motd-form.jsp?save" method="post">
+    <form action="motd-form.jsp?save" method="post">
 
         <fmt:message key="motd.options" var="boxtitle"/>
-		<admin:contentBox title="${boxtitle}">
+        <admin:contentBox title="${boxtitle}">
 
-			<p><input type="checkbox" name="motdenabled" id="motdenabled" ${ motdEnabled ? 'checked' : '' }/> <label for="motdenabled"><fmt:message key="motd.enable" /></label></p>
+            <p><input type="checkbox" name="motdenabled" id="motdenabled" ${ motdEnabled ? 'checked' : '' }/> <label for="motdenabled"><fmt:message key="motd.enable" /></label></p>
 
-			<table cellpadding="3" cellspacing="0" border="0" width="100%">
-				<tr>
-					<td width="5%" valign="top"><fmt:message key="motd.subject" />:&nbsp;*</td>
-					<td width="95%"><input type="text" name="motdSubject" value="${motdSubject}"></td>
-				</tr>
-				<tr>
-					<td width="5%" valign="top"><fmt:message key="motd.message" />:&nbsp;*</td>
-					<td width="95%"><textarea cols="45" rows="5" wrap="virtual" name="motdMessage"><c:out value="${motdMessage}"/></textarea></td>
-				</tr>
-				<tr>
-					<td colspan="2" style="padding-top: 10px"><input type="submit" value="<fmt:message key="motd.button.save" />"/></td>
-				</tr>
-			</table>
+            <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <td width="5%" valign="top"><fmt:message key="motd.subject" />:&nbsp;*</td>
+                    <td width="95%"><input type="text" name="motdSubject" value="${motdSubject}"></td>
+                </tr>
+                <tr>
+                    <td width="5%" valign="top"><fmt:message key="motd.message" />:&nbsp;*</td>
+                    <td width="95%"><textarea cols="45" rows="5" wrap="virtual" name="motdMessage"><c:out value="${motdMessage}"/></textarea></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top: 10px"><input type="submit" value="<fmt:message key="motd.button.save" />"/></td>
+                </tr>
+            </table>
 
-		</admin:contentBox>
+        </admin:contentBox>
 
-		<span class="jive-description">
-			* <fmt:message key="motd.required" />
+        <span class="jive-description">
+            * <fmt:message key="motd.required" />
         </span>
 
         <input type="hidden" name="csrf" value="${csrf}">

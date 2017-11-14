@@ -300,9 +300,9 @@ public class Roster implements Cacheable, Externalizable {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
             for (String groupDisplayName : groups) {
-				Collection<Group> groupsWithProp = GroupManager
-						.getInstance()
-						.search("sharedRoster.displayName", groupDisplayName);
+                Collection<Group> groupsWithProp = GroupManager
+                        .getInstance()
+                        .search("sharedRoster.displayName", groupDisplayName);
                 for ( Group group : groupsWithProp )
                 {
                     String showInRoster = group.getProperties().get( "sharedRoster.showInRoster" );

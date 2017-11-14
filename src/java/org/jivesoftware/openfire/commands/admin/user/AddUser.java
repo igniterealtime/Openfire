@@ -40,22 +40,22 @@ import java.util.Map;
  */
 public class AddUser extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#add-user";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Add a User";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public void execute(SessionData sessionData, Element command) {
+    public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (UserManager.getUserProvider().isReadOnly()) {
@@ -117,7 +117,7 @@ public class AddUser extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Adding a user");
         form.addInstruction("Fill out this form to add a user.");
@@ -163,17 +163,17 @@ public class AddUser extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         return (super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester))
                 && !UserManager.getUserProvider().isReadOnly();
     }

@@ -74,26 +74,26 @@
                     + "file, then go back to fix the problem.");
             }
             else {
-            	// See if the Jive db schema is installed.
-            	try {
-            		Statement stmt = con.createStatement();
-            		// Pick an arbitrary table to see if it's there.
-            		stmt.executeQuery("SELECT * FROM ofID");
-            		stmt.close();
-            	}
-            	catch (SQLException sqle) {
+                // See if the Jive db schema is installed.
+                try {
+                    Statement stmt = con.createStatement();
+                    // Pick an arbitrary table to see if it's there.
+                    stmt.executeQuery("SELECT * FROM ofID");
+                    stmt.close();
+                }
+                catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
                     errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
-            	}
+                }
             }
         }
         catch (Exception ignored) {}
         finally {
             try {
-        	    con.close();
+                con.close();
             } catch (Exception ignored) {}
         }
         return success;

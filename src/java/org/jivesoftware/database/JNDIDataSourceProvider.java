@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JNDIDataSourceProvider implements ConnectionProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(JNDIDataSourceProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JNDIDataSourceProvider.class);
 
     private String dataSourceName;
     private DataSource dataSource;

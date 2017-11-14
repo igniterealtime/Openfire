@@ -41,7 +41,7 @@ public class XMLSocketWriter extends XMLWriter {
      * @throws IOException if an I/O error occurs while flushing the writer.
      */
     @Override
-	public void flush() throws IOException {
+    public void flush() throws IOException {
         // Register that we have started sending data
         connection.writeStarted();
         try {

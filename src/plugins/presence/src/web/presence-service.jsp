@@ -14,7 +14,7 @@
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
-	boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
+    boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
     String unavailableStatus = ParamUtils.getParameter(request, "presenceUnavailableStatus", false);
     if (unavailableStatus == null) {
         unavailableStatus = plugin.getUnavailableStatus();

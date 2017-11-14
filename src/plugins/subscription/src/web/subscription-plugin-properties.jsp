@@ -17,7 +17,7 @@
 <%@ page import="java.util.*,
                  org.jivesoftware.openfire.user.*,
                  org.jivesoftware.openfire.XMPPServer,
-				     org.jivesoftware.openfire.plugin.SubscriptionPlugin,
+                     org.jivesoftware.openfire.plugin.SubscriptionPlugin,
                  org.jivesoftware.util.*"
 %>
 
@@ -38,7 +38,7 @@
 
    Map<String, String> errors = new HashMap<String, String>();
    
-	if (addUser) {
+    if (addUser) {
       if (username == null) {
           errors.put("missingUser", "missingUser");
       }
@@ -80,9 +80,9 @@
 %>
 
 <html>
-	<head>
-	  <title>Subscription Service Properties</title>
-	  <meta name="pageID" content="subscription-plugin-properties"/>
+    <head>
+      <title>Subscription Service Properties</title>
+      <meta name="pageID" content="subscription-plugin-properties"/>
    </head>
    <body>
    
@@ -97,10 +97,10 @@
 
 <% if (success) { %>
 
-	<div class="jive-success">
-	<table cellpadding="0" cellspacing="0" border="0">
-	<tbody>
-	   <tr>
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+       <tr>
          <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
          <td class="jive-icon-label">Service properties edited successfully.</td>
       </tr>
@@ -138,7 +138,7 @@
          </td>
       </tr>
       <tr valign="top">
-	      <td width="1%" nowrap>&nbsp;</td>
+          <td width="1%" nowrap>&nbsp;</td>
          <td width="99%">
 
             <table cellpadding="4" cellspacing="0" border="0" width="100%">
@@ -201,7 +201,7 @@
    </table>
    </div>
    
-	<br>
+    <br>
    <input type="submit" value="Save Settings">
 </fieldset>
 

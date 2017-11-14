@@ -58,7 +58,7 @@ import org.xmpp.packet.Presence;
  */
 public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
 
-	private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
@@ -673,12 +673,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
         List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
-        	if (!originatingResource.equals(address)) {
-	            // Send the presence of the session whose presence has changed to
-	            // this user's other session(s)
-	            presence.setTo(address);
-	            routingTable.routePacket(address, presence, false);
-        	}
+            if (!originatingResource.equals(address)) {
+                // Send the presence of the session whose presence has changed to
+                // this user's other session(s)
+                presence.setTo(address);
+                routingTable.routePacket(address, presence, false);
+            }
         }
     }
 
@@ -1236,8 +1236,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         try {
             // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
             if (name != null && senderJID != null &&
-            	server.getUserManager().isRegisteredUser(senderJID) &&
-            	(name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
+                server.getUserManager().isRegisteredUser(senderJID) &&
+                (name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
                 Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
                 for (ClientSession clientSession : getSessions(name)) {
                     discoItems.add(new DiscoItem(clientSession.getAddress(), null, null, null));
@@ -1384,7 +1384,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         router = server.getPacketRouter();
@@ -1474,7 +1474,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
         // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
@@ -1483,7 +1483,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         Log.debug("SessionManager: Stopping server");
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();

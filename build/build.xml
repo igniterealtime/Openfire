@@ -28,8 +28,8 @@
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
 
-	<property name="javac.source" value="1.7"/>
-	<property name="javac.target" value="1.7"/>
+    <property name="javac.source" value="1.7"/>
+    <property name="javac.target" value="1.7"/>
     <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>
@@ -255,27 +255,27 @@
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
 
-	<!-- git.revision ========================================================= 
-	     http://stackoverflow.com/questions/2974106
-	-->
-	<available file=".git" type="dir" property="git.present"/>
+    <!-- git.revision ========================================================= 
+         http://stackoverflow.com/questions/2974106
+    -->
+    <available file=".git" type="dir" property="git.present"/>
 
-	<target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
-	    <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
-	        <arg value="rev-parse"/>
-	        <arg value="--short"/>
-	        <arg value="HEAD"/>
-	    </exec>
-	    <condition property="repository.version" value="${git.revision}" else="unknown">
-	        <and>
-	            <isset property="git.revision"/>
-	            <length string="${git.revision}" trim="yes" length="0" when="greater"/>
-	        </and>
-	    </condition>
-		<echo message="repository.version set to '${repository.version}'" />
-	</target>
+    <target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
+        <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+            <arg value="rev-parse"/>
+            <arg value="--short"/>
+            <arg value="HEAD"/>
+        </exec>
+        <condition property="repository.version" value="${git.revision}" else="unknown">
+            <and>
+                <isset property="git.revision"/>
+                <length string="${git.revision}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+        <echo message="repository.version set to '${repository.version}'" />
+    </target>
 
-	<!-- init ================================================================================== -->
+    <!-- init ================================================================================== -->
     <target name="init">
 
         <!-- Check for min build requirements -->
@@ -568,8 +568,8 @@
                 windowtitle="Openfire ${version} Javadoc"
                 overview="${src.java.dir}/overview.html"
                 failonerror="yes"
-		Encoding="UTF-8"
-				additionalparam="${javadoc.additionalparams}"
+        Encoding="UTF-8"
+                additionalparam="${javadoc.additionalparams}"
                 >
             <sourcepath>
                 <path location="${src.java.dir}"/>
@@ -714,7 +714,7 @@
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}"/>
         <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}" includeantruntime="false">
-	    <sysproperty key="openfireHome" value="${target.openfireHome}"/>
+        <sysproperty key="openfireHome" value="${target.openfireHome}"/>
 
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>
@@ -1200,7 +1200,7 @@
     <property name="target.work.subdir" value="rpm" />
     <property name="target.rpm" value="${work.dir}/${target.work.subdir}" />
     <property name="rpm.spec.file" value="${basedir}/build/rpm/openfire.spec"/>
-	<property name="rpmbuild.arch" value="x86_64" />
+    <property name="rpmbuild.arch" value="x86_64" />
     <tstamp>
         <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
     </tstamp>
@@ -1208,10 +1208,10 @@
         <format property="rpm.builddate2" pattern="yyyyMMdd" locale="en"/>
     </tstamp>
     <target name="installer.rpm" depends="init, dist.init, git.revision"
-    	    description="Builds a rpm of openfire.">
+            description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
-    	<!-- create empty dirs to allow rpmbuild to do its thing -->
+        <!-- create empty dirs to allow rpmbuild to do its thing -->
         <mkdir dir="${target.rpm}/SPECS" />
         <mkdir dir="${target.rpm}/SOURCES" />
         <mkdir dir="${target.rpm}/BUILD" />
@@ -1233,28 +1233,28 @@
                           value="1"/>
             </then>
         <elseif>
-	        <equals arg1="${version.extra}" arg2="alpha"/>
+            <equals arg1="${version.extra}" arg2="alpha"/>
             <then>
-	        	<property name="rpmbuild.release"
+                <property name="rpmbuild.release"
                           value="0.1.${rpm.builddate2}${version.extra}"/>
- 			</then>
-		</elseif>
+            </then>
+        </elseif>
         <else>
             <property name="rpmbuild.release"
                       value="0.2.${version.extra}"/>        	
         </else>
         </if>
         <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
-		<!-- Save the user from themself, if noarch is the target arch, ignore 
-		     copying the JRE as well -->
-    	<if>
-			<and>
-    		<equals arg1="${bundle.jre}" arg2="true"/>
-			<not>
-				<equals arg1="${rpmbuild.arch}" arg2="noarch" />
-			</not>
-			</and>
-			<then>
+        <!-- Save the user from themself, if noarch is the target arch, ignore 
+             copying the JRE as well -->
+        <if>
+            <and>
+            <equals arg1="${bundle.jre}" arg2="true"/>
+            <not>
+                <equals arg1="${rpmbuild.arch}" arg2="noarch" />
+            </not>
+            </and>
+            <then>
                 <!-- Include bundled jre -->
                 <copy todir="${target.rpm}/SOURCES" file="${jre.bundle.location}" />
             </then>
@@ -1262,17 +1262,17 @@
         <copy todir="${target.rpm}/SOURCES/" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
 
 
-	    <rpm specFile="openfire.spec"
-		     topDir="${target.rpm}"
-		     command="-ba --target ${rpmbuild.arch} --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${rpmbuild.version}' --define 'OPENFIRE_RELEASE ${rpmbuild.release}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_REPOVERSION ${repository.version}' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-		     failOnError="true"
-		 />
+        <rpm specFile="openfire.spec"
+             topDir="${target.rpm}"
+             command="-ba --target ${rpmbuild.arch} --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${rpmbuild.version}' --define 'OPENFIRE_RELEASE ${rpmbuild.release}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_REPOVERSION ${repository.version}' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+             failOnError="true"
+         />
 
-    	  <!-- copy the rpmbuild result into the release directory! -->
-	      <copy todir="${release.dest.dir}" >
-		  <fileset dir="${target.rpm}/SRPMS" />
-		  <fileset dir="${target.rpm}/RPMS/${rpmbuild.arch}" />
-	      </copy>
+          <!-- copy the rpmbuild result into the release directory! -->
+          <copy todir="${release.dest.dir}" >
+          <fileset dir="${target.rpm}/SRPMS" />
+          <fileset dir="${target.rpm}/RPMS/${rpmbuild.arch}" />
+          </copy>
     </target>
 
     <!-- plugins =============================================================================== -->
@@ -1847,13 +1847,13 @@
             <arg line="-uc"/>
         </exec>
 
-	<!-- Copy the resulting files into target -->
-	<copy todir="${debian.release.dir}">
+    <!-- Copy the resulting files into target -->
+    <copy todir="${debian.release.dir}">
             <fileset dir="${debian.work.dir}/.." followsymlinks="false">
-		<include name="**/*.deb" />
-		<include name="**/*.changes" />
-		<include name="**/*.dsc" />
-		<include name="**/*.gz" />
+        <include name="**/*.deb" />
+        <include name="**/*.changes" />
+        <include name="**/*.dsc" />
+        <include name="**/*.gz" />
             </fileset>
         </copy>
     </target>

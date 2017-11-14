@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PluginDownloadManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginDownloadManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(PluginDownloadManager.class);
 
     /**
      * Starts the download process of a given plugin with it's URL.

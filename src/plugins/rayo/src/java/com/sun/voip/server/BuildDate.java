@@ -36,7 +36,7 @@ public class BuildDate {
     }
 
     public static String getBuildDate() {
-	InputStream in = BuildDate.class.getResourceAsStream(BUILD_DATE);
+    InputStream in = BuildDate.class.getResourceAsStream(BUILD_DATE);
 
         if (in == null) {
             return "Can't read " + BUILD_DATE;
@@ -44,7 +44,7 @@ public class BuildDate {
 
         in = new BufferedInputStream(in);
 
-	int bytesAvailable = 0;
+    int bytesAvailable = 0;
 
         try {
             bytesAvailable = in.available();
@@ -52,15 +52,15 @@ public class BuildDate {
             return e.getMessage();
         }
 
-	byte[] buf = new byte[bytesAvailable];
+    byte[] buf = new byte[bytesAvailable];
 
-	try {
-	    in.read(buf, 0, bytesAvailable);
-	} catch (IOException e) {
+    try {
+        in.read(buf, 0, bytesAvailable);
+    } catch (IOException e) {
             return e.getMessage();
         }
 
-	return new String(buf).trim();
+    return new String(buf).trim();
     }
 
 }

@@ -44,52 +44,52 @@ public class RtmfpCallAgent extends CallSetupAgent
     private MemberSender memberSender;
     private MediaInfo mixerMediaPreference;
 
-	public static Map<String, Publication> publishHandlers = Collections.synchronizedMap( new HashMap<String, Publication>());
-	public static Map<String, MemberReceiver> playHandlers = Collections.synchronizedMap( new HashMap<String, MemberReceiver>());
+    public static Map<String, Publication> publishHandlers = Collections.synchronizedMap( new HashMap<String, Publication>());
+    public static Map<String, MemberReceiver> playHandlers = Collections.synchronizedMap( new HashMap<String, MemberReceiver>());
 
     public RtmfpCallAgent(CallHandler callHandler)
     {
 
-		super(callHandler);
+        super(callHandler);
 
-		cp = callHandler.getCallParticipant();
+        cp = callHandler.getCallParticipant();
 
-		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
+        mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
-		memberSender = callHandler.getMemberSender();
-		memberReceiver = callHandler.getMemberReceiver();
+        memberSender = callHandler.getMemberSender();
+        memberReceiver = callHandler.getMemberReceiver();
 
-		playHandlers.put(cp.getRtmfpRecieveStream(), memberReceiver);	// we need later media arrives from flash
+        playHandlers.put(cp.getRtmfpRecieveStream(), memberReceiver);	// we need later media arrives from flash
 
-		callHandler.setEndpointAddress(null, (byte) (0), (byte)0, (byte)0);
+        callHandler.setEndpointAddress(null, (byte) (0), (byte)0, (byte)0);
 
-	}
+    }
 
-	public void initiateCall() throws IOException
-	{
-		try {
-			setState(CallState.ESTABLISHED);
+    public void initiateCall() throws IOException
+    {
+        try {
+            setState(CallState.ESTABLISHED);
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			Logger.println("Call " + cp + ":  RtmfpCallAgent: initiateCall exception " + e);
-			e.printStackTrace();
-		}
-	}
+            Logger.println("Call " + cp + ":  RtmfpCallAgent: initiateCall exception " + e);
+            e.printStackTrace();
+        }
+    }
 
-	public String getSdp()
-	{
-		return null;
+    public String getSdp()
+    {
+        return null;
     }
 
     public void setRemoteMediaInfo(String sdp)
     {
-		return;
+        return;
     }
 
     public void terminateCall()
     {
-		playHandlers.remove(cp.getRtmfpRecieveStream());
+        playHandlers.remove(cp.getRtmfpRecieveStream());
     }
 
 }

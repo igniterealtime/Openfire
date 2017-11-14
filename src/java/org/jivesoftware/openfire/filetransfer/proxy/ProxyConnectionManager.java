@@ -52,7 +52,7 @@ import org.xmpp.packet.JID;
  */
 public class ProxyConnectionManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
 
     private static final String proxyTransferRate = "proxyTransferRate";
 

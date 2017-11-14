@@ -47,12 +47,12 @@ public class GroupCollection extends AbstractCollection<Group> {
     }
 
     @Override
-	public Iterator<Group> iterator() {
+    public Iterator<Group> iterator() {
         return new GroupIterator();
     }
 
     @Override
-	public int size() {
+    public int size() {
         return elements.length;
     }
 

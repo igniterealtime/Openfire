@@ -39,22 +39,22 @@ import java.util.Map;
  */
 public class UserCreated extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/event#user-created";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "User created";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public void execute(SessionData sessionData, Element command) {
+    public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -91,7 +91,7 @@ public class UserCreated extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Dispatching a user created event.");
         form.addInstruction("Fill out this form to dispatch a user created event.");
@@ -112,17 +112,17 @@ public class UserCreated extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

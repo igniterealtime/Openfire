@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WebManager extends WebBean {
 
-	private static final Logger Log = LoggerFactory.getLogger(WebManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(WebManager.class);
 
     private int start = 0;
     private int range = 15;

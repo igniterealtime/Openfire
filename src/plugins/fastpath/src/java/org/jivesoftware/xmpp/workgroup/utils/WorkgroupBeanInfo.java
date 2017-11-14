@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 
 public abstract class WorkgroupBeanInfo implements BeanInfo {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupBeanInfo.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupBeanInfo.class);
+    
     private ResourceBundle bundle;
 
     public WorkgroupBeanInfo() {

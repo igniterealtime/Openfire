@@ -45,7 +45,7 @@ public class UserCreationPlugin implements Plugin {
     private static Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>> stateTable =
             new Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>>();
     private Element vCard;
-	public static final int DEFAULT_MAX_TIME_DEBUG = 30;
+    public static final int DEFAULT_MAX_TIME_DEBUG = 30;
 
     static {
         Hashtable<Presence.Type, Change> subrTable;
@@ -296,75 +296,75 @@ public class UserCreationPlugin implements Plugin {
     public static final int NUMBER_CONVERSATION = 10;
     public static final int NUMBER_MESSAGES = 10 ;//+ RandomUtils.nextInt(9);
     
-	public void generateMessages() {
-		JiveGlobals.setProperty("conversation.maxTimeDebug", String.valueOf(DEFAULT_MAX_TIME_DEBUG));
-		XMPPServer server = XMPPServer.getInstance();
-		ExecutorService taskExecutor = Executors.newFixedThreadPool(8);
+    public void generateMessages() {
+        JiveGlobals.setProperty("conversation.maxTimeDebug", String.valueOf(DEFAULT_MAX_TIME_DEBUG));
+        XMPPServer server = XMPPServer.getInstance();
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(8);
 
-		for (User user : UserManager.getInstance().getUsers()) {
-			final JID userJid = server.createJID(user.getUsername(), null);
-			System.out.println("Creating messages for user: " + userJid.getNode());
-			for (RosterItem ri : user.getRoster().getRosterItems()) {
-				final JID rosterItemJid = ri.getJid();
+        for (User user : UserManager.getInstance().getUsers()) {
+            final JID userJid = server.createJID(user.getUsername(), null);
+            System.out.println("Creating messages for user: " + userJid.getNode());
+            for (RosterItem ri : user.getRoster().getRosterItems()) {
+                final JID rosterItemJid = ri.getJid();
 
-				taskExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						for (int j = 0; j < NUMBER_CONVERSATION; j++) {
-							String thread = RandomStringUtils.randomAlphanumeric(6);
-							for (int i = 0; i < NUMBER_MESSAGES; i++) {
-								if (i % 2 == 0) {
-									Message msg = new Message();
-									msg.setBody("Hello to " + rosterItemJid.getNode() + " from " + userJid.getNode() + ", conversation number " + j
-											+ " of " + NUMBER_CONVERSATION + ", message " + i + " of " + NUMBER_MESSAGES + " thread " + thread);
-									msg.setType(Message.Type.chat);
-									msg.setFrom(userJid);
-									msg.setTo(rosterItemJid);
-									msg.setThread(thread);
-									XMPPServer.getInstance().getMessageRouter().route(msg);
-									try {
-										/* otherwise monitoring plugin stores messages out of order */
-										Thread.sleep(1);
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
-								} else {
-									Message msg = new Message();
-									msg.setBody("Hello to " + userJid.getNode() + " from " + rosterItemJid.getNode() + ", conversation number " + j
-											+ " of " + NUMBER_CONVERSATION + ", message " + i + " of " + NUMBER_MESSAGES + " thread " + thread);
-									msg.setType(Message.Type.chat);
-									msg.setFrom(rosterItemJid);
-									msg.setTo(userJid);
-									msg.setThread(thread);
-									XMPPServer.getInstance().getMessageRouter().route(msg);
-									try {
-										/* otherwise monitoring plugin stores messages out of order */
-										Thread.sleep(1);
-									} catch (InterruptedException e) {
-										e.printStackTrace();
-									}
-								}
-							}
-							try {
-								Thread.sleep(DEFAULT_MAX_TIME_DEBUG);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-				});
+                taskExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int j = 0; j < NUMBER_CONVERSATION; j++) {
+                            String thread = RandomStringUtils.randomAlphanumeric(6);
+                            for (int i = 0; i < NUMBER_MESSAGES; i++) {
+                                if (i % 2 == 0) {
+                                    Message msg = new Message();
+                                    msg.setBody("Hello to " + rosterItemJid.getNode() + " from " + userJid.getNode() + ", conversation number " + j
+                                            + " of " + NUMBER_CONVERSATION + ", message " + i + " of " + NUMBER_MESSAGES + " thread " + thread);
+                                    msg.setType(Message.Type.chat);
+                                    msg.setFrom(userJid);
+                                    msg.setTo(rosterItemJid);
+                                    msg.setThread(thread);
+                                    XMPPServer.getInstance().getMessageRouter().route(msg);
+                                    try {
+                                        /* otherwise monitoring plugin stores messages out of order */
+                                        Thread.sleep(1);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    Message msg = new Message();
+                                    msg.setBody("Hello to " + userJid.getNode() + " from " + rosterItemJid.getNode() + ", conversation number " + j
+                                            + " of " + NUMBER_CONVERSATION + ", message " + i + " of " + NUMBER_MESSAGES + " thread " + thread);
+                                    msg.setType(Message.Type.chat);
+                                    msg.setFrom(rosterItemJid);
+                                    msg.setTo(userJid);
+                                    msg.setThread(thread);
+                                    XMPPServer.getInstance().getMessageRouter().route(msg);
+                                    try {
+                                        /* otherwise monitoring plugin stores messages out of order */
+                                        Thread.sleep(1);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            try {
+                                Thread.sleep(DEFAULT_MAX_TIME_DEBUG);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
 
-			}
-		}
-		taskExecutor.shutdown();
-		try {
-			taskExecutor.awaitTermination(2, TimeUnit.HOURS);
-			System.out.println("Conversation generation finished");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		JiveGlobals.deleteProperty("conversation.maxTimeDebug");
-	}
+            }
+        }
+        taskExecutor.shutdown();
+        try {
+            taskExecutor.awaitTermination(2, TimeUnit.HOURS);
+            System.out.println("Conversation generation finished");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        JiveGlobals.deleteProperty("conversation.maxTimeDebug");
+    }
 
     private Element getDefaultVCard() {
         if (vCard != null) {

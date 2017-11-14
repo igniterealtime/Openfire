@@ -40,72 +40,72 @@ import org.xmpp.packet.JID;
  */
 public class ClientConnectionHandler extends ConnectionHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(ClientConnectionHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(ClientConnectionHandler.class);
 
     public ClientConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
-	NIOConnection createNIOConnection(IoSession session) {
+    NIOConnection createNIOConnection(IoSession session) {
         return new NIOConnection(session, new OfflinePacketDeliverer(), configuration );
     }
 
     @Override
-	StanzaHandler createStanzaHandler(NIOConnection connection) {
+    StanzaHandler createStanzaHandler(NIOConnection connection) {
         return new ClientStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
-	int getMaxIdleTime() {
+    int getMaxIdleTime() {
         return JiveGlobals.getIntProperty(ConnectionSettings.Client.IDLE_TIMEOUT, 6 * 60 * 1000) / 1000;
     }
 
-	/**
-	 * In addition to the functionality provided by the parent class, this
-	 * method will send XMPP ping requests to the remote entity on every first
-	 * invocation of this method (which will occur after a period of half the
-	 * allowed connection idle time has passed, without any IO).
-	 * 
-	 * XMPP entities must respond with either an IQ result or an IQ error
-	 * (feature-unavailable) stanza upon receiving the XMPP ping stanza. Both
-	 * responses will be received by Openfire and will cause the connection idle
-	 * count to be reset.
-	 * 
-	 * Entities that do not respond to the IQ Ping stanzas can be considered
-	 * dead, and their connection will be closed by the parent class
-	 * implementation on the second invocation of this method.
-	 * 
-	 * Note that whitespace pings that are sent by XMPP entities will also cause
-	 * the connection idle count to be reset.
-	 * 
-	 * @see ConnectionHandler#sessionIdle(IoSession, IdleStatus)
-	 */
+    /**
+     * In addition to the functionality provided by the parent class, this
+     * method will send XMPP ping requests to the remote entity on every first
+     * invocation of this method (which will occur after a period of half the
+     * allowed connection idle time has passed, without any IO).
+     * 
+     * XMPP entities must respond with either an IQ result or an IQ error
+     * (feature-unavailable) stanza upon receiving the XMPP ping stanza. Both
+     * responses will be received by Openfire and will cause the connection idle
+     * count to be reset.
+     * 
+     * Entities that do not respond to the IQ Ping stanzas can be considered
+     * dead, and their connection will be closed by the parent class
+     * implementation on the second invocation of this method.
+     * 
+     * Note that whitespace pings that are sent by XMPP entities will also cause
+     * the connection idle count to be reset.
+     * 
+     * @see ConnectionHandler#sessionIdle(IoSession, IdleStatus)
+     */
     @Override
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
-    	super.sessionIdle(session, status);
-    	
-    	final boolean doPing = JiveGlobals.getBooleanProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, true);
+        super.sessionIdle(session, status);
+        
+        final boolean doPing = JiveGlobals.getBooleanProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, true);
         if (doPing && session.getIdleCount(status) == 1) {
             final ClientStanzaHandler handler = (ClientStanzaHandler) session.getAttribute(HANDLER);
             final JID entity = handler.getAddress();
             
             if (entity != null) {
-		    	// Ping the connection to see if it is alive.
-				final IQ pingRequest = new IQ(Type.get);
-				pingRequest.setChildElement("ping",
-						IQPingHandler.NAMESPACE);
-				pingRequest.setFrom( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
-				pingRequest.setTo(entity); 
-				
-	            // Get the connection for this session
-	            final Connection connection = (Connection) session.getAttribute(CONNECTION);
+                // Ping the connection to see if it is alive.
+                final IQ pingRequest = new IQ(Type.get);
+                pingRequest.setChildElement("ping",
+                        IQPingHandler.NAMESPACE);
+                pingRequest.setFrom( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+                pingRequest.setTo(entity); 
+                
+                // Get the connection for this session
+                final Connection connection = (Connection) session.getAttribute(CONNECTION);
 
-		        if (Log.isDebugEnabled()) {
-		            Log.debug("ConnectionHandler: Pinging connection that has been idle: " + connection);
-		        }
+                if (Log.isDebugEnabled()) {
+                    Log.debug("ConnectionHandler: Pinging connection that has been idle: " + connection);
+                }
 
-		        connection.deliver(pingRequest);
+                connection.deliver(pingRequest);
             }
         }
     }

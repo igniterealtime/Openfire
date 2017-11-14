@@ -118,6 +118,7 @@
                         throw new UnauthorizedException("User '" + loginUsername + "' not allowed to login.");
                     }
                     authToken = AuthFactory.authenticate(loginUsername, password);
+                    session = admin.invalidateSession();
                 }
                 else {
                     errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));

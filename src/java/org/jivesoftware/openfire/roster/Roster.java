@@ -748,8 +748,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param addedUser the contact to update in the roster.
      */
     void addSharedUser(Group group, JID addedUser) {
-        boolean newItem = false;
-        RosterItem item = null;
+        boolean newItem;
+        RosterItem item;
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(addedUser);
@@ -772,6 +772,7 @@ public class Roster implements Cacheable, Externalizable {
                 Log.error("Group (" + group.getName() + ") includes non-existent username (" +
                         addedUser +
                         ")");
+                return;
             }
         }
 
@@ -857,8 +858,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param groups    the groups where the contact is a member
      */
     void addSharedUser(JID addedUser, Collection<Group> groups, Group addedGroup) {
-        boolean newItem = false;
-        RosterItem item = null;
+        boolean newItem;
+        RosterItem item;
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(addedUser);
@@ -875,6 +876,7 @@ public class Roster implements Cacheable, Externalizable {
                 newItem = true;
             } catch (UserNotFoundException ex) {
                 Log.error("Couldn't find a user with username (" + addedUser + ")");
+                return;
             }
         }
         // Update the subscription of the item **based on the item groups**

@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
@@ -875,6 +876,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 !conn.isCompressed()) {
             sb.append(
                     "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        }
+
+        // If a server supports roster versioning, 
+        // then it MUST advertise the following stream feature during stream negotiation.
+        if (RosterManager.isRosterVersioningEnabled()) {
+            sb.append("<ver xmlns=\"urn:xmpp:features:rosterver\"/>");
         }
 
         if (getAuthToken() == null) {

@@ -152,6 +152,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
                 catch (SharedGroupException e) {
                     // Do nothing. We shouldn't have this exception since we disabled the checkings
+                    Log.warn( "Unexpected exception while deleting roster of user '{}' .", user, e );
                 }
             }
             // Remove the cached roster from memory
@@ -169,9 +170,10 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
                 catch (SharedGroupException e) {
                     // Do nothing. We shouldn't have this exception since we disabled the checkings
+                    Log.warn( "Unexpected exception while deleting roster of user '{}' .", user, e );
                 }
                 catch (UserNotFoundException e) {
-                    // Do nothing.
+                    // Deleted user had user that no longer exists on their roster. Ignore and move on.
                 }
             }
         }
@@ -357,7 +359,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             // Iterate on all the affected users and update their rosters
             for (JID updatedUser : users) {
                 // Get the roster to update.
-                Roster roster = null;
+                Roster roster;
                 if (server.isLocal(updatedUser)) {
                     try {
                         roster = getRoster(updatedUser.getNode());
@@ -365,6 +367,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                         // Update the roster with the new group display name
                         roster.shareGroupRenamed(users);
                     } catch (UserNotFoundException e) {
+                        Log.debug( "Unexpected exception while applying group modification for user '{}' .", updatedUser.getNode(), e );
                     }
                 }
             }
@@ -649,6 +652,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             try {
                 addedUserRoster = getRoster(addedUser.getNode());
             } catch (UserNotFoundException e) {
+                Log.warn( "Unexpected exception while adding user '{}' to group '{}'.", addedUser, group, e );
             }
         }
 
@@ -675,6 +679,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                         addedUserRoster =
                                 getRoster(addedUser.getNode());
                     } catch (UserNotFoundException e) {
+                        Log.warn( "Unexpected exception while adding user '{}' to group '{}'.", addedUser, group, e );
                     }
                 }
                 // Update the roster of the newly added group user.
@@ -722,6 +727,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             try {
                 deletedUserRoster = getRoster(deletedUser.getNode());
             } catch (UserNotFoundException e) {
+                Log.warn( "Unexpected exception while deleting user '{}' from group '{}'.", deletedUser, group, e );
             }
         }
 

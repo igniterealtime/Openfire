@@ -382,6 +382,7 @@ public class Roster implements Cacheable, Externalizable {
                     RosterManager.getRosterItemProvider().createItem(username, item);
                 } catch (UserAlreadyExistsException e) {
                     // Do nothing. We shouldn't be here.
+                    Log.warn( "Unexpected error while updating roster item for user '{}'!", username, e);
                 }
             } else {
                 // Item is not persistent and it does not belong to a shared contact so do nothing
@@ -1020,8 +1021,10 @@ public class Roster implements Cacheable, Externalizable {
             }
         } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
+            Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
+            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         }
     }
 
@@ -1087,8 +1090,10 @@ public class Roster implements Cacheable, Externalizable {
             }
         } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
+            Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
+            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         }
     }
 
@@ -1108,10 +1113,11 @@ public class Roster implements Cacheable, Externalizable {
             try {
                 // Get the RosterItem for the *local* user to add
                 item = getRosterItem(user);
-                // Brodcast to all the user resources of the updated roster item
+                // Broadcast to all the user resources of the updated roster item
                 broadcast(item, true);
             } catch (UserNotFoundException e) {
                 // Do nothing since the contact does not exist in the user's roster. (strange case!)
+                Log.warn( "Unexpected error while broadcasting shared group rename for user '{}'!", user, e);
             }
         }
     }

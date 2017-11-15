@@ -122,7 +122,7 @@ public class GroupConversationInterceptor implements MUCEventListener, Startable
         }
     }
 
-    public void privateMessageRecieved(JID toJID, JID fromJID, Message message) {
+    public void privateMessageReceived(JID toJID, JID fromJID, Message message) {
         if(message.getBody() != null) {
              if (ClusterManager.isSeniorClusterMember()) {
                  conversationManager.processMessage(fromJID, toJID, message.getBody(), message.toXML(), new Date());

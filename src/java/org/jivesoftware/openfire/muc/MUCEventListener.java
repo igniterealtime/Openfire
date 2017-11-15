@@ -85,7 +85,7 @@ public interface MUCEventListener {
      * @param fromJID the JID of who the message came from.
      * @param message the message sent to user.
      */
-    void privateMessageRecieved(JID toJID, JID fromJID, Message message);
+    void privateMessageReceived(JID toJID, JID fromJID, Message message);
 
     /**
      * Event triggered when the subject of a room is changed.

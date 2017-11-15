@@ -73,9 +73,9 @@ public class MUCEventDispatcher {
         }
     }
 
-    public static void privateMessageRecieved(JID toJID, JID fromJID, Message message) {
+    public static void privateMessageReceived(JID toJID, JID fromJID, Message message) {
         for (MUCEventListener listener : listeners) {
-            listener.privateMessageRecieved(toJID, fromJID, message);
+            listener.privateMessageReceived(toJID, fromJID, message);
         }
     }
 

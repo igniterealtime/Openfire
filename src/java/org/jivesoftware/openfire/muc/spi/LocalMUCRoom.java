@@ -1090,7 +1090,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             occupant.send(packet);
             if(packet instanceof Message) {
                Message message = (Message) packet;
-                 MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(),
+                 MUCEventDispatcher.privateMessageReceived(occupant.getUserAddress(), senderRole.getUserAddress(),
                          message);
             }
         }

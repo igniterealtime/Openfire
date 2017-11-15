@@ -442,7 +442,7 @@ public class StreamManager {
         Log.debug("Agreeing to resume");
         Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
-        resumed.addAttribute("h", Long.toString(clientProcessedStanzas));
+        resumed.addAttribute("h", Long.toString(serverProcessedStanzas));
         session.getConnection().deliverRawText(resumed.asXML());
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);

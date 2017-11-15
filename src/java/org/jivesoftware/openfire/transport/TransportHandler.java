@@ -40,7 +40,7 @@ import org.xmpp.packet.PacketError;
  */
 public class TransportHandler extends BasicModule implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(TransportHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(TransportHandler.class);
 
     private Map<String, Channel<Packet>> transports = new ConcurrentHashMap<>();
 
@@ -80,7 +80,7 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
     }

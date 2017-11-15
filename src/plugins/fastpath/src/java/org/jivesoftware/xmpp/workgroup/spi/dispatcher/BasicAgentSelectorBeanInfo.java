@@ -8,17 +8,17 @@ public class BasicAgentSelectorBeanInfo extends WorkgroupBeanInfo {
     public static final String[] PROPERTY_NAMES = new String[]{};
 
     @Override
-	public String[] getPropertyNames() {
+    public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
     @Override
-	public Class getBeanClass() {
+    public Class getBeanClass() {
         return BasicAgentSelector.class;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "BasicAgentSelector";
     }
 }

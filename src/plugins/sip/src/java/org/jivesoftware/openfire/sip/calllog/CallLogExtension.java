@@ -28,19 +28,19 @@ import org.xmpp.packet.PacketExtension;
  */
 public class CallLogExtension extends PacketExtension {
 
-	public final static String ELEMENT_NAME="callLog";
-	public final static String NAMESPACE= SipComponent.NAMESPACE+"/log";
+    public final static String ELEMENT_NAME="callLog";
+    public final static String NAMESPACE= SipComponent.NAMESPACE+"/log";
 
-	static{
+    static{
     registeredExtensions.put(QName.get(ELEMENT_NAME, NAMESPACE), CallLogExtension.class);
-	}
+    }
 
-	public CallLogExtension(Element e){
-		super(e);
-	}
+    public CallLogExtension(Element e){
+        super(e);
+    }
 
     @Override
-	public CallLogExtension createCopy() {
+    public CallLogExtension createCopy() {
         return new CallLogExtension(this.getElement().createCopy());
     }
 

@@ -172,10 +172,10 @@
 <% } %>
 
     <div class="jive-contentBoxHeader">
-		<fmt:message key="groupchat.service.properties.legend" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
+        <fmt:message key="groupchat.service.properties.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td class="c1">
                    <fmt:message key="groupchat.service.properties.label_service_name" />
@@ -205,7 +205,7 @@
                 </td>
             </tr>
         </table>
-	</div>
+    </div>
     <input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
 </form>
 <!-- END 'Service Name'-->

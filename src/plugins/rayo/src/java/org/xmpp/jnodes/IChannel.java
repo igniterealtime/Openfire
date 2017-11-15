@@ -17,18 +17,18 @@ package org.xmpp.jnodes;
 
 public interface IChannel {
 
-	public void pushAudio(byte[] rtpData, byte[] opus);
+    public void pushAudio(byte[] rtpData, byte[] opus);
 
-	public void pushAudio(int[] dataToSend);
+    public void pushAudio(int[] dataToSend);
 
-	public void pushReceiverAudio(int[] dataToSend);
+    public void pushReceiverAudio(int[] dataToSend);
 
-	public void sendComfortNoisePayload();
+    public void sendComfortNoisePayload();
 
-	public boolean encode();
+    public boolean encode();
 
-	public boolean isActive();
+    public boolean isActive();
 
-	public void setActive(boolean active);
+    public void setActive(boolean active);
 
 }

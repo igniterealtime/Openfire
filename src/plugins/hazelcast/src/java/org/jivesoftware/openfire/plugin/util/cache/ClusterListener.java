@@ -118,13 +118,13 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     private boolean done = true;
 
     public ClusterListener(Cluster cluster) {
-    	
-    	this.cluster = cluster;
+        
+        this.cluster = cluster;
         for (Member member : cluster.getMembers()) {
             clusterNodesInfo.put(member.getUuid(), 
-            		new HazelcastClusterNodeInfo(member, cluster.getClusterTime()));
+                    new HazelcastClusterNodeInfo(member, cluster.getClusterTime()));
         }
-    	
+        
         C2SCache = CacheFactory.createCache(RoutingTableImpl.C2S_CACHE_NAME);
         anonymousC2SCache = CacheFactory.createCache(RoutingTableImpl.ANONYMOUS_C2S_CACHE_NAME);
         S2SCache = CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME);
@@ -160,7 +160,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
                     ClusteredCache clusteredCache = (ClusteredCache) wrapped;
                     for (Map.Entry entry : (Set<Map.Entry>) cache.entrySet()) {
                         EntryEvent event = new EntryEvent(clusteredCache.map.getName(), cluster.getLocalMember(), 
-                        		EntryEventType.ADDED.getType(), entry.getKey(), null, entry.getValue());
+                                EntryEventType.ADDED.getType(), entry.getKey(), null, entry.getValue());
                         EntryListener.entryAdded(event);
                     }
                 }
@@ -312,7 +312,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         Set<String> sessionInfo = lookupJIDList(key, sessionInfoCache.getName());
         if (!sessionInfo.isEmpty()) {
             for (String session : new ArrayList<String>(sessionInfo)) {
-            	sessionInfoCache.remove(session);
+                sessionInfoCache.remove(session);
                 // Registered sessions will be removed
                 // by the clean up of the session info cache
             }
@@ -398,7 +398,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     private class DirectedPresenceListener implements EntryListener {
 
         public void entryAdded(EntryEvent event) {
-			byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
+            byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
             // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -423,7 +423,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         }
 
         public void entryUpdated(EntryEvent event) {
-			byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
+            byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
             // Ignore events originated from this JVM
             if (nodeID != null && !XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -467,9 +467,9 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             Object value = event.getValue();
             Collection<JID> answer = new ArrayList<JID>();
             if (value != null) {
-	            for (DirectedPresence directedPresence : (Collection<DirectedPresence>)value) {
-	                answer.add(directedPresence.getHandler());
-	            }
+                for (DirectedPresence directedPresence : (Collection<DirectedPresence>)value) {
+                    answer.add(directedPresence.getHandler());
+                }
             }
             return answer;
         }
@@ -484,27 +484,27 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             return Collections.emptySet();
         }
 
-		public void entryEvicted(EntryEvent event) {
-			entryRemoved(event);
-		}
+        public void entryEvicted(EntryEvent event) {
+            entryRemoved(event);
+        }
 
-		private void mapClearedOrEvicted(MapEvent event) {
-	        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
-	        // ignore events which were triggered by this node
-	        if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-				nodePresences.get(nodeID).clear();
-	        }
-		}
-		
-		@Override
-		public void mapEvicted(MapEvent event) {
-			mapClearedOrEvicted(event);
-		}
+        private void mapClearedOrEvicted(MapEvent event) {
+            NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
+            // ignore events which were triggered by this node
+            if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                nodePresences.get(nodeID).clear();
+            }
+        }
+        
+        @Override
+        public void mapEvicted(MapEvent event) {
+            mapClearedOrEvicted(event);
+        }
 
-		@Override
-		public void mapCleared(MapEvent event) {
-			mapClearedOrEvicted(event);
-		}
+        @Override
+        public void mapCleared(MapEvent event) {
+            mapClearedOrEvicted(event);
+        }
     }
 
     /**
@@ -550,35 +550,35 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             }
         }
 
-		public void entryEvicted(EntryEvent event) {
-			entryRemoved(event);
-		}
+        public void entryEvicted(EntryEvent event) {
+            entryRemoved(event);
+        }
 
-		private void mapClearedOrEvicted(MapEvent event) {
-	        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
-	        // ignore events which were triggered by this node
-	        if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-				Set<String> sessionJIDs = lookupJIDList(nodeID, componentsCache.getName());
-				sessionJIDs.clear();
-	        }
-		}
-		
-		@Override
-		public void mapEvicted(MapEvent event) {
-			mapClearedOrEvicted(event);
-		}
+        private void mapClearedOrEvicted(MapEvent event) {
+            NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
+            // ignore events which were triggered by this node
+            if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                Set<String> sessionJIDs = lookupJIDList(nodeID, componentsCache.getName());
+                sessionJIDs.clear();
+            }
+        }
+        
+        @Override
+        public void mapEvicted(MapEvent event) {
+            mapClearedOrEvicted(event);
+        }
 
-		@Override
-		public void mapCleared(MapEvent event) {
-			mapClearedOrEvicted(event);
-		}
+        @Override
+        public void mapCleared(MapEvent event) {
+            mapClearedOrEvicted(event);
+        }
     }
 
-	private synchronized void joinCluster() {
-		if (!isDone()) { // already joined
-			return;
-		}
-		// Trigger events
+    private synchronized void joinCluster() {
+        if (!isDone()) { // already joined
+            return;
+        }
+        // Trigger events
         ClusterManager.fireJoinedCluster(false);
         addEntryListener(C2SCache, new CacheListener(this, C2SCache.getName()));
         addEntryListener(anonymousC2SCache, new CacheListener(this, anonymousC2SCache.getName()));
@@ -613,10 +613,10 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         done = false;
     }
 
-	private synchronized void leaveCluster() {
-		if (isDone()) { // not a cluster member
-			return;
-		}
+    private synchronized void leaveCluster() {
+        if (isDone()) { // not a cluster member
+            return;
+        }
         seniorClusterMember = false;
         // Clean up all traces. This will set all remote sessions as unavailable
         List<NodeID> nodeIDs = new ArrayList<NodeID>(nodeSessions.keySet());
@@ -641,8 +641,8 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         done = true;
     }
 
-	public void memberAdded(MembershipEvent event) {
-    	// local member only
+    public void memberAdded(MembershipEvent event) {
+        // local member only
         if (event.getMember().localMember()) { // We left and re-joined the cluster
             joinCluster();
         } else {
@@ -652,10 +652,10 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             ClusterManager.fireJoinedCluster(StringUtils.getBytes(event.getMember().getUuid()), true);
         }
         clusterNodesInfo.put(event.getMember().getUuid(), 
-        		new HazelcastClusterNodeInfo(event.getMember(), cluster.getClusterTime()));
-	}
+                new HazelcastClusterNodeInfo(event.getMember(), cluster.getClusterTime()));
+    }
 
-	public void memberRemoved(MembershipEvent event) {
+    public void memberRemoved(MembershipEvent event) {
         byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
 
         if (event.getMember().localMember()) {
@@ -683,26 +683,26 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         // Delete nodeID instance (release from memory)
         NodeID.deleteInstance(nodeID);
         clusterNodesInfo.remove(event.getMember().getUuid()); 
-	}
-	
-	public List<ClusterNodeInfo> getClusterNodesInfo() {
-		return new ArrayList<ClusterNodeInfo>(clusterNodesInfo.values());
-	}
+    }
+    
+    public List<ClusterNodeInfo> getClusterNodesInfo() {
+        return new ArrayList<ClusterNodeInfo>(clusterNodesInfo.values());
+    }
 
-	public void stateChanged(LifecycleEvent event) {
-		if (event.getState().equals(LifecycleState.SHUTDOWN)) {
-			leaveCluster();
-		} else if (event.getState().equals(LifecycleState.STARTED)) {
-			joinCluster();
-		}
-	}
+    public void stateChanged(LifecycleEvent event) {
+        if (event.getState().equals(LifecycleState.SHUTDOWN)) {
+            leaveCluster();
+        } else if (event.getState().equals(LifecycleState.STARTED)) {
+            joinCluster();
+        }
+    }
 
-	@Override
-	public void memberAttributeChanged(MemberAttributeEvent event) {
-		ClusterNodeInfo priorNodeInfo = clusterNodesInfo.get(event.getMember().getUuid());
+    @Override
+    public void memberAttributeChanged(MemberAttributeEvent event) {
+        ClusterNodeInfo priorNodeInfo = clusterNodesInfo.get(event.getMember().getUuid());
         clusterNodesInfo.put(event.getMember().getUuid(), 
-        		new HazelcastClusterNodeInfo(event.getMember(), priorNodeInfo.getJoinedTime()));
-	}
+                new HazelcastClusterNodeInfo(event.getMember(), priorNodeInfo.getJoinedTime()));
+    }
 
     class S2SCacheListener implements EntryListener {
         public S2SCacheListener() {

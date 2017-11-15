@@ -287,7 +287,7 @@ public class LocalMUCUser implements MUCUser {
                                     
                                     // Send invitations to invitees
                                     @SuppressWarnings("unchecked")
-									Iterator<Element> it = userInfo.elementIterator("invite");
+                                    Iterator<Element> it = userInfo.elementIterator("invite");
                                     while(it.hasNext()) {
                                         Element info = it.next();
                                         JID jid = new JID(info.attributeValue("to"));
@@ -585,28 +585,28 @@ public class LocalMUCUser implements MUCUser {
         }
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LocalMUCUser other = (LocalMUCUser) obj;
-		if (realjid == null) {
-			if (other.realjid != null)
-				return false;
-		} else if (!realjid.equals(other.realjid))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LocalMUCUser other = (LocalMUCUser) obj;
+        if (realjid == null) {
+            if (other.realjid != null)
+                return false;
+        } else if (!realjid.equals(other.realjid))
+            return false;
+        return true;
+    }
 }

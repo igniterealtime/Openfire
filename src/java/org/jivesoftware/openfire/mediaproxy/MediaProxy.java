@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MediaProxy implements SessionListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(MediaProxy.class);
+    private static final Logger Log = LoggerFactory.getLogger(MediaProxy.class);
 
     final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<>();
 

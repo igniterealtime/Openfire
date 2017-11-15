@@ -46,12 +46,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultAuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultAuthProvider.class);
 
-	    private static final String LOAD_PASSWORD =
-	            "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
-	    private static final String TEST_PASSWORD =
-	            "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey,serverKey FROM ofUser WHERE username=?";
+        private static final String LOAD_PASSWORD =
+                "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
+        private static final String TEST_PASSWORD =
+                "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey,serverKey FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
             "UPDATE ofUser SET plainPassword=?, encryptedPassword=?, storedKey=?, serverKey=?, salt=?, iterations=? WHERE username=?";
     
@@ -326,8 +326,8 @@ public class DefaultAuthProvider implements AuthProvider {
         int iterations = JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
                         ScramUtils.DEFAULT_ITERATION_COUNT);
         byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
-	try {
-	       saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
+    try {
+           saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
                clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
                storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
                serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
@@ -369,16 +369,16 @@ public class DefaultAuthProvider implements AuthProvider {
                 pstmt.setString(2, encryptedPassword);
             }
             if (storedKey == null) {
-            	pstmt.setNull(3, Types.VARCHAR);
+                pstmt.setNull(3, Types.VARCHAR);
             }
             else {
-            	pstmt.setString(3, DatatypeConverter.printBase64Binary(storedKey));
+                pstmt.setString(3, DatatypeConverter.printBase64Binary(storedKey));
             }
             if (serverKey == null) {
-            	pstmt.setNull(4, Types.VARCHAR);
+                pstmt.setNull(4, Types.VARCHAR);
             }
             else {
-            	pstmt.setString(4, DatatypeConverter.printBase64Binary(serverKey));
+                pstmt.setString(4, DatatypeConverter.printBase64Binary(serverKey));
             }
             pstmt.setString(5, salt);
             pstmt.setInt(6, iterations);

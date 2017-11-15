@@ -26,44 +26,44 @@ import org.xmpp.packet.Packet;
  * <group>General</group> </item> </query> </iq>
  */
 public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProcessor {
-	private Set<String> watchedSubdomains;
+    private Set<String> watchedSubdomains;
 
-	public ClientToComponentUpdateProcessor(Set<String> activeTransports) {
-		watchedSubdomains = activeTransports;
-		Log.info("Created ClientToComponentUpdateProcessor");
-	}
+    public ClientToComponentUpdateProcessor(Set<String> activeTransports) {
+        watchedSubdomains = activeTransports;
+        Log.info("Created ClientToComponentUpdateProcessor");
+    }
 
-	private String searchJIDforSubdomain(String jid) {
-		for (String subdomain : watchedSubdomains) {
-			if (jid.contains(subdomain))
-				return subdomain;
-		}
-		return "";
-	}
+    private String searchJIDforSubdomain(String jid) {
+        for (String subdomain : watchedSubdomains) {
+            if (jid.contains(subdomain))
+                return subdomain;
+        }
+        return "";
+    }
 
-	@Override
-	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
-		Log.debug("Processing packet in ClientToComponentUpdateProcessor: " + packet.toString());
+    @Override
+    public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
+        Log.debug("Processing packet in ClientToComponentUpdateProcessor: " + packet.toString());
 
-		Element query = ((IQ) packet).getChildElement();
-		List<Node> nodes = findNodesInDocument(query.getDocument(), "//roster:item");
-		if (nodes.size() > 0) {
-			// We now know we have to check the JID of the to be added User
-			// against our valid subdomains.
-			for (Node n : nodes) {
-				String jid = n.valueOf("@jid");
-				// TODO: We ignore remove iq packets for now. There might be
-				// conflicts
-				// when we remove our legacy network registration.
-				String found_subdomain = searchJIDforSubdomain(jid);
-				if (found_subdomain.length() > 0 && !n.valueOf("@subscription").equals("remove")) {
+        Element query = ((IQ) packet).getChildElement();
+        List<Node> nodes = findNodesInDocument(query.getDocument(), "//roster:item");
+        if (nodes.size() > 0) {
+            // We now know we have to check the JID of the to be added User
+            // against our valid subdomains.
+            for (Node n : nodes) {
+                String jid = n.valueOf("@jid");
+                // TODO: We ignore remove iq packets for now. There might be
+                // conflicts
+                // when we remove our legacy network registration.
+                String found_subdomain = searchJIDforSubdomain(jid);
+                if (found_subdomain.length() > 0 && !n.valueOf("@subscription").equals("remove")) {
 
-					Log.debug("Mirroring packet from local network to legacy component " + found_subdomain);
-					IQ forward = (IQ) packet.createCopy();
-					forward.setTo(found_subdomain);
-					dispatchPacket(forward);
-				}
-			}
-		}
-	}
+                    Log.debug("Mirroring packet from local network to legacy component " + found_subdomain);
+                    IQ forward = (IQ) packet.createCopy();
+                    forward.setTo(found_subdomain);
+                    dispatchPacket(forward);
+                }
+            }
+        }
+    }
 }

@@ -112,7 +112,7 @@ public interface CacheFactoryStrategy {
      */
     long getClusterTime();
 
-    	/**
+        /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
      * executed on the local cluster member. If clustering is not enabled, this method
      * will do nothing.
@@ -199,5 +199,5 @@ public interface CacheFactoryStrategy {
      * @param nodeID The target cluster node
      * @return The info for the cluster node, or null if not found
      */
-	ClusterNodeInfo getClusterNodeInfo(byte[] nodeID);
+    ClusterNodeInfo getClusterNodeInfo(byte[] nodeID);
 }

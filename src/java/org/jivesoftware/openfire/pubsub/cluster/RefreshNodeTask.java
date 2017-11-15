@@ -17,20 +17,20 @@ public class RefreshNodeTask extends NodeTask
 {
     private static final Logger log = LoggerFactory.getLogger(RefreshNodeTask.class);
 
-	public RefreshNodeTask()
-	{
-	}
+    public RefreshNodeTask()
+    {
+    }
 
-	public RefreshNodeTask(Node node)
-	{
-		super(node);
-	}
+    public RefreshNodeTask(Node node)
+    {
+        super(node);
+    }
 
-	@Override
-	public void run()
-	{
-		log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
-		PubSubPersistenceManager.loadNode(getService(), getNodeId());
-	}
+    @Override
+    public void run()
+    {
+        log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
+        PubSubPersistenceManager.loadNode(getService(), getNodeId());
+    }
 
 }

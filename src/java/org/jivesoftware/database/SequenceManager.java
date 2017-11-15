@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SequenceManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(SequenceManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SequenceManager.class);
 
     private static final String CREATE_ID =
             "INSERT INTO ofID (id, idType) VALUES (1, ?)";

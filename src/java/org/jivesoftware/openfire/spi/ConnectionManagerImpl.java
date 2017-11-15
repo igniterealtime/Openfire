@@ -627,7 +627,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-	// #####################################################################
+    // #####################################################################
     // Module management
     // #####################################################################
 
@@ -644,7 +644,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     @Override
-	public void start() {
+    public void start() {
         super.start();
         startListeners();
         SocketSendingTracker.getInstance().start();
@@ -652,7 +652,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         CertificateManager.removeListener(this);
         SocketSendingTracker.getInstance().shutdown();
         stopListeners();

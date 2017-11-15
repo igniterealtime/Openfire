@@ -73,7 +73,7 @@ import java.util.regex.Pattern;
  */
 public class CertificateManager {
 
-	private static final Logger Log = LoggerFactory.getLogger( CertificateManager.class );
+    private static final Logger Log = LoggerFactory.getLogger( CertificateManager.class );
 
     private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
@@ -87,7 +87,7 @@ public class CertificateManager {
 
         String serverCertIdentityMapList = JiveGlobals.getProperty("provider.serverCertIdentityMap.classList");
         if (serverCertIdentityMapList != null) {
-        	StringTokenizer st = new StringTokenizer(serverCertIdentityMapList, " ,\t\n\r\f");
+            StringTokenizer st = new StringTokenizer(serverCertIdentityMapList, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
@@ -104,14 +104,14 @@ public class CertificateManager {
         }
         
         if (serverCertMapping.isEmpty()) {
-        	Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
-        	serverCertMapping.add(new SANCertificateIdentityMapping());
-        	serverCertMapping.add(new CNCertificateIdentityMapping());   	
+            Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
+            serverCertMapping.add(new SANCertificateIdentityMapping());
+            serverCertMapping.add(new CNCertificateIdentityMapping());   	
         }
                 
         String clientCertMapList = JiveGlobals.getProperty("provider.clientCertIdentityMap.classList");
         if (clientCertMapList != null) {
-        	StringTokenizer st = new StringTokenizer(clientCertMapList, " ,\t\n\r\f");
+            StringTokenizer st = new StringTokenizer(clientCertMapList, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
@@ -128,8 +128,8 @@ public class CertificateManager {
         }
         
         if (clientCertMapping.isEmpty()) {
-        	Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
-        	clientCertMapping.add(new CNCertificateIdentityMapping());
+            Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
+            clientCertMapping.add(new CNCertificateIdentityMapping());
         }
     }
 
@@ -143,16 +143,16 @@ public class CertificateManager {
      * @return the identities of the remote client as defined in the specified certificate.
      */
     public static List<String> getClientIdentities(X509Certificate x509Certificate) {
-    	
-    	List<String> names = new ArrayList<>();
-    	for (CertificateIdentityMapping mapping : clientCertMapping) {
-    		List<String> identities = mapping.mapIdentity(x509Certificate);
-    		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
-    		if (!identities.isEmpty()) {
-    			names.addAll(identities);
-    			break;
-    		}
-    	}
+        
+        List<String> names = new ArrayList<>();
+        for (CertificateIdentityMapping mapping : clientCertMapping) {
+            List<String> identities = mapping.mapIdentity(x509Certificate);
+            Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
+            if (!identities.isEmpty()) {
+                names.addAll(identities);
+                break;
+            }
+        }
 
         return names;
     }
@@ -169,16 +169,16 @@ public class CertificateManager {
      * @return the identities of the remote server as defined in the specified certificate.
      */
     public static List<String> getServerIdentities(X509Certificate x509Certificate) {
-    	
-    	List<String> names = new ArrayList<>();
-    	for (CertificateIdentityMapping mapping : serverCertMapping) {
-    		List<String> identities = mapping.mapIdentity(x509Certificate);
-    		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
-    		if (!identities.isEmpty()) {
-    			names.addAll(identities);
-    			break;
-    		}
-    	}
+        
+        List<String> names = new ArrayList<>();
+        for (CertificateIdentityMapping mapping : serverCertMapping) {
+            List<String> identities = mapping.mapIdentity(x509Certificate);
+            Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
+            if (!identities.isEmpty()) {
+                names.addAll(identities);
+                break;
+            }
+        }
 
         return names;
     }

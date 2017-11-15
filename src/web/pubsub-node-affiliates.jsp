@@ -23,25 +23,25 @@
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-	String deleteID = ParamUtils.getParameter(request,"deleteID");
-	String ownerString = ParamUtils.getParameter( request, "owner" );
-	if ( ownerString == null )
-	{
-	    ownerString = ParamUtils.getParameter( request, "username" );
-	}
-	
-	JID owner = null;
-	if (ownerString != null)
-	{
-	    if ( ownerString.contains( "@" ) )
-	    {
-	        owner = new JID( ownerString ).asBareJID();
-	    }
-	    else
-	    {
-	        owner = XMPPServer.getInstance().createJID( ownerString, null );
-	    }
-	}
+    String deleteID = ParamUtils.getParameter(request,"deleteID");
+    String ownerString = ParamUtils.getParameter( request, "owner" );
+    if ( ownerString == null )
+    {
+        ownerString = ParamUtils.getParameter( request, "username" );
+    }
+    
+    JID owner = null;
+    if (ownerString != null)
+    {
+        if ( ownerString.contains( "@" ) )
+        {
+            owner = new JID( ownerString ).asBareJID();
+        }
+        else
+        {
+            owner = XMPPServer.getInstance().createJID( ownerString, null );
+        }
+    }
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -98,17 +98,17 @@
 
 <html>
 <head>
-	<title><fmt:message key="pubsub.node.affiliates.title"/></title>
-	<c:choose>
-	    <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
-	        <meta name="subPageID" content="user-pep-node-summary"/>
-	        <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${admin:urlEncode(node.nodeID)}" />
-	    </c:when>
-	    <c:otherwise>
-	        <meta name="subPageID" content="pubsub-node-affiliates"/>
-	        <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
-	    </c:otherwise>
-	</c:choose>
+    <title><fmt:message key="pubsub.node.affiliates.title"/></title>
+    <c:choose>
+        <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
+            <meta name="subPageID" content="user-pep-node-summary"/>
+            <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${admin:urlEncode(node.nodeID)}" />
+        </c:when>
+        <c:otherwise>
+            <meta name="subPageID" content="pubsub-node-affiliates"/>
+            <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
+        </c:otherwise>
+    </c:choose>
 </head>
 <body>
 
@@ -227,15 +227,15 @@
                 </a>
             </td>
             <td width="1%" align="center" style="border-right:1px #ccc solid;">
-	            <c:url value="pubsub-node-affiliates-delete.jsp" var="url">
-	                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:url value="pubsub-node-affiliates-delete.jsp" var="url">
+                    <c:param name="nodeID" value="${node.getNodeID()}" />
                     <c:param name="owner" value="${owner}" />
                     <c:param name="affiliateJID" value="${affiliate.getJID().toBareJID()}" />
-	            </c:url>
-	            <a href="${url}" title="<fmt:message key="global.click_delete" />">
-	                <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
-	            </a>
-	        </td>
+                </c:url>
+                <a href="${url}" title="<fmt:message key="global.click_delete" />">
+                    <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                </a>
+            </td>
         </tr>
         </c:forEach>
     </tbody>

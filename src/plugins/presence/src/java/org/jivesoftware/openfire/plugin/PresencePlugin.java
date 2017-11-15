@@ -57,8 +57,8 @@ import org.xmpp.packet.Presence;
  */
 public class PresencePlugin implements Plugin, Component {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresencePlugin.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(PresencePlugin.class);
+    
     private static final String subdomain = "presence";
 
     private UserManager userManager;

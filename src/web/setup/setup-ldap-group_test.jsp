@@ -54,14 +54,14 @@
 
 <!-- BEGIN connection settings test panel -->
 <div class="jive-testPanel">
-	<div class="jive-testPanel-content">
+    <div class="jive-testPanel-content">
 
-		<div align="right" class="jive-testPanel-close">
-			<a href="#" class="lbAction" rel="deactivate">Close</a>
-		</div>
+        <div align="right" class="jive-testPanel-close">
+            <a href="#" class="lbAction" rel="deactivate">Close</a>
+        </div>
 
 
-		<h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h2>
+        <h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h2>
 
         <p><fmt:message key="setup.ldap.group.test.description" /></p>
 

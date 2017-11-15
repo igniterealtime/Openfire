@@ -71,13 +71,13 @@ public class BroadcastMessageRequest extends MUCRoomTask<Void> {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) message.getElement());
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         message = new Message(packetElement, true);

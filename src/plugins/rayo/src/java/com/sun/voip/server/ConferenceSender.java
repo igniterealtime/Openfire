@@ -66,26 +66,26 @@ public class ConferenceSender extends Thread {
         new ArrayList<SenderCallbackListener>();
 
     public ConferenceSender(ArrayList conferenceList) {
-	this.conferenceList = conferenceList;
+    this.conferenceList = conferenceList;
 
-	setName("TheLoneSender");
-	initialize();
+    setName("TheLoneSender");
+    initialize();
     }
 
     public ConferenceSender(ConferenceManager conferenceManager) {
-	conferenceList = new ArrayList();
-	conferenceList.add(conferenceManager);
+    conferenceList = new ArrayList();
+    conferenceList.add(conferenceManager);
 
-	setName("Sender-" + conferenceManager.getId());
+    setName("Sender-" + conferenceManager.getId());
 
-	initialize();
+    initialize();
     }
 
     private void initialize() {
-	senderThreads = Runtime.getRuntime().availableProcessors();
+    senderThreads = Runtime.getRuntime().availableProcessors();
 
-	setPriority(Thread.MAX_PRIORITY);
-	start();
+    setPriority(Thread.MAX_PRIORITY);
+    start();
     }
 
     public static void addSenderCallbackListener(SenderCallbackListener listener) {
@@ -99,97 +99,97 @@ public class ConferenceSender extends Thread {
      * to each conference member every 20 ms.
      */
     public void run() {
-	String tickerClassName = System.getProperty("com.sun.voip.TICKER");
+    String tickerClassName = System.getProperty("com.sun.voip.TICKER");
 
-	try {
+    try {
             TickerFactory tickerFactory = TickerFactory.getInstance();
 
             ticker = tickerFactory.createTicker(tickerClassName, getName());
-	} catch (TickerException e) {
-	    Logger.println(e.getMessage());
-	    end();
-	    return;
+    } catch (TickerException e) {
+        Logger.println(e.getMessage());
+        end();
+        return;
         }
 
-	/*
-	 * Pump out data every <timeBetweenPackets> ms to each member.
-	 */
-	ticker.arm(RtpPacket.PACKET_PERIOD, RtpPacket.PACKET_PERIOD);
+    /*
+     * Pump out data every <timeBetweenPackets> ms to each member.
+     */
+    ticker.arm(RtpPacket.PACKET_PERIOD, RtpPacket.PACKET_PERIOD);
 
         long sendTime = 0;
         long maxSendTime = 0;
 
-	while (!done) {
-	    long startTime = System.nanoTime();
+    while (!done) {
+        long startTime = System.nanoTime();
 
             for (SenderCallbackListener listener : senderCallbackList) {
-		try {
+        try {
                     listener.senderCallback();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		    Logger.println("Sender callback failed!  "
-			+ e.getMessage());
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+            Logger.println("Sender callback failed!  "
+            + e.getMessage());
+        }
             }
 
-	    sendDataToConferences();
+        sendDataToConferences();
 
-	    int elapsed = (int) (System.nanoTime() - startTime);
+        int elapsed = (int) (System.nanoTime() - startTime);
 
-	    if (elapsed > maxSendTime) {
-	        maxSendTime = elapsed;
-	    }
+        if (elapsed > maxSendTime) {
+            maxSendTime = elapsed;
+        }
 
-	    totalSendTime += elapsed;
-	    sendTime += elapsed;
+        totalSendTime += elapsed;
+        sendTime += elapsed;
 
-	    try {
+        try {
                 ticker.tick();
             } catch (TickerException e) {
                 Logger.println(getName() + " tick() failed! " + e.getMessage());
-		end();
-		break;
+        end();
+        break;
             }
 
-	    if (ConferenceManager.getTotalMembers() == 0) {
-		resetStatistics();
-		sendTime = 0;
-		maxSendTime = 0;
-		continue;
-	    }
+        if (ConferenceManager.getTotalMembers() == 0) {
+        resetStatistics();
+        sendTime = 0;
+        maxSendTime = 0;
+        continue;
+        }
 
-	    packetsSent++;
+        packetsSent++;
 
-	    if ((packetsSent % 250) == 0) {
-		averageSendTime = sendTime / 1000000000. / 250.;
+        if ((packetsSent % 250) == 0) {
+        averageSendTime = sendTime / 1000000000. / 250.;
 
-		lastMaxSendTime = maxSendTime / 1000000000.;
+        lastMaxSendTime = maxSendTime / 1000000000.;
 
-	        String s = getName()
-	            + " time to send a packet to " + ConferenceManager.getTotalMembers()
-	            + " members in last 5 seconds is " + (sendTime / 1000000000.)
-		    + " seconds, average time " + averageSendTime + " seconds "
-		    + ", maxSendTime " + lastMaxSendTime
-		    + ", members speaking " + CallHandler.getTotalSpeaking();
+            String s = getName()
+                + " time to send a packet to " + ConferenceManager.getTotalMembers()
+                + " members in last 5 seconds is " + (sendTime / 1000000000.)
+            + " seconds, average time " + averageSendTime + " seconds "
+            + ", maxSendTime " + lastMaxSendTime
+            + ", members speaking " + CallHandler.getTotalSpeaking();
 
-	        if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	            Logger.println(s);
-	        } else {
-		    Logger.writeFile(s);
-	        }
+            if (Logger.logLevel >= Logger.LOG_DETAIL) {
+                Logger.println(s);
+            } else {
+            Logger.writeFile(s);
+            }
 
-		if (packetsSent > 0) {
-		    timeBetweenSends = (System.nanoTime() - startTime) /
-			1000000000. / 250.;
-		}
+        if (packetsSent > 0) {
+            timeBetweenSends = (System.nanoTime() - startTime) /
+            1000000000. / 250.;
+        }
 
-		startTime = System.nanoTime();
-	        maxSendTime = 0;
-		sendTime = 0;
-	    }
-	}
+        startTime = System.nanoTime();
+            maxSendTime = 0;
+        sendTime = 0;
+        }
+    }
 
-	ticker.disarm();
+    ticker.disarm();
     }
 
     public static double getAverageSendTime() {
@@ -197,113 +197,113 @@ public class ConferenceSender extends Thread {
     }
 
     public static double getMaxSendTime() {
-	return lastMaxSendTime;
+    return lastMaxSendTime;
     }
 
     public static double getTimeBetweenSends() {
-	return timeBetweenSends;
+    return timeBetweenSends;
     }
 
     private void sendDataToConferences() {
-	/*
-	 * Build a memberList containing the members of all conferences.
-	 */
-	ArrayList memberList = new ArrayList();
+    /*
+     * Build a memberList containing the members of all conferences.
+     */
+    ArrayList memberList = new ArrayList();
 
-	for (int i = 0; i < conferenceList.size(); i++) {
-	    ConferenceManager conferenceManager = (ConferenceManager) conferenceList.get(i);
+    for (int i = 0; i < conferenceList.size(); i++) {
+        ConferenceManager conferenceManager = (ConferenceManager) conferenceList.get(i);
 
-	    //ArrayList ml = (ArrayList) conferenceManager.getMemberList();
+        //ArrayList ml = (ArrayList) conferenceManager.getMemberList();
 
-	    //memberList.addAll(ml);
+        //memberList.addAll(ml);
 
-	    /*
-	     * Take a snapshot of member data
-	     */
-	    //for (int j = 0; j < ml.size(); j++) {
+        /*
+         * Take a snapshot of member data
+         */
+        //for (int j = 0; j < ml.size(); j++) {
             //    ConferenceMember member = (ConferenceMember) ml.get(j);
-	    //	member.saveCurrentContribution();
-	    //}
+        //	member.saveCurrentContribution();
+        //}
 
-	    /*
-	     * Take a snapshot of all members and all whisper groups
-	     * in the conference.
-	     */
-	    synchronized (conferenceManager) {
+        /*
+         * Take a snapshot of all members and all whisper groups
+         * in the conference.
+         */
+        synchronized (conferenceManager) {
                 WGManager wgManager = conferenceManager.getWGManager();
 
-		if (wgManager == null) {
-		    continue;	// not initialized yet
-		}
+        if (wgManager == null) {
+            continue;	// not initialized yet
+        }
 
-	        ArrayList whisperGroups = wgManager.getWhisperGroups();
+            ArrayList whisperGroups = wgManager.getWhisperGroups();
 
-	        synchronized(whisperGroups) {
+            synchronized(whisperGroups) {
                     for (int j = 0; j < whisperGroups.size(); j++) {
                         WhisperGroup whisperGroup = (WhisperGroup)
                             whisperGroups.get(j);
 
-		        ArrayList ml = whisperGroup.getMembers();
+                ArrayList ml = whisperGroup.getMembers();
 
-		        for (int k = 0; k < ml.size(); k++) {
-			    ConferenceMember member = (ConferenceMember)
-			        ml.get(k);
+                for (int k = 0; k < ml.size(); k++) {
+                ConferenceMember member = (ConferenceMember)
+                    ml.get(k);
 
-			    if (member.getWhisperGroup() == whisperGroup) {
-				/*
-				 * Member is whispering in this whisper group
-				 */
-				try {
-			            member.saveCurrentContribution();
-				} catch (Exception e) {
-				    e.printStackTrace();
+                if (member.getWhisperGroup() == whisperGroup) {
+                /*
+                 * Member is whispering in this whisper group
+                 */
+                try {
+                        member.saveCurrentContribution();
+                } catch (Exception e) {
+                    e.printStackTrace();
 
-				    Logger.println(
-					"conf " + getName() + ":  "
-					+ " can't save contribution for "
-					+ "member " + member);
+                    Logger.println(
+                    "conf " + getName() + ":  "
+                    + " can't save contribution for "
+                    + "member " + member);
 
-				    member.getCallHandler().cancelRequest(
-					"Unexpected Exception");
-				    continue;
-				}
+                    member.getCallHandler().cancelRequest(
+                    "Unexpected Exception");
+                    continue;
+                }
 
-			        memberList.add(member);
-			    }
+                    memberList.add(member);
+                }
                         }
 
-			/*
-			 * At this point, the whisper group has the data
-			 * from each whisperer mixed in a buffer.
-			 */
-			try {
+            /*
+             * At this point, the whisper group has the data
+             * from each whisperer mixed in a buffer.
+             */
+            try {
                             whisperGroup.saveCurrentContribution();
-			} catch (Exception e) {
+            } catch (Exception e) {
                             e.printStackTrace();
 
-			    Logger.println("conf " + getName() + ":  "
+                Logger.println("conf " + getName() + ":  "
                                 + " can't save contribution for whisper group "
-				+ whisperGroup);
-		 	}
-		    }
-		}
+                + whisperGroup);
             }
-	}
+            }
+        }
+            }
+    }
 
         /*
          * Send data to each member in every conference.
-     	 */
-	if (memberList.size() == 0) {
-	    return;
-	}
+         */
+    if (memberList.size() == 0) {
+        return;
+    }
 
-	sendDataToMembers(memberList);
+    sendDataToMembers(memberList);
 
-	for (int i = 0; i < memberList.size(); i++) {
-	    ConferenceMember member = (ConferenceMember) memberList.get(i);
+    for (int i = 0; i < memberList.size(); i++) {
+        ConferenceMember member = (ConferenceMember) memberList.get(i);
 
-	    member.invalidateCurrentContribution();
-	}
+        member.invalidateCurrentContribution();
+    }
     }
 
     private ArrayList workerThreads = new ArrayList();
@@ -311,42 +311,42 @@ public class ConferenceSender extends Thread {
     private ConcurrentLinkedQueue workToDo = new ConcurrentLinkedQueue();
 
     private void sendDataToMembers(ArrayList memberList) {
-	if (Logger.logLevel == -55) {
-	    for (int i = 0; i < memberList.size(); i++) {
-		ConferenceMember m = (ConferenceMember) memberList.get(i);
+    if (Logger.logLevel == -55) {
+        for (int i = 0; i < memberList.size(); i++) {
+        ConferenceMember m = (ConferenceMember) memberList.get(i);
 
-	        Logger.println("conf " + getName() + ": " + m);
-	    }
-	    Logger.println("wt size " + workerThreads.size()
-		+ " sender threads " + senderThreads);
-	}
+            Logger.println("conf " + getName() + ": " + m);
+        }
+        Logger.println("wt size " + workerThreads.size()
+        + " sender threads " + senderThreads);
+    }
 
-	if (workerThreads.size() > 1 && workerThreads.size() != senderThreads) {
+    if (workerThreads.size() > 1 && workerThreads.size() != senderThreads) {
             /*
              * Stop old threads
-	     * XXX We could just stop the extra threads or add new ones
-	     * rather than stopping all of them.
+         * XXX We could just stop the extra threads or add new ones
+         * rather than stopping all of them.
              */
-	    if (Logger.logLevel == -55) {
+        if (Logger.logLevel == -55) {
                 Logger.println("Stopping sender worker threads "
                     + workerThreads.size());
-	    }
+        }
 
             for (int i = 0; i < workerThreads.size(); i++) {
                 ((WorkerThread) workerThreads.get(i)).done();
             }
 
-	    workerThreads.clear();
-	}
+        workerThreads.clear();
+    }
 
-	if (senderThreads <= 1) {
-	    singleThreadSendDataToMembers(memberList);
-	    return;
-	}
+    if (senderThreads <= 1) {
+        singleThreadSendDataToMembers(memberList);
+        return;
+    }
 
-	CountDownLatch doneSignal = new CountDownLatch(workerThreads.size());
+    CountDownLatch doneSignal = new CountDownLatch(workerThreads.size());
 
-	if (workerThreads.size() != senderThreads) {
+    if (workerThreads.size() != senderThreads) {
             /*
              * Start new threads
              */
@@ -355,37 +355,37 @@ public class ConferenceSender extends Thread {
             }
 
             Logger.println("Started " + senderThreads + " sender threads");
-	}
+    }
 
-	workToDo.clear();
+    workToDo.clear();
 
-	for (int i = 0; i < memberList.size(); i++) {
-	    ConferenceMember member = (ConferenceMember) memberList.get(i);
+    for (int i = 0; i < memberList.size(); i++) {
+        ConferenceMember member = (ConferenceMember) memberList.get(i);
 
-	    if (member.getMemberSender().memberIsReadyForSenderData()) {
-		workToDo.add(member);
-	    }
-	}
+        if (member.getMemberSender().memberIsReadyForSenderData()) {
+        workToDo.add(member);
+        }
+    }
 
-	/*
-	 * Start all of the worker threads
-	 */
-	for (int i = 0; i < workerThreads.size(); i++) {
-	    WorkerThread workerThread = (WorkerThread) workerThreads.get(i);
+    /*
+     * Start all of the worker threads
+     */
+    for (int i = 0; i < workerThreads.size(); i++) {
+        WorkerThread workerThread = (WorkerThread) workerThreads.get(i);
 
-	    workerThread.setLatch(doneSignal);
+        workerThread.setLatch(doneSignal);
 
-	    synchronized (workerThread) {
-		workerThread.notify();
-	    }
-	}
+        synchronized (workerThread) {
+        workerThread.notify();
+        }
+    }
 
-	if (!done) {
-	    try {
-	        doneSignal.await();	// wait for all to finish
-	    } catch (InterruptedException e) {
-	    }
-	}
+    if (!done) {
+        try {
+            doneSignal.await();	// wait for all to finish
+        } catch (InterruptedException e) {
+        }
+    }
     }
 
     private void singleThreadSendDataToMembers(ArrayList memberList) {
@@ -393,104 +393,104 @@ public class ConferenceSender extends Thread {
             ConferenceMember member = (ConferenceMember)
                         memberList.get(i);
 
-	    if (!member.getMemberSender().memberIsReadyForSenderData()) {
-		continue;
-	    }
+        if (!member.getMemberSender().memberIsReadyForSenderData()) {
+        continue;
+        }
 
-	    long start = 0;
+        long start = 0;
 
             if (Logger.logLevel == -33) {
                 start = System.nanoTime();
             }
 
-	    try {
+        try {
                 member.sendData();
-	    } catch (Exception e) {
-		e.printStackTrace();
+        } catch (Exception e) {
+        e.printStackTrace();
 
-		Logger.println("Can't send data to " + member + " "
-		    + e.getMessage());
+        Logger.println("Can't send data to " + member + " "
+            + e.getMessage());
 
-		member.getCallHandler().cancelRequest("Unexpected Exception");
-	    }
+        member.getCallHandler().cancelRequest("Unexpected Exception");
+        }
 
             if (Logger.logLevel == -33) {
                 Logger.println("Sender sendDataToOneMember time "
                     +  member + " "
                     + ((System.nanoTime() - start) / 1000000000.) + " seconds");
 
-		Logger.logLevel = 3;
+        Logger.logLevel = 3;
             }
-	}
+    }
     }
 
     class WorkerThread extends Thread {
-	private boolean done;
-	private CountDownLatch doneSignal;
+    private boolean done;
+    private CountDownLatch doneSignal;
 
-	public WorkerThread(int i, CountDownLatch doneSignal) {
-	    this.doneSignal = doneSignal;
+    public WorkerThread(int i, CountDownLatch doneSignal) {
+        this.doneSignal = doneSignal;
 
-	    setName("Sender-WorkerThread-" + i + "-" + getName());
-	    setPriority(Thread.MAX_PRIORITY);
-	    start();
-	}
+        setName("Sender-WorkerThread-" + i + "-" + getName());
+        setPriority(Thread.MAX_PRIORITY);
+        start();
+    }
 
-	public void setLatch(CountDownLatch doneSignal) {
-	    this.doneSignal = doneSignal;
-	}
+    public void setLatch(CountDownLatch doneSignal) {
+        this.doneSignal = doneSignal;
+    }
 
-	public void done() {
-	    done = true;
-	    interrupt();
-	}
+    public void done() {
+        done = true;
+        interrupt();
+    }
 
         public void run() {
-	    while (!done) {
-		try {
-	            ConferenceMember member = (ConferenceMember)
-			workToDo.remove();
+        while (!done) {
+        try {
+                ConferenceMember member = (ConferenceMember)
+            workToDo.remove();
 
-		    try {
-	                member.sendData();
-	    	    } catch (Exception e) {
-			e.printStackTrace();
+            try {
+                    member.sendData();
+                } catch (Exception e) {
+            e.printStackTrace();
 
-			Logger.println("Can't send data to " + member
-		             + " " + e.getMessage());
+            Logger.println("Can't send data to " + member
+                     + " " + e.getMessage());
 
-			member.getCallHandler().cancelRequest(
-			    "Unexpected Exception");
-	    	    }
-		} catch (NoSuchElementException e) {
-		    synchronized (this) {
-		        doneSignal.countDown();
+            member.getCallHandler().cancelRequest(
+                "Unexpected Exception");
+                }
+        } catch (NoSuchElementException e) {
+            synchronized (this) {
+                doneSignal.countDown();
 
-		        if (done) {
-			    break;  // done
-		        }
+                if (done) {
+                break;  // done
+                }
 
-			try {
-		            wait();
-			} catch (InterruptedException ie) {
-		    	    break;
-		        }
-	    	    }
-		}
-	    }
-	}
+            try {
+                    wait();
+            } catch (InterruptedException ie) {
+                    break;
+                }
+                }
+        }
+        }
+    }
     }
 
     public void end() {
-	done = true;
+    done = true;
 
-    	printStatistics();
-	this.interrupt();
+        printStatistics();
+    this.interrupt();
 
-	synchronized (workerThreads) {
-	    workToDo.clear();
-	    workerThreads.notifyAll();
-	}
+    synchronized (workerThreads) {
+        workToDo.clear();
+        workerThreads.notifyAll();
+    }
 
         for (int i = 0; i < workerThreads.size(); i++) {
             ((WorkerThread) workerThreads.get(i)).done();
@@ -498,41 +498,41 @@ public class ConferenceSender extends Thread {
     }
 
     public void printStatistics() {
-	Logger.println(getName() + " " + packetsSent + " packets sent");
+    Logger.println(getName() + " " + packetsSent + " packets sent");
 
-	if (packetsSent > 0) {
-	    Logger.println(getName()
-		+ " average time to send a packet to every member "
-		+ (totalSendTime / 1000000000. / packetsSent) + " seconds ");
-	}
+    if (packetsSent > 0) {
+        Logger.println(getName()
+        + " average time to send a packet to every member "
+        + (totalSendTime / 1000000000. / packetsSent) + " seconds ");
+    }
 
-	ticker.printStatistics();
+    ticker.printStatistics();
     }
 
     private void resetStatistics() {
-	packetsSent = 0;
-	totalSendTime = 0;
+    packetsSent = 0;
+    totalSendTime = 0;
     }
 
     /*
      * Tuneable parameters
      */
     public static void setSenderThreads(int senderThreads) {
-	if (senderThreads < 1) {
-	    senderThreads = 1;
-	} else if (senderThreads > Runtime.getRuntime().availableProcessors()) {
-	    senderThreads = Runtime.getRuntime().availableProcessors();
-	}
+    if (senderThreads < 1) {
+        senderThreads = 1;
+    } else if (senderThreads > Runtime.getRuntime().availableProcessors()) {
+        senderThreads = Runtime.getRuntime().availableProcessors();
+    }
 
-	ConferenceSender.senderThreads = senderThreads;
+    ConferenceSender.senderThreads = senderThreads;
     }
 
     public static int getSenderThreads() {
-	return senderThreads;
+    return senderThreads;
     }
 
     public String toString() {
-	return getName();
+    return getName();
     }
 
 }

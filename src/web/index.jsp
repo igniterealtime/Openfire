@@ -130,39 +130,39 @@
     padding : 0;
 }
 #jive-latest-activity .jive-bottom-line {
-	padding-top: 10px;
+    padding-top: 10px;
     border-bottom : 1px #e8a400 solid;
-	}
+    }
 #jive-latest-activity {
     border: 1px #E8A400 solid;
     background-color: #FFFBE2;
-	font-family: Lucida Grande, Arial, Helvetica, sans-serif;
-	font-size: 9pt;
+    font-family: Lucida Grande, Arial, Helvetica, sans-serif;
+    font-size: 9pt;
     padding: 0 10px 10px 10px;
     margin-bottom: 10px;
     min-height: 280px;
     -moz-border-radius: 4px;
     width: 95%;
     margin-right: 20px;
-	}
+    }
 #jive-latest-activity h4 {
-	font-size: 13pt;
-	margin: 15px 0 4px 0;
-	}
+    font-size: 13pt;
+    margin: 15px 0 4px 0;
+    }
 #jive-latest-activity h5 {
-	font-size: 9pt;
-	font-weight: normal;
+    font-size: 9pt;
+    font-weight: normal;
     margin: 15px 0 5px 5px;
-	padding: 0;
-	}
+    padding: 0;
+    }
 #jive-latest-activity .jive-blog-date {
     font-size: 8pt;
     white-space: nowrap;
-	}
+    }
 #jive-latest-activity .jive-feed-icon {
     float: right;
     padding-top: 10px;
-	}
+    }
 .info-header {
     background-color: #eee;
     font-size: 10pt;
@@ -410,7 +410,7 @@
                         lastRSSFetch = nowTime;
                     }
                     catch (Throwable throwable) {
-                    	LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
+                        LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
                     }
                 }
 

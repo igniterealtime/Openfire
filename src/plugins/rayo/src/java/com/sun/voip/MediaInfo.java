@@ -41,7 +41,7 @@ public class MediaInfo {
     private static ArrayList supportedMedia = new ArrayList();
 
     static {
-	supportedMedia.add(new MediaInfo(
+    supportedMedia.add(new MediaInfo(
             (byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, true));
 
         //supportedMedia.add(new MediaInfo(
@@ -126,91 +126,91 @@ if (false) {
 
     public MediaInfo(byte payload , int encoding, int sampleRate, int channels, boolean isTelephoneEventPayload)
     {
-		this.payload = payload;
-		this.encoding = encoding;
-		this.sampleRate = sampleRate;
-		this.channels = channels;
-		this.isTelephoneEventPayload = isTelephoneEventPayload;
+        this.payload = payload;
+        this.encoding = encoding;
+        this.sampleRate = sampleRate;
+        this.channels = channels;
+        this.isTelephoneEventPayload = isTelephoneEventPayload;
 
-		samplesPerPacket = sampleRate * channels / (1000 / RtpPacket.PACKET_PERIOD);
+        samplesPerPacket = sampleRate * channels / (1000 / RtpPacket.PACKET_PERIOD);
     }
 
     public static MediaInfo findMediaInfo(int encoding, int sampleRate,
-	int channels) throws IOException {
+    int channels) throws IOException {
 
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo) supportedMedia.get(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo) supportedMedia.get(i);
 
-	    if (mediaInfo.getEncoding() == encoding &&
-		    mediaInfo.getSampleRate() == sampleRate &&
-		    mediaInfo.getChannels() == channels) {
+        if (mediaInfo.getEncoding() == encoding &&
+            mediaInfo.getSampleRate() == sampleRate &&
+            mediaInfo.getChannels() == channels) {
 
-		return mediaInfo;
-	    }
-	}
+        return mediaInfo;
+        }
+    }
 
-	throw new IOException("Unsupported media " + encoding
-	    + "/" + sampleRate + "/" + channels);
+    throw new IOException("Unsupported media " + encoding
+        + "/" + sampleRate + "/" + channels);
     }
 
     public static MediaInfo findMediaInfo(byte payload) throws IOException {
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo) supportedMedia.get(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo) supportedMedia.get(i);
 
-	    if (mediaInfo.getPayload() == payload) {
-		return mediaInfo;
-	    }
-	}
+        if (mediaInfo.getPayload() == payload) {
+        return mediaInfo;
+        }
+    }
 
-	throw new IOException("Unsupported payload " + payload);
+    throw new IOException("Unsupported payload " + payload);
     }
 
     public byte getPayload() {
-	return payload;
+    return payload;
     }
 
     public int getEncoding() {
-	return encoding;
+    return encoding;
     }
 
     public String getEncodingString() {
-	if (encoding == RtpPacket.PCMU_ENCODING) {
-	    return "PCMU";
-	}
+    if (encoding == RtpPacket.PCMU_ENCODING) {
+        return "PCMU";
+    }
 
-	if (encoding == RtpPacket.PCM_ENCODING) {
-	    return "PCM";
-	}
+    if (encoding == RtpPacket.PCM_ENCODING) {
+        return "PCM";
+    }
 
-	return "SPEEX";
+    return "SPEEX";
     }
 
     public int getSampleRate() {
-	return sampleRate;
+    return sampleRate;
     }
 
     public int getChannels() {
-	return channels;
+    return channels;
     }
 
     public int getSamplesPerPacket() {
-	return samplesPerPacket;
+    return samplesPerPacket;
     }
 
     public boolean isTelephoneEventPayload() {
-	return isTelephoneEventPayload;
+    return isTelephoneEventPayload;
     }
 
     public String toString() {
-	String s = "PCMU";
+    String s = "PCMU";
 
-	if (encoding == RtpPacket.PCM_ENCODING) {
-	    s = "PCM";
-	} else if (encoding == RtpPacket.SPEEX_ENCODING) {
-	    s = "SPEEX";
-	}
+    if (encoding == RtpPacket.PCM_ENCODING) {
+        s = "PCM";
+    } else if (encoding == RtpPacket.SPEEX_ENCODING) {
+        s = "SPEEX";
+    }
 
-	return payload + ":" + s + "/" + sampleRate + "/" + channels;
+    return payload + ":" + s + "/" + sampleRate + "/" + channels;
     }
 
 }

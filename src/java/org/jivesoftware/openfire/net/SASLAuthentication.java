@@ -65,7 +65,7 @@ import java.util.regex.Pattern;
  */
 public class SASLAuthentication {
 
-	private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
+    private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
 
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)

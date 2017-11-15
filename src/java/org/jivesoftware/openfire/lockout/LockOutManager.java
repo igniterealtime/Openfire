@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LockOutManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
 
     // Wrap this guy up so we can mock out the LockOutManager class.
     private static class LockOutManagerContainer {
@@ -146,8 +146,8 @@ public class LockOutManager {
         if (username == null) {
             throw new UnsupportedOperationException("Null username not allowed!");
         }
-		LockOutFlag lockOutFlag = getUserLockOut(username);
-		return getUnExpiredLockout(lockOutFlag);
+        LockOutFlag lockOutFlag = getUserLockOut(username);
+        return getUnExpiredLockout(lockOutFlag);
     }
 
     /**
@@ -228,48 +228,48 @@ public class LockOutManager {
     }
     
     /**
-	 * Gets the user lock out.
-	 *
-	 * @param username
-	 *            the username
-	 * @return the user lock out
-	 */
-	private LockOutFlag getUserLockOut(String username) {
-		if (provider.shouldNotBeCached()) {
-			return provider.getDisabledStatus(username);
-		}
-		LockOutFlag flag = lockOutCache.get(username);
-		// If ID wan't found in cache, load it up and put it there.
-		if (flag == null) {
-			synchronized (username.intern()) {
-				flag = lockOutCache.get(username);
-				// If group wan't found in cache, load it up and put it there.
-				if (flag == null) {
-					flag = provider.getDisabledStatus(username);
-					if (flag != null) lockOutCache.put(username, flag);
-				}
-			}
-		}
-		return flag;
-	}
+     * Gets the user lock out.
+     *
+     * @param username
+     *            the username
+     * @return the user lock out
+     */
+    private LockOutFlag getUserLockOut(String username) {
+        if (provider.shouldNotBeCached()) {
+            return provider.getDisabledStatus(username);
+        }
+        LockOutFlag flag = lockOutCache.get(username);
+        // If ID wan't found in cache, load it up and put it there.
+        if (flag == null) {
+            synchronized (username.intern()) {
+                flag = lockOutCache.get(username);
+                // If group wan't found in cache, load it up and put it there.
+                if (flag == null) {
+                    flag = provider.getDisabledStatus(username);
+                    if (flag != null) lockOutCache.put(username, flag);
+                }
+            }
+        }
+        return flag;
+    }
 
-	/**
-	 * Check if lockout flag is expired.
-	 *
-	 * @param flag
-	 *            the flag
-	 */
-	private LockOutFlag getUnExpiredLockout(LockOutFlag flag) {
-		if (flag != null) {
-			Date curDate = new Date();
-			if (flag.getEndTime() != null && curDate.after(flag.getEndTime())) {
-				// Remove expired lockout entry
-				lockOutCache.remove(flag.getUsername());
-				provider.unsetDisabledStatus(flag.getUsername());
-				return null;
-			}
-		}
-		return flag;
-	}
+    /**
+     * Check if lockout flag is expired.
+     *
+     * @param flag
+     *            the flag
+     */
+    private LockOutFlag getUnExpiredLockout(LockOutFlag flag) {
+        if (flag != null) {
+            Date curDate = new Date();
+            if (flag.getEndTime() != null && curDate.after(flag.getEndTime())) {
+                // Remove expired lockout entry
+                lockOutCache.remove(flag.getUsername());
+                provider.unsetDisabledStatus(flag.getUsername());
+                return null;
+            }
+        }
+        return flag;
+    }
 
 }

@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthFactory {
 
-	private static final Logger Log = LoggerFactory.getLogger(AuthFactory.class);
+    private static final Logger Log = LoggerFactory.getLogger(AuthFactory.class);
 
     private static AuthProvider authProvider = null;
     private static MessageDigest digest;
@@ -179,7 +179,7 @@ public class AuthFactory {
      *      support the operation (this is an optional operation).
      */
     public static void setPassword(String username, String password) throws UserNotFoundException, 
-    		UnsupportedOperationException, ConnectionException, InternalUnauthenticatedException {
+            UnsupportedOperationException, ConnectionException, InternalUnauthenticatedException {
             authProvider.setPassword(username, password);
         }
 

@@ -1114,12 +1114,12 @@ public class FastDateFormat {
         }
 
         @Override
-		public int hashCode() {
+        public int hashCode() {
             return mStyle * 31 + mLocale.hashCode();
         }
 
         @Override
-		public boolean equals(Object obj) {
+        public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -1195,7 +1195,7 @@ public class FastDateFormat {
         }
 
         @Override
-		public boolean equals(Object obj) {
+        public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -1214,14 +1214,14 @@ public class FastDateFormat {
         }
 
         @Override
-		public int hashCode() {
+        public int hashCode() {
             return
                 (mObj1 == null ? 0 : mObj1.hashCode()) +
                 (mObj2 == null ? 0 : mObj2.hashCode());
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return "[" + mObj1 + ':' + mObj2 + ']';
         }
     }

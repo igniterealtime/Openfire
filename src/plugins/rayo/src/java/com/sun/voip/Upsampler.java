@@ -38,82 +38,82 @@ public class Upsampler extends Resampler {
      * XXX We only support big endian 16 bit samples!
      */
     public Upsampler(String id, int inSampleRate, int inChannels,
-	    int outSampleRate, int outChannels) throws IOException {
+        int outSampleRate, int outChannels) throws IOException {
 
-	super(id, inSampleRate, inChannels, outSampleRate, outChannels);
+    super(id, inSampleRate, inChannels, outSampleRate, outChannels);
 
-	if (inSampleRate > outSampleRate) {
-	    throw new IOException("Upsampler inSampleRate "
-		+ inSampleRate + " > outSampleRate " + outSampleRate);
-	}
+    if (inSampleRate > outSampleRate) {
+        throw new IOException("Upsampler inSampleRate "
+        + inSampleRate + " > outSampleRate " + outSampleRate);
+    }
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("New Upsampler:  from " 
-	        + inSampleRate + "/" + inChannels + " to " 
-	        + outSampleRate + "/" + outChannels);
-	}
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("New Upsampler:  from " 
+            + inSampleRate + "/" + inChannels + " to " 
+            + outSampleRate + "/" + outChannels);
+    }
 
-	reset();
+    reset();
     }
 
     public void reset() {
-	lastSample = new int[outChannels];
+    lastSample = new int[outChannels];
     }
 
     public byte[] resample(byte[] inSamples, int offset, int length) 
-	    throws IOException {
+        throws IOException {
 
-	length = length & ~1;	// round down
+    length = length & ~1;	// round down
 
-	int[] ints = new int[length / 2];
+    int[] ints = new int[length / 2];
 
-	AudioConversion.bytesToInts(inSamples, offset, length, ints);
+    AudioConversion.bytesToInts(inSamples, offset, length, ints);
 
-	ints = resample(ints);
+    ints = resample(ints);
 
-	byte[] bytes = new byte[ints.length * 2];
+    byte[] bytes = new byte[ints.length * 2];
 
-	AudioConversion.intsToBytes(ints, bytes, offset);
+    AudioConversion.intsToBytes(ints, bytes, offset);
 
-	return bytes;
+    return bytes;
     }
 
     public int[] resample(int[] inSamples) throws IOException {
-	if (inSampleRate == outSampleRate && inChannels == outChannels) {
-	    return inSamples;
-	}
+    if (inSampleRate == outSampleRate && inChannels == outChannels) {
+        return inSamples;
+    }
 
-	resampleCount++;
+    resampleCount++;
 
-	long start = CurrentTime.getTime();
+    long start = CurrentTime.getTime();
 
-	/*
- 	 * Convert mono to multi-channel or vice versa as needed.
-	 *
-	 * Upsampling is done by interpolating between data points
-	 * and producing the right number of output samples.
-	 */
-	int[] outSamples = reChannel(inSamples);
+    /*
+     * Convert mono to multi-channel or vice versa as needed.
+     *
+     * Upsampling is done by interpolating between data points
+     * and producing the right number of output samples.
+     */
+    int[] outSamples = reChannel(inSamples);
 
-	if (inSampleRate == outSampleRate) {
-	    return outSamples;				// no need to resample
-	}
+    if (inSampleRate == outSampleRate) {
+        return outSamples;				// no need to resample
+    }
 
-	outSamples = upsample(outSamples);
+    outSamples = upsample(outSamples);
 
-	outSamples = lowPassFilter.lpf(outSamples);
+    outSamples = lowPassFilter.lpf(outSamples);
 
-	totalTime += (CurrentTime.getTime() - start);
+    totalTime += (CurrentTime.getTime() - start);
 
-	return outSamples;
+    return outSamples;
     }
 
     private int[] upsample(int[] inSamples) {
         /*
          * Calculate the number of inSamples needed to produce an outSample.
          * Round to the nearest integer.
-	 * XXX The number of input samples must be divide into the
-	 * input sample rate or else the outLength will be too small!
+     * XXX The number of input samples must be divide into the
+     * input sample rate or else the outLength will be too small!
          */
         int nSamples = inSamples.length / outChannels;
 
@@ -122,107 +122,107 @@ public class Upsampler extends Resampler {
         int outLength = (int)(Math.round(
             (sampleTime * outSampleRate * outChannels / 1000)));
 
-	//Logger.println("outLength " + outLength);
+    //Logger.println("outLength " + outLength);
 
-	if ((outLength & 1) != 0) {
-	    outLength++;
-	}
+    if ((outLength & 1) != 0) {
+        outLength++;
+    }
 
         int[] outSamples = new int[outLength];
 
-	double frameIncr = (double)inSampleRate / (double)(outSampleRate);
+    double frameIncr = (double)inSampleRate / (double)(outSampleRate);
 
-	int outIx = 0;
+    int outIx = 0;
 
-	int[] last = new int[outChannels];
+    int[] last = new int[outChannels];
 
-	last[0] = inSamples[inSamples.length - outChannels];
+    last[0] = inSamples[inSamples.length - outChannels];
 
-	if (outChannels == 2) {
-	    last[1] = inSamples[inSamples.length - outChannels + 1];
-	}
+    if (outChannels == 2) {
+        last[1] = inSamples[inSamples.length - outChannels + 1];
+    }
 
-	int ix = 0;
-	double i = 0;
+    int ix = 0;
+    double i = 0;
 
-	/*
-	 * Linear interpolation between each two samples
-	 */
-	while (true) {
-	    int intI = (int)i;
+    /*
+     * Linear interpolation between each two samples
+     */
+    while (true) {
+        int intI = (int)i;
 
-	    ix = intI * outChannels;
+        ix = intI * outChannels;
 
-	    if (ix >= inSamples.length || outIx + outChannels > outLength ) {
-		break;
-	    }
+        if (ix >= inSamples.length || outIx + outChannels > outLength ) {
+        break;
+        }
 
-	    int s1;
+        int s1;
 
-	    if (ix == 0) {
-		s1 = lastSample[0];
-	    } else {
-	        s1 = inSamples[ix - outChannels];
-	    } 
+        if (ix == 0) {
+        s1 = lastSample[0];
+        } else {
+            s1 = inSamples[ix - outChannels];
+        } 
 
-	    int s2 = inSamples[ix];
+        int s2 = inSamples[ix];
 
-	    int newSample = (int)(s1 + ((s2 - s1) * (i - intI)));
+        int newSample = (int)(s1 + ((s2 - s1) * (i - intI)));
 
-	    outSamples[outIx] = (int) newSample;
+        outSamples[outIx] = (int) newSample;
 
-	    outIx++;
+        outIx++;
 
-	    if (outChannels == 2) {
-		if (ix == 0) {
-		    s1 = lastSample[1];
-		} else {
-	            s1 = inSamples[ix - outChannels + 1];
-		}
-		
-	        s2 = inSamples[ix + 1];
+        if (outChannels == 2) {
+        if (ix == 0) {
+            s1 = lastSample[1];
+        } else {
+                s1 = inSamples[ix - outChannels + 1];
+        }
+        
+            s2 = inSamples[ix + 1];
 
-		newSample = (int)(s1 + ((s2 - s1) * (i - intI)));
+        newSample = (int)(s1 + ((s2 - s1) * (i - intI)));
 
-	        outSamples[outIx] = (int) newSample;
+            outSamples[outIx] = (int) newSample;
 
-	        outIx++;
-	    }
+            outIx++;
+        }
 
-	    if (outIx >= outLength) {
-		break;
-	    }
+        if (outIx >= outLength) {
+        break;
+        }
 
-	    i += frameIncr;
-	}
+        i += frameIncr;
+    }
 
-	lastSample = last;
-	return outSamples;
+    lastSample = last;
+    return outSamples;
     }
 
     public void printStatistics() {
-	if (resampleCount == 0) {
-	    return;
-	}
+    if (resampleCount == 0) {
+        return;
+    }
 
-	double avg = (double)totalTime / resampleCount;
+    double avg = (double)totalTime / resampleCount;
 
-	long timeUnitsPerSecond = CurrentTime.getTimeUnitsPerSecond();
+    long timeUnitsPerSecond = CurrentTime.getTimeUnitsPerSecond();
 
-	avg = (avg / timeUnitsPerSecond) * 1000;
+    avg = (avg / timeUnitsPerSecond) * 1000;
 
-	String s = "";
+    String s = "";
 
-	if (id != null) {
+    if (id != null) {
             s += "Call " + id + ":  ";
-	}
+    }
 
-	Logger.writeFile(s
-	    + avg + "ms avg upsample time from "
-	    + inSampleRate + "/" + inChannels + " to " + outSampleRate + "/"
-	    + outChannels);
+    Logger.writeFile(s
+        + avg + "ms avg upsample time from "
+        + inSampleRate + "/" + inChannels + " to " + outSampleRate + "/"
+        + outChannels);
 
-	lowPassFilter.printStatistics();
+    lowPassFilter.printStatistics();
     }
 
 }

@@ -16,8 +16,8 @@ package com.rayo.core.verb;
 
 public class PutOnSpeakerCommand extends AbstractVerbCommand {
 
-	public PutOnSpeakerCommand()
-	{
+    public PutOnSpeakerCommand()
+    {
 
-	}
+    }
 }

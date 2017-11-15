@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
 
     private Vector<String> approvedRealms;
     private boolean proxyAuth;

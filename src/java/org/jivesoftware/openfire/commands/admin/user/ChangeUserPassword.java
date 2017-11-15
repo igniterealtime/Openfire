@@ -39,22 +39,22 @@ import java.util.List;
  */
 public class ChangeUserPassword extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#change-user-password";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Change User Password";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (UserManager.getUserProvider().isReadOnly()) {
@@ -87,7 +87,7 @@ public class ChangeUserPassword extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Changing a User Password");
         form.addInstruction("Fill out this form to change a user\u2019s password.");
@@ -114,18 +114,18 @@ public class ChangeUserPassword extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
 
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) && !UserManager.getUserProvider().isReadOnly();
     }
 }

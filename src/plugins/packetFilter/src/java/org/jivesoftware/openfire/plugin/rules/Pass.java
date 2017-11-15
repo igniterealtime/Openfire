@@ -7,15 +7,15 @@ import org.xmpp.packet.Packet;
 
 public class Pass extends AbstractRule implements Rule {
 
-	private static final Logger Log = LoggerFactory.getLogger(Pass.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Pass.class);
+    
     @Override
-	public String getDisplayName() {
+    public String getDisplayName() {
         return "Pass";
     }
 
     @Override
-	public Packet doAction(Packet packet) throws PacketRejectedException {
+    public Packet doAction(Packet packet) throws PacketRejectedException {
         if (doLog()) {
             Log.info("Passing from "+packet.getFrom()+" to "+packet.getTo());
         }

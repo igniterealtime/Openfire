@@ -52,7 +52,7 @@ import org.xmpp.packet.JID;
  */
 public class LdapGroupProvider extends AbstractGroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
 
     private LdapManager manager;
     private UserManager userManager;
@@ -159,7 +159,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         if (username == null || "".equals(username)) {
             return Collections.emptyList();
         }
-    	return search(manager.getGroupMemberField(), username);
+        return search(manager.getGroupMemberField(), username);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         // Make the query be a wildcard search by default. So, if the user searches for
         // "Test", make the sanitized search be "Test*" instead.
         filter.append('(').append(manager.getGroupNameField()).append('=')
-        		.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
+                .append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         // Perform the LDAP query
         return manager.retrieveList(
                 manager.getGroupNameField(),

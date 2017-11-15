@@ -41,7 +41,7 @@ public class NSIncomingCallAgent extends CallSetupAgent {
     private SipUtil sipUtil;
 
     public NSIncomingCallAgent(CallHandler callHandler) {
-		super(callHandler);
+        super(callHandler);
 
         MediaInfo mixerMediaPreference =
             callHandler.getConferenceManager().getMediaInfo();
@@ -53,63 +53,63 @@ public class NSIncomingCallAgent extends CallSetupAgent {
 
 
     public void initiateCall() {
-		setState(CallState.INVITED);
+        setState(CallState.INVITED);
 
-		CallParticipant cp = callHandler.getCallParticipant();
+        CallParticipant cp = callHandler.getCallParticipant();
 
-		String remoteMediaInfo = cp.getRemoteMediaInfo();
+        String remoteMediaInfo = cp.getRemoteMediaInfo();
 
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-			Logger.println("Call " + cp
-			+ ":   NSIncomingCallAgent remoteMediaInfo " + remoteMediaInfo);
-		}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Call " + cp
+            + ":   NSIncomingCallAgent remoteMediaInfo " + remoteMediaInfo);
+        }
 
-		String[] tokens = remoteMediaInfo.split("\\+");
+        String[] tokens = remoteMediaInfo.split("\\+");
 
-		/*
-		 * The remote media info is the SDP info but instead of
-		 * new line as the separator, it has "+".
-		 * Reformat the SDP with \r\n.
-		 */
-		String sdp = "";
+        /*
+         * The remote media info is the SDP info but instead of
+         * new line as the separator, it has "+".
+         * Reformat the SDP with \r\n.
+         */
+        String sdp = "";
 
-		for (int i = 0; i < tokens.length; i++) {
-			sdp += tokens[i] + "\r\n";
-		}
+        for (int i = 0; i < tokens.length; i++) {
+            sdp += tokens[i] + "\r\n";
+        }
 
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-			Logger.println("Call " + cp
-			+ ":  NSIncomingCallAgent Sdp\n" + sdp);
-		}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Call " + cp
+            + ":  NSIncomingCallAgent Sdp\n" + sdp);
+        }
 
-		SdpInfo sdpInfo = null;
+        SdpInfo sdpInfo = null;
 
-		try {
-			sdpInfo = sipUtil.getSdpInfo(sdp, true);
+        try {
+            sdpInfo = sipUtil.getSdpInfo(sdp, true);
 
-				String remoteHost = sdpInfo.getRemoteHost();
-				int remotePort = sdpInfo.getRemotePort();
+                String remoteHost = sdpInfo.getRemoteHost();
+                int remotePort = sdpInfo.getRemotePort();
 
-				Logger.println("Call " + cp
-					+ ":  NSIncomingCallAgent:  remote socket " + remoteHost + " "
-					+ remotePort + " mediaInfo " + sdpInfo.getMediaInfo());
+                Logger.println("Call " + cp
+                    + ":  NSIncomingCallAgent:  remote socket " + remoteHost + " "
+                    + remotePort + " mediaInfo " + sdpInfo.getMediaInfo());
 
-					InetSocketAddress isa =
-						new InetSocketAddress(remoteHost, remotePort);
+                    InetSocketAddress isa =
+                        new InetSocketAddress(remoteHost, remotePort);
 
-					setEndpointAddress(isa, sdpInfo.getMediaInfo().getPayload(),
-					sdpInfo.getTransmitMediaInfo().getPayload(),
-					sdpInfo.getTelephoneEventPayload());
+                    setEndpointAddress(isa, sdpInfo.getMediaInfo().getPayload(),
+                    sdpInfo.getTransmitMediaInfo().getPayload(),
+                    sdpInfo.getTelephoneEventPayload());
 
-		} catch (ParseException e) {
-			Logger.println("Call " + cp
-			+ ":  NSIncomingCallAgent couldn't parse sdp");
-				cancelRequest("NSIncomingCallAgent couldn't parse sdp");
-			return;
-		}
+        } catch (ParseException e) {
+            Logger.println("Call " + cp
+            + ":  NSIncomingCallAgent couldn't parse sdp");
+                cancelRequest("NSIncomingCallAgent couldn't parse sdp");
+            return;
+        }
 
-		setState(CallState.ANSWERED);
-			setState(CallState.ESTABLISHED);
+        setState(CallState.ANSWERED);
+            setState(CallState.ESTABLISHED);
     }
 
 }

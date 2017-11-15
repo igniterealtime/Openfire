@@ -12,18 +12,18 @@ import java.util.List;
  *
  */
 public interface CertificateIdentityMapping {
-	/**
-	 * Maps identities from X509Certificates
-	 * 
-	 * @param certificate The certificate from which to map identities
-	 * @return A list of identities mapped from the certificate 
-	 */
-	List<String> mapIdentity(X509Certificate certificate);
-	
-	/**
-	 * Returns the short name of the mapping
-	 * 
-	 * @return The short name of the mapping
-	 */
-	String name();
+    /**
+     * Maps identities from X509Certificates
+     * 
+     * @param certificate The certificate from which to map identities
+     * @return A list of identities mapped from the certificate 
+     */
+    List<String> mapIdentity(X509Certificate certificate);
+    
+    /**
+     * Returns the short name of the mapping
+     * 
+     * @return The short name of the mapping
+     */
+    String name();
 }

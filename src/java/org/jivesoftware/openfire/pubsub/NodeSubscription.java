@@ -59,7 +59,7 @@ import org.xmpp.packet.Presence;
  */
 public class NodeSubscription {
 
-	private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
+    private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
 
     private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
@@ -142,8 +142,8 @@ public class NodeSubscription {
      * @param state the state of the subscription with the node.
      * @param id the id the uniquely identifies this subscriptin within the node.
      */
-	public NodeSubscription(Node node, JID owner, JID jid, State state, String id)
-	{
+    public NodeSubscription(Node node, JID owner, JID jid, State state, String id)
+    {
         this.node = node;
         this.jid = jid;
         this.owner = owner;
@@ -387,7 +387,7 @@ public class NodeSubscription {
         configure(options);
         if (originalIQ != null) {
             // Return success response
-			node.getService().send(IQ.createResultIQ(originalIQ));
+            node.getService().send(IQ.createResultIQ(originalIQ));
         }
 
         if (wasUnconfigured) {
@@ -498,10 +498,10 @@ public class NodeSubscription {
         // Check if the service needs to subscribe or unsubscribe from the owner presence
         if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
             if (presenceStates.isEmpty()) {
-				node.getService().presenceSubscriptionNotRequired(node, owner);
+                node.getService().presenceSubscriptionNotRequired(node, owner);
             }
             else {
-				node.getService().presenceSubscriptionRequired(node, owner);
+                node.getService().presenceSubscriptionRequired(node, owner);
             }
         }
     }
@@ -698,7 +698,7 @@ public class NodeSubscription {
         }
         // Check if delivery is subject to presence-based policy
         if (!getPresenceStates().isEmpty()) {
-			Collection<String> shows = node.getService().getShowPresences(jid);
+            Collection<String> shows = node.getService().getShowPresences(jid);
             if (shows.isEmpty() || Collections.disjoint(getPresenceStates(), shows)) {
                 return false;
             }
@@ -706,8 +706,8 @@ public class NodeSubscription {
         // Check if node is only sending events when user is online
         if (node.isPresenceBasedDelivery()) {
             // Check that user is online
-			if (node.getService().getShowPresences(jid).isEmpty())
-			{
+            if (node.getService().getShowPresences(jid).isEmpty())
+            {
                 return false;
             }
         }
@@ -775,7 +775,7 @@ public class NodeSubscription {
             subscribeOptions.addElement("required");
         }
         // Send the result
-		node.getService().send(result);
+        node.getService().send(result);
     }
 
     /**
@@ -822,7 +822,7 @@ public class NodeSubscription {
         notification.getElement().addElement("delay", "urn:xmpp:delay")
                 .addAttribute("stamp", XMPPDateTimeFormat.format(publishedItem.getCreationDate()));
         // Send the event notification to the subscriber
-		node.getService().sendNotification(node, notification, jid);
+        node.getService().sendNotification(node, notification, jid);
     }
 
     /**
@@ -834,7 +834,7 @@ public class NodeSubscription {
      * @return true if the specified user is allowed to modify or cancel the subscription.
      */
     boolean canModify(JID user) {
-		return user.equals(getJID()) || user.equals(getOwner()) || node.getService().isServiceAdmin(user);
+        return user.equals(getJID()) || user.equals(getOwner()) || node.getService().isServiceAdmin(user);
     }
 
     /**
@@ -849,7 +849,7 @@ public class NodeSubscription {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " - JID: " + getJID() + " - State: " + getState().name();
     }
 
@@ -887,9 +887,9 @@ public class NodeSubscription {
         Message authRequest = new Message();
         authRequest.addExtension(node.getAuthRequestForm(this));
         authRequest.setTo(owner);
-		authRequest.setFrom(node.getService().getAddress());
+        authRequest.setFrom(node.getService().getAddress());
         // Send authentication request to node owners
-		node.getService().send(authRequest);
+        node.getService().send(authRequest);
     }
 
     /**
@@ -900,7 +900,7 @@ public class NodeSubscription {
         Message authRequest = new Message();
         authRequest.addExtension(node.getAuthRequestForm(this));
         // Send authentication request to node owners
-		node.getService().broadcast(node, authRequest, node.getOwners());
+        node.getService().broadcast(node, authRequest, node.getOwners());
     }
 
     /**

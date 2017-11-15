@@ -28,7 +28,7 @@ import org.xmpp.packet.JID;
 public class OnlyPublishers extends PublisherModel {
 
     @Override
-	public boolean canPublish(Node node, JID entity) {
+    public boolean canPublish(Node node, JID entity) {
         NodeAffiliate nodeAffiliate = node.getAffiliate(entity);
         return nodeAffiliate != null && (
                 nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.publisher ||
@@ -36,7 +36,7 @@ public class OnlyPublishers extends PublisherModel {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "publishers";
     }
 }

@@ -19,56 +19,56 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
  * Message Archiving List Handler.
  */
 public class IQListHandler extends AbstractIQHandler implements
-		ServerFeaturesProvider {
+        ServerFeaturesProvider {
 
-	private static final String NAMESPACE = "urn:xmpp:archive";
-	private static final String NAMESPACE_MANAGE = "urn:xmpp:archive:manage";
+    private static final String NAMESPACE = "urn:xmpp:archive";
+    private static final String NAMESPACE_MANAGE = "urn:xmpp:archive:manage";
 
-	public IQListHandler() {
-		super("Message Archiving List Handler", "list", NAMESPACE);
-	}
+    public IQListHandler() {
+        super("Message Archiving List Handler", "list", NAMESPACE);
+    }
 
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
-		IQ reply = IQ.createResultIQ(packet);
-		ListRequest listRequest = new ListRequest(packet.getChildElement());
-		JID from = packet.getFrom();
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+        IQ reply = IQ.createResultIQ(packet);
+        ListRequest listRequest = new ListRequest(packet.getChildElement());
+        JID from = packet.getFrom();
 
-		Element listElement = reply.setChildElement("list", NAMESPACE);
-		Collection<Conversation> conversations = list(from, listRequest);
-		XmppResultSet resultSet = listRequest.getResultSet();
+        Element listElement = reply.setChildElement("list", NAMESPACE);
+        Collection<Conversation> conversations = list(from, listRequest);
+        XmppResultSet resultSet = listRequest.getResultSet();
 
-		for (Conversation conversation : conversations) {
-			addChatElement(listElement, conversation);
-		}
+        for (Conversation conversation : conversations) {
+            addChatElement(listElement, conversation);
+        }
 
-		if (resultSet != null) {
-			listElement.add(resultSet.createResultElement());
-		}
+        if (resultSet != null) {
+            listElement.add(resultSet.createResultElement());
+        }
 
-		return reply;
-	}
+        return reply;
+    }
 
-	private Collection<Conversation> list(JID from, ListRequest request) {
-		return getPersistenceManager(from).findConversations(request.getStart(),
-				request.getEnd(), from.toBareJID(), request.getWith(),
-				request.getResultSet());
-	}
+    private Collection<Conversation> list(JID from, ListRequest request) {
+        return getPersistenceManager(from).findConversations(request.getStart(),
+                request.getEnd(), from.toBareJID(), request.getWith(),
+                request.getResultSet());
+    }
 
-	private Element addChatElement(Element listElement,
-			Conversation conversation) {
-		Element chatElement = listElement.addElement("chat");
+    private Element addChatElement(Element listElement,
+            Conversation conversation) {
+        Element chatElement = listElement.addElement("chat");
 
-		chatElement.addAttribute("with", conversation.getWithJid());
-		chatElement.addAttribute("start",
-				XmppDateUtil.formatDate(conversation.getStart()));
+        chatElement.addAttribute("with", conversation.getWithJid());
+        chatElement.addAttribute("start",
+                XmppDateUtil.formatDate(conversation.getStart()));
 
-		return chatElement;
-	}
+        return chatElement;
+    }
 
-	public Iterator<String> getFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-		features.add(NAMESPACE_MANAGE);
-		return features.iterator();
-	}
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
+        features.add(NAMESPACE_MANAGE);
+        return features.iterator();
+    }
 
 }

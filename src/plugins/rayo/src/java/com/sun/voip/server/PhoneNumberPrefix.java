@@ -179,51 +179,51 @@ public class PhoneNumberPrefix {
     };
 
     public static String getPrefix(String location) {
-	if (location == null) {
-	    return "";
-	}
+    if (location == null) {
+        return "";
+    }
 
-	if (isInAmerica(Bridge.getBridgeLocation())) {
-	    if (isInAmerica(location)) {
-		return "";
-	    } 
-	    return "70";
-	}
-	
-	if (!isInAmerica(location)) {
-	    return "";
-	}
+    if (isInAmerica(Bridge.getBridgeLocation())) {
+        if (isInAmerica(location)) {
+        return "";
+        } 
+        return "70";
+    }
+    
+    if (!isInAmerica(location)) {
+        return "";
+    }
 
-	return "70";
+    return "70";
     }
 
     private static boolean isInAmerica(String location) {
-	for (int i = 0; i < locations.length; i++) {
-	    if (locations[i].equalsIgnoreCase(location)) {
-		return true;
-	    }
-	}
-	return false;
+    for (int i = 0; i < locations.length; i++) {
+        if (locations[i].equalsIgnoreCase(location)) {
+        return true;
+        }
+    }
+    return false;
     }
 
     public static void main(String args[]) {
-	if (args.length == 0) {
-	    System.out.println(
-		"usage:  java PhonePrefix <location> <location> ...");
-	    System.exit(1);
-	}
+    if (args.length == 0) {
+        System.out.println(
+        "usage:  java PhonePrefix <location> <location> ...");
+        System.exit(1);
+    }
 
-	for (int i = 0; i < args.length; i++) {
-	    String prefix = getPrefix(args[i]);
+    for (int i = 0; i < args.length; i++) {
+        String prefix = getPrefix(args[i]);
 
-	    if (prefix.equals("")) {
-	        System.out.println(
-		   "no prefix needed for location " + args[i]);
-	    } else {
-	        System.out.println(
-		    "prefix " + prefix + " needed for location " + args[i]);
-	    }
-	}
+        if (prefix.equals("")) {
+            System.out.println(
+           "no prefix needed for location " + args[i]);
+        } else {
+            System.out.println(
+            "prefix " + prefix + " needed for location " + args[i]);
+        }
+    }
     }
 
 }

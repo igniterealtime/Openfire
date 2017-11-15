@@ -112,7 +112,7 @@ import org.xmpp.packet.JID;
  */
 public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(LdapVCardProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(LdapVCardProvider.class);
 
     private LdapManager manager;
     private VCardTemplate template;

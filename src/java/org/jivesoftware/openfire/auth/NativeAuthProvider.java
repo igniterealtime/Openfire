@@ -68,7 +68,7 @@ import com.cenqua.shaj.Shaj;
  */
 public class NativeAuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(NativeAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(NativeAuthProvider.class);
 
     private String domain;
 

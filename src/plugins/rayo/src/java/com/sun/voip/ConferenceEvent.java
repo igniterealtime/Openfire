@@ -42,93 +42,93 @@ public class ConferenceEvent {
     private int memberCount;
 
     public ConferenceEvent(int event, String conferenceId) {
-	this.event = event;
-	this.conferenceId = conferenceId;
+    this.event = event;
+    this.conferenceId = conferenceId;
     }
 
     public int getEvent() {
- 	return event;
+    return event;
     }
 
     public String getConferenceId() {
-	return conferenceId;
+    return conferenceId;
     }
 
     public void setCallId(String callId) {
-	this.callId = callId;
+    this.callId = callId;
     }
 
     public String getCallId() {
-	return callId;
+    return callId;
     }
 
     public void setMemberCount(int memberCount) {
-	this.memberCount = memberCount;
+    this.memberCount = memberCount;
     }
 
     public int getMemberCount() {
-	return memberCount;
+    return memberCount;
     }
 
     public void setMemberAddress(InetSocketAddress memberAddress) {
-	this.memberAddress = memberAddress;
+    this.memberAddress = memberAddress;
     }
 
     public InetSocketAddress getMemberAddress() {
-	return memberAddress;
+    return memberAddress;
     }
 
     public void setIsDistributedBridge(boolean isDistributedBridge) {
-	this.isDistributedBridge = isDistributedBridge;
+    this.isDistributedBridge = isDistributedBridge;
     }
 
     public boolean isDistributedBridge() {
-	return isDistributedBridge;
+    return isDistributedBridge;
     }
 
     public boolean equals(int event) {
-	return this.event == event;
+    return this.event == event;
     }
 
     public String toString() {
-	String s;
+    String s;
 
         switch (event) {
         case CONFERENCE_STARTED:
             s = "CONFERENCE_STARTED(" + event + ")"
-	        + ", conferenceId " + conferenceId;
-	    break;
+            + ", conferenceId " + conferenceId;
+        break;
 
         case CONFERENCE_ENDED:
             s = "CONFERENCE_ENDED(" + event + ")"
-	        + ", conferenceId " + conferenceId;
-	    break;
+            + ", conferenceId " + conferenceId;
+        break;
 
         case MEMBER_JOINED:
-	    s = "MEMBER_JOINED(" + event + ")"
-	        + ", conferenceId " + conferenceId
-		+ ", callId " + callId
-		+ ", count " + memberCount
-		+ ", memberAddress " + memberAddress;
-	    break;
+        s = "MEMBER_JOINED(" + event + ")"
+            + ", conferenceId " + conferenceId
+        + ", callId " + callId
+        + ", count " + memberCount
+        + ", memberAddress " + memberAddress;
+        break;
 
         case MEMBER_LEFT:
             s = "MEMBER_LEFT(" + event + ")"
-	        + ", conferenceId " + conferenceId
-		+ ", callId " + callId
-		+ ", count " + memberCount
-		+ ", memberAddress " + memberAddress;
-	    break;
+            + ", conferenceId " + conferenceId
+        + ", callId " + callId
+        + ", count " + memberCount
+        + ", memberAddress " + memberAddress;
+        break;
 
-	default:
-	    s = "UNKNOWN ConferenceEevent(" + event + ")"
-	        + ", conferenceId " + conferenceId
-		+ ", callId " + callId
-		+ ", memberAddress " + memberAddress;
-	    break;
+    default:
+        s = "UNKNOWN ConferenceEevent(" + event + ")"
+            + ", conferenceId " + conferenceId
+        + ", callId " + callId
+        + ", memberAddress " + memberAddress;
+        break;
         }
 
-	return s;
+    return s;
     }
 
 }

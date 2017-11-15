@@ -84,8 +84,8 @@ import org.xmpp.packet.Presence;
  */
 public class WorkgroupManager implements Component {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupManager.class);
+    
     private static final String LOAD_WORKGROUPS =
         "SELECT workgroupID FROM fpWorkgroup";
     private static final String ADD_WORKGROUP =
@@ -197,7 +197,7 @@ public class WorkgroupManager implements Component {
 
         presenceCheckTask = new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 handleOutdatePresence();
             }
         };
@@ -491,7 +491,7 @@ public class WorkgroupManager implements Component {
         TaskEngine taskEngine = TaskEngine.getInstance();
         taskEngine.schedule(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -521,7 +521,7 @@ public class WorkgroupManager implements Component {
         // if the connections were lost or the invitations were lost or whatever
         taskEngine.schedule(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -537,7 +537,7 @@ public class WorkgroupManager implements Component {
         // Every 15 seconds check for not answered room invitations
         taskEngine.schedule(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {
@@ -553,7 +553,7 @@ public class WorkgroupManager implements Component {
         // Every 30 seconds check if the search index of the workgroups should be updated
         taskEngine.schedule(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 workgroupLock.readLock().lock();
                 try {
                     for (Workgroup group : workgroups.values()) {

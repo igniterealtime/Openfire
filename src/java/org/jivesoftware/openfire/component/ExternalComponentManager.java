@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ExternalComponentManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ExternalComponentManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ExternalComponentManager.class);
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofExtComponentConf (subdomain,wildcard,secret,permission) VALUES (?,?,?,?)";

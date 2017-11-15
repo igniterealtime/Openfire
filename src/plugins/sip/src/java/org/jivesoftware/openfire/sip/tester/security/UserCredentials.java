@@ -103,6 +103,6 @@ public class UserCredentials {
      */
     public char[] getPassword() {
         return UserCredentials.password;
-	}
+    }
 
 }

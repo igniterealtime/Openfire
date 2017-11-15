@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class StringUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(StringUtils.class);
+    private static final Logger Log = LoggerFactory.getLogger(StringUtils.class);
 
     // Constants used by escapeHTMLTags
     private static final char[] QUOTE_ENCODE = "&quot;".toCharArray();
@@ -204,7 +204,7 @@ public final class StringUtils {
      *         with their HTML escape sequences.
      */
     public static String escapeHTMLTags(String in) {
-    	return escapeHTMLTags(in, true);
+        return escapeHTMLTags(in, true);
     }
 
     /**
@@ -470,7 +470,7 @@ public final class StringUtils {
      * @return True if the given string can be decoded using Base32
      */
     public static boolean isBase32(String data) {
-    	return data == null ? false : Base32Hex.isInAlphabet(data.toUpperCase());
+        return data == null ? false : Base32Hex.isInAlphabet(data.toUpperCase());
     }
 
     /**
@@ -1096,61 +1096,61 @@ public final class StringUtils {
      * @throws IllegalArgumentException The given domain name is not valid
      */
     public static String validateDomainName(String domain) {
-    	if (domain == null || domain.trim().length() == 0) {
-    		throw new IllegalArgumentException("Domain name cannot be null or empty");
-    	}
-    	String result = IDN.toASCII(domain);
-		if (result.equals(domain)) {
-			// no conversion; validate again via USE_STD3_ASCII_RULES
-			IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
-		} else {
-    		Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
-		}
-    	return result;
+        if (domain == null || domain.trim().length() == 0) {
+            throw new IllegalArgumentException("Domain name cannot be null or empty");
+        }
+        String result = IDN.toASCII(domain);
+        if (result.equals(domain)) {
+            // no conversion; validate again via USE_STD3_ASCII_RULES
+            IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
+        } else {
+            Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
+        }
+        return result;
     }
     
     /**
-	 * Removes characters likely to enable Cross Site Scripting attacks from the
-	 * provided input string. The characters that are removed from the input
-	 * string, if present, are:
-	 * 
-	 * <pre>
-	 * &lt; &gt; &quot; ' % ; ) ( &amp; + -
-	 * </pre>
-	 * 
-	 * @param input the string to be scrubbed
-	 * @return Input without certain characters;
-	 */
-	public static String removeXSSCharacters(String input) {
-		final String[] xss = { "<", ">", "\"", "'", "%", ";", ")", "(", "&",
-				"+", "-" };
-		for (int i = 0; i < xss.length; i++) {
-			input = input.replace(xss[i], "");
-		}
-		return input;
-	}
-	
-	/**
-	 * Returns the UTF-8 bytes for the given String.
-	 * 
-	 * @param input The source string
-	 * @return The UTF-8 encoding for the given string
+     * Removes characters likely to enable Cross Site Scripting attacks from the
+     * provided input string. The characters that are removed from the input
+     * string, if present, are:
+     * 
+     * <pre>
+     * &lt; &gt; &quot; ' % ; ) ( &amp; + -
+     * </pre>
+     * 
+     * @param input the string to be scrubbed
+     * @return Input without certain characters;
+     */
+    public static String removeXSSCharacters(String input) {
+        final String[] xss = { "<", ">", "\"", "'", "%", ";", ")", "(", "&",
+                "+", "-" };
+        for (int i = 0; i < xss.length; i++) {
+            input = input.replace(xss[i], "");
+        }
+        return input;
+    }
+    
+    /**
+     * Returns the UTF-8 bytes for the given String.
+     * 
+     * @param input The source string
+     * @return The UTF-8 encoding for the given string
      * @deprecated Use {@code input.getBytes(StandardCharsets.UTF_8)}
-	 */
+     */
     @Deprecated
-	public static byte[] getBytes(String input) {
+    public static byte[] getBytes(String input) {
         return input.getBytes(StandardCharsets.UTF_8);
-	}
-	
-	/**
-	 * Returns the UTF-8 String for the given byte array.
-	 * 
-	 * @param input The source byte array
-	 * @return The UTF-8 encoded String for the given byte array
+    }
+    
+    /**
+     * Returns the UTF-8 String for the given byte array.
+     * 
+     * @param input The source byte array
+     * @return The UTF-8 encoded String for the given byte array
      * @deprecated Use {@code new String(input, StandardCharsets.UTF_8)}
-	 */
+     */
     @Deprecated
-	public static String getString(byte[] input) {
+    public static String getString(byte[] input) {
         return new String(input, StandardCharsets.UTF_8);
-	}
+    }
 }

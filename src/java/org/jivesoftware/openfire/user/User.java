@@ -158,35 +158,35 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     public String getStoredKey() {
-    	return storedKey;
+        return storedKey;
     }
 
     public void setStoredKey(String storedKey) {
-    	this.storedKey = storedKey;
+        this.storedKey = storedKey;
     }
 
     public String getServerKey() {
-    	return serverKey;
+        return serverKey;
     }
 
     public void setServerKey(String serverKey) {
-    	this.serverKey = serverKey;
+        this.serverKey = serverKey;
     }
 
     public String getSalt() {
-    	return salt;
+        return salt;
     }
 
     public void setSalt(String salt) {
-    	this.salt = salt;
+        this.salt = salt;
     }
 
     public int getIterations() {
-    	return iterations;
+        return iterations;
     }
 
     public void setIterations(int iterations) {
-    	this.iterations = iterations;
+        this.iterations = iterations;
     }
 
     public String getName() {
@@ -199,7 +199,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         if (name != null && name.matches("\\s*")) {
-        	name = null;
+            name = null;
         }
 
         if (name == null && UserManager.getUserProvider().isNameRequired()) {
@@ -256,7 +256,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         if (email != null && email.matches("\\s*")) {
-        	email = null;
+            email = null;
         }
 
         if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
@@ -403,17 +403,17 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return username;
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return username.hashCode();
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -431,7 +431,7 @@ public class User implements Cacheable, Externalizable, Result {
     private class PropertiesMap extends AbstractMap<String, String> {
 
         @Override
-		public String put(String key, String value) {
+        public String put(String key, String value) {
             Map<String,Object> eventParams = new HashMap<>();
             String answer;
             String keyString = key;
@@ -467,7 +467,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         @Override
-		public Set<Entry<String, String>> entrySet() {
+        public Set<Entry<String, String>> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -483,7 +483,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         @Override
-		public Iterator<Map.Entry<String, String>> iterator() {
+        public Iterator<Map.Entry<String, String>> iterator() {
             return new Iterator<Map.Entry<String, String>>() {
 
                 Iterator<Map.Entry<String, String>> iter = properties.entrySet().iterator();
@@ -550,9 +550,9 @@ public class User implements Cacheable, Externalizable, Result {
      * (non-Javadoc)
      * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
      */
-	@Override
-	public String getUID()
-	{
-		return username;
-	}
+    @Override
+    public String getUID()
+    {
+        return username;
+    }
 }

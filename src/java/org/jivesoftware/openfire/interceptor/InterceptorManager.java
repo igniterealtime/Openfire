@@ -46,7 +46,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class InterceptorManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(InterceptorManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(InterceptorManager.class);
 
     private static InterceptorManager instance = new InterceptorManager();
 

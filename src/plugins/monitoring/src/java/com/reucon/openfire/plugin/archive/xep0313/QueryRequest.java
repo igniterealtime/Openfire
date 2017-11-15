@@ -17,9 +17,9 @@ public class QueryRequest {
     private XmppResultSet resultSet;
     private JID archive;
 
-	public QueryRequest(Element queryElement, JID archive) {
+    public QueryRequest(Element queryElement, JID archive) {
 
-		this.archive = archive;
+        this.archive = archive;
 
         if (queryElement.attribute("queryid") != null)
         {
@@ -28,7 +28,7 @@ public class QueryRequest {
 
         Element xElement = queryElement.element(QName.get("x", DataForm.NAMESPACE));
         if(xElement != null) {
-        	this.dataForm = new DataForm(xElement);
+            this.dataForm = new DataForm(xElement);
         }
 
         Element setElement = queryElement.element(QName.get("set", XmppResultSet.NAMESPACE));
@@ -37,22 +37,22 @@ public class QueryRequest {
             resultSet = new XmppResultSet(setElement);
         }
 
-	}
+    }
 
-	public String getQueryid() {
-		return queryid;
-	}
+    public String getQueryid() {
+        return queryid;
+    }
 
-	public DataForm getDataForm() {
-		return dataForm;
-	}
+    public DataForm getDataForm() {
+        return dataForm;
+    }
 
     public XmppResultSet getResultSet() {
         return resultSet;
     }
 
     public JID getArchive() {
-    	return archive;
+        return archive;
     }
 
 }

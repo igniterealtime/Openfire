@@ -33,7 +33,7 @@ import org.xmpp.packet.Packet;
  */
 public class PacketTransporterImpl extends BasicModule  {
 
-	private static final Logger Log = LoggerFactory.getLogger(PacketTransporterImpl.class);
+    private static final Logger Log = LoggerFactory.getLogger(PacketTransporterImpl.class);
 
     /**
      * The handler that does the actual delivery (could be a channel instead)
@@ -98,7 +98,7 @@ public class PacketTransporterImpl extends BasicModule  {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         xmppServer = server;
         deliverer = server.getPacketDeliverer();

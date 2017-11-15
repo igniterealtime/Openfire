@@ -82,7 +82,7 @@ public class DefaultRouter extends RequestRouter {
      * @return True if the router was able to route the request
      */
     @Override
-	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         for (RequestQueue requestQueue : workgroup.getRequestQueues()) {
             // Skip queues that doesn't have agents at the moment
             if (requestQueue != null && requestQueue.isOpened()) {

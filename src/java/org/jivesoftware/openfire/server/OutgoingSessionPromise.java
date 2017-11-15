@@ -58,7 +58,7 @@ import org.xmpp.packet.Presence;
  */
 public class OutgoingSessionPromise implements RoutableChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
+    private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
 
     private static OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
@@ -300,23 +300,23 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     replies.add( reply );
                 }
                 else if (packet instanceof Presence) {
-                	// workaround for OF-23. "undo" the 'setFrom' to a bare JID 
-                	// by sending the error to all available resources.
-                	final List<JID> routes = new ArrayList<>();
-                	if (from.getResource() == null || from.getResource().trim().length() == 0) {
-                    	routes.addAll(routingTable.getRoutes(from, null));
+                    // workaround for OF-23. "undo" the 'setFrom' to a bare JID 
+                    // by sending the error to all available resources.
+                    final List<JID> routes = new ArrayList<>();
+                    if (from.getResource() == null || from.getResource().trim().length() == 0) {
+                        routes.addAll(routingTable.getRoutes(from, null));
                     } else {
-                    	routes.add(from);
+                        routes.add(from);
                     }
-                	
-                	for (JID route : routes) {
-	                    Presence reply = new Presence();
-	                    reply.setID(packet.getID());
-	                    reply.setTo(route);
-	                    reply.setFrom(to);
-	                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    
+                    for (JID route : routes) {
+                        Presence reply = new Presence();
+                        reply.setID(packet.getID());
+                        reply.setTo(route);
+                        reply.setFrom(to);
+                        reply.setError(PacketError.Condition.remote_server_not_found);
 
-	                    replies.add( reply );
+                        replies.add( reply );
                     }
                 }
                 else if (packet instanceof Message) {

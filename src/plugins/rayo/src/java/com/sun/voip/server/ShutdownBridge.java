@@ -37,7 +37,7 @@ import java.net.InetAddress;
 public class ShutdownBridge {
 
     public static void main(String[] args) {
-	String serverName = null;
+    String serverName = null;
 
         if (args.length == 1) {
             serverName = args[0];
@@ -46,30 +46,30 @@ public class ShutdownBridge {
                 serverName = InetAddress.getLocalHost().getHostName();
             } catch (Exception e) {
                 Logger.error(
-		    "ShudownBridge:  Can't get Local Host's IP Address!  "
+            "ShudownBridge:  Can't get Local Host's IP Address!  "
                     + e.getMessage());
                 System.exit(0);
             }
         }
 
-	int serverPort = Integer.getInteger(
-	    "com.sun.voip.server.BRIDGE_SERVER_PORT", 6666).intValue();
+    int serverPort = Integer.getInteger(
+        "com.sun.voip.server.BRIDGE_SERVER_PORT", 6666).intValue();
 
-	try {
-	    Logger.println("Connecting to " + serverName + ":" + serverPort);
+    try {
+        Logger.println("Connecting to " + serverName + ":" + serverPort);
 
-	    Socket socket = new Socket(serverName, serverPort);
+        Socket socket = new Socket(serverName, serverPort);
 
-	    String request = new String("SHUTDOWN\n\n");
-	    socket.getOutputStream().write(request.getBytes());
-	    socket.getOutputStream().flush();
-	    Thread.sleep(1000);	  // give command a chance to happen
-	} catch (IOException e) {
-	} catch (Exception e) {
-	    System.err.println("ShutdownBridge:  Can't create socket " 
-		+ serverName + ":" + serverPort + e.getMessage());
-	    return;
-	}
+        String request = new String("SHUTDOWN\n\n");
+        socket.getOutputStream().write(request.getBytes());
+        socket.getOutputStream().flush();
+        Thread.sleep(1000);	  // give command a chance to happen
+    } catch (IOException e) {
+    } catch (Exception e) {
+        System.err.println("ShutdownBridge:  Can't create socket " 
+        + serverName + ":" + serverPort + e.getMessage());
+        return;
+    }
     }
 
 }

@@ -62,14 +62,14 @@ public class ClusteredCache implements Cache {
     }
 
     public void addEntryListener(EntryListener listener, boolean includeValue) {
-    	registrations.put(listener, map.addEntryListener(listener, includeValue));
+        registrations.put(listener, map.addEntryListener(listener, includeValue));
     }
 
     public void removeEntryListener(EntryListener listener) {
-    	String registrationId = registrations.get(listener);
-    	if (registrationId != null) {
-    		map.removeEntryListener(registrationId);
-    	}
+        String registrationId = registrations.get(listener);
+        if (registrationId != null) {
+            map.removeEntryListener(registrationId);
+        }
     }
 
     // Cache Interface
@@ -83,12 +83,12 @@ public class ClusteredCache implements Cache {
     }
 
     public Object put(Object key, Object object) {
-    	if (object == null) { return null; }
+        if (object == null) { return null; }
         return map.put(key, object, hazelcastLifetimeInSeconds, TimeUnit.SECONDS);
     }
 
     public Object get(Object key) {
-    	numberOfGets++;
+        numberOfGets++;
         return map.get(key);
     }
 
@@ -101,8 +101,8 @@ public class ClusteredCache implements Cache {
     }
 
     public int size() {
-    	LocalMapStats stats = map.getLocalMapStats();
-    	return (int) (stats.getOwnedEntryCount() + stats.getBackupEntryCount());
+        LocalMapStats stats = map.getLocalMapStats();
+        return (int) (stats.getOwnedEntryCount() + stats.getBackupEntryCount());
     }
 
     public boolean containsKey(Object key) {
@@ -134,16 +134,16 @@ public class ClusteredCache implements Cache {
     }
 
     public long getCacheHits() {
-    	return map.getLocalMapStats().getHits();
+        return map.getLocalMapStats().getHits();
     }
 
     public long getCacheMisses() {
-    	long hits = map.getLocalMapStats().getHits();
-    	return numberOfGets > hits ? numberOfGets - hits : 0;
+        long hits = map.getLocalMapStats().getHits();
+        return numberOfGets > hits ? numberOfGets - hits : 0;
     }
 
     public int getCacheSize() {
-    	LocalMapStats stats = map.getLocalMapStats();
+        LocalMapStats stats = map.getLocalMapStats();
         return (int) (stats.getOwnedEntryMemoryCost() + stats.getBackupEntryMemoryCost());
     }
 
@@ -152,7 +152,7 @@ public class ClusteredCache implements Cache {
     }
 
     public void setMaxCacheSize(int maxSize) {
-    	CacheFactory.setMaxSizeProperty(getName(), maxSize);
+        CacheFactory.setMaxSizeProperty(getName(), maxSize);
     }
 
     public long getMaxLifetime() {
@@ -160,7 +160,7 @@ public class ClusteredCache implements Cache {
     }
 
     public void setMaxLifetime(long maxLifetime) {
-    	CacheFactory.setMaxLifetimeProperty(getName(), maxLifetime);
+        CacheFactory.setMaxLifetimeProperty(getName(), maxLifetime);
     }
 
     public void destroy() {
@@ -168,28 +168,28 @@ public class ClusteredCache implements Cache {
     }
 
     public boolean lock(Object key, long timeout) {
-    	boolean result = true;
-    	if (timeout < 0) {
-    		map.lock(key);
-    	} else if (timeout == 0) {
-    		result = map.tryLock(key);
-    	} else {
-    		try {
-    			result = map.tryLock(key, timeout, TimeUnit.MILLISECONDS);
-    		} catch (InterruptedException e) {
-    			logger.error("Failed to get cluster lock", e);
-    			result = false;
-    		}
-    	}
+        boolean result = true;
+        if (timeout < 0) {
+            map.lock(key);
+        } else if (timeout == 0) {
+            result = map.tryLock(key);
+        } else {
+            try {
+                result = map.tryLock(key, timeout, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Failed to get cluster lock", e);
+                result = false;
+            }
+        }
         return result;
     }
 
     public boolean unlock(Object key) {
-    	boolean result = true;
+        boolean result = true;
          try { map.unlock(key); }
          catch (IllegalMonitorStateException e) {
-        	 logger.error("Falied to release cluster lock", e);
-        	 result = false;
+             logger.error("Falied to release cluster lock", e);
+             result = false;
          }
          return result;
     }

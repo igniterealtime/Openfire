@@ -45,7 +45,7 @@ import org.xmpp.packet.Presence;
  */
 public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
-	private static final Logger Log = LoggerFactory.getLogger(ContentFilterPlugin.class);
+    private static final Logger Log = LoggerFactory.getLogger(ContentFilterPlugin.class);
 
     /**
      * The expected value is a boolean, if true the user identified by the value

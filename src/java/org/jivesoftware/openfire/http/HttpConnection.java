@@ -107,11 +107,11 @@ public class HttpConnection {
      */
     public void deliverBody(String body, boolean async) throws HttpConnectionClosedException, IOException {
         // We only want to use this function once so we will close it when the body is delivered.
-    	synchronized (this) {
-	        if (isClosed) {
-	            throw new HttpConnectionClosedException("The http connection is no longer " +
-	                    "available to deliver content");
-	        }
+        synchronized (this) {
+            if (isClosed) {
+                throw new HttpConnectionClosedException("The http connection is no longer " +
+                        "available to deliver content");
+            }
             isClosed = true;
         }
 
@@ -157,9 +157,9 @@ public class HttpConnection {
         return sslCertificates;
     }
 
-	@Override
-	public String toString() {
-		return (session != null ? session.toString() : "[Anonymous]")
-				+ " rid: " + this.getRequestId();
-	}
+    @Override
+    public String toString() {
+        return (session != null ? session.toString() : "[Anonymous]")
+                + " rid: " + this.getRequestId();
+    }
 }

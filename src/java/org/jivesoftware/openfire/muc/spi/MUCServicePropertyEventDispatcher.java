@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MUCServicePropertyEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(MUCServicePropertyEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(MUCServicePropertyEventDispatcher.class);
 
     private static Set<MUCServicePropertyEventListener> listeners =
             new CopyOnWriteArraySet<>();

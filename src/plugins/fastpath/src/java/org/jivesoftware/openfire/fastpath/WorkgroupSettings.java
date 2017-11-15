@@ -37,8 +37,8 @@ import java.sql.ResultSet;
  */
 public class WorkgroupSettings {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupSettings.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupSettings.class);
+    
     private static final String LOAD_SETTINGS =
             "SELECT value FROM fpSetting WHERE workgroupName=? AND namespace=?";
     private static final String INSERT_SETTINGS =

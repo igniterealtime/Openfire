@@ -49,7 +49,7 @@ import org.xmpp.packet.StreamError;
 // TODO implement TLS and observe org.jivesoftware.openfire.session.ConnectionSettings.Component.TLS_POLICY
 public class LocalComponentSession extends LocalSession implements ComponentSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalComponentSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalComponentSession.class);
 
     private LocalExternalComponent component;
     /**
@@ -189,18 +189,18 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }
 
     @Override
-	boolean canProcess(Packet packet) {
+    boolean canProcess(Packet packet) {
         return true;
     }
 
     @Override
-	void deliver(Packet packet) throws PacketException {
+    void deliver(Packet packet) throws PacketException {
         component.deliver(packet);
     }
 
@@ -413,7 +413,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return super.toString() + " - subdomains: " + subdomains;
         }
 

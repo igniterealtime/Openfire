@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
  */
 abstract public class RequestFilterFactory {
 
-	private static final Logger Log = LoggerFactory.getLogger(RequestFilterFactory.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(RequestFilterFactory.class);
+    
     /** <p>The factory to be used.</p> */
     private static RequestFilterFactory factory;
 

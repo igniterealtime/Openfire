@@ -22,7 +22,7 @@
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-	String deleteID = ParamUtils.getParameter(request,"deleteID");
+    String deleteID = ParamUtils.getParameter(request,"deleteID");
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
     {
@@ -76,14 +76,14 @@
 
             lNode.deleteItems(Arrays.asList(pi));
 
-	        // Log the event
-	        webManager.logEvent("Delete item ID: " + deleteID +  ", from node ID: " + nodeID, "Publisher: " + pi.getPublisher().toBareJID());
-	        // Done, so redirect
-	        response.sendRedirect("pubsub-node-items.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8")
-	            + "&deleteSuccess=true"
-	            + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
-	            + "&ownerOfDeleted=" + URLEncoder.encode(pi.getPublisher().toBareJID(), "UTF-8"));
-	        return;
+            // Log the event
+            webManager.logEvent("Delete item ID: " + deleteID +  ", from node ID: " + nodeID, "Publisher: " + pi.getPublisher().toBareJID());
+            // Done, so redirect
+            response.sendRedirect("pubsub-node-items.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8")
+                + "&deleteSuccess=true"
+                + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
+                + "&ownerOfDeleted=" + URLEncoder.encode(pi.getPublisher().toBareJID(), "UTF-8"));
+            return;
         }
     }
 
@@ -210,7 +210,7 @@
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
                 </a>
-	        </td>
+            </td>
         </tr>
         </c:forEach>
     </tbody>

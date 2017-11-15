@@ -105,11 +105,11 @@ public class GaduGaduBuddy extends TransportBuddy {
     }
     
     public void setBuddyGroups(List<String> groups) {
-    	this.groups = groups;
+        this.groups = groups;
     }
     
     public void setBuddyNickname(String nickname) {
-    	this.nickname = nickname;
+        this.nickname = nickname;
     }
     
 }

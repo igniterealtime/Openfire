@@ -17,8 +17,8 @@ import org.xmpp.packet.JID;
 
 public class ComponentList implements IQResultListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(ComponentList.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(ComponentList.class);
+    
     private static ComponentList instance = new ComponentList();
     private XMPPServer server = XMPPServer.getInstance();
     private RoutingTable routingTable = server.getRoutingTable();

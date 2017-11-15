@@ -75,7 +75,7 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         }
     }
 
-	@Override
+    @Override
     public void setHostname( String fqdn )
     {
         if ( fqdn == null || fqdn.isEmpty() )
@@ -88,11 +88,11 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         }
     }
 
-	@Override
+    @Override
     public String getXMPPDomain()
-	{
+    {
         return JiveGlobals.getProperty("xmpp.domain", getHostname() ).toLowerCase();
-	}
+    }
 
     @Override
     public Date getLastStarted() {

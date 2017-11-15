@@ -13,7 +13,7 @@
     boolean success = request.getParameter("success") != null;
     String searchName = ParamUtils.getParameter(request, "searchname");
     boolean searchEnabled = ParamUtils.getBooleanParameter(request, "searchEnabled");
-	boolean groupOnly = ParamUtils.getBooleanParameter(request, "groupOnly");
+    boolean groupOnly = ParamUtils.getBooleanParameter(request, "groupOnly");
     
     SearchPlugin plugin = (SearchPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("search");
 
@@ -35,7 +35,7 @@
                     }
                 }
                 plugin.setExcludedFields(excludedFields);
-				plugin.setGroupOnly(groupOnly);
+                plugin.setGroupOnly(groupOnly);
                 response.sendRedirect("search-props-edit-form.jsp?success=true");
                 return;
             }

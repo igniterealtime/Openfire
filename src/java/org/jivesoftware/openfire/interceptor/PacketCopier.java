@@ -53,7 +53,7 @@ import org.xmpp.packet.Presence;
  */
 public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PacketCopier.class);
+    private static final Logger Log = LoggerFactory.getLogger(PacketCopier.class);
 
     private final static PacketCopier instance = new PacketCopier();
 
@@ -211,7 +211,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
     private class ProcessPacketsTask extends TimerTask {
         @Override
-		public void run() {
+        public void run() {
             try {
                 // Notify components of intercepted packets
                 processPackets();

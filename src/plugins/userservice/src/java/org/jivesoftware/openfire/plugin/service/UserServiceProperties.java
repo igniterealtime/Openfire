@@ -14,25 +14,25 @@ import org.jivesoftware.openfire.plugin.UserServicePluginNG;
 @Path("userService/properties")
 public class UserServiceProperties {
 
-	private UserServicePluginNG plugin;
+    private UserServicePluginNG plugin;
 
-	@PostConstruct
-	public void init() {
-		plugin = UserServicePluginNG.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        plugin = UserServicePluginNG.getInstance();
+    }
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	@Path("/{key}")
-	public UserEntities getUsersByPropertyKey(@PathParam("key") String key) throws ServiceException {
-		return plugin.getUserEntitiesByProperty(key, null);
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @Path("/{key}")
+    public UserEntities getUsersByPropertyKey(@PathParam("key") String key) throws ServiceException {
+        return plugin.getUserEntitiesByProperty(key, null);
+    }
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	@Path("/{key}/{value}")
-	public UserEntities getUsersByPropertyKeyValue(@PathParam("key") String key, @PathParam("value") String value)
-			throws ServiceException {
-		return plugin.getUserEntitiesByProperty(key, value);
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @Path("/{key}/{value}")
+    public UserEntities getUsersByPropertyKeyValue(@PathParam("key") String key, @PathParam("value") String value)
+            throws ServiceException {
+        return plugin.getUserEntitiesByProperty(key, value);
+    }
 }

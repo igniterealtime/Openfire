@@ -36,7 +36,7 @@ import java.util.Properties;
  */
 public class DefaultConnectionProvider implements ConnectionProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultConnectionProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultConnectionProvider.class);
 
     private Properties settings;
     private String driver;
@@ -380,7 +380,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         try {
             ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
             SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);

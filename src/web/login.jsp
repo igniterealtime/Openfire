@@ -26,29 +26,29 @@
             return "index.jsp";
         }
         else {
-        	if (url.startsWith("/")) {
-        		return url;
-        	}
-        	try {
-        		URL u = new URL(url);
-	        	StringBuilder s = new StringBuilder();
-	        	if (u.getPath().equals("")) {
-	        		s.append("/");
-	        	} else {
-	        		s.append(u.getPath());
-	        	}
-	        	if (u.getQuery() != null) {
-	        		s.append('?');
-	        		s.append(u.getQuery());
-	        	}
-	        	if (u.getRef() != null) {
-	        		s.append('#');
-	        		s.append(u.getRef());
-	        	}
-	            return s.toString();
-        	} catch(Exception e) {
-        		return "index.jsp";
-        	}
+            if (url.startsWith("/")) {
+                return url;
+            }
+            try {
+                URL u = new URL(url);
+                StringBuilder s = new StringBuilder();
+                if (u.getPath().equals("")) {
+                    s.append("/");
+                } else {
+                    s.append(u.getPath());
+                }
+                if (u.getQuery() != null) {
+                    s.append('?');
+                    s.append(u.getQuery());
+                }
+                if (u.getRef() != null) {
+                    s.append('#');
+                    s.append(u.getRef());
+                }
+                return s.toString();
+            } catch(Exception e) {
+                return "index.jsp";
+            }
         }
     }
 %>
@@ -143,11 +143,11 @@
             LoginLimitManager.getInstance().recordFailedAttempt(username, request.getRemoteAddr());
             // Provide a special message if the user provided something containing @
             if (username.contains("@")){
-        	    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.lookslikeemail"));            	
+                errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.lookslikeemail"));            	
             } else {
-        	    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
+                errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
             }
-    	}
+        }
     }
 
     // Escape HTML tags in username to prevent cross-site scripting attacks. This
@@ -160,13 +160,13 @@
 
 <html>
 <head>
-	<title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /></title>
-	<script language="JavaScript" type="text/javascript">
-		<!--
-		// break out of frames
-		if (self.parent.frames.length != 0) {
-			self.parent.location=document.location;
-		}
+    <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /></title>
+    <script language="JavaScript" type="text/javascript">
+        <!--
+        // break out of frames
+        if (self.parent.frames.length != 0) {
+            self.parent.location=document.location;
+        }
         function updateFields(el) {
             if (el.checked) {
                 document.loginForm.username.disabled = true;
@@ -178,8 +178,8 @@
                 document.loginForm.username.focus();
             }
         }
-		//-->
-	</script>
+        //-->
+    </script>
     <link rel="stylesheet" href="style/global.css" type="text/css">
     <link rel="stylesheet" href="style/login.css" type="text/css">
 </head>
@@ -272,7 +272,7 @@
 <script language="JavaScript" type="text/javascript">
 <!--
     if (document.loginForm.username.value == '')  {
-	    document.loginForm.username.focus();
+        document.loginForm.username.focus();
     } else {
         document.loginForm.password.focus();
     }

@@ -53,7 +53,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processIQ(final IQ packet) {
+    protected void processIQ(final IQ packet) {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
@@ -70,13 +70,13 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processMessage(final Message packet) throws UnauthorizedException {
+    protected void processMessage(final Message packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
 
     @Override
-	protected void processPresence(final Presence packet) throws UnauthorizedException {
+    protected void processPresence(final Presence packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
@@ -104,7 +104,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	boolean processUnknowPacket(Element doc) {
+    boolean processUnknowPacket(Element doc) {
         String tag = doc.getName();
         if ("route".equals(tag)) {
             // Process stanza wrapped by the route packet
@@ -123,22 +123,22 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:connectionmanager";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return false;
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         return false;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession
@@ -152,7 +152,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	void startTLS() throws Exception {
+    void startTLS() throws Exception {
         connection.startTLS(false);
     }
 }

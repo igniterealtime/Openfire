@@ -41,19 +41,19 @@ public class SpeexEncoder {
     private boolean bigEndian = true;
 
     public SpeexEncoder(int sampleRate, int channels) 
-	    throws SpeexException {
+        throws SpeexException {
 
-	this.sampleRate = sampleRate;
-	this.channels = channels;
+    this.sampleRate = sampleRate;
+    this.channels = channels;
 
         if (sampleRate > 32000) {
             throw new SpeexException(
-		"Speex cannot be used with sample rate " + sampleRate); 
+        "Speex cannot be used with sample rate " + sampleRate); 
         }
 
-	speexEncoder = new org.xiph.speex.SpeexEncoder();
+    speexEncoder = new org.xiph.speex.SpeexEncoder();
 
-	int mode = 0;
+    int mode = 0;
 
         String s = "Narrow Band";
 
@@ -67,44 +67,44 @@ public class SpeexEncoder {
             mode++;         // ultra wide band
         }
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("Initializing Speex encoder using "
                 + sampleRate + "/" + channels + " " + s);
-	}
+    }
 
         if (speexEncoder.init(mode, 0, sampleRate, channels) == false) {
             throw new SpeexException(
-		"Speex encoder initialization failed!");
-	}
+        "Speex encoder initialization failed!");
+    }
 
-	try {
-	    speexEncoder.setBigEndian(true);
-	} catch (Exception e) {
-	    bigEndian = false;
-	}
+    try {
+        speexEncoder.setBigEndian(true);
+    } catch (Exception e) {
+        bigEndian = false;
+    }
 
         speexEncoder.getEncoder().setVbr(true);
 
         pcmPacketSize = 2 * channels * speexEncoder.getFrameSize();;
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println("speex frame size "
                 + speexEncoder.getFrameSize()
                 + " pcmPacketSize " + pcmPacketSize);
-	}
+    }
     }
 
     public void setQuality(int quality) {
-	speexEncoder.getEncoder().setQuality(quality);
+    speexEncoder.getEncoder().setQuality(quality);
     }
 
     public void setComplexity(int complexity) {
-	// XXX setting complexity to 0 breaks it horribly!
-	speexEncoder.getEncoder().setComplexity(complexity);
+    // XXX setting complexity to 0 breaks it horribly!
+    speexEncoder.getEncoder().setComplexity(complexity);
     }
 
     public int getPcmPacketSize() {
-	return pcmPacketSize;
+    return pcmPacketSize;
     }
 
     /*
@@ -112,80 +112,80 @@ public class SpeexEncoder {
      * Return the length of the encoded data.
      */
     public int encode(int[] inData, byte[] outData, int outOffset) 
-	    throws SpeexException {
+        throws SpeexException {
 
-	return encode(AudioConversion.intsToBytes(inData), outData, 
-	    outOffset);
+    return encode(AudioConversion.intsToBytes(inData), outData, 
+        outOffset);
     }
 
     public int encode(byte[] inData, byte[] outData, int outOffset)
-	    throws SpeexException {
+        throws SpeexException {
 
         if (Logger.logLevel == -59) {
-	    Logger.logLevel = 3;
+        Logger.logLevel = 3;
 
-	    Util.dump("encode input:  length " 
-		+ inData.length, inData, 0, 16);
-	}
+        Util.dump("encode input:  length " 
+        + inData.length, inData, 0, 16);
+    }
 
-	long start = CurrentTime.getTime();
+    long start = CurrentTime.getTime();
 
-	if (bigEndian == false) {
-	    /*
-	     * The latest version of JSpeex only understands little endian
-	     */
-	    byte[] data = new byte[inData.length];
+    if (bigEndian == false) {
+        /*
+         * The latest version of JSpeex only understands little endian
+         */
+        byte[] data = new byte[inData.length];
 
             for (int i = 0; i < data.length; i += 2) {
-	        data[i] = inData[i + 1];
-	        data[i + 1] = inData[i];
-	    }
+            data[i] = inData[i + 1];
+            data[i + 1] = inData[i];
+        }
 
-	    inData = data;
-	}
+        inData = data;
+    }
 
-	try {
+    try {
             speexEncoder.processData(inData, 0, inData.length);
-	} catch (Exception e) {
-	    Logger.println("inData.length " + inData.length
-		+ " outData.length " + outData.length
-		+ " outOffset " + outOffset);
+    } catch (Exception e) {
+        Logger.println("inData.length " + inData.length
+        + " outData.length " + outData.length
+        + " outOffset " + outOffset);
 
-	    e.printStackTrace();
-	    throw new SpeexException("SpeexEncode:  " + e.getMessage());
-	}
+        e.printStackTrace();
+        throw new SpeexException("SpeexEncode:  " + e.getMessage());
+    }
 
-	int encSize = speexEncoder.getProcessedDataByteSize();
+    int encSize = speexEncoder.getProcessedDataByteSize();
 
         encodes++;
         encodeTime += (CurrentTime.getTime() - start);
         bytesEncoded += inData.length;
 
-	speexEncoder.getProcessedData(outData, outOffset);
+    speexEncoder.getProcessedData(outData, outOffset);
 
         if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
-	    Util.dump("encodeData output: " + encSize, outData, 0, encSize);
-	}
+        Util.dump("encodeData output: " + encSize, outData, 0, encSize);
+    }
 
-	return encSize;
+    return encSize;
     }
 
     public int getEncodes() {
-	return encodes;
+    return encodes;
     }
 
     public int getBytesEncoded() {
-	return bytesEncoded;
+    return bytesEncoded;
     }
 
     public long getEncodeTime() {
-	return encodeTime;
+    return encodeTime;
     }
 
     public void resetStatistics() {
-	encodes = 0;
-	bytesEncoded = 0;
-	encodeTime = 0;
+    encodes = 0;
+    bytesEncoded = 0;
+    encodeTime = 0;
     }
 
 }

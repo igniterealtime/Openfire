@@ -39,55 +39,55 @@
 
 
 <form name="f" action="debugger-conf.jsp">
-	<div class="jive-contentBoxHeader">
-		Debug connections
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input id="rb01" type="checkbox" name="c2s" <%= (c2s ? "checked" : "") %>/>
-			</td>
-			<td width="99%">
-				<label for="rb01">
-					Client (default port)
-				</label>
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input id="rb02" type="checkbox" name="ssl" <%= (ssl ? "checked" : "") %>/>
-			</td>
-			<td width="99%">
-				<label for="rb02">
-					Client (old SSL port)
-				</label>
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input id="rb03" type="checkbox" name="extcomp" <%= (extcomp ? "checked" : "") %>/>
-			</td>
-			<td width="99%">
-				<label for="rb03">
-					External Component
-				</label>
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap>
-				<input id="rb04" type="checkbox" name="cm" <%= (cm ? "checked" : "") %>/>
-			</td>
-			<td width="99%">
-				<label for="rb04">
-					Connection Manager
-				</label>
-			</td>
-		</tr>
-		</tbody>
-		</table>
-	</div>
+    <div class="jive-contentBoxHeader">
+        Debug connections
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb01" type="checkbox" name="c2s" <%= (c2s ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb01">
+                    Client (default port)
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb02" type="checkbox" name="ssl" <%= (ssl ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb02">
+                    Client (old SSL port)
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb03" type="checkbox" name="extcomp" <%= (extcomp ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb03">
+                    External Component
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb04" type="checkbox" name="cm" <%= (cm ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb04">
+                    Connection Manager
+                </label>
+            </td>
+        </tr>
+        </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 

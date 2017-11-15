@@ -320,13 +320,13 @@ public class ServerDialback {
 
             // Process the answer from the Receiving Server
             try {
-            	while (true) {
-	                Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(), TimeUnit.MILLISECONDS);
-	                if (doc == null) {
-	                    log.debug( "Failed to authenticate domain: Time out waiting for validation response." );
-	                    return false;
-	                }
-	                else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                while (true) {
+                    Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(), TimeUnit.MILLISECONDS);
+                    if (doc == null) {
+                        log.debug( "Failed to authenticate domain: Time out waiting for validation response." );
+                        return false;
+                    }
+                    else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                         if ( "valid".equals(doc.attributeValue("type")) ) {
                             log.debug( "Authenticated succeeded!" );
                             return true;
@@ -334,11 +334,11 @@ public class ServerDialback {
                             log.debug( "Failed to authenticate domain: the validation response was received, but did not grant authentication." );
                             return false;
                         }
-	                }
-	                else {
-	                    log.warn( "Ignoring unexpected answer while waiting for dialback validation: " + doc.asXML() );
-	                }
-            	}
+                    }
+                    else {
+                        log.warn( "Ignoring unexpected answer while waiting for dialback validation: " + doc.asXML() );
+                    }
+                }
             }
             catch (InterruptedException e) {
                 log.debug( "Failed to authenticate domain: An interrupt was received while waiting for validation response (is Openfire shutting down?)" );
@@ -417,7 +417,7 @@ public class ServerDialback {
                     return null;
                 }
                 else {
-                	Log.debug("ServerDialback: Received an invalid/unknown packet while trying to process an incoming session: {}", doc.asXML());
+                    Log.debug("ServerDialback: Received an invalid/unknown packet while trying to process an incoming session: {}", doc.asXML());
                     // The remote server sent an invalid/unknown packet
                     connection.deliverRawText(
                             new StreamError(StreamError.Condition.invalid_xml).toXML());
@@ -435,7 +435,7 @@ public class ServerDialback {
 
         }
         else {
-        	Log.debug("ServerDialback: Received a stanza in an invalid namespace while trying to process an incoming session: {}", xpp.getNamespace("db"));
+            Log.debug("ServerDialback: Received a stanza in an invalid namespace while trying to process an incoming session: {}", xpp.getNamespace("db"));
             connection.deliverRawText(
                     new StreamError(StreamError.Condition.invalid_namespace).toXML());
             // Close the underlying connection

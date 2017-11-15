@@ -215,52 +215,52 @@
 <form name="f" action="user-create.jsp" method="get">
     <input type="hidden" name="csrf" value="${csrf}">
 
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="user.create.new_user" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-		<tr>
-			<td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
-			<td width="99%">
-				<input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>"
-				 id="usernametf" autocomplete="off">
-			</td>
-		</tr>
-		<tr>
-			<td width="1%" nowrap><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
-			<td width="99%">
-				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
-				 id="nametf">
-			</td>
-		</tr>
-		<tr>
-			<td width="1%" nowrap>
-				<label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
-			<td width="99%">
-				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
-				 id="emailtf">
-			</td>
-		</tr>
-		<tr>
-			<td nowrap>
-				<label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
-			</td>
-			<td width="99%">
-				<input type="password" name="password" value="" size="20" maxlength="75"
-				 id="passtf">
-			</td>
-		</tr>
-		<tr>
-			<td width="1%" nowrap>
-				<label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
-			</td>
-			<td width="99%">
-				<input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
-				 id="confpasstf">
-			</td>
-		</tr>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="user.create.new_user" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+        <tr>
+            <td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
+            <td width="99%">
+                <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>"
+                 id="usernametf" autocomplete="off">
+            </td>
+        </tr>
+        <tr>
+            <td width="1%" nowrap><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
+            <td width="99%">
+                <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
+                 id="nametf">
+            </td>
+        </tr>
+        <tr>
+            <td width="1%" nowrap>
+                <label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
+            <td width="99%">
+                <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
+                 id="emailtf">
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>
+                <label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
+            </td>
+            <td width="99%">
+                <input type="password" name="password" value="" size="20" maxlength="75"
+                 id="passtf">
+            </td>
+        </tr>
+        <tr>
+            <td width="1%" nowrap>
+                <label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
+            </td>
+            <td width="99%">
+                <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
+                 id="confpasstf">
+            </td>
+        </tr>
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
         <tr>
             <td class="c1">
@@ -274,17 +274,17 @@
         <% } %>
         <tr>
 
-			<td colspan="2" style="padding-top: 10px;">
-				<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
-				<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
-				<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
-		</tr>
-		</tbody>
-		</table>
+            <td colspan="2" style="padding-top: 10px;">
+                <input type="submit" name="create" value="<fmt:message key="user.create.create" />">
+                <input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
+                <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
+        </tr>
+        </tbody>
+        </table>
 
-	</div>
+    </div>
 
-	<span class="jive-description">
+    <span class="jive-description">
     * <fmt:message key="user.create.requied" />
     </span>
 

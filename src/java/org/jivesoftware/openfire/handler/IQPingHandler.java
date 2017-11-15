@@ -35,46 +35,46 @@ import org.xmpp.packet.IQ.Type;
  * @see <a href="http://www.xmpp.org/extensions/xep-0199.html">XEP-0199:XMPP Ping</a>
  */
 public class IQPingHandler extends IQHandler implements ServerFeaturesProvider {
-	
-	public static final String ELEMENT_NAME = "ping";
+    
+    public static final String ELEMENT_NAME = "ping";
 
-	public static final String NAMESPACE = "urn:xmpp:ping";
-	
-	private final IQHandlerInfo info;
+    public static final String NAMESPACE = "urn:xmpp:ping";
+    
+    private final IQHandlerInfo info;
 
-	/**
-	 * Constructs a new handler that will process XMPP Ping request.
-	 */
-	public IQPingHandler() {
-		super("XMPP Server Ping Handler");
-		info = new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
-	}
+    /**
+     * Constructs a new handler that will process XMPP Ping request.
+     */
+    public IQPingHandler() {
+        super("XMPP Server Ping Handler");
+        info = new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
+    }
 
-	/*
-	 * @see
-	 * org.jivesoftware.openfire.handler.IQHandler#handleIQ(org.xmpp.packet.IQ)
-	 */
-	@Override
-	public IQ handleIQ(IQ packet) {
-		if (packet.getType().equals(Type.get)) {
-			return IQ.createResultIQ(packet);
-		}
-		return null;
-	}
+    /*
+     * @see
+     * org.jivesoftware.openfire.handler.IQHandler#handleIQ(org.xmpp.packet.IQ)
+     */
+    @Override
+    public IQ handleIQ(IQ packet) {
+        if (packet.getType().equals(Type.get)) {
+            return IQ.createResultIQ(packet);
+        }
+        return null;
+    }
 
-	/*
-	 * @see org.jivesoftware.openfire.handler.IQHandler#getInfo()
-	 */
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
-	}
+    /*
+     * @see org.jivesoftware.openfire.handler.IQHandler#getInfo()
+     */
+    @Override
+    public IQHandlerInfo getInfo() {
+        return info;
+    }
 
-	/*
-	 * @see org.jivesoftware.openfire.disco.ServerFeaturesProvider#getFeatures()
-	 */
-	@Override
-	public Iterator<String> getFeatures() {
-		return Collections.singleton(NAMESPACE).iterator();
-	}
+    /*
+     * @see org.jivesoftware.openfire.disco.ServerFeaturesProvider#getFeatures()
+     */
+    @Override
+    public Iterator<String> getFeatures() {
+        return Collections.singleton(NAMESPACE).iterator();
+    }
 }

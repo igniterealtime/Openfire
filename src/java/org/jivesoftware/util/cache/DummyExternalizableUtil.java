@@ -203,17 +203,17 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
 
     @Override
     public void writeSerializableCollection(DataOutput out, Collection<? extends Serializable> value)
-	    throws IOException {
-    	// Do nothing
-	}
-	
-	@Override
-	public int readSerializableCollection(DataInput in, Collection<? extends Serializable> value,
-	                                    ClassLoader loader) throws IOException {
-		// Do nothing
-		return 0;
-	}
-	
+        throws IOException {
+        // Do nothing
+    }
+    
+    @Override
+    public int readSerializableCollection(DataInput in, Collection<? extends Serializable> value,
+                                        ClassLoader loader) throws IOException {
+        // Do nothing
+        return 0;
+    }
+    
     @Override
     public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
         // Do nothing

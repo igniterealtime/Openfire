@@ -1,5 +1,5 @@
 <%@ page import="java.util.*,
-				 org.jivesoftware.util.*"
+                 org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
 

@@ -43,8 +43,8 @@ import org.xmpp.packet.Message;
  */
 public class HistoryRequest {
 
-	private static final Logger Log = LoggerFactory.getLogger(HistoryRequest.class);
-	private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
+    private static final Logger Log = LoggerFactory.getLogger(HistoryRequest.class);
+    private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
     private int maxChars = -1;
     private int maxStanzas = -1;

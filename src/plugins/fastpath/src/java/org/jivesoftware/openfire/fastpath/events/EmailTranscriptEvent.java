@@ -47,7 +47,7 @@ import org.xmpp.packet.JID;
  */
 public class EmailTranscriptEvent implements WorkgroupEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(EmailTranscriptEvent.class);
+    private static final Logger Log = LoggerFactory.getLogger(EmailTranscriptEvent.class);
 
     public EmailTranscriptEvent() {
         WorkgroupEventDispatcher.addListener(this);

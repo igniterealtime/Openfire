@@ -1028,7 +1028,7 @@ public class LdapManager {
 
             // NOTE: this assumes that the username has already been JID-unescaped
             NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), 
-            		new String[] {sanitizeSearchFilter(username)},
+                    new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
             if (debug) {
@@ -1922,7 +1922,7 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim) {
-    	return retrieveList(attribute, searchFilter, startIndex, numResults, suffixToTrim, false);
+        return retrieveList(attribute, searchFilter, startIndex, numResults, suffixToTrim, false);
     }
 
     /**
@@ -2321,20 +2321,20 @@ public class LdapManager {
                 char c = value.charAt(i);
 
                 switch(c) {
-	            	case '!':		result.append("\\21");	break;
-	            	case '&':		result.append("\\26");	break;
-	            	case '(':		result.append("\\28");	break;
-	            	case ')':		result.append("\\29");	break;
-	            	case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;
-	            	case ':':		result.append("\\3a");	break;
-	            	case '\\':		result.append("\\5c");	break;
-	            	case '|':		result.append("\\7c");	break;
-	            	case '~':		result.append("\\7e");	break;
-	            	case '\u0000':	result.append("\\00");	break;
-            	default:
-            		if (c <= 0x7f) {
+                    case '!':		result.append("\\21");	break;
+                    case '&':		result.append("\\26");	break;
+                    case '(':		result.append("\\28");	break;
+                    case ')':		result.append("\\29");	break;
+                    case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;
+                    case ':':		result.append("\\3a");	break;
+                    case '\\':		result.append("\\5c");	break;
+                    case '|':		result.append("\\7c");	break;
+                    case '~':		result.append("\\7e");	break;
+                    case '\u0000':	result.append("\\00");	break;
+                default:
+                    if (c <= 0x7f) {
                         // regular 1-byte UTF-8 char
-            			result.append(String.valueOf(c));
+                        result.append(String.valueOf(c));
                     }
                     else if (c >= 0x080) {
                         // higher-order 2, 3 and 4-byte UTF-8 chars

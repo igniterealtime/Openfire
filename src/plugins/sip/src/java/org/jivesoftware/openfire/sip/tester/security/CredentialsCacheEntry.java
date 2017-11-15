@@ -57,5 +57,5 @@ class CredentialsCacheEntry {
      */
     boolean processResponse(String responseBranchID) {
         return transactionHistory.remove(responseBranchID);
-	}
+    }
 }

@@ -16,941 +16,941 @@
  
 Strophe.addConnectionPlugin('rayo', 
 {
-	_connection: null,
-
-	init: function(conn) 
-	{
-		this.callbacks = {};
-		this._connection = conn;
-
-		Strophe.addNamespace('RAYO_CORE', "urn:xmpp:rayo:1");
-		Strophe.addNamespace('RAYO_CALL', "urn:xmpp:rayo:call:1");    
-		Strophe.addNamespace('RAYO_MIXER', "urn:xmpp:rayo:mixer:1");     
-		Strophe.addNamespace('RAYO_EXT', "urn:xmpp:rayo:ext:1");     
-		Strophe.addNamespace('RAYO_EXT_COMPLETE', "urn:xmpp:rayo:ext:complete:1");     
-		Strophe.addNamespace('RAYO_INPUT', "urn:xmpp:rayo:input:1");     
-		Strophe.addNamespace('RAYO_INPUT_COMPLETE', "urn:xmpp:rayo:input:complete:1");    
-		Strophe.addNamespace('RAYO_OUTPUT', "urn:xmpp:rayo:output:1");     
-		Strophe.addNamespace('RAYO_OUTPUT_COMPLETE', "urn:xmpp:rayo:output:complete:1"); 
-		Strophe.addNamespace('RAYO_PROMPT', "urn:xmpp:rayo:prompt:1");          
-		Strophe.addNamespace('RAYO_RECORD', "urn:xmpp:rayo:record:1");     
-		Strophe.addNamespace('RAYO_RECORD_COMPLETE', "urn:xmpp:rayo:record:complete:1");    
-		Strophe.addNamespace('RAYO_SAY', "urn:xmpp:tropo:say:1");     
-		Strophe.addNamespace('RAYO_SAY_COMPLETE', "urn:xmpp:tropo:say:complete:1");    
-		Strophe.addNamespace('RAYO_HANDSET', "urn:xmpp:rayo:handset:1");     
-		Strophe.addNamespace('RAYO_HANDSET_COMPLETE', "urn:xmpp:rayo:handset:complete:1");     
-
-		this._connection.addHandler(this._handlePresence.bind(this), null,"presence", null, null, null);   
-		
-		console.log('Rayo plugin initialised');		
-	},
-
-	phone: function(callbacks)
-	{
-		this.callbacks = callbacks;
-	},
-
-	hangup: function(callId)
-	{
-		//console.log("hangup " + callId);
-		
-		var that = this;
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("hangup", {xmlns: Strophe.NS.RAYO_CORE});  
-
-		//console.log(iq.toString());
-			
-		that._connection.sendIQ(iq, function() 
-		{
-			that._onhook();			
-			
-		}, function(error) {
-
-			that._onhook();	
-			
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');		
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("hangup failure " + errorcode);  
-			});
-		});	
-	},
-
-	digit: function(callId, key)
-	{
-		//console.log("Rayo plugin digit " + callId + " " + key);
-		
-		var that = this;		
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("dtmf", {xmlns: Strophe.NS.RAYO_CORE, tones: key});  
-			
-		that._connection.sendIQ(iq, null, function(error)
-		{
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dtmf failure " + errorcode); 				
-			});		     	
-		});			
-	},
-	
-	join: function(mixer, headers)
-	{
-		//console.log('Rayo plugin join ' + mixer);
-		//console.log(headers)		
-		
-		if (this._isOffhook()) this._onhook();
-		
-		var that = this;		
-
-		this._offhook(mixer, headers, function()
-		{
-			var iq = $iq({to: mixer + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
-
-			//console.log(iq.toString());
-		
-			that._connection.sendIQ(iq, null, function(error)
-			{
-				$('error', error).each(function() 
-				{
-					var errorcode = $(this).attr('code');
-					if (that.callbacks && that.callbacks.onError) that.callbacks.onError("join failure " + errorcode); 				
-				});		     	
-			});
-		});		
-	},
-
-	leave: function(mixer)
-	{
-		//console.log('Rayo plugin leave ' + mixer);		
-		
-		var that = this;
-		var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("unjoin", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
-
-		//console.log(iq.toString());
-		
-		that._connection.sendIQ(iq, function(response) 
-		{
-			that._onhook();			
-		
-		}, function(error) {
-		
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("unjoin failure " + errorcode); 				
-			});		     	
-		});	
-	},
-
-	hold: function(callId)
-	{
-		//console.log("hold " + callId);
-		
-		var that = this;
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("hold", {xmlns: Strophe.NS.RAYO_HANDSET});  
-
-		//console.log(iq.toString());
-			
-		that._connection.sendIQ(iq, function() 
-		{
-			that._onhook();			
-			
-		}, function(error) {		
-			
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');		
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("hold failure " + errorcode);  
-			});
-		});	
-	},
-	
-	redirect: function(to, headers)
-	{
-		//console.log("redirect " + to);
-		
-		var that = this;
-		var iq = $iq({to: this._connection.domain, from: this._connection.jid, type: "get"}).c("redirect", {xmlns: Strophe.NS.RAYO_CORE, to: to});  
-
-		if (headers)
-		{	
-			var hdrs = Object.getOwnPropertyNames(headers)
-
-			for (var i=0; i< hdrs.length; i++)
-			{
-				var name = hdrs[i];
-				var value = headers[name];
-
-				if (value) iq.c("header", {name: name, value: value}).up(); 
-			}
-		}
-			
-		//console.log(iq.toString());
-			
-		that._connection.sendIQ(iq, function(response) 
-		{
-			$('ref', response).each(function() 
-			{
-				callId = $(this).attr('id');
-				
-				if (that._isOffhook()) that._onhook();	
-				if (that.callbacks && that.callbacks.onRedirect) that.callbacks.onRedirect(callId);	
-			});
-			
-		}, function(error) {	
-			
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');		
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("redirect failure " + errorcode);  
-			});
-		});	
-	},	
-	
-	say: function(callId, message)
-	{
-		//console.log('Rayo plugin say ' + callId + " " + message);
-		
-		var that = this;		
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( "say", {xmlns: Strophe.NS.RAYO_SAY}).t(message);  
-			
-		that._connection.sendIQ(iq, function(response)
-		{
-			$('ref', response).each(function() 
-			{
-				var sayId = $(this).attr('id');
-				var node = Strophe.escapeNode(callId + "@" + that._connection.domain + "/" + sayId);
-
-				if (that.callbacks && that.callbacks.onSay) that.callbacks.onSay(
-				{
-					sayId: sayId,
-					
-					pause: function()
-					{
-						that._connection.sendIQ($iq({to: node + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c( "pause", {xmlns: Strophe.NS.RAYO_SAY}), function(response){}, null, function(error){
-
-							$('error', error).each(function() 
-							{
-								var errorcode = $(this).attr('code');
-								if (that.callbacks && that.callbacks.onError) that.callbacks.onError("pause failure " + errorcode); 				
-							});						
-						});
-					},
-					
-					resume: function()
-					{
-						that._connection.sendIQ($iq({to: node + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c( "resume", {xmlns: Strophe.NS.RAYO_SAY}), null, function(error){
-
-							$('error', error).each(function() 
-							{
-								var errorcode = $(this).attr('code');
-								if (that.callbacks && that.callbacks.onError) that.callbacks.onError("resume failure " + errorcode); 				
-							});						
-						
-						});					
-					}									
-				});	
-			});		
-		
-		}, function(error) {	
-		
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("say failure " + errorcode); 				
-			});		     	
-		});		
-		
-	},
-
-	record: function(callId, fileName)
-	{
-		var to = "file:" + fileName + ".au";
-		console.log('Rayo plugin record ' + callId + " " + to);
-		
-		var that = this;		
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("record", {xmlns: Strophe.NS.RAYO_RECORD, to: to});  
-			
-		that._connection.sendIQ(iq, null, function(error)
-		{
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("record failure " + errorcode); 				
-			});		     	
-		});		
-		
-	},
-	
-	private: function(callId, flag)
-	{
-		//console.log('Rayo plugin private ' + callId + " " + flag);
-		
-		var that = this;		
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( flag ? "private" : "public", {xmlns: Strophe.NS.RAYO_HANDSET});  
-			
-		that._connection.sendIQ(iq, null, function(error)
-		{
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("private/public failure " + errorcode); 				
-			});		     	
-		});		
-		
-	},	
-	
-	mute: function(callId, flag)
-	{
-		//console.log('Rayo plugin mute ' + callId + " " + flag);		
-
-		var that = this;		
-		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( flag ? "mute" : "unmute", {xmlns: Strophe.NS.RAYO_HANDSET});  
-			
-		that._connection.sendIQ(iq, null, function(error)
-		{
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("mute/unmute failure " + errorcode); 				
-			});		     	
-		});		
-	
-	},	
-	
-	answer: function(callId, mixer, headers, callFrom)
-	{
-		//console.log('Rayo plugin accept ' + callId + " " + mixer);
-
-		var that = this;
-		
-		if (this._isOffhook()) this._onhook();
-		if (!headers) headers = {};
-		
-		headers.call_id = callId;
-
-		//console.log(headers)
-
-		this._offhook(mixer, headers, function()
-		{
-			var iq = $iq({to: callId + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c("answer", {xmlns: Strophe.NS.RAYO_CORE});  
-			
-			var hdrs = Object.getOwnPropertyNames(headers)
-
-			for (var i=0; i< hdrs.length; i++)
-			{
-				var name = hdrs[i];
-				var value = headers[name];
-
-				if (value) iq.c("header", {name: name, value: value}).up(); 
-			}
-
-
-			iq.c("header", {name: "caller_id", value: callFrom}).up();
-			iq.c("header", {name: "mixer_name", value: mixer}).up();			
-
-			//console.log(iq.toString());
-
-			that._connection.sendIQ(iq, null, function(error)
-			{
-				$('error', error).each(function() 
-				{
-					var errorcode = $(this).attr('code');			
-					if (that._isOffhook()) that._onhook();
-					if (that.callbacks && that.callbacks.onError) that.callbacks.onError("answer failure " + errorcode); 
-				});
-			});
-		});		
-	},	
-	
-	dial: function(from, to, headers)
-	{
-		//console.log('Rayo plugin dial ' + from + " " + to);
-		//console.log(headers)
-				
-		var that = this;
-		
-		var mixer = "rayo-outgoing-" + Math.random().toString(36).substr(2,9);				
-
-		if (this._isOffhook()) this._onhook();		
-		
-		this._offhook(mixer, headers, function()
-		{
-			that._dial(mixer, from, to, headers);
-		});		
-	},	
-		
-	voicebridge: function(mixer, from, to, headers)
-	{
-		console.log('Rayo plugin voicebridge ' + mixer);	
-		
-		var that = this;		
-
-		var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
-
-		//console.log(iq.toString());
-
-		this._connection.sendIQ(iq, function(response) 
-		{
-			that._dial(mixer, from, to, headers);		
-		
-		}, function(error) {
-		
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("voicebridge failure " + errorcode); 				
-			});		     	
-		});		
-	},
-	
-	_dial: function(mixer, from, to, headers)
-	{
-		//console.log('Rayo plugin _dial ' + from + " " + to);
-		//console.log(headers)
-				
-		var that = this;
-		
-		var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
-
-		if (headers)
-		{	
-			var hdrs = Object.getOwnPropertyNames(headers)
-
-			for (var i=0; i< hdrs.length; i++)
-			{
-				var name = hdrs[i];
-				var value = headers[name];
-
-				if (value) iq.c("header", {name: name, value: value}).up(); 
-			}
-		}
-
-		//console.log(iq.toString());
-
-		that._connection.sendIQ(iq, function(response) {
-
-			$('ref', response).each(function() 
-			{
-				callId = $(this).attr('id');
-
-				if (that.callbacks && that.callbacks.onAccept)
-				{
-					that.callbacks.onAccept(
-					{  		
-						digit: 	  function(tone) 	{that.digit(callId, tone);},
-						redirect: function(to) 		{that.redirect(to, headers);},	
-						say: 	  function(message)	{that.say(callId, message);},	
-						record:	  function(file)	{that.record(callId, file);},								
-						hangup:   function() 		{that.hangup(callId);},
-						hold: 	  function() 		{that.hold(callId);},							
-						join: 	  function() 		{that.join(mixer, headers);},
-						leave: 	  function() 		{that.leave(mixer);},	
-						mute: 	  function(flag) 	{that.mute(callId, flag);},
-						private:  function() 		{that.private(callId, !this.privateCall);},							
-
-						from: 	from,
-						to:	to,	
-						id:	callId,
-						privateCall: false
-					});
-				}					
-			});
-
-		}, function(error){
-
-			//console.log(error);			
-
-			$('error', error).each(function() 
-			{
-				var errorcode = $(this).attr('code');						
-				if (that._isOffhook()) that._onhook();
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dial failure " + errorcode);  
-			});
-
-			that._onhook();
-		});		
-	},
-	
-	_isOffhook: function() 
-	{
-		return this.localStream != null;
-	},
-	
-	_offhook: function(mixer, headers, action) 
-	{
-		//console.log('Rayo plugin offhook ' + mixer);
-		//console.log(headers);
-		
-		var that = this;
-		var sipuri = (headers && headers.sip_handset) ? headers.sip_handset : (that.callbacks.sip_handset ? that.callbacks.sip_handset : null);		
-
-		if (sipuri)
-		{
-			var group = (headers && headers.group_name) ? headers.group_name : "";
-			var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
-			
-
-			var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET,  sipuri: sipuri, mixer: mixer, group: group, codec: codec});  
-
-			//console.log(iq.toString())
-
-			that._connection.sendIQ(iq, function(response)
-			{	
-				//console.log(response)
-				
-				$('ref', response).each(function() 
-				{
-					that.handsetId = $(this).attr('id');
-					that.handsetUri = $(this).attr('uri');
-
-					if (action) action();				
-				}); 
-
-			}, function (error) {
-
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("offhook failure");		
-			});
-		
-		} else {
-
-			navigator.webkitGetUserMedia({audio:true, video:false}, function(stream) 
-			{
-				that.localStream = stream;
-				that._offhook1(mixer, headers, action);
-
-			}, function(error) {
-
-				if (that.callbacks && that.callbacks.onError) that.callbacks.onError(error);
-			}); 
-		}
-	},
-	
-	_offhook1: function(mixer, headers, action)
-	{
-		//console.log('Rayo plugin _offhook1 ' + mixer);
-
-		var that = this;
-		
-		var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
-
-		var peerConstraints = {'optional': [{'DtlsSrtpKeyAgreement': 'false'}]};		
-		
-		that.pc1 = new webkitRTCPeerConnection(null, peerConstraints);		
-		that.pc2 = new webkitRTCPeerConnection(null, peerConstraints);
-
-		that.pc2.onaddstream = function(e)
-		{
-			that.audio = new Audio();
-			that.audio.autoplay = true;	
-			that.audio.src = webkitURL.createObjectURL(e.stream)
-		};		
-		
-		that.pc1.addStream(that.localStream);
-
-		that.pc1.createOffer(function(desc)
-		{
-			//console.log(desc.sdp);	
-			that.pc1.setLocalDescription(desc);
-
-			var sdpObj1 = WebrtcSDP.parseSDP(desc.sdp);
-			
-			if (codec == "PCMU")
-				sdpObj1.contents[0].codecs = [{clockrate: "8000", id: "0", name: "PCMU", channels: 1}];
-			else
-				sdpObj1.contents[0].codecs = [{clockrate: "48000", id: "111", name: "opus", channels: 2}];
-  	
-			var sdp = WebrtcSDP.buildSDP(sdpObj1);
-			//console.log(sdp);
-			that.cryptoSuite = sdpObj1.contents[0].crypto['crypto-suite'];
-			that.remoteCrypto = sdpObj1.contents[0].crypto['key-params'].substring(7);
-
-			that.pc2.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : sdp}));		
-			that.pc2.createAnswer(function(desc)
-			{
-				that.pc2.setLocalDescription(desc);
-
-				var sdpObj2 = WebrtcSDP.parseSDP(desc.sdp);
-				//console.log(desc.sdp);
-				//console.log(sdpObj2);
-				that.localCrypto = sdpObj2.contents[0].crypto['key-params'].substring(7);
-				var sdp = WebrtcSDP.buildSDP(sdpObj2);
-				//console.log(sdp);			
-				that.pc1.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp : sdp}));				
-				that._offhook2(mixer, headers, action);
-
-			});	
-		});		
-	},
-
-	_offhook2: function(mixer, headers, action)
-	{
-		//console.log('Rayo plugin _offhook2 ' + this.cryptoSuite + " " + this.localCrypto + " " + this.remoteCrypto + " " + mixer);
-		
-		var that = this;
-		var stereo = (headers && headers.stereo_pan) ? headers.stereo_pan : (that.callbacks.stereo_pan ? that.callbacks.stereo_pan : "0");
-		var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
-		var group = (headers && headers.group_name) ? headers.group_name : "";
-		var callid = (headers && headers.call_id) ? headers.call_id : "";		
-		
-		var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET, cryptoSuite: that.cryptoSuite, localCrypto: that.localCrypto, remoteCrypto: that.remoteCrypto, codec: codec, stereo: stereo, mixer: mixer, group: group, callid: callid});  
-		
-		//console.log(iq.toString())
-
-		that._connection.sendIQ(iq, function(response)
-		{			
-			$('ref', response).each(function() 
-			{
-				that.handsetId = $(this).attr('id');
-				that.handsetUri = $(this).attr('uri');
-				that.relayHost = $(this).attr('host');
-				that.relayLocalPort = $(this).attr('localport');
-				that.relayRemotePort = $(this).attr('remoteport');
-
-				that.pc2.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayRemotePort + " typ host generation 0"}));
-				that.pc1.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayLocalPort + " typ host generation 0"}));				
-
-				if (action) action();				
-			}); 
-			
-		}, function (error) {
-			
-			if (that.callbacks && that.callbacks.onError) that.callbacks.onError("offhook failure");		
-		}); 	
-	},
-
-	_onhook: function()
-	{
-		//console.log('Rayo plugin onhook ' + this.handsetId);
-		
-		that = this;	
-		var server = this.handsetId + "@" + this._connection.domain;
-		
-		this._connection.sendIQ($iq({to: server, from: this._connection.jid, type: "get"}).c('onhook', {xmlns: Strophe.NS.RAYO_HANDSET}), function(response)
-		{
-			that.localStream.stop();
-			that.localStream = null;
-
-			that.pc1.close();
-			that.pc2.close();
-			that.pc1 = null;
-			that.pc2 = null;			
-		});   
-		
-	},
-
-
-	_handlePresence: function(presence) 
-	{
-		//console.log('Rayo plugin handlePresence');
-		//console.log(presence);
-		
-		var that = this;
-		var from = $(presence).attr('from');
-		var headers = {}
-		
-		$(presence).find('header').each(function() 
-		{		
-			var name = $(this).attr('name');
-			var value = $(this).attr('value');
-			
-			headers[name] = value;
-		});
-			
-
-		$(presence).find('complete').each(function() 
-		{		
-			$(this).find('success').each(function() 
-			{				
-				if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET_COMPLETE)
-				{
-					that._onhook();				
-				}
-				
-				if ($(this).attr('xmlns') == Strophe.NS.RAYO_SAY_COMPLETE)
-				{				
-					var sayId = Strophe.getResourceFromJid(from);
-					if (that.callbacks && that.callbacks.onSayComplete) that.callbacks.onSayComplete(sayId);					
-				}
-			});
-		});
-
-		$(presence).find('offer').each(function() 
-		{		
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{				
-				var callFrom = $(this).attr('from');
-				var callTo = $(this).attr('to');				
-				var callId = Strophe.getNodeFromJid(from);
-				
-				var mixer = headers.mixer_name;
-				
-				var call = {		
-					digit: 	  function(tone) 	{that.digit(callId, tone);},
-					redirect: function(to) 		{that.redirect(to, headers);},	
-					say: 	  function(message)	{that.say(callId, message);},	
-					record:	  function(file)	{that.record(callId, file);},						
-					hangup:   function() 		{that.hangup(callId);},
-					hold: 	  function() 		{that.hold(callId);},						
-					answer:   function() 		{that.answer(callId, mixer, headers, callFrom);},
-					join: 	  function() 		{that.join(mixer, headers);},	
-					leave: 	  function() 		{that.leave(mixer);},	
-					mute: 	  function(flag) 	{that.mute(callId, flag);},
-					private:  function() 		{that.private(callId, !this.privateCall);},					
-					
-					from: 	callFrom,
-					to:	callTo,
-					id:	callId,
-					privateCall: false					
-				}				
-
-				if (that.callbacks && that.callbacks.onOffer) that.callbacks.onOffer(call, headers);
-								
-				var iq = $iq({to: from, from: that._connection.jid, type: "get"}).c("accept", {xmlns: Strophe.NS.RAYO_CORE});  
-
-				var hdrs = Object.getOwnPropertyNames(headers)
-
-				for (var i=0; i< hdrs.length; i++)
-				{
-					var name = hdrs[i];
-					var value = headers[name];
-
-					if (value) iq.c("header", {name: name, value: value}).up(); 
-				}
-			
-				iq.c("header", {name: "caller_id", value: callFrom}).up();
-				iq.c("header", {name: "mixer_name", value: mixer}).up();				
-				
-				//console.log(iq.toString());
-
-				that._connection.sendIQ(iq, null, function(error)
-				{
-					$('error', error).each(function() 
-					{
-						var errorcode = $(this).attr('code');				
-						if (that.callbacks && that.callbacks.onError) that.callbacks.onError("accept failure " + errorcode);     	
-					});
-				});				
-			}
-		})
-		
-		$(presence).find('joined').each(function() 
-		{
-			//console.log(presence);	
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{	
-				var callId = Strophe.getNodeFromJid(from);			
-				var jid = Strophe.unescapeNode(callId);
-				var mixer = $(this).attr('mixer-name');	
-
-				if (jid == that._connection.jid)
-				{
-					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();					
-				}
-				
-				if (that.callbacks && that.callbacks.onJoin) that.callbacks.onJoin(callId, jid, mixer);     					
-			}
-		});
-		
-		$(presence).find('unjoined').each(function() 
-		{
-			//console.log(presence);
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{
-				var callId = Strophe.getNodeFromJid(from);			
-				var jid = Strophe.unescapeNode(callId);
-				var mixer = $(this).attr('mixer-name');				
-				
-				if (jid == that._connection.jid)
-				{
-					if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();					
-				}
-				
-				if (that.callbacks && that.callbacks.onUnjoin) that.callbacks.onUnjoin(callId, jid, mixer);  
-			}
-		});
-		
-		$(presence).find('started-speaking').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
-			}
-		});		
-		
-		$(presence).find('stopped-speaking').each(function() 
-		{
-			//console.log(presence);	
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
-			}
-		});
-				
-		$(presence).find('onhold').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onHold) that.callbacks.onHold(callId);
-			}
-		});
-		
-		$(presence).find('onmute').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onMute) that.callbacks.onMute(callId);
-			}
-		});
-		
-		$(presence).find('offmute').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.offMute) that.callbacks.offMute(callId);
-			}
-		});	
-		
-		$(presence).find('private').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onPrivate) that.callbacks.onPrivate(callId);
-			}
-		});
-		
-		$(presence).find('public').each(function() 
-		{
-			//console.log(presence);		
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{				
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.offPrivate) that.callbacks.offPrivate(callId);
-			}
-		});		
-		
-		$(presence).find('ringing').each(function() 
-		{
-			//console.log(presence);
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{			
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onRing) that.callbacks.onRing(callId, headers);
-			}
-		});
-		
-		$(presence).find('transferring').each(function() 
-		{
-			//console.log(presence);
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{			
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onRedirecting) that.callbacks.onRedirecting(callId);
-			}
-		});
-		
-		$(presence).find('transferred').each(function() 
-		{
-			//console.log(presence);
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
-			{			
-				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onRedirected) that.callbacks.onRedirected(callId);
-			}
-		});		
-		
-		$(presence).find('answered').each(function() 
-		{	
-			//console.log(presence);
-		
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{
-				var callId = Strophe.getNodeFromJid(from);			
-				var jid = Strophe.unescapeNode(headers.call_owner);	
-				
-				var busy = false;
-				
-				if (jid.indexOf('@') > -1 && jid.indexOf('/') > -1)
-				{
-					if (headers.call_action == "join")
-					{
-						busy = jid != that._connection.jid;
-
-					} else {
-
-						busy = jid == that._connection.jid;									
-					}
-				}
-				
-				
-				if (busy)
-				{
-					var mixer = headers.mixer_name;
-					
-					var call = {		
-						digit: 	 function(tone) 	{that.digit(callId, tone);},
-						say: 	 function(message)	{that.say(callId, message);},	
-						record:	 function(file)		{that.record(callId, file);},							
-						hangup:  function() 		{that.hangup(callId);},
-						hold: 	 function() 		{that.hold(callId);},							
-						join: 	 function() 		{that.join(mixer, headers);},	
-						leave: 	 function() 		{that.leave(mixer);},	
-						mute: 	 function(flag) 	{that.mute(callId, flag);},
-						private: function() 		{that.private(callId, !this.privateCall);},						
-
-						id:	callId,
-						from: 	Strophe.getNodeFromJid(jid),
-						privateCall: false											
-					}				
-					if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();						
-					if (that.callbacks && that.callbacks.onBusy) that.callbacks.onBusy(call, headers);					
-
-				} else {
-				
-					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
-					if (that.callbacks && that.callbacks.onAnswer) that.callbacks.onAnswer(callId, headers);
-				}				
-			}
-		});	
-		
-		$(presence).find('end').each(function() 
-		{
-			//console.log(presence);
-			
-			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{			
-				var callId = Strophe.getNodeFromJid(from);
-				that._onhook();				
-				
-				if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();
-				if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);				
-			}
-		});
-		
-		return true;
-	}
+    _connection: null,
+
+    init: function(conn) 
+    {
+        this.callbacks = {};
+        this._connection = conn;
+
+        Strophe.addNamespace('RAYO_CORE', "urn:xmpp:rayo:1");
+        Strophe.addNamespace('RAYO_CALL', "urn:xmpp:rayo:call:1");    
+        Strophe.addNamespace('RAYO_MIXER', "urn:xmpp:rayo:mixer:1");     
+        Strophe.addNamespace('RAYO_EXT', "urn:xmpp:rayo:ext:1");     
+        Strophe.addNamespace('RAYO_EXT_COMPLETE', "urn:xmpp:rayo:ext:complete:1");     
+        Strophe.addNamespace('RAYO_INPUT', "urn:xmpp:rayo:input:1");     
+        Strophe.addNamespace('RAYO_INPUT_COMPLETE', "urn:xmpp:rayo:input:complete:1");    
+        Strophe.addNamespace('RAYO_OUTPUT', "urn:xmpp:rayo:output:1");     
+        Strophe.addNamespace('RAYO_OUTPUT_COMPLETE', "urn:xmpp:rayo:output:complete:1"); 
+        Strophe.addNamespace('RAYO_PROMPT', "urn:xmpp:rayo:prompt:1");          
+        Strophe.addNamespace('RAYO_RECORD', "urn:xmpp:rayo:record:1");     
+        Strophe.addNamespace('RAYO_RECORD_COMPLETE', "urn:xmpp:rayo:record:complete:1");    
+        Strophe.addNamespace('RAYO_SAY', "urn:xmpp:tropo:say:1");     
+        Strophe.addNamespace('RAYO_SAY_COMPLETE', "urn:xmpp:tropo:say:complete:1");    
+        Strophe.addNamespace('RAYO_HANDSET', "urn:xmpp:rayo:handset:1");     
+        Strophe.addNamespace('RAYO_HANDSET_COMPLETE', "urn:xmpp:rayo:handset:complete:1");     
+
+        this._connection.addHandler(this._handlePresence.bind(this), null,"presence", null, null, null);   
+        
+        console.log('Rayo plugin initialised');		
+    },
+
+    phone: function(callbacks)
+    {
+        this.callbacks = callbacks;
+    },
+
+    hangup: function(callId)
+    {
+        //console.log("hangup " + callId);
+        
+        var that = this;
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("hangup", {xmlns: Strophe.NS.RAYO_CORE});  
+
+        //console.log(iq.toString());
+            
+        that._connection.sendIQ(iq, function() 
+        {
+            that._onhook();			
+            
+        }, function(error) {
+
+            that._onhook();	
+            
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');		
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("hangup failure " + errorcode);  
+            });
+        });	
+    },
+
+    digit: function(callId, key)
+    {
+        //console.log("Rayo plugin digit " + callId + " " + key);
+        
+        var that = this;		
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("dtmf", {xmlns: Strophe.NS.RAYO_CORE, tones: key});  
+            
+        that._connection.sendIQ(iq, null, function(error)
+        {
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dtmf failure " + errorcode); 				
+            });		     	
+        });			
+    },
+    
+    join: function(mixer, headers)
+    {
+        //console.log('Rayo plugin join ' + mixer);
+        //console.log(headers)		
+        
+        if (this._isOffhook()) this._onhook();
+        
+        var that = this;		
+
+        this._offhook(mixer, headers, function()
+        {
+            var iq = $iq({to: mixer + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+
+            //console.log(iq.toString());
+        
+            that._connection.sendIQ(iq, null, function(error)
+            {
+                $('error', error).each(function() 
+                {
+                    var errorcode = $(this).attr('code');
+                    if (that.callbacks && that.callbacks.onError) that.callbacks.onError("join failure " + errorcode); 				
+                });		     	
+            });
+        });		
+    },
+
+    leave: function(mixer)
+    {
+        //console.log('Rayo plugin leave ' + mixer);		
+        
+        var that = this;
+        var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("unjoin", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+
+        //console.log(iq.toString());
+        
+        that._connection.sendIQ(iq, function(response) 
+        {
+            that._onhook();			
+        
+        }, function(error) {
+        
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("unjoin failure " + errorcode); 				
+            });		     	
+        });	
+    },
+
+    hold: function(callId)
+    {
+        //console.log("hold " + callId);
+        
+        var that = this;
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("hold", {xmlns: Strophe.NS.RAYO_HANDSET});  
+
+        //console.log(iq.toString());
+            
+        that._connection.sendIQ(iq, function() 
+        {
+            that._onhook();			
+            
+        }, function(error) {		
+            
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');		
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("hold failure " + errorcode);  
+            });
+        });	
+    },
+    
+    redirect: function(to, headers)
+    {
+        //console.log("redirect " + to);
+        
+        var that = this;
+        var iq = $iq({to: this._connection.domain, from: this._connection.jid, type: "get"}).c("redirect", {xmlns: Strophe.NS.RAYO_CORE, to: to});  
+
+        if (headers)
+        {	
+            var hdrs = Object.getOwnPropertyNames(headers)
+
+            for (var i=0; i< hdrs.length; i++)
+            {
+                var name = hdrs[i];
+                var value = headers[name];
+
+                if (value) iq.c("header", {name: name, value: value}).up(); 
+            }
+        }
+            
+        //console.log(iq.toString());
+            
+        that._connection.sendIQ(iq, function(response) 
+        {
+            $('ref', response).each(function() 
+            {
+                callId = $(this).attr('id');
+                
+                if (that._isOffhook()) that._onhook();	
+                if (that.callbacks && that.callbacks.onRedirect) that.callbacks.onRedirect(callId);	
+            });
+            
+        }, function(error) {	
+            
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');		
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("redirect failure " + errorcode);  
+            });
+        });	
+    },	
+    
+    say: function(callId, message)
+    {
+        //console.log('Rayo plugin say ' + callId + " " + message);
+        
+        var that = this;		
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( "say", {xmlns: Strophe.NS.RAYO_SAY}).t(message);  
+            
+        that._connection.sendIQ(iq, function(response)
+        {
+            $('ref', response).each(function() 
+            {
+                var sayId = $(this).attr('id');
+                var node = Strophe.escapeNode(callId + "@" + that._connection.domain + "/" + sayId);
+
+                if (that.callbacks && that.callbacks.onSay) that.callbacks.onSay(
+                {
+                    sayId: sayId,
+                    
+                    pause: function()
+                    {
+                        that._connection.sendIQ($iq({to: node + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c( "pause", {xmlns: Strophe.NS.RAYO_SAY}), function(response){}, null, function(error){
+
+                            $('error', error).each(function() 
+                            {
+                                var errorcode = $(this).attr('code');
+                                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("pause failure " + errorcode); 				
+                            });						
+                        });
+                    },
+                    
+                    resume: function()
+                    {
+                        that._connection.sendIQ($iq({to: node + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c( "resume", {xmlns: Strophe.NS.RAYO_SAY}), null, function(error){
+
+                            $('error', error).each(function() 
+                            {
+                                var errorcode = $(this).attr('code');
+                                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("resume failure " + errorcode); 				
+                            });						
+                        
+                        });					
+                    }									
+                });	
+            });		
+        
+        }, function(error) {	
+        
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("say failure " + errorcode); 				
+            });		     	
+        });		
+        
+    },
+
+    record: function(callId, fileName)
+    {
+        var to = "file:" + fileName + ".au";
+        console.log('Rayo plugin record ' + callId + " " + to);
+        
+        var that = this;		
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("record", {xmlns: Strophe.NS.RAYO_RECORD, to: to});  
+            
+        that._connection.sendIQ(iq, null, function(error)
+        {
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("record failure " + errorcode); 				
+            });		     	
+        });		
+        
+    },
+    
+    private: function(callId, flag)
+    {
+        //console.log('Rayo plugin private ' + callId + " " + flag);
+        
+        var that = this;		
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( flag ? "private" : "public", {xmlns: Strophe.NS.RAYO_HANDSET});  
+            
+        that._connection.sendIQ(iq, null, function(error)
+        {
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("private/public failure " + errorcode); 				
+            });		     	
+        });		
+        
+    },	
+    
+    mute: function(callId, flag)
+    {
+        //console.log('Rayo plugin mute ' + callId + " " + flag);		
+
+        var that = this;		
+        var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c( flag ? "mute" : "unmute", {xmlns: Strophe.NS.RAYO_HANDSET});  
+            
+        that._connection.sendIQ(iq, null, function(error)
+        {
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("mute/unmute failure " + errorcode); 				
+            });		     	
+        });		
+    
+    },	
+    
+    answer: function(callId, mixer, headers, callFrom)
+    {
+        //console.log('Rayo plugin accept ' + callId + " " + mixer);
+
+        var that = this;
+        
+        if (this._isOffhook()) this._onhook();
+        if (!headers) headers = {};
+        
+        headers.call_id = callId;
+
+        //console.log(headers)
+
+        this._offhook(mixer, headers, function()
+        {
+            var iq = $iq({to: callId + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c("answer", {xmlns: Strophe.NS.RAYO_CORE});  
+            
+            var hdrs = Object.getOwnPropertyNames(headers)
+
+            for (var i=0; i< hdrs.length; i++)
+            {
+                var name = hdrs[i];
+                var value = headers[name];
+
+                if (value) iq.c("header", {name: name, value: value}).up(); 
+            }
+
+
+            iq.c("header", {name: "caller_id", value: callFrom}).up();
+            iq.c("header", {name: "mixer_name", value: mixer}).up();			
+
+            //console.log(iq.toString());
+
+            that._connection.sendIQ(iq, null, function(error)
+            {
+                $('error', error).each(function() 
+                {
+                    var errorcode = $(this).attr('code');			
+                    if (that._isOffhook()) that._onhook();
+                    if (that.callbacks && that.callbacks.onError) that.callbacks.onError("answer failure " + errorcode); 
+                });
+            });
+        });		
+    },	
+    
+    dial: function(from, to, headers)
+    {
+        //console.log('Rayo plugin dial ' + from + " " + to);
+        //console.log(headers)
+                
+        var that = this;
+        
+        var mixer = "rayo-outgoing-" + Math.random().toString(36).substr(2,9);				
+
+        if (this._isOffhook()) this._onhook();		
+        
+        this._offhook(mixer, headers, function()
+        {
+            that._dial(mixer, from, to, headers);
+        });		
+    },	
+        
+    voicebridge: function(mixer, from, to, headers)
+    {
+        console.log('Rayo plugin voicebridge ' + mixer);	
+        
+        var that = this;		
+
+        var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+
+        //console.log(iq.toString());
+
+        this._connection.sendIQ(iq, function(response) 
+        {
+            that._dial(mixer, from, to, headers);		
+        
+        }, function(error) {
+        
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("voicebridge failure " + errorcode); 				
+            });		     	
+        });		
+    },
+    
+    _dial: function(mixer, from, to, headers)
+    {
+        //console.log('Rayo plugin _dial ' + from + " " + to);
+        //console.log(headers)
+                
+        var that = this;
+        
+        var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
+
+        if (headers)
+        {	
+            var hdrs = Object.getOwnPropertyNames(headers)
+
+            for (var i=0; i< hdrs.length; i++)
+            {
+                var name = hdrs[i];
+                var value = headers[name];
+
+                if (value) iq.c("header", {name: name, value: value}).up(); 
+            }
+        }
+
+        //console.log(iq.toString());
+
+        that._connection.sendIQ(iq, function(response) {
+
+            $('ref', response).each(function() 
+            {
+                callId = $(this).attr('id');
+
+                if (that.callbacks && that.callbacks.onAccept)
+                {
+                    that.callbacks.onAccept(
+                    {  		
+                        digit: 	  function(tone) 	{that.digit(callId, tone);},
+                        redirect: function(to) 		{that.redirect(to, headers);},	
+                        say: 	  function(message)	{that.say(callId, message);},	
+                        record:	  function(file)	{that.record(callId, file);},								
+                        hangup:   function() 		{that.hangup(callId);},
+                        hold: 	  function() 		{that.hold(callId);},							
+                        join: 	  function() 		{that.join(mixer, headers);},
+                        leave: 	  function() 		{that.leave(mixer);},	
+                        mute: 	  function(flag) 	{that.mute(callId, flag);},
+                        private:  function() 		{that.private(callId, !this.privateCall);},							
+
+                        from: 	from,
+                        to:	to,	
+                        id:	callId,
+                        privateCall: false
+                    });
+                }					
+            });
+
+        }, function(error){
+
+            //console.log(error);			
+
+            $('error', error).each(function() 
+            {
+                var errorcode = $(this).attr('code');						
+                if (that._isOffhook()) that._onhook();
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dial failure " + errorcode);  
+            });
+
+            that._onhook();
+        });		
+    },
+    
+    _isOffhook: function() 
+    {
+        return this.localStream != null;
+    },
+    
+    _offhook: function(mixer, headers, action) 
+    {
+        //console.log('Rayo plugin offhook ' + mixer);
+        //console.log(headers);
+        
+        var that = this;
+        var sipuri = (headers && headers.sip_handset) ? headers.sip_handset : (that.callbacks.sip_handset ? that.callbacks.sip_handset : null);		
+
+        if (sipuri)
+        {
+            var group = (headers && headers.group_name) ? headers.group_name : "";
+            var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
+            
+
+            var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET,  sipuri: sipuri, mixer: mixer, group: group, codec: codec});  
+
+            //console.log(iq.toString())
+
+            that._connection.sendIQ(iq, function(response)
+            {	
+                //console.log(response)
+                
+                $('ref', response).each(function() 
+                {
+                    that.handsetId = $(this).attr('id');
+                    that.handsetUri = $(this).attr('uri');
+
+                    if (action) action();				
+                }); 
+
+            }, function (error) {
+
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError("offhook failure");		
+            });
+        
+        } else {
+
+            navigator.webkitGetUserMedia({audio:true, video:false}, function(stream) 
+            {
+                that.localStream = stream;
+                that._offhook1(mixer, headers, action);
+
+            }, function(error) {
+
+                if (that.callbacks && that.callbacks.onError) that.callbacks.onError(error);
+            }); 
+        }
+    },
+    
+    _offhook1: function(mixer, headers, action)
+    {
+        //console.log('Rayo plugin _offhook1 ' + mixer);
+
+        var that = this;
+        
+        var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
+
+        var peerConstraints = {'optional': [{'DtlsSrtpKeyAgreement': 'false'}]};		
+        
+        that.pc1 = new webkitRTCPeerConnection(null, peerConstraints);		
+        that.pc2 = new webkitRTCPeerConnection(null, peerConstraints);
+
+        that.pc2.onaddstream = function(e)
+        {
+            that.audio = new Audio();
+            that.audio.autoplay = true;	
+            that.audio.src = webkitURL.createObjectURL(e.stream)
+        };		
+        
+        that.pc1.addStream(that.localStream);
+
+        that.pc1.createOffer(function(desc)
+        {
+            //console.log(desc.sdp);	
+            that.pc1.setLocalDescription(desc);
+
+            var sdpObj1 = WebrtcSDP.parseSDP(desc.sdp);
+            
+            if (codec == "PCMU")
+                sdpObj1.contents[0].codecs = [{clockrate: "8000", id: "0", name: "PCMU", channels: 1}];
+            else
+                sdpObj1.contents[0].codecs = [{clockrate: "48000", id: "111", name: "opus", channels: 2}];
+    
+            var sdp = WebrtcSDP.buildSDP(sdpObj1);
+            //console.log(sdp);
+            that.cryptoSuite = sdpObj1.contents[0].crypto['crypto-suite'];
+            that.remoteCrypto = sdpObj1.contents[0].crypto['key-params'].substring(7);
+
+            that.pc2.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : sdp}));		
+            that.pc2.createAnswer(function(desc)
+            {
+                that.pc2.setLocalDescription(desc);
+
+                var sdpObj2 = WebrtcSDP.parseSDP(desc.sdp);
+                //console.log(desc.sdp);
+                //console.log(sdpObj2);
+                that.localCrypto = sdpObj2.contents[0].crypto['key-params'].substring(7);
+                var sdp = WebrtcSDP.buildSDP(sdpObj2);
+                //console.log(sdp);			
+                that.pc1.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp : sdp}));				
+                that._offhook2(mixer, headers, action);
+
+            });	
+        });		
+    },
+
+    _offhook2: function(mixer, headers, action)
+    {
+        //console.log('Rayo plugin _offhook2 ' + this.cryptoSuite + " " + this.localCrypto + " " + this.remoteCrypto + " " + mixer);
+        
+        var that = this;
+        var stereo = (headers && headers.stereo_pan) ? headers.stereo_pan : (that.callbacks.stereo_pan ? that.callbacks.stereo_pan : "0");
+        var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
+        var group = (headers && headers.group_name) ? headers.group_name : "";
+        var callid = (headers && headers.call_id) ? headers.call_id : "";		
+        
+        var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET, cryptoSuite: that.cryptoSuite, localCrypto: that.localCrypto, remoteCrypto: that.remoteCrypto, codec: codec, stereo: stereo, mixer: mixer, group: group, callid: callid});  
+        
+        //console.log(iq.toString())
+
+        that._connection.sendIQ(iq, function(response)
+        {			
+            $('ref', response).each(function() 
+            {
+                that.handsetId = $(this).attr('id');
+                that.handsetUri = $(this).attr('uri');
+                that.relayHost = $(this).attr('host');
+                that.relayLocalPort = $(this).attr('localport');
+                that.relayRemotePort = $(this).attr('remoteport');
+
+                that.pc2.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayRemotePort + " typ host generation 0"}));
+                that.pc1.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayLocalPort + " typ host generation 0"}));				
+
+                if (action) action();				
+            }); 
+            
+        }, function (error) {
+            
+            if (that.callbacks && that.callbacks.onError) that.callbacks.onError("offhook failure");		
+        }); 	
+    },
+
+    _onhook: function()
+    {
+        //console.log('Rayo plugin onhook ' + this.handsetId);
+        
+        that = this;	
+        var server = this.handsetId + "@" + this._connection.domain;
+        
+        this._connection.sendIQ($iq({to: server, from: this._connection.jid, type: "get"}).c('onhook', {xmlns: Strophe.NS.RAYO_HANDSET}), function(response)
+        {
+            that.localStream.stop();
+            that.localStream = null;
+
+            that.pc1.close();
+            that.pc2.close();
+            that.pc1 = null;
+            that.pc2 = null;			
+        });   
+        
+    },
+
+
+    _handlePresence: function(presence) 
+    {
+        //console.log('Rayo plugin handlePresence');
+        //console.log(presence);
+        
+        var that = this;
+        var from = $(presence).attr('from');
+        var headers = {}
+        
+        $(presence).find('header').each(function() 
+        {		
+            var name = $(this).attr('name');
+            var value = $(this).attr('value');
+            
+            headers[name] = value;
+        });
+            
+
+        $(presence).find('complete').each(function() 
+        {		
+            $(this).find('success').each(function() 
+            {				
+                if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET_COMPLETE)
+                {
+                    that._onhook();				
+                }
+                
+                if ($(this).attr('xmlns') == Strophe.NS.RAYO_SAY_COMPLETE)
+                {				
+                    var sayId = Strophe.getResourceFromJid(from);
+                    if (that.callbacks && that.callbacks.onSayComplete) that.callbacks.onSayComplete(sayId);					
+                }
+            });
+        });
+
+        $(presence).find('offer').each(function() 
+        {		
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {				
+                var callFrom = $(this).attr('from');
+                var callTo = $(this).attr('to');				
+                var callId = Strophe.getNodeFromJid(from);
+                
+                var mixer = headers.mixer_name;
+                
+                var call = {		
+                    digit: 	  function(tone) 	{that.digit(callId, tone);},
+                    redirect: function(to) 		{that.redirect(to, headers);},	
+                    say: 	  function(message)	{that.say(callId, message);},	
+                    record:	  function(file)	{that.record(callId, file);},						
+                    hangup:   function() 		{that.hangup(callId);},
+                    hold: 	  function() 		{that.hold(callId);},						
+                    answer:   function() 		{that.answer(callId, mixer, headers, callFrom);},
+                    join: 	  function() 		{that.join(mixer, headers);},	
+                    leave: 	  function() 		{that.leave(mixer);},	
+                    mute: 	  function(flag) 	{that.mute(callId, flag);},
+                    private:  function() 		{that.private(callId, !this.privateCall);},					
+                    
+                    from: 	callFrom,
+                    to:	callTo,
+                    id:	callId,
+                    privateCall: false					
+                }				
+
+                if (that.callbacks && that.callbacks.onOffer) that.callbacks.onOffer(call, headers);
+                                
+                var iq = $iq({to: from, from: that._connection.jid, type: "get"}).c("accept", {xmlns: Strophe.NS.RAYO_CORE});  
+
+                var hdrs = Object.getOwnPropertyNames(headers)
+
+                for (var i=0; i< hdrs.length; i++)
+                {
+                    var name = hdrs[i];
+                    var value = headers[name];
+
+                    if (value) iq.c("header", {name: name, value: value}).up(); 
+                }
+            
+                iq.c("header", {name: "caller_id", value: callFrom}).up();
+                iq.c("header", {name: "mixer_name", value: mixer}).up();				
+                
+                //console.log(iq.toString());
+
+                that._connection.sendIQ(iq, null, function(error)
+                {
+                    $('error', error).each(function() 
+                    {
+                        var errorcode = $(this).attr('code');				
+                        if (that.callbacks && that.callbacks.onError) that.callbacks.onError("accept failure " + errorcode);     	
+                    });
+                });				
+            }
+        })
+        
+        $(presence).find('joined').each(function() 
+        {
+            //console.log(presence);	
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {	
+                var callId = Strophe.getNodeFromJid(from);			
+                var jid = Strophe.unescapeNode(callId);
+                var mixer = $(this).attr('mixer-name');	
+
+                if (jid == that._connection.jid)
+                {
+                    if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();					
+                }
+                
+                if (that.callbacks && that.callbacks.onJoin) that.callbacks.onJoin(callId, jid, mixer);     					
+            }
+        });
+        
+        $(presence).find('unjoined').each(function() 
+        {
+            //console.log(presence);
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {
+                var callId = Strophe.getNodeFromJid(from);			
+                var jid = Strophe.unescapeNode(callId);
+                var mixer = $(this).attr('mixer-name');				
+                
+                if (jid == that._connection.jid)
+                {
+                    if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();					
+                }
+                
+                if (that.callbacks && that.callbacks.onUnjoin) that.callbacks.onUnjoin(callId, jid, mixer);  
+            }
+        });
+        
+        $(presence).find('started-speaking').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
+            }
+        });		
+        
+        $(presence).find('stopped-speaking').each(function() 
+        {
+            //console.log(presence);	
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
+            }
+        });
+                
+        $(presence).find('onhold').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onHold) that.callbacks.onHold(callId);
+            }
+        });
+        
+        $(presence).find('onmute').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onMute) that.callbacks.onMute(callId);
+            }
+        });
+        
+        $(presence).find('offmute').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.offMute) that.callbacks.offMute(callId);
+            }
+        });	
+        
+        $(presence).find('private').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onPrivate) that.callbacks.onPrivate(callId);
+            }
+        });
+        
+        $(presence).find('public').each(function() 
+        {
+            //console.log(presence);		
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {				
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.offPrivate) that.callbacks.offPrivate(callId);
+            }
+        });		
+        
+        $(presence).find('ringing').each(function() 
+        {
+            //console.log(presence);
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {			
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onRing) that.callbacks.onRing(callId, headers);
+            }
+        });
+        
+        $(presence).find('transferring').each(function() 
+        {
+            //console.log(presence);
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {			
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onRedirecting) that.callbacks.onRedirecting(callId);
+            }
+        });
+        
+        $(presence).find('transferred').each(function() 
+        {
+            //console.log(presence);
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+            {			
+                var callId = Strophe.getNodeFromJid(from);
+                if (that.callbacks && that.callbacks.onRedirected) that.callbacks.onRedirected(callId);
+            }
+        });		
+        
+        $(presence).find('answered').each(function() 
+        {	
+            //console.log(presence);
+        
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {
+                var callId = Strophe.getNodeFromJid(from);			
+                var jid = Strophe.unescapeNode(headers.call_owner);	
+                
+                var busy = false;
+                
+                if (jid.indexOf('@') > -1 && jid.indexOf('/') > -1)
+                {
+                    if (headers.call_action == "join")
+                    {
+                        busy = jid != that._connection.jid;
+
+                    } else {
+
+                        busy = jid == that._connection.jid;									
+                    }
+                }
+                
+                
+                if (busy)
+                {
+                    var mixer = headers.mixer_name;
+                    
+                    var call = {		
+                        digit: 	 function(tone) 	{that.digit(callId, tone);},
+                        say: 	 function(message)	{that.say(callId, message);},	
+                        record:	 function(file)		{that.record(callId, file);},							
+                        hangup:  function() 		{that.hangup(callId);},
+                        hold: 	 function() 		{that.hold(callId);},							
+                        join: 	 function() 		{that.join(mixer, headers);},	
+                        leave: 	 function() 		{that.leave(mixer);},	
+                        mute: 	 function(flag) 	{that.mute(callId, flag);},
+                        private: function() 		{that.private(callId, !this.privateCall);},						
+
+                        id:	callId,
+                        from: 	Strophe.getNodeFromJid(jid),
+                        privateCall: false											
+                    }				
+                    if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();						
+                    if (that.callbacks && that.callbacks.onBusy) that.callbacks.onBusy(call, headers);					
+
+                } else {
+                
+                    if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
+                    if (that.callbacks && that.callbacks.onAnswer) that.callbacks.onAnswer(callId, headers);
+                }				
+            }
+        });	
+        
+        $(presence).find('end').each(function() 
+        {
+            //console.log(presence);
+            
+            if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+            {			
+                var callId = Strophe.getNodeFromJid(from);
+                that._onhook();				
+                
+                if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();
+                if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);				
+            }
+        });
+        
+        return true;
+    }
 });
 
 ;(function() {
@@ -1136,16 +1136,16 @@ Strophe.addConnectionPlugin('rayo',
             sdp+="/"+codecObj.channels;
         }
         sdp += "\r\n";
-	if (codecObj.ptime){
-	    sdp+="a=ptime:"+codecObj.ptime;
-	    sdp += "\r\n";
+    if (codecObj.ptime){
+        sdp+="a=ptime:"+codecObj.ptime;
+        sdp += "\r\n";
         } else if (codecObj.name.toLowerCase().indexOf("opus")==0){
-	    sdp+="a=ptime:20\r\n";
-	    sdp+="a=fmtp:"+codecObj.id+" minptime=20 stereo=1\r\n";
-	}
-	if (codecObj.name.toLowerCase().indexOf("telephone-event")==0){
-	    sdp+="a=fmtp:"+codecObj.id+" 0-15\r\n";
-	}
+        sdp+="a=ptime:20\r\n";
+        sdp+="a=fmtp:"+codecObj.id+" minptime=20 stereo=1\r\n";
+    }
+    if (codecObj.name.toLowerCase().indexOf("telephone-event")==0){
+        sdp+="a=fmtp:"+codecObj.id+" 0-15\r\n";
+    }
         return sdp;
     }
 
@@ -1161,7 +1161,7 @@ Strophe.addConnectionPlugin('rayo',
     }
 
     _buildIce= function(ice) {
-	var sdp="";
+    var sdp="";
         if (ice.ufrag) {
             if (!ice.filterLines) {
                 sdp = sdp + "a=ice-ufrag:" + ice.ufrag + "\r\n";
@@ -1169,9 +1169,9 @@ Strophe.addConnectionPlugin('rayo',
             }
             if (ice.options) {
                 sdp = sdp + "a=ice-options:" + ice.options + "\r\n";
-	    }
-	}
-	return sdp;
+        }
+    }
+    return sdp;
     }
 
     _buildSessProps = function(sdpObj) {
@@ -1180,7 +1180,7 @@ Strophe.addConnectionPlugin('rayo',
             sdp = sdp + _buildFingerprint(sdpObj.fingerprint);
         }
         if (sdpObj.ice) {
-	    sdp= sdp + _buildIce(sdpObj.ice);
+        sdp= sdp + _buildIce(sdpObj.ice);
         }
         return sdp;
     }
@@ -1210,7 +1210,7 @@ Strophe.addConnectionPlugin('rayo',
                 sdpObj.rtcp.address + "\r\n";
         }
         if (sdpObj.ice) {
-	    sdp= sdp + _buildIce(sdpObj.ice);
+        sdp= sdp + _buildIce(sdpObj.ice);
         }
 
         var ci = 0;
@@ -1230,9 +1230,9 @@ Strophe.addConnectionPlugin('rayo',
             } else {
                sdp = sdp + "a=sendrecv\r\n";
             }
-		} else {
-				sdp = sdp + "a=sendrecv\r\n";
-		}
+        } else {
+                sdp = sdp + "a=sendrecv\r\n";
+        }
 
 
 
@@ -1265,56 +1265,56 @@ Strophe.addConnectionPlugin('rayo',
 
     WebrtcSDP = {
 
-	getAttributes: function(element) 
-	{
-		var res = {},
-		attr;
-		for(var i = 0, len = element.attributes.length; i < len; i++) {
-		    if(element.attributes.hasOwnProperty(i)) {
-			attr = element.attributes[i];
-			res[attr.name] = attr.value;
-		    }
-		}
-		return res;
-	},
-	
-	each: function( object, callback, args ) 
-	{
-		var name, i = 0,
-			length = object.length,
-			isObj = length === undefined || $.isFunction(object);
+    getAttributes: function(element) 
+    {
+        var res = {},
+        attr;
+        for(var i = 0, len = element.attributes.length; i < len; i++) {
+            if(element.attributes.hasOwnProperty(i)) {
+            attr = element.attributes[i];
+            res[attr.name] = attr.value;
+            }
+        }
+        return res;
+    },
+    
+    each: function( object, callback, args ) 
+    {
+        var name, i = 0,
+            length = object.length,
+            isObj = length === undefined || $.isFunction(object);
 
-		if ( args ) {
-			if ( isObj ) {
-				for ( name in object ) {
-					if ( callback.apply( object[ name ], args ) === false ) {
-						break;
-					}
-				}
-			} else {
-				for ( ; i < length; ) {
-					if ( callback.apply( object[ i++ ], args ) === false ) {
-						break;
-					}
-				}
-			}
+        if ( args ) {
+            if ( isObj ) {
+                for ( name in object ) {
+                    if ( callback.apply( object[ name ], args ) === false ) {
+                        break;
+                    }
+                }
+            } else {
+                for ( ; i < length; ) {
+                    if ( callback.apply( object[ i++ ], args ) === false ) {
+                        break;
+                    }
+                }
+            }
 
-		// A special, fast, case for the most common use of each
-		} else {
-			if ( isObj ) {
-				for ( name in object ) {
-					if ( callback.call( object[ name ], name, object[ name ] ) === false ) {
-						break;
-					}
-				}
-			} else {
-				for ( var value = object[0];
-					i < length && callback.call( value, i, value ) !== false; value = object[++i] ) {}
-			}
-		}
+        // A special, fast, case for the most common use of each
+        } else {
+            if ( isObj ) {
+                for ( name in object ) {
+                    if ( callback.call( object[ name ], name, object[ name ] ) === false ) {
+                        break;
+                    }
+                }
+            } else {
+                for ( var value = object[0];
+                    i < length && callback.call( value, i, value ) !== false; value = object[++i] ) {}
+            }
+        }
 
-		return object;
-	},   
+        return object;
+    },   
 
         buildJingle: function(jingle, blob) {
             var description = "urn:xmpp:jingle:apps:rtp:1";
@@ -1359,7 +1359,7 @@ Strophe.addConnectionPlugin('rayo',
                 }
 
                 // Raw candidates
-	        c = c.up().c('transport',{xmlns:"urn:xmpp:jingle:transports:raw-udp:1"});
+            c = c.up().c('transport',{xmlns:"urn:xmpp:jingle:transports:raw-udp:1"});
                 c = c.c('candidate', {component:'1',
                                       ip: sdpObj.connection.address,
                                       port: sdpObj.media.port}).up();
@@ -1370,18 +1370,18 @@ Strophe.addConnectionPlugin('rayo',
                 }
                 c = c.up();
 
-		// 3 places we might find ice creds - in order of priority:
-		// candidate username
-		// media level icefrag
-		// session level icefrag
-		var iceObj = {};
-		if (sdpObj.candidates[0].username ){
-			iceObj = {ufrag:sdpObj.candidates[0].username,pwd:sdpObj.candidates[0].password};
-		} else if ((sdpObj.ice) && (sdpObj.ice.ufrag)){
-			iceObj = sdpObj.ice;
-		} else if ((blob.session.ice) && (blob.session.ice.ufrag)){
-			iceObj = blob.session.ice;
-		}
+        // 3 places we might find ice creds - in order of priority:
+        // candidate username
+        // media level icefrag
+        // session level icefrag
+        var iceObj = {};
+        if (sdpObj.candidates[0].username ){
+            iceObj = {ufrag:sdpObj.candidates[0].username,pwd:sdpObj.candidates[0].password};
+        } else if ((sdpObj.ice) && (sdpObj.ice.ufrag)){
+            iceObj = sdpObj.ice;
+        } else if ((blob.session.ice) && (blob.session.ice.ufrag)){
+            iceObj = blob.session.ice;
+        }
                 // Ice candidates
                 var transp = {xmlns:"urn:xmpp:jingle:transports:ice-udp:1",
                              pwd: iceObj.pwd,
@@ -1389,26 +1389,26 @@ Strophe.addConnectionPlugin('rayo',
                 if (iceObj.options) {
                     transp.options = iceObj.options;
                 }
-	        c = c.c('transport',transp);
+            c = c.c('transport',transp);
                 WebrtcSDP.util.each(sdpObj.candidates, function() {
                     c = c.c('candidate', this).up();           
                 });
-		// two places to find the fingerprint
-		// media 
-		// session
-		var fp = null;
-		if (sdpObj.fingerprint) {
-		    fp= sdpObj.fingerprint;
-		}else if(blob.session.fingerprint){
-		    fp = blob.session.fingerprint;
-		}
+        // two places to find the fingerprint
+        // media 
+        // session
+        var fp = null;
+        if (sdpObj.fingerprint) {
+            fp= sdpObj.fingerprint;
+        }else if(blob.session.fingerprint){
+            fp = blob.session.fingerprint;
+        }
                 if (fp){
                     c = c.c('fingerprint',{xmlns:"urn:xmpp:tmp:jingle:apps:dtls:0",
-				hash:fp.hash,
+                hash:fp.hash,
                                 required:fp.required});
                     c.t(fp.print);
                     c.up();
-		}
+        }
                 c = c.up().up();
             });
             return c;
@@ -1438,7 +1438,7 @@ Strophe.addConnectionPlugin('rayo',
 
                 $(this).find('description').each(function () {
                   if($(this).attr('xmlns') == "urn:xmpp:jingle:apps:rtp:1"){
-		    var mediaType = $(this).attr('media');
+            var mediaType = $(this).attr('media');
                     mediaObj.type = mediaType;
                     mediaObj.proto = "RTP/SAVPF"; // HACK
                     mediaObj.port = 1000;
@@ -1457,15 +1457,15 @@ Strophe.addConnectionPlugin('rayo',
                         sdpObj['mid'] = $(this).attr('mid');
                     }
                     sdpObj.media = mediaObj;
-		    $(this).find('payload-type').each(function () {
+            $(this).find('payload-type').each(function () {
                         var codec = WebrtcSDP.util.getAttributes(this);
                         //console.log("codec: "+JSON.stringify(codec,null," "));
                         sdpObj.codecs.push(codec);
                         mediaObj.pts.push(codec.id);
                     });
-		  } else {
-	            console.log("skip description with wrong xmlns: "+$(this).attr('xmlns'));
-		  }
+          } else {
+                console.log("skip description with wrong xmlns: "+$(this).attr('xmlns'));
+          }
                 });
 
                 $(this).find('crypto').each(function () {
@@ -1540,7 +1540,7 @@ Strophe.addConnectionPlugin('rayo',
             // Iterate the lines
             var sdpLines = sdpString.split("\r\n");
             for (var sdpLine in sdpLines) {
-            	//console.log("parseSDP sdpLines[sdpLine] " + typeof sdpLines[sdpLine]);
+                //console.log("parseSDP sdpLines[sdpLine] " + typeof sdpLines[sdpLine]);
                 //console.log(sdpLines[sdpLine]);
                 
                 if (typeof sdpLines[sdpLine] != "string") continue;
@@ -1549,8 +1549,8 @@ Strophe.addConnectionPlugin('rayo',
 
                 if (line.type == "o") {
                     contentsObj.session = _parseO(line.contents);
-		    contentsObj.session.ice = {};
-		    sdpObj = contentsObj.session;
+            contentsObj.session.ice = {};
+            sdpObj = contentsObj.session;
                 }
                 if (line.type == "m") {
                     // New m-line, 
@@ -1672,9 +1672,9 @@ Strophe.addConnectionPlugin('rayo',
                 sdp = sdp + "\r\n";
             }
 
-	    if (contentsObj.session){
-	        sdp = sdp + _buildSessProps(contentsObj.session);
-	    }
+        if (contentsObj.session){
+            sdp = sdp + _buildSessProps(contentsObj.session);
+        }
             var contents = contentsObj.contents;
             var ic = 0;
             while (ic + 1 <= contents.length) {

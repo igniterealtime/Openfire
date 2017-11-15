@@ -39,7 +39,7 @@ import org.xmpp.packet.PacketError;
  */
 public class ChatSettingsManager implements WorkgroupEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatSettingsManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatSettingsManager.class);
 
     private static final String GET_SETTINGS =
             "SELECT * FROM fpChatSetting WHERE workgroupNode=?";

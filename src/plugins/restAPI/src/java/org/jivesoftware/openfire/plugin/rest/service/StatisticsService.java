@@ -13,17 +13,17 @@ import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 @Path("restapi/v1/system/statistics")
 public class StatisticsService {
 
-	private StatisticsController controller;
+    private StatisticsController controller;
 
-	@PostConstruct
-	public void init() {
-		controller = StatisticsController.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        controller = StatisticsController.getInstance();
+    }
 
-	@GET
-	@Path("/sessions")
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public SessionsCount getCCS() throws ServiceException {
-		return controller.getConcurentSessions();
-	}
+    @GET
+    @Path("/sessions")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public SessionsCount getCCS() throws ServiceException {
+        return controller.getConcurentSessions();
+    }
 }

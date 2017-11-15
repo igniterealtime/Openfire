@@ -33,8 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public class MetaDataRouter extends RequestRouter {
 
-	private static final Logger Log = LoggerFactory.getLogger(MetaDataRouter.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(MetaDataRouter.class);
+    
     public MetaDataRouter() {
     }
 
@@ -47,12 +47,12 @@ public class MetaDataRouter extends RequestRouter {
     }
 
     @Override
-	public boolean isConfigurable(){
+    public boolean isConfigurable(){
         return false;
     }
 
     @Override
-	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         boolean success = false;
         Map<String,List<String>> metaData = request.getMetaData();
         if (metaData != null) {

@@ -42,28 +42,28 @@ public class WGManager {
     private WhisperGroup conferenceWhisperGroup;
    
     public WGManager(String conferenceId, MediaInfo mediaInfo) {
-	this.mediaInfo = mediaInfo;
+    this.mediaInfo = mediaInfo;
 
-	int channels = mediaInfo.getChannels();
+    int channels = mediaInfo.getChannels();
 
-	conferenceWhisperGroup = createWhisperGroup(
-	    conferenceId, WhisperGroup.getDefaultAttenuation());
+    conferenceWhisperGroup = createWhisperGroup(
+        conferenceId, WhisperGroup.getDefaultAttenuation());
     }
 
     public WhisperGroup getConferenceWhisperGroup() {
-	return conferenceWhisperGroup;
+    return conferenceWhisperGroup;
     }
 
     public boolean hasCommonMix() {
-	return conferenceWhisperGroup.hasCommonMix();
+    return conferenceWhisperGroup.hasCommonMix();
     }
 
     public ArrayList getWhisperGroups() {
-	return whisperGroups;
+    return whisperGroups;
     }
 
     public void setMediaInfo(MediaInfo mediaInfo) {
-	this.mediaInfo = mediaInfo;
+    this.mediaInfo = mediaInfo;
 
         synchronized (whisperGroups) {
             for (int i = 0; i < whisperGroups.size(); i++) {
@@ -104,45 +104,45 @@ public class WGManager {
         WhisperGroup whisperGroup;
 
         synchronized(whisperGroups) {
-	    for (int i = 0; i < whisperGroups.size(); i++) {
-		whisperGroup = (WhisperGroup) whisperGroups.get(i);
+        for (int i = 0; i < whisperGroups.size(); i++) {
+        whisperGroup = (WhisperGroup) whisperGroups.get(i);
 
-		if (whisperGroupId.equals(whisperGroup.getId())) {
-		    Logger.println("whisper group already exists: "
-			+ whisperGroupId);
-		    return whisperGroup;
-		}
-	    }
+        if (whisperGroupId.equals(whisperGroup.getId())) {
+            Logger.println("whisper group already exists: "
+            + whisperGroupId);
+            return whisperGroup;
+        }
+        }
 
-	    whisperGroup = new WhisperGroup(whisperGroupId, 
-		attenuation, mediaInfo);
+        whisperGroup = new WhisperGroup(whisperGroupId, 
+        attenuation, mediaInfo);
 
             whisperGroups.add(whisperGroup);
 
             if (Logger.logLevel >= Logger.LOG_INFO) {
                 Logger.println("New Whisper group " + toString());
             }
-	}
+    }
 
-	return whisperGroup;
+    return whisperGroup;
     }
 
     public boolean isInWhisperGroup(ConferenceMember member) {
-	synchronized(whisperGroups) {
+    synchronized(whisperGroups) {
             for (int i = 0; i < whisperGroups.size(); i++) {
                 WhisperGroup whisperGroup =
                     (WhisperGroup)whisperGroups.get(i);
 
-		if (whisperGroup.isMember(member)) {
-		    return true;
-		}
-	    }
-	}
-	return false;
+        if (whisperGroup.isMember(member)) {
+            return true;
+        }
+        }
+    }
+    return false;
     }
 
     public void migrate(ConferenceMember oldMember, 
-	    ConferenceMember newMember) {
+        ConferenceMember newMember) {
 
         synchronized(whisperGroups) {
             for (int i = 0; i < whisperGroups.size(); i++) {
@@ -150,39 +150,39 @@ public class WGManager {
                     (WhisperGroup)whisperGroups.get(i);
 
                 if (whisperGroup.isMember(oldMember)) {
-		    whisperGroup.removeCall(oldMember);
-		     
-		    whisperGroup.addCall(newMember);
-		}
-	    }
-	}
+            whisperGroup.removeCall(oldMember);
+             
+            whisperGroup.addCall(newMember);
+        }
+        }
+    }
     }
 
     public void removeCall(WhisperGroup whisperGroup,
-	    ConferenceMember member) {
+        ConferenceMember member) {
 
-	whisperGroup.removeCall(member);
+    whisperGroup.removeCall(member);
 
-	if (whisperGroup.isTransient()) {
-	    String id = whisperGroup.getId();
+    if (whisperGroup.isTransient()) {
+        String id = whisperGroup.getId();
 
-	    if (whisperGroup.getMembers().size() == 0) {
-		Logger.println("Removing transient whisper group " + id);
+        if (whisperGroup.getMembers().size() == 0) {
+        Logger.println("Removing transient whisper group " + id);
 
-		try {
-		    destroyWhisperGroup(whisperGroup.getId());
-		} catch (ParseException e) {
-		    Logger.println("Failed to destroy whisper group " + id
-			+ " " + e.getMessage());
-		}
-	    } else {
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-		    Logger.println(whisperGroup.getMembers().size() 
-		        + " members remaining in transient whisper group " 
-		        + id);
-		}
-	    }
-	} 
+        try {
+            destroyWhisperGroup(whisperGroup.getId());
+        } catch (ParseException e) {
+            Logger.println("Failed to destroy whisper group " + id
+            + " " + e.getMessage());
+        }
+        } else {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println(whisperGroup.getMembers().size() 
+                + " members remaining in transient whisper group " 
+                + id);
+        }
+        }
+    } 
     }
 
     public void destroyWhisperGroup(String id) throws ParseException {
@@ -197,18 +197,18 @@ public class WGManager {
             synchronized(whisperGroup) {
                 ArrayList members = whisperGroup.getMembers();
 
-		/*
-		 * We don't want to be called recursively when we
-		 * remove the last member!
-		 */
-		whisperGroup.setTransient(false);
+        /*
+         * We don't want to be called recursively when we
+         * remove the last member!
+         */
+        whisperGroup.setTransient(false);
 
-		while (members.size() > 0) {
-		    ConferenceMember member = (ConferenceMember)
-			members.get(0);
+        while (members.size() > 0) {
+            ConferenceMember member = (ConferenceMember)
+            members.get(0);
 
-		    member.removeCall(id);
-		}
+            member.removeCall(id);
+        }
             }
 
             whisperGroups.remove(whisperGroup);
@@ -233,7 +233,7 @@ public class WGManager {
     }
 
     public void setTransientWhisperGroup(String id, boolean isTransient) 
-		throws ParseException {
+        throws ParseException {
 
         synchronized(whisperGroups) {
             WhisperGroup whisperGroup = findWhisperGroup(id);
@@ -245,12 +245,12 @@ public class WGManager {
                     + id + " doesn't exist", 0);
             }
 
-	    whisperGroup.setTransient(isTransient);
-	}
+        whisperGroup.setTransient(isTransient);
+    }
     }
 
     public void setLockedWhisperGroup(String id, boolean isLocked) 
-		throws ParseException {
+        throws ParseException {
 
         synchronized(whisperGroups) {
             WhisperGroup whisperGroup = findWhisperGroup(id);
@@ -262,12 +262,12 @@ public class WGManager {
                     + id + " doesn't exist", 0);
             }
 
-	    whisperGroup.setLocked(isLocked);
-	}
+        whisperGroup.setLocked(isLocked);
+    }
     }
 
     public void setWhisperGroupAttenuation(String id, double attenuation) 
-		throws ParseException {
+        throws ParseException {
 
         synchronized(whisperGroups) {
             WhisperGroup whisperGroup = findWhisperGroup(id);
@@ -279,12 +279,12 @@ public class WGManager {
                     + id + " doesn't exist", 0);
             }
 
-	    whisperGroup.setAttenuation(attenuation);
-	}
+        whisperGroup.setAttenuation(attenuation);
+    }
     }
 
     public void setWhisperGroupNoCommonMix(String id, boolean noCommonMix) 
-		throws ParseException {
+        throws ParseException {
 
         synchronized(whisperGroups) {
             WhisperGroup whisperGroup = findWhisperGroup(id);
@@ -296,31 +296,31 @@ public class WGManager {
                     + id + " doesn't exist", 0);
             }
 
-	    whisperGroup.setNoCommonMix(noCommonMix);
-	}
+        whisperGroup.setNoCommonMix(noCommonMix);
+    }
     }
 
     public void addConferenceTreatment(TreatmentManager treatmentManager) {
-	conferenceWhisperGroup.addTreatment(treatmentManager);
+    conferenceWhisperGroup.addTreatment(treatmentManager);
     }
 
     public void pauseConferenceTreatment(String treatment, boolean isPaused) {
-	conferenceWhisperGroup.pauseTreatment(treatment, isPaused);
+    conferenceWhisperGroup.pauseTreatment(treatment, isPaused);
     }
 
     public void removeConferenceTreatment(String treatment) {
-	conferenceWhisperGroup.removeTreatment(treatment);
+    conferenceWhisperGroup.removeTreatment(treatment);
     }
 
     public void recordConference(boolean enabled, String recordingFile,
-	    String recordingType) throws IOException {
+        String recordingType) throws IOException {
 
-	conferenceWhisperGroup.recordConference(enabled, recordingFile,
-	    recordingType);
+    conferenceWhisperGroup.recordConference(enabled, recordingFile,
+        recordingType);
     }
 
     public String getRecordingFile() {
-	return conferenceWhisperGroup.getRecordingFile();
+    return conferenceWhisperGroup.getRecordingFile();
     }
 
     public String getAbbreviatedWhisperGroupInfo(boolean showMembers) {
@@ -338,7 +338,7 @@ public class WGManager {
     }
 
     public String getAbbreviatedWhisperGroupInfo(
-	    ConferenceMember member, boolean showMembers) {
+        ConferenceMember member, boolean showMembers) {
 
         synchronized(whisperGroups) {
             String s = "";
@@ -350,10 +350,10 @@ public class WGManager {
                 if (whisperGroup.isMember(member)) {
                     s += " " + whisperGroup.toAbbreviatedString(showMembers);
                 }
-	    }
+        }
 
-	    return s;
-	}
+        return s;
+    }
     }
 
     public String getWhisperGroupInfo() {
@@ -371,19 +371,19 @@ public class WGManager {
     }
 
     public String getWhisperGroupInfo(ConferenceMember member) {
-	synchronized(whisperGroups) {
-	    String s = "";
+    synchronized(whisperGroups) {
+        String s = "";
 
-	    for (int i = 0; i < whisperGroups.size(); i++) {
-	        WhisperGroup whisperGroup = 
-		    (WhisperGroup)whisperGroups.get(i);
+        for (int i = 0; i < whisperGroups.size(); i++) {
+            WhisperGroup whisperGroup = 
+            (WhisperGroup)whisperGroups.get(i);
 
-	        if (whisperGroup.isMember(member)) {
-		    s += " " + whisperGroup;
-		}
-	    }
-	    return s;
-	}
+            if (whisperGroup.isMember(member)) {
+            s += " " + whisperGroup;
+        }
+        }
+        return s;
+    }
     }
 
 }

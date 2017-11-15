@@ -52,7 +52,7 @@ import org.xmpp.packet.StreamError;
  */
 public class ServerSocketReader extends SocketReader {
 
-	private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);
+    private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);
 
     public ServerSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
             Socket socket, SocketConnection connection, boolean useBlockingMode) {
@@ -65,7 +65,7 @@ public class ServerSocketReader extends SocketReader {
      * @param packet the received packet.
      */
     @Override
-	protected void processIQ(final IQ packet) throws UnauthorizedException {
+    protected void processIQ(final IQ packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             try {
@@ -86,7 +86,7 @@ public class ServerSocketReader extends SocketReader {
      * @param packet the received packet.
      */
     @Override
-	protected void processPresence(final Presence packet) throws UnauthorizedException {
+    protected void processPresence(final Presence packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             try {
@@ -107,7 +107,7 @@ public class ServerSocketReader extends SocketReader {
      * @param packet the received packet.
      */
     @Override
-	protected void processMessage(final Message packet) throws UnauthorizedException {
+    protected void processMessage(final Message packet) throws UnauthorizedException {
         try {
             packetReceived(packet);
             try {
@@ -130,7 +130,7 @@ public class ServerSocketReader extends SocketReader {
      * @return true if the packet is a db:result packet otherwise false.
      */
     @Override
-	protected boolean processUnknowPacket(Element doc) {
+    protected boolean processUnknowPacket(Element doc) {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
@@ -182,12 +182,12 @@ public class ServerSocketReader extends SocketReader {
     }
 
     @Override
-	protected void shutdown() {
+    protected void shutdown() {
         super.shutdown();
     }
 
     @Override
-	boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
+    boolean createSession(String namespace) throws UnauthorizedException, XmlPullParserException,
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
@@ -198,22 +198,22 @@ public class ServerSocketReader extends SocketReader {
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:server";
     }
 
     @Override
-	public String getExtraNamespaces() {
+    public String getExtraNamespaces() {
         return "xmlns:db=\"jabber:server:dialback\"";
     }
 
     @Override
-	String getName() {
+    String getName() {
         return "Server SR - " + hashCode();
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return true;
     }
 }

@@ -58,8 +58,8 @@ import com.lowagie.text.pdf.PdfWriter;
  */
 public class ConversationUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(ConversationUtils.class);
-			
+    private static final Logger Log = LoggerFactory.getLogger(ConversationUtils.class);
+            
     /**
      * Returns the status of the rebuilding of the messaging/metadata archives. This is done
      * asynchronously.
@@ -70,7 +70,7 @@ public class ConversationUtils {
         // Get handle on the Monitoring plugin
         MonitoringPlugin plugin =
             (MonitoringPlugin)XMPPServer.getInstance().getPluginManager().getPlugin(
-            		MonitoringConstants.NAME);
+                    MonitoringConstants.NAME);
 
         ArchiveIndexer archiveIndexer = (ArchiveIndexer)plugin.getModule(ArchiveIndexer.class);
 
@@ -94,7 +94,7 @@ public class ConversationUtils {
         // Get handle on the Monitoring plugin
         MonitoringPlugin plugin =
             (MonitoringPlugin)XMPPServer.getInstance().getPluginManager().getPlugin(
-            		MonitoringConstants.NAME);
+                    MonitoringConstants.NAME);
 
         ConversationManager conversationmanager =
             (ConversationManager)plugin.getModule(ConversationManager.class);
@@ -349,7 +349,7 @@ public class ConversationUtils {
         if (conversation.getMessages().size() == 0) {
             builder.append("<span class=small-description>" +
                 LocaleUtils.getLocalizedString("archive.search.results.archive_disabled",
-                		MonitoringConstants.NAME) +
+                        MonitoringConstants.NAME) +
                 "</a>");
         }
 
@@ -387,7 +387,7 @@ public class ConversationUtils {
     class PDFEventListener extends PdfPageEventHelper {
 
         @Override
-		public void onEndPage(PdfWriter writer, Document document) {
+        public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
 
             try {

@@ -8,10 +8,10 @@
 
     <!--  OF-902 use HttpOnly for session cookie -->
     <session-config>
-	 <cookie-config>
-	  <http-only>true</http-only>
-	 </cookie-config>
-	</session-config>
+     <cookie-config>
+      <http-only>true</http-only>
+     </cookie-config>
+    </session-config>
 
     <!-- prevent URL rewritting with jsessionid included, OF-669 -->
     <context-param>

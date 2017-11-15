@@ -60,7 +60,7 @@ import java.util.*;
  */
 public final class HttpBindManager implements CertificateEventListener, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
 
     public static final String HTTP_BIND_ENABLED = "httpbind.enabled";
 
@@ -80,15 +80,15 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
     public static final int HTTP_BIND_THREADS_DEFAULT = 200;
 
-	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
+    private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
 
-	private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
+    private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
 
-	private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
+    private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
 
-	private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
+    private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
 
-	private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
+    private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
 
     // http binding CORS default properties
 
@@ -260,8 +260,8 @@ public final class HttpBindManager implements CertificateEventListener, Property
     private Connector createConnector( final Server httpBindServer ) {
         final int port = getHttpBindUnsecurePort();
         if (port > 0) {
-			HttpConfiguration httpConfig = new HttpConfiguration();
-			configureProxiedConnector(httpConfig);
+            HttpConfiguration httpConfig = new HttpConfiguration();
+            configureProxiedConnector(httpConfig);
             ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
@@ -290,22 +290,22 @@ public final class HttpBindManager implements CertificateEventListener, Property
                 final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
                 final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
- 				final HttpConfiguration httpsConfig = new HttpConfiguration();
-				httpsConfig.setSecureScheme("https");
-				httpsConfig.setSecurePort(securePort);
- 				configureProxiedConnector(httpsConfig);
- 				httpsConfig.addCustomizer(new SecureRequestCustomizer());
+                final HttpConfiguration httpsConfig = new HttpConfiguration();
+                httpsConfig.setSecureScheme("https");
+                httpsConfig.setSecurePort(securePort);
+                configureProxiedConnector(httpsConfig);
+                httpsConfig.addCustomizer(new SecureRequestCustomizer());
 
- 				final ServerConnector sslConnector;
+                final ServerConnector sslConnector;
 
-				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
-				{
-					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
-				}
-				else
-				{
-					sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
-				}
+                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+                {
+                    sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
+                }
+                else
+                {
+                    sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
+                }
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
                 return sslConnector;
@@ -322,29 +322,29 @@ public final class HttpBindManager implements CertificateEventListener, Property
         // Check to see if we are deployed behind a proxy
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (isXFFEnabled()) {
-        	ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
-        	// default: "X-Forwarded-For"
-        	String forwardedForHeader = getXFFHeader();
-        	if (forwardedForHeader != null) {
-        		customizer.setForwardedForHeader(forwardedForHeader);
-        	}
-        	// default: "X-Forwarded-Server"
-        	String forwardedServerHeader = getXFFServerHeader();
-        	if (forwardedServerHeader != null) {
-        		customizer.setForwardedServerHeader(forwardedServerHeader);
-        	}
-        	// default: "X-Forwarded-Host"
-        	String forwardedHostHeader = getXFFHostHeader();
-        	if (forwardedHostHeader != null) {
-        		customizer.setForwardedHostHeader(forwardedHostHeader);
-        	}
-        	// default: none
-        	String hostName = getXFFHostName();
-        	if (hostName != null) {
-        		customizer.setHostHeader(hostName);
-        	}
+            ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
+            // default: "X-Forwarded-For"
+            String forwardedForHeader = getXFFHeader();
+            if (forwardedForHeader != null) {
+                customizer.setForwardedForHeader(forwardedForHeader);
+            }
+            // default: "X-Forwarded-Server"
+            String forwardedServerHeader = getXFFServerHeader();
+            if (forwardedServerHeader != null) {
+                customizer.setForwardedServerHeader(forwardedServerHeader);
+            }
+            // default: "X-Forwarded-Host"
+            String forwardedHostHeader = getXFFHostHeader();
+            if (forwardedHostHeader != null) {
+                customizer.setForwardedHostHeader(forwardedHostHeader);
+            }
+            // default: none
+            String hostName = getXFFHostName();
+            if (hostName != null) {
+                customizer.setHostHeader(hostName);
+            }
 
-        	httpConfig.addCustomizer(customizer);
+            httpConfig.addCustomizer(customizer);
         }
         httpConfig.setRequestHeaderSize(JiveGlobals.getIntProperty(HTTP_BIND_REQUEST_HEADER_SIZE, HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT));
    }
@@ -495,11 +495,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
     }
 
     public void setXFFHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
+        }
     }
 
     public String getXFFServerHeader() {
@@ -507,11 +507,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
     }
 
     public void setXFFServerHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
+        }
     }
 
     public String getXFFHostHeader() {
@@ -519,11 +519,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
     }
 
     public void setXFFHostHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
+        }
     }
 
     public String getXFFHostName() {
@@ -531,11 +531,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
     }
 
     public void setXFFHostName(String name) {
-    	if (name == null || name.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
-    	}
+        if (name == null || name.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
+        }
     }
 
     public void setHttpBindEnabled(boolean isEnabled) {
@@ -635,7 +635,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
         final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
         final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
         return configuration.getCompressionPolicy() == null || configuration.getCompressionPolicy().equals( Connection.CompressionPolicy.optional );
-	}
+    }
 
     /**
      * Creates a Jetty context handler that can be used to expose the cross-domain functionality as implemented by

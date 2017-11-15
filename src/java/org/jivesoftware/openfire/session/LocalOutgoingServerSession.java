@@ -75,7 +75,7 @@ import org.xmpp.packet.Presence;
  */
 public class LocalOutgoingServerSession extends LocalServerSession implements OutgoingServerSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
     /**
      * Regular expression to ensure that the hostname contains letters.
@@ -387,7 +387,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     private static LocalOutgoingServerSession secureAndAuthenticate(String remoteDomain, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream, String localDomain) throws Exception {
-    	final Logger log = LoggerFactory.getLogger(Log.getName() + "[Secure/Authenticate connection for: " + localDomain + " to: " + remoteDomain + "]" );
+        final Logger log = LoggerFactory.getLogger(Log.getName() + "[Secure/Authenticate connection for: " + localDomain + " to: " + remoteDomain + "]" );
         Element features;
 
         log.debug( "Securing and authenticating connection ...");
@@ -452,26 +452,26 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 LocalOutgoingServerSession result = null;
 
                 // first, try SASL
-            	if (saslEXTERNALoffered) {
+                if (saslEXTERNALoffered) {
                     log.debug( "Trying to authenticate with EXTERNAL SASL." );
-            		result = attemptSASLexternal(connection, xpp, reader, localDomain, remoteDomain, id, openingStream);
+                    result = attemptSASLexternal(connection, xpp, reader, localDomain, remoteDomain, id, openingStream);
                     if (result == null) {
                         log.debug( "Failed to authenticate with EXTERNAL SASL." );
                     } else {
                         log.debug( "Successfully authenticated with EXTERNAL SASL." );
                     }
-            	}
+                }
 
                 // SASL unavailable or failed, try dialback.
-            	if (result == null) {
+                if (result == null) {
                     log.debug( "Trying to authenticate with dialback." );
-            		result = attemptDialbackOverTLS(connection, reader, localDomain, remoteDomain, id);
+                    result = attemptDialbackOverTLS(connection, reader, localDomain, remoteDomain, id);
                     if (result == null) {
                         log.debug( "Failed to authenticate with dialback." );
                     } else {
                         log.debug( "Successfully authenticated with dialback." );
                     }
-            	}
+                }
 
                 if ( result != null ) {
                     log.debug( "Successfully secured and authenticated connection!" );
@@ -574,7 +574,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-	boolean canProcess(Packet packet) {
+    boolean canProcess(Packet packet) {
         final String senderDomain = packet.getFrom().getDomain();
         final String recipDomain = packet.getTo().getDomain();
         boolean processed = true;
@@ -594,7 +594,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-	void deliver(Packet packet) throws UnauthorizedException {
+    void deliver(Packet packet) throws UnauthorizedException {
         if (!conn.isClosed()) {
             conn.deliver(packet);
         }
@@ -624,10 +624,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         try {
             if (packet instanceof IQ) {
-            	if (((IQ) packet).isResponse()) {
-            		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
-            		return;
-            	}
+                if (((IQ) packet).isResponse()) {
+                    Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
+                    return;
+                }
                 IQ reply = new IQ();
                 reply.setID(packet.getID());
                 reply.setTo(packet.getFrom());
@@ -671,7 +671,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }

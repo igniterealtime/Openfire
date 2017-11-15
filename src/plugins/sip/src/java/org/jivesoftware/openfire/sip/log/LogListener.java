@@ -25,8 +25,8 @@ import org.xmpp.packet.IQ;
  */
 public interface LogListener {
 
-	public IQ logReceived(IQ iq);
+    public IQ logReceived(IQ iq);
 
-	public ComponentManager getComponentManager();
+    public ComponentManager getComponentManager();
 
 }

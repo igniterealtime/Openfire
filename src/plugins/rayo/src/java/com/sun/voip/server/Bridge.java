@@ -45,83 +45,83 @@ public class Bridge {
     private static String bridgeLocation = "OPL";
     private static char fileSep = System.getProperty("file.separator").charAt(0);
 
-	private static final Bridge instance = new Bridge();
+    private static final Bridge instance = new Bridge();
 
     private static boolean localhostSecurity = false;
 
     private static String defaultProtocol = "SIP";
 
-	public static Bridge getInstance() {
-		return instance;
-	}
+    public static Bridge getInstance() {
+        return instance;
+    }
 
     public static String getVersion() {
-		return "0.0.0.1";
+        return "0.0.0.1";
     }
 
     public static String getBridgeLocation() {
-	return bridgeLocation;
+    return bridgeLocation;
     }
 
     public static void setBridgeLocation(String bridgeLocation) {
-	Bridge.bridgeLocation = bridgeLocation;
+    Bridge.bridgeLocation = bridgeLocation;
     }
 
     public static String getBridgeLogDirectory() {
-	return System.getProperty("user.dir") + fileSep + ".." + fileSep + "logs" + fileSep;
+    return System.getProperty("user.dir") + fileSep + ".." + fileSep + "logs" + fileSep;
     }
 
     public static String getPrivateHost() {
-	return privateHost;
+    return privateHost;
     }
 
     public static String getPublicHost() {
-	return publicHost;
+    return publicHost;
     }
 
     public static void setPrivateHost(String privateHost) {
-	Bridge.privateHost = privateHost;
+    Bridge.privateHost = privateHost;
     }
 
     public static void setPublicHost(String publicHost) {
-	Bridge.publicHost = publicHost;
+    Bridge.publicHost = publicHost;
     }
 
     public static int getPrivateControlPort() {
-	return privateControlPort;
+    return privateControlPort;
     }
 
     public static int getPrivateSipPort() {
-	return privateSipPort;
+    return privateSipPort;
     }
 
 
     public static int getPublicControlPort() {
-	return publicControlPort;
+    return publicControlPort;
     }
 
     public static int getPublicSipPort() {
-	return publicSipPort;
+    return publicSipPort;
     }
 
     public static void setLocalhostSecurity(boolean localhostSecurity) {
-	Bridge.localhostSecurity = localhostSecurity;
+    Bridge.localhostSecurity = localhostSecurity;
     }
 
     public static boolean getLocalhostSecurity() {
-	return localhostSecurity;
+    return localhostSecurity;
     }
 
     public static void setDefaultProtocol(String defaultProtocol) {
-	Bridge.defaultProtocol = defaultProtocol;
+    Bridge.defaultProtocol = defaultProtocol;
     }
 
     public static String getDefaultProtocol() {
-	return defaultProtocol;
+    return defaultProtocol;
     }
 
     public static InetSocketAddress getLocalBridgeAddress() {
-	return (InetSocketAddress) new InetSocketAddress(privateHost,  privateControlPort);
+    return (InetSocketAddress) new InetSocketAddress(privateHost,  privateControlPort);
     }
 
 }

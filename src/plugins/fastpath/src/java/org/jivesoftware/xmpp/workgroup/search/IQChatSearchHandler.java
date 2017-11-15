@@ -53,8 +53,8 @@ import org.xmpp.packet.PacketError;
  */
 public class IQChatSearchHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQChatSearchHandler.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(IQChatSearchHandler.class);
+    
     private static final String LOAD_META_DATA =
             "SELECT metadataName, metadataValue FROM fpSessionMetadata WHERE sessionID=?";
 

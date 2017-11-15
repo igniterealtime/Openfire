@@ -37,7 +37,7 @@ import org.voicebridge.Config;
  * meeting id and pass code.  Transfer the call to the appropriate meeting.
  */
 public class IncomingConferenceHandler extends Thread
-	implements CallEventListener {
+    implements CallEventListener {
 
     private String meetingCode = "";
     private String passCode = "";
@@ -49,7 +49,7 @@ public class IncomingConferenceHandler extends Thread
     private static final int IN_MEETING               = 3;
 
     private static final String ENTER_MEETING_CODE =
-	"enter-conf-call-number.au;then-press-pound.au" ;
+    "enter-conf-call-number.au;then-press-pound.au" ;
 
     private static final String INVALID_MEETING_CODE = "conf-invalid.au";
 
@@ -58,7 +58,7 @@ public class IncomingConferenceHandler extends Thread
     private static final String INCOMING_TIMEOUT = "incoming_timeout.au";
 
     private static final String ENTER_REQUIRED_PASS_CODE =
-	"please-enter-your.au;access-code.au;then-press-pound.au";
+    "please-enter-your.au;access-code.au;then-press-pound.au";
 
     private static final String LEAVE_MEETING = "leaveCLICK.au";
 
@@ -80,19 +80,19 @@ public class IncomingConferenceHandler extends Thread
      * Constructor.
      */
     public IncomingConferenceHandler(IncomingCallHandler incomingCallHandler, String phoneNo) {
-		this.incomingCallHandler = incomingCallHandler;
-		this.phoneNo = phoneNo;
+        this.incomingCallHandler = incomingCallHandler;
+        this.phoneNo = phoneNo;
 
-		incomingCallHandler.addCallEventListener(this);
+        incomingCallHandler.addCallEventListener(this);
 
-	    Logger.println("IncomingConferenceHandler:  " + phoneNo);
+        Logger.println("IncomingConferenceHandler:  " + phoneNo);
     }
 
     private String lastMessagePlayed;
 
     private void playTreatmentToCall(String treatment) {
         try {
-	    incomingCallHandler.playTreatmentToCall(treatment);
+        incomingCallHandler.playTreatmentToCall(treatment);
         } catch (IOException e) {
             Logger.println("Call " + incomingCallHandler
                 + " Can't play treatment " + treatment);
@@ -101,111 +101,111 @@ public class IncomingConferenceHandler extends Thread
     }
 
     private void playConferenceId() {
-	if (meetingCode == null || meetingCode.length() == 0) {
-	    return;
-	}
+    if (meetingCode == null || meetingCode.length() == 0) {
+        return;
+    }
 
-	String s = "conference.au";
+    String s = "conference.au";
 
-	for (int i = 0; i < meetingCode.length(); i++) {
-	    s += ";" + meetingCode.substring(i, i + 1) + ".au";
-	}
+    for (int i = 0; i < meetingCode.length(); i++) {
+        s += ";" + meetingCode.substring(i, i + 1) + ".au";
+    }
 
-	playTreatmentToCall(s);
+    playTreatmentToCall(s);
     }
 
     private void playNumberOfCalls() {
-	String s = incomingCallHandler.getNumberOfCallsAsTreatment();
-	playTreatmentToCall(s + ";conf-peopleinconf.au");
+    String s = incomingCallHandler.getNumberOfCallsAsTreatment();
+    playTreatmentToCall(s + ";conf-peopleinconf.au");
     }
 
     /*
      * Called when status for an incoming call changes.
      */
     public void callEventNotification(CallEvent callEvent) {
-	//if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println("IncomingConferenceHandler " + callEvent.toString());
-	//}
+    //if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println("IncomingConferenceHandler " + callEvent.toString());
+    //}
 
-	if (callEvent.equals(CallEvent.STATE_CHANGED) &&
-		callEvent.getCallState().equals(CallState.ESTABLISHED)) {
+    if (callEvent.equals(CallEvent.STATE_CHANGED) &&
+        callEvent.getCallState().equals(CallState.ESTABLISHED)) {
 
-	    /*
-	     * New incoming call
-	     */
-	    if (callEvent.getInfo() != null) {
-	    	Logger.println("IncomingConferenceHandler:  " + callEvent.getInfo());
-	    }
+        /*
+         * New incoming call
+         */
+        if (callEvent.getInfo() != null) {
+            Logger.println("IncomingConferenceHandler:  " + callEvent.getInfo());
+        }
 
-		if (Config.getInstance().getMeetingCode(phoneNo) != null)
-		{
-			meetingCode = Config.getInstance().getMeetingCode(phoneNo);
+        if (Config.getInstance().getMeetingCode(phoneNo) != null)
+        {
+            meetingCode = Config.getInstance().getMeetingCode(phoneNo);
 
-	    	Logger.println("IncomingConferenceHandler:  meeting code " + meetingCode);
+            Logger.println("IncomingConferenceHandler:  meeting code " + meetingCode);
 
-			if (Config.getInstance().getPassCode(meetingCode, phoneNo) == null)
-			{
-				try {
-					incomingCallHandler.transferCall(meetingCode);
-					state = IN_MEETING;
+            if (Config.getInstance().getPassCode(meetingCode, phoneNo) == null)
+            {
+                try {
+                    incomingCallHandler.transferCall(meetingCode);
+                    state = IN_MEETING;
 
-				} catch (IOException e) {
-					System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
-				}
+                } catch (IOException e) {
+                    System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
+                }
 
-			} else {
-				state = WAITING_FOR_PASS_CODE;
-				playTreatmentToCall(ENTER_REQUIRED_PASS_CODE);
-				start();
-			}
+            } else {
+                state = WAITING_FOR_PASS_CODE;
+                playTreatmentToCall(ENTER_REQUIRED_PASS_CODE);
+                start();
+            }
 
-		} else {
+        } else {
 
-	    	playTreatmentToCall(ENTER_MEETING_CODE);
-			state = WAITING_FOR_MEETING_CODE;
-			start();
-		}
+            playTreatmentToCall(ENTER_MEETING_CODE);
+            state = WAITING_FOR_MEETING_CODE;
+            start();
+        }
 
-	    return;
-	}
+        return;
+    }
 
-	if (callEvent.equals(CallEvent.STATE_CHANGED) &&
-		callEvent.getCallState().equals(CallState.ENDED)) {
+    if (callEvent.equals(CallEvent.STATE_CHANGED) &&
+        callEvent.getCallState().equals(CallState.ENDED)) {
 
-	    playTreatmentToCall(LEAVE_MEETING);
-	    return;
-	}
+        playTreatmentToCall(LEAVE_MEETING);
+        return;
+    }
 
-	/*
-	 * We're only interested in dtmf keys
-	 */
+    /*
+     * We're only interested in dtmf keys
+     */
         if (callEvent.equals(CallEvent.DTMF_KEY) == false) {
-	    return;
-	}
+        return;
+    }
 
         String dtmfKey = callEvent.getDtmfKey();
 
-	if (state == WAITING_FOR_MEETING_CODE) {
-	    getMeetingCode(dtmfKey);
-	} else if (state == WAITING_FOR_PASS_CODE) {
-	    getPassCode(dtmfKey);
-	} else {
-	    if (lastDtmfKey.equals("*")) {
-		if (dtmfKey.equals("1")) {
-		    incomingCallHandler.setMuted(true);
-		    playTreatmentToCall(CALL_MUTED);
-		} else if (dtmfKey.equals("2")) {
-		    incomingCallHandler.setMuted(false);
-		    playTreatmentToCall(CALL_UNMUTED);
-		} else if (dtmfKey.equals("9")) {
-		    playConferenceId();
-		} else if (dtmfKey.equals("#")) {
-		    playNumberOfCalls();
-		}
-	    }
-	}
+    if (state == WAITING_FOR_MEETING_CODE) {
+        getMeetingCode(dtmfKey);
+    } else if (state == WAITING_FOR_PASS_CODE) {
+        getPassCode(dtmfKey);
+    } else {
+        if (lastDtmfKey.equals("*")) {
+        if (dtmfKey.equals("1")) {
+            incomingCallHandler.setMuted(true);
+            playTreatmentToCall(CALL_MUTED);
+        } else if (dtmfKey.equals("2")) {
+            incomingCallHandler.setMuted(false);
+            playTreatmentToCall(CALL_UNMUTED);
+        } else if (dtmfKey.equals("9")) {
+            playConferenceId();
+        } else if (dtmfKey.equals("#")) {
+            playNumberOfCalls();
+        }
+        }
+    }
 
-	lastDtmfKey = dtmfKey;
+    lastDtmfKey = dtmfKey;
     }
 
     private void getMeetingCode(String dtmfKey) {
@@ -214,142 +214,142 @@ public class IncomingConferenceHandler extends Thread
             return;
         }
 
-		if (meetingCode.length() == 0) {
-			playTreatmentToCall(INVALID_MEETING_CODE
-			+ ";" + ENTER_MEETING_CODE);
-			return;
-		}
+        if (meetingCode.length() == 0) {
+            playTreatmentToCall(INVALID_MEETING_CODE
+            + ";" + ENTER_MEETING_CODE);
+            return;
+        }
 
-		String confRoom = null;
+        String confRoom = null;
 
-		if (Config.getInstance().isValidConference(meetingCode))
-		{
-			confRoom = meetingCode;
+        if (Config.getInstance().isValidConference(meetingCode))
+        {
+            confRoom = meetingCode;
 
-		} else if (Config.getInstance().isValidConferenceExten(meetingCode))	{
+        } else if (Config.getInstance().isValidConferenceExten(meetingCode))	{
 
-			confRoom = Config.getInstance().getMeetingCode(meetingCode);
+            confRoom = Config.getInstance().getMeetingCode(meetingCode);
 
-		}
+        }
 
-		if (confRoom != null)
-		{
+        if (confRoom != null)
+        {
 
-			if (Config.getInstance().getPassCode(confRoom, phoneNo) == null)
-			{
-				try {
-					incomingCallHandler.transferCall(confRoom);
-					state = IN_MEETING;
+            if (Config.getInstance().getPassCode(confRoom, phoneNo) == null)
+            {
+                try {
+                    incomingCallHandler.transferCall(confRoom);
+                    state = IN_MEETING;
 
-				} catch (IOException e) {
-					System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
-				}
+                } catch (IOException e) {
+                    System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
+                }
 
-			} else {
-        		state = WAITING_FOR_PASS_CODE;
-        		playTreatmentToCall(ENTER_REQUIRED_PASS_CODE);
-        		return;
-			}
+            } else {
+                state = WAITING_FOR_PASS_CODE;
+                playTreatmentToCall(ENTER_REQUIRED_PASS_CODE);
+                return;
+            }
 
-		} else {
-			playTreatmentToCall(INVALID_MEETING_CODE + ";" + ENTER_MEETING_CODE);
-			meetingCode = "";
-			state = WAITING_FOR_MEETING_CODE;
-			return;
-		}
+        } else {
+            playTreatmentToCall(INVALID_MEETING_CODE + ";" + ENTER_MEETING_CODE);
+            meetingCode = "";
+            state = WAITING_FOR_MEETING_CODE;
+            return;
+        }
     }
 
     private void getPassCode(String dtmfKey) {
         if (!dtmfKey.equals("#")) {
-	    passCode += dtmfKey;   // accumulate pass code
-	    return;
-		}
+        passCode += dtmfKey;   // accumulate pass code
+        return;
+        }
 
-		/*
-		 * For now, allow people to join without a passCode
-		 */
-		int intPassCode = 0;
+        /*
+         * For now, allow people to join without a passCode
+         */
+        int intPassCode = 0;
 
-		if (passCode.length() > 0) {
-			try {
-				intPassCode = Integer.parseInt(passCode);
+        if (passCode.length() > 0) {
+            try {
+                intPassCode = Integer.parseInt(passCode);
 
-			} catch (NumberFormatException e) {
-					playTreatmentToCall(INVALID_PASS_CODE);
+            } catch (NumberFormatException e) {
+                    playTreatmentToCall(INVALID_PASS_CODE);
 
-				passCode = "";
-				return;
-			}
-		}
+                passCode = "";
+                return;
+            }
+        }
 
-		if (Config.getInstance().isValidConferencePin(meetingCode, passCode))
-		{
-			try {
-				incomingCallHandler.transferCall(meetingCode);
-				state = IN_MEETING;
+        if (Config.getInstance().isValidConferencePin(meetingCode, passCode))
+        {
+            try {
+                incomingCallHandler.transferCall(meetingCode);
+                state = IN_MEETING;
 
-			} catch (IOException e) {
-				System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
+            } catch (IOException e) {
+                System.err.println("Exception joining meeting! " + meetingCode + " " + e.getMessage());
 
-				playTreatmentToCall(INVALID_PASS_CODE);
-				passCode = "";
-				state = WAITING_FOR_PASS_CODE;
-			}
+                playTreatmentToCall(INVALID_PASS_CODE);
+                passCode = "";
+                state = WAITING_FOR_PASS_CODE;
+            }
 
-		} else {
+        } else {
 
-			playTreatmentToCall(INVALID_PASS_CODE);
-			passCode = "";
-			state = WAITING_FOR_PASS_CODE;
-		}
+            playTreatmentToCall(INVALID_PASS_CODE);
+            passCode = "";
+            state = WAITING_FOR_PASS_CODE;
+        }
     }
 
     public void run() {
-	/*
-	 * Timeout handler to re-prompt user
-	 */
-	long startTime = System.currentTimeMillis();
+    /*
+     * Timeout handler to re-prompt user
+     */
+    long startTime = System.currentTimeMillis();
 
-	while (state == WAITING_FOR_MEETING_CODE ||
-	        state == WAITING_FOR_PASS_CODE) {
+    while (state == WAITING_FOR_MEETING_CODE ||
+            state == WAITING_FOR_PASS_CODE) {
 
-	    int currentState = state;
+        int currentState = state;
 
-	    try {
-		Thread.sleep(timeout);
+        try {
+        Thread.sleep(timeout);
 
-		if (state != WAITING_FOR_MEETING_CODE &&
-			state != WAITING_FOR_PASS_CODE) {
+        if (state != WAITING_FOR_MEETING_CODE &&
+            state != WAITING_FOR_PASS_CODE) {
 
-		    break;
-		}
+            break;
+        }
 
-		if (currentState == state) {
-		    if (System.currentTimeMillis() - startTime >=
-			    CallSetupAgent.getDefaultCallAnswerTimeout() * 1000) {
+        if (currentState == state) {
+            if (System.currentTimeMillis() - startTime >=
+                CallSetupAgent.getDefaultCallAnswerTimeout() * 1000) {
 
-			playTreatmentToCall(INCOMING_TIMEOUT);
+            playTreatmentToCall(INCOMING_TIMEOUT);
 
-			/* We'd like to wait until the treatment is done
-			 * before cancelling the call.
-			 */
-			try {
-			    Thread.sleep(5000);
-			} catch (InterruptedException e) {
-			}
+            /* We'd like to wait until the treatment is done
+             * before cancelling the call.
+             */
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+            }
 
-	    		incomingCallHandler.cancelRequest(
-			    "Incoming call timeout");
+                incomingCallHandler.cancelRequest(
+                "Incoming call timeout");
 
-			break;
-		    }
+            break;
+            }
 
-		    playTreatmentToCall(lastMessagePlayed);
-		}
-	    } catch (InterruptedException e) {
-		Logger.println("Incoming ConferenceHandler Interrupted!");
-	    }
-	}
+            playTreatmentToCall(lastMessagePlayed);
+        }
+        } catch (InterruptedException e) {
+        Logger.println("Incoming ConferenceHandler Interrupted!");
+        }
+    }
     }
 
 }

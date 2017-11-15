@@ -43,7 +43,7 @@ public class PrivacyListProvider {
 
     private static final PrivacyListProvider instance = new PrivacyListProvider();
     
-	private static final Logger Log = LoggerFactory.getLogger(PrivacyListProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(PrivacyListProvider.class);
 
     private static final String PRIVACY_LIST_COUNT =
             "SELECT count(*) from ofPrivacyList";

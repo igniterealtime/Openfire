@@ -799,7 +799,7 @@ public class Config implements MUCEventListener {
 
     }
 
-	public void privateMessageRecieved(JID a, JID b, Message message)
+	public void privateMessageReceived(JID a, JID b, Message message)
 	{
 
 	}

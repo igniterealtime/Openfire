@@ -29,6 +29,10 @@
                  java.util.Collection"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.nio.NIOConnection" %>
+<%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
+<%@ page import="org.jivesoftware.openfire.http.HttpConnection" %>
+<%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -160,6 +164,52 @@
             <% } %>
         </td>
     </tr>
+    <%
+        if (currentSess instanceof LocalClientSession) {
+            LocalClientSession s = (LocalClientSession)currentSess;
+
+            %>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.sm-status"/>:
+        </td>
+        <td>
+            <%
+                if (s.isDetached()) {
+                    %><fmt:message key="session.details.sm-detached"/><%
+                } else if (s.getStreamManager().isEnabled()) {
+                    if (s.getStreamManager().getResume()) {
+                        %><fmt:message key="session.details.sm-resume"/><%
+                    } else {
+                        %><fmt:message key="session.details.sm-enabled"/><%
+                    }
+                } else {
+                    %><fmt:message key="session.details.sm-disabled"/><%
+                }
+            %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.connection-type"/>:
+        </td>
+        <td>
+            <%
+                if (s.isDetached()) {
+                    %><fmt:message key="session.details.sm-detached"/><%
+                } else if (s.getConnection() instanceof NIOConnection) {
+                    %>TCP<%
+                } else if (s.getConnection() instanceof WebSocketConnection) {
+                    %>WebSocket<%
+                } else if (s.getConnection() instanceof HttpSession.HttpVirtualConnection) {
+                    %>BOSH<%
+                } else {
+                    %>Unknown<%
+                }
+            %>
+        </td>
+    </tr>
+    <% } %>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.status" />:

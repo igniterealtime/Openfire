@@ -9,6 +9,8 @@
                  org.jivesoftware.openfire.XMPPServer"
 %>
 <%@ page import="java.net.UnknownHostException" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -42,6 +44,16 @@
         }
         if (fqdn == null || fqdn.isEmpty()) {
             errors.put("fqdn", "fqdn");
+        }
+        try {
+            fqdn = JID.domainprep(fqdn);
+        } catch (IllegalArgumentException e) {
+            errors.put("fqdn", "fqdn");
+        }
+        try {
+            domain = JID.domainprep(domain);
+        } catch (IllegalArgumentException e) {
+            errors.put("domain", "domain");
         }
         if (XMPPServer.getInstance().isStandAlone()) {
             if (embeddedPort == Integer.MIN_VALUE) {
@@ -153,7 +165,7 @@
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="domain"
-         value="<%= ((domain != null) ? domain : "") %>">
+         value="<%= ((domain != null) ? StringUtils.escapeForXML(domain) : "") %>">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.domain.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("domain") != null) { %>
             <span class="jive-error-text">
@@ -168,7 +180,7 @@
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="fqdn"
-               value="<%= ((fqdn != null) ? fqdn : "") %>">
+               value="<%= ((fqdn != null) ? StringUtils.escapeForXML(fqdn) : "") %>">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.fqdn.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("fqdn") != null) { %>
         <span class="jive-error-text">

@@ -47,6 +47,7 @@
 <%@ page import="java.util.Arrays" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -247,7 +248,10 @@
                     <% } catch (Exception e) { %>
                     <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
-                    ${webManager.serverInfo.XMPPDomain}
+                    <c:out value="${webManager.serverInfo.XMPPDomain}"/>
+                    <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getXMPPDomain()); } catch (Exception e) { %>
+                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.domain-stringprep-error" />" title="<fmt:message key="index.domain-stringprep-error" />">&nbsp;
+                    <% } %>
                 </td>
             </tr>
             <tr><td>&nbsp;</td></tr>
@@ -284,7 +288,10 @@
                     <fmt:message key="index.host_name" />
                 </td>
                 <td class="c2">
-                    ${webManager.serverInfo.hostname}
+                    <c:out value="${webManager.serverInfo.hostname}"/>
+                    <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getHostname()); } catch (Exception e) { %>
+                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.hostname-stringprep-error" />" title="<fmt:message key="index.hostname-stringprep-error" />">&nbsp;
+                    <% } %>
                     <%  // Determine if the DNS configuration for this XMPP domain needs to be evaluated.
                         final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                         final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();

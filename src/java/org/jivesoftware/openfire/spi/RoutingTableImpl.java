@@ -946,7 +946,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lock.unlock();
             }
         }
-        localRoutingTable.removeRoute(new DomainPair("", route.getDomain()));
+        localRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return clientRoute != null;
     }
 

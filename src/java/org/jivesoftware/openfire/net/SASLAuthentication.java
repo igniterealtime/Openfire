@@ -548,15 +548,15 @@ public class SASLAuthentication {
                     // Check if the user provider in use supports passwords retrieval. Access to the users passwords will be required by the CallbackHandler.
                     if ( !AuthFactory.supportsPasswordRetrieval() )
                     {
-                        Log.trace( "Cannot support '{}' as the AuthFactory that's in used does not support password retrieval.", mechanism );
+                        Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support password retrieval.", mechanism );
                         it.remove();
                     }
                     break;
 
                 case "SCRAM-SHA-1":
-                    if ( !AuthFactory.supportsPasswordRetrieval() || !AuthFactory.supportsScram() )
+                    if ( AuthFactory.supportsScram() )
                     {
-                        Log.trace( "Cannot support '{}' as the AuthFactory that's in used does not support password retrieval nor SCRAM.", mechanism );
+                        Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support SCRAM.", mechanism );
                         it.remove();
                     }
                     break;

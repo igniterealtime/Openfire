@@ -161,6 +161,394 @@ hr {
     </div>
     
     <div id="pageBody">
+
+
+<h2>4.2.0 Beta -- <span style="font-weight: normal;">Nov 17, 2017</span></h2>
+
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-210'>OF-210</a>] -         Add support for Roster Versioning (aka XEP-0237)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-548'>OF-548</a>] -         Find maven-managed artifacts to replace third-party libraries.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-549'>OF-549</a>] -         Create &quot;XMMP Server&quot; module
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-552'>OF-552</a>] -         Create &quot;Webadmin&quot; module
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-553'>OF-553</a>] -         Create distribution module(s).
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-554'>OF-554</a>] -         Create parent plugin module
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-555'>OF-555</a>] -         Create plugin modules
+</li>
+</ul>
+                
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-394'>OF-394</a>] -         Shouldn&#39;t show an exception when creating room with illegal characters in JID
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1134'>OF-1134</a>] -         JustMarried: Allow roster alias to be changed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1145'>OF-1145</a>] -         Avatar Resizer plugin issues when using LdapVCardProvider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1159'>OF-1159</a>] -         System Property Encryption is not cluster aware
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1193'>OF-1193</a>] -         Avatar resizer plugin: ClassNotFoundException
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1208'>OF-1208</a>] -         Option to block anonymous logins from sending s2s packets
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1250'>OF-1250</a>] -         Old DWR causes CSRF, XSS in Admin Console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1262'>OF-1262</a>] -         Error message for failed login on admin console contains moderator verbage
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1308'>OF-1308</a>] -         Openfire not closing stream gracefully with &lt;/stream:stream&gt;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1309'>OF-1309</a>] -         S2S communication on wrong stream
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1329'>OF-1329</a>] -         Session fixation in admin web console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1335'>OF-1335</a>] -         Forwarded messages rewritten to default namespace over S2S
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1366'>OF-1366</a>] -         NullPointerException in Group lookup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1384'>OF-1384</a>] -         Disco-item handler should process any domain
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1393'>OF-1393</a>] -         OpenFire randomString has too many digits
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1400'>OF-1400</a>] -         XSS in server name field
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1401'>OF-1401</a>] -         SMS error message handling doesn&#39;t escape content correctly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1403'>OF-1403</a>] -         Muc admin doesn&#39;t escape group names correctly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1417'>OF-1417</a>] -         CVE-2017-15911 XSS with domain in setup-host-settings.jsp
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1422'>OF-1422</a>] -         MUC Nick Sharing can cause rejoin to fail
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1423'>OF-1423</a>] -         Websocket message size is restricted to 65536
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1424'>OF-1424</a>] -         CME while calculating Group Cache stats
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1429'>OF-1429</a>] -         Closed BOSH sessions are still on admin console as client sessions
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-35'>OF-35</a>] -         Create an admin console for pubsub
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-159'>OF-159</a>] -         Add an s2s testing feature
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1336'>OF-1336</a>] -         User Property Provider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1353'>OF-1353</a>] -         Introduce &#39;priorToServerVersion&#39; for plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1402'>OF-1402</a>] -         XEP-0198 Resumption for Client Sessions
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1316'>OF-1316</a>] -         Update Tinder to 1.3.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1320'>OF-1320</a>] -         Update bundled JRE with the latest version
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1339'>OF-1339</a>] -         Merge websocket plugin with core
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1380'>OF-1380</a>] -         all.log should be exposed via Openfire Admin Console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1411'>OF-1411</a>] -         Update bundled JRE with the latest version
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1428'>OF-1428</a>] -         Remove deprecated Clustering plugin
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-200'>OF-200</a>] -         In user summary, display &quot;currently logged in&quot; instead of blank in last logout column
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1030'>OF-1030</a>] -         Monitoring Service plugin Search Archive Date Range field validation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1256'>OF-1256</a>] -         Display the current clustering status on the admin screens
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1306'>OF-1306</a>] -         Cache LDAP UserDN searches
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1313'>OF-1313</a>] -         Add protection for Cross-Site Request Forgery in MoTD plugin
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1314'>OF-1314</a>] -         Add the ability to disabled delayed delivery (XEP-203)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1317'>OF-1317</a>] -         Update dom4j from 1.6.1 to 2.0.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1328'>OF-1328</a>] -         Update JSTUN library in stunserver plugin
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1368'>OF-1368</a>] -         Add an informational message during failed login
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1370'>OF-1370</a>] -         inVerse plugin: hide registration tab when appropriate.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1373'>OF-1373</a>] -         Check for changes in keystores
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1379'>OF-1379</a>] -         Packet interceptors should trigger on error response when s2s fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1391'>OF-1391</a>] -         Update bundled postgresql JDBC Driver to 42.1.4
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1408'>OF-1408</a>] -         Display cache expiry times, entry, hit and miss counts on the Cache Summary page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1409'>OF-1409</a>] -         Audit clearing of caches
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1410'>OF-1410</a>] -         Allow openfire.bat to start in other folders
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1415'>OF-1415</a>] -         Simplify certificate management
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1418'>OF-1418</a>] -         LDAPManager reports UserNotFoundException unnecessarily
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1425'>OF-1425</a>] -         Allow plugins to define a minimum Java version
+</li>
+</ul>
+
+<h2>4.1.6 -- <span style="font-weight: normal;">Oct 5, 2017</span></h2>
+
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1020'>OF-1020</a>] -         Admin Console Remote File Inclusion (RFI) Vulnerability
+</li>
+</ul>
+                
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1304'>OF-1304</a>] -         SQL syntax error with monitoring plugin  IQ Query Handler
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1362'>OF-1362</a>] -         Websocket plugin fails when trying to use connection configuration
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1363'>OF-1363</a>] -         NPE when displaying properties for non-existing user
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1366'>OF-1366</a>] -         NullPointerException in Group lookup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1374'>OF-1374</a>] -         Pubsub publish NullPointerException
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1381'>OF-1381</a>] -         User enumeration possible by SCRAM
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1354'>OF-1354</a>] -         Add option to Client Control plugin to disable Start a chat in Spark
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1320'>OF-1320</a>] -         Update bundled JRE with the latest version
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1340'>OF-1340</a>] -         Create x64 Windows Installer
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1349'>OF-1349</a>] -         Create separate Windows installer with and without JRE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1359'>OF-1359</a>] -         Elevate webclients to top level menu in openfire admin UI
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1360'>OF-1360</a>] -         Update inVerse plugin to match upstream Converse 3.1.0 release.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1365'>OF-1365</a>] -         Some caches should not be purgeable.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1367'>OF-1367</a>] -         BOSH URL should be based on FQDN, not XMPP domain.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1369'>OF-1369</a>] -         Don&#39;t advertise in-band registration for read-only user providers
+</li>
+</ul>
+
+
+<h2>4.1.5 -- <span style="font-weight: normal;">Jun 30, 2017</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1310'>OF-1310</a>] -         Can`t delete last item of the pubsub node
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1327'>OF-1327</a>] -         Should not compare incomparable types
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1330'>OF-1330</a>] -         Can&#39;t enable database query statistics on the admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1332'>OF-1332</a>] -         Update bundled MySQL driver to fix utf8mb4 databases
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1334'>OF-1334</a>] -         Monitoring Plugin displays &quot;Archive index rebuild failed&quot;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1348'>OF-1348</a>] -         AuthBased*Provider try to use SortedSet without Comparable items
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1355'>OF-1355</a>] -         UserImportExport plugin: import should not fail when optional config is missing
+</li>
+</ul>
+                
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1343'>OF-1343</a>] -         Update install guide about the automatic service installation
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1277'>OF-1277</a>] -         Change setting name to Invisible Login and Status
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1325'>OF-1325</a>] -         Implement separate History settings in Client Control
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1326'>OF-1326</a>] -         Allow BOSH context to be re-used.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1338'>OF-1338</a>] -         Minimum server version restrictions should ignore release status identifier
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1341'>OF-1341</a>] -         Windows Launcher requires to run &quot;as administrator&quot; 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1342'>OF-1342</a>] -         Remove &quot;Run Openfire&quot; from the final step of the installer
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1347'>OF-1347</a>] -         Group settings update
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1350'>OF-1350</a>] -         Be less strict when setting a password on a MUC room
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1351'>OF-1351</a>] -         Parse &#39;release&#39; number
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1352'>OF-1352</a>] -         Plugin version number should not wrap
+</li>
+</ul>
+
+
+<h2>4.1.4 -- <span style="font-weight: normal;">May 4, 2017</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-119'>OF-119</a>] -         Ldap issue (search filter and &#39;@&#39; encoding) [patch]
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1272'>OF-1272</a>] -         DBAccess plugin XSS
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1273'>OF-1273</a>] -         Javadoc will not build in Docker
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1305'>OF-1305</a>] -         Openfire doesn&#39;t load user names with multi-byte characters from LDAP/AD
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1322'>OF-1322</a>] -         EXTERNAL is always offered for C2S sessions
+</li>
+</ul>
+                
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1319'>OF-1319</a>] -         Update bundled JRE with the latest version
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1292'>OF-1292</a>] -         NPE in Admin Console when cancelling creating a new room
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1295'>OF-1295</a>] -         Add information about windows service into Upgrade Guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1297'>OF-1297</a>] -         Add another note about UAC to the documentation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1301'>OF-1301</a>] -         Don&#39;t fail when default value for FQDN cannot be resolved.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1311'>OF-1311</a>] -         Store a list as a property value.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1312'>OF-1312</a>] -         Allow SASL mechanisms to be configured through the admin console.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1321'>OF-1321</a>] -         Prevent stacktrace when using admin console with stale session.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1324'>OF-1324</a>] -         OutgoingSessionPromise outgoing queue should be limited
+</li>
+</ul>
+
+
+<h2>4.1.3 -- <span style="font-weight: normal;">Feb 24, 2017</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1263'>OF-1263</a>] -         Contact List sharing shows stale data
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1269'>OF-1269</a>] -         Admin Console shows wrong group affiliation information for some users
+</li>
+</ul>
+
+<h2>4.1.2 -- <span style="font-weight: normal;">Feb 18, 2017</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1195'>OF-1195</a>] -         JDBCAuthProvider does not play nice with SCRAM
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1271'>OF-1271</a>] -         MUC History doesn&#39;t replay copy complex elements correctly after restart
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1278'>OF-1278</a>] -         Recursive Loop in SCRAM salt generation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1280'>OF-1280</a>] -         Wrong ADD COLUMN syntax for Oracle Upgrade Scripts
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1282'>OF-1282</a>] -         Setting TLS_CERTIFICATE_VERIFY false does not properly work
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1291'>OF-1291</a>] -         MAM not advertised on chatrooms
+</li>
+</ul>
+                
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1270'>OF-1270</a>] -         Remove obsolete information and update links in the Readme
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1281'>OF-1281</a>] -         Update installation package with the latest Java JRE
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1275'>OF-1275</a>] -         Openfire is unable to connect to LDAPS when using TLSv1.1 or TSLv1.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1288'>OF-1288</a>] -         Monitoring plugin does not add queryid and id to MAM responses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1289'>OF-1289</a>] -         Openfire should load jars in a predictable order
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1290'>OF-1290</a>] -         Stack Overflow in SASL EXTERNAL auth
+</li>
+</ul>
+
+
+<h2>4.1.1 -- <span style="font-weight: normal;">Dec 31, 2016</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1253'>OF-1253</a>] -         Due to initial mysql schema failure, a new install will ask for current admin password and fail due to non-existent schema
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1254'>OF-1254</a>] -         Database update scripts for 25 set version 24
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1255'>OF-1255</a>] -         Invalid SQL syntax in Mysql installation script. 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1257'>OF-1257</a>] -         SQLServer syntax error  java.sql.SQLException: Incorrect syntax near the keyword &#39;COLUMN&#39;.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1260'>OF-1260</a>] -         ClientControl plugin: Improve CSRF error message
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1258'>OF-1258</a>] -         Add an option to Client Control plugin to disable Anonymous login in Spark
+</li>
+</ul>
+            
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1259'>OF-1259</a>] -         Migrate XML property &#39;xmpp.fqdn&#39;
+</li>
+</ul>
+
 <h2>4.1.0 -- <span style="font-weight: normal;">Dec 21, 2016</span></h2>
 
 <h2>        Sub-task

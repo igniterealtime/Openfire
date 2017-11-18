@@ -56,7 +56,7 @@ public class IQPingHandler extends IQHandler implements ServerFeaturesProvider {
      */
     @Override
     public IQ handleIQ(IQ packet) {
-        if (packet.getType().equals(Type.get)) {
+        if (Type.get.equals(packet.getType())) {
             return IQ.createResultIQ(packet);
         }
         return null;

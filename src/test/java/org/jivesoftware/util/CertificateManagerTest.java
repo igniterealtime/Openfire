@@ -14,17 +14,18 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit test to validate the functionality of @{link CertificateManager}.
@@ -270,5 +271,42 @@ public class CertificateManagerTest
         assertEquals( 2, serverIdentities.size() );
         assertTrue( serverIdentities.contains( subjectAltNameXmppAddr ));
         assertFalse( serverIdentities.contains( subjectCommonName ) );
+    }
+
+    /**
+     * Asserts that {@link CertificateManager#parsePrivateKey(InputStream, String)} can parse a password-less private
+     * key PEM file.
+     */
+    @Test
+    public void testParsePrivateKey() throws Exception
+    {
+        // Setup fixture.
+        try ( final InputStream stream = getClass().getResourceAsStream( "/privatekey.pem" ) )
+        {
+            // Execute system under test.
+            final PrivateKey result = CertificateManager.parsePrivateKey( stream, "" );
+
+            // Verify result.
+            assertNotNull( result );
+        }
+    }
+
+    /**
+     * Asserts that {@link CertificateManager#parseCertificates(InputStream)} can parse a PEM file that contains a
+     * certificate chain
+     */
+    @Test
+    public void testParseFullChain() throws Exception
+    {
+        // Setup fixture.
+        try ( final InputStream stream = getClass().getResourceAsStream( "/fullchain.pem" ) )
+        {
+            // Execute system under test.
+            final Collection<X509Certificate> result = CertificateManager.parseCertificates( stream );
+
+            // Verify result.
+            assertNotNull( result );
+            assertEquals( 2, result.size() );
+        }
     }
 }

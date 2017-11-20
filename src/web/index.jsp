@@ -69,7 +69,7 @@
 
 <%! long lastRSSFetch = 0;
     SyndFeed lastBlogFeed = null;
-    String blogFeedRSS = "https://community.igniterealtime.org/blogs/ignite/feeds/posts";
+    String blogFeedRSS = "https://discourse.igniterealtime.org/c/blogs/ignite-realtime-blogs.rss";
 
 %>
 <% // Get parameters //

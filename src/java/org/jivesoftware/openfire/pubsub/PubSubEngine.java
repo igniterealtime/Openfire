@@ -1151,7 +1151,7 @@ public class PubSubEngine {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(from) || (!UserManager.getInstance().isRegisteredUser(from) && !isComponent(from)) ) {
+        if (!service.canCreateNode(from) || (!isComponent(from) && !UserManager.getInstance().isRegisteredUser(from))) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }

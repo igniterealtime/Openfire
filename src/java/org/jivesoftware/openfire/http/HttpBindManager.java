@@ -140,7 +140,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
     /**
      * Contains all Jetty handlers that are added as an extension.
      *
-     * This collection is mutabl. Handlers can be added and removed at runtime.
+     * This collection is mutable. Handlers can be added and removed at runtime.
      */
     private final HandlerCollection extensionHandlers = new HandlerCollection( true );
 
@@ -222,6 +222,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
         try {
             httpBindServer.start();
             handlerList.start();
+            extensionHandlers.start();
 
             CertificateManager.addListener(this);
 
@@ -239,6 +240,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
         if (httpBindServer != null) {
             try {
                 handlerList.stop();
+                extensionHandlers.stop();
                 httpBindServer.stop();
                 Log.info("HTTP bind service stopped");
             }

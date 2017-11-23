@@ -165,6 +165,7 @@
         </td>
     </tr>
     <%
+        boolean detached = false;
         if (currentSess instanceof LocalClientSession) {
             LocalClientSession s = (LocalClientSession)currentSess;
 
@@ -176,6 +177,7 @@
         <td>
             <%
                 if (s.isDetached()) {
+                    detached = true;
                     %><fmt:message key="session.details.sm-detached"/><%
                 } else if (s.getStreamManager().isEnabled()) {
                     if (s.getStreamManager().getResume()) {
@@ -343,14 +345,16 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-            <% try { %>
-                <%= currentSess.getHostAddress() %>
-                /
-                <%= currentSess.getHostName() %>
-            <% } catch (java.net.UnknownHostException e) { %>
-                Invalid session/connection
-            <% } %>
-        </td>
+                <%
+            if (detached) { %>
+            <fmt:message key="session.details.sm-detached"/>
+                <% } else {
+                try { %>
+                <%= currentSess.getHostAddress() %> / <%= currentSess.getHostName() %>
+                <% } catch (java.net.UnknownHostException e) { %>
+            Invalid session/connection
+                <% }
+            } %>
     </tr>
 </tbody>
 </table>
@@ -369,6 +373,7 @@
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
         <th><fmt:message key="session.details.resource" /></th>
+        <th nowrap><fmt:message key="session.details.node" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
         <th><fmt:message key="session.details.priority" /></th>

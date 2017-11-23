@@ -449,11 +449,17 @@ public abstract class LocalSession implements Session {
 
     @Override
     public String getHostAddress() throws UnknownHostException {
+        if (conn == null) {
+            throw new UnknownHostException("Detached session");
+        }
         return conn.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
+        if (conn == null) {
+            throw new UnknownHostException("Detached session");
+        }
         return conn.getHostName();
     }
 

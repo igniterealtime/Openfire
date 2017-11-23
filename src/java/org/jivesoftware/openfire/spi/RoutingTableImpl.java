@@ -150,6 +150,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean addClientRoute(JID route, LocalClientSession destination) {
         boolean added;
         boolean available = destination.getPresence().isAvailable();
+        Log.debug("Adding client route {}", route);
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
         if (destination.getAuthToken().isAnonymous()) {
             Lock lockAn = CacheFactory.getLock(route.toString(), anonymousUsersCache);
@@ -946,6 +947,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lock.unlock();
             }
         }
+        Log.debug("Removing client route {}", route);
         localRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return clientRoute != null;
     }

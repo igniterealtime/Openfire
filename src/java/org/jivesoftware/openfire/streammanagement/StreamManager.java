@@ -206,6 +206,7 @@ public class StreamManager {
     }
 
     private void startResume(String namespace, String previd, long h) {
+        Log.debug("Attempting resumption for {}, h={}", previd, h);
         this.namespace = namespace;
         // Ensure that resource binding has NOT occurred.
         if (!allowResume() ) {
@@ -238,6 +239,7 @@ public class StreamManager {
             return;
         }
         JID fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+        Log.debug("Resuming session {}", fullJid);
 
         // Locate existing session.
         LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
@@ -249,6 +251,7 @@ public class StreamManager {
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;
         }
+        Log.debug("Found existing session, checking status");
         // Previd identifies proper session. Now check SM status
         if (!otherSession.getStreamManager().namespace.equals(namespace)) {
             sendError(new PacketError(PacketError.Condition.unexpected_request));
@@ -259,8 +262,12 @@ public class StreamManager {
             return;
         }
         if (!otherSession.isDetached()) {
+            Log.debug("Existing session is not detached; detaching.");
+            Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
+            oldConnection.close();
         }
+        Log.debug("Attaching to other session.");
         // If we're all happy, disconnect this session.
         Connection conn = session.getConnection();
         session.setDetached();
@@ -283,6 +290,10 @@ public class StreamManager {
      */
     public void sendServerAcknowledgement() {
         if(isEnabled()) {
+            if (session.isDetached()) {
+                Log.debug("Session is detached, won't request an ack.");
+                return;
+            }
             String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
             session.deliverRawText( ack );
         }

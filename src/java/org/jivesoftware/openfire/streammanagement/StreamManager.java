@@ -206,7 +206,7 @@ public class StreamManager {
     }
 
     private void startResume(String namespace, String previd, long h) {
-        Log.debug("Attempting resumption.");
+        Log.debug("Attempting resumption for {}, h={}", previd, h);
         this.namespace = namespace;
         // Ensure that resource binding has NOT occurred.
         if (!allowResume() ) {
@@ -239,7 +239,7 @@ public class StreamManager {
             return;
         }
         JID fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
-        Log.debug("Resuming session {}", fullJid.toString());
+        Log.debug("Resuming session {}", fullJid);
 
         // Locate existing session.
         LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);

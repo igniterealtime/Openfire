@@ -168,11 +168,17 @@
     </td>
 
     <td width="1%" nowrap>
-        <% try { %>
-            <%= sess.getHostAddress() %>
-        <% } catch (java.net.UnknownHostException e) { %>
-            Invalid session/connection
-        <% } %>
+        <%
+            LocalClientSession localSession = (LocalClientSession) sess;
+            if (localSession != null && localSession.isDetached()) { %>
+                <fmt:message key="session.details.sm-detached"/>
+            <% } else {
+                try { %>
+                <%= sess.getHostAddress() %>
+            <% } catch (java.net.UnknownHostException e) { %>
+                Invalid session/connection
+            <% }
+            } %>
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">

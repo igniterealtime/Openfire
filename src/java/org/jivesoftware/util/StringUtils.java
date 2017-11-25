@@ -544,7 +544,7 @@ public final class StringUtils {
         // Create a char buffer to put random letters and numbers in.
         char[] randBuffer = new char[length];
         for (int i = 0; i < randBuffer.length; i++) {
-            randBuffer[i] = numbersAndLetters[randGen.nextInt(numbersAndLetters.length - 1)];
+            randBuffer[i] = numbersAndLetters[randGen.nextInt(numbersAndLetters.length)];
         }
         return new String(randBuffer);
     }

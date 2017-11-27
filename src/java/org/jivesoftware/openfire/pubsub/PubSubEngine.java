@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,12 +77,12 @@ public class PubSubEngine {
      * @param iq the IQ packet sent to the pubsub service.
      * @return true if the IQ packet was handled by the engine.
      */
-    public boolean process(PubSubService service, IQ iq) {
+    public boolean process(final PubSubService service, final IQ iq) {
         // Ignore IQs of type ERROR or RESULT
         if (IQ.Type.error == iq.getType() || IQ.Type.result == iq.getType()) {
             return true;
         }
-        Element childElement = iq.getChildElement();
+        final Element childElement = iq.getChildElement();
         String namespace = null;
 
         if (childElement != null) {
@@ -91,7 +92,14 @@ public class PubSubEngine {
             Element action = childElement.element("publish");
             if (action != null) {
                 // Entity publishes an item
-                publishItemsToNode(service, iq, action);
+                // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+                final Element finalAction = action;
+                TaskEngine.getInstance().submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        publishItemsToNode(service, iq, finalAction);
+                    }
+                });
                 return true;
             }
             action = childElement.element("subscribe");
@@ -115,7 +123,14 @@ public class PubSubEngine {
             action = childElement.element("create");
             if (action != null) {
                 // Entity is requesting to create a new node
-                createNode(service, iq, childElement, action);
+                final Element finalAction = action;
+                // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+                TaskEngine.getInstance().submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        createNode(service, iq, childElement, finalAction);
+                    }
+                });
                 return true;
             }
             action = childElement.element("unsubscribe");
@@ -497,9 +512,9 @@ public class PubSubEngine {
         leafNode.deleteItems(items);
     }
 
-    private void subscribeNode(PubSubService service, IQ iq, Element childElement, Element subscribeElement) {
+    private void subscribeNode(final PubSubService service, final IQ iq, final Element childElement, Element subscribeElement) {
         String nodeID = subscribeElement.attributeValue("node");
-        Node node;
+        final Node node;
         if (nodeID == null) {
             if (service.isCollectionNodesSupported()) {
                 // Entity subscribes to root collection node
@@ -523,8 +538,8 @@ public class PubSubEngine {
             }
         }
         // Check if sender and subscriber JIDs match or if a valid "trusted proxy" is being used
-        JID from = iq.getFrom();
-        JID subscriberJID = new JID(subscribeElement.attributeValue("jid"));
+        final JID from = iq.getFrom();
+        final JID subscriberJID = new JID(subscribeElement.attributeValue("jid"));
         if (!from.toBareJID().equals(subscriberJID.toBareJID()) && !service.isServiceAdmin(from)) {
             // JIDs do not match and requestor is not a service admin so return an error
             Element pubsubError = DocumentHelper.createElement(
@@ -533,14 +548,27 @@ public class PubSubEngine {
             return;
         }
         // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-        JID owner = subscriberJID.asBareJID();
+        final JID owner = subscriberJID.asBareJID();
         // Check if the node's access model allows the subscription to proceed
-        AccessModel accessModel = node.getAccessModel();
+        final AccessModel accessModel = node.getAccessModel();
         if (!accessModel.canSubscribe(node, owner, subscriberJID)) {
             sendErrorPacket(iq, accessModel.getSubsriptionError(),
                     accessModel.getSubsriptionErrorDetail());
             return;
         }
+
+        // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+        TaskEngine.getInstance().submit(new Runnable() {
+            @Override
+            public void run() {
+                subscribeNodeAsync(iq, subscriberJID, node, owner, service, from, childElement, accessModel);
+            }
+        });
+
+    }
+
+    private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {
+
         // Check if the subscriber is an anonymous user
         if (!isComponent(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID)) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
@@ -1139,7 +1167,9 @@ public class PubSubEngine {
      * - Node does not already exist
      * - New node configuration is valid
      *
-     * NOTE: This method should not reply to the client
+     * <br/>NOTE 1: This method should not reply to the client
+     * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
+     * do not call this method in the same thread in which a response might arrive
      *
      * @param service
      * @param iq

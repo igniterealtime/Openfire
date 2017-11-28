@@ -107,6 +107,10 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
+                <exclusion> <!-- Exclude the older dom4j dependency that's defined in Tinder -->
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 

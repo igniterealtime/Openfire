@@ -90,7 +90,7 @@ public class JSTLFunctions
      * &lt;table&gt;, etc) and converts the '&lt;' and '&gt;' characters to
      * their HTML escape sequences. It will also replace LF  with &lt;br&gt;.
      *
-     * @see StringUtils#escapeHTMLTags(String);
+     * @see StringUtils#escapeHTMLTags(String)
      */
     public static String escapeHTMLTags( String string )
     {

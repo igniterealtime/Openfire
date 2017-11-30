@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -542,7 +543,7 @@ public class PubSubEngine {
             return;
         }
         // Check if the subscriber is an anonymous user
-        if (!isComponent(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID)) {
+        if (!isComponent(subscriberJID) && !isRemoteServer(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID)) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
@@ -1899,6 +1900,27 @@ public class PubSubEngine {
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         if (routingTable != null) {
             return routingTable.hasComponentRoute(jid);
+        }
+        return false;
+    }
+
+    /**
+     * Checks to see if the supplied JID is that of a connected remote server
+     * @param jid the JID representing the remote server
+     * @return true if the supplied JID is a connected server session
+     */
+    private boolean isRemoteServer(final JID jid) {
+        final String jidString = jid.toString();
+        final SessionManager sessionManager = SessionManager.getInstance();
+        for (final String incomingServer : sessionManager.getIncomingServers()) {
+            if(incomingServer.equals(jidString)) {
+                return true;
+            }
+        }
+        for (final String outgoingServer : sessionManager.getOutgoingServers()) {
+            if(outgoingServer.equals(jidString)) {
+                return true;
+            }
         }
         return false;
     }

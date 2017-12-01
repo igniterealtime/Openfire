@@ -33,9 +33,7 @@ import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -203,6 +201,52 @@ public class CacheFactory {
         cacheProps.put("cache.pepServiceManager.maxLifetime", JiveConstants.MINUTE * 30);
         cacheProps.put("cache.publishedItems.size", 1024l * 1024 * 10);
         cacheProps.put("cache.publishedItems.maxLifetime", JiveConstants.MINUTE * 15);
+
+        PropertyEventDispatcher.addListener( new PropertyEventListener()
+        {
+
+            @Override
+            public void propertySet( String property, Map<String, Object> params )
+            {
+                final Cache cache = getCacheByProperty( property );
+                if ( cache == null )
+                {
+                    return;
+                }
+
+                if ( property.endsWith( ".size" ) )
+                {
+                    final Long size = getMaxCacheSize( cache.getName() );
+                    cache.setMaxCacheSize( size < Integer.MAX_VALUE ? size.intValue() : Integer.MAX_VALUE );
+                }
+
+                if ( property.endsWith( ".maxLifeTime" ) )
+                {
+                    final Long lifetime = getMaxCacheLifetime( cache.getName() );
+                    cache.setMaxLifetime( lifetime );
+                }
+
+                // Note that changes to 'min' and 'type' cannot be applied runtime - a restart is required for those.
+            }
+
+            @Override
+            public void propertyDeleted( String property, Map<String, Object> params )
+            {
+                propertySet( property, params );
+            }
+
+            @Override
+            public void xmlPropertySet( String property, Map<String, Object> params )
+            {
+                propertySet( property, params );
+            }
+
+            @Override
+            public void xmlPropertyDeleted( String property, Map<String, Object> params )
+            {
+                propertySet( property, params );
+            }
+        } );
     }
 
     private CacheFactory() {
@@ -227,7 +271,10 @@ public class CacheFactory {
      */
     public static void setMaxSizeProperty(String cacheName, long size) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty("cache." + cacheName + ".size", Long.toString(size));
+        if ( !Long.toString(size).equals( JiveGlobals.getProperty( "cache." + cacheName + ".size" ) ) )
+        {
+            JiveGlobals.setProperty( "cache." + cacheName + ".size", Long.toString( size ) );
+        }
     }
 
     public static boolean hasMaxSizeFromProperty(String cacheName) {
@@ -253,7 +300,10 @@ public class CacheFactory {
      */
     public static void setMaxLifetimeProperty(String cacheName, long lifetime) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty(("cache." + cacheName + ".maxLifetime"), Long.toString(lifetime));
+        if ( !Long.toString( lifetime ).equals( JiveGlobals.getProperty( "cache." + cacheName + ".maxLifetime" ) ))
+        {
+            JiveGlobals.setProperty( ( "cache." + cacheName + ".maxLifetime" ), Long.toString( lifetime ) );
+        }
     }
 
     public static boolean hasMaxLifetimeFromProperty(String cacheName) {
@@ -262,7 +312,10 @@ public class CacheFactory {
 
     public static void setCacheTypeProperty(String cacheName, String type) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty("cache." + cacheName + ".type", type);
+        if ( !type.equals( JiveGlobals.getProperty( "cache." + cacheName + ".type" ) ))
+        {
+            JiveGlobals.setProperty( "cache." + cacheName + ".type", type );
+        }
     }
 
     public static String getCacheTypeProperty(String cacheName) {
@@ -272,11 +325,45 @@ public class CacheFactory {
 
     public static void setMinCacheSize(String cacheName, long size) {
         cacheName = cacheName.replaceAll(" ", "");
-        JiveGlobals.setProperty("cache." + cacheName + ".min", Long.toString(size));
+        if ( !Long.toString( size ).equals( JiveGlobals.getProperty( "cache." + cacheName + ".min" ) ))
+        {
+            JiveGlobals.setProperty( "cache." + cacheName + ".min", Long.toString( size ) );
+        }
     }
 
     public static long getMinCacheSize(String cacheName) {
         return getCacheProperty(cacheName, ".min", 0);
+    }
+
+    private static Cache getCacheByProperty( String property )
+    {
+        if ( !property.startsWith( "cache." ) )
+        {
+            return null;
+        }
+
+        // Extract the cache name identifier from the property name.
+        final String name = property.substring( "cache.".length(), property.lastIndexOf( "." ) );
+
+        // See if property is using the short name variant.
+        for ( final Map.Entry<String, String> entry : cacheNames.entrySet() )
+        {
+            if ( name.equals( entry.getValue() ) )
+            {
+                return caches.get( entry.getKey() );
+            }
+        }
+
+        // If not a short name, then try for a normalized name.
+        for ( final Map.Entry<String, Cache> entry : caches.entrySet() )
+        {
+            if ( entry.getKey().replaceAll(" ", "").equals( name ) )
+            {
+                return entry.getValue();
+            }
+        }
+
+        return null;
     }
 
     private static long getCacheProperty(String cacheName, String suffix, long defaultValue) {

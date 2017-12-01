@@ -447,7 +447,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
                 final boolean dialbackOffered = features.element("dialback") != null;
                 
-                log.debug("Remote server is offering dialback: {}, EXTERNAL SASL:", dialbackOffered, saslEXTERNALoffered );
+                log.debug("Remote server is offering dialback: {}, EXTERNAL SASL: {}", dialbackOffered, saslEXTERNALoffered );
 
                 LocalOutgoingServerSession result = null;
 

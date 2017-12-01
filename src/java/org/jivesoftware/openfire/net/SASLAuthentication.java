@@ -554,7 +554,7 @@ public class SASLAuthentication {
                     break;
 
                 case "SCRAM-SHA-1":
-                    if ( AuthFactory.supportsScram() )
+                    if ( !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support SCRAM.", mechanism );
                         it.remove();

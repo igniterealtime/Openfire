@@ -75,33 +75,33 @@ public class RtcpSenderPacket extends RtcpPacket {
      * This constructor is used for a packet which has been received.
      */
     public RtcpSenderPacket(DatagramPacket packet) {
-	super(packet);
+    super(packet);
     }
 
     /*
      * This constructor is used to create a packet to send
      */
     public RtcpSenderPacket(int SSRC) {
-	super(SSRC, true);
-	setSSRC_1(SSRC);
+    super(SSRC, true);
+    setSSRC_1(SSRC);
     }
 
     public void setNTPTimestamp(long ts) {
-	rtcpData[8] = (byte)  ((ts >> 56) & 0xff);
-	rtcpData[9] = (byte)  ((ts >> 48) & 0xff);
-	rtcpData[10] = (byte) ((ts >> 40) & 0xff);
-	rtcpData[11] = (byte) ((ts >> 32) & 0xff);
-	rtcpData[12] = (byte) ((ts >> 24) & 0xff);
-	rtcpData[13] = (byte) ((ts >> 16) & 0xff);
-	rtcpData[14] = (byte) ((ts >> 8) & 0xff);
-	rtcpData[15] = (byte) (ts & 0xff);
+    rtcpData[8] = (byte)  ((ts >> 56) & 0xff);
+    rtcpData[9] = (byte)  ((ts >> 48) & 0xff);
+    rtcpData[10] = (byte) ((ts >> 40) & 0xff);
+    rtcpData[11] = (byte) ((ts >> 32) & 0xff);
+    rtcpData[12] = (byte) ((ts >> 24) & 0xff);
+    rtcpData[13] = (byte) ((ts >> 16) & 0xff);
+    rtcpData[14] = (byte) ((ts >> 8) & 0xff);
+    rtcpData[15] = (byte) (ts & 0xff);
     }
 
     public void setRTPTimestamp(int ts) {
-	rtcpData[16] = (byte) ((ts >> 24) & 0xff);
-	rtcpData[17] = (byte) ((ts >> 16) & 0xff);
-	rtcpData[18] = (byte) ((ts >> 8) & 0xff);
-	rtcpData[19] = (byte) (ts & 0xff);
+    rtcpData[16] = (byte) ((ts >> 24) & 0xff);
+    rtcpData[17] = (byte) ((ts >> 16) & 0xff);
+    rtcpData[18] = (byte) ((ts >> 8) & 0xff);
+    rtcpData[19] = (byte) (ts & 0xff);
     }
 
     public int getRTPTimestamp() {
@@ -112,10 +112,10 @@ public class RtcpSenderPacket extends RtcpPacket {
     }
 
     public void setPacketCount(int packetCount) {
-	rtcpData[20] = (byte) ((packetCount >> 24) & 0xff);
-	rtcpData[21] = (byte) ((packetCount >> 16) & 0xff);
-	rtcpData[22] = (byte) ((packetCount >> 8) & 0xff);
-	rtcpData[23] = (byte) (packetCount & 0xff);
+    rtcpData[20] = (byte) ((packetCount >> 24) & 0xff);
+    rtcpData[21] = (byte) ((packetCount >> 16) & 0xff);
+    rtcpData[22] = (byte) ((packetCount >> 8) & 0xff);
+    rtcpData[23] = (byte) (packetCount & 0xff);
     }
 
     public int getPacketCount() {
@@ -126,42 +126,42 @@ public class RtcpSenderPacket extends RtcpPacket {
     }
 
     public void setOctetCount(int octetCount) {
-	rtcpData[24] = (byte) ((octetCount >> 24) & 0xff);
-	rtcpData[25] = (byte) ((octetCount >> 16) & 0xff);
-	rtcpData[26] = (byte) ((octetCount >> 8) & 0xff);
-	rtcpData[27] = (byte) (octetCount >> 0xff);
+    rtcpData[24] = (byte) ((octetCount >> 24) & 0xff);
+    rtcpData[25] = (byte) ((octetCount >> 16) & 0xff);
+    rtcpData[26] = (byte) ((octetCount >> 8) & 0xff);
+    rtcpData[27] = (byte) (octetCount >> 0xff);
     }
 
     public int getOctetCount() {
-	return ((((int)rtcpData[24]) << 24) & 0xff000000) |
+    return ((((int)rtcpData[24]) << 24) & 0xff000000) |
                ((((int)rtcpData[25]) << 16) & 0x00ff0000) |
-	       ((((int)rtcpData[26]) << 8)  & 0x0000ff00) |
+           ((((int)rtcpData[26]) << 8)  & 0x0000ff00) |
                (rtcpData[27] & 0xff);
     }
 
     public void setSSRC_1(int SSRC) {
-	rtcpData[28] = (byte) ((SSRC >> 24) & 0xff);
-	rtcpData[29] = (byte) ((SSRC >> 16) & 0xff);
-	rtcpData[30] = (byte) ((SSRC >> 8) & 0xff);
-	rtcpData[31] = (byte) (SSRC & 0xff);
+    rtcpData[28] = (byte) ((SSRC >> 24) & 0xff);
+    rtcpData[29] = (byte) ((SSRC >> 16) & 0xff);
+    rtcpData[30] = (byte) ((SSRC >> 8) & 0xff);
+    rtcpData[31] = (byte) (SSRC & 0xff);
     }
 
     public void setFractionLost(byte fractionLost) {
-	rtcpData[32] = fractionLost;
+    rtcpData[32] = fractionLost;
     }
 
     public byte getFractionLost() {
-	return rtcpData[32];
+    return rtcpData[32];
     }
 
     public void setCumulativeLost(int cumulativeLost) {
-	rtcpData[33] = (byte) ((cumulativeLost >> 16) & 0xff);
-	rtcpData[34] = (byte) ((cumulativeLost >> 8) & 0xff);
-	rtcpData[35] = (byte) (cumulativeLost & 0xff);
+    rtcpData[33] = (byte) ((cumulativeLost >> 16) & 0xff);
+    rtcpData[34] = (byte) ((cumulativeLost >> 8) & 0xff);
+    rtcpData[35] = (byte) (cumulativeLost & 0xff);
     }
 
     public int getCumulativeLost() {
-	int cumulativeLost = ((((int)rtcpData[33]) << 16) & 0x00ff0000) |
+    int cumulativeLost = ((((int)rtcpData[33]) << 16) & 0x00ff0000) |
                              ((((int)rtcpData[34]) << 8) & 0x0000ff00) |
                              (rtcpData[35] & 0xff);
 
@@ -169,14 +169,14 @@ public class RtcpSenderPacket extends RtcpPacket {
             cumulativeLost |= 0xff000000;       // it's negative
         }
 
-	return cumulativeLost;
+    return cumulativeLost;
     }
 
     public void setHighestSeqReceived(int seq) {
-	rtcpData[36] = (byte) ((seq >> 24) & 0xff);
-	rtcpData[37] = (byte) ((seq >> 16) & 0xff);
-	rtcpData[38] = (byte) ((seq >> 8) & 0xff);
-	rtcpData[39] = (byte) (seq & 0xff);
+    rtcpData[36] = (byte) ((seq >> 24) & 0xff);
+    rtcpData[37] = (byte) ((seq >> 16) & 0xff);
+    rtcpData[38] = (byte) ((seq >> 8) & 0xff);
+    rtcpData[39] = (byte) (seq & 0xff);
     }
 
     public int getHighestSeqReceived() {
@@ -187,10 +187,10 @@ public class RtcpSenderPacket extends RtcpPacket {
     }
 
     public void setInterArrivalJitter(int interArrivalJitter) {
-	rtcpData[40] = (byte) ((interArrivalJitter >> 24) & 0xff);
-	rtcpData[41] = (byte) ((interArrivalJitter >> 16) & 0xff);
-	rtcpData[42] = (byte) ((interArrivalJitter >> 8) & 0xff);
-	rtcpData[43] = (byte) (interArrivalJitter  & 0xff);
+    rtcpData[40] = (byte) ((interArrivalJitter >> 24) & 0xff);
+    rtcpData[41] = (byte) ((interArrivalJitter >> 16) & 0xff);
+    rtcpData[42] = (byte) ((interArrivalJitter >> 8) & 0xff);
+    rtcpData[43] = (byte) (interArrivalJitter  & 0xff);
     }
 
     public int getInterArrivalJitter() {
@@ -201,10 +201,10 @@ public class RtcpSenderPacket extends RtcpPacket {
     }
 
     public void setLSR(int LSR) {
-	rtcpData[44] = (byte) ((LSR >> 24) & 0xff);
-	rtcpData[45] = (byte) ((LSR >> 16) & 0xff);
-	rtcpData[46] = (byte) ((LSR >> 8) & 0xff);
-	rtcpData[47] = (byte) (LSR & 0xff);
+    rtcpData[44] = (byte) ((LSR >> 24) & 0xff);
+    rtcpData[45] = (byte) ((LSR >> 16) & 0xff);
+    rtcpData[46] = (byte) ((LSR >> 8) & 0xff);
+    rtcpData[47] = (byte) (LSR & 0xff);
     }
 
     public int getLSR() {
@@ -215,14 +215,14 @@ public class RtcpSenderPacket extends RtcpPacket {
 
     }
     public void setDLSR(int DLSR) {
-	rtcpData[48] = (byte) ((DLSR >> 24) & 0xff);
-	rtcpData[49] = (byte) ((DLSR >> 16) & 0xff);
-	rtcpData[50] = (byte) ((DLSR >> 8) & 0xff);
-	rtcpData[51] = (byte) (DLSR & 0xff);
+    rtcpData[48] = (byte) ((DLSR >> 24) & 0xff);
+    rtcpData[49] = (byte) ((DLSR >> 16) & 0xff);
+    rtcpData[50] = (byte) ((DLSR >> 8) & 0xff);
+    rtcpData[51] = (byte) (DLSR & 0xff);
     }
 
     public void printReport() {
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.writeFile(" RTCP Sender report:  from " + from
                 + ", RTP Timestamp " + Integer.toHexString(getRTPTimestamp())
                 + ", packets " + getPacketCount()
@@ -232,7 +232,7 @@ public class RtcpSenderPacket extends RtcpPacket {
                 + ", highest seq "
                 + Integer.toHexString(getHighestSeqReceived())
                 + ", jitter " + getInterArrivalJitter());
-	}
+    }
     }
 
 }

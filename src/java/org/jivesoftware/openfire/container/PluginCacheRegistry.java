@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
  * A simple registry of cache configuration data for plugins.
  */
 public class PluginCacheRegistry {
-	
-	private static final Logger Log = LoggerFactory.getLogger(PluginCacheRegistry.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(PluginCacheRegistry.class);
 
     private static final PluginCacheRegistry instance = new PluginCacheRegistry();
 

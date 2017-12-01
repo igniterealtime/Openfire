@@ -28,8 +28,13 @@
         }
     }
     // Check if outgoing session is secured (only if incoming sessions are secured)
-    if (isSecured && outSession != null) {
-        isSecured = outSession.isSecure();
+    if (isSecured) {
+        for (org.jivesoftware.openfire.session.OutgoingServerSession outSession : outSessions) {
+            if (!outSession.isSecure()) {
+                isSecured = false;
+                break;
+            }
+        }
     }
 %>
 <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
@@ -49,12 +54,12 @@
      <% } else { %>
     <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
      <% } %>
-    <% if (!inSessions.isEmpty() && outSession == null) { %>
+    <% if (!inSessions.isEmpty() && outSessions.isEmpty()) { %>
         <td width="1%">
             <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
         </td>
         <td width="10%"><fmt:message key="server.session.connection.incoming" /></td>
-    <% } else if (inSessions.isEmpty() && outSession != null) { %>
+    <% } else if (inSessions.isEmpty() && !outSessions.isEmpty()) { %>
         <td width="1%">
             <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
         </td>
@@ -68,35 +73,25 @@
 
     <% Date creationDate = null;
         Date lastActiveDate = null;
-        if (!inSessions.isEmpty() && outSession == null) {
-            for (IncomingServerSession inSession : inSessions) {
-                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
-                    // Use the creation date of the oldest incoming session
-                    creationDate = inSession.getCreationDate();
-                }
-                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
-                    // Use the last active date of the newest incoming session
-                    lastActiveDate = inSession.getLastActiveDate();
-                }
+        for (IncomingServerSession inSession : inSessions) {
+            if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+                // Use the creation date of the oldest incoming session
+                creationDate = inSession.getCreationDate();
+            }
+            if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+                // Use the last active date of the newest incoming session
+                lastActiveDate = inSession.getLastActiveDate();
             }
         }
-        else if (inSessions.isEmpty() && outSession != null) {
-            creationDate = outSession.getCreationDate();
-            lastActiveDate = outSession.getLastActiveDate();
-        }
-        else {
-            for (IncomingServerSession inSession : inSessions) {
-                if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
-                    // Use the creation date of the oldest incoming session
-                    creationDate = inSession.getCreationDate();
-                }
-                if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
-                    // Use the last active date of the newest incoming session
-                    lastActiveDate = inSession.getLastActiveDate();
-                }
+        for (OutgoingServerSession outSession : outSessions) {
+            if (creationDate == null || creationDate.after(outSession.getCreationDate())) {
+                // Use the creation date of the oldest outgoing session
+                creationDate = outSession.getCreationDate();
             }
-            creationDate = creationDate.before(outSession.getCreationDate()) ? creationDate : outSession.getCreationDate();
-            lastActiveDate = lastActiveDate.after(outSession.getLastActiveDate()) ? lastActiveDate : outSession.getLastActiveDate();
+            if (lastActiveDate == null || lastActiveDate.before(outSession.getLastActiveDate())) {
+                // Use the last active date of the newest outgoing session
+                lastActiveDate = outSession.getLastActiveDate();
+            }
         }
         Calendar creationCal = Calendar.getInstance();
         creationCal.setTime(creationDate);

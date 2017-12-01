@@ -68,9 +68,9 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      * @param cp the CallParticipant
      */
     public CallSetupAgent(CallHandler callHandler) {
-	this.callHandler = callHandler;
+    this.callHandler = callHandler;
 
-	cp = callHandler.getCallParticipant();
+    cp = callHandler.getCallParticipant();
     }
     
     /*
@@ -88,12 +88,12 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
         } catch (InterruptedException e) {
         }
 
-	inviteTimeoutThread = null;
+    inviteTimeoutThread = null;
 
         if (reasonCallTerminated == null && getState() < CallState.ANSWERED) {
-	    Logger.println("Call answer time out " + cp);
-	    sendCallEventNotification(
-		new CallEvent(CallEvent.CALL_ANSWER_TIMEOUT));
+        Logger.println("Call answer time out " + cp);
+        sendCallEventNotification(
+        new CallEvent(CallEvent.CALL_ANSWER_TIMEOUT));
             cancelRequest("No answer");
         }
     }
@@ -102,7 +102,7 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      * set the call answer timeout in seconds
      */
     public static void setDefaultCallAnswerTimeout(
-	    int defaultCallAnswerTimeout) {
+        int defaultCallAnswerTimeout) {
 
         CallSetupAgent.defaultCallAnswerTimeout = defaultCallAnswerTimeout;
     }
@@ -115,76 +115,76 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
     }
 
     public CallState getCallState() {
-	return callState;
+    return callState;
     }
 
     public int getState() {
-	return callState.getState();
+    return callState.getState();
     }
 
     protected void setState(int state) {
-	setState(state, null);
+    setState(state, null);
     }
 
     protected void setState(int state, String info) {
-	callState = new CallState(state);
+    callState = new CallState(state);
 
-	CallEvent callEvent = new CallEvent(CallEvent.STATE_CHANGED);
+    CallEvent callEvent = new CallEvent(CallEvent.STATE_CHANGED);
 
-	callEvent.setCallState(callState);
+    callEvent.setCallState(callState);
 
-	String s = "";
+    String s = "";
 
-	if (state == CallState.INVITED || state == CallState.ESTABLISHED) {
-	    s += "ConferenceReceiverPort='" 
-		+ callHandler.getReceiveAddress().getPort() + "'";
+    if (state == CallState.INVITED || state == CallState.ESTABLISHED) {
+        s += "ConferenceReceiverPort='" 
+        + callHandler.getReceiveAddress().getPort() + "'";
 
-	    MediaInfo mediaInfo =
+        MediaInfo mediaInfo =
                  callHandler.getConferenceManager().getMediaInfo();
 
             s += " ConferencePayload='" +  mediaInfo.getPayload() + "'";
-	    s += " BridgeIPAddress='" 
-		+ Bridge.getPrivateHost() + "'";
+        s += " BridgeIPAddress='" 
+        + Bridge.getPrivateHost() + "'";
 
-	    s += " BridgeInfo='" 
+        s += " BridgeInfo='" 
                 + Bridge.getPrivateHost() + ":"
                 + Bridge.getPrivateControlPort() + ":"
                 + Bridge.getPrivateSipPort() + ":" 
-		+ Bridge.getPublicHost() + ":"
+        + Bridge.getPublicHost() + ":"
                 + Bridge.getPublicControlPort()+ ":"
                 + Bridge.getPublicSipPort() + "'";
-	} 
+    } 
 
-	if (info != null) {
-	    s = info + " " + s;
-	}
+    if (info != null) {
+        s = info + " " + s;
+    }
 
-	callEvent.setInfo(s);
+    callEvent.setInfo(s);
 
-	Logger.println("Call " + callHandler + " " + callState);
+    Logger.println("Call " + callHandler + " " + callState);
 
-	sendCallEventNotification(callEvent);
+    sendCallEventNotification(callEvent);
 
         if (state == CallState.ESTABLISHED) {
             String treatment = cp.getCallEstablishedTreatment();
 
             if (treatment != null) {
-		callEstablishedTreatment = initializeTreatment(treatment, 0);
+        callEstablishedTreatment = initializeTreatment(treatment, 0);
 
-		if (callEstablishedTreatment != null) {
-		    addTreatment(callEstablishedTreatment);
-		}
+        if (callEstablishedTreatment != null) {
+            addTreatment(callEstablishedTreatment);
+        }
             }
-	}
+    }
 
-	if (inviteTimeoutThread == null && state == CallState.INVITED) {
-	    inviteTimeoutThread = new Thread(this);
+    if (inviteTimeoutThread == null && state == CallState.INVITED) {
+        inviteTimeoutThread = new Thread(this);
             inviteTimeoutThread.start();        // start invite timeout thread
-	}
+    }
     }
 
     protected void sendCallEventNotification(CallEvent callEvent) {
-	callHandler.sendCallEventNotification(callEvent);
+    callHandler.sendCallEventNotification(callEvent);
     }
 
     /*
@@ -192,31 +192,31 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      * the CallHandler can tell the Mixer where to send RTP data.
      */
     protected void setEndpointAddress(InetSocketAddress isa, 
-	    byte mediaPayload, byte receivePayload,
-	    byte telephoneEventPayload) {
+        byte mediaPayload, byte receivePayload,
+        byte telephoneEventPayload) {
 
-	setEndpointAddress(isa, mediaPayload, receivePayload, telephoneEventPayload, null);
+    setEndpointAddress(isa, mediaPayload, receivePayload, telephoneEventPayload, null);
     }
 
     protected void setEndpointAddress(InetSocketAddress isa, 
-	    byte mediaPayload, byte receivePayload,
-	    byte telephoneEventPayload, InetSocketAddress rtcpAddress) {
+        byte mediaPayload, byte receivePayload,
+        byte telephoneEventPayload, InetSocketAddress rtcpAddress) {
 
-	callHandler.setEndpointAddress(isa, mediaPayload, receivePayload,
-	    telephoneEventPayload, rtcpAddress);
+    callHandler.setEndpointAddress(isa, mediaPayload, receivePayload,
+        telephoneEventPayload, rtcpAddress);
     }
 
     /*
      * true if call is established
      */
     public boolean isCallEstablished() {
-	return getState() == CallState.ESTABLISHED || 
-	    getState() == CallState.ENDING;
+    return getState() == CallState.ESTABLISHED || 
+        getState() == CallState.ENDING;
     }
 
     public boolean isCallEnding() {
-	return getState() == CallState.ENDING || 
-	    getState() == CallState.ENDED;
+    return getState() == CallState.ENDING || 
+        getState() == CallState.ENDED;
     }
 
     /**
@@ -237,41 +237,41 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
             repeatCount = 30;
         }
 
-	callAnsweredTreatment = initializeTreatment(treatment, repeatCount);
+    callAnsweredTreatment = initializeTreatment(treatment, repeatCount);
 
         if (callHandler.isFirstMember()) {
             treatment = cp.getFirstConferenceMemberTreatment();
 
             if (treatment != null) {
                 callAnsweredTreatment =
-		    initializeTreatment(treatment, repeatCount);
+            initializeTreatment(treatment, repeatCount);
             }
         }
     }
 
     private TreatmentManager initializeTreatment(String treatment,
-	    int repeatCount) {
+        int repeatCount) {
 
-	MediaInfo mediaInfo = callHandler.getConferenceManager().getMediaInfo();
+    MediaInfo mediaInfo = callHandler.getConferenceManager().getMediaInfo();
 
         if (treatment != null) {
-	    try {
+        try {
                 return new TreatmentManager(
                     treatment, repeatCount, mediaInfo.getSampleRate(),
-		    mediaInfo.getChannels());
-	    } catch (IOException e) {
-		Logger.println("can't play treatment " + treatment
-		    + " " + e.getMessage());
-	    }
+            mediaInfo.getChannels());
+        } catch (IOException e) {
+        Logger.println("can't play treatment " + treatment
+            + " " + e.getMessage());
         }
-	return null;
+        }
+    return null;
     }
 
     /*
      * Add a treatment to play to the call.
      */
     protected void addTreatment(TreatmentManager treatmentManager) {
-	callHandler.addTreatment(treatmentManager);
+    callHandler.addTreatment(treatmentManager);
     }
 
     /**
@@ -279,7 +279,7 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      */
     protected void startCallAnsweredTreatment() {
         Logger.println("Call " + callHandler 
-	    + " starting call answered treatment");
+        + " starting call answered treatment");
 
         callAnsweredTreatment.addTreatmentDoneListener(this);
         callHandler.addTreatment(callAnsweredTreatment);
@@ -289,35 +289,35 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      * Stop call answered treatment
      */
     public void stopCallAnsweredTreatment() {
-	if (callAnsweredTreatment != null) {
+    if (callAnsweredTreatment != null) {
             if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Call " + callHandler 
-		    + " Stop callAnsweredTreatment player...");
-	    }
-	
-	    callAnsweredTreatment.stopTreatment();
-	    callAnsweredTreatment = null;
-	} else {
-	    if (cp.getJoinConfirmationTimeout() != 0) {
-		if (getState() == CallState.INVITED) {
-		    setState(CallState.ANSWERED);
-		
-		    MediaInfo mediaInfo = 
-			callHandler.getConferenceManager().getMediaInfo();
+            Logger.println("Call " + callHandler 
+            + " Stop callAnsweredTreatment player...");
+        }
+    
+        callAnsweredTreatment.stopTreatment();
+        callAnsweredTreatment = null;
+    } else {
+        if (cp.getJoinConfirmationTimeout() != 0) {
+        if (getState() == CallState.INVITED) {
+            setState(CallState.ANSWERED);
+        
+            MediaInfo mediaInfo = 
+            callHandler.getConferenceManager().getMediaInfo();
 
-		    setState(CallState.ESTABLISHED,
-			"ConferencePayload='" +  mediaInfo.getPayload() + "'"
-	    		+ " BridgeIPAddress='" 
-			+ Bridge.getPrivateHost() + "'");
-		}
-	    }
-	}
+            setState(CallState.ESTABLISHED,
+            "ConferencePayload='" +  mediaInfo.getPayload() + "'"
+                + " BridgeIPAddress='" 
+            + Bridge.getPrivateHost() + "'");
+        }
+        }
+    }
     }
 
     public void stopCallEstablishedTreatment() {
         if (callEstablishedTreatment == null) {
-	    return;
-	}
+        return;
+    }
 
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
             Logger.println("Call " + callHandler
@@ -336,7 +336,7 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
     public void treatmentDoneNotification(TreatmentManager treatmentManager) {
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
             Logger.println("Call " + callHandler 
-		+ " treatment done notification, current state "
+        + " treatment done notification, current state "
                 + callState + " " + callHandler);
         }
 
@@ -347,41 +347,41 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
              * CALL_PARTICIPANT_INVITED state until a dtmf key is pressed.
              * Then we change state to CALL_PARTICIPANT_ANSWERED and
              * fall through.
-	     *
-	     * XXX We need to make sure the treatment repeats enough times.
-	     * If it finishes before we timeout, we'll treat the call as answered!
-	     *
+         *
+         * XXX We need to make sure the treatment repeats enough times.
+         * If it finishes before we timeout, we'll treat the call as answered!
+         *
              */
-	    if (reasonCallTerminated != null) {
-		break;
-	    }
+        if (reasonCallTerminated != null) {
+        break;
+        }
 
             setState(CallState.ANSWERED);
-	    
+        
         case CallState.ANSWERED:
-	    /*
-	     * Call answered treatment is done, we're ready for the conference
-	     */
-	    MediaInfo mediaInfo = 
-		callHandler.getConferenceManager().getMediaInfo();
+        /*
+         * Call answered treatment is done, we're ready for the conference
+         */
+        MediaInfo mediaInfo = 
+        callHandler.getConferenceManager().getMediaInfo();
 
-	    setState(CallState.ESTABLISHED,
-		"ConferencePayload='" +  mediaInfo.getPayload() + "'"
-		+ " BridgeIPAddress='" 
-		+ Bridge.getPrivateHost() + "'");
+        setState(CallState.ESTABLISHED,
+        "ConferencePayload='" +  mediaInfo.getPayload() + "'"
+        + " BridgeIPAddress='" 
+        + Bridge.getPrivateHost() + "'");
             break;
 
-	case CallState.ENDING:
-	    /*
-	     * Call end treatment is done, time to end the call
-	     */
-	    terminateCall();
-	    done();
-	    break;
+    case CallState.ENDING:
+        /*
+         * Call end treatment is done, time to end the call
+         */
+        terminateCall();
+        done();
+        break;
 
-	default:
-	    Logger.error("Call " + callHandler 
-		+ ":  unexpected state " + callState);
+    default:
+        Logger.error("Call " + callHandler 
+        + ":  unexpected state " + callState);
             break;
         }
     }
@@ -396,7 +396,7 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
     }
 
     public String getSdp() {
-	return null;
+    return null;
     }
 
     public void setRemoteMediaInfo(String sdp) throws ParseException {
@@ -409,73 +409,73 @@ public class CallSetupAgent implements TreatmentDoneListener, Runnable {
      * Cancel a call
      */
     public void cancelRequest(String s) {
-	if (reasonCallTerminated != null || getState() == CallState.ENDED) {
-	    return;
-	}
+    if (reasonCallTerminated != null || getState() == CallState.ENDED) {
+        return;
+    }
 
-	reasonCallTerminated = s;
+    reasonCallTerminated = s;
 
         if (inviteTimeoutThread != null) {
             inviteTimeoutThread.interrupt();
             inviteTimeoutThread = null;
         }
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println(
-		"Call " + callHandler + ":  cancelling call, " + s);
-	}
+        "Call " + callHandler + ":  cancelling call, " + s);
+    }
 
-	if (callAnsweredTreatment != null) {
-	    callAnsweredTreatment.stopTreatment();
-	}
+    if (callAnsweredTreatment != null) {
+        callAnsweredTreatment.stopTreatment();
+    }
 
-	if (callEstablishedTreatment != null) {
-	    callEstablishedTreatment.stopTreatment();
-	}
+    if (callEstablishedTreatment != null) {
+        callEstablishedTreatment.stopTreatment();
+    }
 
-	if (getState() == CallState.ESTABLISHED) {
-	    String endTreatment = cp.getCallEndTreatment();
+    if (getState() == CallState.ESTABLISHED) {
+        String endTreatment = cp.getCallEndTreatment();
 
-	    if (endTreatment != null && cp.isConferenceMuted() == false) {
-		try {
-        	    MediaInfo mediaInfo = 
-			callHandler.getConferenceManager().getMediaInfo();
+        if (endTreatment != null && cp.isConferenceMuted() == false) {
+        try {
+                MediaInfo mediaInfo = 
+            callHandler.getConferenceManager().getMediaInfo();
 
-    		    TreatmentManager callEndTreatment =
-			new TreatmentManager(endTreatment, 0, 
-			    mediaInfo.getSampleRate(), mediaInfo.getChannels());
+                TreatmentManager callEndTreatment =
+            new TreatmentManager(endTreatment, 0, 
+                mediaInfo.getSampleRate(), mediaInfo.getChannels());
 
-		    setState(CallState.ENDING, "Reason='" + s + "'");
+            setState(CallState.ENDING, "Reason='" + s + "'");
 
-		    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	                Logger.println("Call " + callHandler 
-			    + " adding end treatment...");
-		    }
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+                    Logger.println("Call " + callHandler 
+                + " adding end treatment...");
+            }
 
-		    callEndTreatment.addTreatmentDoneListener(this);
+            callEndTreatment.addTreatmentDoneListener(this);
                     callHandler.addTreatment(callEndTreatment);
 
-		    return;
-		} catch (IOException e) {
-		    Logger.error("Call " + callHandler + " " + e.getMessage());
-		}
-	    }
-	} 
+            return;
+        } catch (IOException e) {
+            Logger.error("Call " + callHandler + " " + e.getMessage());
+        }
+        }
+    } 
 
-	terminateCall();	// do subclass specific work
-	setState(CallState.ENDING, "Reason='" + s + "'");
-	done();
+    terminateCall();	// do subclass specific work
+    setState(CallState.ENDING, "Reason='" + s + "'");
+    done();
     }
 
     /*
      * Finish the call termination process
      */
     private void done() {
-	if (getState() == CallState.ENDED) {
-	    return;
-	}
+    if (getState() == CallState.ENDED) {
+        return;
+    }
 
-	setState(CallState.ENDED, "Reason='" + reasonCallTerminated + "'");
+    setState(CallState.ENDED, "Reason='" + reasonCallTerminated + "'");
     }
 
 }

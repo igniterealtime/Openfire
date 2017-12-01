@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(SchemaManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SchemaManager.class);
 
     private static final String CHECK_VERSION_OLD =
             "SELECT minorVersion FROM jiveVersion";
@@ -83,7 +83,7 @@ public class SchemaManager {
             return checkSchema(con, "openfire", DATABASE_VERSION,
                     new ResourceLoader() {
                         @Override
-						public InputStream loadResource(String resourceName) {
+                        public InputStream loadResource(String resourceName) {
                             File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
                                     "resources" + File.separator + "database", resourceName);
                             try {
@@ -126,7 +126,7 @@ public class SchemaManager {
             con = DbConnectionManager.getConnection();
             return checkSchema(con, schemaKey, schemaVersion, new ResourceLoader() {
                 @Override
-				public InputStream loadResource(String resourceName) {
+                public InputStream loadResource(String resourceName) {
                     File file = new File(pluginManager.getPluginDirectory(plugin) +
                             File.separator + "database", resourceName);
                     try {

@@ -54,8 +54,8 @@ import org.xmpp.packet.JID;
  */
 public class WorkgroupUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupUtils.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupUtils.class);
+    
     public static String updateWorkgroup(String workgroupName, String displayName,
             String description, int maxSize, int minSize, long requestTimeout, long offerTimeout) 
     {

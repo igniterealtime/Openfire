@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PropertyEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
 
     private static Set<PropertyEventListener> listeners =
             new CopyOnWriteArraySet<>();

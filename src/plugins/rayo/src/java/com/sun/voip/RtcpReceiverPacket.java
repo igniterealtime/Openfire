@@ -65,15 +65,15 @@ public class RtcpReceiverPacket extends RtcpPacket {
      * This constructor is used for a packet which has been received.
      */
     public RtcpReceiverPacket(DatagramPacket packet) {
-	super(packet);
+    super(packet);
     }
 
     /*
      * This constructor is used to create a packet to send
      */
     public RtcpReceiverPacket(int SSRC) {
-	super(SSRC, false);
-	setSSRC_1(SSRC);
+    super(SSRC, false);
+    setSSRC_1(SSRC);
     }
 
     public void setSSRC_1(int SSRC) {
@@ -84,11 +84,11 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
  
     public void setFractionLost(byte fractionLost) {
-	rtcpData[12] = fractionLost;
+    rtcpData[12] = fractionLost;
     }
 
     public byte getFractionLost() {
-	return rtcpData[12];
+    return rtcpData[12];
     }
 
     public void setCumulativeLost(int cumulativeLost) {
@@ -98,7 +98,7 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
 
     public int getCumulativeLost() {
-	int cumulativeLost = ((((int)rtcpData[13]) << 16) & 0x00ff0000) |
+    int cumulativeLost = ((((int)rtcpData[13]) << 16) & 0x00ff0000) |
                              ((((int)rtcpData[14]) << 8) & 0x0000ff00) |
                              (rtcpData[15] & 0xff);
 
@@ -106,7 +106,7 @@ public class RtcpReceiverPacket extends RtcpPacket {
             cumulativeLost |= 0xff000000;       // it's negative
         }
 
-	return cumulativeLost;
+    return cumulativeLost;
     }
 
     public void setHighestSeqReceived(int seq) {
@@ -117,7 +117,7 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
 
     public int getHighestSeqReceived() {
-	return ((((int)rtcpData[16]) << 24) & 0xff000000) |
+    return ((((int)rtcpData[16]) << 24) & 0xff000000) |
                ((((int)rtcpData[17]) << 16) & 0x00ff0000) |
                ((((int)rtcpData[18]) << 8)  & 0x0000ff00) |
                (rtcpData[19] & 0xff);
@@ -131,7 +131,7 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
 
     public int getInterArrivalJitter() {
-	return ((((int)rtcpData[20]) << 24) & 0xff000000) |
+    return ((((int)rtcpData[20]) << 24) & 0xff000000) |
                ((((int)rtcpData[21]) << 16) & 0x00ff0000) |
                ((((int)rtcpData[22]) << 8)  & 0x0000ff00) |
                (rtcpData[23] & 0xff);
@@ -145,7 +145,7 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
 
     public int getLSR() {
-	return ((((int)rtcpData[24]) << 24) & 0xff000000) |
+    return ((((int)rtcpData[24]) << 24) & 0xff000000) |
                ((((int)rtcpData[25]) << 16) & 0x00ff0000) |
                ((((int)rtcpData[26]) << 8)  & 0x0000ff00) |
                (rtcpData[27] & 0xff);
@@ -159,16 +159,16 @@ public class RtcpReceiverPacket extends RtcpPacket {
     }
 
     public void printReport() {
-	if (Logger.logLevel >= Logger.LOG_INFO) {
+    if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.writeFile(" RTCP Receiver report:  "
-	        + " from " + from
+            + " from " + from
                 + ", fractionLost " + getFractionLost()
                 + ", highest sequence "
                 + Integer.toHexString(getHighestSeqReceived())
                 + ", cumulativeLost " + getCumulativeLost()
                 + ", jitter " + getInterArrivalJitter()
                 + " LSR " + getLSR());
-	}
+    }
     }
 
 }

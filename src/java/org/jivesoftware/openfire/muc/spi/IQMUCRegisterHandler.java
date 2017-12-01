@@ -46,7 +46,7 @@ import org.xmpp.packet.Presence;
  */
 class IQMUCRegisterHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
 
     private static final Element probeResult;
     

@@ -43,7 +43,7 @@ import org.xmpp.packet.Message;
  */
 public class HistoryStrategy {
 
-	private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
+    private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
 
     /**
      * The type of strategy being used.
@@ -323,28 +323,28 @@ public class HistoryStrategy {
      * 
      * @return true if the given packet is a subject change request
      */
-	public boolean isSubjectChangeRequest(Message message) {
-		
-		// The subject is changed by sending a message of type "groupchat" to the <room@service>, 
-		// where the <message/> MUST contain a <subject/> element that specifies the new subject 
-		// but MUST NOT contain a <body/> element (or a <thread/> element).
-		// Unfortunately, many clients do not follow these strict guidelines from the specs, so we
-		// allow a lenient policy for detecting non-conforming subject change requests. This can be
-		// configured by setting the "xmpp.muc.subject.change.strict" property to false (true by default).
-		// An empty <subject/> value means that the room subject should be removed.
+    public boolean isSubjectChangeRequest(Message message) {
+        
+        // The subject is changed by sending a message of type "groupchat" to the <room@service>, 
+        // where the <message/> MUST contain a <subject/> element that specifies the new subject 
+        // but MUST NOT contain a <body/> element (or a <thread/> element).
+        // Unfortunately, many clients do not follow these strict guidelines from the specs, so we
+        // allow a lenient policy for detecting non-conforming subject change requests. This can be
+        // configured by setting the "xmpp.muc.subject.change.strict" property to false (true by default).
+        // An empty <subject/> value means that the room subject should be removed.
 
-		return Message.Type.groupchat == message.getType() && 
-				message.getSubject() != null && 
-				(!isSubjectChangeStrict() || 
-				    (message.getBody() == null && 
-				     message.getThread() == null));
-	}
+        return Message.Type.groupchat == message.getType() && 
+                message.getSubject() != null && 
+                (!isSubjectChangeStrict() || 
+                    (message.getBody() == null && 
+                     message.getThread() == null));
+    }
 
-	private boolean isSubjectChangeStrict() {
-		return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
-	}
+    private boolean isSubjectChangeStrict() {
+        return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
+    }
 
-	private static class MessageComparator implements Comparator<Message> {
+    private static class MessageComparator implements Comparator<Message> {
         @Override
         public int compare(Message o1, Message o2) {
             String stamp1 = o1.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");

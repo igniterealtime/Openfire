@@ -55,13 +55,13 @@ public final class MUCRoomHistory {
     }
 
     public void addMessage(Message packet) {
-    	boolean isSubjectChangeRequest = isSubjectChangeRequest(packet);
-    	JID fromJID = packet.getFrom();
+        boolean isSubjectChangeRequest = isSubjectChangeRequest(packet);
+        JID fromJID = packet.getFrom();
         // Don't keep messages whose sender is the room itself (thus address without resource)
         // unless the message is changing the room's subject
         if (!isSubjectChangeRequest &&
-        	(fromJID == null || fromJID.toString().length() == 0 ||
-        	 fromJID.equals(room.getRole().getRoleAddress()))) {
+            (fromJID == null || fromJID.toString().length() == 0 ||
+             fromJID.equals(room.getRole().getRoleAddress()))) {
             return;
         }
         // Do not store regular messages if there is no message strategy (keep subject change requests)

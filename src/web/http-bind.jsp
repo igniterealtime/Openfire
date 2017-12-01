@@ -187,99 +187,99 @@
     </admin:contentBox>
 
     <admin:contentBox title="Script Syntax">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="middle">
-				<td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="true" id="rb03" ${serverManager.scriptSyntaxEnabled ? "checked" : ""}></td>
-				<td width="99%"><label for="rb03"><b><fmt:message key="httpbind.settings.script.label_enable" /></b> - <fmt:message key="httpbind.settings.script.label_enable_info" /></label></td>
-			</tr>
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
             <tr valign="middle">
-				<td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="false" id="rb04" ${serverManager.scriptSyntaxEnabled ? "" : "checked"}></td>
-				<td width="99%"><label for="rb04"><b><fmt:message key="httpbind.settings.script.label_disable" /></b> - <fmt:message key="httpbind.settings.script.label_disable_info" /></label></td>
-			</tr>
-		</tbody>
-		</table>
+                <td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="true" id="rb03" ${serverManager.scriptSyntaxEnabled ? "checked" : ""}></td>
+                <td width="99%"><label for="rb03"><b><fmt:message key="httpbind.settings.script.label_enable" /></b> - <fmt:message key="httpbind.settings.script.label_enable_info" /></label></td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="false" id="rb04" ${serverManager.scriptSyntaxEnabled ? "" : "checked"}></td>
+                <td width="99%"><label for="rb04"><b><fmt:message key="httpbind.settings.script.label_disable" /></b> - <fmt:message key="httpbind.settings.script.label_disable_info" /></label></td>
+            </tr>
+        </tbody>
+        </table>
     </admin:contentBox>
 
     <!-- CORS -->
     <fmt:message key="httpbind.settings.cors.group" var="cors_boxtitle"/>
     <admin:contentBox title="${cors_boxtitle}">
-    	<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="CORSEnabled" value="true" id="rb05" ${serverManager.CORSEnabled ? "checked" : ""}>
-				</td>
-				<td width="99%">
-					<label for="rb05"><b><fmt:message key="httpbind.settings.cors.label_enable"/></b> - <fmt:message key="httpbind.settings.cors.label_enable_info"/></label>
-					<table border="0">
-						<tr><td><label for="CORSDomains"><fmt:message key="httpbind.settings.cors.domain_list"/></label></td></tr>
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="CORSEnabled" value="true" id="rb05" ${serverManager.CORSEnabled ? "checked" : ""}>
+                </td>
+                <td width="99%">
+                    <label for="rb05"><b><fmt:message key="httpbind.settings.cors.label_enable"/></b> - <fmt:message key="httpbind.settings.cors.label_enable_info"/></label>
+                    <table border="0">
+                        <tr><td><label for="CORSDomains"><fmt:message key="httpbind.settings.cors.domain_list"/></label></td></tr>
                         <tr><td><input id="CORSDomains" type="text" size="80" name="CORSDomains" value="${fn:escapeXml(serverManager.CORSAllowOrigin)}"></td></tr>
                     </table>
-				</td>
-			</tr>
+                </td>
+            </tr>
             <tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="CORSEnabled" value="false" id="rb06" ${serverManager.CORSEnabled ? "" : "checked"}>
-				</td>
-				<td width="99%">
-					<label for="rb06"><b><fmt:message key="httpbind.settings.cors.label_disable"/></b> - <fmt:message key="httpbind.settings.cors.label_disable_info"/></label>
-				</td>
-			</tr>
-		</tbody>
-		</table>
+                <td width="1%" nowrap>
+                    <input type="radio" name="CORSEnabled" value="false" id="rb06" ${serverManager.CORSEnabled ? "" : "checked"}>
+                </td>
+                <td width="99%">
+                    <label for="rb06"><b><fmt:message key="httpbind.settings.cors.label_disable"/></b> - <fmt:message key="httpbind.settings.cors.label_disable_info"/></label>
+                </td>
+            </tr>
+        </tbody>
+        </table>
     </admin:contentBox>
     <!-- CORS -->
     
     <!-- XFF -->
     <fmt:message key="httpbind.settings.xff.group" var="xff_boxtitle"/>
     <admin:contentBox title="${xff_boxtitle}">
-    	<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="XFFEnabled" value="true" id="rb07" ${serverManager.XFFEnabled ? "checked" : ""}>
-				</td>
-				<td width="99%">
-					<label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
-					<table border="0">
-						<tr>
-							<td><label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label></td>
-                            <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(serverManager.XFFHeader == null ? "" : serverManager.XFFHeader)}"></td>
-						</tr>
-						<tr>
-							<td><label for="XFFServerHeader"><fmt:message key="httpbind.settings.xff.forwarded_server"/></label></td>
-                            <td><input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="${fn:escapeXml(serverManager.XFFServerHeader == null ? "" : serverManager.XFFServerHeader)}"></td>
-						</tr>
-						<tr>
-							<td><label for="XFFHostHeader"><fmt:message key="httpbind.settings.xff.forwarded_host"/></label></td>
-                            <td><input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="${fn:escapeXml(serverManager.XFFHostHeader == null ? "" : serverManager.XFFHostHeader)}"></td>
-						</tr>
-						<tr>
-							<td><label for="XFFHostName"><fmt:message key="httpbind.settings.xff.host_name"/></label></td>
-                            <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(serverManager.XFFHostName == null ? "" : serverManager.XFFHostName)}"></td>
-						</tr>
-                    </table>
-				</td>
-			</tr>
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
             <tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="XFFEnabled" value="false" id="rb08" ${serverManager.XFFEnabled ? "" : "checked"}>
-				</td>
-				<td width="99%">
-					<label for="rb08"><b><fmt:message key="httpbind.settings.xff.label_disable"/></b> - <fmt:message key="httpbind.settings.xff.label_disable_info"/></label>
-				</td>
-			</tr>
-		</tbody>
-		</table>
+                <td width="1%" nowrap>
+                    <input type="radio" name="XFFEnabled" value="true" id="rb07" ${serverManager.XFFEnabled ? "checked" : ""}>
+                </td>
+                <td width="99%">
+                    <label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
+                    <table border="0">
+                        <tr>
+                            <td><label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label></td>
+                            <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(serverManager.XFFHeader == null ? "" : serverManager.XFFHeader)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFServerHeader"><fmt:message key="httpbind.settings.xff.forwarded_server"/></label></td>
+                            <td><input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="${fn:escapeXml(serverManager.XFFServerHeader == null ? "" : serverManager.XFFServerHeader)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFHostHeader"><fmt:message key="httpbind.settings.xff.forwarded_host"/></label></td>
+                            <td><input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="${fn:escapeXml(serverManager.XFFHostHeader == null ? "" : serverManager.XFFHostHeader)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFHostName"><fmt:message key="httpbind.settings.xff.host_name"/></label></td>
+                            <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(serverManager.XFFHostName == null ? "" : serverManager.XFFHostName)}"></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="XFFEnabled" value="false" id="rb08" ${serverManager.XFFEnabled ? "" : "checked"}>
+                </td>
+                <td width="99%">
+                    <label for="rb08"><b><fmt:message key="httpbind.settings.xff.label_disable"/></b> - <fmt:message key="httpbind.settings.xff.label_disable_info"/></label>
+                </td>
+            </tr>
+        </tbody>
+        </table>
     </admin:contentBox>
     <!-- XFF -->
 
     <admin:contentBox title="Cross-domain policy">
-    	<p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>
-    	<p><fmt:message key="httpbind.settings.crossdomain.info.override"><fmt:param value="<tt>&lt;openfireHome&gt;/conf/crossdomain.xml</tt>" /></fmt:message></p>
-    	<p><fmt:message key="httpbind.settings.crossdomain.info.policy" /></p>
-    	<textarea id="crossdomain" cols="120" rows="10" wrap="virtual" readonly="readonly"><c:out value="${crossDomainContent}"/></textarea>
+        <p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>
+        <p><fmt:message key="httpbind.settings.crossdomain.info.override"><fmt:param value="<tt>&lt;openfireHome&gt;/conf/crossdomain.xml</tt>" /></fmt:message></p>
+        <p><fmt:message key="httpbind.settings.crossdomain.info.policy" /></p>
+        <textarea id="crossdomain" cols="120" rows="10" wrap="virtual" readonly="readonly"><c:out value="${crossDomainContent}"/></textarea>
     </admin:contentBox>
     
     <input type="submit" id="settingsUpdate" name="update" value="<fmt:message key="global.save_settings" />">

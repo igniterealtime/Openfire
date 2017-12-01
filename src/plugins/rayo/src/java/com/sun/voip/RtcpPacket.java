@@ -45,45 +45,45 @@ public class RtcpPacket {
      * This constructor is used for a packet which has been received.
      */
     public RtcpPacket(DatagramPacket packet) {
-	rtcpData = packet.getData();
-	from = packet.getSocketAddress();
+    rtcpData = packet.getData();
+    from = packet.getSocketAddress();
     }
 
     /*
      * This constructor is used to create a packet to send
      */
     public RtcpPacket(int SSRC, boolean isSenderReport) {
-	if (isSenderReport) {
-	    rtcpData = new byte[SENDER_REPORT_LENGTH];
-	    rtcpData[0] = (byte) 0x81;
-	    rtcpData[1] = (byte) 200;
-	    rtcpData[2] = (byte) 0;
-	    rtcpData[3] = (byte) SENDER_REPORT_LENGTH;
-	} else {
-	    rtcpData = new byte[RECEIVER_REPORT_LENGTH];
-	    rtcpData[0] = (byte) 0x81;
-	    rtcpData[1] = (byte) 201;
-	    rtcpData[2] = (byte) 0;
-	    rtcpData[3] = (byte) RECEIVER_REPORT_LENGTH;
-	}
+    if (isSenderReport) {
+        rtcpData = new byte[SENDER_REPORT_LENGTH];
+        rtcpData[0] = (byte) 0x81;
+        rtcpData[1] = (byte) 200;
+        rtcpData[2] = (byte) 0;
+        rtcpData[3] = (byte) SENDER_REPORT_LENGTH;
+    } else {
+        rtcpData = new byte[RECEIVER_REPORT_LENGTH];
+        rtcpData[0] = (byte) 0x81;
+        rtcpData[1] = (byte) 201;
+        rtcpData[2] = (byte) 0;
+        rtcpData[3] = (byte) RECEIVER_REPORT_LENGTH;
+    }
 
-	rtcpData[4] = (byte) ((SSRC >> 24) & 0xff);
-	rtcpData[5] = (byte) ((SSRC >> 16) & 0xff);
-	rtcpData[6] = (byte) ((SSRC >> 8) & 0xff);
-	rtcpData[7] = (byte) (SSRC & 0xff);
+    rtcpData[4] = (byte) ((SSRC >> 24) & 0xff);
+    rtcpData[5] = (byte) ((SSRC >> 16) & 0xff);
+    rtcpData[6] = (byte) ((SSRC >> 8) & 0xff);
+    rtcpData[7] = (byte) (SSRC & 0xff);
 
-	packet = new DatagramPacket(rtcpData, rtcpData.length);
+    packet = new DatagramPacket(rtcpData, rtcpData.length);
     }
 
     public byte[] getData() {
-	return rtcpData;
+    return rtcpData;
     }
 
     public int getSynchronizationSource() {
         return ((rtcpData[4] << 24) & 0xff000000) | 
-	   ((rtcpData[5] << 16) & 0x00ff0000) | 
-	   ((rtcpData[6] << 8)  & 0x0000ff00) | 
-	   (rtcpData[7] & 0xff);
+       ((rtcpData[5] << 16) & 0x00ff0000) | 
+       ((rtcpData[6] << 8)  & 0x0000ff00) | 
+       (rtcpData[7] & 0xff);
     }
 
     public void setSynchronizationSource(int synchronizationSource) {
@@ -94,7 +94,7 @@ public class RtcpPacket {
     }
 
     public DatagramPacket getDatagramPacket() {
-	return packet;
+    return packet;
     }
 
     /**
@@ -105,7 +105,7 @@ public class RtcpPacket {
     }
 
     public SocketAddress getSocketAddress() {
-	return packet.getSocketAddress();
+    return packet.getSocketAddress();
     }
 
 }

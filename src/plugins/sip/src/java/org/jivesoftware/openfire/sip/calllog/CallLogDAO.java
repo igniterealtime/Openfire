@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CallLogDAO {
 
-	private static final Logger Log = LoggerFactory.getLogger(CallLogDAO.class);
+    private static final Logger Log = LoggerFactory.getLogger(CallLogDAO.class);
 
     final static CallFilter emptyFilter = new CallFilter("", new ArrayList<String>());
 

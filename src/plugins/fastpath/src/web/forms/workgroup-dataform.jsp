@@ -115,7 +115,7 @@
 </p>
 <% if(save){ %>
  <div class="success">
-        	<%= message %>
+            <%= message %>
 </div>
 <% } %>
 

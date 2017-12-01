@@ -37,7 +37,7 @@ import org.xmpp.packet.JID;
  */
 public class DefaultAdminProvider implements AdminProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultAdminProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultAdminProvider.class);
 
     /**
      * Constructs a new DefaultAdminProvider

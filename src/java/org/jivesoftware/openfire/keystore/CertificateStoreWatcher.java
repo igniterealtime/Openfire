@@ -3,8 +3,11 @@ package org.jivesoftware.openfire.keystore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.*;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -80,6 +83,23 @@ public class CertificateStoreWatcher
                                     final Path storeFile = store.getConfiguration().getFile().toPath().normalize();
                                     if ( storeFile.equals( changedFile ) )
                                     {
+                                        // Check if the modified file is usable.
+                                        try ( final FileInputStream is = new FileInputStream( changedFile.toFile() ) )
+                                        {
+                                            final KeyStore tmpStore = KeyStore.getInstance( store.getConfiguration().getType() );
+                                            tmpStore.load( is, store.getConfiguration().getPassword() );
+                                        }
+                                        catch ( EOFException e )
+                                        {
+                                            Log.debug( "The keystore is still being modified. Ignore for now. A new event should be thrown later.", e );
+                                            break;
+                                        }
+                                        catch ( Exception e )
+                                        {
+                                            Log.debug( "Can't read the modified keystore with this config. Continue iterating over configs.", e );
+                                            continue;
+                                        }
+
                                         Log.info( "A file system change was detected. A(nother) certificate store that is backed by file '{}' will be reloaded.", storeFile );
                                         try
                                         {

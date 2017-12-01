@@ -17,25 +17,25 @@ public class LocalMUCRoomManager {
     private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
      
     public int getNumberChatRooms(){
-    	return rooms.size();
+        return rooms.size();
     }
     public void addRoom(String roomname,LocalMUCRoom room){
-    	rooms.put(roomname, room);
+        rooms.put(roomname, room);
         GroupEventDispatcher.addListener(room);
     }
     
     public Collection<LocalMUCRoom> getRooms(){
-    	return rooms.values();
+        return rooms.values();
     }
     
     public LocalMUCRoom getRoom(String roomname){
-    	return rooms.get(roomname);
+        return rooms.get(roomname);
     }
     
     public MUCRoom removeRoom(String roomname){
-    	//memory leak will happen if we forget remove it from GroupEventDispatcher
-    	if(rooms.containsKey(roomname))
-    		GroupEventDispatcher.removeListener((LocalMUCRoom) rooms.get(roomname));
+        //memory leak will happen if we forget remove it from GroupEventDispatcher
+        if(rooms.containsKey(roomname))
+            GroupEventDispatcher.removeListener((LocalMUCRoom) rooms.get(roomname));
         return	rooms.remove(roomname);
     }
     

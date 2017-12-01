@@ -12,15 +12,15 @@
 
 <a name="top"></a>
 
-	<div id="pageHeader">
-		<div id="logo"></div>
-		<h1>Building the Source</h1>
-	</div>
-	<div class="navigation">
-		<a href="index.html">&laquo; Back to documentation index</a>
-	</div>
-	
-	<div id="pageBody">
+    <div id="pageHeader">
+        <div id="logo"></div>
+        <h1>Building the Source</h1>
+    </div>
+    <div class="navigation">
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </div>
+    
+    <div id="pageBody">
 
 
 <p>This document provides detailed information for developers that wish to
@@ -36,8 +36,8 @@ in this distribution.
 This documentation is divided into three sections:
 <ol>
  <li> <a href="#source">Source</a> -- get te Openfire source code.
-	<li> <a href="#setup">Setup</a> -- how to setup your environment for Openfire development.
-	<li> <a href="#tasks">Build tasks</a> -- tasks that can be performed using the build program.
+    <li> <a href="#setup">Setup</a> -- how to setup your environment for Openfire development.
+    <li> <a href="#tasks">Build tasks</a> -- tasks that can be performed using the build program.
 
 </ol>
 
@@ -55,75 +55,75 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 
 <b><a name="javaSetup">Configure Java for Openfire</a></b>
 <ul>
-	Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
-	open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
-	Java with "java -version" -- it must version 1.5 or greater.
-	If Java isn't installed, download a copy from the
-	<a href="http://java.sun.com/">Java website</a>.
-	<p>
-	<font color="red">Important!</font> -- the Openfire build tool needs to know
-	where Java is installed on your system. You must configure the "JAVA_HOME"
-	environment variable to point to the correct directory. Instructions on
-	how to set this variable for various platforms are as follows:
-	<p>
-	<ul>
-		<li> Unix/Linux
-			<ol>
+    Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
+    open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
+    Java with "java -version" -- it must version 1.5 or greater.
+    If Java isn't installed, download a copy from the
+    <a href="http://java.sun.com/">Java website</a>.
+    <p>
+    <font color="red">Important!</font> -- the Openfire build tool needs to know
+    where Java is installed on your system. You must configure the "JAVA_HOME"
+    environment variable to point to the correct directory. Instructions on
+    how to set this variable for various platforms are as follows:
+    <p>
+    <ul>
+        <li> Unix/Linux
+            <ol>
 
-				<li>Edit the ".profile" file in your home directory (or
-					corresponding file for your shell).
-				<li>Set the JAVA_HOME environment variable by adding the
-					following line to the file:
-					<p><span class="code">
-					export JAVA_HOME=/usr/local/jdk1.5
-					</span>
-					<p>
-					The value "/usr/local/jdk1.5" should be replaced with your actual
-					Java directory. Be sure there are no spaces after the end of
-					the directory name. Do not add an extra slash after the directory name.
-				<li>Save changes to the file and then "source" it:
-					<p><span class="code">
-					source .profile
-					</span>
-					<p>
+                <li>Edit the ".profile" file in your home directory (or
+                    corresponding file for your shell).
+                <li>Set the JAVA_HOME environment variable by adding the
+                    following line to the file:
+                    <p><span class="code">
+                    export JAVA_HOME=/usr/local/jdk1.5
+                    </span>
+                    <p>
+                    The value "/usr/local/jdk1.5" should be replaced with your actual
+                    Java directory. Be sure there are no spaces after the end of
+                    the directory name. Do not add an extra slash after the directory name.
+                <li>Save changes to the file and then "source" it:
+                    <p><span class="code">
+                    source .profile
+                    </span>
+                    <p>
 
-					The JAVA_HOME variable should now be configured correctly.
-			</ol>
-	 	<p>
-		<li> WindowsNT/2000/XP
-			<ol>
-				<li>Navigate to your desktop and right click on "My Computer";
-					choose properties.
-				<li>Select the "Advanced" tab and click on the
-					"Environment Variables" button.
-				<li>Click the "New..." button in the System variables section.
-					Enter the variable name "JAVA_HOME" and set the variable
-					value to the full path of your Java installation. For example,
-					"c:\jdk1.5". Be sure to not add an extra slash to the end
-					of the directory name.
-				<li>Click "OK" in all of the menus to accept the changes.
-				<li>Close any open command prompt windows. The next time you
-					open a command prompt, the "JAVA_HOME" variable will be set
-					correctly.
-			</ol>
-		<p>
+                    The JAVA_HOME variable should now be configured correctly.
+            </ol>
+        <p>
+        <li> WindowsNT/2000/XP
+            <ol>
+                <li>Navigate to your desktop and right click on "My Computer";
+                    choose properties.
+                <li>Select the "Advanced" tab and click on the
+                    "Environment Variables" button.
+                <li>Click the "New..." button in the System variables section.
+                    Enter the variable name "JAVA_HOME" and set the variable
+                    value to the full path of your Java installation. For example,
+                    "c:\jdk1.5". Be sure to not add an extra slash to the end
+                    of the directory name.
+                <li>Click "OK" in all of the menus to accept the changes.
+                <li>Close any open command prompt windows. The next time you
+                    open a command prompt, the "JAVA_HOME" variable will be set
+                    correctly.
+            </ol>
+        <p>
 
-		<li> Windows95/98
-			<ol>
-				<li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
-				<li>Add a line to the end of the file that resembles the following:
-					<p><span class="code">
-					set JAVA_HOME=c:\jdk1.5
-					</span>
-					<p>
-					The value "c:\jdk1.5" should be replaced with your actual
-					Java directory. Be sure there are no spaces between
-					the "=" sign or after the end of the directory name. Do
-					not add an extra slash after the directory name.
-				<li>Save changes to autoexec.bat and restart your computer.
-			</ol>
+        <li> Windows95/98
+            <ol>
+                <li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
+                <li>Add a line to the end of the file that resembles the following:
+                    <p><span class="code">
+                    set JAVA_HOME=c:\jdk1.5
+                    </span>
+                    <p>
+                    The value "c:\jdk1.5" should be replaced with your actual
+                    Java directory. Be sure there are no spaces between
+                    the "=" sign or after the end of the directory name. Do
+                    not add an extra slash after the directory name.
+                <li>Save changes to autoexec.bat and restart your computer.
+            </ol>
 
-	</ul>
+    </ul>
 </ul>
 
 <p><b><a name="ant">Install the Ant Build Tool</a></b><p>
@@ -171,27 +171,27 @@ with the build tool.
 
 <p><b><a name="tasks"><font color="#0066cc">3.</font> Build Tasks</a></b><p>
 
-	The list of common build tasks is below. All build commands should be
-	run from the "build" directory of your Openfire distribution.
+    The list of common build tasks is below. All build commands should be
+    run from the "build" directory of your Openfire distribution.
 
-	<br><br>
+    <br><br>
 
-	For a full list of the commands and a brief description from the command line, type
-	<code>ant -projecthelp</code>. For more complete help on several commands, 
+    For a full list of the commands and a brief description from the command line, type
+    <code>ant -projecthelp</code>. For more complete help on several commands, 
     read the documentation below.
 
-	<br><br>
+    <br><br>
 
-	To execute a build task, type <code>ant [options] targetname</code> where "targetname" is
-	one of the targets listed below:
+    To execute a build task, type <code>ant [options] targetname</code> where "targetname" is
+    one of the targets listed below:
 
-	<ul>
+    <ul>
 
         <li><a href="#noparams"><i>Default</i></a>
         <li><a href="#openfire">openfire</a>
         <li><a href="#plugins">plugins</a>
         <li><a href="#clean">clean</a>
-	</ul>
+    </ul>
 <p>
 Each task is documented with a syntax guide and description. Optional paramaters
 for each task are enclosed with braces. If you would like to permanently set the
@@ -258,7 +258,7 @@ Cleans all artifacts of the build process.<p>
 </ul>
 
 
-	</div>
+    </div>
 
 </div>
 

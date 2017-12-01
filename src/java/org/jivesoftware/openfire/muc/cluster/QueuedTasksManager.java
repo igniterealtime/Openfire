@@ -45,7 +45,7 @@ public class QueuedTasksManager {
         // Register a periodic task that will execute queued tasks
         TaskEngine.getInstance().scheduleAtFixedRate(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 if (!ClusterManager.isClusteringStarting()) {
                     MUCRoomTask mucRoomTask;
                     while ((mucRoomTask = taskQueue.poll()) != null) {

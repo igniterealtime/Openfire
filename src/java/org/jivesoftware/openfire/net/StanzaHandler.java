@@ -47,7 +47,7 @@ import java.io.StringReader;
  */
 public abstract class StanzaHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
 
     /**
      * A factory that generates random stream IDs
@@ -201,7 +201,7 @@ public abstract class StanzaHandler {
         }
     }
 
-	private void process(Element doc) throws UnauthorizedException {
+    private void process(Element doc) throws UnauthorizedException {
         if (doc == null) {
             return;
         }
@@ -549,15 +549,15 @@ public abstract class StanzaHandler {
         connection.deliverRawText(sb.toString());
     }
 
-	/**
-	 * Determines whether stanza's namespace matches XEP-0198 namespace
-	 * @param stanza Stanza to be checked
-	 * @return whether stanza's namespace matches XEP-0198 namespace
-	 */
-	private boolean isStreamManagementStanza(Element stanza) {
-		return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
-				StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
-	}
+    /**
+     * Determines whether stanza's namespace matches XEP-0198 namespace
+     * @param stanza Stanza to be checked
+     * @return whether stanza's namespace matches XEP-0198 namespace
+     */
+    private boolean isStreamManagementStanza(Element stanza) {
+        return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
+                StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
+    }
 
     private String getStreamHeader() {
         StringBuilder sb = new StringBuilder(200);
@@ -684,23 +684,23 @@ public abstract class StanzaHandler {
     }
 
     /**
-	 * Obtain the address of the XMPP entity for which this StanzaHandler
-	 * handles stanzas.
-	 *
-	 * Note that the value that is returned for this method can
-	 * change over time. For example, if no session has been established yet,
-	 * this method will return <tt>null</tt>, or, if resource binding occurs,
-	 * the returned value might change. Values obtained from this method are
-	 * therefore best <em>not</em> cached.
-	 *
-	 * @return The address of the XMPP entity for.
-	 */
+     * Obtain the address of the XMPP entity for which this StanzaHandler
+     * handles stanzas.
+     *
+     * Note that the value that is returned for this method can
+     * change over time. For example, if no session has been established yet,
+     * this method will return <tt>null</tt>, or, if resource binding occurs,
+     * the returned value might change. Values obtained from this method are
+     * therefore best <em>not</em> cached.
+     *
+     * @return The address of the XMPP entity for.
+     */
     public JID getAddress() {
-    	if (session == null) {
-    		return null;
-    	}
+        if (session == null) {
+            return null;
+        }
 
-    	return session.getAddress();
+        return session.getAddress();
     }
 
     /**

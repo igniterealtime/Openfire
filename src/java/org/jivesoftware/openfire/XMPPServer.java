@@ -98,7 +98,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class XMPPServer {
 
-	private static final Logger logger = LoggerFactory.getLogger(XMPPServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(XMPPServer.class);
 
     private static XMPPServer instance;
 
@@ -300,7 +300,7 @@ public class XMPPServer {
         }
 
         if (isStandAlone()) {
-        	logger.info("Registering shutdown hook (standalone mode)");
+            logger.info("Registering shutdown hook (standalone mode)");
             Runtime.getRuntime().addShutdownHook(new ShutdownHookThread());
             TaskEngine.getInstance().schedule(new Terminator(), 1000, 1000);
         }
@@ -491,7 +491,7 @@ public class XMPPServer {
 
             Thread finishSetup = new Thread() {
                 @Override
-				public void run() {
+                public void run() {
                     try {
                         if (isStandAlone()) {
                             // Always restart the HTTP server manager. This covers the case
@@ -576,7 +576,7 @@ public class XMPPServer {
         }
     }
 
-	private void loadModules() {
+    private void loadModules() {
         // Load boot modules
         loadModule(RoutingTableImpl.class.getName());
         loadModule(AuditManagerImpl.class.getName());
@@ -712,7 +712,7 @@ public class XMPPServer {
     public void restartHTTPServer() {
         Thread restartThread = new Thread() {
             @Override
-			public void run() {
+            public void run() {
                 if (isStandAlone()) {
                     // Restart the HTTP server manager. This covers the case
                     // of changing the ports, as well as generating self-signed certificates.
@@ -738,7 +738,7 @@ public class XMPPServer {
      * inside of another server.
      */
     public void stop() {
-    	logger.info("Initiating shutdown ...");
+        logger.info("Initiating shutdown ...");
         // Only do a system exit if we're running standalone
         if (isStandAlone()) {
             // if we're in a wrapper, we have to tell the wrapper to shut us down
@@ -927,19 +927,19 @@ public class XMPPServer {
      * via the launcher, especially in Windows.
      */
     private class Terminator extends TimerTask {
-    	private BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-    	@Override
-    	public void run() {
-        	try { 
-        		if (stdin.ready()) {
-            		if (EXIT.equalsIgnoreCase(stdin.readLine())) {
-            			System.exit(0); // invokes shutdown hook(s)
-            		}
-        		}
-        	} catch (IOException ioe) {
-        		logger.error("Error reading console input", ioe);
-        	}
-    	}
+        private BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        @Override
+        public void run() {
+            try { 
+                if (stdin.ready()) {
+                    if (EXIT.equalsIgnoreCase(stdin.readLine())) {
+                        System.exit(0); // invokes shutdown hook(s)
+                    }
+                }
+            } catch (IOException ioe) {
+                logger.error("Error reading console input", ioe);
+            }
+        }
     }
     
     /**
@@ -955,7 +955,7 @@ public class XMPPServer {
          * <p>Logs the server shutdown.</p>
          */
         @Override
-		public void run() {
+        public void run() {
             shutdownServer();
             logger.info("Server halted");
             System.err.println("Server halted");
@@ -975,7 +975,7 @@ public class XMPPServer {
          * <p>Shuts down the JVM after a 5 second delay.</p>
          */
         @Override
-		public void run() {
+        public void run() {
             try {
                 Thread.sleep(5000);
                 // No matter what, we make sure it's dead
@@ -996,41 +996,41 @@ public class XMPPServer {
         ClusterManager.shutdown();
         // Notify server listeners that the server is about to be stopped
         for (XMPPServerListener listener : listeners) {
-        	try {
-        		listener.serverStopping();
-        	} catch (Exception ex) {
-        		logger.error("Exception during listener shutdown", ex);
-        	}
+            try {
+                listener.serverStopping();
+            } catch (Exception ex) {
+                logger.error("Exception during listener shutdown", ex);
+            }
         }
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
         }
-    	logger.info("Shutting down " + modules.size() + " modules ...");
+        logger.info("Shutting down " + modules.size() + " modules ...");
         // Get all modules and stop and destroy them
         for (Module module : modules.values()) {
-        	try {
-	            module.stop();
-	            module.destroy();
-        	} catch (Exception ex) {
-        		logger.error("Exception during module shutdown", ex);
-        	}
+            try {
+                module.stop();
+                module.destroy();
+            } catch (Exception ex) {
+                logger.error("Exception during module shutdown", ex);
+            }
         }
         // Stop all plugins
-    	logger.info("Shutting down plugins ...");
+        logger.info("Shutting down plugins ...");
         if (pluginManager != null) {
-        	try {
-        		pluginManager.shutdown();
-        	} catch (Exception ex) {
-        		logger.error("Exception during plugin shutdown", ex);
-        	}
+            try {
+                pluginManager.shutdown();
+            } catch (Exception ex) {
+                logger.error("Exception during plugin shutdown", ex);
+            }
         }
         modules.clear();
         // Stop the Db connection manager.
         try {	
-        	DbConnectionManager.destroyConnectionProvider();
+            DbConnectionManager.destroyConnectionProvider();
         } catch (Exception ex) {
-    		logger.error("Exception during DB shutdown", ex);
+            logger.error("Exception during DB shutdown", ex);
         }
 
         // Shutdown the task engine.

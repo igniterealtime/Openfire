@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultProxyTransfer implements ProxyTransfer {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultProxyTransfer.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultProxyTransfer.class);
 
     private String initiator;
 

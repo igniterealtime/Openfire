@@ -16,8 +16,8 @@ package com.rayo.core.verb;
 
 public class UntalkCommand extends AbstractVerbCommand {
 
-	public UntalkCommand()
-	{
+    public UntalkCommand()
+    {
 
-	}
+    }
 }

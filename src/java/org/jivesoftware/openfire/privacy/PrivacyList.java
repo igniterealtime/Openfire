@@ -57,7 +57,7 @@ import org.xmpp.packet.Packet;
  */
 public class PrivacyList implements Cacheable, Externalizable {
 
-	private static final Logger Log = LoggerFactory.getLogger(PrivacyList.class);
+    private static final Logger Log = LoggerFactory.getLogger(PrivacyList.class);
 
     /**
      * Reuse the same factory for all the connections.
@@ -76,7 +76,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         // Create xmpp parser to keep in each thread
         localParser = new ThreadLocal<XMPPPacketReader>() {
             @Override
-			protected XMPPPacketReader initialValue() {
+            protected XMPPPacketReader initialValue() {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);
@@ -258,12 +258,12 @@ public class PrivacyList implements Cacheable, Externalizable {
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return name.hashCode();
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (this == object) {
             return true;
         }

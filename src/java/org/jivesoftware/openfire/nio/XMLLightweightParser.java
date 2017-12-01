@@ -45,7 +45,7 @@ import org.jivesoftware.util.PropertyEventListener;
  */
 class XMLLightweightParser {
 
-	private static final Pattern XML_HAS_CHARREF = Pattern.compile("&#(0*([0-9]+)|[xX]0*([0-9a-fA-F]+));");
+    private static final Pattern XML_HAS_CHARREF = Pattern.compile("&#(0*([0-9]+)|[xX]0*([0-9a-fA-F]+));");
 
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
@@ -112,8 +112,8 @@ class XMLLightweightParser {
 
     public XMLLightweightParser(Charset charset) {
         encoder = charset.newDecoder()
-			.onMalformedInput(CodingErrorAction.REPLACE)
-			.onUnmappableCharacter(CodingErrorAction.REPLACE);
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
 
     /*
@@ -156,10 +156,10 @@ class XMLLightweightParser {
     protected void foundMsg(String msg) throws XMLNotWellFormedException {
         // Add message to the complete message list
         if (msg != null) {
-        	if (hasIllegalCharacterReferences(msg)) {
+            if (hasIllegalCharacterReferences(msg)) {
                 buffer = null;
-        		throw new XMLNotWellFormedException("Illegal character reference found in: " + msg);
-        	}
+                throw new XMLNotWellFormedException("Illegal character reference found in: " + msg);
+            }
             msgs.add(msg);
         }
         // Move the position into the buffer
@@ -309,9 +309,9 @@ class XMLLightweightParser {
                         cdataOffset = 0;
                     }
                 } else if (cdataOffset == XMLLightweightParser.CDATA_END.length-1 && ch == XMLLightweightParser.CDATA_END[cdataOffset - 1]) {
-                	// if we are looking for the last CDATA_END char, and we instead found an extra ']' 
-                	// char, leave cdataOffset as is and proceed to the next char. This could be a case 
-                	// where the XML character data ends with multiple square braces. For Example ]]]>
+                    // if we are looking for the last CDATA_END char, and we instead found an extra ']' 
+                    // char, leave cdataOffset as is and proceed to the next char. This could be a case 
+                    // where the XML character data ends with multiple square braces. For Example ]]]>
                 } else {
                     cdataOffset = 0;
                 }
@@ -388,65 +388,65 @@ class XMLLightweightParser {
         }
     }
 
-	/**
-	 * This method verifies if the provided argument contains at least one numeric character reference (
-	 * <code>CharRef	   ::=   	'&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';</code>) for which the decimal or hexidecimal
-	 * character value refers to an invalid XML 1.0 character.
-	 * 
-	 * @param string
-	 *            The input string
-	 * @return <tt>true</tt> if the input string contains an invalid numeric character reference, <tt>false</tt>
-	 *         otherwise.
-	 * @see http://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref
-	 */
-	public static boolean hasIllegalCharacterReferences(String string) {
-		// If there's no character reference, don't bother to do more specific checking.
-		final Matcher matcher = XML_HAS_CHARREF.matcher(string);
+    /**
+     * This method verifies if the provided argument contains at least one numeric character reference (
+     * <code>CharRef	   ::=   	'&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';</code>) for which the decimal or hexidecimal
+     * character value refers to an invalid XML 1.0 character.
+     * 
+     * @param string
+     *            The input string
+     * @return <tt>true</tt> if the input string contains an invalid numeric character reference, <tt>false</tt>
+     *         otherwise.
+     * @see http://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref
+     */
+    public static boolean hasIllegalCharacterReferences(String string) {
+        // If there's no character reference, don't bother to do more specific checking.
+        final Matcher matcher = XML_HAS_CHARREF.matcher(string);
 
-		while (matcher.find()) {
-			final String decValue = matcher.group(2);
-			if (decValue != null) {
-				final int value = Integer.parseInt(decValue);
-				if (!isLegalXmlCharacter(value)) {
-					return true;
-				} else {
-					continue;
-				}
-			}
+        while (matcher.find()) {
+            final String decValue = matcher.group(2);
+            if (decValue != null) {
+                final int value = Integer.parseInt(decValue);
+                if (!isLegalXmlCharacter(value)) {
+                    return true;
+                } else {
+                    continue;
+                }
+            }
 
-			final String hexValue = matcher.group(3);
-			if (hexValue != null) {
-				final int value = Integer.parseInt(hexValue, 16);
-				if (!isLegalXmlCharacter(value)) {
-					return true;
-				} else {
-					continue;
-				}
-			}
+            final String hexValue = matcher.group(3);
+            if (hexValue != null) {
+                final int value = Integer.parseInt(hexValue, 16);
+                if (!isLegalXmlCharacter(value)) {
+                    return true;
+                } else {
+                    continue;
+                }
+            }
 
-			// This is bad. The XML_HAS_CHARREF expression should have a hit for either the decimal
-			// or the heximal notation.
-			throw new IllegalStateException(
-					"An error occurred while searching for illegal character references in the value [" + string + "].");
-		}
+            // This is bad. The XML_HAS_CHARREF expression should have a hit for either the decimal
+            // or the heximal notation.
+            throw new IllegalStateException(
+                    "An error occurred while searching for illegal character references in the value [" + string + "].");
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Verifies if the codepoint value represents a valid character as defined in paragraph 2.2 of
-	 * "Extensible Markup Language (XML) 1.0 (Fifth Edition)"
-	 * 
-	 * @param value
-	 *            the codepoint
-	 * @return <tt>true</tt> if the codepoint is a valid charater per XML 1.0 definition, <tt>false</tt> otherwise.
-	 * @see http://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char
-	 */
-	public static boolean isLegalXmlCharacter(int value) {
-		return value == 0x9 || value == 0xA || value == 0xD || (value >= 0x20 && value <= 0xD7FF)
-				|| (value >= 0xE000 && value <= 0xFFFD) || (value >= 0x10000 && value <= 0x10FFFF);
-	}
-	
+    /**
+     * Verifies if the codepoint value represents a valid character as defined in paragraph 2.2 of
+     * "Extensible Markup Language (XML) 1.0 (Fifth Edition)"
+     * 
+     * @param value
+     *            the codepoint
+     * @return <tt>true</tt> if the codepoint is a valid charater per XML 1.0 definition, <tt>false</tt> otherwise.
+     * @see http://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char
+     */
+    public static boolean isLegalXmlCharacter(int value) {
+        return value == 0x9 || value == 0xA || value == 0xD || (value >= 0x20 && value <= 0xD7FF)
+                || (value >= 0xE000 && value <= 0xFFFD) || (value >= 0x10000 && value <= 0x10FFFF);
+    }
+    
     private static class PropertyListener implements PropertyEventListener {
         @Override
         public void propertySet(String property, Map<String, Object> params) {

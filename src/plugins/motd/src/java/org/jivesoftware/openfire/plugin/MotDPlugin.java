@@ -80,7 +80,7 @@ public class MotDPlugin implements Plugin {
 
             TimerTask messageTask = new TimerTask() {
                @Override
-			public void run() {
+            public void run() {
                   router.route(message);
                }
             };

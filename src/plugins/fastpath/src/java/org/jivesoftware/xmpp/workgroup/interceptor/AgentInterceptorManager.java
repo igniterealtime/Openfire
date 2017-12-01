@@ -41,12 +41,12 @@ public class AgentInterceptorManager extends InterceptorManager {
     }
 
     @Override
-	protected String getPropertySuffix() {
+    protected String getPropertySuffix() {
         return "agent";
     }
 
     @Override
-	protected Collection<Class> getBuiltInInterceptorClasses() {
+    protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class) TrafficMonitor.class);
     }
 }

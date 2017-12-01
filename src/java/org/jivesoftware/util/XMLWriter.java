@@ -87,35 +87,35 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     public XMLWriter(Writer writer, OutputFormat format) {
         this.writer = writer;
         this.format = format;
-		namespaceStack.push(Namespace.NO_NAMESPACE);
+        namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
     public XMLWriter() throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
         this.writer = new BufferedWriter( new OutputStreamWriter( System.out, StandardCharsets.UTF_8) );
         this.autoFlush = true;
-		namespaceStack.push(Namespace.NO_NAMESPACE);
+        namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
     public XMLWriter(OutputStream out) throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
-		namespaceStack.push(Namespace.NO_NAMESPACE);
+        namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
     public XMLWriter(OutputStream out, OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter(out, format.getEncoding());
         this.autoFlush = true;
-		namespaceStack.push(Namespace.NO_NAMESPACE);
+        namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
     public XMLWriter(OutputFormat format) throws UnsupportedEncodingException {
         this.format = format;
         this.writer = createWriter( System.out, format.getEncoding() );
         this.autoFlush = true;
-		namespaceStack.push(Namespace.NO_NAMESPACE);
+        namespaceStack.push(Namespace.NO_NAMESPACE);
     }
 
     public void setWriter(Writer writer) {
@@ -421,14 +421,14 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     // XMLFilterImpl methods
     //-------------------------------------------------------------------------
     @Override
-	public void parse(InputSource source) throws IOException, SAXException {
+    public void parse(InputSource source) throws IOException, SAXException {
         installLexicalHandler();
         super.parse(source);
     }
 
 
     @Override
-	public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
+    public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
         for (int i = 0; i < LEXICAL_HANDLER_NAMES.length; i++) {
             if (LEXICAL_HANDLER_NAMES[i].equals(name)) {
                 setLexicalHandler((LexicalHandler) value);
@@ -439,7 +439,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
         for (int i = 0; i < LEXICAL_HANDLER_NAMES.length; i++) {
             if (LEXICAL_HANDLER_NAMES[i].equals(name)) {
                 return getLexicalHandler();
@@ -465,12 +465,12 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     // ContentHandler interface
     //-------------------------------------------------------------------------
     @Override
-	public void setDocumentLocator(Locator locator) {
+    public void setDocumentLocator(Locator locator) {
         super.setDocumentLocator(locator);
     }
 
     @Override
-	public void startDocument() throws SAXException {
+    public void startDocument() throws SAXException {
         try {
             writeDeclaration();
             super.startDocument();
@@ -481,7 +481,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void endDocument() throws SAXException {
+    public void endDocument() throws SAXException {
         super.endDocument();
 
         if ( autoFlush ) {
@@ -492,7 +492,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    public void startPrefixMapping(String prefix, String uri) throws SAXException {
         if ( namespacesMap == null ) {
             namespacesMap = new HashMap<>();
         }
@@ -501,12 +501,12 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void endPrefixMapping(String prefix) throws SAXException {
+    public void endPrefixMapping(String prefix) throws SAXException {
         super.endPrefixMapping(prefix);
     }
 
     @Override
-	public void startElement(String namespaceURI, String localName, String qName, Attributes attributes) throws SAXException {
+    public void startElement(String namespaceURI, String localName, String qName, Attributes attributes) throws SAXException {
         try {
             charactersAdded = false;
 
@@ -528,7 +528,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         try {
             charactersAdded = false;
             --indentLevel;
@@ -556,7 +556,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(char[] ch, int start, int length) throws SAXException {
         if (ch == null || ch.length == 0 || length <= 0) {
             return;
         }
@@ -571,7 +571,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
             String string = new String(ch, start, length);
 
             if (escapeText) {
-            	string = escapeElementEntities(string);
+                string = escapeElementEntities(string);
             }
 
             if (format.isTrimText()) {
@@ -604,12 +604,12 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     @Override
-	public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
         super.ignorableWhitespace(ch, start, length);
     }
 
     @Override
-	public void processingInstruction(String target, String data) throws SAXException {
+    public void processingInstruction(String target, String data) throws SAXException {
         try {
             indent();
             writer.write("<?");
@@ -632,12 +632,12 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     // DTDHandler interface
     //-------------------------------------------------------------------------
     @Override
-	public void notationDecl(String name, String publicID, String systemID) throws SAXException {
+    public void notationDecl(String name, String publicID, String systemID) throws SAXException {
         super.notationDecl(name, publicID, systemID);
     }
 
     @Override
-	public void unparsedEntityDecl(String name, String publicID, String systemID, String notationName) throws SAXException {
+    public void unparsedEntityDecl(String name, String publicID, String systemID, String notationName) throws SAXException {
         super.unparsedEntityDecl(name, publicID, systemID, notationName);
     }
 
@@ -924,7 +924,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     protected void writeCDATA(String text) throws IOException {
         writer.write( "<![CDATA[" );
         if (text != null) {
-        	writer.write( text );
+            writer.write( text );
         }
         writer.write( "]]>" );
 
@@ -1345,9 +1345,9 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                     }
                     break;
                 default:
-                	if (c < 32 || shouldEncodeChar(c)) {
+                    if (c < 32 || shouldEncodeChar(c)) {
                         entity = "&#" + (int) c + ";";
-                	}
+                    }
                     break;
             }
             if (entity != null) {
@@ -1416,9 +1416,9 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                     // don't encode standard whitespace characters
                     break;
                 default:
-                	if (c < 32 || shouldEncodeChar(c)) {
+                    if (c < 32 || shouldEncodeChar(c)) {
                         entity = "&#" + (int) c + ";";
-                	}
+                    }
                     break;
             }
             if (entity != null) {
@@ -1444,32 +1444,32 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         return answer;
     }
 
-	/**
-	 * Should the given character be escaped. This depends on the
-	 * encoding of the document.
-	 *
-	 * @return boolean
-	 */
-	protected boolean shouldEncodeChar(char c) {
-		int max = getMaximumAllowedCharacter();
-		return max > 0 && c > max;
-	}
+    /**
+     * Should the given character be escaped. This depends on the
+     * encoding of the document.
+     *
+     * @return boolean
+     */
+    protected boolean shouldEncodeChar(char c) {
+        int max = getMaximumAllowedCharacter();
+        return max > 0 && c > max;
+    }
 
-	/**
-	 * Returns the maximum allowed character code that should be allowed
-	 * unescaped which defaults to 127 in US-ASCII (7 bit) or
-	 * 255 in ISO-* (8 bit).
-	 */
-	protected int defaultMaximumAllowedCharacter() {
-		String encoding = format.getEncoding();
-		if (encoding != null) {
-			if (encoding.equals("US-ASCII")) {
-				return 127;
-			}
-		}
-		// no encoding for things like ISO-*, UTF-8 or UTF-16
-		return -1;
-	}
+    /**
+     * Returns the maximum allowed character code that should be allowed
+     * unescaped which defaults to 127 in US-ASCII (7 bit) or
+     * 255 in ISO-* (8 bit).
+     */
+    protected int defaultMaximumAllowedCharacter() {
+        String encoding = format.getEncoding();
+        if (encoding != null) {
+            if (encoding.equals("US-ASCII")) {
+                return 127;
+            }
+        }
+        // no encoding for things like ISO-*, UTF-8 or UTF-16
+        return -1;
+    }
 
     protected boolean isNamespaceDeclaration( Namespace ns ) {
         if (ns != null && ns != Namespace.XML_NAMESPACE) {

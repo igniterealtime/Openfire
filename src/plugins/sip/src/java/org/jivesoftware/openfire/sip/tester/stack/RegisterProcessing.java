@@ -433,7 +433,7 @@ class RegisterProcessing {
         }
 
         @Override
-		public void run() {
+        public void run() {
             try {
                 if (isRegistered())
                     register(registrarAddress, registrarPort, transport,

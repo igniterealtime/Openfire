@@ -43,8 +43,8 @@ import org.slf4j.LoggerFactory;
  */
 public class PluginClassLoader extends URLClassLoader {
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginClassLoader.class);
-	private List<JarURLConnection> cachedJarFiles = new ArrayList<JarURLConnection>();
+    private static final Logger Log = LoggerFactory.getLogger(PluginClassLoader.class);
+    private List<JarURLConnection> cachedJarFiles = new ArrayList<JarURLConnection>();
     public PluginClassLoader() {
         super(new URL[] {}, findParentClassLoader());
     }
@@ -93,14 +93,14 @@ public class PluginClassLoader extends URLClassLoader {
             if (jars != null) {
                 for (int i = 0; i < jars.length; i++) {
                     if (jars[i] != null && jars[i].isFile()) {
-                    	String jarFileUri = jars[i].toURI().toString()  + "!/";
+                        String jarFileUri = jars[i].toURI().toString()  + "!/";
                         if (developmentMode) {
                             // Do not add plugin-pluginName.jar to classpath.
                             if (!jars[i].getName().equals("plugin-" + directory.getName() + ".jar")) {
                                 addURLFile(new URL("jar", "", -1, jarFileUri));
                             }
                         } else {
-	                        addURLFile(new URL("jar", "", -1, jarFileUri));
+                            addURLFile(new URL("jar", "", -1, jarFileUri));
                         }
                     }
                 }
@@ -118,17 +118,17 @@ public class PluginClassLoader extends URLClassLoader {
      * @param file URL for the JAR file or directory to append to classpath
      */
     public void addURLFile(URL file) {
-    	try {
-        	// open and cache JAR file connection 
-        	URLConnection uc = file.openConnection();
-        	if (uc instanceof JarURLConnection) {
-            	uc.setUseCaches(true);
-            	((JarURLConnection) uc).getManifest();
-            	cachedJarFiles.add((JarURLConnection)uc);
-        	}
-    	} catch (Exception e) {
-    		Log.warn("Failed to cache plugin JAR file: " + file.toExternalForm());
-    	}
+        try {
+            // open and cache JAR file connection 
+            URLConnection uc = file.openConnection();
+            if (uc instanceof JarURLConnection) {
+                uc.setUseCaches(true);
+                ((JarURLConnection) uc).getManifest();
+                cachedJarFiles.add((JarURLConnection)uc);
+            }
+        } catch (Exception e) {
+            Log.warn("Failed to cache plugin JAR file: " + file.toExternalForm());
+        }
         addURL(file);
     }
     
@@ -137,12 +137,12 @@ public class PluginClassLoader extends URLClassLoader {
      */
     public void unloadJarFiles() {
         for (JarURLConnection url : cachedJarFiles) {
-        	try {
-        		Log.info("Unloading plugin JAR file " + url.getJarFile().getName());
-        		url.getJarFile().close();
-        	} catch (Exception e) {
-        		Log.error("Failed to unload JAR file", e);
-        	}
+            try {
+                Log.info("Unloading plugin JAR file " + url.getJarFile().getName());
+                url.getJarFile().close();
+            } catch (Exception e) {
+                Log.error("Failed to unload JAR file", e);
+            }
         }
     }
 

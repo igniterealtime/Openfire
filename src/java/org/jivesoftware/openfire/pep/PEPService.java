@@ -522,10 +522,10 @@ public class PEPService implements PubSubService, Cacheable {
         return adHocCommandManager;
     }
 
-	@Override
-	public int getCachedSize() {
-		// Rather arbitrary. Don't use this for size-based eviction policies!
-		return 600;
-	}
+    @Override
+    public int getCachedSize() {
+        // Rather arbitrary. Don't use this for size-based eviction policies!
+        return 600;
+    }
 
 }

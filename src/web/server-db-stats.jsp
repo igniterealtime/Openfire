@@ -133,8 +133,8 @@
 </form>
 
 <%  if (showQueryStats) { %>
-	<br>
-	<h3><fmt:message key="server.db_stats.settings" /></h3>
+    <br>
+    <h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
         <input type="hidden" name="csrf" value="${csrf}">

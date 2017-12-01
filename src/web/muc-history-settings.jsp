@@ -148,50 +148,50 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="groupchat.history.settings.legend" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0" >
-		<tbody>
-			<tr valign="middle" class="">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_no_history" />
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
-				</td>
-				<td width="99%">
-					<label for="rb02">
-					<b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_entire_history" />
-				</td>
-			</tr>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
-				</td>
-				<td width="99%">
-					<label for="rb03">
-					<b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_number_messages" />
-				</td>
-			</tr>
-			<tr valign="middle" class="">
-				<td width="1%" nowrap>&nbsp;</td>
-				<td width="99%">
-					<input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
-				</td>
-			</tr>
-		</tbody>
-		</table>
-	</div>
+        <fmt:message key="groupchat.history.settings.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0" >
+        <tbody>
+            <tr valign="middle" class="">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_no_history" />
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                    <b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_entire_history" />
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
+                </td>
+                <td width="99%">
+                    <label for="rb03">
+                    <b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_number_messages" />
+                </td>
+            </tr>
+            <tr valign="middle" class="">
+                <td width="1%" nowrap>&nbsp;</td>
+                <td width="99%">
+                    <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="groupchat.history.settings.save" />"/>
 </form>
 <!-- END 'History Settings' -->

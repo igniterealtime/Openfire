@@ -73,7 +73,7 @@
                 <td><%= users%></td>
                 <td><%= groups%></td>
                 <td><%= bookmark.getProperty("autojoin") != null ? "<img src='/images/check.gif'>" : "&nbsp;"%></td>
-				<td><%= bookmark.getProperty("nameasnick") != null ? "<img src='/images/check.gif'>" : "&nbsp;"%></td>
+                <td><%= bookmark.getProperty("nameasnick") != null ? "<img src='/images/check.gif'>" : "&nbsp;"%></td>
                 <td>
                     <a href="create-bookmark.jsp?edit=true&bookmarkID=<%= bookmark.getBookmarkID()%>"><img src="/images/edit-16x16.gif" border="0" width="16" height="16" alt="Edit Bookmark"/></a>
                     <a href="confirm-bookmark-delete.jsp?bookmarkID=<%= bookmark.getBookmarkID()%>"><img src="/images/delete-16x16.gif" border="0" width="16" height="16" alt="Delete Bookmark"/></a>

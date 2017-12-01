@@ -9,8 +9,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -71,13 +71,13 @@
 </head>
 <body>
 
-	<h1>
+    <h1>
     <fmt:message key="setup.profile.title" />
-	</h1>
+    </h1>
 
-	<p>
-	<fmt:message key="setup.profile.description" />
-	</p>
+    <p>
+    <fmt:message key="setup.profile.description" />
+    </p>
 
 <% if (sessionFailure) { %>
             <span class="jive-error-text">
@@ -85,9 +85,9 @@
             </span>
 <% } %>
 
-	<!-- BEGIN jive-contentBox -->
-	<div class="jive-contentBox">
-	<form action="setup-profile-settings.jsp" name="profileform" method="post">
+    <!-- BEGIN jive-contentBox -->
+    <div class="jive-contentBox">
+    <form action="setup-profile-settings.jsp" name="profileform" method="post">
 
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
@@ -96,7 +96,7 @@
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
-	    <fmt:message key="setup.profile.default_description" />
+        <fmt:message key="setup.profile.default_description" />
     </td>
 </tr>
 <tr>
@@ -105,7 +105,7 @@
     </td>
     <td>
         <label for="rb01-0"><b><fmt:message key="setup.profile.default.scramOnly" /></b></label><br>
-	    <fmt:message key="setup.profile.default.scramOnly_description" />
+        <fmt:message key="setup.profile.default.scramOnly_description" />
     </td>
 </tr>
 <tr>
@@ -114,19 +114,19 @@
     </td>
     <td>
         <label for="rb02"><b><fmt:message key="setup.profile.ldap" /></b></label><br>
-	    <fmt:message key="setup.profile.ldap_description" />
+        <fmt:message key="setup.profile.ldap_description" />
     </td>
 </tr>
 </table>
 
 <br>
-		<div align="right">
-			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-		</div>
+        <div align="right">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+        </div>
 
-	</form>
-	</div>
-	<!-- END jive-contentBox -->
+    </form>
+    </div>
+    <!-- END jive-contentBox -->
 
 </body>
 </html>

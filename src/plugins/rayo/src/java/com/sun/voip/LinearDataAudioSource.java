@@ -38,11 +38,11 @@ public class LinearDataAudioSource implements AudioSource {
     private int linearOffset = 0;
 
     public LinearDataAudioSource(int[] linearData, 
-	    int sampleRate, int channels) {
+        int sampleRate, int channels) {
 
-	this.linearData = linearData;
-	this.sampleRate = sampleRate;
-	this.channels = channels;
+    this.linearData = linearData;
+    this.sampleRate = sampleRate;
+    this.channels = channels;
     }
 
     /*
@@ -55,9 +55,9 @@ public class LinearDataAudioSource implements AudioSource {
 
         int byteLen = sampleRate * sampleTime * channels * 2 / 1000;
 
-	int[] data = new int[byteLen / 2];
+    int[] data = new int[byteLen / 2];
 
-	int dataOffset = 0;
+    int dataOffset = 0;
 
         for (int i = 0; i < byteLen; i += 2) {
             if (linearOffset >= linearData.length) {
@@ -67,16 +67,16 @@ public class LinearDataAudioSource implements AudioSource {
                  * is linear silence.
                  */
                 break;
-	    }
+        }
 
             data[dataOffset++] = linearData[linearOffset++];
-	}
+    }
 
         return data;
     }
 
     public void rewind() throws IOException {
-	linearOffset = 0;
+    linearOffset = 0;
     }
 
     public void done() {

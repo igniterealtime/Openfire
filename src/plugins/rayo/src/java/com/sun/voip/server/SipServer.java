@@ -73,7 +73,7 @@ public class SipServer implements SipListener {
      */
     private static ArrayList<String> voIPGateways = new ArrayList<String>();
     private static ArrayList<ProxyCredentials> voIPGatewayLoginInfo = new ArrayList<ProxyCredentials>();
-	private static ArrayList<RegisterProcessing> registrations = new ArrayList<RegisterProcessing>();
+    private static ArrayList<RegisterProcessing> registrations = new ArrayList<RegisterProcessing>();
 
     /*
      * flag to indicate whether to send SIP Uri's to a proxy or directly
@@ -110,7 +110,7 @@ public class SipServer implements SipListener {
      */
     private void setup(Config config, Properties properties)
     {
-		String localHostAddress = config.getPrivateHost();
+        String localHostAddress = config.getPrivateHost();
         properties.setProperty("javax.sip.IP_ADDRESS", localHostAddress);
 
         /*
@@ -119,13 +119,13 @@ public class SipServer implements SipListener {
 
         setVoIPGateways(config);
 
-		if (voIPGateways.size() == 0) {
-			Logger.println("There are no VoIP gateways.  You cannot make calls to the phone system.");
-		}
+        if (voIPGateways.size() == 0) {
+            Logger.println("There are no VoIP gateways.  You cannot make calls to the phone system.");
+        }
 
         /*
-	 * Obtain an instance of the singleton SipFactory
-	 */
+     * Obtain an instance of the singleton SipFactory
+     */
         sipFactory = SipFactory.getInstance();
 
         /*
@@ -136,38 +136,38 @@ public class SipServer implements SipListener {
 
         try {
             /*
-	     * Create SipStack object
-	     */
+         * Create SipStack object
+         */
             sipStack = (SipStack)sipFactory.createSipStack(properties);
             /*
-	     * Create AddressFactory
-	     */
+         * Create AddressFactory
+         */
             addressFactory = sipFactory.createAddressFactory();
             /*
              * Create HeaderFactory
-	     */
+         */
             headerFactory = sipFactory.createHeaderFactory();
             /*
-	     * Create MessageFactory
-	     */
+         * Create MessageFactory
+         */
             messageFactory = sipFactory.createMessageFactory();
         } catch(PeerUnavailableException e) {
             /*
-	     * could not find gov.nist.ri.jain.protocol.ip.sip.
+         * could not find gov.nist.ri.jain.protocol.ip.sip.
              * SipStackImpl in the classpath
              */
             Logger.exception("could not stsart sip stack.", e);
             return;
         } catch(SipException e) {
             /*
-	     * could not create SipStack for some other reason
-	     */
+         * could not create SipStack for some other reason
+         */
             Logger.exception("could not start sip stack.", e);
             return;
         }
 
-		ListeningPoint udpListenPort = null;
-		ListeningPoint tcpListenPort = null;
+        ListeningPoint udpListenPort = null;
+        ListeningPoint tcpListenPort = null;
 
         try {
             /*
@@ -178,9 +178,9 @@ public class SipServer implements SipListener {
              * at this point.
              */
             String s = System.getProperty("com.sun.voip.server.SIP_PORT", String.valueOf(SIP_PORT));
-	    	int sipPort = Integer.parseInt(s);
+            int sipPort = Integer.parseInt(s);
 
-	    	Logger.println("");
+            Logger.println("");
             Logger.println("Bridge private address:   " + properties.getProperty("javax.sip.IP_ADDRESS"));
 
             tcpListenPort = sipStack.createListeningPoint(localHostAddress, sipPort, "tcp");
@@ -190,36 +190,36 @@ public class SipServer implements SipListener {
             sipProvider.addListeningPoint(udpListenPort);
             sipProvider.addSipListener(this);
 
-	   		sipAddress = new InetSocketAddress(sipStack.getIPAddress(), sipPort);
+            sipAddress = new InetSocketAddress(sipStack.getIPAddress(), sipPort);
 
             /*
-	     * get IPs of the SIP Proxy server
-	     */
+         * get IPs of the SIP Proxy server
+         */
             defaultSipProxy = config.getDefaultProxy();
 
             /*
-	     * Initialize SipUtil class.  Do this last so that
+         * Initialize SipUtil class.  Do this last so that
              * the other sip stack variables are initialized
              */
             SipUtil.initialize();
 
-			for (int i = 0; i < voIPGatewayLoginInfo.size(); i++)
-			{
-				try {
-					InetAddress inetAddress = InetAddress.getByName(voIPGateways.get(i));
+            for (int i = 0; i < voIPGatewayLoginInfo.size(); i++)
+            {
+                try {
+                    InetAddress inetAddress = InetAddress.getByName(voIPGateways.get(i));
 
-					ProxyCredentials proxyCredentials = voIPGatewayLoginInfo.get(i);
+                    ProxyCredentials proxyCredentials = voIPGatewayLoginInfo.get(i);
 
-					if (proxyCredentials.getAuthUserName() != null)
-					{
-						registrations.add(new RegisterProcessing(inetAddress.getHostAddress(), voIPGateways.get(i), proxyCredentials));
-					}
+                    if (proxyCredentials.getAuthUserName() != null)
+                    {
+                        registrations.add(new RegisterProcessing(inetAddress.getHostAddress(), voIPGateways.get(i), proxyCredentials));
+                    }
 
-				} catch (Exception e) {
-					System.out.println(String.format("Bad Address  %s ", voIPGateways.get(i)));
-					continue;
-				}
-			}
+                } catch (Exception e) {
+                    System.out.println(String.format("Bad Address  %s ", voIPGateways.get(i)));
+                    continue;
+                }
+            }
 
 
         } catch(TransportAlreadySupportedException e) {
@@ -232,18 +232,18 @@ public class SipServer implements SipListener {
             Logger.exception("Stack has no ListeningPoints", e);
             return;
         } catch(TransportNotSupportedException e) {
-	    Logger.exception("TransportNotSupportedException", e);
+        Logger.exception("TransportNotSupportedException", e);
             return;
-	} catch(TooManyListenersException e) {
-	    Logger.exception("TooManyListenersException", e);
+    } catch(TooManyListenersException e) {
+        Logger.exception("TooManyListenersException", e);
             return;
-	} catch(InvalidArgumentException e) {
-	    Logger.exception("InvalidArgumentException", e);
+    } catch(InvalidArgumentException e) {
+        Logger.exception("InvalidArgumentException", e);
             return;
-	}
+    }
 
         Logger.println("Default SIP Proxy:        " + defaultSipProxy);
-	Logger.println("");
+    Logger.println("");
     }
 
     public static ArrayList<String> getVoIPGateways() {
@@ -256,8 +256,8 @@ public class SipServer implements SipListener {
 
     public static void setVoIPGateways(Config config)
     {
-		voIPGateways = config.getRegistrars();
-		voIPGatewayLoginInfo = config.getRegistrations();
+        voIPGateways = config.getRegistrars();
+        voIPGatewayLoginInfo = config.getRegistrations();
         return;
     }
 
@@ -267,11 +267,11 @@ public class SipServer implements SipListener {
      * to the target endpoint.
      */
     public static void setSendSipUriToProxy(boolean sendSipUriToProxy) {
-	SipServer.sendSipUriToProxy = sendSipUriToProxy;
+    SipServer.sendSipUriToProxy = sendSipUriToProxy;
     }
 
     public static boolean getSendSipUriToProxy() {
-	return sendSipUriToProxy;
+    return sendSipUriToProxy;
     }
 
     /**
@@ -279,7 +279,7 @@ public class SipServer implements SipListener {
      * @return SipProxy String with dotted IP address
      */
     public static String getDefaultSipProxy() {
-	return defaultSipProxy;
+    return defaultSipProxy;
     }
 
     /**
@@ -287,11 +287,11 @@ public class SipServer implements SipListener {
      * @param ip String with dotted IP address
      */
     public static void setDefaultSipProxy(String defaultSipProxy) {
-	SipServer.defaultSipProxy = defaultSipProxy;
+    SipServer.defaultSipProxy = defaultSipProxy;
     }
 
     public static InetSocketAddress getSipAddress() {
-	return sipAddress;
+    return sipAddress;
     }
 
     /**
@@ -316,15 +316,15 @@ public class SipServer implements SipListener {
                 //int state = callSetupAgent.getState();
                 //if (state == CallSetupAgent.CALL_PARTICIPANT_INVITED) {
                 //    // callSetupAgent.processTimeOut(timeoutEvent);
-		//    Logger.error("timeout:  " + callSetupAgent);
-		//}
+        //    Logger.error("timeout:  " + callSetupAgent);
+        //}
             //}
         } catch (Exception e) {
             /*
-	     * FIXME: if any exception happens at this stage,
+         * FIXME: if any exception happens at this stage,
              * we should send back a 500 Internal Server Error
              */
-	    Logger.exception("processTimeout", e);
+        Logger.exception("processTimeout", e);
         }
     }
 
@@ -337,113 +337,113 @@ public class SipServer implements SipListener {
         try {
             Request request = requestEvent.getRequest();
 
-	    CallIdHeader callIdHeader = (CallIdHeader)
-		request.getHeader(CallIdHeader.NAME);
+        CallIdHeader callIdHeader = (CallIdHeader)
+        request.getHeader(CallIdHeader.NAME);
 
-	    String sipCallId = callIdHeader.getCallId();
+        String sipCallId = callIdHeader.getCallId();
 
             SipListener sipListener = findSipListener(requestEvent);
 
-	    /*
-	     * If there's an existing listener pass the request there.
-	     */
+        /*
+         * If there's an existing listener pass the request there.
+         */
             if (sipListener != null) {
 
-	        if (request.getMethod().equals(Request.INVITE)) {
-		    duplicateInvite(request);
-		    return;
-			}
+            if (request.getMethod().equals(Request.INVITE)) {
+            duplicateInvite(request);
+            return;
+            }
 
 
              sipListener.processRequest(requestEvent);
-		     return;
+             return;
 
             } else {
-		if (request.getMethod().equals(Request.REGISTER)) {
-		    handleRegister(request, requestEvent);
+        if (request.getMethod().equals(Request.REGISTER)) {
+            handleRegister(request, requestEvent);
 
-		} else if (request.getMethod().equals(Request.OPTIONS)) {
+        } else if (request.getMethod().equals(Request.OPTIONS)) {
 
-			Response res = messageFactory.createResponse(Response.OK, request);
-			sipProvider.sendResponse(res);
-			return;
+            Response res = messageFactory.createResponse(Response.OK, request);
+            sipProvider.sendResponse(res);
+            return;
 
 
-		} else if (!request.getMethod().equals(Request.INVITE)) {
+        } else if (!request.getMethod().equals(Request.INVITE)) {
                     Logger.writeFile("sipListener could not be found for " + sipCallId + " " + request.getMethod() + ".  Ignoring");
-		    return;
+            return;
                 }
-	    }
+        }
 
-	    /*
-	     * An INVITE for an incoming call goes to the IncomingCallHandler.
-	     */
-	    if (request.getMethod().equals(Request.INVITE)) {
+        /*
+         * An INVITE for an incoming call goes to the IncomingCallHandler.
+         */
+        if (request.getMethod().equals(Request.INVITE)) {
 
-		if (SipIncomingCallAgent.addSipCallId(sipCallId) == false) {
-		    FromHeader fromHeader = (FromHeader)
-			request.getHeader(FromHeader.NAME);
+        if (SipIncomingCallAgent.addSipCallId(sipCallId) == false) {
+            FromHeader fromHeader = (FromHeader)
+            request.getHeader(FromHeader.NAME);
 
-        	    ToHeader toHeader = (ToHeader)
-			request.getHeader(ToHeader.NAME);
+                ToHeader toHeader = (ToHeader)
+            request.getHeader(ToHeader.NAME);
 
-        	    String from = fromHeader.getAddress().toString();
-        	    String to = toHeader.getAddress().toString();
+                String from = fromHeader.getAddress().toString();
+                String to = toHeader.getAddress().toString();
 
-		    Logger.writeFile("SipServer:  duplicate INVITE from " + from + " to " + to);
+            Logger.writeFile("SipServer:  duplicate INVITE from " + from + " to " + to);
 
-		    return;
-		}
+            return;
+        }
 
-		CallParticipant cp = new CallParticipant();
+        CallParticipant cp = new CallParticipant();
 
-		String s = SipUtil.getCallIdFromSdp(request);
+        String s = SipUtil.getCallIdFromSdp(request);
 
-		if (s != null) {
-		    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-			Logger.println("Using callId from SDP in INVITE: "
-			    + s);
-		    }
-		    cp.setCallId(s);
-		}
+        if (s != null) {
+            if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Using callId from SDP in INVITE: "
+                + s);
+            }
+            cp.setCallId(s);
+        }
 
-	  	s = SipUtil.getConferenceIdFromSdp(request);
+        s = SipUtil.getConferenceIdFromSdp(request);
 
-		if (s != null) {
-		    String[] tokens = s.split(":");
+        if (s != null) {
+            String[] tokens = s.split(":");
 
-		    cp.setConferenceId(tokens[0].trim());
+            cp.setConferenceId(tokens[0].trim());
 
-		    if (tokens.length > 1) {
+            if (tokens.length > 1) {
                         cp.setMediaPreference(tokens[1]);
                     }
 
-		    if (tokens.length > 2) {
-			cp.setConferenceDisplayName(tokens[2]);
-		    }
-		}
+            if (tokens.length > 2) {
+            cp.setConferenceDisplayName(tokens[2]);
+            }
+        }
 
-		if (SipUtil.getUserNameFromSdp(request) != null) {
-		    cp.setName(SipUtil.getUserNameFromSdp(request));
-		} else {
-		    cp.setName(SipUtil.getFromName(requestEvent));
-		}
+        if (SipUtil.getUserNameFromSdp(request) != null) {
+            cp.setName(SipUtil.getUserNameFromSdp(request));
+        } else {
+            cp.setName(SipUtil.getFromName(requestEvent));
+        }
 
-		cp.setDistributedBridge(SipUtil.getDistributedBridgeFromSdp(request));
-		cp.setPhoneNumber(SipUtil.getFromPhoneNumber(requestEvent));
-		cp.setToPhoneNumber(SipUtil.getToPhoneNumber(requestEvent));
+        cp.setDistributedBridge(SipUtil.getDistributedBridgeFromSdp(request));
+        cp.setPhoneNumber(SipUtil.getFromPhoneNumber(requestEvent));
+        cp.setToPhoneNumber(SipUtil.getToPhoneNumber(requestEvent));
 
 
-		new IncomingCallHandler(cp, requestEvent);
-		return;
-	    }
+        new IncomingCallHandler(cp, requestEvent);
+        return;
+        }
         } catch (Exception e) {
             /*
-	     * FIXME: if any exception happens at this stage,
+         * FIXME: if any exception happens at this stage,
              * we should send back a 500 Internal Server Error
              */
-	    Logger.exception("processRequest", e);
-	    e.printStackTrace();
+        Logger.exception("processRequest", e);
+        e.printStackTrace();
         }
     }
 
@@ -452,10 +452,10 @@ public class SipServer implements SipListener {
     {
       try
       {
-	FromHeader fromHeader = (FromHeader) request.getHeader(FromHeader.NAME);
+    FromHeader fromHeader = (FromHeader) request.getHeader(FromHeader.NAME);
         ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
 
-	String from = fromHeader.getAddress().toString();
+    String from = fromHeader.getAddress().toString();
         String to = toHeader.getAddress().toString();
 
         Response response = messageFactory.createResponse(Response.OK, request);
@@ -477,26 +477,26 @@ public class SipServer implements SipListener {
 
 
     private void handleRegister(Request request, RequestEvent requestEvent)
-	    throws Exception {
+        throws Exception {
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println(request.toString());
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println(request.toString());
+    }
 
-	Response response = messageFactory.createResponse(
-	    Response.OK, request);
+    Response response = messageFactory.createResponse(
+        Response.OK, request);
 
         ServerTransaction serverTransaction = requestEvent.getServerTransaction();
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println("Response " + response);
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println("Response " + response);
+    }
 
         if (serverTransaction != null) {
             serverTransaction.sendResponse(response);
         } else {
-	    sipProvider.sendResponse(response);
-	}
+        sipProvider.sendResponse(response);
+    }
     }
 
     /**
@@ -508,10 +508,10 @@ public class SipServer implements SipListener {
     {
         Response response = responseReceivedEvent.getResponse();
 
-		if (responseReceivedEvent.getClientTransaction() == null)
-		{
+        if (responseReceivedEvent.getClientTransaction() == null)
+        {
             Logger.error("SipServer processResponse:  clientTransaction is null! " + responseReceivedEvent.getResponse());
-	    	return;
+            return;
         }
 
         try {
@@ -521,7 +521,7 @@ public class SipServer implements SipListener {
                 sipListener.processResponse(responseReceivedEvent);
             } else {
                 /*
-		 * a BYE message could come from a party that already
+         * a BYE message could come from a party that already
                  * has its entry removed from the SipListenersTable.  Ignoring.
                  * This is the desired behaviour if we wished to send BYE
                  * requests to a party that just got hung up on (e.g.
@@ -530,15 +530,15 @@ public class SipServer implements SipListener {
 
                 if (response.getStatusCode() != Response.OK && response.getStatusCode() != 201)
                 {
-		    		CallIdHeader callIdHeader = (CallIdHeader) response.getHeader(CallIdHeader.NAME);
+                    CallIdHeader callIdHeader = (CallIdHeader) response.getHeader(CallIdHeader.NAME);
                     //Logger.writeFile("sipListener could not be found for " + callIdHeader.getCallId() + " " + response.getStatusCode() + ".  Ignoring");
-				}
+                }
             }
         } catch (Exception e) {
             /* FIXME: if any exception happens at this stage,
              * we should send back a 500 Internal Server Error
              */
-	    Logger.exception("processResponse", e);
+        Logger.exception("processResponse", e);
         }
     }
 
@@ -550,35 +550,35 @@ public class SipServer implements SipListener {
      * @return the SipListener for this sipEvent
      */
     private SipListener findSipListener(EventObject event) {
-	String sipCallId = null;
+    String sipCallId = null;
 
         try {
-	    CallIdHeader callIdHeader;
+        CallIdHeader callIdHeader;
 
-	    if (event instanceof RequestEvent) {
+        if (event instanceof RequestEvent) {
                 Request request = ((RequestEvent)event).getRequest();
 
-		callIdHeader = (CallIdHeader)
+        callIdHeader = (CallIdHeader)
                     request.getHeader(CallIdHeader.NAME);
-	    } else if (event instanceof ResponseEvent) {
-		Response response = ((ResponseEvent)event).getResponse();
+        } else if (event instanceof ResponseEvent) {
+        Response response = ((ResponseEvent)event).getResponse();
 
-		callIdHeader = (CallIdHeader)
+        callIdHeader = (CallIdHeader)
                     response.getHeader(CallIdHeader.NAME);
-	    } else {
-		Logger.error("Invalid event object " + event);
-	       	return null;
-	    }
+        } else {
+        Logger.error("Invalid event object " + event);
+            return null;
+        }
 
-	    sipCallId = callIdHeader.getCallId();
+        sipCallId = callIdHeader.getCallId();
 
             synchronized (sipListenersTable) {
                 return (SipListener)sipListenersTable.get(sipCallId);
             }
         } catch (NullPointerException e) {
             /*
-	     * most likely due to a null sipCallId
-	     */
+         * most likely due to a null sipCallId
+         */
             if (sipCallId == null || "".equals(sipCallId)) {
                 Logger.exception("could not get SIP CallId from incoming"
                         + " message.  Dropping message", e);
@@ -592,7 +592,7 @@ public class SipServer implements SipListener {
      * @return the sipStack
      */
     public static SipStack getSipStack() {
-	return sipStack;
+    return sipStack;
     }
 
     /**
@@ -651,7 +651,7 @@ public class SipServer implements SipListener {
                     sipListenersTable.put(key, sipListener);
                 } else {
                     Logger.error("key:  " + key + " already mapped!");
-		}
+        }
             }
         }
 
@@ -666,59 +666,59 @@ public class SipServer implements SipListener {
                 } else {
                     Logger.println("could not find a SipListener "
                         + "entry to remove with the key:" + key);
-	        }
+            }
             }
         }
     }
 
     public static ServerTransaction getServerTransaction(
-	    RequestEvent requestEvent) throws TransactionDoesNotExistException,
-	    TransactionUnavailableException {
+        RequestEvent requestEvent) throws TransactionDoesNotExistException,
+        TransactionUnavailableException {
 
-	Request request = requestEvent.getRequest();
+    Request request = requestEvent.getRequest();
 
-	ServerTransaction st = null;
+    ServerTransaction st = null;
 
-	try {
-	    getSipProvider().getNewServerTransaction(request);
-	} catch (TransactionAlreadyExistsException e) {
-	    Logger.println("Server transaction already exists for " + request);
+    try {
+        getSipProvider().getNewServerTransaction(request);
+    } catch (TransactionAlreadyExistsException e) {
+        Logger.println("Server transaction already exists for " + request);
 
-	    st = requestEvent.getServerTransaction();
+        st = requestEvent.getServerTransaction();
 
-	    if (st == null) {
-		Logger.println("st still null!");
+        if (st == null) {
+        Logger.println("st still null!");
 
-		//st = sipStack.findTransaction((SIPRequest) request, true);
-	    }
-	}
+        //st = sipStack.findTransaction((SIPRequest) request, true);
+        }
+    }
 
-	if (st == null) {
-	    Logger.println("Server transaction not found for " + request);
+    if (st == null) {
+        Logger.println("Server transaction not found for " + request);
 
-	    throw new TransactionDoesNotExistException(
+        throw new TransactionDoesNotExistException(
                         "Server transaction not found for " + request);
-	}
+    }
 
-	return st;
+    return st;
     }
 
     public void processDialogTerminated(DialogTerminatedEvent dte) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processDialogTerminated called");
-	}
+    }
     }
 
     public void  processTransactionTerminated(TransactionTerminatedEvent tte) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processTransactionTerminated called");
-	}
+    }
     }
 
     public void  processIOException(IOExceptionEvent ioee) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processTransactionTerminated called");
-	}
+    }
     }
 
     public synchronized static ClientTransaction handleChallenge(Response challenge, ClientTransaction challengedTransaction, ProxyCredentials proxyCredentials)
@@ -775,7 +775,7 @@ public class SipServer implements SipListener {
                 URI uri = from.getAddress().getURI();
 
                 AuthorizationHeader authorization = getAuthorization(reoriginatedRequest.getMethod(),
-                		reoriginatedRequest.getRequestURI().toString(),
+                        reoriginatedRequest.getRequestURI().toString(),
                         reoriginatedRequest.getContent() == null ? "" : reoriginatedRequest.getContent().toString(),
                         authHeader, proxyCredentials);
 
@@ -809,7 +809,7 @@ public class SipServer implements SipListener {
         }
         catch (Exception e) {
             Logger.println("ERRO REG: " + e.toString());
-			e.printStackTrace();
+            e.printStackTrace();
             return null;
         }
     }
@@ -859,7 +859,7 @@ public class SipServer implements SipListener {
             authorization.setResponse(response);
         }
         catch (ParseException ex) {
-			throw new SecurityException("Failed to create an authorization header!");
+            throw new SecurityException("Failed to create an authorization header!");
         }
 
         return authorization;
@@ -872,7 +872,7 @@ public class SipServer implements SipListener {
         {
             try
             {
-            	tcpListenPort.sendHeartbeat( sipAddress.getAddress().getHostAddress(), sipAddress.getPort() );
+                tcpListenPort.sendHeartbeat( sipAddress.getAddress().getHostAddress(), sipAddress.getPort() );
             }
             catch (IOException e)
             {

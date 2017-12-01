@@ -17,5 +17,4 @@
 
 <%  // Redirect to muc-service-edit-form and set that a service will be created
     response.sendRedirect("muc-service-edit-form.jsp?create=true");
-    return;
 %>

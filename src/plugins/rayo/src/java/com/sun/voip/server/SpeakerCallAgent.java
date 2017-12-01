@@ -53,46 +53,46 @@ public class SpeakerCallAgent extends CallSetupAgent
 
     public SpeakerCallAgent(CallHandler callHandler)
     {
-		super(callHandler);
+        super(callHandler);
 
-		cp = callHandler.getCallParticipant();
-		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
+        cp = callHandler.getCallParticipant();
+        mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
-		memberSender = callHandler.getMemberSender();
-		memberReceiver = callHandler.getMemberReceiver();
+        memberSender = callHandler.getMemberSender();
+        memberReceiver = callHandler.getMemberReceiver();
 
-		Log.info("SpeakerCallAgent init " + cp.getDisplayName() + " " + cp.getPhoneNumber() + " " + cp.isMuted());
-	}
+        Log.info("SpeakerCallAgent init " + cp.getDisplayName() + " " + cp.getPhoneNumber() + " " + cp.isMuted());
+    }
 
-	public void initiateCall() throws IOException
-	{
-		String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+    public void initiateCall() throws IOException
+    {
+        String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
-		try {
+        try {
 
-			if ("CALL".equals(cp.getDisplayName()) && "Speaker".equals(cp.getProtocol()))	// bridge from call to speaker
-			{
-				memberSender.setChannel(new SpeakerChannel(cp.getOtherCall().getMemberReceiver()));
-			}
+            if ("CALL".equals(cp.getDisplayName()) && "Speaker".equals(cp.getProtocol()))	// bridge from call to speaker
+            {
+                memberSender.setChannel(new SpeakerChannel(cp.getOtherCall().getMemberReceiver()));
+            }
 
-			setState(CallState.ANSWERED);
-			setEndpointAddress(null, (byte)0, (byte)0, (byte)0);
-			setState(CallState.ESTABLISHED);
+            setState(CallState.ANSWERED);
+            setEndpointAddress(null, (byte)0, (byte)0, (byte)0);
+            setState(CallState.ESTABLISHED);
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			Log.error("Call " + cp + ":  SpeakerCallAgent: initiateCall exception ");
-			e.printStackTrace();
-		}
-	}
+            Log.error("Call " + cp + ":  SpeakerCallAgent: initiateCall exception ");
+            e.printStackTrace();
+        }
+    }
 
-	public String getSdp()
-	{
-		return null;
+    public String getSdp()
+    {
+        return null;
     }
 
     public void setRemoteMediaInfo(String sdp)
     {
-		return;
+        return;
     }
 }

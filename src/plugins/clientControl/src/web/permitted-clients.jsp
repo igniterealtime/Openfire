@@ -174,7 +174,7 @@
                         var boxall = document.getElementById('boxall');
                         var boxspecify = document.getElementById('boxspecify');
                         boxall.style.background = "#fffbe2"
-					    boxspecify.style.background = "#F4F4F4"
+                        boxspecify.style.background = "#F4F4F4"
                 }
                 else {
                     document.f.client[i].disabled = false;
@@ -182,7 +182,7 @@
                         var boxall = document.getElementById('boxall');
                         var boxspecify = document.getElementById('boxspecify');
                         boxall.style.background = "#F4F4F4"
-					    boxspecify.style.background = "#fffbe2"
+                        boxspecify.style.background = "#fffbe2"
                 }
             }
         }
@@ -267,16 +267,16 @@
 
     <div class="clientscontent">
 
-		<div class="permitclientbox permitclientActive" id="boxall">
-		<input type="radio" name="all" value="true" onclick="disableAll();" <%= clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.all.clients"/></strong> - <fmt:message key="permitted.client.all.clients.description"/>
-		</div>
+        <div class="permitclientbox permitclientActive" id="boxall">
+        <input type="radio" name="all" value="true" onclick="disableAll();" <%= clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.all.clients"/></strong> - <fmt:message key="permitted.client.all.clients.description"/>
+        </div>
 
-		<div class="permitclientbox" id="boxspecify">
-		<input type="radio" name="all" value="false" onclick="disableAll();" <%= !clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.specific.clients"/></strong><br>
-			<div class="specifyclients">
+        <div class="permitclientbox" id="boxspecify">
+        <input type="radio" name="all" value="false" onclick="disableAll();" <%= !clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.specific.clients"/></strong><br>
+            <div class="specifyclients">
                 <table border="0">
                     <tr>
-				        <td valign="top" nowrap>
+                        <td valign="top" nowrap>
                             <div style="display: block; width: 260px;">
                                <%
                                 int count = 0;
@@ -293,14 +293,14 @@
                                 <% } %>
                             </div>
                         </td>
-				    </tr>
-				</table>
+                    </tr>
+                </table>
 
             <span class="horizontalrule" style="height:1px;"></span>
 
             <strong><fmt:message key="permitted.client.add.other.client" />:</strong>
             <a onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="permitted.client.tooltip" />', 'trail', true, 'direction', 'northeast', 'width', '220');"><img src="images/icon_help_14x14.gif" align="texttop" /></a><br>
-			<input type="text" name="other" style="width: 160px;">&nbsp;<input type="hidden" value="${csrf}" name="csrf"><input type="submit" name="addOther" value="<fmt:message key="permitted.client.add" />"/><br>
+            <input type="text" name="other" style="width: 160px;">&nbsp;<input type="hidden" value="${csrf}" name="csrf"><input type="submit" name="addOther" value="<fmt:message key="permitted.client.add" />"/><br>
             <% for (String otherClient : otherClients) { %>
                 <%= otherClient%>&nbsp(<a href="permitted-clients.jsp?csrf=${csrf}&removeClient=<%=StringUtils.escapeForXML(otherClient)%>" name="removeClient" id="<%= StringUtils.escapeForXML(otherClient) %>"><fmt:message key="permitted.client.remove" /></a>)<br>
             <% } %>
@@ -309,7 +309,7 @@
 
         </div>
 
-	</div>
+    </div>
 
     </fieldset>
 

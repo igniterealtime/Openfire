@@ -259,12 +259,12 @@ public class Offer {
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return request.hashCode();
     }
 
     @Override
-	public boolean equals(Object obj) {
+    public boolean equals(Object obj) {
         boolean eq = false;
         if (obj instanceof Offer){
             Offer otherOffer = (Offer)obj;

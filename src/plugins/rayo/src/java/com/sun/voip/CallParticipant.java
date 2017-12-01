@@ -125,82 +125,82 @@ public class CallParticipant {
      */
     public ProxyCredentials getProxyCredentials()
     {
-		return proxyCredentials;
+        return proxyCredentials;
     }
 
     public void setProxyCredentials(ProxyCredentials proxyCredentials)
     {
-		this.proxyCredentials = proxyCredentials;
+        this.proxyCredentials = proxyCredentials;
     }
 
     public CallHandler getOtherCall()
     {
-		return otherCall;
+        return otherCall;
     }
 
     public void setOtherCall(CallHandler otherCall)
     {
-		this.otherCall = otherCall;
+        this.otherCall = otherCall;
     }
 
     public IChannel getChannel()
     {
-		return channel;
+        return channel;
     }
 
     public void setChannel(IChannel channel)
     {
-		this.channel = channel;
+        this.channel = channel;
     }
 
     public long getStartTimestamp()
     {
-		return startTimestamp;
+        return startTimestamp;
     }
 
     public void setStartTimestamp(long startTimestamp)
     {
-		this.startTimestamp = startTimestamp;
+        this.startTimestamp = startTimestamp;
     }
 
     public long getEndTimestamp()
     {
-		return endTimestamp;
+        return endTimestamp;
     }
 
     public void setEndTimestamp(long endTimestamp)
     {
-		this.endTimestamp = endTimestamp;
+        this.endTimestamp = endTimestamp;
     }
 
     public CallParticipant getFarParty()
     {
-		return farParty;
+        return farParty;
     }
 
     public void setFarParty(CallParticipant farParty)
     {
-		this.farParty = farParty;
+        this.farParty = farParty;
     }
 
     public CallParticipant getHandset()
     {
-		return handset;
+        return handset;
     }
 
     public void setHandset(CallParticipant handset)
     {
-		this.handset = handset;
+        this.handset = handset;
     }
 
     public Map<String, String> getHeaders()
     {
-		return headers;
+        return headers;
     }
 
     public void setHeaders(Map<String, String> headers)
     {
-		this.headers = headers;
+        this.headers = headers;
     }
 
     /**
@@ -221,7 +221,7 @@ public class CallParticipant {
      * Get call answer timeout
      */
     public int getCallAnswerTimeout() {
-	return callAnswerTimeout;
+    return callAnswerTimeout;
     }
 
     /**
@@ -264,7 +264,7 @@ public class CallParticipant {
      * one of our calls.  It is not associated with the SIP CallId.
      */
     public String getCallId() {
-	return callId;
+    return callId;
     }
 
     /**
@@ -272,14 +272,14 @@ public class CallParticipant {
      * owner of the call.
      */
     public String getCallOwner() {
-	return callOwner;
+    return callOwner;
     }
 
     /**
      * Get the call timeout value.
      */
     public int getCallTimeout() {
-	return callTimeout;
+    return callTimeout;
     }
 
     /**
@@ -307,67 +307,67 @@ public class CallParticipant {
      * returns the conference display name
      */
     public String getConferenceDisplayName() {
-	return conferenceDisplayName;
+    return conferenceDisplayName;
     }
 
     /**
      * returns the caller id display name
      */
     public String getDisplayName() {
-	return displayName;
+    return displayName;
     }
 
     /**
      * returns whether or not this is a call from a distributed bridge
      */
     public boolean isDistributedBridge() {
-	return distributedBridge;
+    return distributedBridge;
     }
 
     /**
      * is dtmf detection enabled
      */
     public boolean dtmfDetection() {
-	return dtmfDetection;
+    return dtmfDetection;
     }
 
     /**
      * is dtmf suppression enabled
      */
     public boolean dtmfSuppression() {
-	return dtmfSuppression;
+    return dtmfSuppression;
     }
 
     /**
      * should telephone events be ignored
      */
     public boolean ignoreTelephoneEvents() {
-	return ignoreTelephoneEvents;
+    return ignoreTelephoneEvents;
     }
 
     public String getInputTreatment() {
-	return inputTreatment;
+    return inputTreatment;
     }
 
     /**
      * encryption key
      */
     public String getEncryptionKey() {
-	return encryptionKey;
+    return encryptionKey;
     }
 
     /**
      * encryption algorithm
      */
     public String getEncryptionAlgorithm() {
-	return encryptionAlgorithm;
+    return encryptionAlgorithm;
     }
 
     /**
      * Get first conference member treatment
      */
     public String getFirstConferenceMemberTreatment() {
-	return firstConferenceMemberTreatment;
+    return firstConferenceMemberTreatment;
     }
 
     /**
@@ -375,7 +375,7 @@ public class CallParticipant {
      * Used for ExecMC outgoing calls.
      */
     public boolean getForwardDtmfKeys() {
-	return forwardDtmfKeys;
+    return forwardDtmfKeys;
     }
 
     /**
@@ -383,53 +383,53 @@ public class CallParticipant {
      * which forwards data to this call.
      */
     public String getForwardingCallId() {
-	return forwardingCallId;
+    return forwardingCallId;
     }
 
     /**
      * Handle SESSION_PROGRESS SIP message
      */
     public boolean getHandleSessionProgress() {
-	return handleSessionProgress;
+    return handleSessionProgress;
     }
 
     /**
      * Get remote media Info for non-signaling call agent
      */
     public String getRemoteMediaInfo() {
-	return remoteMediaInfo;
+    return remoteMediaInfo;
     }
 
     /**
      * get join confirmation timeout
      */
     public int getJoinConfirmationTimeout() {
-	return joinConfirmationTimeout;
+    return joinConfirmationTimeout;
     }
 
     /**
      * Is call muted
      */
     public boolean isMuted() {
-	return isMuted;
+    return isMuted;
     }
 
     public boolean isHeld() {
-	return isHeld;
+    return isHeld;
     }
 
     /**
      * Is the call muted from the whisper group
      */
     public boolean isMuteWhisperGroup() {
-	return isMuteWhisperGroup;
+    return isMuteWhisperGroup;
     }
 
     /**
      * Is conference muted from this call
      */
     public boolean isConferenceMuted() {
-	return isConferenceMuted;
+    return isConferenceMuted;
     }
 
     /**
@@ -443,36 +443,36 @@ public class CallParticipant {
      * Is this a recorder
      */
     public boolean isRecorder() {
-	return isRecorder;
+    return isRecorder;
     }
-	/**
-	 * Is call auto-answered
-	 *
-	*/
+    /**
+     * Is call auto-answered
+     *
+    */
 
     public boolean isAutoAnswer()
     {
-		return autoAnswer;
-	}
+        return autoAnswer;
+    }
     /**
      * Get media preference
      */
     public String getMediaPreference() {
-	return mediaPreference;
+    return mediaPreference;
     }
 
     /**
      * Is call being migrated
      */
     public boolean migrateCall() {
-	return migrateCall;
+    return migrateCall;
     }
 
     /**
      * Is mixMinus enabled
      */
     public boolean mixMinus() {
-	return mixMinus;
+    return mixMinus;
     }
 
     /**
@@ -480,14 +480,14 @@ public class CallParticipant {
      * @return the name
      */
     public String getName() {
-	return name;
+    return name;
     }
 
     /**
      * returns whether or not it's okay to record this call
      */
     public boolean doNotRecord() {
-	return doNotRecord;
+    return doNotRecord;
     }
 
     /**
@@ -495,11 +495,11 @@ public class CallParticipant {
      * @return the phone number
      */
     public String getPhoneNumber() {
-	return phoneNumber;
+    return phoneNumber;
     }
 
     public String getToPhoneNumber() {
-	return toPhoneNumber;
+    return toPhoneNumber;
     }
 
     /**
@@ -507,7 +507,7 @@ public class CallParticipant {
      * @return the phone number location
      */
     public String getPhoneNumberLocation() {
-	return phoneNumberLocation;
+    return phoneNumberLocation;
     }
 
     /**
@@ -515,42 +515,42 @@ public class CallParticipant {
      * @return the record directory
      */
     public String getRecordDirectory() {
-	return recordDirectory;
+    return recordDirectory;
     }
 
     /**
      * returns path to recording file with data from member.
      */
     public String getFromRecordingFile() {
-	return fromRecordingFile;
+    return fromRecordingFile;
     }
 
     /**
      * returns type of recording.
      */
     public String getFromRecordingType() {
-	return fromRecordingType;
+    return fromRecordingType;
     }
 
     /**
      * returns path to recording file with data to member.
      */
     public String getToRecordingFile() {
-	return toRecordingFile;
+    return toRecordingFile;
     }
 
     /**
      * returns type of recording.
      */
     public String getToRecordingType() {
-	return toRecordingType;
+    return toRecordingType;
     }
 
     /**
      * returns the signaling protocol, SIP or h.323
      */
     public String getProtocol() {
-	return protocol;
+    return protocol;
     }
 
     /**
@@ -558,35 +558,35 @@ public class CallParticipant {
      * one bridge to another.
      */
     public String getRemoteCallId() {
-	return remoteCallId;
+    return remoteCallId;
     }
 
     /**
      * returns the Sip proxy
      */
     public String getSipProxy() {
-	return sipProxy;
+    return sipProxy;
     }
 
     /**
      * returns whether or not to Speex encode
      */
     public boolean speexEncode() {
-	return speexEncode;
+    return speexEncode;
     }
 
     /**
      * returns the whisper group this call is initially in
      */
     public String getWhisperGroupId() {
-	return whisperGroupId;
+    return whisperGroupId;
     }
 
     /**
      * returns voip gateway address
      */
     public String getVoIPGateway() {
-	return voipGateway;
+    return voipGateway;
     }
 
     /**
@@ -595,28 +595,28 @@ public class CallParticipant {
      * receiver thread.
      */
     public boolean useConferenceReceiverThread() {
-	return useConferenceReceiverThread;
+    return useConferenceReceiverThread;
     }
 
     /**
      * is voice detection enabled
      */
     public boolean voiceDetection() {
-	return voiceDetection;
+    return voiceDetection;
     }
 
     /**
      * should voice detection be done even while muted?
      */
     public boolean voiceDetectionWhileMuted() {
-	return voiceDetectionWhileMuted;
+    return voiceDetectionWhileMuted;
     }
 
     /**
      * Set call answer timeout
      */
     public void setCallAnswerTimeout(int callAnswerTimeout) {
-	this.callAnswerTimeout = callAnswerTimeout;
+    this.callAnswerTimeout = callAnswerTimeout;
     }
 
     /**
@@ -630,7 +630,7 @@ public class CallParticipant {
      * Set audio treatment string for call end
      */
     public void setCallEndTreatment(String callEndTreatment) {
-	this.callEndTreatment = callEndTreatment;
+    this.callEndTreatment = callEndTreatment;
     }
 
     /**
@@ -644,49 +644,49 @@ public class CallParticipant {
      * Set call Number
      */
     public void setCallId(String callId) {
-	this.callId = callId;
+    this.callId = callId;
     }
 
     /**
      * Set call Owner
      */
     public void setCallOwner(String callOwner) {
-	this.callOwner = callOwner;
+    this.callOwner = callOwner;
     }
 
     /**
      * Set call timeout (seconds)
      */
     public void setCallTimeout(int callTimeout) {
-	this.callTimeout = callTimeout;
+    this.callTimeout = callTimeout;
     }
 
     /**
      * Set conference id
      */
     public void setConferenceId(String conferenceId) {
-	this.conferenceId = conferenceId;
+    this.conferenceId = conferenceId;
     }
 
     /**
      * Set audio treatment string for joining a conference
      */
     public void setConferenceJoinTreatment(String conferenceJoinTreatment) {
-	this.conferenceJoinTreatment = conferenceJoinTreatment;
+    this.conferenceJoinTreatment = conferenceJoinTreatment;
     }
 
     /**
      * Set audio treatment string for leaving a conference
      */
     public void setConferenceLeaveTreatment(String conferenceLeaveTreatment) {
-	this.conferenceLeaveTreatment = conferenceLeaveTreatment;
+    this.conferenceLeaveTreatment = conferenceLeaveTreatment;
     }
 
     /**
      * Set the flag to mute the conference from this call.
      */
     public void setConferenceMuted(boolean isConferenceMuted) {
-	this.isConferenceMuted = isConferenceMuted;
+    this.isConferenceMuted = isConferenceMuted;
     }
 
     /**
@@ -700,77 +700,77 @@ public class CallParticipant {
      * Set the conference display name
      */
     public void setConferenceDisplayName(String conferenceDisplayName) {
-	this.conferenceDisplayName = conferenceDisplayName;
+    this.conferenceDisplayName = conferenceDisplayName;
     }
 
     /**
      * set the caller id display name
      */
     public void setDisplayName(String displayName) {
-	this.displayName = displayName;
+    this.displayName = displayName;
     }
 
     /**
      * set flag to indicate this is a distributed bridge
      */
     public void setDistributedBridge(boolean distributedBridge) {
-	this.distributedBridge = distributedBridge;
+    this.distributedBridge = distributedBridge;
     }
 
     /**
      * Set dtmf detection flag
      */
     public void setDtmfDetection(boolean dtmfDetection) {
-	this.dtmfDetection = dtmfDetection;
+    this.dtmfDetection = dtmfDetection;
     }
 
     /**
      * Set dtmf suppression flag
      */
     public void setDtmfSuppression(boolean dtmfSuppression) {
-	this.dtmfSuppression = dtmfSuppression;
+    this.dtmfSuppression = dtmfSuppression;
     }
 
     /**
      * Set ignore telephone events flag
      */
     public void setIgnoreTelephoneEvents(boolean ignoreTelephoneEvents) {
-	this.ignoreTelephoneEvents = ignoreTelephoneEvents;
+    this.ignoreTelephoneEvents = ignoreTelephoneEvents;
     }
 
     public void setInputTreatment(String inputTreatment) {
-	this.inputTreatment = inputTreatment;
+    this.inputTreatment = inputTreatment;
     }
 
     /**
      * Set encryption key
      */
     public void setEncryptionKey(String encryptionKey) {
-	this.encryptionKey = encryptionKey;
+    this.encryptionKey = encryptionKey;
     }
 
     /**
      * Set encryption algorithm
      */
     public void setEncryptionAlgorithm(String encryptionAlgorithm) {
-	this.encryptionAlgorithm = encryptionAlgorithm;
+    this.encryptionAlgorithm = encryptionAlgorithm;
     }
 
     /**
      * Set first conference member treatment
      */
     public void setFirstConferenceMemberTreatment(
-	    String firstConferenceMemberTreatment) {
+        String firstConferenceMemberTreatment) {
 
-	this.firstConferenceMemberTreatment =
-	    firstConferenceMemberTreatment;
+    this.firstConferenceMemberTreatment =
+        firstConferenceMemberTreatment;
     }
 
     /**
      * Set forward dtmf keys
      */
     public void setForwardDtmfKeys(boolean forwardDtmfKeys) {
-	this.forwardDtmfKeys = forwardDtmfKeys;
+    this.forwardDtmfKeys = forwardDtmfKeys;
     }
 
     /*
@@ -778,60 +778,60 @@ public class CallParticipant {
      * which forwards data to this call.
      */
     public void setForwardingCallId(String forwardingCallId) {
-	this.forwardingCallId = forwardingCallId;
+    this.forwardingCallId = forwardingCallId;
     }
 
     /**
      * set handleSessionProgress
      */
     public void setHandleSessionProgress(boolean handleSessionProgress) {
-	this.handleSessionProgress = handleSessionProgress;
+    this.handleSessionProgress = handleSessionProgress;
     }
 
     /**
      * Set remote media info for non-signaling call agent.
      */
     public void setRemoteMediaInfo(String remoteMediaInfo) {
-	this.remoteMediaInfo = remoteMediaInfo;
+    this.remoteMediaInfo = remoteMediaInfo;
     }
 
     /**
      * Set join confirmation timeout
      */
     public void setJoinConfirmationTimeout(int joinConfirmationTimeout) {
-	this.joinConfirmationTimeout = joinConfirmationTimeout;
+    this.joinConfirmationTimeout = joinConfirmationTimeout;
     }
 
     /**
      * Set flag to migrate call
      */
     public void setMigrateCall(boolean migrateCall) {
-	this.migrateCall = migrateCall;
+    this.migrateCall = migrateCall;
     }
 
     /**
      * Set media preference
      */
     public void setMediaPreference(String mediaPreference) {
-	this.mediaPreference = mediaPreference;
+    this.mediaPreference = mediaPreference;
     }
 
     /**
      * Set flag to enable / disable mix minus
      */
     public void setMixMinus(boolean mixMinus) {
-	this.mixMinus = mixMinus;
+    this.mixMinus = mixMinus;
     }
 
     /**
      * Set the flag to mute the conference from this call.
      */
     public void setMuted(boolean isMuted) {
-	this.isMuted = isMuted;
+    this.isMuted = isMuted;
     }
 
     public void setHeld(boolean isHeld) {
-	this.isHeld = isHeld;
+    this.isHeld = isHeld;
     }
 
     /**
@@ -845,59 +845,59 @@ public class CallParticipant {
      * Set isRecorder
      */
     public void setRecorder(boolean isRecorder) {
-	this.isRecorder = isRecorder;
+    this.isRecorder = isRecorder;
     }
     /**
      * Set autoAnswer
      */
     public void setAutoAnswer(boolean autoAnswer) {
-	this.autoAnswer = autoAnswer;
+    this.autoAnswer = autoAnswer;
     }
 
     /**
      * Set the name of the call participant
      */
     public void setName(String name) {
-	this.name = name;
+    this.name = name;
     }
 
     /**
      * Set whether or not it's ok to record this call
      */
     public void setDoNotRecord(boolean doNotRecord) {
-	this.doNotRecord = doNotRecord;
+    this.doNotRecord = doNotRecord;
     }
 
     /**
      * Set the phone number of the call participant
      */
     public void setPhoneNumber(String phoneNumber) {
-	this.phoneNumber = phoneNumber;
+    this.phoneNumber = phoneNumber;
     }
 
     public void setToPhoneNumber(String phoneNumber) {
-	this.toPhoneNumber = phoneNumber;
+    this.toPhoneNumber = phoneNumber;
     }
 
     /**
      * Set the phone number location
      */
     public void setPhoneNumberLocation(String phoneNumberLocation) {
-	this.phoneNumberLocation = phoneNumberLocation;
+    this.phoneNumberLocation = phoneNumberLocation;
     }
 
     /**
      * Set the record directory
      */
     public void setRecordDirectory(String recordDirectory) {
-	this.recordDirectory = recordDirectory;
+    this.recordDirectory = recordDirectory;
     }
 
     /**
      * Sets the recording file path for data from member.
      */
     public void setFromRecordingFile(String fromRecordingFile) {
-	this.fromRecordingFile = fromRecordingFile;
+    this.fromRecordingFile = fromRecordingFile;
     }
 
     /**
@@ -911,7 +911,7 @@ public class CallParticipant {
      * Sets the recording file path for data to member.
      */
     public void setToRecordingFile(String toRecordingFile) {
-	this.toRecordingFile = toRecordingFile;
+    this.toRecordingFile = toRecordingFile;
     }
 
     /**
@@ -925,42 +925,42 @@ public class CallParticipant {
      * Sets the signaling protocol
      */
     public void setProtocol(String protocol) {
-	this.protocol = protocol;
+    this.protocol = protocol;
     }
 
     /*
      * Sets the remote call id.  This is used for bridge to bridge calls.
      */
     public void setRemoteCallId(String remoteCallId) {
-	this.remoteCallId = remoteCallId;
+    this.remoteCallId = remoteCallId;
     }
 
     /**
      * Sets the Sip proxy
      */
     public void setSipProxy(String sipProxy) {
-	this.sipProxy = sipProxy;
+    this.sipProxy = sipProxy;
     }
 
     /**
      * Sets speexEncode flag
      */
     public void setSpeexEncode(boolean speexEncode) {
-	this.speexEncode = speexEncode;
+    this.speexEncode = speexEncode;
     }
 
     /**
      * Sets the whisperGroup this call is initially in
      */
     public void setWhisperGroupId(String whisperGroupId) {
-	this.whisperGroupId = whisperGroupId;
+    this.whisperGroupId = whisperGroupId;
     }
 
     /**
      * Sets the address of the SIP server
      */
     public void setVoIPGateway(String voipGateway) {
-	this.voipGateway = voipGateway;
+    this.voipGateway = voipGateway;
     }
 
     /**
@@ -969,23 +969,23 @@ public class CallParticipant {
      * receiver thread.
      */
     public void setUseConferenceReceiverThread(
-	    boolean useConferenceReceiverThread) {
+        boolean useConferenceReceiverThread) {
 
-	this.useConferenceReceiverThread = true;
+    this.useConferenceReceiverThread = true;
     }
 
     /**
      * set voice detection flag
      */
     public void setVoiceDetection(boolean voiceDetection) {
-	this.voiceDetection = voiceDetection;
+    this.voiceDetection = voiceDetection;
     }
 
     /**
      * set voice detection while muted flag
      */
     public void setVoiceDetectionWhileMuted(boolean voiceDetectionWhileMuted) {
-	this.voiceDetectionWhileMuted = voiceDetectionWhileMuted;
+    this.voiceDetectionWhileMuted = voiceDetectionWhileMuted;
     }
 
     /*
@@ -996,7 +996,7 @@ public class CallParticipant {
      * get second party number
      */
     public String getSecondPartyNumber() {
-	return secondPartyNumber;
+    return secondPartyNumber;
     }
 
     /**
@@ -1010,88 +1010,88 @@ public class CallParticipant {
      * get second party timeout
      */
     public int getSecondPartyTimeout() {
-	return secondPartyTimeout;
+    return secondPartyTimeout;
     }
 
     /**
      * get second party treatment
      */
     public String getSecondPartyTreatment() {
-	return secondPartyTreatment;
+    return secondPartyTreatment;
     }
 
     /**
      * get second party call end treatment
      */
     public String getSecondPartyCallEndTreatment() {
-	return secondPartyCallEndTreatment;
+    return secondPartyCallEndTreatment;
     }
 
     /**
      * get second party call Id
      */
     public String getSecondPartyCallId() {
-	return secondPartyCallId;
+    return secondPartyCallId;
     }
 
     /**
      * get second party voice detection
      */
     public boolean getSecondPartyVoiceDetection() {
-	return secondPartyVoiceDetection;
+    return secondPartyVoiceDetection;
     }
 
     /**
      * Set second party number
      */
     public void setSecondPartyNumber(String secondPartyNumber) {
-	this.secondPartyNumber = secondPartyNumber;
+    this.secondPartyNumber = secondPartyNumber;
     }
 
     /**
      * Set second party name
      */
     public void setSecondPartyName(String secondPartyName) {
-	this.secondPartyName = secondPartyName;
+    this.secondPartyName = secondPartyName;
     }
 
     /**
      * Set second party timeout
      */
     public void setSecondPartyTimeout(int secondPartyTimeout) {
-	this.secondPartyTimeout = secondPartyTimeout;
+    this.secondPartyTimeout = secondPartyTimeout;
     }
 
     /**
      * Set second party treatment
      */
     public void setSecondPartyTreatment(String secondPartyTreatment) {
-	this.secondPartyTreatment = secondPartyTreatment;
+    this.secondPartyTreatment = secondPartyTreatment;
     }
 
     /**
      * Set second party call end treatment
      */
     public void setSecondPartyCallEndTreatment(
-	    String secondPartyCallEndTreatment) {
+        String secondPartyCallEndTreatment) {
 
-	this.secondPartyCallEndTreatment = secondPartyCallEndTreatment;
+    this.secondPartyCallEndTreatment = secondPartyCallEndTreatment;
     }
 
     /**
      * Set second party call Id
      */
     public void setSecondPartyCallId(String secondPartyCallId) {
-	this.secondPartyCallId = secondPartyCallId;
+    this.secondPartyCallId = secondPartyCallId;
     }
 
     /**
      * Set second party voice detection
      */
     public void setSecondPartyVoiceDetection(
-	    boolean secondPartyVoiceDetection) {
+        boolean secondPartyVoiceDetection) {
 
-	this.secondPartyVoiceDetection = secondPartyVoiceDetection;
+    this.secondPartyVoiceDetection = secondPartyVoiceDetection;
     }
 
     /**
@@ -1099,122 +1099,122 @@ public class CallParticipant {
      * sent to the bridge server to initiate a call.
      */
     public String getCallSetupRequest() {
-	String request = "";
+    String request = "";
 
         if (callAnswerTimeout != 0) {
-	    request += "callAnswerTimeout=" + callAnswerTimeout + "\r\n";
+        request += "callAnswerTimeout=" + callAnswerTimeout + "\r\n";
         }
 
         if (callAnsweredTreatment != null) {
-    	    request +=
-		"callAnsweredTreatment=" + callAnsweredTreatment + "\r\n";
-	}
+            request +=
+        "callAnsweredTreatment=" + callAnsweredTreatment + "\r\n";
+    }
 
         if (callEndTreatment != null) {
-	    request += "callEndTreatment=" + callEndTreatment + "\r\n";
-	}
+        request += "callEndTreatment=" + callEndTreatment + "\r\n";
+    }
 
         if (callEstablishedTreatment != null) {
-	    request += "callEstablishedTreatment="
-		+ callEstablishedTreatment + "\r\n";
-	}
+        request += "callEstablishedTreatment="
+        + callEstablishedTreatment + "\r\n";
+    }
 
-	if (callId != null) {
-	    request += "callId=" + callId + "\r\n";
-	}
+    if (callId != null) {
+        request += "callId=" + callId + "\r\n";
+    }
 
-	if (callTimeout != 0) {
-	    request += "callTimeout=" + callTimeout + "\r\n";
-	}
+    if (callTimeout != 0) {
+        request += "callTimeout=" + callTimeout + "\r\n";
+    }
 
         if (conferenceId != null) {
-    	    request += "conferenceId=" + conferenceId + "\r\n";
-	}
+            request += "conferenceId=" + conferenceId + "\r\n";
+    }
 
-	if (conferenceJoinTreatment != null) {
-    	    request += "conferenceJoinTreatment=" + conferenceJoinTreatment
-		+ "\r\n";
-	}
+    if (conferenceJoinTreatment != null) {
+            request += "conferenceJoinTreatment=" + conferenceJoinTreatment
+        + "\r\n";
+    }
 
-	if (conferenceLeaveTreatment != null) {
-    	    request += "conferenceLeaveTreatment="
-		+ conferenceLeaveTreatment + "\r\n";
-	}
+    if (conferenceLeaveTreatment != null) {
+            request += "conferenceLeaveTreatment="
+        + conferenceLeaveTreatment + "\r\n";
+    }
 
-	if (conferenceDisplayName != null) {
-    	    request += "conferenceDisplayName=" + conferenceDisplayName + "\r\n";
-	}
+    if (conferenceDisplayName != null) {
+            request += "conferenceDisplayName=" + conferenceDisplayName + "\r\n";
+    }
 
-	if (displayName != null) {
-    	    request += "displayName=" + displayName + "\r\n";
-	}
+    if (displayName != null) {
+            request += "displayName=" + displayName + "\r\n";
+    }
 
-	if (distributedBridge == true) {
-	    request += "distributedBridge=true\r\n";
-	}
+    if (distributedBridge == true) {
+        request += "distributedBridge=true\r\n";
+    }
 
-	if (doNotRecord == true) {
-	    request += "doNotRecord=true\r\n";
-	}
+    if (doNotRecord == true) {
+        request += "doNotRecord=true\r\n";
+    }
 
-	if (dtmfDetection == true) {
-    	    request += "dtmfDetection=true\r\n";
-	}
+    if (dtmfDetection == true) {
+            request += "dtmfDetection=true\r\n";
+    }
 
-	if (dtmfSuppression == false) {
-    	    request += "dtmfSuppression=false\r\n";
-	}
+    if (dtmfSuppression == false) {
+            request += "dtmfSuppression=false\r\n";
+    }
 
-	if (ignoreTelephoneEvents == true) {
-	    request += "ignoreTelephoneEvents=true\r\n";
-	}
+    if (ignoreTelephoneEvents == true) {
+        request += "ignoreTelephoneEvents=true\r\n";
+    }
 
-	if (inputTreatment != null) {
-	    request += "inputTreatment=" + inputTreatment + "\r\n";
-	}
+    if (inputTreatment != null) {
+        request += "inputTreatment=" + inputTreatment + "\r\n";
+    }
 
-	if (encryptionKey != null) {
-	    request += "encryptionKey=" + encryptionKey + "\r\n";
-	}
+    if (encryptionKey != null) {
+        request += "encryptionKey=" + encryptionKey + "\r\n";
+    }
 
-	if (encryptionAlgorithm != null) {
-	    request += "encryptionAlgorithm=" + encryptionAlgorithm
-		+ "\r\n";
-	}
+    if (encryptionAlgorithm != null) {
+        request += "encryptionAlgorithm=" + encryptionAlgorithm
+        + "\r\n";
+    }
 
-	if (firstConferenceMemberTreatment != null) {
-    	    request += "firstConferenceMemberTreatment="
-		+ firstConferenceMemberTreatment + "\r\n";
-	}
+    if (firstConferenceMemberTreatment != null) {
+            request += "firstConferenceMemberTreatment="
+        + firstConferenceMemberTreatment + "\r\n";
+    }
 
-	if (forwardDtmfKeys == true) {
-	    request += "forwardDtmfKeys=true\r\n";
-	}
+    if (forwardDtmfKeys == true) {
+        request += "forwardDtmfKeys=true\r\n";
+    }
 
-	if (forwardingCallId != null) {
-	    request += "forwardDataFrom=" + forwardingCallId + "\r\n";
-	}
+    if (forwardingCallId != null) {
+        request += "forwardDataFrom=" + forwardingCallId + "\r\n";
+    }
 
-	if (handleSessionProgress == true) {
-	    request += "handleSessionProgress=true\r\n";
-	}
+    if (handleSessionProgress == true) {
+        request += "handleSessionProgress=true\r\n";
+    }
 
-	if (remoteMediaInfo != null) {
-	    request +=
-		"remoteMediaInfo=" + remoteMediaInfo + "\r\n";
-	}
+    if (remoteMediaInfo != null) {
+        request +=
+        "remoteMediaInfo=" + remoteMediaInfo + "\r\n";
+    }
 
-	if (isMuted == true) {
-	    request += "mute=true\r\n";
-	}
+    if (isMuted == true) {
+        request += "mute=true\r\n";
+    }
 
-	if (isMuteWhisperGroup == true) {
-	    request += "muteWhisperGroup=true\r\n";
-	}
+    if (isMuteWhisperGroup == true) {
+        request += "muteWhisperGroup=true\r\n";
+    }
 
         if (isConferenceMuted == true) {
-	    request += "muteConference=true\r\n";
-	}
+        request += "muteConference=true\r\n";
+    }
 
         if (isConferenceSilenced == true) {
             request += "SilenceMainConference=true\r\n";
@@ -1224,78 +1224,78 @@ public class CallParticipant {
             request += "recorder=true\r\n";
         }
 
-	if (joinConfirmationTimeout != 0) {
-	    request += "joinConfirmationTimeout="
-		+ joinConfirmationTimeout + "\r\n";
+    if (joinConfirmationTimeout != 0) {
+        request += "joinConfirmationTimeout="
+        + joinConfirmationTimeout + "\r\n";
         }
 
-	if (useConferenceReceiverThread == true) {
-	    request += "useConferenceReceiverThread=true\r\n";
-	}
+    if (useConferenceReceiverThread == true) {
+        request += "useConferenceReceiverThread=true\r\n";
+    }
 
-	if (mixMinus == false) {
-	    request += "mixMinus=false\r\n";
-	}
+    if (mixMinus == false) {
+        request += "mixMinus=false\r\n";
+    }
 
         // decide whether to migrate or just call
-	if (phoneNumber != null) {
+    if (phoneNumber != null) {
             if (migrateCall) {
                 request += "migrate=" + callId + ":" + phoneNumber + "\r\n";
             } else {
                 request += "phoneNumber=" + phoneNumber + "\r\n";
-	    }
+        }
         }
 
-	if (phoneNumberLocation != null) {
+    if (phoneNumberLocation != null) {
             request += "phoneNumberLocation=" + phoneNumberLocation + "\r\n";
-	}
+    }
 
-	if (recordDirectory != null) {
-	    request += "recordDirectory=" + recordDirectory + "\r\n";
-	}
+    if (recordDirectory != null) {
+        request += "recordDirectory=" + recordDirectory + "\r\n";
+    }
 
-	if (fromRecordingFile != null) {
-	    request += "recordFromMember=true:0:" + fromRecordingFile + "\r\n";
+    if (fromRecordingFile != null) {
+        request += "recordFromMember=true:0:" + fromRecordingFile + "\r\n";
         }
 
-	if (toRecordingFile != null) {
-	    request += "recordToMember=true:0:" + toRecordingFile + "\r\n";
+    if (toRecordingFile != null) {
+        request += "recordToMember=true:0:" + toRecordingFile + "\r\n";
         }
 
-	if (name != null) {
-    	    request += "name=" + name + "\r\n";
-	}
+    if (name != null) {
+            request += "name=" + name + "\r\n";
+    }
 
-	if (protocol != null) {
-	    request += "protocol=" + protocol + "\r\n";
-	}
+    if (protocol != null) {
+        request += "protocol=" + protocol + "\r\n";
+    }
 
-	if (remoteCallId != null) {
-	    request += "remoteCallId=" + remoteCallId + "\r\n";
-	}
+    if (remoteCallId != null) {
+        request += "remoteCallId=" + remoteCallId + "\r\n";
+    }
 
-	if (sipProxy != null) {
-	    request += "sipProxy=" + sipProxy + "\r\n";
-	}
+    if (sipProxy != null) {
+        request += "sipProxy=" + sipProxy + "\r\n";
+    }
 
-	if (speexEncode == true) {
-	    request += "speexEncode=" + speexEncode + "\r\n";
-	}
+    if (speexEncode == true) {
+        request += "speexEncode=" + speexEncode + "\r\n";
+    }
 
-	if (whisperGroupId != null) {
-	    request += "whisperGroup=" + whisperGroupId + "\r\n";
-	}
+    if (whisperGroupId != null) {
+        request += "whisperGroup=" + whisperGroupId + "\r\n";
+    }
 
-	if (voipGateway != null) {
-	    request += "voipGateway=" + voipGateway + "\r\n";
-	}
+    if (voipGateway != null) {
+        request += "voipGateway=" + voipGateway + "\r\n";
+    }
 
-	if (voiceDetection == true) {
-	    request += "voiceDetection=true\r\n";
+    if (voiceDetection == true) {
+        request += "voiceDetection=true\r\n";
         }
 
-	if (voiceDetectionWhileMuted == true) {
-	    request += "voiceDetectionWhileMuted=true\r\n";
+    if (voiceDetectionWhileMuted == true) {
+        request += "voiceDetectionWhileMuted=true\r\n";
         }
 
         if (secondPartyNumber != null) {
@@ -1319,49 +1319,49 @@ public class CallParticipant {
             request += "secondPartyCallId=" + secondPartyCallId + "\r\n";
         }
 
-	if (secondPartyTreatment != null) {
-	    request += "secondPartyTreatment=" + secondPartyTreatment + "\r\n";
-	}
+    if (secondPartyTreatment != null) {
+        request += "secondPartyTreatment=" + secondPartyTreatment + "\r\n";
+    }
 
         if (secondPartyVoiceDetection == true) {
             request += "secondPartyVoiceDetection=true\r\n";
         }
 
         request += "\r\n";
-	return request;
+    return request;
     }
 
     public String toConsiseString() {
-	if (phoneNumber == null) {
-	    if (inputTreatment == null) {
-	        return "Anonymous";
-	    }
+    if (phoneNumber == null) {
+        if (inputTreatment == null) {
+            return "Anonymous";
+        }
 
-	    if (name != null) {
-		return name + "@" + inputTreatment;
-	    }
+        if (name != null) {
+        return name + "@" + inputTreatment;
+        }
 
-	    return inputTreatment;
-	}
+        return inputTreatment;
+    }
 
-	int end = phoneNumber.indexOf("@");
+    int end = phoneNumber.indexOf("@");
 
         if (end >= 0) {
-	    if (name == null || name.equals("Anonymous")) {
+        if (name == null || name.equals("Anonymous")) {
                 return phoneNumber;
-	    }
+        }
 
-	    int start = 0;
+        int start = 0;
 
-	    if (phoneNumber.indexOf("sip:") == 0) {
-	        start = phoneNumber.indexOf(":") + 1;
-	    }
+        if (phoneNumber.indexOf("sip:") == 0) {
+            start = phoneNumber.indexOf(":") + 1;
+        }
 
-	    String s = name.replaceAll(" ", "_");
+        String s = name.replaceAll(" ", "_");
 
-	    if (s.equals(phoneNumber.substring(start, end))) {
-		return phoneNumber;
-	    }
+        if (s.equals(phoneNumber.substring(start, end))) {
+        return phoneNumber;
+        }
         }
 
         if (name == null || name.equals("") || name.equals(phoneNumber)) {
@@ -1376,7 +1376,7 @@ public class CallParticipant {
      * @return the string representation
      */
     public String toString() {
-	return callId + "::" + toConsiseString();
+    return callId + "::" + toConsiseString();
     }
 
 }

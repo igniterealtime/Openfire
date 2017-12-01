@@ -62,79 +62,79 @@
 <script type="text/javascript" language="javascript" src="scripts/tooltips/domLib.js"></script>
 <style type="text/css">
 #lightbox{
-	top: 20%;
-	margin-top: -20px;
-	}
+    top: 20%;
+    margin-top: -20px;
+    }
 
 .jive-testPanel {
-	display: block;
-	position: relative;
-	float: left;
-	margin: 0;
-	padding: 0;
-	border: 2px solid #666666;
-	background-color: #f8f7eb;
-	overflow: hidden;
-	z-index: 9997;
-	-moz-border-radius: 6px;
-	}
+    display: block;
+    position: relative;
+    float: left;
+    margin: 0;
+    padding: 0;
+    border: 2px solid #666666;
+    background-color: #f8f7eb;
+    overflow: hidden;
+    z-index: 9997;
+    -moz-border-radius: 6px;
+    }
 .jive-testPanel-content {
-	display: block;
-	float: left;
-	padding: 20px;
-	font-size: 8pt;
-	z-index: 9999;
-	}
+    display: block;
+    float: left;
+    padding: 20px;
+    font-size: 8pt;
+    z-index: 9999;
+    }
 .jive-testPanel-close a,
 .jive-testPanel-close a:visited {
-	float: right;
-	color: #666;
-	padding: 2px 5px 2px 18px;
-	margin: 0;
-	font-size: 8pt;
-	background: transparent url(../../../images/setup_btn_closetestx.gif) no-repeat left;
-	background-position: 4;
-	border: 1px solid #ccc;
-	z-index: 9999;
-	}
+    float: right;
+    color: #666;
+    padding: 2px 5px 2px 18px;
+    margin: 0;
+    font-size: 8pt;
+    background: transparent url(../../../images/setup_btn_closetestx.gif) no-repeat left;
+    background-position: 4;
+    border: 1px solid #ccc;
+    z-index: 9999;
+    }
 .jive-testPanel-close a:hover {
-	background-color: #e9e8d9;
-	}
+    background-color: #e9e8d9;
+    }
 .jive-testPanel-content h2 {
-	font-size: 14pt;
-	color: #396b9c;
-	margin: 0 0 10px 0;
-	padding: 0;
-	}
+    font-size: 14pt;
+    color: #396b9c;
+    margin: 0 0 10px 0;
+    padding: 0;
+    }
 .jive-testPanel-content h2 span {
-	font-size: 10pt;
-	color: #000;
-	}
+    font-size: 10pt;
+    color: #000;
+    }
 .jive-testPanel-content h4 {
-	font-size: 12pt;
-	margin: 0 0 10px 0;
-	padding: 0;
-	}
+    font-size: 12pt;
+    margin: 0 0 10px 0;
+    padding: 0;
+    }
 .jive-testPanel-content h4.jive-testSuccess {
-	color: #1e7100;
-	}
+    color: #1e7100;
+    }
 .jive-testPanel-content h4.jive-testError {
-	color: #890000;
-	}
+    color: #890000;
+    }
 </style>
 
 <!-- BEGIN connection settings test panel -->
 <div class="jive-testPanel">
-	<div class="jive-testPanel-content">
+    <div class="jive-testPanel-content">
 
-		<div align="right" class="jive-testPanel-close">
-			<a href="#" class="lbAction" rel="deactivate"><fmt:message key="archive.group_conversation.close" /></a>
-		</div>
+        <div align="right" class="jive-testPanel-close">
+            <a href="#" class="lbAction" rel="deactivate"><fmt:message key="archive.group_conversation.close" /></a>
+        </div>
 
 
-		<h2><fmt:message key="archive.group_conversation.participants.title"/></h2>
+        <h2><fmt:message key="archive.group_conversation.participants.title"/></h2>
 
-		<p><fmt:message key="archive.group_conversation.participants.description">
+        <p><fmt:message key="archive.group_conversation.participants.description">
                 <fmt:param value="<%=roomName%>" />
             </fmt:message>
         </p>
@@ -204,7 +204,7 @@
         </tbody>
         </table>
         </div>
-	</div>
+    </div>
 </div>
 
 </body>

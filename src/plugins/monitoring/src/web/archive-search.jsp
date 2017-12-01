@@ -367,7 +367,7 @@
 </style>
 
 <style type="text/css" title="setupStyle" media="screen">
-	@import "../../style/lightbox.css";
+    @import "../../style/lightbox.css";
 </style>
 
 <script language="JavaScript" type="text/javascript" src="../../js/lightbox.js"></script>
@@ -379,10 +379,10 @@
         selectedConversation = conv;
         
         new Ajax.Request('/plugins/monitoring/api/conversations/' +conv, {
-        	method: 'get',
-        	onSuccess: function(transport) {
-        		showConv(transport.responseText.evalJSON());
-        	}
+            method: 'get',
+            onSuccess: function(transport) {
+                showConv(transport.responseText.evalJSON());
+            }
         });
     }
 
@@ -494,7 +494,7 @@
     Behaviour.register(myrules);
 </script>
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 <body>

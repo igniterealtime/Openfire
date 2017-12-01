@@ -63,11 +63,11 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
     public OutgoingCallHandler(CallEventListener callEventListener, CallParticipant cp) {
 
-	addCallEventListener(this);
+    addCallEventListener(this);
         csl = callEventListener;
         this.cp = cp;
 
-	setName("Outgoing CallHandler for " + cp);
+    setName("Outgoing CallHandler for " + cp);
     }
 
     public CallEventListener getRequestHandler() {
@@ -98,21 +98,21 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
                 memberSender = member.getMemberSender();
                 memberReceiver = member.getMemberReceiver();
             } catch (IOException e) {
-		CallEvent callEvent =
-		    new CallEvent(CallEvent.CANT_CREATE_MEMBER);
+        CallEvent callEvent =
+            new CallEvent(CallEvent.CANT_CREATE_MEMBER);
 
-		callEvent.setInfo(e.getMessage());
+        callEvent.setInfo(e.getMessage());
 
                 sendCallEventNotification(callEvent);
-        	removeCallEventListener(this);
+            removeCallEventListener(this);
                 return;
             }
         }
 
-	addCall(this);		// add to list of active calls
+    addCall(this);		// add to list of active calls
 
         lastGateway = false;
-	onlyOneGateway = false;
+    onlyOneGateway = false;
 
         /*
          * Start the call (INVITE) and wait for it to end (BYE).
@@ -127,85 +127,85 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
             Logger.println("Call " + this + ":  Using gateway specified for the call:  " + gateway);
 
             lastGateway = true;
-	    onlyOneGateway = true;
+        onlyOneGateway = true;
             placeCall();
         } else if (voIPGateways.size() > 0) {
 
-			if (voIPGateways.size() == 1) {
-				onlyOneGateway = true;
-			}
+            if (voIPGateways.size() == 1) {
+                onlyOneGateway = true;
+            }
 
             lastGateway = true;
             placeCall();
 
         } else if (cp.getPhoneNumber() != null && cp.getPhoneNumber().indexOf("sip:") == 0) {
 
-			 placeCall(); // no gateway involved, direct SIP call
+             placeCall(); // no gateway involved, direct SIP call
 
-		} else if (cp.getProtocol() != null && ("Speaker".equals(cp.getProtocol()) || "WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
+        } else if (cp.getProtocol() != null && ("Speaker".equals(cp.getProtocol()) || "WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
 
-			 placeCall(); // WebRtc call
+             placeCall(); // WebRtc call
 
-		} else {
+        } else {
 
-			Logger.error("Couldn't place call " + cp);
-			sendCallEventNotification( new CallEvent(CallEvent.CANT_START_CONFERENCE));
-		}
+            Logger.error("Couldn't place call " + cp);
+            sendCallEventNotification( new CallEvent(CallEvent.CANT_START_CONFERENCE));
+        }
 
         conferenceManager.leave(member); // Remove member from conference.
 
         removeCall(this);		 // remove call from active call list
-	removeCallEventListener(this);
+    removeCallEventListener(this);
         done = true;
     }
 
     private void placeCall() {
-	String protocol = Bridge.getDefaultProtocol();
+    String protocol = Bridge.getDefaultProtocol();
 
-	if (cp.getProtocol() != null) {
-	    protocol = cp.getProtocol();
-	}
+    if (cp.getProtocol() != null) {
+        protocol = cp.getProtocol();
+    }
 
-	if (protocol.equalsIgnoreCase("SIP")) {
+    if (protocol.equalsIgnoreCase("SIP")) {
             csa = new SipTPCCallAgent(this);
-	} else if (protocol.equalsIgnoreCase("NS")) {
-	    csa = new NSOutgoingCallAgent(this);
-	} else if (protocol.equalsIgnoreCase("WebRtc")) {
-	    csa = new WebRtcCallAgent(this);
-	} else if (protocol.equalsIgnoreCase("Speaker")) {
-	    csa = new SpeakerCallAgent(this);
-	} else if (protocol.equalsIgnoreCase("Rtmfp")) {
-	    csa = new RtmfpCallAgent(this);
-	} else {
-	    //csa = new H323TPCCallAgent(this);
-	    reasonCallEnded =
-		CallEvent.getEventString(CallEvent.H323_NOT_IMPLEMENTED);
+    } else if (protocol.equalsIgnoreCase("NS")) {
+        csa = new NSOutgoingCallAgent(this);
+    } else if (protocol.equalsIgnoreCase("WebRtc")) {
+        csa = new WebRtcCallAgent(this);
+    } else if (protocol.equalsIgnoreCase("Speaker")) {
+        csa = new SpeakerCallAgent(this);
+    } else if (protocol.equalsIgnoreCase("Rtmfp")) {
+        csa = new RtmfpCallAgent(this);
+    } else {
+        //csa = new H323TPCCallAgent(this);
+        reasonCallEnded =
+        CallEvent.getEventString(CallEvent.H323_NOT_IMPLEMENTED);
 
-	    sendCallEventNotification(
-		new CallEvent(CallEvent.H323_NOT_IMPLEMENTED));
+        sendCallEventNotification(
+        new CallEvent(CallEvent.H323_NOT_IMPLEMENTED));
 
-	    Logger.println("Call " + cp + ":  " + reasonCallEnded);
-	    return;
-	}
+        Logger.println("Call " + cp + ":  " + reasonCallEnded);
+        return;
+    }
 
         try {
             csa.initiateCall();
 
-	    synchronized (callInitiatedLock) {
-	        callInitiatedLock.notifyAll();
-	    }
+        synchronized (callInitiatedLock) {
+            callInitiatedLock.notifyAll();
+        }
 
             synchronized(stateChangeLock) {
                 if (reasonCallEnded == null) {
 
-		    //if (protocol.equalsIgnoreCase("SIP") == false) {
-		    //    /*
-		    //     * Leave Conference and rejoin with the right local media parameters
-		    //     * XXX Need to somehow get the socket from the h323 stack!
-		    //     */
-		    //    member.getMemberReceiver().setReceiveSocket();
-		    //    conferenceManager.transferMember(conferenceManager, member);
-		    //}
+            //if (protocol.equalsIgnoreCase("SIP") == false) {
+            //    /*
+            //     * Leave Conference and rejoin with the right local media parameters
+            //     * XXX Need to somehow get the socket from the h323 stack!
+            //     */
+            //    member.getMemberReceiver().setReceiveSocket();
+            //    conferenceManager.transferMember(conferenceManager, member);
+            //}
 
                     try {
                         stateChangeLock.wait();	// wait for call to end
@@ -214,13 +214,13 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
                 }
             }
         } catch (IOException e) {
-	    synchronized (callInitiatedLock) {
-	        callInitiatedLock.notifyAll();
-	    }
+        synchronized (callInitiatedLock) {
+            callInitiatedLock.notifyAll();
+        }
 
-	    if (reasonCallEnded == null) {
-		cancelRequest(e.getMessage());
-	    }
+        if (reasonCallEnded == null) {
+        cancelRequest(e.getMessage());
+        }
 
             Logger.println("Call " + this + " Exception " + e.getMessage());
         }
@@ -232,12 +232,12 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
      * or speaking not speaking notification.
      */
     public void callEventNotification(CallEvent callEvent) {
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println("Notification:  " + callEvent);
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println("Notification:  " + callEvent);
+    }
 
-	if (callEvent.equals(CallEvent.STATE_CHANGED)) {
-	    if (callEvent.getCallState().equals(CallState.ANSWERED)) {
+    if (callEvent.equals(CallEvent.STATE_CHANGED)) {
+        if (callEvent.getCallState().equals(CallState.ANSWERED)) {
 
                 /*
                  * For two party calls
@@ -268,9 +268,9 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
                         return;
                     }
 
-		    callEvent = new CallEvent(CallEvent.MIGRATION_FAILED);
+            callEvent = new CallEvent(CallEvent.MIGRATION_FAILED);
 
-		    callEvent.setInfo("Migration failed: " + getReasonCallEnded());
+            callEvent.setInfo("Migration failed: " + getReasonCallEnded());
                     sendCallEventNotification(callEvent);
                 }
             } else if (callEvent.getCallState().equals(CallState.ENDED)) {
@@ -319,12 +319,12 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
                 cancelRequest(reasonCallEnded);
             }
-	}
+    }
 
         if (suppressEvent(cp, callEvent) == false) {
             Application.outgoingCallNotification(callEvent);
 
-	    if (csl != null) csl.callEventNotification(callEvent);
+        if (csl != null) csl.callEventNotification(callEvent);
 
 
         }
@@ -361,12 +361,12 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
          */
         if (suppressStatus == true) {
             if (callEvent.getInfo() != null &&
-		    callEvent.getInfo().indexOf("No Answer") >= 0 ||
-		    callEvent.equals(CallEvent.BUSY_HERE) ||
-		    callEvent.equals(CallEvent.CALL_ANSWER_TIMEOUT) ||
-		    callEvent.equals(CallEvent.MIGRATED) ||
-		    callEvent.equals(CallEvent.MIGRATION_FAILED) ||
-		    callEvent.equals(CallEvent.JOIN_TIMEOUT)) {
+            callEvent.getInfo().indexOf("No Answer") >= 0 ||
+            callEvent.equals(CallEvent.BUSY_HERE) ||
+            callEvent.equals(CallEvent.CALL_ANSWER_TIMEOUT) ||
+            callEvent.equals(CallEvent.MIGRATED) ||
+            callEvent.equals(CallEvent.MIGRATION_FAILED) ||
+            callEvent.equals(CallEvent.JOIN_TIMEOUT)) {
 
                 return false;
             }
@@ -397,8 +397,8 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
         /*
          * Suppress CALL_PARTICIPANT_INVITED message from alternate gateway
          */
-	if (onlyOneGateway == false && callEvent.equals(CallEvent.STATE_CHANGED) &&
-	        callEvent.getCallState().equals(CallState.INVITED)) {
+    if (onlyOneGateway == false && callEvent.equals(CallEvent.STATE_CHANGED) &&
+            callEvent.getCallState().equals(CallState.INVITED)) {
 
             return true;
         }
@@ -442,15 +442,15 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
     }
 
     public String getSdp() {
-	synchronized (callInitiatedLock) {
+    synchronized (callInitiatedLock) {
             while (csa == null && !done && reasonCallEnded == null) {
-		try {
-		    callInitiatedLock.wait();
-		} catch (InterruptedException e) {
-		}
-	    }
-	    return csa.getSdp();
-	}
+        try {
+            callInitiatedLock.wait();
+        } catch (InterruptedException e) {
+        }
+        }
+        return csa.getSdp();
+    }
     }
 
     /*
@@ -476,15 +476,15 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
      */
     public boolean waitForCallToBeAnswered() {
 
-		String protocol = Bridge.getDefaultProtocol();
+        String protocol = Bridge.getDefaultProtocol();
 
-		if (cp.getProtocol() != null) {
-			protocol = cp.getProtocol();
-		}
+        if (cp.getProtocol() != null) {
+            protocol = cp.getProtocol();
+        }
 
-		if (protocol.equalsIgnoreCase("WebRtc") || protocol.equalsIgnoreCase("Rtmfp")  || protocol.equalsIgnoreCase("Speaker")) {
-			return true;
-		}
+        if (protocol.equalsIgnoreCase("WebRtc") || protocol.equalsIgnoreCase("Rtmfp")  || protocol.equalsIgnoreCase("Speaker")) {
+            return true;
+        }
 
         synchronized(waitCallAnswerLock) {
             if (done || reasonCallEnded != null) {
@@ -506,9 +506,9 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
     public boolean waitForCallToBeEstablished() {
 
-		if (cp.getProtocol().equalsIgnoreCase("WebRtc") || cp.getProtocol().equalsIgnoreCase("Rtmfp") || cp.getProtocol().equalsIgnoreCase("Speaker")) {
-			return true;
-		}
+        if (cp.getProtocol().equalsIgnoreCase("WebRtc") || cp.getProtocol().equalsIgnoreCase("Rtmfp") || cp.getProtocol().equalsIgnoreCase("Speaker")) {
+            return true;
+        }
 
         synchronized(waitCallEstablishedLock) {
             if (done || reasonCallEnded != null) {

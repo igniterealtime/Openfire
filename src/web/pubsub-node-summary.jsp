@@ -233,14 +233,14 @@
             </a>
         </td>
         <c:if test="${not PEPMode}" >
-	        <td width="1%" align="center">
-	            <c:url value="pubsub-node-edit.jsp" var="url">
-	                <c:param name="nodeID" value="${node.getNodeID()}" />
-	            </c:url>
-	            <a href="${url}" title="<fmt:message key="global.click_edit" />">
-	                <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
-	            </a>
-	        </td>
+            <td width="1%" align="center">
+                <c:url value="pubsub-node-edit.jsp" var="url">
+                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                </c:url>
+                <a href="${url}" title="<fmt:message key="global.click_edit" />">
+                    <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
+                </a>
+            </td>
         </c:if>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">

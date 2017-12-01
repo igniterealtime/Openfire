@@ -39,7 +39,7 @@ import org.xmpp.packet.JID;
  */
 public class Agent {
 
-	private static final Logger Log = LoggerFactory.getLogger(Agent.class);
+    private static final Logger Log = LoggerFactory.getLogger(Agent.class);
 
     private static final String LOAD_AGENT =
             "SELECT name, agentJID, maxchats FROM fpAgent WHERE agentID=?";
@@ -85,7 +85,7 @@ public class Agent {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return "AI-" + Integer.toHexString(hashCode()) + " JID " + agentJID.toString() + " MAX " +
                 Integer.toString(maxChats);
     }

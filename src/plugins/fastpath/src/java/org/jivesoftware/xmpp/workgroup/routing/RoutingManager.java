@@ -42,8 +42,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class RoutingManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(RoutingManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(RoutingManager.class);
+    
     private static final String ADD_ROUTING_RULE =
             "INSERT INTO fpRouteRule (workgroupID, queueID, rulePosition, query) VALUES (?,?,?,?)";
     private static final String DELETE_ROUTING_RULE =

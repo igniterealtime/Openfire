@@ -36,26 +36,26 @@ import org.xmpp.packet.JID;
  */
 public class DiscoServerItem extends DiscoItem {
 
-	private final DiscoInfoProvider infoProvider;
-	private final DiscoItemsProvider itemsProvider;
-	
-	public DiscoServerItem(JID jid, String name, String node, String action, DiscoInfoProvider infoProvider, DiscoItemsProvider itemsProvider) {
-		super(jid, name, node, action);
-		
-		if (infoProvider == null)
-		{
-			throw new IllegalArgumentException("Argument 'infoProvider' cannot be null.");
-		}
-		
-		if (itemsProvider == null)
-		{
-			throw new IllegalArgumentException("Argument 'itemsProvider' cannot be null.");
-		}
-		
-		this.infoProvider = infoProvider;
-		this.itemsProvider = itemsProvider;
-	}
-	
+    private final DiscoInfoProvider infoProvider;
+    private final DiscoItemsProvider itemsProvider;
+    
+    public DiscoServerItem(JID jid, String name, String node, String action, DiscoInfoProvider infoProvider, DiscoItemsProvider itemsProvider) {
+        super(jid, name, node, action);
+        
+        if (infoProvider == null)
+        {
+            throw new IllegalArgumentException("Argument 'infoProvider' cannot be null.");
+        }
+        
+        if (itemsProvider == null)
+        {
+            throw new IllegalArgumentException("Argument 'itemsProvider' cannot be null.");
+        }
+        
+        this.infoProvider = infoProvider;
+        this.itemsProvider = itemsProvider;
+    }
+    
     /**
      * Returns the DiscoInfoProvider responsible for providing the information related to this item.
      * The DiscoInfoProvider will be automatically included in IQDiscoInfoHandler as the provider
@@ -65,7 +65,7 @@ public class DiscoServerItem extends DiscoItem {
      */
     public DiscoInfoProvider getDiscoInfoProvider()
     {
-    	return infoProvider;
+        return infoProvider;
     }
 
     /**
@@ -77,6 +77,6 @@ public class DiscoServerItem extends DiscoItem {
      */
     public DiscoItemsProvider getDiscoItemsProvider()
     {
-    	return itemsProvider;
+        return itemsProvider;
     }
 }

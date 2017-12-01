@@ -38,81 +38,81 @@ public class Util {
      * XXX length needs to be a multiple of 16.
      */
     public static synchronized void dump(String msg, byte[] data, int offset,
-	    int length) {
+        int length) {
 
-	Logger.println(msg);
+    Logger.println(msg);
 
-	String s = "";
+    String s = "";
 
-	String t = "";
+    String t = "";
 
-	char[] v = new char[1];
+    char[] v = new char[1];
 
-	for (int i = 0; i < length; i++) {
-	    if ((i % 16) == 0) {
-		if (i > 0) {
-		    Logger.println(s + "\t" + t);
-		}
+    for (int i = 0; i < length; i++) {
+        if ((i % 16) == 0) {
+        if (i > 0) {
+            Logger.println(s + "\t" + t);
+        }
 
-		s = Integer.toHexString(i + offset) + ":  ";
+        s = Integer.toHexString(i + offset) + ":  ";
 
-		t = "";
-	    }
+        t = "";
+        }
 
-	    s += Integer.toHexString(data[i] & 0xff) + " ";
+        s += Integer.toHexString(data[i] & 0xff) + " ";
 
-	    v[0] = (char)(data[i + offset] & 0xff);
+        v[0] = (char)(data[i + offset] & 0xff);
 
-	    if (v[0] < 0x20 || v[0] > 0x7e) {
-		t += ".";
-	    } else {
-		t += String.copyValueOf(v);
-	    }
-	}
-	Logger.println(s + "\t" + t);
+        if (v[0] < 0x20 || v[0] > 0x7e) {
+        t += ".";
+        } else {
+        t += String.copyValueOf(v);
+        }
+    }
+    Logger.println(s + "\t" + t);
     }
 
     public static synchronized void dump(String msg, int[] data, int offset,
-	    int length) {
-	
-	Logger.println(msg);
+        int length) {
+    
+    Logger.println(msg);
 
-	String s = "";
+    String s = "";
 
-	String t = "";
+    String t = "";
 
-	char[] v = new char[1];
+    char[] v = new char[1];
 
-	for (int i = 0; i < length; i++) {
-	    if ((i % 8) == 0) {
-		if (i > 0) {
-		    Logger.println(s + "\t" + t);
-		}
+    for (int i = 0; i < length; i++) {
+        if ((i % 8) == 0) {
+        if (i > 0) {
+            Logger.println(s + "\t" + t);
+        }
 
-		s = Integer.toHexString(i + offset) + ":  ";
+        s = Integer.toHexString(i + offset) + ":  ";
 
-		t = "";
-	    }
+        t = "";
+        }
 
-	    s += Integer.toHexString(data[i + offset] & 0xffff) + " ";
+        s += Integer.toHexString(data[i + offset] & 0xffff) + " ";
 
-	    v[0] = (char)((data[i + offset] >> 8) & 0xff);
+        v[0] = (char)((data[i + offset] >> 8) & 0xff);
 
-	    if (v[0] < 0x20 || v[0] > 0x7e) {
-		t += ".";
-	    } else {
-		t += String.copyValueOf(v);
-	    }
+        if (v[0] < 0x20 || v[0] > 0x7e) {
+        t += ".";
+        } else {
+        t += String.copyValueOf(v);
+        }
 
-	    v[0] = (char) (data[i + offset] & 0xff);
+        v[0] = (char) (data[i + offset] & 0xff);
 
-	    if (v[0] < 0x20 || v[0] > 0x7e) {
-		t += ".";
-	    } else {
-		t += String.copyValueOf(v);
-	    }
-	}
-	Logger.println(s + "\t" + t);
+        if (v[0] < 0x20 || v[0] > 0x7e) {
+        t += ".";
+        } else {
+        t += String.copyValueOf(v);
+        }
+    }
+    Logger.println(s + "\t" + t);
     }
 
 }

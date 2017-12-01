@@ -46,7 +46,7 @@ import org.xmpp.packet.PacketError;
  */
 public class MultiplexerPacketHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketHandler.class);
 
     private String connectionManagerDomain;
     private final ConnectionMultiplexerManager multiplexerManager;

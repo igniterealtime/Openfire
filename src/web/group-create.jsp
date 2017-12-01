@@ -206,7 +206,7 @@
    <% } %>
 
     <!-- BEGIN create group -->
-	<div class="jive-contentBoxHeader">
+    <div class="jive-contentBoxHeader">
         <%
             // If editing the group.
             if (groupName != null) {
@@ -219,8 +219,8 @@
         <fmt:message key="group.create.new_group_title" />
         <% } %>
     </div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
     <tr valign="top">
         <td width="1%" nowrap>
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
@@ -269,9 +269,9 @@
 
     <%  } %>
 
-	<tr>
-		<td></td>
-		<td>
+    <tr>
+        <td></td>
+        <td>
             <%
                // If editing the group.
                if (groupName != null) {
@@ -284,12 +284,12 @@
             <input type="submit" name="create" value="<fmt:message key="group.create.create" />">
             <% } %>
             <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
-		</td>
-	</tr>
+        </td>
+    </tr>
     </table>
-	</div>
-	<span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
-	<!-- END create group -->
+    </div>
+    <span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
+    <!-- END create group -->
 
 </form>
 

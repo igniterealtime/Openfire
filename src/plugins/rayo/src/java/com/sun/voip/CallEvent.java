@@ -61,12 +61,12 @@ public class CallEvent {
         "269 DTMF",
         "270 MIGRATED",
         "275 MIGRATION FAILED no answer",
-		"279 CALL TRANSFERRED",
+        "279 CALL TRANSFERRED",
         "486 Busy Here",
         "900 Can't start conference",
         "910 Can't create member",
         "920 H323 is not implemented",
-	""
+    ""
     };
 
     private int event;
@@ -82,66 +82,66 @@ public class CallEvent {
     private int numberOfCalls;
 
     public CallEvent(int event) {
-	this.event = event;
-	info = "";
+    this.event = event;
+    info = "";
     }
 
     public CallEvent(String s) {
-	for (int i = 0; i < LAST_EVENT; i++) {
-	    int ix;
+    for (int i = 0; i < LAST_EVENT; i++) {
+        int ix;
 
-	    if ((ix = s.indexOf(eventString[i])) < 0) {
-		continue;
-	    }
+        if ((ix = s.indexOf(eventString[i])) < 0) {
+        continue;
+        }
 
-	    event = i;
+        event = i;
 
-	    s = s.substring(ix + eventString[i].length() + 1);
+        s = s.substring(ix + eventString[i].length() + 1);
 
-	    info = getInfo(s);
+        info = getInfo(s);
 
-	    if ((callId = getValue(s, "CallId=")) == null) {
-		break;
-	    }
+        if ((callId = getValue(s, "CallId=")) == null) {
+        break;
+        }
 
-	    if ((conferenceId = getValue(s, "ConferenceId=")) == null) {
-		break;
-	    }
+        if ((conferenceId = getValue(s, "ConferenceId=")) == null) {
+        break;
+        }
 
-	    if ((callInfo = getValue(s, "CallInfo=")) == null) {
-		break;
-	    }
+        if ((callInfo = getValue(s, "CallInfo=")) == null) {
+        break;
+        }
 
-	    return;
-	}
+        return;
+    }
 
-	event = INFO;
-	info = s;
+    event = INFO;
+    info = s;
     }
 
     private String getInfo(String s) {
-	int ix = s.indexOf("CallId=");
+    int ix = s.indexOf("CallId=");
 
-	if (ix <= 0) {
-	    return "";
-	}
+    if (ix <= 0) {
+        return "";
+    }
 
-	return s.substring(0, ix);
+    return s.substring(0, ix);
     }
 
     private String getValue(String s, String key) {
         int ix;
 
-	if ((ix = s.indexOf(key)) < 0) {
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
+    if ((ix = s.indexOf(key)) < 0) {
+        if (Logger.logLevel >= Logger.LOG_INFO) {
                 Logger.println("Missing " + key + ":  " + s);
-	    }
-	    return null;
-	}
+        }
+        return null;
+    }
 
-	if (ix > 0) {
+    if (ix > 0) {
            info = s.substring(0, ix);
-	}
+    }
 
         if ((ix = s.indexOf("'")) < 0) {
             Logger.println("Missing quote:  " + s);
@@ -153,147 +153,147 @@ public class CallEvent {
         if ((ix = s.indexOf("'")) < 0) {
             Logger.println("Missing quote:  " + s);
             return null;
-	}
+    }
 
-	return s.substring(0, ix);
+    return s.substring(0, ix);
     }
 
     public int getEvent() {
-	return event;
+    return event;
     }
 
     public void setInfo(String info) {
-	this.info = info;
+    this.info = info;
 
-	if (this.info == null) {
-	    this.info = "";
-	}
+    if (this.info == null) {
+        this.info = "";
+    }
     }
 
     public String getInfo() {
-	return info;
+    return info;
     }
 
     public void setCallId(String callId) {
-	this.callId = callId;
+    this.callId = callId;
     }
 
     public String getCallId() {
-	return callId;
+    return callId;
     }
 
     public void setConferenceId(String conferenceId) {
-	this.conferenceId = conferenceId;
+    this.conferenceId = conferenceId;
     }
 
     public String getConferenceId() {
-	return conferenceId;
+    return conferenceId;
     }
 
     public void setCallInfo(String callInfo) {
-	this.callInfo = callInfo;
+    this.callInfo = callInfo;
     }
 
     public String getCallInfo() {
-	return callInfo;
+    return callInfo;
     }
 
     public void setCallState(CallState callState) {
-    	this.callState = callState;
+        this.callState = callState;
     }
 
     public CallState getCallState() {
-    	return callState;
+        return callState;
     }
 
     public void setStartedSpeaking() {
-	startedSpeaking = true;
+    startedSpeaking = true;
     }
 
     public boolean startedSpeaking() {
-	return startedSpeaking;
+    return startedSpeaking;
     }
 
     public void setStoppedSpeaking() {
-	stoppedSpeaking = true;
+    stoppedSpeaking = true;
     }
 
     public boolean stoppedSpeaking() {
-	return stoppedSpeaking;
+    return stoppedSpeaking;
     }
 
     public void setDtmfKey(String dtmfKey) {
-	this.dtmfKey = dtmfKey;
+    this.dtmfKey = dtmfKey;
     }
 
     public String getDtmfKey() {
-	return dtmfKey;
+    return dtmfKey;
     }
 
     public void setTreatmentId(String treatmentId) {
-	this.treatmentId = treatmentId;
+    this.treatmentId = treatmentId;
     }
 
     public String getTreatmentId() {
-	return treatmentId;
+    return treatmentId;
     }
 
     public void setNumberOfCalls(int numberOfCalls) {
-	this.numberOfCalls = numberOfCalls;
+    this.numberOfCalls = numberOfCalls;
     }
 
     public int getNumberOfCalls() {
-	return numberOfCalls;
+    return numberOfCalls;
     }
 
     public boolean equals(int event) {
-	return this.event == event;
+    return this.event == event;
     }
 
     public static String getEventString(int event) {
-	if (event < 0 || event > LAST_EVENT) {
-	    return "Invalid Event:  " + event;
-	}
+    if (event < 0 || event > LAST_EVENT) {
+        return "Invalid Event:  " + event;
+    }
 
-	return eventString[event];
+    return eventString[event];
     }
 
     public String toString() {
-	if (event < 0 || event > LAST_EVENT) {
-	    return "Invalid Event:  " + event;
-	}
+    if (event < 0 || event > LAST_EVENT) {
+        return "Invalid Event:  " + event;
+    }
 
-	String s = eventString[event];
+    String s = eventString[event];
 
-	if (event == STATE_CHANGED) {
-	    s = callState.toString();
-	}
+    if (event == STATE_CHANGED) {
+        s = callState.toString();
+    }
 
-	if (info != null && info.length() > 0) {
-	    s += " " + info;
-	}
+    if (info != null && info.length() > 0) {
+        s += " " + info;
+    }
 
-	if (event == DTMF_KEY) {
-	    s += " DTMFKey='" + dtmfKey + "'";
-	} else if (event == TREATMENT_DONE) {
-	    s += " Treatment='" + treatmentId + "'";
-	} else if (event == NUMBER_OF_CALLS) {
-	    s += " NumberOfCalls='" + numberOfCalls + "'";
-	}
+    if (event == DTMF_KEY) {
+        s += " DTMFKey='" + dtmfKey + "'";
+    } else if (event == TREATMENT_DONE) {
+        s += " Treatment='" + treatmentId + "'";
+    } else if (event == NUMBER_OF_CALLS) {
+        s += " NumberOfCalls='" + numberOfCalls + "'";
+    }
 
-	if (callId != null && callId.length() > 0) {
-	    s += " CallId='" + callId + "'";
-	}
+    if (callId != null && callId.length() > 0) {
+        s += " CallId='" + callId + "'";
+    }
 
-	if (conferenceId != null && conferenceId.length() > 0) {
+    if (conferenceId != null && conferenceId.length() > 0) {
             s += " ConferenceId='" + conferenceId +"'";
-	}
+    }
 
-	if (callInfo != null && callInfo.length() > 0) {
+    if (callInfo != null && callInfo.length() > 0) {
             s += " CallInfo='" + callInfo + "'";
-	}
+    }
 
-	return BridgeVersion.getVersion() + " " + s;
+    return BridgeVersion.getVersion() + " " + s;
     }
 
 }

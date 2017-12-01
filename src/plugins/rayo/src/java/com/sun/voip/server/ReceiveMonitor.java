@@ -50,155 +50,155 @@ public class ReceiveMonitor extends Thread {
     private ServerSocket serverSocket;
 
     public ReceiveMonitor() throws IOException {
-	Logger.init();
+    Logger.init();
 
-	String s = System.getProperty("com.sun.voip.server.RECEIVE_MONITOR_PORT");
+    String s = System.getProperty("com.sun.voip.server.RECEIVE_MONITOR_PORT");
 
-	int port = RECEIVE_MONITOR_PORT;
+    int port = RECEIVE_MONITOR_PORT;
 
-	if (s != null) {
-	    try {
-		port = Integer.parseInt(s);	
-	    } catch (NumberFormatException e) {
-		Logger.println("Invalid ReceiveMonitor port:  " 
-		    + e.getMessage() + ".  Defaulting to " + port);
-	    }
-	}
+    if (s != null) {
+        try {
+        port = Integer.parseInt(s);	
+        } catch (NumberFormatException e) {
+        Logger.println("Invalid ReceiveMonitor port:  " 
+            + e.getMessage() + ".  Defaulting to " + port);
+        }
+    }
 
-	serverSocket = new ServerSocket(port);
+    serverSocket = new ServerSocket(port);
 
-	start();
+    start();
     }
 
     public void run() {
-	while (true) {
-	    Socket socket;
+    while (true) {
+        Socket socket;
 
-	    try {
-		socket = serverSocket.accept(); // wait for a connection
-	    } catch (IOException e) {
-		Logger.println("accept failed:  " + e.getMessage());
-		break;
-	    }
+        try {
+        socket = serverSocket.accept(); // wait for a connection
+        } catch (IOException e) {
+        Logger.println("accept failed:  " + e.getMessage());
+        break;
+        }
 
-	    InetAddress inetAddress = socket.getInetAddress();
+        InetAddress inetAddress = socket.getInetAddress();
 
-	    String host;
+        String host;
 
-	    try {
-	        host = inetAddress.getHostName();
-	    } catch (Exception e) {
-	        host = inetAddress.toString();
-	    }
+        try {
+            host = inetAddress.getHostName();
+        } catch (Exception e) {
+            host = inetAddress.toString();
+        }
 
-	    Logger.println("New connection accepted from " 
-	        + host + ":" + socket.getPort());
+        Logger.println("New connection accepted from " 
+            + host + ":" + socket.getPort());
 
-	    try {
-	        new Monitor(socket);
-	    } catch (IOException e) {
-		Logger.println("Unable to create Monitor:  " 
-		    + e.getMessage());
-	    }
-	} 
+        try {
+            new Monitor(socket);
+        } catch (IOException e) {
+        Logger.println("Unable to create Monitor:  " 
+            + e.getMessage());
+        }
+    } 
     }
 
     class Monitor extends Thread {
 
-	private Socket socket;
+    private Socket socket;
 
-	private BufferedReader reader;
-	private DataOutputStream output;
+    private BufferedReader reader;
+    private DataOutputStream output;
 
-	public Monitor(Socket socket) throws IOException {
-	    this.socket = socket;
+    public Monitor(Socket socket) throws IOException {
+        this.socket = socket;
 
-	    reader = new BufferedReader(
-		new InputStreamReader(socket.getInputStream()));
+        reader = new BufferedReader(
+        new InputStreamReader(socket.getInputStream()));
 
             output = new DataOutputStream(socket.getOutputStream());
 
-	    start();
-	}
+        start();
+    }
 
-	public void run() {
-	    String callId;
+    public void run() {
+        String callId;
 
-	    try {
-		callId = reader.readLine();
-	    } catch (IOException e) {
-		Logger.error("unable to read line from " + socket
-		    + e.getMessage());
-		close();
-		return;
-	    }
+        try {
+        callId = reader.readLine();
+        } catch (IOException e) {
+        Logger.error("unable to read line from " + socket
+            + e.getMessage());
+        close();
+        return;
+        }
 
-	    if (callId == null) {
-		close();
-		return;
-	    }
+        if (callId == null) {
+        close();
+        return;
+        }
 
-	    CallHandler callHandler = CallHandler.findCall(callId);
+        CallHandler callHandler = CallHandler.findCall(callId);
 
-	    if (callHandler == null) {
-		try {
-		    Logger.println("Invalid callId:  " + callId);
-	            write("Invalid callId:  " + callId);
-		} catch (IOException e) {
-		}
+        if (callHandler == null) {
+        try {
+            Logger.println("Invalid callId:  " + callId);
+                write("Invalid callId:  " + callId);
+        } catch (IOException e) {
+        }
 
-		close();
-		return;
-	    }
+        close();
+        return;
+        }
 
-	    MemberReceiver memberReceiver = 
-		callHandler.getMember().getMemberReceiver();
+        MemberReceiver memberReceiver = 
+        callHandler.getMember().getMemberReceiver();
 
-	    while (true) {
-		try {
+        while (true) {
+        try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
                 }
 
-		String s;
+        String s;
 
-		try {
-		    s = memberReceiver.getPerformanceData();
-		} catch (IOException e) {
-		    try {
-			write("CallEnded");
-		    } catch (IOException ee) {
-		    }
-		    break;
-		}
+        try {
+            s = memberReceiver.getPerformanceData();
+        } catch (IOException e) {
+            try {
+            write("CallEnded");
+            } catch (IOException ee) {
+            }
+            break;
+        }
 
-		try {
-		    write(s);
-		} catch (IOException e) {
-		    break;
-		}
-	    }
-	}
+        try {
+            write(s);
+        } catch (IOException e) {
+            break;
+        }
+        }
+    }
 
-	private void close() {
-	    try {
-		socket.close();
-	    } catch (IOException e) {
-	    }
-	}
+    private void close() {
+        try {
+        socket.close();
+        } catch (IOException e) {
+        }
+    }
 
-	private void write(String s) throws IOException {
-	    s += "\n";
+    private void write(String s) throws IOException {
+        s += "\n";
 
-	    try {
-	        output.write(s.getBytes());
-	    } catch (IOException e) {
-		Logger.error("unable to write to " + socket
-		    + e.getMessage());
-		close();
-		throw e;
-	    }
-	}
+        try {
+            output.write(s.getBytes());
+        } catch (IOException e) {
+        Logger.error("unable to write to " + socket
+            + e.getMessage());
+        close();
+        throw e;
+        }
+    }
     }
 
 }

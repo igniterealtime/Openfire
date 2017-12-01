@@ -61,8 +61,8 @@ import org.xmpp.packet.PacketError;
  */
 public class WorkgroupIQHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupIQHandler.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupIQHandler.class);
+    
     private Workgroup workgroup;
     private WorkgroupSettings workgroupSettings = null;
 

@@ -58,27 +58,27 @@ public class ClientStanzaHandler extends StanzaHandler {
      * @return always false.
      */
     @Override
-	boolean processUnknowPacket(Element doc) {
+    boolean processUnknowPacket(Element doc) {
         return false;
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:client";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         return true;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if ("jabber:client".equals(namespace)) {
             // The connected client is a regular client so create a ClientSession
@@ -89,28 +89,28 @@ public class ClientStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processIQ(IQ packet) throws UnauthorizedException {
+    protected void processIQ(IQ packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processIQ(packet);
     }
 
     @Override
-	protected void processPresence(Presence packet) throws UnauthorizedException {
+    protected void processPresence(Presence packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processPresence(packet);
     }
 
     @Override
-	protected void processMessage(Message packet) throws UnauthorizedException {
+    protected void processMessage(Message packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processMessage(packet);
     }
 
     @Override
-	void startTLS() throws Exception {
+    void startTLS() throws Exception {
         connection.startTLS(false);
     }
 }

@@ -49,7 +49,7 @@ public class NotAcceptableException extends Exception {
     }
 
     @Override
-	public void printStackTrace() {
+    public void printStackTrace() {
         super.printStackTrace();
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace();
@@ -57,7 +57,7 @@ public class NotAcceptableException extends Exception {
     }
 
     @Override
-	public void printStackTrace(PrintStream ps) {
+    public void printStackTrace(PrintStream ps) {
         super.printStackTrace(ps);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(ps);
@@ -65,7 +65,7 @@ public class NotAcceptableException extends Exception {
     }
 
     @Override
-	public void printStackTrace(PrintWriter pw) {
+    public void printStackTrace(PrintWriter pw) {
         super.printStackTrace(pw);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(pw);

@@ -37,8 +37,8 @@ import org.xmpp.packet.IQ;
  */
 public class LogListenerImpl implements LogListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(LogListenerImpl.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(LogListenerImpl.class);
+    
     ComponentManager componentManager = null;
 
     public LogListenerImpl(ComponentManager componentmanager) {

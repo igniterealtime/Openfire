@@ -118,8 +118,8 @@
 
 <form action="pubsub-node-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-	<input type="hidden" name="nodeID" value="${node.nodeID}">
-	<input type="hidden" name="owner" value="${owner}">
+    <input type="hidden" name="nodeID" value="${node.nodeID}">
+    <input type="hidden" name="owner" value="${owner}">
 
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>

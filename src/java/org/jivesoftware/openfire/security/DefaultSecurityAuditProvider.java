@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultSecurityAuditProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultSecurityAuditProvider.class);
 
     private static final String LOG_ENTRY =
             "INSERT INTO ofSecurityAuditLog(msgID,username,entryStamp,summary,node,details) VALUES(?,?,?,?,?,?)";

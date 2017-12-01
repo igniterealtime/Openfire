@@ -40,36 +40,36 @@ public class CallState {
     private int state;
 
     private String[] stateString = {
-	"000 UNINITIALIZED",
-	"100 INVITED",
-	"110 ANSWERED",
-	"200 ESTABLISHED",
-	"290 ENDING",
-	"299 ENDED"
+    "000 UNINITIALIZED",
+    "100 INVITED",
+    "110 ANSWERED",
+    "200 ESTABLISHED",
+    "290 ENDING",
+    "299 ENDED"
     };
 
     public CallState() {
-	state = UNINITIALIZED;
+    state = UNINITIALIZED;
     }
 
     public CallState(int state) {
-	this.state = state;
+    this.state = state;
     }
 
     public int getState() {
-    	return state;
+        return state;
     }
 
     public boolean equals(int state) {
-	return this.state == state;
+    return this.state == state;
     }
 
     public String toString() {
-	if (state < 0 || state > LAST_STATE) {
+    if (state < 0 || state > LAST_STATE) {
             return ("Unknown state " + state);
-	}
+    }
 
-	return stateString[state];
+    return stateString[state];
     }
 
 }

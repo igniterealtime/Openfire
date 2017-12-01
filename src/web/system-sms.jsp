@@ -1,7 +1,8 @@
 <%@ page import="java.util.*,
-				 org.jivesoftware.util.*"
+                 org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -53,6 +54,11 @@
     if ( host == null || host.isEmpty() )
     {
         errors.put( "host", "cannot be missing or empty." );
+    }
+    try {
+        JID.domainprep(host);
+    } catch (Exception e) {
+        errors.put("host", "Invalid hostname");
     }
     if ( port < 0 || port > 65535 )
     {

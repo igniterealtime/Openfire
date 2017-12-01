@@ -41,23 +41,23 @@ public class RtpReceiverPacket extends RtpPacket {
     private int sequenceOffset = 0;
 
     public RtpReceiverPacket(String id, int encoding, int sampleRate, 
-	    int channels, int bufferSize) {
+        int channels, int bufferSize) {
 
-	super(encoding, sampleRate, channels, bufferSize);
+    super(encoding, sampleRate, channels, bufferSize);
 
-	this.id = id;		// for Logging
+    this.id = id;		// for Logging
     }
 
     public RtpReceiverPacket(String id, int encoding, int sampleRate, 
-	    int channels) {
+        int channels) {
 
-	super(encoding, sampleRate, channels);
+    super(encoding, sampleRate, channels);
 
-	this.id = id;		// for Logging
+    this.id = id;		// for Logging
     }
 
     public void setId(String id) {
-	this.id = id;
+    this.id = id;
     }
 
     /**
@@ -68,149 +68,149 @@ public class RtpReceiverPacket extends RtpPacket {
      * than expected, +1 means packet seq is one higher than expected.
      */
     public void updateRtpHeader(int length) {
-	long packetRtpTimestamp = getRtpTimestamp();
-	short packetRtpSequenceNumber = getRtpSequenceNumber();
+    long packetRtpTimestamp = getRtpTimestamp();
+    short packetRtpSequenceNumber = getRtpSequenceNumber();
 
-	boolean outOfSequence = false;
+    boolean outOfSequence = false;
 
-	sequenceOffset = 0;
+    sequenceOffset = 0;
 
-	if (isMarkSet()) {
-	    /*
-	     * The MARK_BIT is supposed to be set in the first packet
-	     * and also the first packet with PCMU_PAYLOAD after COMFORT_PAYLOAD
-	     * has been received.
-	     * 
-	     * When the MARK_BIT is set, we accept the sequence number
-	     * and timestamp in the packet.
-	     *
-	     * Calculate what we expect the next packet to have.
-	     */
-	    setMark();		// make sure mark is set;
-	    rtpSequenceNumber = (short) (packetRtpSequenceNumber + 1);
+    if (isMarkSet()) {
+        /*
+         * The MARK_BIT is supposed to be set in the first packet
+         * and also the first packet with PCMU_PAYLOAD after COMFORT_PAYLOAD
+         * has been received.
+         * 
+         * When the MARK_BIT is set, we accept the sequence number
+         * and timestamp in the packet.
+         *
+         * Calculate what we expect the next packet to have.
+         */
+        setMark();		// make sure mark is set;
+        rtpSequenceNumber = (short) (packetRtpSequenceNumber + 1);
 
-	    rtpTimestamp = packetRtpTimestamp + length;
-	} else {
-	    /*
-	     * Normal packet without the MARK_BIT set.
-	     * Verify the sequenceNumber and timestamp
-	     *
-	     * Set what we expect next packet to have
-	     */
+        rtpTimestamp = packetRtpTimestamp + length;
+    } else {
+        /*
+         * Normal packet without the MARK_BIT set.
+         * Verify the sequenceNumber and timestamp
+         *
+         * Set what we expect next packet to have
+         */
             if (packetRtpSequenceNumber == rtpSequenceNumber) {
-	        rtpSequenceNumber = ++rtpSequenceNumber;
-	    } else {
+            rtpSequenceNumber = ++rtpSequenceNumber;
+        } else {
                 outOfSequencePackets++;
-		outOfSequence = true;
+        outOfSequence = true;
 
-		sequenceOffset = packetRtpSequenceNumber - rtpSequenceNumber;
+        sequenceOffset = packetRtpSequenceNumber - rtpSequenceNumber;
 
                 if (Logger.logLevel >= Logger.LOG_INFO) {
                     Logger.writeFile(id + ":  PACKET OUT OF SEQUENCE!  "
-			+ "seq expected 0x"
+            + "seq expected 0x"
                         + Integer.toHexString(rtpSequenceNumber)
                         + ", got 0x"
                         + Integer.toHexString(packetRtpSequenceNumber)
                         + ", total out of seq " + outOfSequencePackets
-			+ ", payload " + getRtpPayload() 
-			+ ", length " + getLength());
-		}
+            + ", payload " + getRtpPayload() 
+            + ", length " + getLength());
+        }
 
-		/*
-		 * Set the sequence number to what we expect next
-		 * but never lower the sequence number.
-		 * We have to be careful here because after
-		 * 0x7fff the next sequence number is negative.
-		 */
-		if ((packetRtpSequenceNumber > 0 && rtpSequenceNumber > 0) ||
-		    (packetRtpSequenceNumber < 0 && rtpSequenceNumber < 0)) {
+        /*
+         * Set the sequence number to what we expect next
+         * but never lower the sequence number.
+         * We have to be careful here because after
+         * 0x7fff the next sequence number is negative.
+         */
+        if ((packetRtpSequenceNumber > 0 && rtpSequenceNumber > 0) ||
+            (packetRtpSequenceNumber < 0 && rtpSequenceNumber < 0)) {
 
-		    if (packetRtpSequenceNumber > rtpSequenceNumber) {
-		        rtpSequenceNumber = (short)
-		            (packetRtpSequenceNumber + 1); // reset seq number
-		    } 
-		} else {
-		    rtpSequenceNumber = (short)
-		        (packetRtpSequenceNumber + 1); // reset seq number
-		}
+            if (packetRtpSequenceNumber > rtpSequenceNumber) {
+                rtpSequenceNumber = (short)
+                    (packetRtpSequenceNumber + 1); // reset seq number
+            } 
+        } else {
+            rtpSequenceNumber = (short)
+                (packetRtpSequenceNumber + 1); // reset seq number
+        }
 
-		/*
-		 * XXX We may want to insert packets which are missing.
-		 * One approach (Norco does this) is to duplicate 
-		 * the last packet received.  Maybe inserting a packet 
-		 * of silence would be ok too.
-		 * This is handled by the ConferenceMember.
-		 */
+        /*
+         * XXX We may want to insert packets which are missing.
+         * One approach (Norco does this) is to duplicate 
+         * the last packet received.  Maybe inserting a packet 
+         * of silence would be ok too.
+         * This is handled by the ConferenceMember.
+         */
             }
 
             if (rtpTimestamp == packetRtpTimestamp) {
-	        rtpTimestamp += length; 
-	    } else {
-		if (outOfSequence == false) {
-		    /*
-		     * Don't report wrong timestamp if packet is out of sequence.
-		     */
+            rtpTimestamp += length; 
+        } else {
+        if (outOfSequence == false) {
+            /*
+             * Don't report wrong timestamp if packet is out of sequence.
+             */
                     wrongRtpTimestamp++;
 
-		    if ((wrongRtpTimestamp % 1000) == 0) {
+            if ((wrongRtpTimestamp % 1000) == 0) {
                         if (Logger.logLevel >= Logger.LOG_INFO) {
                             Logger.writeFile(id + " Bad packet received:  len " 
-			        + length 
-			        + ", ts off by " 
-			        + (long)(packetRtpTimestamp - rtpTimestamp)
+                    + length 
+                    + ", ts off by " 
+                    + (long)(packetRtpTimestamp - rtpTimestamp)
                                 + ", total wrong ts " + wrongRtpTimestamp 
-			        + ", seq " + packetRtpSequenceNumber);
-			}
-                    }
-		}
-
-		/*
-		 * XXX Should we reset the timestamp to what we just got?
-		 * Seems we have to...
-		 * It's possible some packets were lost and we're
-		 * never going to get the timestamp we'd like.
-		 */
-		if (packetRtpTimestamp > rtpTimestamp) { 
-		    rtpTimestamp = packetRtpTimestamp + length;
-		} 
+                    + ", seq " + packetRtpSequenceNumber);
             }
-	}
+                    }
+        }
 
-	rtpSequenceNumber &= 0xffff;
-	rtpTimestamp &= 0xffffffff;
-	previousRtpTimestamp = packetRtpTimestamp;
+        /*
+         * XXX Should we reset the timestamp to what we just got?
+         * Seems we have to...
+         * It's possible some packets were lost and we're
+         * never going to get the timestamp we'd like.
+         */
+        if (packetRtpTimestamp > rtpTimestamp) { 
+            rtpTimestamp = packetRtpTimestamp + length;
+        } 
+            }
+    }
+
+    rtpSequenceNumber &= 0xffff;
+    rtpTimestamp &= 0xffffffff;
+    previousRtpTimestamp = packetRtpTimestamp;
     }
 
     public long getRtpTimestampDiff() {
-	return rtpTimestamp - previousRtpTimestamp;
+    return rtpTimestamp - previousRtpTimestamp;
     }
 
     public void incrementShortPackets() {
-	shortPackets++;
+    shortPackets++;
     }
 
     public int getShortPackets() {
-	return shortPackets;
+    return shortPackets;
     }
 
     public void incrementOutOfSequencePackets() {
-	outOfSequencePackets++;
+    outOfSequencePackets++;
     }
 
     public int getOutOfSequencePackets() {
-	return outOfSequencePackets;
+    return outOfSequencePackets;
     }
 
     public void incrementWrongRtpTimestamp() {
-	wrongRtpTimestamp++;
+    wrongRtpTimestamp++;
     }
 
     public int getWrongRtpTimestamp() {
-	return wrongRtpTimestamp;
+    return wrongRtpTimestamp;
     }
 
     public int getSequenceOffset() {
-	return sequenceOffset;
+    return sequenceOffset;
     }
 
     /*
@@ -225,7 +225,7 @@ public class RtpReceiverPacket extends RtpPacket {
         short expected = packet.rtpSequenceNumber;
 
         while (true) {
-	    packet.updateRtpHeader(180);
+        packet.updateRtpHeader(180);
 
             if (packet.rtpSequenceNumber != expected) {
                 Logger.println("expected " + expected
@@ -233,8 +233,8 @@ public class RtpReceiverPacket extends RtpPacket {
             }
 
             expected++;
-	    packet.buffer[2] = (byte) ((packet.rtpSequenceNumber >> 8) & 0xff);
-	    packet.buffer[3] = (byte) (packet.rtpSequenceNumber & 0xff);
+        packet.buffer[2] = (byte) ((packet.rtpSequenceNumber >> 8) & 0xff);
+        packet.buffer[3] = (byte) (packet.rtpSequenceNumber & 0xff);
         }
     }
 

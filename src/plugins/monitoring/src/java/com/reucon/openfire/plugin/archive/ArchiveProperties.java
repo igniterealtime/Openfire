@@ -5,7 +5,7 @@ package com.reucon.openfire.plugin.archive;
  */
 public interface ArchiveProperties
 {
-	// TODO: change the below to a separate property to allow archiving but disable/enable XEP-0136
+    // TODO: change the below to a separate property to allow archiving but disable/enable XEP-0136
     String ENABLED = "conversation.metadataArchiving";
     String INDEX_DIR = "archive.indexdir";
     // Unnecessary since Open Archive Archive Manager no longer archives messages

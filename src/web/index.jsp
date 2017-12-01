@@ -47,6 +47,7 @@
 <%@ page import="java.util.Arrays" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -68,7 +69,7 @@
 
 <%! long lastRSSFetch = 0;
     SyndFeed lastBlogFeed = null;
-    String blogFeedRSS = "https://community.igniterealtime.org/blogs/ignite/feeds/posts";
+    String blogFeedRSS = "https://discourse.igniterealtime.org/c/blogs/ignite-realtime-blogs.rss";
 
 %>
 <% // Get parameters //
@@ -130,39 +131,39 @@
     padding : 0;
 }
 #jive-latest-activity .jive-bottom-line {
-	padding-top: 10px;
+    padding-top: 10px;
     border-bottom : 1px #e8a400 solid;
-	}
+    }
 #jive-latest-activity {
     border: 1px #E8A400 solid;
     background-color: #FFFBE2;
-	font-family: Lucida Grande, Arial, Helvetica, sans-serif;
-	font-size: 9pt;
+    font-family: Lucida Grande, Arial, Helvetica, sans-serif;
+    font-size: 9pt;
     padding: 0 10px 10px 10px;
     margin-bottom: 10px;
     min-height: 280px;
     -moz-border-radius: 4px;
     width: 95%;
     margin-right: 20px;
-	}
+    }
 #jive-latest-activity h4 {
-	font-size: 13pt;
-	margin: 15px 0 4px 0;
-	}
+    font-size: 13pt;
+    margin: 15px 0 4px 0;
+    }
 #jive-latest-activity h5 {
-	font-size: 9pt;
-	font-weight: normal;
+    font-size: 9pt;
+    font-weight: normal;
     margin: 15px 0 5px 5px;
-	padding: 0;
-	}
+    padding: 0;
+    }
 #jive-latest-activity .jive-blog-date {
     font-size: 8pt;
     white-space: nowrap;
-	}
+    }
 #jive-latest-activity .jive-feed-icon {
     float: right;
     padding-top: 10px;
-	}
+    }
 .info-header {
     background-color: #eee;
     font-size: 10pt;
@@ -247,7 +248,10 @@
                     <% } catch (Exception e) { %>
                     <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
-                    ${webManager.serverInfo.XMPPDomain}
+                    <c:out value="${webManager.serverInfo.XMPPDomain}"/>
+                    <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getXMPPDomain()); } catch (Exception e) { %>
+                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.domain-stringprep-error" />" title="<fmt:message key="index.domain-stringprep-error" />">&nbsp;
+                    <% } %>
                 </td>
             </tr>
             <tr><td>&nbsp;</td></tr>
@@ -284,7 +288,10 @@
                     <fmt:message key="index.host_name" />
                 </td>
                 <td class="c2">
-                    ${webManager.serverInfo.hostname}
+                    <c:out value="${webManager.serverInfo.hostname}"/>
+                    <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getHostname()); } catch (Exception e) { %>
+                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.hostname-stringprep-error" />" title="<fmt:message key="index.hostname-stringprep-error" />">&nbsp;
+                    <% } %>
                     <%  // Determine if the DNS configuration for this XMPP domain needs to be evaluated.
                         final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                         final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
@@ -410,7 +417,7 @@
                         lastRSSFetch = nowTime;
                     }
                     catch (Throwable throwable) {
-                    	LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
+                        LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
                     }
                 }
 

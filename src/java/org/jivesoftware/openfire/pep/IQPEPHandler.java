@@ -16,10 +16,7 @@
 
 package org.jivesoftware.openfire.pep;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,18 +27,11 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterEventDispatcher;
@@ -93,9 +83,9 @@ import org.xmpp.packet.Presence;
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
         UserIdentitiesProvider, UserItemsProvider, PresenceEventListener,
-        RosterEventListener, UserEventListener {
+        RosterEventListener, UserEventListener, DiscoInfoProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
 
     /**
      * Metadata that relates to the IQ processing capabilities of this specific {@link IQHandler}.
@@ -104,20 +94,20 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     private PEPServiceManager pepServiceManager = null;
 
-	/**
-	 * The managed thread pool that will do most of the processing. The amount
-	 * of worker threads in this pool should be kept low to avoid resource
-	 * contention.
-	 */
+    /**
+     * The managed thread pool that will do most of the processing. The amount
+     * of worker threads in this pool should be kept low to avoid resource
+     * contention.
+     */
     // There's room for future improvement here. If anywhere in the future,
-	// Openfire allows implementations to use dedicated resource pools, we can
-	// significantly increase the number of worker threads in this executor. The
-	// bottleneck for this particular executor is the database pool. During
-	// startup, PEP queries the database a lot, which causes all of the
-	// connections in the generic database pool to be used up by this PEP
-	// implementation. This can cause problems in other parts of Openfire that
-	// depend on database access (ideally, these should get dedicated resource
-	// pools too).
+    // Openfire allows implementations to use dedicated resource pools, we can
+    // significantly increase the number of worker threads in this executor. The
+    // bottleneck for this particular executor is the database pool. During
+    // startup, PEP queries the database a lot, which causes all of the
+    // connections in the generic database pool to be used up by this PEP
+    // implementation. This can cause problems in other parts of Openfire that
+    // depend on database access (ideally, these should get dedicated resource
+    // pools too).
     private ExecutorService executor = null;
 
     /**
@@ -139,33 +129,33 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         pepServiceManager = new PEPServiceManager();
     }
 
-	public PEPServiceManager getServiceManager()
-	{
-		return pepServiceManager;
-	}
+    public PEPServiceManager getServiceManager()
+    {
+        return pepServiceManager;
+    }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.container.BasicModule#destroy()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.container.BasicModule#destroy()
+     */
     @Override
-	public void destroy() {
+    public void destroy() {
         super.destroy();
     }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.container.BasicModule#start()
-	 */
-	@Override
-	public void start() {
-		super.start();
-		
-		// start the service manager
-		pepServiceManager.start();
-		
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.container.BasicModule#start()
+     */
+    @Override
+    public void start() {
+        super.start();
+        
+        // start the service manager
+        pepServiceManager.start();
+        
         // start a new executor service
         startExecutor();
         
@@ -175,15 +165,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         RosterEventDispatcher.addListener(this);
         // Listen to user events in order to destroy a PEP service when a user is deleted.
         UserEventDispatcher.addListener(this);
-	}
-	
+    }
+    
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.container.BasicModule#stop()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.container.BasicModule#stop()
+     */
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         
         // Remove listeners
@@ -199,59 +189,59 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
     
     /**
-	 * Starts a new thread pool, unless an existing one is still running.
-	 */
-	private void startExecutor() {
-		if (executor == null || executor.isShutdown()) {
-			// keep the amount of workers low! See comment that goes with the
-			// field named 'executor'.
-			Log.debug("Starting executor service...");
-			executor = Executors.newScheduledThreadPool(2);
-		}
-	}
+     * Starts a new thread pool, unless an existing one is still running.
+     */
+    private void startExecutor() {
+        if (executor == null || executor.isShutdown()) {
+            // keep the amount of workers low! See comment that goes with the
+            // field named 'executor'.
+            Log.debug("Starting executor service...");
+            executor = Executors.newScheduledThreadPool(2);
+        }
+    }
     
-	/**
-	 * Shuts down the executor by dropping all tasks from the queue. This method
-	 * will allow the executor to finish operations on running tasks for a
-	 * period of two seconds. After that, tasks are forcefully stopped.
-	 * <p>
-	 * The order in which the various shutdown routines of the executor are
-	 * called, is:
-	 * <ol>
-	 * <li>{@link ExecutorService#shutdown()}</li>
-	 * <li>{@link ExecutorService#awaitTermination(long, TimeUnit)} (two
-	 * seconds)</li>
-	 * <li>{@link ExecutorService#shutdownNow()}</li>
-	 * </ol>
-	 */
-	private void stopExecutor() {
-		Log.debug("Stopping executor service...");
-		/*
-		 * This method gets called as part of the Component#shutdown() routine.
-		 * If that method gets called, the component has already been removed
-		 * from the routing tables. We don't need to worry about new packets to
-		 * arrive - there won't be any.
-		 */
-		executor.shutdown();
-		try {
-			if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
-				Log.debug("Forcing a shutdown for the executor service (after a two-second timeout has elapsed...");
-				executor.shutdownNow();
-				// Note that if any IQ request stanzas had been scheduled, they
-				// MUST be responded to with an error here. A list of tasks that
-				// have never been commenced by the executor is returned by the
-				// #shutdownNow() method of the ExecutorService.
-			}
-		} catch (InterruptedException e) {
-			// ignore, as we're shutting down anyway.
-		}
-	}
+    /**
+     * Shuts down the executor by dropping all tasks from the queue. This method
+     * will allow the executor to finish operations on running tasks for a
+     * period of two seconds. After that, tasks are forcefully stopped.
+     * <p>
+     * The order in which the various shutdown routines of the executor are
+     * called, is:
+     * <ol>
+     * <li>{@link ExecutorService#shutdown()}</li>
+     * <li>{@link ExecutorService#awaitTermination(long, TimeUnit)} (two
+     * seconds)</li>
+     * <li>{@link ExecutorService#shutdownNow()}</li>
+     * </ol>
+     */
+    private void stopExecutor() {
+        Log.debug("Stopping executor service...");
+        /*
+         * This method gets called as part of the Component#shutdown() routine.
+         * If that method gets called, the component has already been removed
+         * from the routing tables. We don't need to worry about new packets to
+         * arrive - there won't be any.
+         */
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                Log.debug("Forcing a shutdown for the executor service (after a two-second timeout has elapsed...");
+                executor.shutdownNow();
+                // Note that if any IQ request stanzas had been scheduled, they
+                // MUST be responded to with an error here. A list of tasks that
+                // have never been commenced by the executor is returned by the
+                // #shutdownNow() method of the ExecutorService.
+            }
+        } catch (InterruptedException e) {
+            // ignore, as we're shutting down anyway.
+        }
+    }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.handler.IQHandler#getInfo()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.handler.IQHandler#getInfo()
+     */
     @Override
     public IQHandlerInfo getInfo() {
         return info;
@@ -302,11 +292,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     // *****************************************************************
     
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.jivesoftware.openfire.handler.IQHandler#handleIQ(org.xmpp.packet.IQ)
-	 */
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.jivesoftware.openfire.handler.IQHandler#handleIQ(org.xmpp.packet.IQ)
+     */
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // Do nothing if server is not enabled
@@ -319,7 +309,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
         final JID senderJID = packet.getFrom();
         if (packet.getTo() == null) {
-        	// packet addressed to service itself (not to a node/user)
+            // packet addressed to service itself (not to a node/user)
             final String jidFrom = senderJID.toBareJID();
             packet = packet.createCopy();
             packet.setTo(jidFrom);
@@ -329,35 +319,35 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
                 // If no service exists yet for jidFrom, create one.
                 if (pepService == null) {
-                	try {
-                		pepService = pepServiceManager.create(senderJID);                		
-                	} catch (IllegalArgumentException ex) {
-            			final IQ reply = IQ.createResultIQ(packet);
-            			reply.setChildElement(packet.getChildElement().createCopy());
-            			reply.setError(PacketError.Condition.not_allowed);
-            			return reply;
-                	}
+                    try {
+                        pepService = pepServiceManager.create(senderJID);                		
+                    } catch (IllegalArgumentException ex) {
+                        final IQ reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.not_allowed);
+                        return reply;
+                    }
 
-            		// Probe presences
-            		pepServiceManager.start(pepService);
+                    // Probe presences
+                    pepServiceManager.start(pepService);
 
-            		// Those who already have presence subscriptions to jidFrom
-					// will now automatically be subscribed to this new
-					// PEPService.
-					try {
-						final RosterManager rm = XMPPServer.getInstance()
-								.getRosterManager();
-						final Roster roster = rm.getRoster(senderJID.getNode());
-						for (final RosterItem item : roster.getRosterItems()) {
-							if (item.getSubStatus() == RosterItem.SUB_BOTH
-									|| item.getSubStatus() == RosterItem.SUB_FROM) {
-								createSubscriptionToPEPService(pepService, item
-										.getJid(), senderJID);
-							}
-						}
-					} catch (UserNotFoundException e) {
-						// Do nothing
-					}
+                    // Those who already have presence subscriptions to jidFrom
+                    // will now automatically be subscribed to this new
+                    // PEPService.
+                    try {
+                        final RosterManager rm = XMPPServer.getInstance()
+                                .getRosterManager();
+                        final Roster roster = rm.getRoster(senderJID.getNode());
+                        for (final RosterItem item : roster.getRosterItems()) {
+                            if (item.getSubStatus() == RosterItem.SUB_BOTH
+                                    || item.getSubStatus() == RosterItem.SUB_FROM) {
+                                createSubscriptionToPEPService(pepService, item
+                                        .getJid(), senderJID);
+                            }
+                        }
+                    } catch (UserNotFoundException e) {
+                        // Do nothing
+                    }
                 }
 
                 // If publishing a node, and the node doesn't exist, create it.
@@ -390,7 +380,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 final PEPService pepService = pepServiceManager.getPEPService(jidFrom);            	
                 
                 if (pepService != null) {
-                	pepServiceManager.process(pepService, packet);
+                    pepServiceManager.process(pepService, packet);
                 } else {
                     // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
                     // a user who does not have a PEP service, we wish to utilize the error reporting flow
@@ -402,14 +392,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             }
         }
         else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
-        	// packet was addressed to a node.
-        	
+            // packet was addressed to a node.
+            
             final String jidTo = packet.getTo().toBareJID();
 
             final PEPService pepService = pepServiceManager.getPEPService(jidTo);
 
             if (pepService != null) {
-            	pepServiceManager.process(pepService, packet);
+                pepServiceManager.process(pepService, packet);
             } else {
                 // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
                 // a user who does not have a PEP service, we wish to utilize the error reporting flow
@@ -655,13 +645,83 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // Do nothing
     }
 
+    // DiscoInfoProvider
+
+    /*
+     * With all these, there are basically two axes of binary choice.
+     * Either the PEPService exists already - in which case we can defer to it,
+     * or else it doesn't, in which case we should use the generic engine.
+     *
+     * In either case, we might be being asked for a node, or the root. If we're
+     * asked for a node when the PEPService doesn't exist that's an error. Otherwise
+     * if we're asked for the root we can safely defer to the generic engine.
+     */
+
+    @Override
+    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+
+        if (node != null && pepService != null) {
+            Node pubNode = pepService.getNode(node);
+            if (pubNode == null) return null;
+            // Answer the identity of a given node
+            Element identity = DocumentHelper.createElement("identity");
+            identity.addAttribute("category", "pubsub");
+            identity.addAttribute("type", pubNode.isCollectionNode() ? "collection" : "leaf");
+
+            List<Element> identities = new LinkedList<>();
+            identities.add(identity);
+            return identities.iterator();
+        } else if (node != null) {
+            return null;
+        } else {
+            PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+            return pubsub.getIdentities(null, null, senderJID);
+        }
+    }
+
+    @Override
+    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
+        if (node == null) {
+            PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+            return pubsub.getFeatures(null, null, senderJID);
+        } else {
+            List<String> features = new LinkedList<>();
+            features.add("http://jabber.org/protocol/pubsub");
+            return features.iterator();
+        }
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+        if (node != null) {
+            // Answer the extended info of a given node
+            Node pubNode = pepService.getNode(node);
+            // Get the metadata data form
+            return pubNode.getMetadataForm();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasInfo(String name, String node, JID senderJID) {
+        if (node == null) return true;
+        String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
+        PEPService pepService = pepServiceManager.getPEPService(recipientJID);
+
+        return pepService.getNode(node) != null;
+    }
+
     private class GetNotificationsOnInitialPresence implements Runnable {
-    	
-    	private final JID availableSessionJID;
-    	public GetNotificationsOnInitialPresence(final JID availableSessionJID) {
-    		this.availableSessionJID = availableSessionJID;
-    	}
-    	
+        
+        private final JID availableSessionJID;
+        public GetNotificationsOnInitialPresence(final JID availableSessionJID) {
+            this.availableSessionJID = availableSessionJID;
+        }
+        
         @Override
         public void run() {
             // Send the last published items for the contacts on availableSessionJID's roster.

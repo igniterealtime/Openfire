@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SecurityAuditManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(SecurityAuditManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SecurityAuditManager.class);
 
     // Wrap this guy up so we can mock out the SecurityAuditManager class.
     private static class SecurityAuditManagerContainer {

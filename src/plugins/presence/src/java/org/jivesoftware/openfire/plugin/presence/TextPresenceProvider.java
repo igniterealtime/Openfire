@@ -38,7 +38,7 @@ import java.io.PrintWriter;
 class TextPresenceProvider extends PresenceInfoProvider {
 
     @Override
-	public void sendInfo(HttpServletRequest request, HttpServletResponse response,
+    public void sendInfo(HttpServletRequest request, HttpServletResponse response,
             Presence presence) throws IOException {
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
@@ -66,7 +66,7 @@ class TextPresenceProvider extends PresenceInfoProvider {
     }
 
     @Override
-	public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
+    public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();

@@ -30,97 +30,97 @@ import org.jivesoftware.util.JiveGlobals;
  *
  */
 public class CrowdProperties {
-	private static final String APPLICATION_NAME = "application.name";
-	private static final String APPLICATION_PASSWORD = "application.password";
-	private static final String CROWD_SERVER_URL = "crowd.server.url";
-	private static final String HTTP_PROXY_HOST = "http.proxy.host";
-	private static final String HTTP_PROXY_PORT = "http.proxy.port";
-	private static final String HTTP_PROXY_USERNAME = "http.proxy.username";
-	private static final String HTTP_PROXY_PASSWORD = "http.proxy.password";
-	private static final String HTTP_MAX_CONNECTIONS = "http.max.connections";
-	private static final String HTTP_TIMEOUT = "http.timeout";
-	private static final String HTTP_SOCKET_TIMEOUT = "http.socket.timeout";
-	
-	private Properties props;
-	
-	public CrowdProperties() throws IOException {
-		props = new Properties();
-		
-		File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf" + File.separator + "crowd.properties");
-		if (!file.exists()) {
-			throw new IOException("The file crowd.properties is missing from Openfire conf folder");
-		} else {
-			try {
-				props.load(new FileInputStream(file));
-			} catch (IOException ioe) {
-				throw new IOException("Unable to load crowd.properties file");
-			}
-		}
-		
-		// checking for required info in file
-		if (StringUtils.isBlank(props.getProperty(APPLICATION_NAME))
-				|| StringUtils.isBlank(props.getProperty(APPLICATION_PASSWORD))
-				|| StringUtils.isBlank(props.getProperty(CROWD_SERVER_URL))) {
-			
-			throw new IOException("crowd.properties is missing required information (app name, app passwd, crowd url)");
-		}
-	}
-	
-	public String getApplicationName() {
-		return props.getProperty(APPLICATION_NAME);
-	}
-	
-	public String getApplicationPassword() {
-		return props.getProperty(APPLICATION_PASSWORD);
-	}
-	
-	public String getCrowdServerUrl() {
-		String url = props.getProperty(CROWD_SERVER_URL);
-		if (!url.endsWith("/")) {
-			url += "/";
-		}
-		return url;
-	}
-	
-	public String getHttpProxyHost() {
-		return props.getProperty(HTTP_PROXY_HOST);
-	}
-	
-	public int getHttpProxyPort() {
-		return getIntegerValue(HTTP_PROXY_PORT, 0);
-	}
-	
-	public String getHttpProxyUsername() {
-		return noNull(props.getProperty(HTTP_PROXY_USERNAME));
-	}
-	
-	public String getHttpProxyPassword() {
-		return noNull(props.getProperty(HTTP_PROXY_PASSWORD));
-	}
-	
-	public int getHttpMaxConnections() {
-		return getIntegerValue(HTTP_MAX_CONNECTIONS, 20);
-	}
-	
-	public int getHttpConnectionTimeout() {
-		return getIntegerValue(HTTP_TIMEOUT, 5000);
-	}
+    private static final String APPLICATION_NAME = "application.name";
+    private static final String APPLICATION_PASSWORD = "application.password";
+    private static final String CROWD_SERVER_URL = "crowd.server.url";
+    private static final String HTTP_PROXY_HOST = "http.proxy.host";
+    private static final String HTTP_PROXY_PORT = "http.proxy.port";
+    private static final String HTTP_PROXY_USERNAME = "http.proxy.username";
+    private static final String HTTP_PROXY_PASSWORD = "http.proxy.password";
+    private static final String HTTP_MAX_CONNECTIONS = "http.max.connections";
+    private static final String HTTP_TIMEOUT = "http.timeout";
+    private static final String HTTP_SOCKET_TIMEOUT = "http.socket.timeout";
+    
+    private Properties props;
+    
+    public CrowdProperties() throws IOException {
+        props = new Properties();
+        
+        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf" + File.separator + "crowd.properties");
+        if (!file.exists()) {
+            throw new IOException("The file crowd.properties is missing from Openfire conf folder");
+        } else {
+            try {
+                props.load(new FileInputStream(file));
+            } catch (IOException ioe) {
+                throw new IOException("Unable to load crowd.properties file");
+            }
+        }
+        
+        // checking for required info in file
+        if (StringUtils.isBlank(props.getProperty(APPLICATION_NAME))
+                || StringUtils.isBlank(props.getProperty(APPLICATION_PASSWORD))
+                || StringUtils.isBlank(props.getProperty(CROWD_SERVER_URL))) {
+            
+            throw new IOException("crowd.properties is missing required information (app name, app passwd, crowd url)");
+        }
+    }
+    
+    public String getApplicationName() {
+        return props.getProperty(APPLICATION_NAME);
+    }
+    
+    public String getApplicationPassword() {
+        return props.getProperty(APPLICATION_PASSWORD);
+    }
+    
+    public String getCrowdServerUrl() {
+        String url = props.getProperty(CROWD_SERVER_URL);
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        return url;
+    }
+    
+    public String getHttpProxyHost() {
+        return props.getProperty(HTTP_PROXY_HOST);
+    }
+    
+    public int getHttpProxyPort() {
+        return getIntegerValue(HTTP_PROXY_PORT, 0);
+    }
+    
+    public String getHttpProxyUsername() {
+        return noNull(props.getProperty(HTTP_PROXY_USERNAME));
+    }
+    
+    public String getHttpProxyPassword() {
+        return noNull(props.getProperty(HTTP_PROXY_PASSWORD));
+    }
+    
+    public int getHttpMaxConnections() {
+        return getIntegerValue(HTTP_MAX_CONNECTIONS, 20);
+    }
+    
+    public int getHttpConnectionTimeout() {
+        return getIntegerValue(HTTP_TIMEOUT, 5000);
+    }
 
-	public int getHttpSocketTimeout() {
-		return getIntegerValue(HTTP_SOCKET_TIMEOUT, 20000);
-	}
-	
-	private int getIntegerValue(String propKey, int defaultValue) {
-		int i = 0;
-		try {
-			i = Integer.parseInt(props.getProperty(propKey));
-		} catch (NumberFormatException nfe) {
-			i = defaultValue;
-		}
-		return i;
-	}
-	
-	private String noNull(String str) {
-		return (str != null) ? str : "";
-	}
+    public int getHttpSocketTimeout() {
+        return getIntegerValue(HTTP_SOCKET_TIMEOUT, 20000);
+    }
+    
+    private int getIntegerValue(String propKey, int defaultValue) {
+        int i = 0;
+        try {
+            i = Integer.parseInt(props.getProperty(propKey));
+        } catch (NumberFormatException nfe) {
+            i = defaultValue;
+        }
+        return i;
+    }
+    
+    private String noNull(String str) {
+        return (str != null) ? str : "";
+    }
 }

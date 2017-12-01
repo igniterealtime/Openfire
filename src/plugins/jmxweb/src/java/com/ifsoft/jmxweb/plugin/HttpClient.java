@@ -18,10 +18,10 @@ public class HttpClient {
     String line="";
     public String getMemoryData(){
         try {
-			String port = JiveGlobals.getProperty("httpbind.port.plain", "7070");
-			String host = XMPPServer.getInstance().getServerInfo().getHostname();
-			String username = JiveGlobals.getProperty("jmxweb.admin.username", "admin");
-			String password = JiveGlobals.getProperty("jmxweb.admin.password", "admin");
+            String port = JiveGlobals.getProperty("httpbind.port.plain", "7070");
+            String host = XMPPServer.getInstance().getServerInfo().getHostname();
+            String username = JiveGlobals.getProperty("jmxweb.admin.username", "admin");
+            String password = JiveGlobals.getProperty("jmxweb.admin.password", "admin");
 
             URL url = new URL("http://" + username + ":" + password + "@" + host + ":" + port + "/jolokia/read/java.lang:type=Memory/HeapMemoryUsage");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

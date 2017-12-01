@@ -59,7 +59,7 @@ import org.xmpp.packet.StreamError;
  */
 public class LocalConnectionMultiplexerSession extends LocalSession implements ConnectionMultiplexerSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalConnectionMultiplexerSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalConnectionMultiplexerSession.class);
 
     public static LocalConnectionMultiplexerSession createSession(String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
@@ -188,7 +188,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
             return null;
         }
@@ -289,12 +289,12 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     @Override
-	boolean canProcess(Packet packet) {
+    boolean canProcess(Packet packet) {
         return true;
     }
 
     @Override
-	void deliver(Packet packet) throws UnauthorizedException {
+    void deliver(Packet packet) throws UnauthorizedException {
         if (!conn.isClosed()) {
             conn.deliver(packet);
         }

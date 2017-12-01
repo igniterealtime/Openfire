@@ -52,7 +52,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ reply = IQ.createResultIQ(packet);
         Element lastActivity = reply.setChildElement("query", NAMESPACE);
         String sender = packet.getFrom().getNode();
@@ -112,7 +112,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -122,7 +122,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         presenceManager = server.getPresenceManager();
     }

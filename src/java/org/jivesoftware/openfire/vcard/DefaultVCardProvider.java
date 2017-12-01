@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultVCardProvider implements VCardProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
 
     private static final String LOAD_PROPERTIES =
         "SELECT vcard FROM ofVCard WHERE username=?";

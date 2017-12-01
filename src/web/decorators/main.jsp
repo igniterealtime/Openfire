@@ -177,7 +177,7 @@
 <!-- END main -->
 
 <!-- BEGIN footer -->
-	<div id="jive-footer">
+    <div id="jive-footer">
         <div class="jive-footer-nav">
             <admin:tabs css="" currentcss="currentlink" justlinks="true">
             <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>

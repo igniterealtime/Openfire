@@ -58,7 +58,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PluginCacheConfigurator {
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginCacheConfigurator.class);
+    private static final Logger Log = LoggerFactory.getLogger(PluginCacheConfigurator.class);
 
     private InputStream configDataStream;
 

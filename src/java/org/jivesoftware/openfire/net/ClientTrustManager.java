@@ -69,7 +69,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ClientTrustManager implements X509TrustManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);
 
     /**
      * KeyStore that holds the trusted CA

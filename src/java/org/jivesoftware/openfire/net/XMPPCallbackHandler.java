@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class XMPPCallbackHandler implements CallbackHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(XMPPCallbackHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(XMPPCallbackHandler.class);
 
     public XMPPCallbackHandler() {
     }

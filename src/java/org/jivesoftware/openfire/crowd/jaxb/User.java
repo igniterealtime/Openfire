@@ -21,26 +21,26 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
 public class User {
-	@XmlAttribute
-	public String name;
-	
-	@XmlElement(name="display-name")
-	public String displayName;
-	
-	@XmlElement(name="first-name")
-	public String firstName;
-	
-	@XmlElement(name="last-name")
-	public String lastName;
-	
-	public String email;
-	
-	private org.jivesoftware.openfire.user.User openfireUser;
-	
-	public synchronized org.jivesoftware.openfire.user.User getOpenfireUser() {
-		if (openfireUser == null) {
-			openfireUser = new org.jivesoftware.openfire.user.User(name, displayName, email, new Date(), new Date());
-		}
-		return openfireUser;
-	}
+    @XmlAttribute
+    public String name;
+    
+    @XmlElement(name="display-name")
+    public String displayName;
+    
+    @XmlElement(name="first-name")
+    public String firstName;
+    
+    @XmlElement(name="last-name")
+    public String lastName;
+    
+    public String email;
+    
+    private org.jivesoftware.openfire.user.User openfireUser;
+    
+    public synchronized org.jivesoftware.openfire.user.User getOpenfireUser() {
+        if (openfireUser == null) {
+            openfireUser = new org.jivesoftware.openfire.user.User(name, displayName, email, new Date(), new Date());
+        }
+        return openfireUser;
+    }
 }

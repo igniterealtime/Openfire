@@ -32,10 +32,10 @@
     // Calls a getBuildProgress
     function getBuildProgress() {
         new Ajax.Request('/plugins/monitoring/api/buildprogress', {
-        	method: 'get',
-        	onSuccess: function(transport) {
-        		showBuildProgress(transport.responseText.evalJSON());
-        	}
+            method: 'get',
+            onSuccess: function(transport) {
+                showBuildProgress(transport.responseText.evalJSON());
+            }
         });
     }
 
@@ -156,7 +156,7 @@
 </style>
 
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 

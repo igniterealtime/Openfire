@@ -15,16 +15,16 @@ import java.util.regex.Pattern;
  */
 public class CNCertificateIdentityMapping implements CertificateIdentityMapping {
 
-	private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
-	
-	/**
-	 * Maps certificate CommonName as identity credentials
-	 * 
-	 * @param certificate
-	 * @return A List of names.
-	 */
-	@Override
-	public List<String> mapIdentity(X509Certificate certificate) {
+    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
+    
+    /**
+     * Maps certificate CommonName as identity credentials
+     * 
+     * @param certificate
+     * @return A List of names.
+     */
+    @Override
+    public List<String> mapIdentity(X509Certificate certificate) {
         String name = certificate.getSubjectDN().getName();
         Matcher matcher = cnPattern.matcher(name);
         // Create an array with the detected identities
@@ -32,18 +32,18 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
         while (matcher.find()) {
             names.add(matcher.group(2));
         }
-		
-		return names;
-	}
+        
+        return names;
+    }
 
-	/**
-	 * Returns the short name of mapping
-	 * 
-	 * @return The short name of the mapping
-	 */
-	@Override
-	public String name() {
-		return "Common Name Mapping";
-	}
+    /**
+     * Returns the short name of mapping
+     * 
+     * @return The short name of the mapping
+     */
+    @Override
+    public String name() {
+        return "Common Name Mapping";
+    }
 
 }

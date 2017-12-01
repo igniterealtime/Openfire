@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
  * @author Gaston Dombiak
  */
 public class ClusterManager {
-	
-	private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
 
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<>();
@@ -50,24 +50,24 @@ public class ClusterManager {
     static {
         // Listen for clustering property changes (e.g. enabled/disabled)
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
-			@Override
-			public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
-			@Override
-			public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
-			@Override
-			public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
-			@Override
-			public void xmlPropertySet(String property, Map<String, Object> params) {
-		        if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
-		            if (Boolean.parseBoolean((String) params.get("value"))) {
-		                // Reload/sync all Jive properties
-		            	JiveProperties.getInstance().init();
-		            	ClusterManager.startup();
-		            } else {
-		            	ClusterManager.shutdown();
-		            }
-		        }
-			}
+            @Override
+            public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
+            @Override
+            public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+            @Override
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+            @Override
+            public void xmlPropertySet(String property, Map<String, Object> params) {
+                if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
+                    if (Boolean.parseBoolean((String) params.get("value"))) {
+                        // Reload/sync all Jive properties
+                        JiveProperties.getInstance().init();
+                        ClusterManager.startup();
+                    } else {
+                        ClusterManager.shutdown();
+                    }
+                }
+            }
         });
     }
     
@@ -75,69 +75,69 @@ public class ClusterManager {
      * Instantiate and start the cluster event dispatcher thread
      */
     private static void initEventDispatcher() {
-    	if (dispatcher == null || !dispatcher.isAlive()) {
-	        dispatcher = new Thread("ClusterManager events dispatcher") {
-	            @Override
-				public void run() {
-	            	// exit thread if/when clustering is disabled
-	                while (ClusterManager.isClusteringEnabled()) {
-	                    try {
-	                        Event event = events.take();
-	                        EventType eventType = event.getType();
-	                        // Make sure that CacheFactory is getting this events first (to update cache structure)
-	                        if (event.getNodeID() == null) {
-	                        	// Replace standalone caches with clustered caches and migrate data
-		                        if (eventType == EventType.joined_cluster) {
-		                            CacheFactory.joinedCluster();
-		                        } else if (eventType == EventType.left_cluster) {
-		                            CacheFactory.leftCluster();
-		                        }
-	                        }
-	                        // Now notify rest of the listeners
-	                        for (ClusterEventListener listener : listeners) {
-	                            try {
-	                                switch (eventType) {
-	                                    case joined_cluster: {
-	                                        if (event.getNodeID() == null) {
-	                                            listener.joinedCluster();
-	                                        }
-	                                        else {
-	                                            listener.joinedCluster(event.getNodeID());
-	                                        }
-	                                        break;
-	                                    }
-	                                    case left_cluster: {
-	                                        if (event.getNodeID() == null) {
-	                                            listener.leftCluster();
-	                                        }
-	                                        else {
-	                                            listener.leftCluster(event.getNodeID());
-	                                        }
-	                                        break;
-	                                    }
-	                                    case marked_senior_cluster_member: {
-	                                        listener.markedAsSeniorClusterMember();
-	                                        break;
-	                                    }
-	                                    default:
-	                                        break;
-	                                }
-	                            }
-	                            catch (Exception e) {
-	                                Log.error(e.getMessage(), e);
-	                            }
-	                        }
-	                        // Mark event as processed
-	                        event.setProcessed(true);
-	                    } catch (Exception e) {
-	                        Log.warn(e.getMessage(), e);
-	                    }
-	                }
-	            }
-	        };
-	        dispatcher.setDaemon(true);
-	        dispatcher.start();
-    	}
+        if (dispatcher == null || !dispatcher.isAlive()) {
+            dispatcher = new Thread("ClusterManager events dispatcher") {
+                @Override
+                public void run() {
+                    // exit thread if/when clustering is disabled
+                    while (ClusterManager.isClusteringEnabled()) {
+                        try {
+                            Event event = events.take();
+                            EventType eventType = event.getType();
+                            // Make sure that CacheFactory is getting this events first (to update cache structure)
+                            if (event.getNodeID() == null) {
+                                // Replace standalone caches with clustered caches and migrate data
+                                if (eventType == EventType.joined_cluster) {
+                                    CacheFactory.joinedCluster();
+                                } else if (eventType == EventType.left_cluster) {
+                                    CacheFactory.leftCluster();
+                                }
+                            }
+                            // Now notify rest of the listeners
+                            for (ClusterEventListener listener : listeners) {
+                                try {
+                                    switch (eventType) {
+                                        case joined_cluster: {
+                                            if (event.getNodeID() == null) {
+                                                listener.joinedCluster();
+                                            }
+                                            else {
+                                                listener.joinedCluster(event.getNodeID());
+                                            }
+                                            break;
+                                        }
+                                        case left_cluster: {
+                                            if (event.getNodeID() == null) {
+                                                listener.leftCluster();
+                                            }
+                                            else {
+                                                listener.leftCluster(event.getNodeID());
+                                            }
+                                            break;
+                                        }
+                                        case marked_senior_cluster_member: {
+                                            listener.markedAsSeniorClusterMember();
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                    }
+                                }
+                                catch (Exception e) {
+                                    Log.error(e.getMessage(), e);
+                                }
+                            }
+                            // Mark event as processed
+                            event.setProcessed(true);
+                        } catch (Exception e) {
+                            Log.warn(e.getMessage(), e);
+                        }
+                    }
+                }
+            };
+            dispatcher.setDaemon(true);
+            dispatcher.start();
+        }
     }
 
     /**
@@ -458,7 +458,7 @@ public class ClusterManager {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return super.toString() + " type: " + type;
         }
     }

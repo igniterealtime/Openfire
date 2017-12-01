@@ -27,7 +27,7 @@ public class PlcCompress implements Plc {
     private String id;
 
     public void setId(String id) {
-	this.id = id;
+    this.id = id;
     }
 
     public void reset() {
@@ -37,16 +37,16 @@ public class PlcCompress implements Plc {
     }   
 
     public JitterObject repair(JitterObject jo) {
-	/*
-	 * Nothing to do here.  return null so JitterManager will 
-	 * get next packet
-	 */
+    /*
+     * Nothing to do here.  return null so JitterManager will 
+     * get next packet
+     */
         if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println(id + ":  missing packet compressed out "
                  + (jo.sequence & 0xffff));
         }
 
-	return null;
+    return null;
     }
 
 }

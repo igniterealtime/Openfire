@@ -444,21 +444,21 @@ public class RosterItem implements Cacheable, Externalizable {
                 String groupName = it.next();
                 try {
                     Group group = GroupManager.getInstance().getGroup(groupName);
-                	if (RosterManager.isSharedGroup(group)) {
-                		it.remove();
-                	}
+                    if (RosterManager.isSharedGroup(group)) {
+                        it.remove();
+                    }
                 } catch (GroupNotFoundException e) {
                     // Check now if there is a group whose display name matches the requested group
-                	Collection<Group> groupsWithProp = GroupManager
-    						.getInstance()
-    						.search("sharedRoster.displayName", groupName);
-                	Iterator<Group> itr = groupsWithProp.iterator();
-                	while(itr.hasNext()) {
-                		Group group = itr.next();
-                    	if (RosterManager.isSharedGroup(group)) {
-                    		it.remove();
-                    	}
-                	}
+                    Collection<Group> groupsWithProp = GroupManager
+                            .getInstance()
+                            .search("sharedRoster.displayName", groupName);
+                    Iterator<Group> itr = groupsWithProp.iterator();
+                    while(itr.hasNext()) {
+                        Group group = itr.next();
+                        if (RosterManager.isSharedGroup(group)) {
+                            it.remove();
+                        }
+                    }
                 }
             }
             this.groups = groups;
@@ -600,10 +600,10 @@ public class RosterItem implements Cacheable, Externalizable {
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
+     */
     @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = jid.toBareJID().length();

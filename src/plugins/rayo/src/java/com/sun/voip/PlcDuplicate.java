@@ -27,7 +27,7 @@ public class PlcDuplicate implements Plc {
     private String id;
 
     public void setId(String id) {
-	this.id = id;
+    this.id = id;
     }
 
     public void reset() {
@@ -37,20 +37,20 @@ public class PlcDuplicate implements Plc {
     }   
 
     public JitterObject repair(JitterObject jo) {
-	/*
-	 * Since this packet has isMissing set, 
-	 * the data is from an older packet.
-	 *
-	 * Just clear the isMissing bit and no one will
-	 * even know it's missing.
-	 */
+    /*
+     * Since this packet has isMissing set, 
+     * the data is from an older packet.
+     *
+     * Just clear the isMissing bit and no one will
+     * even know it's missing.
+     */
         if (Logger.logLevel >= Logger.LOG_INFO) {
             Logger.println(id + ":  missing packet, duplicated last "
                 + (jo.sequence & 0xffff));
         }
 
-	jo.isMissing = false;
-	return jo;
+    jo.isMissing = false;
+    return jo;
     }
 
 }

@@ -37,7 +37,7 @@ public class LinkedList<E> {
      * Creates a new linked list.
      */
     public LinkedList() {
-    	head = new LinkedListNode<>();
+        head = new LinkedListNode<>();
     }
 
     /**
@@ -72,7 +72,7 @@ public class LinkedList<E> {
      * @param node the node to add to the beginning of the list.
      */
     public LinkedListNode<E> addFirst(LinkedListNode<E> node) {
-    	return node.insert(head.next, head);
+        return node.insert(head.next, head);
     }
 
     /**
@@ -92,7 +92,7 @@ public class LinkedList<E> {
      * @param node the node to add to the beginning of the list.
      */
     public LinkedListNode<E> addLast(LinkedListNode<E> node) {
-    	return node.insert(head, head.previous);
+        return node.insert(head, head.previous);
     }
 
     /**
@@ -128,7 +128,7 @@ public class LinkedList<E> {
      * @return a String representation of the LinkedList.
      */
     @Override
-	public String toString() {
+    public String toString() {
         LinkedListNode<E> node = head.next;
         StringBuilder buf = new StringBuilder();
         while (node != head) {

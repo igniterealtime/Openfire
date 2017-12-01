@@ -8,7 +8,7 @@
     <version>1.7.0</version>
     <date>10/12/2015</date>
     <minServerVersion>4.0.0</minServerVersion>
-	
+    
     <adminconsole>		
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">

@@ -66,7 +66,7 @@ import org.xmpp.packet.Presence;
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
         DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
+    private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
 
     /**
      * the chat service's hostname
@@ -384,7 +384,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         
         JiveGlobals.migrateProperty("xmpp.pubsub.enabled");
@@ -494,7 +494,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-	public void start() {
+    public void start() {
         // Check that the service is enabled
         if (!isServiceEnabled()) {
             return;
@@ -511,7 +511,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
@@ -571,7 +571,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public void markedAsSeniorClusterMember() {
         // Offer the service since we are the senior cluster member
-		// enableService(true);
+        // enableService(true);
     }
 
     @Override
@@ -581,11 +581,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             return null;
         }
         ArrayList<DiscoServerItem> items = new ArrayList<>();
-		final DiscoServerItem item = new DiscoServerItem(new JID(
-			getServiceDomain()), "Publish-Subscribe service", null, null, this,
-			this);
-		items.add(item);
-		return items.iterator();
+        final DiscoServerItem item = new DiscoServerItem(new JID(
+            getServiceDomain()), "Publish-Subscribe service", null, null, this,
+            this);
+        items.add(item);
+        return items.iterator();
     }
 
     @Override
@@ -733,9 +733,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // Answer all first level nodes
             for (Node pubNode : rootCollectionNode.getNodes()) {
                 if (canDiscoverNode(pubNode)) {
-                	final DiscoItem item = new DiscoItem(
-						new JID(serviceDomain), pubNode.getName(),
-						pubNode.getNodeID(), null);
+                    final DiscoItem item = new DiscoItem(
+                        new JID(serviceDomain), pubNode.getName(),
+                        pubNode.getNodeID(), null);
                     answer.add(item);
                 }
             }
@@ -747,8 +747,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     // Answer all nested nodes as items
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
-                        	final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
-								nestedNode.getNodeID(), null);
+                            final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
+                                nestedNode.getNodeID(), null);
                             answer.add(item);
                         }
                     }

@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultLockOutProvider implements LockOutProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultLockOutProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultLockOutProvider.class);
 
     private static final String FLAG_ID = "lockout";
     private static final String DELETE_FLAG =

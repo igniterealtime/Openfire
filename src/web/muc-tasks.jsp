@@ -180,7 +180,7 @@
     <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
     <td width="99%" class="jive-error-text">
 
-		<% if (errors.get("idletime") != null) { %>
+        <% if (errors.get("idletime") != null) { %>
                 <fmt:message key="muc.tasks.valid_idel_minutes" />
         <% }
            else if (errors.get("logfreq") != null) { %>
@@ -201,38 +201,38 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.tasks.user_setting" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="kickEnabled" value="false" id="rb01"
-					 <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="kickEnabled" value="true" id="rb02"
-					 <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-						<label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
-						 <input type="text" name="idletime" size="5" maxlength="5"
-							 onclick="this.form.kickEnabled[1].checked=true;"
-							 value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
-						 <fmt:message key="global.minutes" />.
-				</td>
-			</tr>
-		</tbody>
-		</table>
+        <fmt:message key="muc.tasks.user_setting" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="kickEnabled" value="false" id="rb01"
+                     <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="kickEnabled" value="true" id="rb02"
+                     <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                        <label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
+                         <input type="text" name="idletime" size="5" maxlength="5"
+                             onclick="this.form.kickEnabled[1].checked=true;"
+                             value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
+                         <fmt:message key="global.minutes" />.
+                </td>
+            </tr>
+        </tbody>
+        </table>
         <br/>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-	</div>
+    </div>
 </form>
 <!-- END 'Idle User Settings' -->
 
@@ -243,32 +243,32 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.tasks.conversation.logging" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0" >
-		<tr valign="middle">
-			<td width="1%" nowrap class="c1">
-				<fmt:message key="muc.tasks.flush" />
-			</td>
-			<td width="99%">
-				<input type="text" name="logfreq" size="15" maxlength="50"
-				 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap class="c1">
-				<fmt:message key="muc.tasks.batch" />
-			</td>
-			<td width="99%">
-				<input type="text" name="logbatchsize" size="15" maxlength="50"
-				 value="<%= mucService.getLogConversationBatchSize() %>">
-			</td>
-		</tr>
-		</table>
+        <fmt:message key="muc.tasks.conversation.logging" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0" >
+        <tr valign="middle">
+            <td width="1%" nowrap class="c1">
+                <fmt:message key="muc.tasks.flush" />
+            </td>
+            <td width="99%">
+                <input type="text" name="logfreq" size="15" maxlength="50"
+                 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap class="c1">
+                <fmt:message key="muc.tasks.batch" />
+            </td>
+            <td width="99%">
+                <input type="text" name="logbatchsize" size="15" maxlength="50"
+                 value="<%= mucService.getLogConversationBatchSize() %>">
+            </td>
+        </tr>
+        </table>
         <br/>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-	</div>
+    </div>
 </form>
 <!-- END 'Conversation Logging' -->
 

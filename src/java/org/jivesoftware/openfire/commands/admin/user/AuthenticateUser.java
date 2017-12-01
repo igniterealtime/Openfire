@@ -41,22 +41,22 @@ import java.util.List;
  */
 public class AuthenticateUser extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#authenticate-user";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Authenticate User";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         JID account;
         try {
@@ -86,7 +86,7 @@ public class AuthenticateUser extends AdHocCommand {
         }
 
         try {
-        	AuthFactory.authenticate(user.getUsername(), password);
+            AuthFactory.authenticate(user.getUsername(), password);
         }
         catch (UnauthorizedException | ConnectionException | InternalUnauthenticatedException e) {
             // Auth failed
@@ -100,7 +100,7 @@ public class AuthenticateUser extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Authenticating a user");
         form.addInstruction("Fill out this form to authenticate a user.");
@@ -127,12 +127,12 @@ public class AuthenticateUser extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 

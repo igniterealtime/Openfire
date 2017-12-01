@@ -31,10 +31,10 @@ import javax.security.sasl.SaslException;
  * @author Richard Midwinter
  */
 public class ScramUtils {
-	
-	public static final int DEFAULT_ITERATION_COUNT = 4096;
+    
+    public static final int DEFAULT_ITERATION_COUNT = 4096;
 
-	private ScramUtils() {}
+    private ScramUtils() {}
 
     public static byte[] createSaltedPassword(byte[] salt, String password, int iters) throws SaslException {
         Mac mac = createSha1Hmac(password.getBytes(StandardCharsets.UTF_8));

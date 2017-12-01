@@ -14,29 +14,29 @@ import org.xmpp.packet.Packet;
  */
 public class MucFilterProcessor extends AbstractRemoteRosterProcessor {
 
-	public MucFilterProcessor() {
-		Log.info("Created MucFilterProcessor");
-	}
+    public MucFilterProcessor() {
+        Log.info("Created MucFilterProcessor");
+    }
 
-	/**
-	 * At this Point we know: MucBlock = true, !incoming, !processed Package is
-	 * IQ with Namespace disco#info, from equals the watched subdomain given
-	 * through subdomain
-	 */
-	@Override
-	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
-		IQ iqPacket = (IQ) packet;
+    /**
+     * At this Point we know: MucBlock = true, !incoming, !processed Package is
+     * IQ with Namespace disco#info, from equals the watched subdomain given
+     * through subdomain
+     */
+    @Override
+    public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
+        IQ iqPacket = (IQ) packet;
 
-		if (iqPacket.getType().equals(IQ.Type.result) && to.length() > 0) {
-			Element root = iqPacket.getChildElement();
+        if (iqPacket.getType().equals(IQ.Type.result) && to.length() > 0) {
+            Element root = iqPacket.getChildElement();
 
-			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//disco:feature");
-			for (Node node : nodes) {
-				String var = node.valueOf("@var");
-				if (var.equals("http://jabber.org/protocol/muc"))
-					root.remove(node);
-			}
+            List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//disco:feature");
+            for (Node node : nodes) {
+                String var = node.valueOf("@var");
+                if (var.equals("http://jabber.org/protocol/muc"))
+                    root.remove(node);
+            }
 
-		}
-	}
+        }
+    }
 }

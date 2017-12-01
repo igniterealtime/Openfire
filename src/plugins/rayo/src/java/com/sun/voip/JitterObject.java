@@ -39,9 +39,9 @@ public class JitterObject {
     public Object data;
 
     public JitterObject(int sequence, boolean isMissing, Object data) {
-	this.sequence = sequence;
-	this.isMissing = isMissing;
-	this.data = data;
+    this.sequence = sequence;
+    this.isMissing = isMissing;
+    this.data = data;
     }
 
     public String toString() {

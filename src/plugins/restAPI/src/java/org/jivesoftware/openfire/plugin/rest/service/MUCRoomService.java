@@ -24,62 +24,62 @@ import org.jivesoftware.openfire.plugin.rest.controller.MUCRoomController;
 @Path("restapi/v1/chatrooms")
 public class MUCRoomService {
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
-			@QueryParam("search") String roomSearch,
-			@DefaultValue("false") @QueryParam("expandGroups") Boolean expand) {
-		return MUCRoomController.getInstance().getChatRooms(serviceName, channelType, roomSearch, expand);
-	}
-	
-	@GET
-	@Path("/{roomName}")
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public MUCRoomEntity getMUCRoomJSON2(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue("false") @QueryParam("expandGroups") Boolean expand) throws ServiceException {
-		return MUCRoomController.getInstance().getChatRoom(roomName, serviceName, expand);
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+            @DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
+            @QueryParam("search") String roomSearch,
+            @DefaultValue("false") @QueryParam("expandGroups") Boolean expand) {
+        return MUCRoomController.getInstance().getChatRooms(serviceName, channelType, roomSearch, expand);
+    }
+    
+    @GET
+    @Path("/{roomName}")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public MUCRoomEntity getMUCRoomJSON2(@PathParam("roomName") String roomName,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName,
+            @DefaultValue("false") @QueryParam("expandGroups") Boolean expand) throws ServiceException {
+        return MUCRoomController.getInstance().getChatRoom(roomName, serviceName, expand);
+    }
 
 
-	@DELETE
-	@Path("/{roomName}")
-	public Response deleteMUCRoom(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws ServiceException {
-		MUCRoomController.getInstance().deleteChatRoom(roomName, serviceName);
-		return Response.status(Status.OK).build();
-	}
+    @DELETE
+    @Path("/{roomName}")
+    public Response deleteMUCRoom(@PathParam("roomName") String roomName,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName) throws ServiceException {
+        MUCRoomController.getInstance().deleteChatRoom(roomName, serviceName);
+        return Response.status(Status.OK).build();
+    }
 
-	@POST
-	public Response createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			MUCRoomEntity mucRoomEntity) throws ServiceException {
-		MUCRoomController.getInstance().createChatRoom(serviceName, mucRoomEntity);
-		return Response.status(Status.CREATED).build();
-	}
+    @POST
+    public Response createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+            MUCRoomEntity mucRoomEntity) throws ServiceException {
+        MUCRoomController.getInstance().createChatRoom(serviceName, mucRoomEntity);
+        return Response.status(Status.CREATED).build();
+    }
 
-	@PUT
-	@Path("/{roomName}")
-	public Response udpateMUCRoom(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName, MUCRoomEntity mucRoomEntity)
-			throws ServiceException {
-		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, mucRoomEntity);
-		return Response.status(Status.OK).build();
-	}
+    @PUT
+    @Path("/{roomName}")
+    public Response udpateMUCRoom(@PathParam("roomName") String roomName,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName, MUCRoomEntity mucRoomEntity)
+            throws ServiceException {
+        MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, mucRoomEntity);
+        return Response.status(Status.OK).build();
+    }
 
-	@GET
-	@Path("/{roomName}/participants")
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public ParticipantEntities getMUCRoomParticipants(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName) {
-		return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
-	}
-	
-	@GET
-	@Path("/{roomName}/occupants")
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public OccupantEntities getMUCRoomOccupants(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName) {
-		return MUCRoomController.getInstance().getRoomOccupants(roomName, serviceName);
-	}
+    @GET
+    @Path("/{roomName}/participants")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public ParticipantEntities getMUCRoomParticipants(@PathParam("roomName") String roomName,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
+        return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
+    }
+    
+    @GET
+    @Path("/{roomName}/occupants")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public OccupantEntities getMUCRoomOccupants(@PathParam("roomName") String roomName,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
+        return MUCRoomController.getInstance().getRoomOccupants(roomName, serviceName);
+    }
 }

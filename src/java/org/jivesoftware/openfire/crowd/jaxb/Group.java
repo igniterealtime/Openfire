@@ -22,8 +22,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="group")
 public class Group implements Serializable {
-	@XmlAttribute
-	public String name;
-	
-	public String description;
+    @XmlAttribute
+    public String name;
+    
+    public String description;
 }

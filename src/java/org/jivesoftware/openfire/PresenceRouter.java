@@ -40,7 +40,7 @@ import org.xmpp.packet.*;
  */
 public class PresenceRouter extends BasicModule {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceRouter.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceRouter.class);
 
     private RoutingTable routingTable;
     private PresenceUpdateHandler updateHandler;
@@ -198,7 +198,7 @@ public class PresenceRouter extends BasicModule {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();

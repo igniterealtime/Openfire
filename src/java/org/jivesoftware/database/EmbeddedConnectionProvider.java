@@ -116,7 +116,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
     }
 
     @Override
-	public void finalize() throws Throwable {
+    public void finalize() throws Throwable {
         super.finalize();
         destroy();
     }

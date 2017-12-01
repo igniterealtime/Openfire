@@ -52,91 +52,91 @@ public class VideobridgeCallAgent extends CallSetupAgent
 
     public VideobridgeCallAgent(CallHandler callHandler)
     {
-		super(callHandler);
+        super(callHandler);
 
-		cp = callHandler.getCallParticipant();
-		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
-		memberSender = callHandler.getMemberSender();
-		memberReceiver = callHandler.getMemberReceiver();
+        cp = callHandler.getCallParticipant();
+        mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
+        memberSender = callHandler.getMemberSender();
+        memberReceiver = callHandler.getMemberReceiver();
 
-		String s = System.getProperty("com.sun.voip.server.FIRST_VIDEOBRIDGE_RTP_PORT");
+        String s = System.getProperty("com.sun.voip.server.FIRST_VIDEOBRIDGE_RTP_PORT");
 
-		try {
-			startRTPPort = Integer.parseInt(s);
+        try {
+            startRTPPort = Integer.parseInt(s);
 
-		} catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
 
-			startRTPPort = 60000;
-		}
+            startRTPPort = 60000;
+        }
 
-		s = System.getProperty("com.sun.voip.server.LAST_VIDEOBRIDGE_RTP_PORT");
+        s = System.getProperty("com.sun.voip.server.LAST_VIDEOBRIDGE_RTP_PORT");
 
-		try {
-			stopRTPPort = Integer.parseInt(s);
+        try {
+            stopRTPPort = Integer.parseInt(s);
 
-		} catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
 
-			stopRTPPort = 70000;
-		}
+            stopRTPPort = 70000;
+        }
 
-		nextRTPPort = startRTPPort;
-	}
+        nextRTPPort = startRTPPort;
+    }
 
-	public void initiateCall() throws IOException
-	{
-		String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+    public void initiateCall() throws IOException
+    {
+        String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
-		try {
-			InetSocketAddress isaLocal = callHandler.getReceiveAddress();
+        try {
+            InetSocketAddress isaLocal = callHandler.getReceiveAddress();
 
-			int localRTPPort = isaLocal.getPort();
-			int localRTCPPort = localRTPPort + 1;
-			int remoteRTPPort = nextRTPPort;
-			int remoteRTCPPort = remoteRTPPort + 1;
+            int localRTPPort = isaLocal.getPort();
+            int localRTCPPort = localRTPPort + 1;
+            int remoteRTPPort = nextRTPPort;
+            int remoteRTCPPort = remoteRTPPort + 1;
 
-			synchronized (nextRTPPort)
-			{
-				nextRTPPort++;
+            synchronized (nextRTPPort)
+            {
+                nextRTPPort++;
 
-				if (nextRTPPort > stopRTPPort) nextRTPPort = startRTPPort;
-			}
-			setState(CallState.INVITED);
+                if (nextRTPPort > stopRTPPort) nextRTPPort = startRTPPort;
+            }
+            setState(CallState.INVITED);
 
 
-        	IQ iq = new IQ(IQ.Type.set);
-			iq.setFrom(cp.getCallOwner());
-			iq.setTo(domainName);
+            IQ iq = new IQ(IQ.Type.set);
+            iq.setFrom(cp.getCallOwner());
+            iq.setTo(domainName);
 
-			String id = "rayo-" + System.currentTimeMillis();
+            String id = "rayo-" + System.currentTimeMillis();
 
-			Element colibri = iq.setChildElement("colibri", "urn:xmpp:rayo:colibri:1");
-			colibri.addAttribute("videobridge", cp.getConferenceId());
-			colibri.addAttribute("localrtpport",String.valueOf(remoteRTPPort));
-			colibri.addAttribute("localrtcpport",String.valueOf(remoteRTCPPort));
-			colibri.addAttribute("remotertpport",String.valueOf(localRTPPort));
-			colibri.addAttribute("remotertcpport",String.valueOf(localRTCPPort));
-			colibri.addAttribute("codec", cp.getMediaPreference().equals("PCM/48000/2") ? "opus" : "pcmu");
-			RayoPlugin.component.sendPacket(iq);
-			setState(CallState.ANSWERED);
+            Element colibri = iq.setChildElement("colibri", "urn:xmpp:rayo:colibri:1");
+            colibri.addAttribute("videobridge", cp.getConferenceId());
+            colibri.addAttribute("localrtpport",String.valueOf(remoteRTPPort));
+            colibri.addAttribute("localrtcpport",String.valueOf(remoteRTCPPort));
+            colibri.addAttribute("remotertpport",String.valueOf(localRTPPort));
+            colibri.addAttribute("remotertcpport",String.valueOf(localRTCPPort));
+            colibri.addAttribute("codec", cp.getMediaPreference().equals("PCM/48000/2") ? "opus" : "pcmu");
+            RayoPlugin.component.sendPacket(iq);
+            setState(CallState.ANSWERED);
 
-			InetSocketAddress isaRemote = new InetSocketAddress("localhost", remoteRTPPort);
-			setEndpointAddress(isaRemote, (byte) (cp.getMediaPreference().equals("PCM/48000/2") ? 111 : 0), (byte)0, (byte)0);
-			setState(CallState.ESTABLISHED);
+            InetSocketAddress isaRemote = new InetSocketAddress("localhost", remoteRTPPort);
+            setEndpointAddress(isaRemote, (byte) (cp.getMediaPreference().equals("PCM/48000/2") ? 111 : 0), (byte)0, (byte)0);
+            setState(CallState.ESTABLISHED);
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			Logger.println("Call " + cp + ":  VideobridgeCallAgent: initiateCall exception ");
-			e.printStackTrace();
-		}
-	}
+            Logger.println("Call " + cp + ":  VideobridgeCallAgent: initiateCall exception ");
+            e.printStackTrace();
+        }
+    }
 
-	public String getSdp()
-	{
-		return null;
+    public String getSdp()
+    {
+        return null;
     }
 
     public void setRemoteMediaInfo(String sdp)
     {
-		return;
+        return;
     }
 }

@@ -6,38 +6,38 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "occupant")
 public class OccupantEntity {
 
-	private String jid;
-	private String role;
-	private String affiliation;
+    private String jid;
+    private String role;
+    private String affiliation;
 
-	public OccupantEntity() {
-	}
+    public OccupantEntity() {
+    }
 
-	@XmlElement
-	public String getJid() {
-		return jid;
-	}
+    @XmlElement
+    public String getJid() {
+        return jid;
+    }
 
-	public void setJid(String jid) {
-		this.jid = jid;
-	}
+    public void setJid(String jid) {
+        this.jid = jid;
+    }
 
-	@XmlElement
-	public String getRole() {
-		return role;
-	}
+    @XmlElement
+    public String getRole() {
+        return role;
+    }
 
-	public void setRole(String role) {
-		this.role = role;
-	}
+    public void setRole(String role) {
+        this.role = role;
+    }
 
-	@XmlElement
-	public String getAffiliation() {
-		return affiliation;
-	}
+    @XmlElement
+    public String getAffiliation() {
+        return affiliation;
+    }
 
-	public void setAffiliation(String affiliation) {
-		this.affiliation = affiliation;
-	}
+    public void setAffiliation(String affiliation) {
+        this.affiliation = affiliation;
+    }
 
 }

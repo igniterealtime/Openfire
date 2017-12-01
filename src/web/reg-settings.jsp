@@ -213,7 +213,7 @@
 
     <fmt:message key="reg.settings.change_password" var="change_password_boxtitle"/>
     <admin:contentBox title="${change_password_boxtitle}">
-	    <p><fmt:message key="reg.settings.change_password_info" /></p>
+        <p><fmt:message key="reg.settings.change_password_info" /></p>
         <c:if test="${readOnly}">
             <admin:infoBox type="info"><fmt:message key="reg.settings.change_password_readonly" /></admin:infoBox>
         </c:if>

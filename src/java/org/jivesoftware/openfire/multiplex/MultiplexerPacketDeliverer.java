@@ -46,7 +46,7 @@ import org.xmpp.packet.Presence;
  */
 public class MultiplexerPacketDeliverer implements PacketDeliverer {
 
-	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
+    private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
 
     private OfflineMessageStrategy messageStrategy;
     private String connectionManagerDomain;

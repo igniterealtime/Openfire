@@ -65,6 +65,7 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
                 </executions>
@@ -106,6 +107,10 @@
                 <exclusion> <!-- Exclude the older SLF4J dependency that's defined in Tinder -->
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion> <!-- Exclude the older dom4j dependency that's defined in Tinder -->
+                    <groupId>dom4j</groupId>
+                    <artifactId>dom4j</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -326,11 +331,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-pool2</artifactId>
-            <version>2.3</version>
-        </dependency>
-        <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
             <version>3.1</version>
@@ -376,6 +376,11 @@
             <artifactId>jsmpp</artifactId>
             <version>2.2.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+            <artifactId>concurrentlinkedhashmap-lru</artifactId>
+            <version>1.0</version>
+        </dependency>
 
         <!-- Database Drivers -->
         <dependency>
@@ -399,12 +404,6 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-            <artifactId>concurrentlinkedhashmap-lru</artifactId>
-            <version>1.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

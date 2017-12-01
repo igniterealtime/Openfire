@@ -240,7 +240,7 @@ public interface RoutingTable {
      * if none was found. When running inside of a cluster and a remote node is hosting
      * the session then a session surrage will be returned.
      *
-     * @param jid the address of the session.
+     * @param pair DomainPair that specifies the local/remote server address.
      * @return the outgoing server session associated to the specified XMPP address or null if none was found.
      */
     OutgoingServerSession getServerRoute(DomainPair pair);

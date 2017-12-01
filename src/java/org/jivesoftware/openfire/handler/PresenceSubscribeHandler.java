@@ -504,10 +504,10 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * where X is subscribe, subscribed, etc.
      * </p>
      *
-     * @param  item      The item to be updated
-     * @param  action    The new state change request
-     * @param  isSending True if the roster owner of the item is sending the new state change request
-     * @return Change    changes to apply to the item 
+     * @param  itemSubType The item to be updated
+     * @param  action      The new state change request
+     * @param  isSending   True if the roster owner of the item is sending the new state change request
+     * @return Change      changes to apply to the item 
      */
     public static Change getStateChange(RosterItem.SubType itemSubType, Presence.Type action, boolean isSending) {
         Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(itemSubType);

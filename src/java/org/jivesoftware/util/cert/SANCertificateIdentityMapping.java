@@ -242,7 +242,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
     /**
      * Parse a UPN value 
      *
-     * @param otherName The ASN.1 representation of the UPN (cannot be null).
+     * @param value The ASN.1 representation of the UPN (cannot be null).
      * @return The parsed UPN value.
      */
     protected String parseOtherNameUpn( ASN1Primitive value )

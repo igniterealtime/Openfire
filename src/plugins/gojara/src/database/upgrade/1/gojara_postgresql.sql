@@ -1,4 +1,4 @@
--- Create SessionEntry 
+-- Create SessionEntry
 CREATE TABLE ofGojaraSessions(
   username 			varchar(255) NOT NULL,
   transport 		varchar(255) NOT NULL,

@@ -48,7 +48,6 @@
                 <includes>
                     <include>log4j.xml</include>
                 </includes>
-                <filtering>true</filtering>
             </resource>
             <!-- TODO: Move these resources to starter/src/main/resources !? -->
             <resource>

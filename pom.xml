@@ -366,7 +366,6 @@
                                         <include>log4j.xml</include>
                                     </includes>
                                     <targetPath>lib</targetPath>
-                                    <filtering>true</filtering>
                                 </resource>
                                 <!-- Copy the spank directory to ${openfireHome}/resources -->
                                 <resource>

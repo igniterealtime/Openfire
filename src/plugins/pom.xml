@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.igniterealtime.openfire</groupId>
-    <version>4.2.0-beta</version>
+    <version>4.2.0</version>
     <artifactId>plugins</artifactId>
     <packaging>pom</packaging>
     <name>Openfire Plugins</name>
@@ -77,7 +77,7 @@
         <plugin.name>${project.artifactId}</plugin.name>
 
         <!-- Versions -->
-        <openfire.version>4.2.0-beta</openfire.version>
+        <openfire.version>4.2.0</openfire.version>
     </properties>
 
     <build>

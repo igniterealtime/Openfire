@@ -29,6 +29,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.*;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
@@ -84,6 +85,11 @@ public class CertificateManager {
     private static List<CertificateIdentityMapping> clientCertMapping = new ArrayList<>();
     
     static {
+
+        if ( Security.getProvider( BouncyCastleProvider.PROVIDER_NAME ) == null )
+        {
+            java.security.Security.addProvider( new BouncyCastleProvider() );
+        }
 
         String serverCertIdentityMapList = JiveGlobals.getProperty("provider.serverCertIdentityMap.classList");
         if (serverCertIdentityMapList != null) {

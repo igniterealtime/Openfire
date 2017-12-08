@@ -97,6 +97,7 @@
         <module>broadcast</module>
         <module>callbackOnOffline</module>
         <module>candy</module>
+        <module>certificateManager</module>
         <module>clientControl</module>
         <!-- Needs coherence.jar -->
         <!--<module>clustering</module>-->

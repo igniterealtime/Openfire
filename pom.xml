@@ -8,6 +8,8 @@
     <name>Parent</name>
     <packaging>pom</packaging>
 
+    <description>Openfire is a cross-platform real-time collaboration server based on the XMPP (Jabber) protocol.</description>
+
     <modules>
         <module>dbutil</module>
         <module>i18n</module>
@@ -126,21 +128,57 @@
     </properties>
 
     <profiles>
-        <!-- Generate JavaDoc to target/javadoc: mvn javadoc:aggregate -->
+        <!-- Disable Javadoc linting (which is very error prone) in versions of Java that have it enabled by default. -->
         <profile>
-            <id>javadoc</id>
+            <id>java8-doclint-disabled</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>release</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.3</version>
+                        <version>2.9.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
                                 <goals>
-                                    <!-- Create one JavaDoc which contains all modules -->
-                                    <goal>aggregate</goal>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -149,78 +187,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>dist.src</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>Copy directories</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${openfireSource}</outputDirectory>
-                                    <resources>
-                                        <!-- Copy the build directory -->
-                                        <resources>
-                                            <targetPath>build</targetPath>
-                                            <directory>${project.basedir}/build</directory>
-                                        </resources>
-                                        <!-- Copy the documentation/dist -->
-                                        <resources>
-                                            <directory>${project.basedir}/documentation/dist</directory>
-                                        </resources>
-                                        <!-- Copy the documentation -->
-                                        <resources>
-                                            <targetPath>documentation</targetPath>
-                                            <directory>${project.basedir}/documentation/docs</directory>
-                                        </resources>
-                                        <!-- Copy i18n -->
-                                        <resource>
-                                            <targetPath>resources/i18n</targetPath>
-                                            <directory>${project.basedir}/src/i18n</directory>
-                                        </resource>
-                                        <!-- Copy src -->
-                                        <resource>
-                                            <targetPath>src</targetPath>
-                                            <directory>${project.basedir}/src</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <!-- Child modules should not create an assembly -->
-                        <inherited>false</inherited>
-                        <configuration>
-                            <descriptor>src/assembly/src.xml</descriptor>
-                            <finalName>openfire_src_${project.version}</finalName>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <outputDirectory>${releaseDirectory}</outputDirectory>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>create-archive</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-
-        </profile>
     </profiles>
 
     <build>
@@ -228,38 +194,6 @@
         <pluginManagement>
 
             <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.3</version>
-                    <configuration>
-                        <additionalparam>-Xdoclint:none</additionalparam>
-                        <quiet>true</quiet>
-                        <outputDirectory>${project.build.directory}</outputDirectory>
-                        <reportOutputDirectory>${project.build.directory}</reportOutputDirectory>
-                        <destDir>javadoc</destDir>
-                        <includeDependencySources>false</includeDependencySources>
-                        <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
-                        <nodeprecated>false</nodeprecated>
-                        <nodeprecatedlist>false</nodeprecatedlist>
-                        <author>false</author>
-                        <notimestamp>true</notimestamp>
-                        <doctitle>Openfire ${project.version}</doctitle>
-                        <windowtitle>Openfire ${project.version}</windowtitle>
-                        <docfilessubdirs>true</docfilessubdirs>
-                        <show>public</show>
-                        <excludePackageNames>org.apache.*:org.dom4j.*</excludePackageNames>
-                        <overview>${project.basedir}/src/java/overview.html</overview>
-                    </configuration>
-                    <dependencies>
-                        <!-- Used to resolve MINA 2.0 bundle -->
-                        <dependency>
-                            <groupId>org.apache.felix</groupId>
-                            <artifactId>maven-bundle-plugin</artifactId>
-                            <version>3.0.0</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -279,10 +213,6 @@
                                 <MavenParentGroupId>${project.parent.groupId}</MavenParentGroupId>
                                 <MavenParentArtifactId>${project.parent.artifactId}</MavenParentArtifactId>
                                 <MavenParentVersion>${project.parent.version}</MavenParentVersion>
-                                <!--<BambooBuildKey>${bamboo.buildKey}</BambooBuildKey>-->
-                                <!--<BambooBuildNumber>${bamboo.buildNumber}</BambooBuildNumber>-->
-                                <!--<BambooCustomSVNRevisionNumber>${bamboo.custom.svn.revision.number}-->
-                                <!--</BambooCustomSVNRevisionNumber>-->
                             </manifestEntries>
                         </archive>
                     </configuration>
@@ -305,10 +235,6 @@
                                 <MavenParentGroupId>${project.parent.groupId}</MavenParentGroupId>
                                 <MavenParentArtifactId>${project.parent.artifactId}</MavenParentArtifactId>
                                 <MavenParentVersion>${project.parent.version}</MavenParentVersion>
-                                <!--<BambooBuildKey>${bamboo.buildKey}</BambooBuildKey>-->
-                                <!--<BambooBuildNumber>${bamboo.buildNumber}</BambooBuildNumber>-->
-                                <!--<BambooCustomSVNRevisionNumber>${bamboo.custom.svn.revision.number}-->
-                                <!--</BambooCustomSVNRevisionNumber>-->
                             </manifestEntries>
                         </archive>
                     </configuration>
@@ -520,4 +446,5 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
 </project>

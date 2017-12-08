@@ -388,6 +388,16 @@
             </else>
         </if>
 
+        <!--
+            Java has trouble reading translations from UTF-8 files. To work around that,
+            this plugin ensures that Java-compatible encoding is used.
+            See https://stackoverflow.com/questions/4659929/how-to-use-utf-8-in-resource-properties-with-resourcebundle
+          -->
+        <native2ascii encoding="UTF8" src="${target.i18n.dir}" dest="${target.i18n.dir}/encoded" />
+        <move todir="${target.i18n.dir}" overwrite="true">
+            <fileset dir="${target.i18n.dir}/encoded"/>
+        </move>
+
         <!-- Auto generates a default base i18n file -->
         <copy file="${target.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
               tofile="${target.i18n.dir}/${i18n.basename}.properties"/>

@@ -1,11 +1,13 @@
 package org.jivesoftware.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
 import org.jivesoftware.util.Version.ReleaseStatus;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class VersionTest {
 
@@ -100,4 +102,32 @@ public class VersionTest {
         assertEquals(version1, version2);
         assertTrue((version1.compareTo(version2) == 0) == version1.equals(version2));
     }
+
+    @Test
+    public void willVersionAThreeDigitSnapshot() throws Exception {
+        final String versionString = "1.2.3-SNAPSHOT";
+        Version test = new Version(versionString);
+
+        assertThat(test.getMajor(), is(1));
+        assertThat(test.getMinor(), is(2));
+        assertThat(test.getMicro(), is(3));
+        assertThat(test.getStatusVersion(), is(-1));
+        assertThat(test.getStatus(), is(ReleaseStatus.Snapshot));
+        assertThat(test.getVersionString(),is(versionString));
+    }
+
+    @Test
+    public void willVersionAFourDigitSnapshot() throws Exception {
+        final String versionString = "1.2.3.4-snapshot";
+        Version test = new Version(versionString);
+
+        assertThat(test.getMajor(), is(1));
+        assertThat(test.getMinor(), is(2));
+        assertThat(test.getMicro(), is(3));
+        assertThat(test.getStatusVersion(), is(4));
+        assertThat(test.getStatus(), is(ReleaseStatus.Snapshot));
+        assertThat(test.getVersionString(),is(versionString.toUpperCase()));
+
+    }
+
 }

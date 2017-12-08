@@ -199,9 +199,9 @@
                 <fmt:message key="system.email.mail_debugging" />:
             </td>
             <td nowrap>
-                <input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01">On</label>
+                <input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01"><fmt:message key="system.email.mail_debugging.enabled" /></label>
                 &nbsp;
-                <input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02">Off</label>
+                <input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02"><fmt:message key="system.email.mail_debugging.disabled" /></label>
                 &nbsp; (<fmt:message key="system.email.restart_possible" />)
             </td>
         </tr>

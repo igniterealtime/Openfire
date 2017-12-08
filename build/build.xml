@@ -1489,6 +1489,7 @@
                                         </fileset>
                                         <fileset dir="${web.dir}">
                                             <include name="WEB-INF/**/*.*"/>
+                                            <include name="META-INF/**/*.*"/>
                                             <exclude name="WEB-INF/web.xml"/>
                                             <exclude name="WEB-INF/classes/openfire_init.xml"/>
                                             <exclude name="WEB-INF/tmp/**/*.*"/>

@@ -261,7 +261,7 @@ function checkClick(el) {
             <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>">Update Address</a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>"><fmt:message key="system.emailtest.update-address" /></a>)
             </span>
         </td>
     </tr>

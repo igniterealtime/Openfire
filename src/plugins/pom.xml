@@ -7,6 +7,90 @@
     <packaging>pom</packaging>
     <name>Openfire Plugins</name>
 
+    <description>Aggregate project for Openfire plugins.</description>
+    <url>http://www.igniterealtime.org/projects/openfire/</url>
+
+    <inceptionYear>2003</inceptionYear>
+
+    <issueManagement>
+        <system>jira</system>
+        <url>http://issues.igniterealtime.org/browse/OF</url>
+    </issueManagement>
+
+    <scm>
+        <connection>scm:svn:http://svn.igniterealtime.org/svn/repos/openfire/trunk/</connection>
+        <developerConnection>scm:svn:https://svn.igniterealtime.org/svn/repos/openfire/trunk/</developerConnection>
+        <url>http://fisheye.igniterealtime.org/viewrep/openfire/trunk/</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Guus der Kinderen</name>
+            <roles>
+                <role>Lead Developer</role>
+            </roles>
+            <email>guus.der.kinderen@gmail.com</email>
+            <timezone>+1</timezone>
+            <organization>Ignite Realtime</organization>
+            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Robin Collier</name>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <email>robincollier@hotmail.com</email>
+            <timezone>-5</timezone>
+            <organization>Ignite Realtime</organization>
+            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Matt Tucker</name>
+            <roles>
+                <role>Original Author</role>
+                <role>Developer (inactive)</role>
+            </roles>
+            <email>matt@jivesoftware.com</email>
+            <organization>Jive Software</organization>
+            <organizationUrl>http://www.jivesoftware.com</organizationUrl>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <name>Gaston Dombiak</name>
+            <roles>
+                <role>Original Author</role>
+                <role>Lead Developer (inactive)</role>
+            </roles>
+            <email>gaston@jivesoftware.com</email>
+            <organization>Jive Software</organization>
+            <organizationUrl>http://www.jivesoftware.com</organizationUrl>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <name>Daniel Henninger</name>
+            <roles>
+                <role>Developer (inactive)</role>
+            </roles>
+            <email>daniel@vorpalcloud.org</email>
+            <timezone>-5</timezone>
+            <organization>Ignite Realtime</organization>
+            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+        </developer>
+    </developers>
+
+    <contributors>
+        <contributor>
+            <name>Daryl Herzmann</name>
+            <roles>
+                <role>Community Organizer</role>
+            </roles>
+            <email>akrherz@iastate.edu</email>
+            <organization>Iowa State University</organization>
+            <organizationUrl>http://mesonet.agron.iastate.edu</organizationUrl>
+            <timezone>-6</timezone>
+        </contributor>
+    </contributors>
+
     <modules>
         <module>openfire-plugin-assembly-descriptor</module>
         <module>bookmarks</module>
@@ -79,6 +163,68 @@
         <!-- Versions -->
         <openfire.version>4.2.0</openfire.version>
     </properties>
+
+    <profiles>
+        <!-- Disable Javadoc linting (which is very error prone) in versions of Java that have it enabled by default. -->
+        <profile>
+            <id>java8-doclint-disabled</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
 
     <build>
         <plugins>

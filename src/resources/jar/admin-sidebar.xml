@@ -142,79 +142,79 @@
         <!-- TLS / SSL-->
         <sidebar id="sidebar-certificates" name="${sidebar.sidebar-certificates}">
 
-            <item id="security-certificate-store-management" name="Certificate Stores"
+            <item id="security-certificate-store-management" name="${sidebar.certificate-stores}"
                   url="security-certificate-store-management.jsp"
-                  description="Manage Openfire Certificate stores">
+                  description="${sidebar.certificate-stores.descr}">
 
                 <sidebar id="sidebar-certificate-store-socket-c2s" name="${sidebar.client-connections-settings}">
 
-                    <item id="sidebar-certificate-store-socket_c2s-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-socket_c2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=SOCKET_C2S"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-socket_c2s-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-socket_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=SOCKET_C2S"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
 
                 <sidebar id="sidebar-certificate-store-socket-s2s" name="${sidebar.server2server-settings}">
 
-                    <item id="sidebar-certificate-store-socket_s2s-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-socket_s2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=SOCKET_S2S"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-socket_s2s-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-socket_s2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=SOCKET_S2S"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr"/>
 
                 </sidebar>
 
                 <sidebar id="sidebar-certificate-store-bosh-c2s" name="${sidebar.http-bind}">
 
-                    <item id="sidebar-certificate-store-bosh_c2s-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-bosh_c2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=BOSH_C2S"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-bosh_c2s-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-bosh_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=BOSH_C2S"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr"/>
 
                 </sidebar>
 
                 <sidebar id="sidebar-certificate-store-component" name="${sidebar.external-components-settings}">
 
-                    <item id="sidebar-certificate-store-component-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-component-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=COMPONENT"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-component-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-component-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=COMPONENT"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr"/>
 
                 </sidebar>
 
                 <sidebar id="sidebar-certificate-store-connection-manager" name="${sidebar.connection-managers-settings}">
 
-                    <item id="sidebar-certificate-store-connection_manager-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-connection_manager-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=CONNECTION_MANAGER"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-connection_manager-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-connection_manager-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=CONNECTION_MANAGER"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr"/>
 
                 </sidebar>
 
                 <sidebar id="sidebar-certificate-store-webadmin" name="${admin.console}">
 
-                    <item id="sidebar-certificate-store-webadmin-identity-store" name="Identity Store"
+                    <item id="sidebar-certificate-store-webadmin-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=WEBADMIN"
-                          description="Contains key and certificate that serve as identification of Openfire."/>
+                          description="${sidebar.identity-store.descr"/>
 
-                    <item id="sidebar-certificate-store-webadmin-trust-store" name="Trust Store"
+                    <item id="sidebar-certificate-store-webadmin-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=WEBADMIN"
-                          description="Contains certificates that are used to verify the identity of peers."/>
+                          description="${sidebar.trust-store.descr"/>
 
                 </sidebar>
                 <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->

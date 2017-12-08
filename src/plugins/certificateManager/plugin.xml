@@ -5,7 +5,7 @@
     <description>Adds certificate management features.</description>
     <author>Guus der Kinderen</author>
     <version>1.0.0</version>
-    <date>24/11/2017</date>
+    <date>11/24/2017</date>
     <minServerVersion>4.0.0</minServerVersion>
     <adminconsole>
         <tab id="tab-server">

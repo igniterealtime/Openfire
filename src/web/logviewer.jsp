@@ -443,7 +443,7 @@ IFRAME {
                                 <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
                             </td>
                             <td width="1%" nowrap>
-                                <label for="de02">Disabled</label> &nbsp;
+                                <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;
                             </td>
                             <td width="1%">
                                 <input type="submit" name="" value="<fmt:message key="global.save_changes" />">

@@ -134,6 +134,7 @@
         <module>userCreation</module>
         <module>userImportExport</module>
         <module>userservice</module>
+        <module>userStatus</module>
         <module>xmldebugger</module>
     </modules>
 

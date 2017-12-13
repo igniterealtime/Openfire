@@ -72,6 +72,8 @@ public class ImportExportPlugin implements Plugin {
     /**
      * Converts the user data that is to be exported to a byte[]. If a read-only
      * user store is being used a user's password will be the same as their username.
+     * 
+     * @param xep227Support XEP-227 Compliance
      *
      * @return a byte[] of the user data.
      * @throws IOException if there's a problem writing to the XMLWriter.
@@ -88,6 +90,8 @@ public class ImportExportPlugin implements Plugin {
     /**
      * Converts the exported user data to a String. If a read-only
      * user store is being used a user's password will be the same as their username.
+     * 
+     * @param xep227Support XEP-227 Compliance
      *
      * @return a formatted String representation of the user data.
      * @throws IOException if there's a problem writing to the XMLWriter.
@@ -120,6 +124,7 @@ public class ImportExportPlugin implements Plugin {
      * @param file a FileItem containing the user data to be imported.
      * @param previousDomain a String an optional parameter that if supplied will replace the user roster entries domain names to 
      * server name of current Openfire installation.
+     * @param xep227Support XEP-227 Compliance
      * @return True if FileItem matches the openfire user schema.
      * @throws IOException if there is a problem reading the FileItem.
      * @throws DocumentException if an error occurs during parsing.
@@ -133,8 +138,10 @@ public class ImportExportPlugin implements Plugin {
     
     /**
      * Returns whether or not the supplied FileItem matches the openfire user schema
+     * 
+     * @param usersFile a FileItem to be validated. 
+     * @param xep227Support XEP-227 Compliance
      *
-     * @param file a FileItem to be validated.
      * @return True if FileItem matches the openfire user schema.
      */
     public boolean validateImportFile(FileItem usersFile, boolean xep227Support) {

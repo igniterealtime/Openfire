@@ -79,12 +79,12 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         return manager.process(packet);
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -133,17 +133,17 @@ public class AdHocCommandHandler extends IQHandler
             for (AdHocCommand command : manager.getCommands()) {
                 // Only include commands that the sender can invoke (i.e. has enough permissions)
                 if (command.hasPermission(senderJID)) {
-					final DiscoItem item = new DiscoItem(new JID(serverName),
-							command.getLabel(), command.getCode(), null);
-					answer.add(item);
-				}
+                    final DiscoItem item = new DiscoItem(new JID(serverName),
+                            command.getLabel(), command.getCode(), null);
+                    answer.add(item);
+                }
             }
         }
         return answer.iterator();
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         infoHandler = server.getIQDiscoInfoHandler();
@@ -151,7 +151,7 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         infoHandler.setServerNodeInfoProvider(NAMESPACE, this);
         itemsHandler.setServerNodeInfoProvider(NAMESPACE, this);
@@ -160,7 +160,7 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         infoHandler.removeServerNodeInfoProvider(NAMESPACE);
         itemsHandler.removeServerNodeInfoProvider(NAMESPACE);

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LoginLimitManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
 
     // Wrap this guy up so we can mock out the LoginLimitManager class.
     private static class LoginLimitManagerContainer {
@@ -146,7 +146,7 @@ public class LoginLimitManager {
 
     /**
      * Runs at configured interval to clear out attempts per username, thereby wiping lockouts.
-	 */
+     */
     private class PerUsernameTask extends TimerTask {
 
         /**
@@ -156,11 +156,11 @@ public class LoginLimitManager {
         public void run() {
             attemptsPerUsername.clear();
         }
-	}
+    }
 
     /**
      * Runs at configured interval to clear out attempts per ip address, thereby wiping lockouts.
-	 */
+     */
     private class PerIPAddressTask extends TimerTask {
 
         /**
@@ -170,6 +170,6 @@ public class LoginLimitManager {
         public void run() {
             attemptsPerIP.clear();
         }
-	}
+    }
 
 }

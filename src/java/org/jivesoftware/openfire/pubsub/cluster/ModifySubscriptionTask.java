@@ -9,20 +9,20 @@ public class ModifySubscriptionTask extends SubscriptionTask
 {
     private static final Logger log = LoggerFactory.getLogger(ModifySubscriptionTask.class);
 
-	public ModifySubscriptionTask()
-	{
+    public ModifySubscriptionTask()
+    {
 
-	}
+    }
 
-	public ModifySubscriptionTask(NodeSubscription subscription)
-	{
-		super(subscription);
-	}
+    public ModifySubscriptionTask(NodeSubscription subscription)
+    {
+        super(subscription);
+    }
 
-	@Override
-	public void run()
-	{
-		log.debug("[TASK] Modify subscription : {}", toString());
-		PubSubPersistenceManager.loadSubscription(getService(), getNode(), getSubscriptionId());
-	}
+    @Override
+    public void run()
+    {
+        log.debug("[TASK] Modify subscription : {}", toString());
+        PubSubPersistenceManager.loadSubscription(getService(), getNode(), getSubscriptionId());
+    }
 }

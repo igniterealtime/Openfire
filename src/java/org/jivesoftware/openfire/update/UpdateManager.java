@@ -66,7 +66,7 @@ import org.xmpp.packet.Message;
  */
 public class UpdateManager extends BasicModule {
 
-	private static final Logger Log = LoggerFactory.getLogger(UpdateManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(UpdateManager.class);
 
     protected static DocumentFactory docFactory = DocumentFactory.getInstance();
 
@@ -107,7 +107,7 @@ public class UpdateManager extends BasicModule {
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         startService();
     }
@@ -119,7 +119,7 @@ public class UpdateManager extends BasicModule {
         // Thread that performs the periodic checks for updates
         thread = new Thread("Update Manager") {
             @Override
-			public void run() {
+            public void run() {
                 try {
                     // Sleep for 5 seconds before starting to work. This is required because
                     // this module has a dependency on the PluginManager, which is loaded
@@ -188,7 +188,7 @@ public class UpdateManager extends BasicModule {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         router = server.getMessageRouter();
         serverName = server.getServerInfo().getXMPPDomain();
@@ -269,34 +269,34 @@ public class UpdateManager extends BasicModule {
         }
         
         if (isKnownPlugin(url)) {
-			GetMethod getMethod = new GetMethod(url);
-			//execute the method
-			try {
-			    int statusCode = httpClient.executeMethod(getMethod);
-			    if (statusCode == 200) {
-			        //get the resonse as an InputStream
-			        try (InputStream in = getMethod.getResponseBodyAsStream()) {
-			            String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-			            installed = XMPPServer.getInstance().getPluginManager()
-			                    .installPlugin(in, pluginFilename);
-			        }
-			        if (installed) {
-			            // Remove the plugin from the list of plugins to update
-			            for (Update update : pluginUpdates) {
-			                if (update.getURL().equals(url)) {
-			                    update.setDownloaded(true);
-			                }
-			            }
-			            // Save response in a file for later retrieval
-			            saveLatestServerInfo();
-			        }
-			    }
-			}
-			catch (IOException e) {
-			    Log.warn("Error downloading new plugin version", e);
-			}
+            GetMethod getMethod = new GetMethod(url);
+            //execute the method
+            try {
+                int statusCode = httpClient.executeMethod(getMethod);
+                if (statusCode == 200) {
+                    //get the resonse as an InputStream
+                    try (InputStream in = getMethod.getResponseBodyAsStream()) {
+                        String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+                        installed = XMPPServer.getInstance().getPluginManager()
+                                .installPlugin(in, pluginFilename);
+                    }
+                    if (installed) {
+                        // Remove the plugin from the list of plugins to update
+                        for (Update update : pluginUpdates) {
+                            if (update.getURL().equals(url)) {
+                                update.setDownloaded(true);
+                            }
+                        }
+                        // Save response in a file for later retrieval
+                        saveLatestServerInfo();
+                    }
+                }
+            }
+            catch (IOException e) {
+                Log.warn("Error downloading new plugin version", e);
+            }
         } else {
-        	Log.error("Invalid plugin download URL: " +url);
+            Log.error("Invalid plugin download URL: " +url);
         }
         return installed;
     }
@@ -310,11 +310,11 @@ public class UpdateManager extends BasicModule {
      * @return true if the URL is in the list. Otherwise false.
      */
     private boolean isKnownPlugin(String url) {
-    	for (String pluginName : availablePlugins.keySet()) {
-    		if (availablePlugins.get(pluginName).getDownloadURL().toString().equals(url)) {
+        for (String pluginName : availablePlugins.keySet()) {
+            if (availablePlugins.get(pluginName).getDownloadURL().toString().equals(url)) {
                 return true;
-    		}
-    	}
+            }
+        }
         
         return false;
     }

@@ -1,8 +1,8 @@
 <%@page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.ParamUtils,
-				 org.jivesoftware.util.TaskEngine,
-				 org.jivesoftware.openfire.XMPPServer,
-				 org.jivesoftware.openfire.plugin.UserCreationPlugin,
+                 org.jivesoftware.util.TaskEngine,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.plugin.UserCreationPlugin,
                  java.util.HashMap,
                  java.util.Map"
 %>
@@ -36,7 +36,7 @@
         final boolean boolGenerateMessages = generateMessages;
 
         if (maxUsers % usersRoster != 0 || maxUsers <= usersRoster) {
-        	errors.put("arguments", ""); 
+            errors.put("arguments", ""); 
         }
 
         if (errors.isEmpty()) {
@@ -48,7 +48,7 @@
                     plugin.populateRosters(userPrefix, intFrom, maxUsers, usersRoster);
                     plugin.createVCards(userPrefix, intFrom, maxUsers);
                     if (boolGenerateMessages) {
-                    	plugin.generateMessages();
+                        plugin.generateMessages();
                     }
                     
                 }
@@ -101,31 +101,31 @@
             <td width="1%" colspan="2" nowrap>
                 User prefix:
                 &nbsp;<input type="text" name="prefix" value="<%=(prefix != null ? prefix : "user") %>" size="30" maxlength="75"/>
-	        </td>
+            </td>
         </tr>
         <tr class="c1">
             <td width="1%" colspan="2" nowrap>
                 From index:
                 &nbsp;<input type="text" name="from" value="<%=(from != null ? from : "0") %>" size="5" maxlength="15"/>
-	        </td>
+            </td>
         </tr>
         <tr class="c1">
             <td width="1%" colspan="2" nowrap>
                 Total users:
                 &nbsp;<input type="text" name="total" value="<%=(total != null ? total : "20") %>" size="5" maxlength="15"/>
-	        </td>
+            </td>
         </tr>
         <tr class="c1">
             <td width="1%" colspan="2" nowrap>
                 Contacts in roster:
                 &nbsp;<input type="text" name="usersPerRoster" value="<%=(usersPerRoster != null ? usersPerRoster : "9") %>" size="5" maxlength="15"/>
-	        </td>
+            </td>
         </tr>
         <tr>
             <td colspan="2" width="90%"><label class="jive-label" for="messageGenerate">Generate chat messages:</label><br>
             Generates dummy chat messages between users. Useful for testing message archiving.</td>
             <td><input type="checkbox" id="messageGenerate" name="messageGenerate" <%= "checked" %> /></td>
-      	</tr>	
+        </tr>	
         <tr class="c1">
             <td width="1%" colspan="2" nowrap>
                 <input type="submit" name="Create"/>

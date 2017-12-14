@@ -46,7 +46,7 @@ public class ResourceServlet extends HttpServlet {
     private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         debug = Boolean.valueOf(config.getInitParameter("debug"));
@@ -54,7 +54,7 @@ public class ResourceServlet extends HttpServlet {
     }
 
     @Override
-	public void service(HttpServletRequest request, HttpServletResponse response) {
+    public void service(HttpServletRequest request, HttpServletResponse response) {
         boolean compress = false;
 
         boolean javascript = request.getRequestURI().endsWith("scripts/");

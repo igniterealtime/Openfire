@@ -653,7 +653,7 @@ public abstract class Node {
 
                     if (!(newParentNode instanceof CollectionNode))
                     {
-                    	throw new NotAcceptableException("Specified node in field pubsub#collection [" + newParent + "] " + ((newParentNode == null) ? "does not exist" : "is not a collection node"));
+                        throw new NotAcceptableException("Specified node in field pubsub#collection [" + newParent + "] " + ((newParentNode == null) ? "does not exist" : "is not a collection node"));
                     }
                     changeParent((CollectionNode) newParentNode);
                 }
@@ -882,7 +882,7 @@ public abstract class Node {
         }
 
         if (parent != null && !parent.isRootCollectionNode()) {
-        	formField.addValue(parent.getNodeID());
+            formField.addValue(parent.getNodeID());
         }
 
         formField = form.addField();
@@ -1887,10 +1887,10 @@ public abstract class Node {
      * @param newParent the new parent node of this node.
      */
     protected void changeParent(CollectionNode newParent) {
-    	if (parent == newParent) {
-    		return;
-    	}
-    	
+        if (parent == newParent) {
+            return;
+        }
+        
         if (parent != null) {
             // Remove this node from the current parent node
             parent.removeChildNode(this);
@@ -2027,7 +2027,7 @@ public abstract class Node {
             }
         }
         
-		// Verify that the subscriber JID is currently available to receive notification 
+        // Verify that the subscriber JID is currently available to receive notification 
         // messages. This is required because the message router will deliver packets via 
         // the bare JID if a session for the full JID is not available. The "isActiveRoute"
         // condition below will prevent inadvertent delivery of multiple copies of each
@@ -2041,10 +2041,10 @@ public abstract class Node {
         // Note however that this may be somewhat in conflict with the following:
         //   12.3 "Presence-Based Delivery of Events" - automatically detect user's presence
         //
-		if (subscriberJID.getResource() == null ||
-			SessionManager.getInstance().getSession(subscriberJID) != null) {
-			service.sendNotification(this, notification, subscriberJID);
-		}
+        if (subscriberJID.getResource() == null ||
+            SessionManager.getInstance().getSession(subscriberJID) != null) {
+            service.sendNotification(this, notification, subscriberJID);
+        }
 
         if (headers != null) {
             // Remove the added child element that includes subscription IDs information
@@ -2284,25 +2284,25 @@ public abstract class Node {
 
     @Override
     public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + nodeID.hashCode();
-		result = prime * result + service.getServiceID().hashCode();
-		return result;
-	}
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + nodeID.hashCode();
+        result = prime * result + service.getServiceID().hashCode();
+        return result;
+    }
 
     @Override
-	public boolean equals(Object obj) {
-    	if (obj == this)
-    		return true;
-    	
-    	if (getClass() != obj.getClass())
-    		return false;
-    	
-    	Node compareNode = (Node) obj;
-    	
-		return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
-	}
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        
+        if (getClass() != obj.getClass())
+            return false;
+        
+        Node compareNode = (Node) obj;
+        
+        return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
+    }
 
     /**
      * Policy that defines whether owners or publisher should receive replies to items.

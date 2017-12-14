@@ -115,7 +115,7 @@ import org.xmpp.packet.JID;
  */
 public class ChatSearchManager implements WorkgroupEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatSearchManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatSearchManager.class);
 
     private static final String CHATS_SINCE_DATE =
             "SELECT sessionID,transcript,startTime FROM fpSession WHERE workgroupID=? AND " +

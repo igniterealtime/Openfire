@@ -45,7 +45,7 @@ public class RemoteSessionLocator implements org.jivesoftware.openfire.session.R
         return new RemoteIncomingServerSession(nodeID, streamID);
     }
 
-    public OutgoingServerSession getOutgoingServerSession(byte[] nodeID, JID address) {
+    public OutgoingServerSession getOutgoingServerSession(byte[] nodeID, DomainPair address) {
         return new RemoteOutgoingServerSession(nodeID, address);
     }
 }

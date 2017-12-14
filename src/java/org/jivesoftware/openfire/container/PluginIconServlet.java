@@ -39,12 +39,12 @@ import java.net.URL;
 public class PluginIconServlet extends HttpServlet {
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
     }
 
     @Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         String canonicalName = ParamUtils.getParameter(request, "plugin");
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         PluginMetadata metadata = pluginManager.getMetadata( canonicalName );

@@ -55,7 +55,7 @@ public class IQPrivacyHandler extends IQHandler
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ.Type type = packet.getType();
         JID from = packet.getFrom();
         if (from.getNode() == null || !UserManager.getInstance().isRegisteredUser(from.getNode())) {
@@ -407,7 +407,7 @@ public class IQPrivacyHandler extends IQHandler
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -433,7 +433,7 @@ public class IQPrivacyHandler extends IQHandler
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
     }
 }

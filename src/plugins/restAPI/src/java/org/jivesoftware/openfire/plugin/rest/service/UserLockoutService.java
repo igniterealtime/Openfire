@@ -13,24 +13,24 @@ import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 @Path("restapi/v1/lockouts")
 public class UserLockoutService {
 
-	private UserServiceController plugin;
+    private UserServiceController plugin;
 
-	@PostConstruct
-	public void init() {
-		plugin = UserServiceController.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        plugin = UserServiceController.getInstance();
+    }
 
-	@POST
-	@Path("/{username}")
-	public Response disableUser(@PathParam("username") String username) throws ServiceException {
-		plugin.disableUser(username);
-		return Response.status(Response.Status.CREATED).build();
-	}
+    @POST
+    @Path("/{username}")
+    public Response disableUser(@PathParam("username") String username) throws ServiceException {
+        plugin.disableUser(username);
+        return Response.status(Response.Status.CREATED).build();
+    }
 
-	@DELETE
-	@Path("/{username}")
-	public Response enableUser(@PathParam("username") String username) throws ServiceException {
-		plugin.enableUser(username);
-		return Response.status(Response.Status.OK).build();
-	}
+    @DELETE
+    @Path("/{username}")
+    public Response enableUser(@PathParam("username") String username) throws ServiceException {
+        plugin.enableUser(username);
+        return Response.status(Response.Status.OK).build();
+    }
 }

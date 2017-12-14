@@ -63,23 +63,23 @@ public class Encryptor
 
         if(_var0 != null ? _var0.equals(EncryptionMode.Null) : _var0 == EncryptionMode.Null)
         {
-			Log.info("decryptRTCP no encryption found");
+            Log.info("decryptRTCP no encryption found");
             return RTCPPacket.parseBytes(encryptedBytes);
-		}
+        }
         if(ArrayExtensions.getLength(encryptedBytes).intValue() < 12 + _rTCPIntegritySize.intValue())
         {
-			Log.info("decryptRTCP packet too small");
+            Log.info("decryptRTCP packet too small");
             return null;
-		}
+        }
         Byte buffer[] = BitAssistant.subArray(encryptedBytes, Integer.valueOf(0), Integer.valueOf(ArrayExtensions.getLength(encryptedBytes).intValue() - _rTCPIntegritySize.intValue()));
         Byte buffer2[] = BitAssistant.subArray(encryptedBytes, Integer.valueOf(ArrayExtensions.getLength(encryptedBytes).intValue() - _rTCPIntegritySize.intValue()), _rTCPIntegritySize);
         Byte buffer4[] = BitAssistant.subArray(Crypto.getHmacSha1(_rTCPDecryptionAuth, buffer), Integer.valueOf(0), _rTCPIntegritySize);
 
         if(!BitAssistant.sequencesAreEqual(buffer2, buffer4).booleanValue())
         {
-			Log.info("decryptRTCP sequences Are not Equal");
+            Log.info("decryptRTCP sequences Are not Equal");
             return null;
-		}
+        }
 
         Long ssrc = BitAssistant.toLongFromIntegerNetwork(buffer, Integer.valueOf(4));
         Byte buffer5[] = BitAssistant.subArray(buffer, Integer.valueOf(ArrayExtensions.getLength(buffer).intValue() - 4));
@@ -104,28 +104,28 @@ public class Encryptor
     {
         if(ArrayExtensions.getLength(encryptedBytes).intValue() < 12)
         {
-			Log.info("decryptRTP packet less than 12 bytes");
+            Log.info("decryptRTP packet less than 12 bytes");
             return null;
-		}
+        }
         Integer num = new Integer(encryptedBytes[1].byteValue() & 0x7f);
 
         if(num.intValue() >= 72 && num.intValue() <= 76)
         {
-			Log.info("decryptRTP packet first bye no good " + encryptedBytes[1]);
+            Log.info("decryptRTP packet first bye no good " + encryptedBytes[1]);
             return null;
-		}
+        }
         EncryptionMode _var0 = getEncryptionMode();
 
         if(_var0 != null ? _var0.equals(EncryptionMode.Null) : _var0 == EncryptionMode.Null)
         {
-			Log.info("decryptRTP no encryption found");
+            Log.info("decryptRTP no encryption found");
             return RTPPacket.parseBytes(encryptedBytes);
-		}
+        }
         if(ArrayExtensions.getLength(encryptedBytes).intValue() < 12 + _rTPIntegritySize.intValue())
         {
-			Log.info("decryptRTP packet too small");
+            Log.info("decryptRTP packet too small");
             return null;
-		}
+        }
         Byte collection[] = BitAssistant.subArray(encryptedBytes, Integer.valueOf(0), Integer.valueOf(ArrayExtensions.getLength(encryptedBytes).intValue() - _rTPIntegritySize.intValue()));
         Byte buffer2[] = BitAssistant.subArray(encryptedBytes, Integer.valueOf(ArrayExtensions.getLength(encryptedBytes).intValue() - _rTPIntegritySize.intValue()), _rTPIntegritySize);
         ArrayList list = ArrayListExtensions.createArray(collection);
@@ -134,16 +134,16 @@ public class Encryptor
 
         if(!BitAssistant.sequencesAreEqual(buffer2, buffer4).booleanValue())
         {
-			//Log.info("decryptRTP sequences Are not Equal");
+            //Log.info("decryptRTP sequences Are not Equal");
             //return null;
-		}
+        }
         RTPPacket packet = RTPPacket.parseBytes(collection);
 
         if(packet == null)
         {
-			Log.info("decryptRTP collection is bad");
+            Log.info("decryptRTP collection is bad");
             return null;
-		}
+        }
 
         if(_rTPDecryption != null)
             packet.setPayload(_rTPDecryption.decrypt(packet.getPayload(), packet.getSynchronizationSource(), getRTPDecryptionPacketIndex(packet.getSequenceNumber())));

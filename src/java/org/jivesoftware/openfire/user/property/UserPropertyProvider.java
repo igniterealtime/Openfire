@@ -31,7 +31,7 @@ import java.util.Map;
  * this respect.
  *
  * <b>Warning:</b> in virtually all cases a user property provider should not be used directly. Instead, use the
- * Map returned by {@link User#getProperties() ) to create, read, update or delete user properties. Failure to do so
+ * Map returned by {@link User#getProperties()} to create, read, update or delete user properties. Failure to do so
  * is likely to result in inconsistent data behavior and race conditions. Direct access to the user property
  * provider is only provided for special-case logic.
  *

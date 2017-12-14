@@ -64,42 +64,42 @@ import java.util.zip.GZIPInputStream;
  */
 public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
 
-	private FeedFetcherCache feedInfoCache;
+    private FeedFetcherCache feedInfoCache;
     private CredentialSupplier credentialSupplier;
 
-	public HttpClientWithTimeoutFeedFetcher() {
-		super();
-	}
-
-	/**
-	 * @param cache
-	 */
-	public HttpClientWithTimeoutFeedFetcher(FeedFetcherCache cache) {
-		this();
-		setFeedInfoCache(cache);
-	}
-
-
-	public HttpClientWithTimeoutFeedFetcher(FeedFetcherCache cache, CredentialSupplier credentialSupplier) {
-	    this(cache);
-	    setCredentialSupplier(credentialSupplier);
-	}
-
-	/**
-	 * @return the feedInfoCache.
-	 */
-	public synchronized FeedFetcherCache getFeedInfoCache() {
-		return feedInfoCache;
-	}
+    public HttpClientWithTimeoutFeedFetcher() {
+        super();
+    }
 
     /**
-	 * @param feedInfoCache the feedInfoCache to set
-	 */
-	public synchronized void setFeedInfoCache(FeedFetcherCache feedInfoCache) {
-		this.feedInfoCache = feedInfoCache;
-	}
+     * @param cache
+     */
+    public HttpClientWithTimeoutFeedFetcher(FeedFetcherCache cache) {
+        this();
+        setFeedInfoCache(cache);
+    }
 
-	/**
+
+    public HttpClientWithTimeoutFeedFetcher(FeedFetcherCache cache, CredentialSupplier credentialSupplier) {
+        this(cache);
+        setCredentialSupplier(credentialSupplier);
+    }
+
+    /**
+     * @return the feedInfoCache.
+     */
+    public synchronized FeedFetcherCache getFeedInfoCache() {
+        return feedInfoCache;
+    }
+
+    /**
+     * @param feedInfoCache the feedInfoCache to set
+     */
+    public synchronized void setFeedInfoCache(FeedFetcherCache feedInfoCache) {
+        this.feedInfoCache = feedInfoCache;
+    }
+
+    /**
      * @return Returns the credentialSupplier.
      */
     public synchronized CredentialSupplier getCredentialSupplier() {
@@ -112,95 +112,95 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
         this.credentialSupplier = credentialSupplier;
     }
 
-	/**
-	 * @see com.sun.syndication.fetcher.FeedFetcher#retrieveFeed(java.net.URL)
-	 */
-	@Override
-	public SyndFeed retrieveFeed(URL feedUrl) throws IllegalArgumentException, IOException, FeedException, FetcherException {
-		if (feedUrl == null) {
-			throw new IllegalArgumentException("null is not a valid URL");
-		}
-		// TODO Fix this
-		//System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-		HttpClient client = new HttpClient();
+    /**
+     * @see com.sun.syndication.fetcher.FeedFetcher#retrieveFeed(java.net.URL)
+     */
+    @Override
+    public SyndFeed retrieveFeed(URL feedUrl) throws IllegalArgumentException, IOException, FeedException, FetcherException {
+        if (feedUrl == null) {
+            throw new IllegalArgumentException("null is not a valid URL");
+        }
+        // TODO Fix this
+        //System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+        HttpClient client = new HttpClient();
         HttpConnectionManager conManager = client.getHttpConnectionManager();
         conManager.getParams().setParameter("http.connection.timeout", 3000);
         conManager.getParams().setParameter("http.socket.timeout", 3000);
 
         if (getCredentialSupplier() != null) {
-			client.getState().setAuthenticationPreemptive(true);
-			// TODO what should realm be here?
-			Credentials credentials = getCredentialSupplier().getCredentials(null, feedUrl.getHost());
-			if (credentials != null) {
-			    client.getState().setCredentials(null, feedUrl.getHost(), credentials);
-			}
-		}
+            client.getState().setAuthenticationPreemptive(true);
+            // TODO what should realm be here?
+            Credentials credentials = getCredentialSupplier().getCredentials(null, feedUrl.getHost());
+            if (credentials != null) {
+                client.getState().setCredentials(null, feedUrl.getHost(), credentials);
+            }
+        }
 
 
         System.setProperty("httpclient.useragent", "Openfire Admin Console: v" +
                 XMPPServer.getInstance().getServerInfo().getVersion().getVersionString());
         String urlStr = feedUrl.toString();
-		FeedFetcherCache cache = getFeedInfoCache();
-		if (cache != null) {
-			// retrieve feed
-			HttpMethod method = new GetMethod(urlStr);
-			method.addRequestHeader("Accept-Encoding", "gzip");
-			try {
-				if (isUsingDeltaEncoding()) {
-				    method.setRequestHeader("A-IM", "feed");
-				}
+        FeedFetcherCache cache = getFeedInfoCache();
+        if (cache != null) {
+            // retrieve feed
+            HttpMethod method = new GetMethod(urlStr);
+            method.addRequestHeader("Accept-Encoding", "gzip");
+            try {
+                if (isUsingDeltaEncoding()) {
+                    method.setRequestHeader("A-IM", "feed");
+                }
 
-				// get the feed info from the cache
-			    // Note that syndFeedInfo will be null if it is not in the cache
-				SyndFeedInfo syndFeedInfo = cache.getFeedInfo(feedUrl);
-			    if (syndFeedInfo != null) {
-				    method.setRequestHeader("If-None-Match", syndFeedInfo.getETag());
+                // get the feed info from the cache
+                // Note that syndFeedInfo will be null if it is not in the cache
+                SyndFeedInfo syndFeedInfo = cache.getFeedInfo(feedUrl);
+                if (syndFeedInfo != null) {
+                    method.setRequestHeader("If-None-Match", syndFeedInfo.getETag());
 
-				    if (syndFeedInfo.getLastModified() instanceof String) {
-				        method.setRequestHeader("If-Modified-Since", (String)syndFeedInfo.getLastModified());
-				    }
-			    }
+                    if (syndFeedInfo.getLastModified() instanceof String) {
+                        method.setRequestHeader("If-Modified-Since", (String)syndFeedInfo.getLastModified());
+                    }
+                }
 
-			    method.setFollowRedirects(true);
+                method.setFollowRedirects(true);
 
-				int statusCode = client.executeMethod(method);
-				fireEvent(FetcherEvent.EVENT_TYPE_FEED_POLLED, urlStr);
-				handleErrorCodes(statusCode);
+                int statusCode = client.executeMethod(method);
+                fireEvent(FetcherEvent.EVENT_TYPE_FEED_POLLED, urlStr);
+                handleErrorCodes(statusCode);
 
-			    SyndFeed feed = getFeed(syndFeedInfo, urlStr, method, statusCode);
+                SyndFeed feed = getFeed(syndFeedInfo, urlStr, method, statusCode);
 
-				syndFeedInfo = buildSyndFeedInfo(feedUrl, urlStr, method, feed, statusCode);
+                syndFeedInfo = buildSyndFeedInfo(feedUrl, urlStr, method, feed, statusCode);
 
-				cache.setFeedInfo(new URL(urlStr), syndFeedInfo);
+                cache.setFeedInfo(new URL(urlStr), syndFeedInfo);
 
-				// the feed may have been modified to pick up cached values
-				// (eg - for delta encoding)
-				feed = syndFeedInfo.getSyndFeed();
+                // the feed may have been modified to pick up cached values
+                // (eg - for delta encoding)
+                feed = syndFeedInfo.getSyndFeed();
 
-				return feed;
-			} finally {
-				method.releaseConnection();
-			}
+                return feed;
+            } finally {
+                method.releaseConnection();
+            }
 
-		} else {
-		    // cache is not in use
-			HttpMethod method = new GetMethod(urlStr);
-			try {
-			    method.setFollowRedirects(true);
+        } else {
+            // cache is not in use
+            HttpMethod method = new GetMethod(urlStr);
+            try {
+                method.setFollowRedirects(true);
 
-				int statusCode = client.executeMethod(method);
-				fireEvent(FetcherEvent.EVENT_TYPE_FEED_POLLED, urlStr);
-				handleErrorCodes(statusCode);
+                int statusCode = client.executeMethod(method);
+                fireEvent(FetcherEvent.EVENT_TYPE_FEED_POLLED, urlStr);
+                handleErrorCodes(statusCode);
 
-				return getFeed(null, urlStr, method, statusCode);
-			} finally {
-				method.releaseConnection();
-			}
-		}
-	}
+                return getFeed(null, urlStr, method, statusCode);
+            } finally {
+                method.releaseConnection();
+            }
+        }
+    }
 
 
-	/**
+    /**
      * @param feedUrl
      * @param urlStr
      * @param method
@@ -218,19 +218,19 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
 
         Header imHeader = method.getResponseHeader("IM");
         if (imHeader != null && imHeader.getValue().indexOf("feed") >= 0 && isUsingDeltaEncoding()) {
-			FeedFetcherCache cache = getFeedInfoCache();
-			if (cache != null && statusCode == 226) {
-			    // client is setup to use http delta encoding and the server supports it and has returned a delta encoded response
-			    // This response only includes new items
-			    SyndFeedInfo cachedInfo = cache.getFeedInfo(feedUrl);
-			    if (cachedInfo != null) {
-				    SyndFeed cachedFeed = cachedInfo.getSyndFeed();
+            FeedFetcherCache cache = getFeedInfoCache();
+            if (cache != null && statusCode == 226) {
+                // client is setup to use http delta encoding and the server supports it and has returned a delta encoded response
+                // This response only includes new items
+                SyndFeedInfo cachedInfo = cache.getFeedInfo(feedUrl);
+                if (cachedInfo != null) {
+                    SyndFeed cachedFeed = cachedInfo.getSyndFeed();
 
-				    // set the new feed to be the orginal feed plus the new items
-				    feed = combineFeeds(cachedFeed, feed);
-			    }
-			}
-		}
+                    // set the new feed to be the orginal feed plus the new items
+                    feed = combineFeeds(cachedFeed, feed);
+                }
+            }
+        }
 
         Header lastModifiedHeader = method.getResponseHeader("Last-Modified");
         if (lastModifiedHeader != null) {
@@ -248,48 +248,48 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
     }
 
     /**
-	 * @param urlStr
-	 * @param method
-	 * @return SyndFeed or None
-	 * @throws IOException
-	 * @throws HttpException
-	 * @throws FetcherException
-	 * @throws FeedException
-	 */
-	private static SyndFeed retrieveFeed(String urlStr, HttpMethod method) throws IOException, HttpException, FetcherException, FeedException {
+     * @param urlStr
+     * @param method
+     * @return SyndFeed or None
+     * @throws IOException
+     * @throws HttpException
+     * @throws FetcherException
+     * @throws FeedException
+     */
+    private static SyndFeed retrieveFeed(String urlStr, HttpMethod method) throws IOException, HttpException, FetcherException, FeedException {
 
-		InputStream stream = null;
-		if ((method.getResponseHeader("Content-Encoding") != null) && ("gzip".equalsIgnoreCase(method.getResponseHeader("Content-Encoding").getValue()))) {
-		    stream = new GZIPInputStream(method.getResponseBodyAsStream());
-		} else {
-		    stream = method.getResponseBodyAsStream();
-		}
-		try {
-		    XmlReader reader = null;
-		    if (method.getResponseHeader("Content-Type") != null) {
-		        reader = new XmlReader(stream, method.getResponseHeader("Content-Type").getValue(), true);
-		    } else {
-		        reader = new XmlReader(stream, true);
-		    }
-			return new SyndFeedInput().build(reader);
-		} finally {
-		    if (stream != null) {
-		        stream.close();
-		    }
-		}
-	}
+        InputStream stream = null;
+        if ((method.getResponseHeader("Content-Encoding") != null) && ("gzip".equalsIgnoreCase(method.getResponseHeader("Content-Encoding").getValue()))) {
+            stream = new GZIPInputStream(method.getResponseBodyAsStream());
+        } else {
+            stream = method.getResponseBodyAsStream();
+        }
+        try {
+            XmlReader reader = null;
+            if (method.getResponseHeader("Content-Type") != null) {
+                reader = new XmlReader(stream, method.getResponseHeader("Content-Type").getValue(), true);
+            } else {
+                reader = new XmlReader(stream, true);
+            }
+            return new SyndFeedInput().build(reader);
+        } finally {
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
 
-	private SyndFeed getFeed(SyndFeedInfo syndFeedInfo, String urlStr, HttpMethod method, int statusCode) throws IOException, HttpException, FetcherException, FeedException {
+    private SyndFeed getFeed(SyndFeedInfo syndFeedInfo, String urlStr, HttpMethod method, int statusCode) throws IOException, HttpException, FetcherException, FeedException {
 
-		if (statusCode == HttpURLConnection.HTTP_NOT_MODIFIED && syndFeedInfo != null) {
-		    fireEvent(FetcherEvent.EVENT_TYPE_FEED_UNCHANGED, urlStr);
-		    return syndFeedInfo.getSyndFeed();
-		}
+        if (statusCode == HttpURLConnection.HTTP_NOT_MODIFIED && syndFeedInfo != null) {
+            fireEvent(FetcherEvent.EVENT_TYPE_FEED_UNCHANGED, urlStr);
+            return syndFeedInfo.getSyndFeed();
+        }
 
-		SyndFeed feed = retrieveFeed(urlStr, method);
-		fireEvent(FetcherEvent.EVENT_TYPE_FEED_RETRIEVED, urlStr, feed);
-		return feed;
-	}
+        SyndFeed feed = retrieveFeed(urlStr, method);
+        fireEvent(FetcherEvent.EVENT_TYPE_FEED_RETRIEVED, urlStr, feed);
+        return feed;
+    }
 
     public interface CredentialSupplier {
         Credentials getCredentials( String realm, String host );

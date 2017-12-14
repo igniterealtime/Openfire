@@ -571,13 +571,13 @@ public class FlowWriter
     {
     }
 
-	public int D()
-	{
-		synchronized (this.P)
-		{
-		  return this.P.size();
-		}
-	}
+    public int D()
+    {
+        synchronized (this.P)
+        {
+          return this.P.size();
+        }
+    }
 
     public int E()
     {

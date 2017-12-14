@@ -77,12 +77,14 @@
                 sess.close();
             }
 
-            Session sess = sessionManager.getOutgoingServerSession(hostname);
-            if (sess != null) {
-                sess.close();
+            Collection<OutgoingServerSession> sessions = sessionManager.getOutgoingServerSessions(hostname);
+            for (OutgoingServerSession sess : sessions) {
+                if (sess != null) {
+                    sess.close();
+                }
             }
             // Log the event
-            webManager.logEvent("closed server session for "+hostname, null);
+            webManager.logEvent("closed server sessions for "+hostname, null);
             // wait one second
             Thread.sleep(1000L);
         }
@@ -194,8 +196,8 @@
         for (String host : hostnames) {
             count++;
             List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);
-            OutgoingServerSession outSession = sessionManager.getOutgoingServerSession(host);
-            if (inSessions.isEmpty() && outSession == null) {
+            List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(host);
+            if (inSessions.isEmpty() && outSessions.isEmpty()) {
                 // If the connections were just closed then skip this host
                 continue;
             }

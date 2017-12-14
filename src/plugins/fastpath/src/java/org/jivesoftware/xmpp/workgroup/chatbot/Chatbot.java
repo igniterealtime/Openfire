@@ -108,8 +108,8 @@ import org.xmpp.packet.Message;
  */
 public class Chatbot implements UserCommunicationMethod {
 
-	private static final Logger Log = LoggerFactory.getLogger(Chatbot.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Chatbot.class);
+    
     /**
      * Holds the workgroup where the chatbot is working. This is a one-to-one relation so this
      * chatbot is the only chatbot that will be answering Messages sent to the workgroup.

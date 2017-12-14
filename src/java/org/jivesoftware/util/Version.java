@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public final class Version implements Comparable<Version> {
 
     private static final Pattern PATTERN = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)(?:\\s+(\\w+))?(?:\\s+(\\d+))?");
+    private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("(?i)(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?-SNAPSHOT");
 
     /**
      * The major number (ie 1.x.x).
@@ -111,16 +112,22 @@ public final class Version implements Comparable<Version> {
                 } else {
                     this.statusVersion = -1;
                 }
-            } else {
-                this.major = this.minor = this.micro = 0;
-                this.statusVersion = -1;
-                this.status = ReleaseStatus.Release;
+                return;
             }
-        } else {
-            this.major = this.minor = this.micro = 0;
-            this.statusVersion = -1;
-            this.status = ReleaseStatus.Release;
+            final Matcher snapshotMatcher = SNAPSHOT_PATTERN.matcher(source);
+            if (snapshotMatcher.matches()) {
+                major = Integer.parseInt(snapshotMatcher.group(1));
+                minor = Integer.parseInt(snapshotMatcher.group(2));
+                micro = Integer.parseInt(snapshotMatcher.group(3));
+                status = ReleaseStatus.Snapshot;
+                final String statusVersionString = snapshotMatcher.group(4);
+                statusVersion = statusVersionString == null ? -1 : Integer.parseInt(statusVersionString);
+                return;
+            }
         }
+        this.major = this.minor = this.micro = 0;
+        this.statusVersion = -1;
+        this.status = ReleaseStatus.Release;
     }
 
     /**
@@ -130,17 +137,22 @@ public final class Version implements Comparable<Version> {
      * @return The version as a string
      */
     public String getVersionString() {
-    	if (versionString == null) {
+        if (versionString == null) {
             StringBuilder sb = new StringBuilder();
             sb.append(major).append('.').append(minor).append('.').append(micro);
-            if (status != ReleaseStatus.Release || statusVersion != -1) {
+            if(status == ReleaseStatus.Snapshot) {
+                if (statusVersion >= 0) {
+                    sb.append('.').append(statusVersion);
+                }
+                sb.append("-SNAPSHOT");
+            } else if (status != ReleaseStatus.Release || statusVersion != -1) {
                 sb.append(' ').append(status);
                 if (statusVersion >= 0) {
                     sb.append(' ').append(statusVersion);
                 }
             }
             versionString = sb.toString();
-    	}
+        }
         return versionString;
     }
 
@@ -196,7 +208,7 @@ public final class Version implements Comparable<Version> {
      * are indicated by type safe enum constants.
      */
     public enum ReleaseStatus {
-        Release("Release"), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha");
+        Release("Release"), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha"), Snapshot("Snapshot");
 
         private String status;
 
@@ -205,7 +217,7 @@ public final class Version implements Comparable<Version> {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return status;
         }
     }
@@ -216,7 +228,7 @@ public final class Version implements Comparable<Version> {
      * @param otherVersion a verion to comapr against
      */
     public boolean isNewerThan(Version otherVersion) {
-    	return this.compareTo(otherVersion) > 0;
+        return this.compareTo(otherVersion) > 0;
     }
 
     @Override

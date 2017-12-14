@@ -18,28 +18,28 @@ public class MsgArchiveController {
     /** The Constant LOG. */
     private static final Logger LOG = LoggerFactory.getLogger(MsgArchiveController.class);
 
-	/** The Constant INSTANCE. */
-	public static final MsgArchiveController INSTANCE = new MsgArchiveController();
+    /** The Constant INSTANCE. */
+    public static final MsgArchiveController INSTANCE = new MsgArchiveController();
 
     /** The Constant USER_MESSAGE_COUNT. */
     private static final String USER_MESSAGE_COUNT = "select COUNT(1) from ofMessageArchive a " +
             "join ofPresence p on (a.sentDate > p.offlineDate) " +
             "WHERE a.toJID = ? AND p.username = ?";
 
-	/**
-	 * Gets the single instance of MsgArchiveController.
-	 *
-	 * @return single instance of MsgArchiveController
-	 */
-	public static MsgArchiveController getInstance() {
-		return INSTANCE;
-	}
+    /**
+     * Gets the single instance of MsgArchiveController.
+     *
+     * @return single instance of MsgArchiveController
+     */
+    public static MsgArchiveController getInstance() {
+        return INSTANCE;
+    }
 
-	/**
-	 * The Constructor.
-	 */
-	private MsgArchiveController() {
-	}
+    /**
+     * The Constructor.
+     */
+    private MsgArchiveController() {
+    }
 
     /**
      * Returns the total number of messages that haven't been delivered to the user.

@@ -211,9 +211,9 @@ public class ServerSession implements ISession
         for(Iterator iterator = C.keySet().iterator(); iterator.hasNext(); ((com.jcumulus.server.rtmfp.publisher.FlowWriter)C.get(integer)).I())
             integer = (Integer)iterator.next();
 
-    	this.M.A((com.jcumulus.server.rtmfp.publisher.FlowWriter)null);
-    	this.M.J();
-    	this.U = true;
+        this.M.A((com.jcumulus.server.rtmfp.publisher.FlowWriter)null);
+        this.M.J();
+        this.U = true;
 
         if(!Strings.isNullOrEmpty(s))
         {

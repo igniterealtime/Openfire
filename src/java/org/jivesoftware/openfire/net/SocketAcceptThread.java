@@ -82,7 +82,7 @@ public class SocketAcceptThread extends Thread {
      * call getting sockets and handing them to the SocketManager.
      */
     @Override
-	public void run() {
+    public void run() {
         acceptingMode.run();
         // We stopped accepting new connections so close the listener
         shutdown();

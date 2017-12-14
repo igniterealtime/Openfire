@@ -42,6 +42,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -58,7 +59,7 @@ import org.xmpp.packet.Packet;
  */
 public class NIOConnection implements Connection {
 
-	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
+    private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
     private ConnectionConfiguration configuration;
 
     /**
@@ -266,8 +267,19 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    public void reinit(LocalSession owner) {
+        session = owner;
+        StanzaHandler stanzaHandler = getStanzaHandler();
+        stanzaHandler.setSession(owner);
+    }
+
+    protected StanzaHandler getStanzaHandler() {
+        return (StanzaHandler)ioSession.getAttribute(ConnectionHandler.HANDLER);
+    }
+
+    @Override
     public boolean isClosed() {
-    	return state.get() == State.CLOSED;
+        return state.get() == State.CLOSED;
     }
 
     @Override
@@ -278,7 +290,7 @@ public class NIOConnection implements Connection {
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-        	backupDeliverer.deliver(packet);
+            backupDeliverer.deliver(packet);
         }
         else {
             boolean errorDelivering = false;
@@ -353,7 +365,7 @@ public class NIOConnection implements Connection {
     }
 
     @Deprecated
-	@Override
+    @Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         startTLS( clientMode );
     }
@@ -453,17 +465,17 @@ public class NIOConnection implements Connection {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " MINA Session: " + ioSession;
     }
 
     private static class ThreadLocalEncoder extends ThreadLocal<CharsetEncoder> {
 
         @Override
-		protected CharsetEncoder initialValue() {
+        protected CharsetEncoder initialValue() {
             return StandardCharsets.UTF_8.newEncoder()
-				.onMalformedInput(CodingErrorAction.REPORT)
-				.onUnmappableCharacter(CodingErrorAction.REPORT);
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
         }
     }
 }

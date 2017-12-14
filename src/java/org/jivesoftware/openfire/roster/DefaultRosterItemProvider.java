@@ -51,7 +51,7 @@ import org.xmpp.packet.JID;
  */
 public class DefaultRosterItemProvider implements RosterItemProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultRosterItemProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultRosterItemProvider.class);
 
     private static final String CREATE_ROSTER_ITEM =
             "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick) " +
@@ -76,10 +76,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
              "WHERE username=? ORDER BY ofRosterGroups.rosterID, rank";
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
-	 */
-	@Override
-	public RosterItem createItem(String username, RosterItem item)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
+     */
+    @Override
+    public RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException
     {
         Connection con = null;
@@ -111,10 +111,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
-	 */
-	@Override
-	public void updateItem(String username, RosterItem item) throws UserNotFoundException {
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
+     */
+    @Override
+    public void updateItem(String username, RosterItem item) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         long rosterID = item.getID();
@@ -147,10 +147,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#deleteItem(java.lang.String, long)
-	 */
-	@Override
-	public void deleteItem(String username, long rosterItemID) {
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#deleteItem(java.lang.String, long)
+     */
+    @Override
+    public void deleteItem(String username, long rosterItemID) {
         // Only try to remove the user if they exist in the roster already:
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -179,10 +179,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getUsernames(java.lang.String)
-	 */
-	@Override
-	public Iterator<String> getUsernames(String jid) {
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getUsernames(java.lang.String)
+     */
+    @Override
+    public Iterator<String> getUsernames(String jid) {
         List<String> answer = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -206,10 +206,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItemCount(java.lang.String)
-	 */
-	@Override
-	public int getItemCount(String username) {
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItemCount(java.lang.String)
+     */
+    @Override
+    public int getItemCount(String username) {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -233,10 +233,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItems(java.lang.String)
-	 */
-	@Override
-	public Iterator<RosterItem> getItems(String username) {
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItems(java.lang.String)
+     */
+    @Override
+    public Iterator<RosterItem> getItems(String username) {
         LinkedList<RosterItem> itemList = new LinkedList<>();
         Map<Long, RosterItem> itemsByID = new HashMap<>();
         Connection con = null;
@@ -271,8 +271,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             // Load the groups for the loaded contact
             if (!itemList.isEmpty()) {
-            	pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
-            	pstmt.setString(1, username);
+                pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+                pstmt.setString(1, username);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
                     itemsByID.get(rs.getLong(1)).getGroups().add(rs.getString(2));

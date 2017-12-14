@@ -27,9 +27,9 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 public class XMPPPPacketReaderFactory extends BasePooledObjectFactory<XMPPPacketReader> {
 
-	private static Logger Log = LoggerFactory.getLogger( XMPPPPacketReaderFactory.class );
+    private static Logger Log = LoggerFactory.getLogger( XMPPPPacketReaderFactory.class );
 
-	private static XmlPullParserFactory xppFactory = null;
+    private static XmlPullParserFactory xppFactory = null;
     static {
         try {
             xppFactory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
@@ -41,30 +41,30 @@ public class XMPPPPacketReaderFactory extends BasePooledObjectFactory<XMPPPacket
     }
 
     //-- BasePooledObjectFactory implementation 
-	
-	@Override
-	public XMPPPacketReader create() throws Exception {
-		XMPPPacketReader parser = new XMPPPacketReader();
+    
+    @Override
+    public XMPPPacketReader create() throws Exception {
+        XMPPPacketReader parser = new XMPPPacketReader();
         parser.setXPPFactory( xppFactory );
         return parser;
-	}
+    }
 
-	@Override
-	public PooledObject<XMPPPacketReader> wrap(XMPPPacketReader reader) {
-		return new DefaultPooledObject<XMPPPacketReader>(reader);
-	}
+    @Override
+    public PooledObject<XMPPPacketReader> wrap(XMPPPacketReader reader) {
+        return new DefaultPooledObject<XMPPPacketReader>(reader);
+    }
 
-	@Override
-	public boolean validateObject(PooledObject<XMPPPacketReader> po) {
-		// reset the input for the pooled parser
-		try {
-			po.getObject().getXPPParser().resetInput();
-			return true;
-		} catch (XmlPullParserException xppe) {
-			Log.error("Failed to reset pooled parser; evicting from pool", xppe);
-			return false;
-		}
-	}
+    @Override
+    public boolean validateObject(PooledObject<XMPPPacketReader> po) {
+        // reset the input for the pooled parser
+        try {
+            po.getObject().getXPPParser().resetInput();
+            return true;
+        } catch (XmlPullParserException xppe) {
+            Log.error("Failed to reset pooled parser; evicting from pool", xppe);
+            return false;
+        }
+    }
 
 
 }

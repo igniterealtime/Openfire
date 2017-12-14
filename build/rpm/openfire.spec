@@ -10,7 +10,7 @@ Source1: %{JRE_BUNDLE}
 %ifarch noarch
 # Note that epoch is set here to 1, this appears to be consistent with non-Redhat
 # jres as well due to an ancient problem with java-1.5.0-ibm jpackage RPM
-Requires: java-headless >= 1:1.7.0
+Requires: java >= 1:1.7.0
 %endif
 Group: Applications/Communications
 Vendor: Igniterealtime Community

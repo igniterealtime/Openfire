@@ -33,7 +33,7 @@ public class DirectCallHandler extends Thread implements CallEventListener {
     private DirectCallEventListener listener;
 
     public DirectCallHandler(CallParticipant cp, DirectCallEventListener ln) {
-	this.cp = cp;
+    this.cp = cp;
         listener = ln;
     }
 
@@ -64,22 +64,22 @@ public class DirectCallHandler extends Thread implements CallEventListener {
 
         CallParticipant cp2 = new CallParticipant();
 
-	cp2.setCallAnswerTimeout(cp.getCallAnswerTimeout());
-	cp2.setCallAnsweredTreatment(cp.getSecondPartyTreatment());
-	cp2.setCallEndTreatment(cp.getSecondPartyCallEndTreatment());
-	cp2.setCallId(cp.getSecondPartyCallId());
-	cp2.setConferenceId(cp.getConferenceId());
-	if (cp.getSecondPartyName() != null) {
-	    cp2.setName(cp.getSecondPartyName());
-	} else {
-	    cp2.setName(cp.getSecondPartyNumber());
-	}
-	cp2.setDisplayName(cp.getName());
-	if (cp2.getCallId() == null) {
-	    cp2.setCallId(CallHandler.getNewCallId());
-	}
-	cp2.setPhoneNumber(cp.getSecondPartyNumber());
-	cp2.setVoiceDetection(cp.getSecondPartyVoiceDetection());
+    cp2.setCallAnswerTimeout(cp.getCallAnswerTimeout());
+    cp2.setCallAnsweredTreatment(cp.getSecondPartyTreatment());
+    cp2.setCallEndTreatment(cp.getSecondPartyCallEndTreatment());
+    cp2.setCallId(cp.getSecondPartyCallId());
+    cp2.setConferenceId(cp.getConferenceId());
+    if (cp.getSecondPartyName() != null) {
+        cp2.setName(cp.getSecondPartyName());
+    } else {
+        cp2.setName(cp.getSecondPartyNumber());
+    }
+    cp2.setDisplayName(cp.getName());
+    if (cp2.getCallId() == null) {
+        cp2.setCallId(CallHandler.getNewCallId());
+    }
+    cp2.setPhoneNumber(cp.getSecondPartyNumber());
+    cp2.setVoiceDetection(cp.getSecondPartyVoiceDetection());
 
         ch2 = new DirectOutgoingCallHandler(cp2);
         ch1.setOtherCall(ch2);

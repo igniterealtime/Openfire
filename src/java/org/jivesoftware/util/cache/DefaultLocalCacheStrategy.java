@@ -94,7 +94,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     @Override
     public long getClusterTime() {
-    	return System.currentTimeMillis();
+        return System.currentTimeMillis();
     }
 
     @Override
@@ -120,10 +120,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     public void updateCacheStats(Map<String, Cache> caches) {
     }
 
-	@Override
-	public String getPluginName() {
-		return "local";
-	}
+    @Override
+    public String getPluginName() {
+        return "local";
+    }
 
     @Override
     public Lock getLock(Object key, Cache cache) {
@@ -132,20 +132,20 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
             lockKey = ((String) key).intern();
         }
 
-		return new LocalLock(lockKey);
+        return new LocalLock(lockKey);
     }
 
-	private void acquireLock(Object key) {
-		ReentrantLock lock = lookupLockForAcquire(key);
-		lock.lock();
-	}
+    private void acquireLock(Object key) {
+        ReentrantLock lock = lookupLockForAcquire(key);
+        lock.lock();
+    }
 
-	private void releaseLock(Object key) {
-		ReentrantLock lock = lookupLockForRelease(key);
-		lock.unlock();
-	}
+    private void releaseLock(Object key) {
+        ReentrantLock lock = lookupLockForRelease(key);
+        lock.unlock();
+    }
 
-	private ReentrantLock lookupLockForAcquire(Object key) {
+    private ReentrantLock lookupLockForAcquire(Object key) {
         synchronized(key) {
             LockAndCount lac = locks.get(key);
             if (lac == null) {
@@ -161,7 +161,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
     }
 
-	private ReentrantLock lookupLockForRelease(Object key) {
+    private ReentrantLock lookupLockForRelease(Object key) {
         synchronized(key) {
             LockAndCount lac = locks.get(key);
             if (lac == null) {
@@ -181,43 +181,43 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
 
     private class LocalLock implements Lock {
-		private final Object key;
+        private final Object key;
 
-		LocalLock(Object key) {
-			this.key = key;
-		}
+        LocalLock(Object key) {
+            this.key = key;
+        }
 
-		@Override
-		public void lock(){
-			acquireLock(key);
-		}
+        @Override
+        public void lock(){
+            acquireLock(key);
+        }
 
-		@Override
-		public void	unlock() {
-			releaseLock(key);
-		}
+        @Override
+        public void	unlock() {
+            releaseLock(key);
+        }
 
         @Override
         public void	lockInterruptibly(){
-			throw new UnsupportedOperationException();
-		}
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public Condition newCondition(){
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public Condition newCondition(){
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public boolean 	tryLock() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public boolean 	tryLock() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public boolean 	tryLock(long time, TimeUnit unit) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public boolean 	tryLock(long time, TimeUnit unit) {
+            throw new UnsupportedOperationException();
+        }
 
-	}
+    }
 
     private static class LockAndCount {
         final ReentrantLock lock;
@@ -228,9 +228,9 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
     }
 
-	@Override
-	public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
-		// not clustered
-		return null;
-	}
+    @Override
+    public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
+        // not clustered
+        return null;
+    }
 }

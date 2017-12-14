@@ -6073,45 +6073,45 @@ Strophe.addConnectionPlugin("disco", {
  */
 Strophe.addConnectionPlugin("caps", {
     /** Constant: HASH
-	 * Hash used
-	 *
-	 * Currently only sha-1 is supported.
-	 */
+     * Hash used
+     *
+     * Currently only sha-1 is supported.
+     */
     HASH: "sha-1",
     /** Variable: node
-	 * Client which is being used.
-	 *
-	 * Can be overwritten as soon as Strophe has been initialized.
-	 */
+     * Client which is being used.
+     *
+     * Can be overwritten as soon as Strophe has been initialized.
+     */
     node: "http://strophe.im/strophejs/",
     /** PrivateVariable: _ver
-	 * Own generated version string
-	 */
+     * Own generated version string
+     */
     _ver: "",
     /** PrivateVariable: _connection
-	 * Strophe connection
-	 */
+     * Strophe connection
+     */
     _connection: null,
     /** PrivateVariable: _knownCapabilities
-	 * A hashtable containing version-strings and their capabilities, serialized
-	 * as string.
-	 *
-	 * TODO: Maybe those caps shouldn't be serialized.
-	 */
+     * A hashtable containing version-strings and their capabilities, serialized
+     * as string.
+     *
+     * TODO: Maybe those caps shouldn't be serialized.
+     */
     _knownCapabilities: {},
     /** PrivateVariable: _jidVerIndex
-	 * A hashtable containing jids and their versions for better lookup of capabilities.
-	 */
+     * A hashtable containing jids and their versions for better lookup of capabilities.
+     */
     _jidVerIndex: {},
     /** Function: init
-	 * Initialize plugin:
-	 *   - Add caps namespace
-	 *   - Add caps feature to disco plugin
-	 *   - Add handler for caps stanzas
-	 *
-	 * Parameters:
-	 *   (Strophe.Connection) conn - Strophe connection
-	 */
+     * Initialize plugin:
+     *   - Add caps namespace
+     *   - Add caps feature to disco plugin
+     *   - Add handler for caps stanzas
+     *
+     * Parameters:
+     *   (Strophe.Connection) conn - Strophe connection
+     */
     init: function(conn) {
         this._connection = conn;
         Strophe.addNamespace("CAPS", "http://jabber.org/protocol/caps");
@@ -6122,11 +6122,11 @@ Strophe.addConnectionPlugin("caps", {
         this._connection.addHandler(this._delegateCapabilities.bind(this), Strophe.NS.CAPS);
     },
     /** Function: generateCapsAttrs
-	 * Returns the attributes for generating the "c"-stanza containing the own version
-	 *
-	 * Returns:
-	 *   (Object) - attributes
-	 */
+     * Returns the attributes for generating the "c"-stanza containing the own version
+     *
+     * Returns:
+     *   (Object) - attributes
+     */
     generateCapsAttrs: function() {
         return {
             xmlns: Strophe.NS.CAPS,
@@ -6136,11 +6136,11 @@ Strophe.addConnectionPlugin("caps", {
         };
     },
     /** Function: generateVer
-	 * Returns the base64 encoded version string (encoded itself with sha1)
-	 *
-	 * Returns:
-	 *   (String) - version
-	 */
+     * Returns the base64 encoded version string (encoded itself with sha1)
+     *
+     * Returns:
+     *   (String) - version
+     */
     generateVer: function() {
         if (this._ver !== "") {
             return this._ver;
@@ -6157,15 +6157,15 @@ Strophe.addConnectionPlugin("caps", {
         return this._ver;
     },
     /** Function: getCapabilitiesByJid
-	 * Returns serialized capabilities of a jid (if available).
-	 * Otherwise null.
-	 *
-	 * Parameters:
-	 *   (String) jid - Jabber id
-	 *
-	 * Returns:
-	 *   (String|null) - capabilities, serialized; or null when not available.
-	 */
+     * Returns serialized capabilities of a jid (if available).
+     * Otherwise null.
+     *
+     * Parameters:
+     *   (String) jid - Jabber id
+     *
+     * Returns:
+     *   (String|null) - capabilities, serialized; or null when not available.
+     */
     getCapabilitiesByJid: function(jid) {
         if (this._jidVerIndex[jid]) {
             return this._knownCapabilities[this._jidVerIndex[jid]];
@@ -6173,16 +6173,16 @@ Strophe.addConnectionPlugin("caps", {
         return null;
     },
     /** PrivateFunction: _delegateCapabilities
-	 * Checks if the version has already been saved.
-	 * If yes: do nothing.
-	 * If no: Request capabilities
-	 *
-	 * Parameters:
-	 *   (Strophe.Builder) stanza - Stanza
-	 *
-	 * Returns:
-	 *   (Boolean)
-	 */
+     * Checks if the version has already been saved.
+     * If yes: do nothing.
+     * If no: Request capabilities
+     *
+     * Parameters:
+     *   (Strophe.Builder) stanza - Stanza
+     *
+     * Returns:
+     *   (Boolean)
+     */
     _delegateCapabilities: function(stanza) {
         var from = stanza.getAttribute("from"), c = stanza.querySelector("c"), ver = c.getAttribute("ver"), node = c.getAttribute("node");
         if (!this._knownCapabilities[ver]) {
@@ -6196,19 +6196,19 @@ Strophe.addConnectionPlugin("caps", {
         return true;
     },
     /** PrivateFunction: _requestCapabilities
-	 * Requests capabilities from the one which sent the caps-info stanza.
-	 * This is done using disco info.
-	 *
-	 * Additionally, it registers a handler for handling the reply.
-	 *
-	 * Parameters:
-	 *   (String) to - Destination jid
-	 *   (String) node - Node attribute of the caps-stanza
-	 *   (String) ver - Version of the caps-stanza
-	 *
-	 * Returns:
-	 *   (Boolean) - true
-	 */
+     * Requests capabilities from the one which sent the caps-info stanza.
+     * This is done using disco info.
+     *
+     * Additionally, it registers a handler for handling the reply.
+     *
+     * Parameters:
+     *   (String) to - Destination jid
+     *   (String) node - Node attribute of the caps-stanza
+     *   (String) ver - Version of the caps-stanza
+     *
+     * Returns:
+     *   (Boolean) - true
+     */
     _requestCapabilities: function(to, node, ver) {
         if (to !== this._connection.jid) {
             var id = this._connection.disco.info(to, node + "#" + ver);
@@ -6217,15 +6217,15 @@ Strophe.addConnectionPlugin("caps", {
         return true;
     },
     /** PrivateFunction: _handleDiscoInfoReply
-	 * Parses the disco info reply and adds the version & it's capabilities to the _knownCapabilities variable.
-	 * Additionally, it adds the jid & the version to the _jidVerIndex variable for a better lookup.
-	 *
-	 * Parameters:
-	 *   (Strophe.Builder) stanza - Disco info stanza
-	 *
-	 * Returns:
-	 *   (Boolean) - false, to automatically remove the handler.
-	 */
+     * Parses the disco info reply and adds the version & it's capabilities to the _knownCapabilities variable.
+     * Additionally, it adds the jid & the version to the _jidVerIndex variable for a better lookup.
+     *
+     * Parameters:
+     *   (Strophe.Builder) stanza - Disco info stanza
+     *
+     * Returns:
+     *   (Boolean) - false, to automatically remove the handler.
+     */
     _handleDiscoInfoReply: function(stanza) {
         var query = stanza.querySelector("query"), node = query.getAttribute("node").split("#"), ver = node[1], from = stanza.getAttribute("from");
         if (!this._knownCapabilities[ver]) {
@@ -6245,15 +6245,15 @@ Strophe.addConnectionPlugin("caps", {
         return false;
     },
     /** PrivateFunction: _sortIdentities
-	 * Sorts two identities according the sorting requirements in XEP-0115.
-	 *
-	 * Parameters:
-	 *   (Object) a - Identity a
-	 *   (Object) b - Identity b
-	 *
-	 * Returns:
-	 *   (Integer) - 1, 0 or -1; according to which one's greater.
-	 */
+     * Sorts two identities according the sorting requirements in XEP-0115.
+     *
+     * Parameters:
+     *   (Object) a - Identity a
+     *   (Object) b - Identity b
+     *
+     * Returns:
+     *   (Integer) - 1, 0 or -1; according to which one's greater.
+     */
     _sortIdentities: function(a, b) {
         if (a.category > b.category) {
             return 1;

@@ -346,7 +346,7 @@
 <body>
 
 <p>
-	<fmt:message key="group.edit.form_info" />
+    <fmt:message key="group.edit.form_info" />
 </p>
 
 <c:if test="${not empty errors['general']}">
@@ -586,7 +586,7 @@
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="80%">
             <tr>
-	            <th>&nbsp;</th>
+                <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
                 <c:if test="${not webManager.groupManager.readOnly}">
                     <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>

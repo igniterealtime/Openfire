@@ -137,7 +137,7 @@ public abstract class AbstractRule implements Rule {
 
 
     @Override
-	public String toString() {
+    public String toString() {
         StringBuffer sb = new StringBuffer();
         if (packetAction != null)
         sb.append("Type : "+packetAction.toString()+'\n');

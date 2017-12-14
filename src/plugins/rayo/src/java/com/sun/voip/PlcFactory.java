@@ -35,20 +35,20 @@ public class PlcFactory {
     }
 
     public static PlcFactory getInstance() {
-	if (plcFactory == null) {
-	    plcFactory = new PlcFactory();
-	}
-	
-	return plcFactory;
+    if (plcFactory == null) {
+        plcFactory = new PlcFactory();
+    }
+    
+    return plcFactory;
     }
 
     public Plc createPlc() {
-	return createPlc(null);
+    return createPlc(null);
     }
 
     public Plc createPlc(String s) {
-	if (s != null) {
-	    try {
+    if (s != null) {
+        try {
                 Class plcClass = Class.forName(s);
                 Class[] params = new Class[] { };
 
@@ -58,15 +58,15 @@ public class PlcFactory {
                     Object[] args = new Object[] { };
 
                     return (Plc) constructor.newInstance(args);
-		}
+        }
 
                 Logger.println("constructor not found for: " + s);
             } catch (Exception e) {
                 Logger.println("Error loading '" + s + "': " + e.getMessage());
             }
-	}
+    }
 
-	return new PlcCompress();
+    return new PlcCompress();
     }
 
 }

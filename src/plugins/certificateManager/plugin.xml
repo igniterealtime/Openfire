@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <class>org.igniterealtime.openfire.plugins.certificatemanager.CertificateManagerPlugin</class>
+    <name>Certificate Manager</name>
+    <description>Adds certificate management features.</description>
+    <author>Guus der Kinderen</author>
+    <version>1.0.0</version>
+    <date>11/24/2017</date>
+    <minServerVersion>4.0.0</minServerVersion>
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="sidebar-certificates">
+                <item id="certificate-management"
+                      name="${admin.sidebar.tls.item.certificate-management.name}"
+                      description="${admin.sidebar.tls.item.certificate-management.description}"
+                      url="certificate-management.jsp"/>
+            </sidebar>
+        </tab>
+    </adminconsole>
+</plugin>

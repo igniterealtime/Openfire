@@ -171,13 +171,13 @@ function checkClick(el) {
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-	        <td class="jive-icon-label">
-		        <fmt:message key="system.emailtest.no_host">
-				    <fmt:param value="<a href=\"system-email.jsp\">"/>
-				    <fmt:param value="</a>"/>
-				</fmt:message>
-	        </td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">
+                <fmt:message key="system.emailtest.no_host">
+                    <fmt:param value="<a href=\"system-email.jsp\">"/>
+                    <fmt:param value="</a>"/>
+                </fmt:message>
+            </td>
         </tr>
     </tbody>
     </table>
@@ -193,8 +193,8 @@ function checkClick(el) {
         <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr>
-            	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            	<td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
+                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
             </tr>
         </tbody>
         </table>
@@ -210,7 +210,7 @@ function checkClick(el) {
                 <fmt:message key="system.emailtest.failure" />
                 <%  if (mex != null) { %>
                     <%  if (mex instanceof AuthenticationFailedException) { %>
-                    	<fmt:message key="system.emailtest.failure_authentication" />                        
+                        <fmt:message key="system.emailtest.failure_authentication" />                        
                     <%  } else { %>
                         (Message: <%= StringUtils.escapeHTMLTags(mex.getMessage()) %>)
                     <%  } %>
@@ -261,7 +261,7 @@ function checkClick(el) {
             <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>">Update Address</a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>"><fmt:message key="system.emailtest.update-address" /></a>)
             </span>
         </td>
     </tr>

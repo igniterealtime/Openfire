@@ -43,7 +43,7 @@ public class GetConversationsTask implements ClusterTask<Collection<Conversation
 
     public void run() {
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
-        		MonitoringConstants.NAME);
+                MonitoringConstants.NAME);
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         conversations = conversationManager.getConversations();
     }

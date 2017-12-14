@@ -41,6 +41,8 @@
 <% webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters
+    Map<String, String> errors = new HashMap<>();
+
     boolean create = ParamUtils.getBooleanParameter(request,"create");
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
@@ -50,12 +52,33 @@
     String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
     JID roomJID = null;
     if (roomName != null && mucName != null) {
-        roomJID = new JID(roomName, mucName, null);
+        try {
+            JID.nodeprep( roomName );
+        } catch ( IllegalArgumentException e ) {
+            errors.put("roomName","roomName");
+        }
+        try {
+            JID.domainprep( mucName );
+        } catch ( IllegalArgumentException e ) {
+            errors.put("mucName","mucName");
+        }
+
+        if ( errors.isEmpty() )
+        {
+            roomJID = new JID( roomName, mucName, null );
+        }
     }
     else if (roomJIDStr != null) {
-        roomJID = new JID(roomJIDStr);
-        roomName = roomJID.getNode();
-        mucName = roomJID.getDomain();
+        try {
+            roomJID = new JID( roomJIDStr );
+        } catch ( IllegalArgumentException e ) {
+            errors.put( "roomJID", "roomJID" );
+        }
+        if ( roomJID != null )
+        {
+            roomName = roomJID.getNode();
+            mucName = roomJID.getDomain();
+        }
     }
     String naturalName = ParamUtils.getParameter(request,"roomconfig_roomname");
     String description = ParamUtils.getParameter(request,"roomconfig_roomdesc");
@@ -110,7 +133,6 @@
     }
 
     // Handle an save
-    Map<String, String> errors = new HashMap<String, String>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 

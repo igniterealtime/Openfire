@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
@@ -31,7 +32,7 @@ import org.xmpp.packet.Packet;
  * @author Iain Shigeoka
  */
 public interface Connection extends Closeable {
-	
+    
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -48,6 +49,14 @@ public interface Connection extends Closeable {
      * @param session the session that owns this connection
      */
     void init( LocalSession session );
+
+    /**
+     * Reinitializes the connection to switch to a different session. This allows for
+     * XEP-0198 resumption and transport-switching.
+     *
+     * @param session The new session now owning the connection.
+     */
+    void reinit( LocalSession session );
 
     /**
      * Returns the raw IP address of this <code>InetAddress</code>
@@ -95,23 +104,23 @@ public interface Connection extends Closeable {
      */
     String getHostName() throws UnknownHostException;
 
-	/**
-	 * Returns the local underlying {@link javax.security.cert.X509Certificate}
-	 * chain for the connection.
-	 * 
-	 * @return an ordered array of certificates, with the local certificate
-	 *         first followed by any certificate authorities. If no certificates
-	 *         is present for the connection, then <tt>null</tt> is returned.
-	 */
+    /**
+     * Returns the local underlying {@link javax.security.cert.X509Certificate}
+     * chain for the connection.
+     * 
+     * @return an ordered array of certificates, with the local certificate
+     *         first followed by any certificate authorities. If no certificates
+     *         is present for the connection, then <tt>null</tt> is returned.
+     */
     Certificate[] getLocalCertificates();
 
-	/**
-	 * Returns the underlying {@link javax.security.cert.X509Certificate} for
-	 * the connection of the peer.
-	 * 
-	 * @return an ordered array of peer certificates, with the peer's own
-	 *         certificate first followed by any certificate authorities.
-	 */
+    /**
+     * Returns the underlying {@link javax.security.cert.X509Certificate} for
+     * the connection of the peer.
+     * 
+     * @return an ordered array of peer certificates, with the peer's own
+     *         certificate first followed by any certificate authorities.
+     */
     Certificate[] getPeerCertificates();
 
     /**

@@ -86,7 +86,7 @@
             }
             catch ( Exception e )
             {
-                errors.put( "sendfailed", SmsService.getDescriptiveMessage( e ) );
+                errors.put( "sendfailed", StringUtils.escapeHTMLTags(SmsService.getDescriptiveMessage( e ), true) );
             }
         }
     }

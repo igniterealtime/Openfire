@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultStatsViewer implements StatsViewer {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultStatsViewer.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(DefaultStatsViewer.class);
+    
     private StatsEngine engine;
 
     /**

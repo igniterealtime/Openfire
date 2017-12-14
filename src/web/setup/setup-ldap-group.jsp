@@ -2,7 +2,7 @@
 
 <%
     // Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }

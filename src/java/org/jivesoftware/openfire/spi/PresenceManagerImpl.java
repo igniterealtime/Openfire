@@ -61,7 +61,7 @@ import org.xmpp.packet.Presence;
  */
 public class PresenceManagerImpl extends BasicModule implements PresenceManager, UserEventListener, XMPPServerListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceManagerImpl.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceManagerImpl.class);
 
     private static final String LOAD_OFFLINE_PRESENCE =
             "SELECT offlinePresence, offlineDate FROM ofPresence WHERE username=?";
@@ -514,7 +514,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
     // #####################################################################
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
 
@@ -530,7 +530,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         // Use component manager for Presence Updates.
         componentManager = InternalComponentManager.getInstance();
@@ -540,7 +540,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         // Clear the caches when stopping the module.
         offlinePresenceCache.clear();
         lastActivityCache.clear();

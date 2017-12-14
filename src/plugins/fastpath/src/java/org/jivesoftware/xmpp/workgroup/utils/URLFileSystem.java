@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
  */
 
 public class URLFileSystem {
-	
-	private static final Logger Log = LoggerFactory.getLogger(URLFileSystem.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(URLFileSystem.class);
+    
     public static void main(String args[]) {
     }
 

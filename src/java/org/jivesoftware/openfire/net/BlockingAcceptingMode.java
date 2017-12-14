@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 @Deprecated
 class BlockingAcceptingMode extends SocketAcceptingMode {
 
-	private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
+    private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
 
     protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface) throws IOException {
         super();
@@ -46,7 +46,7 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
      * call getting sockets and creating new reading threads for each new connection.
      */
     @Override
-	public void run() {
+    public void run() {
         while (notTerminated) {
             try {
                 Socket sock = serverSocket.accept();

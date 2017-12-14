@@ -5,13 +5,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.util.Locale;
+
+import org.junit.Before;
 import org.junit.Test;
 
 public class StringUtilsTest {
-	
+    
+    @Before
+    public void setUp() {
+        JiveGlobals.setLocale(Locale.ENGLISH);
+    }
+    
     @Test
     public void testValidDomainNames() {
-    	
+        
         assertValidDomainName("www.mycompany.com");
         assertValidDomainName("www.my-company.com");
         assertValidDomainName("abc.de");
@@ -22,7 +30,7 @@ public class StringUtilsTest {
     
     @Test
     public void testInvalidDomainNames() {
-    	
+        
         assertInvalidDomainName("www.my_company.com", "Contains non-LDH characters");
         assertInvalidDomainName("www.-dash.com", "Has leading or trailing hyphen");
         assertInvalidDomainName("www.dash-.com", "Has leading or trailing hyphen");
@@ -40,23 +48,23 @@ public class StringUtilsTest {
         assertEquals(count[0], 2);
     }
 
-	private void assertValidDomainName(String domain) {
-		assertValidDomainName(domain, domain);
+    private void assertValidDomainName(String domain) {
+        assertValidDomainName(domain, domain);
     }
 
-	private void assertValidDomainName(String domain, String expected) {
+    private void assertValidDomainName(String domain, String expected) {
         assertEquals("Domain should be valid: " + domain, expected, StringUtils.validateDomainName(domain));
     }
 
-	private void assertInvalidDomainName(String domain, String expectedCause) {
-		try {
-        	StringUtils.validateDomainName(domain);
-        	fail("Domain should not be valid: " + domain);
+    private void assertInvalidDomainName(String domain, String expectedCause) {
+        try {
+            StringUtils.validateDomainName(domain);
+            fail("Domain should not be valid: " + domain);
         } catch (IllegalArgumentException iae) {
-        	// this is not part of the official API, so leave off for now
-        	//assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
+            // this is not part of the official API, so leave off for now
+            //assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
         }
-	}
+    }
 
     @Test
     public void testElapsedTimeInMilliseconds() throws Exception {

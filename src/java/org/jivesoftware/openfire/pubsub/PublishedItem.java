@@ -62,8 +62,8 @@ public class PublishedItem implements Serializable {
             xmlReaders.add(xmlReader);
         }    	
     }
-	
-	/**
+    
+    /**
      * JID of the entity that published the item to the node. This is the full JID
      * of the publisher.
      */
@@ -71,7 +71,7 @@ public class PublishedItem implements Serializable {
     /**
      * The node where the item was published.
      */
-	private volatile transient LeafNode node;
+    private volatile transient LeafNode node;
     /**
      * The id for the node where the item was published.
      */
@@ -92,7 +92,7 @@ public class PublishedItem implements Serializable {
      * The optional payload is included when publishing the item. This value
      * is created from the payload XML and cached as/when needed.
      */
-	private volatile transient Element payload;
+    private volatile transient Element payload;
     /**
      * XML representation of the payload (for serialization)
      */
@@ -129,23 +129,23 @@ public class PublishedItem implements Serializable {
      * @return the leaf node where this item was published.
      */
     public LeafNode getNode() {
-    	if (node == null) {
-			synchronized (this) {
-				if (node == null) {
-					if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId))
-					{
-						node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
-					}
-					else
-					{
-						PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-						node = serviceMgr.hasCachedService(new JID(serviceId)) ? (LeafNode) serviceMgr.getPEPService(
-								serviceId).getNode(nodeId) : null;
-					}
-				}
-			}
-    	}
-    	return node;
+        if (node == null) {
+            synchronized (this) {
+                if (node == null) {
+                    if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId))
+                    {
+                        node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
+                    }
+                    else
+                    {
+                        PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+                        node = serviceMgr.hasCachedService(new JID(serviceId)) ? (LeafNode) serviceMgr.getPEPService(
+                                serviceId).getNode(nodeId) : null;
+                    }
+                }
+            }
+        }
+        return node;
     }
 
     /**
@@ -183,24 +183,24 @@ public class PublishedItem implements Serializable {
      * @return the payload included when publishing the item or <tt>null</tt> if none was found.
      */
     public Element getPayload() {
-    	if (payload == null && payloadXML != null) {
-    		synchronized (this) {
-				if (payload == null) {
-		    		// payload initialized as XML string from DB
-		            SAXReader xmlReader = null;
-		    		try {
-		    			xmlReader = xmlReaders.take();
-		    			payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
-		    		} catch (Exception ex) {
-		    			 log.error("Failed to parse payload XML", ex);
-		    		} finally {
-		    			if (xmlReader != null) {
-		    				xmlReaders.add(xmlReader);
-		    			}
-		    		}
-				}
-			}
-    	}
+        if (payload == null && payloadXML != null) {
+            synchronized (this) {
+                if (payload == null) {
+                    // payload initialized as XML string from DB
+                    SAXReader xmlReader = null;
+                    try {
+                        xmlReader = xmlReaders.take();
+                        payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
+                    } catch (Exception ex) {
+                         log.error("Failed to parse payload XML", ex);
+                    } finally {
+                        if (xmlReader != null) {
+                            xmlReaders.add(xmlReader);
+                        }
+                    }
+                }
+            }
+        }
         return payload;
     }
 
@@ -224,8 +224,8 @@ public class PublishedItem implements Serializable {
      *        if none was found.
      */
     void setPayloadXML(String payloadXML) {
-    	this.payloadXML = payloadXML;
-    	this.payload = null; // will be recreated only if needed
+        this.payloadXML = payloadXML;
+        this.payload = null; // will be recreated only if needed
     }
 
     /**
@@ -281,10 +281,10 @@ public class PublishedItem implements Serializable {
      * @return Unique identifier for this item
      */
     public String getItemKey() {
-    	return getItemKey(nodeId,id);
+        return getItemKey(nodeId,id);
     }
 
-	/**
+    /**
      * Returns a string that uniquely identifies this published item
      * in the following format: <i>nodeId:itemId</i>
      * @param node Node for the published item
@@ -292,7 +292,7 @@ public class PublishedItem implements Serializable {
      * @return Unique identifier for this item
      */
     public static String getItemKey(LeafNode node, String itemId) {
-    	return getItemKey(node.getNodeID(), itemId);
+        return getItemKey(node.getNodeID(), itemId);
     }
 
     /**
@@ -303,7 +303,7 @@ public class PublishedItem implements Serializable {
      * @return Unique identifier for this item
      */
     public static String getItemKey(String nodeId, String itemId) {
-    	return new StringBuilder(nodeId)
-    		.append(':').append(itemId).toString();
+        return new StringBuilder(nodeId)
+            .append(':').append(itemId).toString();
     }
 }

@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LdapAuthorizationMapping implements AuthorizationMapping {
 
-	private static final Logger Log = LoggerFactory.getLogger(LdapAuthorizationMapping.class);
+    private static final Logger Log = LoggerFactory.getLogger(LdapAuthorizationMapping.class);
 
     private LdapManager manager;
     private String usernameField;
@@ -105,7 +105,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
             constraints.setReturningAttributes(new String[] { usernameField });
 
             NamingEnumeration answer = ctx.search("", princSearchFilter, 
-            		new String[] {LdapManager.sanitizeSearchFilter(principal)},
+                    new String[] {LdapManager.sanitizeSearchFilter(principal)},
                     constraints);
             Log.debug("LdapAuthorizationMapping: ... search finished");
             if (answer == null || !answer.hasMoreElements()) {

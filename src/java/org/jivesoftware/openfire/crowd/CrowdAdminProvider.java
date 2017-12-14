@@ -34,57 +34,57 @@ import org.xmpp.packet.JID;
  * Admin provider which will map a crowd group with openfire authorized admin users
  */
 public class CrowdAdminProvider implements AdminProvider {
-	private static final Logger LOG = LoggerFactory.getLogger(CrowdAdminProvider.class);
-	private static final String JIVE_AUTHORIZED_GROUPS = "admin.authorizedGroups";
+    private static final Logger LOG = LoggerFactory.getLogger(CrowdAdminProvider.class);
+    private static final String JIVE_AUTHORIZED_GROUPS = "admin.authorizedGroups";
 
-	@Override
-	public List<JID> getAdmins() {
-		List<JID> results = new ArrayList<>();
-		
-		GroupProvider provider = GroupManager.getInstance().getProvider();
-		
-		String groups = JiveGlobals.getProperty(JIVE_AUTHORIZED_GROUPS);
-		groups = (groups == null || groups.trim().length() == 0) ? "" : groups;
-		JiveGlobals.setProperty(JIVE_AUTHORIZED_GROUPS, groups); // make sure the property is created
-		StringTokenizer tokenizer = new StringTokenizer(groups, ",");
-		while (tokenizer.hasMoreTokens()) {
-			String groupName = tokenizer.nextToken().trim().toLowerCase();
-			
-			if (groupName != null && groupName.length() > 0) {
-				try {
-					LOG.info("Adding admin users from group: " + groupName);
-					Group group = provider.getGroup(groupName);
-					if (group != null) {
-						results.addAll(group.getMembers());
-					}
-					
-				} catch (GroupNotFoundException gnfe) {
-					LOG.error("Error when trying to load the members of group:" + String.valueOf(groupName), gnfe);
-				}
-			}
-		}
-		
-		
-		if (results.isEmpty()) {
-			// Add default admin account when none was specified
-			results.add(new JID("admin", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true));
-		}
-		
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("admin users: " + results.toString());
-		}
-		
-		return results;
-	}
+    @Override
+    public List<JID> getAdmins() {
+        List<JID> results = new ArrayList<>();
+        
+        GroupProvider provider = GroupManager.getInstance().getProvider();
+        
+        String groups = JiveGlobals.getProperty(JIVE_AUTHORIZED_GROUPS);
+        groups = (groups == null || groups.trim().length() == 0) ? "" : groups;
+        JiveGlobals.setProperty(JIVE_AUTHORIZED_GROUPS, groups); // make sure the property is created
+        StringTokenizer tokenizer = new StringTokenizer(groups, ",");
+        while (tokenizer.hasMoreTokens()) {
+            String groupName = tokenizer.nextToken().trim().toLowerCase();
+            
+            if (groupName != null && groupName.length() > 0) {
+                try {
+                    LOG.info("Adding admin users from group: " + groupName);
+                    Group group = provider.getGroup(groupName);
+                    if (group != null) {
+                        results.addAll(group.getMembers());
+                    }
+                    
+                } catch (GroupNotFoundException gnfe) {
+                    LOG.error("Error when trying to load the members of group:" + String.valueOf(groupName), gnfe);
+                }
+            }
+        }
+        
+        
+        if (results.isEmpty()) {
+            // Add default admin account when none was specified
+            results.add(new JID("admin", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true));
+        }
+        
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("admin users: " + results.toString());
+        }
+        
+        return results;
+    }
 
-	@Override
-	public void setAdmins(List<JID> admins) {
-		return;
-	}
+    @Override
+    public void setAdmins(List<JID> admins) {
+        return;
+    }
 
-	@Override
-	public boolean isReadOnly() {
-		return true;
-	}
+    @Override
+    public boolean isReadOnly() {
+        return true;
+    }
 
 }

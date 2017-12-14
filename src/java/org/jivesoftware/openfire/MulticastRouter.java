@@ -61,7 +61,7 @@ import org.xmpp.packet.Packet;
  */
 public class MulticastRouter extends BasicModule implements ServerFeaturesProvider, IQResultListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
+    private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
 
     private static final String NAMESPACE = "http://jabber.org/protocol/address";
 
@@ -400,7 +400,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         this.packetRouter = server.getPacketRouter();

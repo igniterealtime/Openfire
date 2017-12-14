@@ -45,8 +45,8 @@ import org.xmpp.packet.PacketError;
  */
 public class SparkVersionManager implements Component {
     
-	private static final Logger Log = LoggerFactory.getLogger(SparkVersionManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SparkVersionManager.class);
+    
     private ComponentManager componentManager;
     public static String SERVICE_NAME = "updater";
 

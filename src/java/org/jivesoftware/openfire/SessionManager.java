@@ -17,15 +17,8 @@
 package org.jivesoftware.openfire;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
@@ -46,6 +39,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -64,7 +58,7 @@ import org.xmpp.packet.Presence;
  */
 public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
 
-	private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
@@ -144,6 +138,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     private ConnectionMultiplexerSessionListener multiplexerSessionListener = new ConnectionMultiplexerSessionListener();
 
     /**
+     * Sessions contained in this Map are (client?) sessions which are detached.
+     * Sessions remaining here too long will be reaped, but they will be checked
+     * to see if they have in fact resumed since.
+     */
+    private final Map<StreamID, LocalSession> detachedSessions = new ConcurrentHashMap<>();
+
+    /**
      * Local session manager responsible for keeping sessions connected to this JVM that are not
      * present in the routing table.
      */
@@ -175,6 +176,30 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
         localSessionManager = new LocalSessionManager();
         conflictLimit = JiveGlobals.getIntProperty("xmpp.session.conflict-limit", 0);
+    }
+
+    /**
+     * Record a session as being detached (ie, has no connection). This is idempotent.
+     * This should really only be called by the LocalSession itself when it detaches.
+     *
+     * @param localSession the LocalSession (this) to mark as detached.
+     */
+    public void addDetached(LocalSession localSession) {
+        this.detachedSessions.put(localSession.getStreamID(), localSession);
+    }
+
+    /**
+     * Remove a session as being detached. This is idempotent.
+     * This should be called by the LocalSession itself either when resumed or when
+     * closed.
+     *
+     * @param localSession the LocalSession (this) which has been resumed or closed.
+     */
+    public synchronized void removeDetached(LocalSession localSession) {
+        LocalSession other = this.detachedSessions.get(localSession.getStreamID());
+        if (other == localSession) {
+            this.detachedSessions.remove(localSession.getStreamID());
+        }
     }
 
     /**
@@ -648,12 +673,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
         List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
-        	if (!originatingResource.equals(address)) {
-	            // Send the presence of the session whose presence has changed to
-	            // this user's other session(s)
-	            presence.setTo(address);
-	            routingTable.routePacket(address, presence, false);
-        	}
+            if (!originatingResource.equals(address)) {
+                // Send the presence of the session whose presence has changed to
+                // this user's other session(s)
+                presence.setTo(address);
+                routingTable.routePacket(address, presence, false);
+            }
         }
     }
 
@@ -872,11 +897,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * OutgoingServerSession an only send packets to the remote server but are not capable of
      * receiving packets from the remote server.
      *
-     * @param hostname the name of the remote server.
+     * @param pair DomainPair describing the local and remote servers.
      * @return a session that was originated from this server to a remote server.
      */
-    public OutgoingServerSession getOutgoingServerSession(String hostname) {
-        return routingTable.getServerRoute(new JID(null, hostname, null, true));
+    public OutgoingServerSession getOutgoingServerSession(DomainPair pair) {
+        return routingTable.getServerRoute(pair);
+    }
+    public List<OutgoingServerSession> getOutgoingServerSessions(String host) {
+        List<OutgoingServerSession> sessions = new LinkedList<>();
+        for (DomainPair pair : routingTable.getServerRoutes()) {
+            if (pair.getRemote().equals(host)) {
+                sessions.add(routingTable.getServerRoute(pair));
+            }
+        }
+        return sessions;
     }
 
     public Collection<ClientSession> getSessions(String username) {
@@ -1032,6 +1066,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      */
     public Collection<String> getOutgoingServers() {
         return routingTable.getServerHostnames();
+    }
+    public Collection<DomainPair> getOutgoingDomainPairs() {
+        return routingTable.getServerRoutes();
     }
 
     /**
@@ -1199,8 +1236,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         try {
             // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
             if (name != null && senderJID != null &&
-            	server.getUserManager().isRegisteredUser(senderJID) &&
-            	(name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
+                server.getUserManager().isRegisteredUser(senderJID) &&
+                (name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
                 Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
                 for (ClientSession clientSession : getSessions(name)) {
                     discoItems.add(new DiscoItem(clientSession.getAddress(), null, null, null));
@@ -1223,6 +1260,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         public void onConnectionClose(Object handback) {
             try {
                 LocalClientSession session = (LocalClientSession) handback;
+                if (session.isDetached()) {
+                    Log.debug("Closing session is detached already.");
+                    return;
+                }
+                if (session.getStreamManager().getResume()) {
+                    Log.debug("Closing session has SM enabled; detaching.");
+                    session.setDetached();
+                    return;
+                }
                 try {
                     if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&
                             routingTable.hasClientRoute(session.getAddress())) {
@@ -1310,7 +1356,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             // Remove all the hostnames that were registered for this server session
             for (DomainPair domainPair : session.getOutgoingDomainPairs()) {
                 // Remove the route to the session using the hostname
-                server.getRoutingTable().removeServerRoute(new JID(null, domainPair.getRemote(), null, true));
+                server.getRoutingTable().removeServerRoute(domainPair);
             }
         }
     }
@@ -1338,7 +1384,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         router = server.getPacketRouter();
@@ -1428,13 +1474,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
+        // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
+        int period = 3 * 60 * 1000;
+        TaskEngine.getInstance().scheduleAtFixedRate(new DetachedCleanupTask(), period, period);
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         Log.debug("SessionManager: Stopping server");
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
@@ -1527,6 +1576,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
     }
 
+    public void setSessionDetachTime(int idleTime) {
+        if (getSessionDetachTime() == idleTime) {
+            return;
+        }
+        // Set the new property value
+        JiveGlobals.setProperty("xmpp.session.detach.timeout", Integer.toString(idleTime));
+    }
+
+    public int getSessionDetachTime() {
+        return JiveGlobals.getIntProperty("xmpp.session.detach.timeout", 10 * 60 * 1000);
+    }
+
     public Cache<String, ClientSessionInfo> getSessionInfoCache() {
         return sessionInfoCache;
     }
@@ -1611,4 +1672,54 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             }
         }
     }
+
+
+    /**
+     * Task that closes detached client sessions.
+     */
+    private class DetachedCleanupTask extends TimerTask {
+        /**
+         * Close detached client sessions that haven't seen activity in more than
+         * 30 minutes by default.
+         */
+        @Override
+        public void run() {
+            int idleTime = getSessionDetachTime();
+            if (idleTime == -1) {
+                return;
+            }
+            final long deadline = System.currentTimeMillis() - idleTime;
+            for (LocalSession session : detachedSessions.values()) {
+                try {
+                    if (session.getLastActiveDate().getTime() < deadline) {
+                        removeDetached(session);
+                        LocalClientSession clientSession = (LocalClientSession)session;
+                        if (clientSession != null) {
+                            try {
+                                if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&
+                                    routingTable.hasClientRoute(session.getAddress())) {
+                                    // Send an unavailable presence to the user's subscribers
+                                    // Note: This gives us a chance to send an unavailable presence to the
+                                    // entities that the user sent directed presences
+                                    Presence presence = new Presence();
+                                    presence.setType(Presence.Type.unavailable);
+                                    presence.setFrom(session.getAddress());
+                                    router.route(presence);
+                                }
+
+                                session.getStreamManager().onClose(router, serverAddress);
+                            } finally {
+                                // Remove the session
+                                removeSession(clientSession);
+                            }
+                        }
+                    }
+                }
+                catch (Throwable e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
+        }
+    }
+
 }

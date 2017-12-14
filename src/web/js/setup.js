@@ -8,11 +8,11 @@ function togglePanel(thisID) {
 
 activeLink = thisID.id+"Link";
 
-	if ($(thisID).style.display != 'none') {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "";
-	} else {
-		Effect.toggle($(thisID),'slide', {duration: .4});
-		$(activeLink).className = "jiveAdvancedButtonOn";
-	}
+    if ($(thisID).style.display != 'none') {
+        Effect.toggle($(thisID),'slide', {duration: .4});
+        $(activeLink).className = "";
+    } else {
+        Effect.toggle($(thisID),'slide', {duration: .4});
+        $(activeLink).className = "jiveAdvancedButtonOn";
+    }
 }

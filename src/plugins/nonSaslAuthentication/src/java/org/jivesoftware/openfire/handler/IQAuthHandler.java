@@ -72,7 +72,7 @@ import org.xmpp.packet.StreamError;
  */
 public class IQAuthHandler extends IQHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQAuthHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQAuthHandler.class);
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -99,7 +99,7 @@ public class IQAuthHandler extends IQHandler {
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         JID from = packet.getFrom();
         LocalClientSession session = (LocalClientSession) sessionManager.getSession(from);
         // If no session was found then answer an error (if possible)
@@ -212,17 +212,17 @@ public class IQAuthHandler extends IQHandler {
 
     private IQ login(String username, Element iq, IQ packet, String password, LocalClientSession session, String digest)
             throws UnauthorizedException, UserNotFoundException, ConnectionException, InternalUnauthenticatedException {
-    	// Verify the validity of the username
-    	if (username == null || username.trim().length() == 0) {
-    		throw new UnauthorizedException("Invalid username (empty or null).");
-    	}
-    	try {
-    		Stringprep.nodeprep(username);
-    	} catch (StringprepException e) {
+        // Verify the validity of the username
+        if (username == null || username.trim().length() == 0) {
+            throw new UnauthorizedException("Invalid username (empty or null).");
+        }
+        try {
+            Stringprep.nodeprep(username);
+        } catch (StringprepException e) {
             throw new UnauthorizedException("Invalid username: " + username, e);
-		}
-    	
-    	// Verify that specified resource is not violating any string prep rule
+        }
+        
+        // Verify that specified resource is not violating any string prep rule
         String resource = iq.elementText("resource");
         if (resource != null) {
             try {
@@ -344,7 +344,7 @@ public class IQAuthHandler extends IQHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
@@ -353,7 +353,7 @@ public class IQAuthHandler extends IQHandler {
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 

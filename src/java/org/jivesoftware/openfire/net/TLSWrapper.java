@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TLSWrapper {
 
-	private static final Logger Log = LoggerFactory.getLogger(TLSWrapper.class);
+    private static final Logger Log = LoggerFactory.getLogger(TLSWrapper.class);
 
     /*
      * Enables logging of the SSLEngine operations.

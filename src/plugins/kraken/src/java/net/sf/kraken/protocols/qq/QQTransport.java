@@ -153,16 +153,16 @@ public class QQTransport extends BaseTransport<QQBuddy> {
      */
     public PresenceType convertQQStatusToXMPP(byte qqStatus) {
         switch (qqStatus) {
-	        case QQ.QQ_STATUS_AWAY:
-	            return PresenceType.away;
-	        case QQ.QQ_STATUS_HIDDEN:
-	            return PresenceType.xa;
-	        case QQ.QQ_STATUS_OFFLINE:
-	            return PresenceType.unavailable;
-	        case QQ.QQ_STATUS_ONLINE:
-	            return PresenceType.available;
-	        default:
-	            return PresenceType.unknown;
+            case QQ.QQ_STATUS_AWAY:
+                return PresenceType.away;
+            case QQ.QQ_STATUS_HIDDEN:
+                return PresenceType.xa;
+            case QQ.QQ_STATUS_OFFLINE:
+                return PresenceType.unavailable;
+            case QQ.QQ_STATUS_ONLINE:
+                return PresenceType.available;
+            default:
+                return PresenceType.unknown;
         }
     }
 

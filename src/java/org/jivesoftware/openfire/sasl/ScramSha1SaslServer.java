@@ -46,9 +46,9 @@ import org.slf4j.LoggerFactory;
  */
 public class ScramSha1SaslServer implements SaslServer {
     private static final Logger Log = LoggerFactory.getLogger(ScramSha1SaslServer.class);
-	private static final Pattern
-			CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
-			CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
+    private static final Pattern
+            CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
+            CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
 
     private String username;
     private State state = State.INITIAL;
@@ -58,9 +58,9 @@ public class ScramSha1SaslServer implements SaslServer {
     private SecureRandom random = new SecureRandom();
 
     private enum State {
-    	INITIAL,
-    	IN_PROGRESS,
-    	COMPLETE;
+        INITIAL,
+        IN_PROGRESS,
+        COMPLETE;
     }
     
     public ScramSha1SaslServer() {
@@ -139,7 +139,7 @@ public class ScramSha1SaslServer implements SaslServer {
         String clientFirstMessage = new String(response, StandardCharsets.UTF_8);
         Matcher m = CLIENT_FIRST_MESSAGE.matcher(clientFirstMessage);
         if (!m.matches()) {
-        	throw new SaslException("Invalid first client message");
+            throw new SaslException("Invalid first client message");
         }
 //        String gs2Header = m.group(1);
 //        String gs2CbindFlag = m.group(2);
@@ -162,7 +162,7 @@ public class ScramSha1SaslServer implements SaslServer {
         String clientFinalMessage = new String(response, StandardCharsets.UTF_8);
         Matcher m = CLIENT_FINAL_MESSAGE.matcher(clientFinalMessage);
         if (!m.matches()) {
-        	throw new SaslException("Invalid client final message");
+            throw new SaslException("Invalid client final message");
         }
 
         String clientFinalMessageWithoutProof = m.group(1);
@@ -191,14 +191,14 @@ public class ScramSha1SaslServer implements SaslServer {
             byte[] clientKey = clientSignature.clone();
             byte[] decodedProof = DatatypeConverter.parseBase64Binary(proof);
             for (int i = 0; i < clientKey.length; i++) {
-            	clientKey[i] ^= decodedProof[i];
+                clientKey[i] ^= decodedProof[i];
             }
 
             if (!Arrays.equals(storedKey, MessageDigest.getInstance("SHA-1").digest(clientKey))) {
                 throw new SaslException("Authentication failed");
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
-            		.getBytes(StandardCharsets.UTF_8);
+                    .getBytes(StandardCharsets.UTF_8);
         } catch (UserNotFoundException | NoSuchAlgorithmException e) {
             throw new SaslException(e.getMessage(), e);
         }
@@ -240,7 +240,7 @@ public class ScramSha1SaslServer implements SaslServer {
     @Override
     public byte[] unwrap(byte[] incoming, int offset, int len)
         throws SaslException {
-    	if (isComplete()) {
+        if (isComplete()) {
             throw new IllegalStateException("SCRAM-SHA-1 does not support integrity or privacy");
         } else {
             throw new IllegalStateException("SCRAM-SHA-1 authentication not completed");
@@ -255,7 +255,7 @@ public class ScramSha1SaslServer implements SaslServer {
     @Override
     public byte[] wrap(byte[] outgoing, int offset, int len)
         throws SaslException {
-    	if (isComplete()) {
+        if (isComplete()) {
             throw new IllegalStateException("SCRAM-SHA-1 does not support integrity or privacy");
         } else {
             throw new IllegalStateException("SCRAM-SHA-1 authentication not completed");
@@ -275,7 +275,7 @@ public class ScramSha1SaslServer implements SaslServer {
      */
     @Override
     public Object getNegotiatedProperty(String propName) {
-    	if (isComplete()) {
+        if (isComplete()) {
             if (propName.equals(Sasl.QOP)) {
                 return "auth";
             } else {

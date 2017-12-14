@@ -29,7 +29,7 @@ import org.xmpp.packet.JID;
 public class OnlySubscribers extends PublisherModel {
 
     @Override
-	public boolean canPublish(Node node, JID entity) {
+    public boolean canPublish(Node node, JID entity) {
         NodeAffiliate nodeAffiliate = node.getAffiliate(entity);
         // Deny access if user does not have any relation with the node or is an outcast
         if (nodeAffiliate == null ||
@@ -51,7 +51,7 @@ public class OnlySubscribers extends PublisherModel {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "subscribers";
     }
 }

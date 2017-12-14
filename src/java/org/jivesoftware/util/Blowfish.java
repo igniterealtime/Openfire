@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Blowfish implements Encryptor {
 
-	private static final Logger Log = LoggerFactory.getLogger(Blowfish.class);
+    private static final Logger Log = LoggerFactory.getLogger(Blowfish.class);
 
     private BlowfishCBC m_bfish;
     private static Random m_rndGen = new SecureRandom();
@@ -35,7 +35,7 @@ public class Blowfish implements Encryptor {
      * Creates a new Blowfish object using the default key
      */
     public Blowfish() {
-    	setKey(DEFAULT_KEY);
+        setKey(DEFAULT_KEY);
     }
 
     /**
@@ -45,7 +45,7 @@ public class Blowfish implements Encryptor {
      * @param password the password (treated as a real unicode array)
      */
     public Blowfish(String password) {
-    	setKey(password);
+        setKey(password);
     }
 
     /**
@@ -55,7 +55,7 @@ public class Blowfish implements Encryptor {
      * @return encrypted string in binhex format
      */
     public String encryptString(String sPlainText) {
-    	if (sPlainText == null) { return null; }
+        if (sPlainText == null) { return null; }
         // get the IV
         long lCBCIV;
         synchronized (m_rndGen)
@@ -955,7 +955,7 @@ public class Blowfish implements Encryptor {
          * call this if you don't need an instance anymore
          */
         @Override
-		public void cleanUp()
+        public void cleanUp()
         {
             m_lCBCIV = 0;
             super.cleanUp();
@@ -1004,7 +1004,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the ciphertext data
          */
         @Override
-		public void encrypt(byte[] inbuffer,
+        public void encrypt(byte[] inbuffer,
                             byte[] outbuffer)
         {
             int nLen = inbuffer.length;
@@ -1025,7 +1025,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to encrypt
          */
         @Override
-		public void encrypt(byte[] buffer)
+        public void encrypt(byte[] buffer)
         {
 
             int nLen = buffer.length;
@@ -1050,7 +1050,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the ciphertext data
          */
         @Override
-		public void encrypt(int[] inbuffer,
+        public void encrypt(int[] inbuffer,
                             int[] outbuffer)
         {
             int nLen = inbuffer.length;
@@ -1070,7 +1070,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to encrypt
          */
         @Override
-		public void encrypt(int[] buffer)
+        public void encrypt(int[] buffer)
         {
             int nLen = buffer.length;
             long lTemp;
@@ -1091,7 +1091,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the ciphertext data
          */
         @Override
-		public void encrypt(long[] inbuffer,
+        public void encrypt(long[] inbuffer,
                             long[] outbuffer)
         {
             int nLen = inbuffer.length;
@@ -1108,7 +1108,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to encrypt
          */
         @Override
-		public void encrypt(long[] buffer)
+        public void encrypt(long[] buffer)
         {
             int nLen = buffer.length;
             for (int nI = 0; nI < nLen; nI++)
@@ -1126,7 +1126,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the plaintext data
          */
         @Override
-		public void decrypt(byte[] inbuffer,
+        public void decrypt(byte[] inbuffer,
                             byte[] outbuffer)
         {
             int nLen = inbuffer.length;
@@ -1147,7 +1147,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to decrypt
          */
         @Override
-		public void  decrypt(byte[] buffer)
+        public void  decrypt(byte[] buffer)
         {
             int nLen = buffer.length;
             long lTemp;
@@ -1170,7 +1170,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the plaintext data
          */
         @Override
-		public void decrypt(int[] inbuffer,
+        public void decrypt(int[] inbuffer,
                             int[] outbuffer)
         {
 
@@ -1192,7 +1192,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to decrypt
          */
         @Override
-		public void decrypt(int[] buffer)
+        public void decrypt(int[] buffer)
         {
             int nLen = buffer.length;
             long lTemp;
@@ -1213,7 +1213,7 @@ public class Blowfish implements Encryptor {
          * @param outbuffer buffer to get the plaintext data
          */
         @Override
-		public void decrypt(long[] inbuffer,
+        public void decrypt(long[] inbuffer,
                             long[] outbuffer)
         {
             int nLen = inbuffer.length;
@@ -1230,7 +1230,7 @@ public class Blowfish implements Encryptor {
          * @param buffer buffer to decrypt
          */
         @Override
-		public void decrypt(long[] buffer)
+        public void decrypt(long[] buffer)
         {
             int nLen = buffer.length;
             for (int nI = 0; nI < nLen; nI++)
@@ -1479,20 +1479,20 @@ public class Blowfish implements Encryptor {
 
     // Encryptor interface 
     
-	@Override
-	public String encrypt(String value) {
-		return this.encryptString(value);
-	}
+    @Override
+    public String encrypt(String value) {
+        return this.encryptString(value);
+    }
 
-	@Override
-	public String decrypt(String value) {
-		return this.decryptString(value);
-	}
+    @Override
+    public String decrypt(String value) {
+        return this.decryptString(value);
+    }
 
-	@Override
-	public void setKey(String key) {
-		
-		String password = key == null ? DEFAULT_KEY : key;
+    @Override
+    public void setKey(String key) {
+        
+        String password = key == null ? DEFAULT_KEY : key;
         // hash down the password to a 160bit key
         MessageDigest digest = null;
         try {
@@ -1506,6 +1506,6 @@ public class Blowfish implements Encryptor {
         // setup the encryptor (use a dummy IV)
         m_bfish = new BlowfishCBC(digest.digest(), 0);
         digest.reset();
-	}
+    }
 }
 

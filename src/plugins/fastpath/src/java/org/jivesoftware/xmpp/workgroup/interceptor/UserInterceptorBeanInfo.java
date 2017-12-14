@@ -19,17 +19,17 @@ public class UserInterceptorBeanInfo extends WorkgroupBeanInfo {
     }
 
     @Override
-	public Class getBeanClass() {
+    public Class getBeanClass() {
         return UserInterceptor.class;
     }
 
     @Override
-	public String[] getPropertyNames() {
+    public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "UserInterceptor";
     }
 }

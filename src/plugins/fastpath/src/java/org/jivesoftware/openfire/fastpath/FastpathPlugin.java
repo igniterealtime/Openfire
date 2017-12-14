@@ -43,8 +43,8 @@ import org.xmpp.packet.JID;
  */
 public class FastpathPlugin implements Plugin, ClusterEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(FastpathPlugin.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(FastpathPlugin.class);
+    
     /**
      * Keep a reference to Fastpath only when the service is up and running in this JVM.
      */

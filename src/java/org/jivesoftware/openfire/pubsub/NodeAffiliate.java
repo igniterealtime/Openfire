@@ -224,14 +224,14 @@ public class NodeAffiliate {
         else {
             // Affiliate should have at most one subscription per unique JID
             if (!notifySubscriptions.isEmpty()) {
-            	List<JID> subs = new ArrayList<>();
-            	for(NodeSubscription subscription: notifySubscriptions) {
-            		JID sub = subscription.getJID();
-            		if (!subs.contains(sub)) {
-            			node.sendEventNotification(sub, notification, null);
-            			subs.add(sub);
-            		}
-            	}
+                List<JID> subs = new ArrayList<>();
+                for(NodeSubscription subscription: notifySubscriptions) {
+                    JID sub = subscription.getJID();
+                    if (!subs.contains(sub)) {
+                        node.sendEventNotification(sub, notification, null);
+                        subs.add(sub);
+                    }
+                }
             }
         }
     }
@@ -264,8 +264,8 @@ public class NodeAffiliate {
         for (PublishedItem publishedItem : subsByItem.keySet()) {
             affectedSubscriptions = itemsBySubs.get(subsByItem.get(publishedItem));
             if (affectedSubscriptions == null) {
-            	List<PublishedItem> items = new ArrayList<>(publishedItems.size());
-            	items.add(publishedItem);
+                List<PublishedItem> items = new ArrayList<>(publishedItems.size());
+                items.add(publishedItem);
                 itemsBySubs.put(subsByItem.get(publishedItem), items);
             }
             else {
@@ -276,7 +276,7 @@ public class NodeAffiliate {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " - JID: " + getJID() + " - Affiliation: " +
                 getAffiliation().name();
     }

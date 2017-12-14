@@ -31,32 +31,32 @@ import javax.net.ssl.SSLSession;
  */
 public class JiveInitialLdapContext extends InitialLdapContext {
 
-	private StartTlsResponse tlsResp;
-	private SSLSession sslSess;
-	
-	public JiveInitialLdapContext(Hashtable<?, ?> arg0, Control[] arg1)
-			throws NamingException {
-		super(arg0, arg1);
-	}
-	
-	public JiveInitialLdapContext() throws NamingException {
-		super();
-	}
+    private StartTlsResponse tlsResp;
+    private SSLSession sslSess;
+    
+    public JiveInitialLdapContext(Hashtable<?, ?> arg0, Control[] arg1)
+            throws NamingException {
+        super(arg0, arg1);
+    }
+    
+    public JiveInitialLdapContext() throws NamingException {
+        super();
+    }
 
-	public StartTlsResponse getTlsResponse() {
-		return tlsResp;
-	}
+    public StartTlsResponse getTlsResponse() {
+        return tlsResp;
+    }
 
-	public void setTlsResponse(StartTlsResponse tlsResp) {
-		this.tlsResp = tlsResp;
-	}
+    public void setTlsResponse(StartTlsResponse tlsResp) {
+        this.tlsResp = tlsResp;
+    }
 
-	public SSLSession getSslSession() {
-		return sslSess;
-	}
+    public SSLSession getSslSession() {
+        return sslSess;
+    }
 
-	public void setSslSession(SSLSession sslSess) {
-		this.sslSess = sslSess;
-	}
+    public void setSslSession(SSLSession sslSess) {
+        this.sslSess = sslSess;
+    }
 
 }

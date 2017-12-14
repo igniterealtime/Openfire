@@ -86,8 +86,8 @@ import org.xmpp.packet.Presence;
  */
 public class Workgroup {
 
-	private static final Logger Log = LoggerFactory.getLogger(Workgroup.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Workgroup.class);
+    
     private static final String LOAD_WORKGROUP =
             "SELECT jid, displayName, description, status, modes, creationDate, " +
             "modificationDate, maxchats, minchats, offerTimeout, requestTimeout, " +

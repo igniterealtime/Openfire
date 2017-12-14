@@ -27,8 +27,8 @@
     if (save) {
         if (errors.size() == 0) {
             plugin.setEnabled(enabled);
-        	plugin.setSecret(secret);
-        	plugin.setHttpBasicAuth(httpBasicAuth);
+            plugin.setSecret(secret);
+            plugin.setHttpBasicAuth(httpBasicAuth);
             plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
             response.sendRedirect("user-service.jsp?success=true");
             return;

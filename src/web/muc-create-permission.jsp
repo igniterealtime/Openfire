@@ -95,9 +95,9 @@
 
     List<JID> allowedJIDs = new ArrayList<JID>();
     try {
-    	if (userJID != null && userJID.trim().length() > 0) {
-    		String allowedJID;
-	        // do validation; could be a group jid
+        if (userJID != null && userJID.trim().length() > 0) {
+            String allowedJID;
+            // do validation; could be a group jid
             if (userJID.indexOf('@') == -1) {
                 String username = JID.escapeNode(userJID);
                 String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
@@ -108,39 +108,39 @@
                 String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
                 allowedJID = username + rest.trim();
             }
-	    	allowedJIDs.add(GroupJID.fromString(allowedJID.trim()).asBareJID());
-    	}
-    	if (groupNames != null) {
-    		// create a group JID for each group
-    		for (String groupName : groupNames) {
-    			GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
-    			allowedJIDs.add(groupJID);
-    		}
-    	}
+            allowedJIDs.add(GroupJID.fromString(allowedJID.trim()).asBareJID());
+        }
+        if (groupNames != null) {
+            // create a group JID for each group
+            for (String groupName : groupNames) {
+                GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+                allowedJIDs.add(groupJID);
+            }
+        }
     } catch (java.lang.IllegalArgumentException ex) {
         errors.put("userJID","userJID");
     }
 
     if (errors.size() == 0) {
-	    // Handle an add
-	    if (add) {
+        // Handle an add
+        if (add) {
             mucService.addUsersAllowedToCreate(allowedJIDs);
             // Log the event
             webManager.logEvent("updated MUC room creation permissions for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
-	    }
-	
-	    if (delete) {
-	        // Remove the user from the allowed list
-	        mucService.removeUserAllowedToCreate(GroupJID.fromString(userJID));
-	        // Log the event
-	        webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
-	        // done, return
-	        response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-	        return;
-	    }
-	}
+        }
+    
+        if (delete) {
+            // Remove the user from the allowed list
+            mucService.removeUserAllowedToCreate(GroupJID.fromString(userJID));
+            // Log the event
+            webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
+            // done, return
+            response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            return;
+        }
+    }
 %>
 
 <html>
@@ -158,9 +158,9 @@
 </p>
 
 <%  if (errors.size() > 0) { 
-	    if (delete) {
-	    	userJID = null; // mask group jid on error
-	    }
+        if (delete) {
+            userJID = null; // mask group jid on error
+        }
 %>
 
     <div class="jive-error">
@@ -206,10 +206,10 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.create.permission.policy" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
+        <fmt:message key="muc.create.permission.policy" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
         <tbody>
             <tr>
                 <td width="1%">
@@ -232,7 +232,7 @@
             </tr>
         </tbody>
         </table>
-	</div>
+    </div>
     <input type="submit" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END 'Permission Policy' -->
@@ -246,21 +246,21 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.create.permission.allowed_users" />
-	</div>
-	<div class="jive-contentBox">
-	    <p>
-	    <label for="groupJIDs"><fmt:message key="muc.create.permission.add_group" /></label><br/>
-		<select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 
-		 onclick="this.form.openPerms[1].checked=true;" id="groupJIDs">
-		<%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
-			<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
-			 <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
-			 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
-		<%  } %>
-		</select>
-		</p>
-		<p>
+        <fmt:message key="muc.create.permission.allowed_users" />
+    </div>
+    <div class="jive-contentBox">
+        <p>
+        <label for="groupJIDs"><fmt:message key="muc.create.permission.add_group" /></label><br/>
+        <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 
+         onclick="this.form.openPerms[1].checked=true;" id="groupJIDs">
+        <%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
+            <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+             <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
+             ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
+        <%  } %>
+        </select>
+        </p>
+        <p>
         <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
         <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
          onclick="this.form.openPerms[1].checked=true;" id="userJIDtf">
@@ -268,51 +268,51 @@
         </p>
 
         <div class="jive-table" style="width:400px;">
-			<table cellpadding="0" cellspacing="0" border="0" width="100%">
-			<thead>
-				<tr>
-					<th width="99%">User/Group</th>
-					<th width="1%">Remove</th>
-				</tr>
-			</thead>
-			<tbody>
-				<%  if (mucService.getUsersAllowedToCreate().size() == 0) { %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="99%">User/Group</th>
+                    <th width="1%">Remove</th>
+                </tr>
+            </thead>
+            <tbody>
+                <%  if (mucService.getUsersAllowedToCreate().size() == 0) { %>
 
-					<tr>
-						<td colspan="2">
-							<fmt:message key="muc.create.permission.no_allowed_users" />
-						</td>
-					</tr>
+                    <tr>
+                        <td colspan="2">
+                            <fmt:message key="muc.create.permission.no_allowed_users" />
+                        </td>
+                    </tr>
 
-				<%  } %>
+                <%  } %>
 
-				<%  for (JID jid : mucService.getUsersAllowedToCreate()) {
-                	    boolean isGroup = GroupJID.isGroup(jid);
-                	    String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
-				%>
-					<tr>
-						<td width="99%">
-		                  <% if (isGroup) { %>
-		                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.group" />" alt="<fmt:message key="muc.create.permission.group" />"/>
-		                  <% } else { %>
-		                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
-		                  <% } %>
-						  <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
-						  <%= jidDisplay %></a>
-						</td>
-						<td width="1%" align="center">
-							<a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
-							 title="<fmt:message key="muc.create.permission.click_title" />"
-							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
-							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
-						</td>
-					</tr>
+                <%  for (JID jid : mucService.getUsersAllowedToCreate()) {
+                        boolean isGroup = GroupJID.isGroup(jid);
+                        String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
+                %>
+                    <tr>
+                        <td width="99%">
+                          <% if (isGroup) { %>
+                            <img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.group" />" alt="<fmt:message key="muc.create.permission.group" />"/>
+                          <% } else { %>
+                            <img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
+                          <% } %>
+                          <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
+                          <%= jidDisplay %></a>
+                        </td>
+                        <td width="1%" align="center">
+                            <a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+                             title="<fmt:message key="muc.create.permission.click_title" />"
+                             onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
+                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                        </td>
+                    </tr>
 
-				<%  } %>
-			</tbody>
-			</table>
+                <%  } %>
+            </tbody>
+            </table>
         </div>
-	</div>
+    </div>
 </form>
 <!-- END 'Allowed Users' -->
 

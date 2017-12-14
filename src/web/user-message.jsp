@@ -192,45 +192,45 @@ function updateSelect(el) {
 
 <%  } %>
 
-	<!-- BEGIN send message block -->
-	<!--<div class="jive-contentBoxHeader">
-		<fmt:message key="user.message.send_admin_msg" />
-	</div>-->
-	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
-		<table cellpadding="3" cellspacing="1" border="0" width="600">
+    <!-- BEGIN send message block -->
+    <!--<div class="jive-contentBoxHeader">
+        <fmt:message key="user.message.send_admin_msg" />
+    </div>-->
+    <div class="jive-contentBox" style="-moz-border-radius: 3px;">
+        <table cellpadding="3" cellspacing="1" border="0" width="600">
 
-		<tr><td colspan=3 class="text" style="padding-bottom: 10px;">
-		<%   if (user == null) { %>
+        <tr><td colspan=3 class="text" style="padding-bottom: 10px;">
+        <%   if (user == null) { %>
 
-			<p><fmt:message key="user.message.info" /></p>
+            <p><fmt:message key="user.message.info" /></p>
 
-		<%  } else { %>
+        <%  } else { %>
 
-			<p><fmt:message key="user.message.specified_user_info" /></p>
+            <p><fmt:message key="user.message.specified_user_info" /></p>
 
-		<%  } %>
-		</td></tr>
-		<tr>
-			<td class="jive-label">
-				<fmt:message key="user.message.to" />:
-			</td>
-			<td>
-				<%  if (user == null) { %>
+        <%  } %>
+        </td></tr>
+        <tr>
+            <td class="jive-label">
+                <fmt:message key="user.message.to" />:
+            </td>
+            <td>
+                <%  if (user == null) { %>
 
-					<fmt:message key="user.message.all_online_user" />
+                    <fmt:message key="user.message.all_online_user" />
 
-				<%  } else { %>
+                <%  } else { %>
 
-					<%  if (sess != null && numSessions == 1) { %>
+                    <%  if (sess != null && numSessions == 1) { %>
 
-						<%= sess.getAddress().toString() %>
-						<input type="hidden" name="jid" value="<%= sess.getAddress().toString() %>">
+                        <%= sess.getAddress().toString() %>
+                        <input type="hidden" name="jid" value="<%= sess.getAddress().toString() %>">
 
-					<%  } else { %>
+                    <%  } else { %>
 
-						<select size="2" name="jid" multiple>
+                        <select size="2" name="jid" multiple>
 
-						<%
+                        <%
                             for (ClientSession clisess : sessions) {
                         %>
                             <option value="<%= clisess.getAddress().toString() %>"><%= clisess.getAddress().toString() %>
@@ -238,45 +238,45 @@ function updateSelect(el) {
 
                             <% } %>
 
-						</select>
+                        </select>
 
-						<input type="checkbox" name="sendToAll" value="true" id="cb01"
-						 onfocus="updateSelect(this);" onclick="updateSelect(this);">
-						<label for="cb01"><fmt:message key="user.message.send_session" /></label>
+                        <input type="checkbox" name="sendToAll" value="true" id="cb01"
+                         onfocus="updateSelect(this);" onclick="updateSelect(this);">
+                        <label for="cb01"><fmt:message key="user.message.send_session" /></label>
 
-					<%  } %>
+                    <%  } %>
 
-					<%  if (errors.get("jid") != null) { %>
+                    <%  if (errors.get("jid") != null) { %>
 
-						<br>
-						<span class="jive-error-text">
-						<fmt:message key="user.message.valid_address" />
-						</span>
+                        <br>
+                        <span class="jive-error-text">
+                        <fmt:message key="user.message.valid_address" />
+                        </span>
 
-					<%  } %>
+                    <%  } %>
 
-				<%  } %>
-			</td>
-		</tr>
-		<tr valign="top">
-			<td class="jive-label">
-				<fmt:message key="user.message.message" />:
-			</td>
-			<td>
-				<%  if (errors.get("message") != null) { %>
+                <%  } %>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td class="jive-label">
+                <fmt:message key="user.message.message" />:
+            </td>
+            <td>
+                <%  if (errors.get("message") != null) { %>
 
-					<span class="jive-error-text">
-					<fmt:message key="user.message.valid_message" />
-					</span>
-					<br>
+                    <span class="jive-error-text">
+                    <fmt:message key="user.message.valid_message" />
+                    </span>
+                    <br>
 
-				<%  } %>
-				<textarea name="message" cols="55" rows="5" wrap="virtual"></textarea>
-			</td>
-		</tr>
-		</table>
-	</div>
-	<!-- END send message block -->
+                <%  } %>
+                <textarea name="message" cols="55" rows="5" wrap="virtual"></textarea>
+            </td>
+        </tr>
+        </table>
+    </div>
+    <!-- END send message block -->
 
 <input type="submit" value="<fmt:message key="user.message.send_message" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

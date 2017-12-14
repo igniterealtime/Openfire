@@ -51,10 +51,10 @@ public class Listener
         A = flag;
     }
 
-	public Publication getPublication()
-	{
-		return K;
-	}
+    public Publication getPublication()
+    {
+        return K;
+    }
 
 
     public void C()

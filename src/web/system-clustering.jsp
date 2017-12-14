@@ -198,36 +198,36 @@
 <!-- BEGIN 'Clustering Enabled' -->
 <form action="system-clustering.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="system.clustering.enabled.legend" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr>
-				<td width="1%" valign="top" nowrap>
-					<input type="radio" name="clusteringEnabled" value="false" id="rb01"
-					 <%= (!clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="system.clustering.label_disable" /></b> - <fmt:message key="system.clustering.label_disable_info" />
-					</label>
-				</td>
-			</tr>
-			<tr>
-				<td width="1%" valign="top" nowrap>
-					<input type="radio" name="clusteringEnabled" value="true" id="rb02"
-					 <%= (clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
-				</td>
-				<td width="99%">
-					<label for="rb02">
-					<b><fmt:message key="system.clustering.label_enable" /></b> - <fmt:message key="system.clustering.label_enable_info" /> <b><fmt:message key="system.clustering.label_enable_info2" /></b> 
-					</label>
-				</td>
-			</tr>
-		</tbody>
-		</table>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="system.clustering.enabled.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr>
+                <td width="1%" valign="top" nowrap>
+                    <input type="radio" name="clusteringEnabled" value="false" id="rb01"
+                     <%= (!clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="system.clustering.label_disable" /></b> - <fmt:message key="system.clustering.label_disable_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%" valign="top" nowrap>
+                    <input type="radio" name="clusteringEnabled" value="true" id="rb02"
+                     <%= (clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                    <b><fmt:message key="system.clustering.label_enable" /></b> - <fmt:message key="system.clustering.label_enable_info" /> <b><fmt:message key="system.clustering.label_enable_info2" /></b> 
+                    </label>
+                </td>
+            </tr>
+        </tbody>
+        </table>
         <br/>
         <% if (clusteringAvailable) { %>
         <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">

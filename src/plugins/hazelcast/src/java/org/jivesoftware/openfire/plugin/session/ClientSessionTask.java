@@ -56,17 +56,17 @@ public class ClientSessionTask extends RemoteSessionTask {
     }
 
     Session getSession() {
-    	if (session == null) {
-    		session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
-    	}
-    	return session;
+        if (session == null) {
+            session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+        }
+        return session;
     }
 
     public void run() {
-    	if (getSession() == null || getSession().isClosed()) {
-    		logger.error("Session not found for JID: " + address);
-    		return;
-    	}
+        if (getSession() == null || getSession().isClosed()) {
+            logger.error("Session not found for JID: " + address);
+            return;
+        }
         super.run();
 
         ClientSession session = (ClientSession) getSession();

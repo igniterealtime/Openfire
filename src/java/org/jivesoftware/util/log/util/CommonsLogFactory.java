@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 @Deprecated
 public class CommonsLogFactory extends LogFactory {
 
-	private static final Logger Log = LoggerFactory.getLogger(CommonsLogFactory.class);
+    private static final Logger Log = LoggerFactory.getLogger(CommonsLogFactory.class);
 
     private org.apache.commons.logging.Log log;
 
@@ -131,40 +131,40 @@ public class CommonsLogFactory extends LogFactory {
     }
 
     @Override
-	public Object getAttribute(String string) {
+    public Object getAttribute(String string) {
         return null;
     }
 
     @Override
-	public String[] getAttributeNames() {
+    public String[] getAttributeNames() {
         return new String[0];
     }
 
     @Override
-	public org.apache.commons.logging.Log getInstance(Class aClass)
+    public org.apache.commons.logging.Log getInstance(Class aClass)
             throws LogConfigurationException {
         return log;
     }
 
     @Override
-	public org.apache.commons.logging.Log getInstance(String string)
+    public org.apache.commons.logging.Log getInstance(String string)
             throws LogConfigurationException
     {
         return log;
     }
 
     @Override
-	public void release() {
+    public void release() {
 
     }
 
     @Override
-	public void removeAttribute(String string) {
+    public void removeAttribute(String string) {
 
     }
 
     @Override
-	public void setAttribute(String string, Object object) {
+    public void setAttribute(String string, Object object) {
 
     }
 }

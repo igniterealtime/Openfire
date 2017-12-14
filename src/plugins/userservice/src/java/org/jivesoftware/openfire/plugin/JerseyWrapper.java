@@ -22,78 +22,78 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
  */
 public class JerseyWrapper extends ServletContainer {
 
-	/** The Constant AUTHFILTER. */
-	private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.AuthFilter";
+    /** The Constant AUTHFILTER. */
+    private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.AuthFilter";
 
-	/** The Constant CONTAINER_REQUEST_FILTERS. */
-	private static final String CONTAINER_REQUEST_FILTERS = "com.sun.jersey.spi.container.ContainerRequestFilters";
+    /** The Constant CONTAINER_REQUEST_FILTERS. */
+    private static final String CONTAINER_REQUEST_FILTERS = "com.sun.jersey.spi.container.ContainerRequestFilters";
 
-	/** The Constant RESOURCE_CONFIG_CLASS_KEY. */
-	private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
+    /** The Constant RESOURCE_CONFIG_CLASS_KEY. */
+    private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
 
-	/** The Constant RESOURCE_CONFIG_CLASS. */
-	private static final String RESOURCE_CONFIG_CLASS = "com.sun.jersey.api.core.PackagesResourceConfig";
+    /** The Constant RESOURCE_CONFIG_CLASS. */
+    private static final String RESOURCE_CONFIG_CLASS = "com.sun.jersey.api.core.PackagesResourceConfig";
 
-	/** The Constant SCAN_PACKAGE_DEFAULT. */
-	private static final String SCAN_PACKAGE_DEFAULT = JerseyWrapper.class.getPackage().getName();
+    /** The Constant SCAN_PACKAGE_DEFAULT. */
+    private static final String SCAN_PACKAGE_DEFAULT = JerseyWrapper.class.getPackage().getName();
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 1L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 1L;
 
-	/** The Constant SERVLET_URL. */
-	private static final String SERVLET_URL = "userService/*";
+    /** The Constant SERVLET_URL. */
+    private static final String SERVLET_URL = "userService/*";
 
-	/** The config. */
-	private static Map<String, Object> config;
+    /** The config. */
+    private static Map<String, Object> config;
 
-	/** The prc. */
-	private static PackagesResourceConfig prc;
+    /** The prc. */
+    private static PackagesResourceConfig prc;
 
-	static {
-		config = new HashMap<String, Object>();
-		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
-		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
-		prc.setPropertiesAndFeatures(config);
-		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, AUTHFILTER);
+    static {
+        config = new HashMap<String, Object>();
+        config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
+        prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
+        prc.setPropertiesAndFeatures(config);
+        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, AUTHFILTER);
 
-		prc.getClasses().add(UserServiceLegacy.class);
-		prc.getClasses().add(UserService.class);
-		prc.getClasses().add(UserRosterService.class);
-		prc.getClasses().add(UserGroupService.class);
-		prc.getClasses().add(UserServiceProperties.class);
-		prc.getClasses().add(UserLockoutService.class);
+        prc.getClasses().add(UserServiceLegacy.class);
+        prc.getClasses().add(UserService.class);
+        prc.getClasses().add(UserRosterService.class);
+        prc.getClasses().add(UserGroupService.class);
+        prc.getClasses().add(UserServiceProperties.class);
+        prc.getClasses().add(UserLockoutService.class);
 
-		prc.getClasses().add(RESTExceptionMapper.class);
-	}
+        prc.getClasses().add(RESTExceptionMapper.class);
+    }
 
-	/**
-	 * Instantiates a new jersey wrapper.
-	 */
-	public JerseyWrapper() {
-		super(prc);
-	}
+    /**
+     * Instantiates a new jersey wrapper.
+     */
+    public JerseyWrapper() {
+        super(prc);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)
-	 */
-	@Override
-	public void init(ServletConfig servletConfig) throws ServletException {
-		super.init(servletConfig);
-		// Exclude this servlet from requering the user to login
-		AuthCheckFilter.addExclude(SERVLET_URL);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)
+     */
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
+        super.init(servletConfig);
+        // Exclude this servlet from requering the user to login
+        AuthCheckFilter.addExclude(SERVLET_URL);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.sun.jersey.spi.container.servlet.ServletContainer#destroy()
-	 */
-	@Override
-	public void destroy() {
-		super.destroy();
-		// Release the excluded URL
-		AuthCheckFilter.removeExclude(SERVLET_URL);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.sun.jersey.spi.container.servlet.ServletContainer#destroy()
+     */
+    @Override
+    public void destroy() {
+        super.destroy();
+        // Release the excluded URL
+        AuthCheckFilter.removeExclude(SERVLET_URL);
+    }
 }

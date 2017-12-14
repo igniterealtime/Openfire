@@ -21,5 +21,5 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="groups")
 public class Groups {
-	public List<Group> group;
+    public List<Group> group;
 }

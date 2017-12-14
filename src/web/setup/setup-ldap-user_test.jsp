@@ -63,241 +63,241 @@
 <script type="text/javascript" language="javascript" src="../js/tooltips/domLib.js"></script>
 <style type="text/css">
 #lightbox{
-	top: 20%;
-	margin-top: -20px;
-	}
+    top: 20%;
+    margin-top: -20px;
+    }
 
 .jive-testPanel {
-	margin-top: -100px;
-	}
+    margin-top: -100px;
+    }
 html>body .jive-testPanel {
-	margin-top: 0px;
-	}
+    margin-top: 0px;
+    }
 </style>
 
 <!-- BEGIN connection settings test panel -->
 <div class="jive-testPanel">
-	<div class="jive-testPanel-content">
+    <div class="jive-testPanel-content">
 
-		<div align="right" class="jive-testPanel-close">
-			<a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
-		</div>
+        <div align="right" class="jive-testPanel-close">
+            <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
+        </div>
 
 
-		<h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h2>
+        <h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h2>
 
-		<!--<h4 class="jive-testSuccess">Success!</h4>-->
-		<!-- <h4 class="jive-testError">Error</h4> -->
+        <!--<h4 class="jive-testSuccess">Success!</h4>-->
+        <!-- <h4 class="jive-testError">Error</h4> -->
 
-		<p><fmt:message key="setup.ldap.user.vcard.test.description" /></p>
+        <p><fmt:message key="setup.ldap.user.vcard.test.description" /></p>
 
-		<div class="jive-testpanel-vcard">
+        <div class="jive-testpanel-vcard">
             <% if (attributes != null) { %>
             <table width="331" border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
-				<tr>
-					<td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.personal" /></td>
-				</tr>
-				<tr>
+                <tr>
+                    <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.personal" /></td>
+                </tr>
+                <tr>
                     <% String value = attributes.get(LdapUserTester.NAME);
                        boolean failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label" width="20%"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.name" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label" width="20%"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.name" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.EMAIL);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.email" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.email" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.NICKNAME);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.nickname" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.nickname" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BIRTHDAY);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.birthday" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.birthday" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.PHOTO);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.photo" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.photo" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : StringUtils.chopAtWord(value , 17) + "..."%></td>
-				</tr>
-				<tr>
-					<td colspan="2"></td>
-				</tr>
-				<tr>
-					<td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.home" /></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.home" /></td>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_STREET);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.street" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.street" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_CITY);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.city" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.city" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_STATE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.state" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.state" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_ZIP);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pcode" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pcode" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_COUNTRY);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.country" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.country" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_PHONE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.phone" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.phone" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_MOBILE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.mobile" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.mobile" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_FAX);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.fax" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.fax" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
+                </tr>
 
-				<tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.HOME_PAGER);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pager" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pager" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-			</table>
+                </tr>
+            </table>
 
-			<table width="331" border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard">
-				<tr>
-					<td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.business" /></td>
-				</tr>
-				<tr>
+            <table width="331" border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard">
+                <tr>
+                    <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.business" /></td>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_STREET);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label" width="20%"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.street" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label" width="20%"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.street" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_CITY);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.city" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.city" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_STATE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.state" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.state" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_ZIP);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pcode" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pcode" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_COUNTRY);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.country" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.country" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_JOB_TITLE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.title" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.title" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_DEPARTMENT);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.department" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.department" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_PHONE);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.phone" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.phone" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_MOBILE);
                         failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.mobile" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.mobile" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_FAX);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.fax" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.fax" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
+                </tr>
+                <tr>
                     <% value = attributes.get(LdapUserTester.BUSINESS_PAGER);
                        failed = value != null && value.contains("{");
                     %>
-					<td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pager" />:<%= value != null ? "</strong>" : ""%></td>
+                    <td class="jive-testpanel-vcard-label"><%= value != null ? "<strong>" : ""%><fmt:message key="setup.ldap.user.vcard.pager" />:<%= value != null ? "</strong>" : ""%></td>
                     <td class="jive-testpanel-vcard-value"><%= failed || value == null? "" : value%></td>
-				</tr>
-				<tr>
-					<td colspan="2" class="jive-testpanel-vcard-next">
-						<a href="<%= ParamUtils.getParameter(request, "currentPage")%>?test=true&serverType=<%= ParamUtils.getParameter(request, "serverType")%>&userIndex=<%=userIndex%>"><fmt:message key="setup.ldap.user.vcard.test.random" /></a>
-					</td>
-				</tr>
-			</table>
+                </tr>
+                <tr>
+                    <td colspan="2" class="jive-testpanel-vcard-next">
+                        <a href="<%= ParamUtils.getParameter(request, "currentPage")%>?test=true&serverType=<%= ParamUtils.getParameter(request, "serverType")%>&userIndex=<%=userIndex%>"><fmt:message key="setup.ldap.user.vcard.test.random" /></a>
+                    </td>
+                </tr>
+            </table>
             <% } else { %>
             <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
             <p><%= errorDetail %></p>
             <% } %>
-		</div>
+        </div>
 
-	</div>
+    </div>
 </div>
 
 

@@ -36,7 +36,7 @@ import java.util.*;
 public class GetListActiveUsers extends AdHocCommand {
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting List of Active Users");
         form.addInstruction("Fill out this form to request the active users of this service.");
@@ -63,7 +63,7 @@ public class GetListActiveUsers extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -105,27 +105,27 @@ public class GetListActiveUsers extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#get-active-users";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Get List of Active Users";
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 }

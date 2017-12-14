@@ -25,8 +25,8 @@ import org.xmpp.packet.JID;
  */
 public class ImageServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(ImageServlet.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(ImageServlet.class);
+    
     /**
      * The content-type of the images to return.
      */
@@ -35,7 +35,7 @@ public class ImageServlet extends HttpServlet {
     private ChatSettingsManager chatSettingsManager;
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         // Initialize chat settings manager.
@@ -51,7 +51,7 @@ public class ImageServlet extends HttpServlet {
      * @throws IOException
      */
     @Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response)
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String imageName = request.getParameter("imageName");

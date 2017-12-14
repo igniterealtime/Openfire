@@ -62,7 +62,7 @@ import org.xmpp.packet.Presence;
  */
 public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
 
     final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<>();
     private Map<String, IQ> componentInfo = new ConcurrentHashMap<>();
@@ -94,13 +94,13 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
     }
 
     @Override
-	public void start() {
+    public void start() {
         // Set this ComponentManager as the current component manager
         ComponentManagerFactory.setComponentManager(instance);
 
@@ -115,7 +115,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         if (getAddress() != null) {
             // Remove the route to this service
@@ -204,10 +204,10 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      */
     @Override
     public void removeComponent(String subdomain) {
-    	RoutableComponents components = null;
-    	if (routables == null || (components = routables.get(subdomain)) == null) {
-    		return;
-    	}
+        RoutableComponents components = null;
+        if (routables == null || (components = routables.get(subdomain)) == null) {
+            return;
+        }
         List<Component> componentsToRemove = new ArrayList<>(components.getComponents());
         for (Component component : componentsToRemove) {
             removeComponent(subdomain, component);

@@ -83,7 +83,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EmailService {
 
-	private static final Logger Log = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger Log = LoggerFactory.getLogger(EmailService.class);
 
     private static final String SSL_FACTORY = "org.jivesoftware.util.SimpleSSLSocketFactory";
 

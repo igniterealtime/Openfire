@@ -248,25 +248,25 @@
 
 <style type="text/css">
 .connectionManagers {
-	margin-top: 8px;
-	border: 1px solid #DCDCDC;
-	border-bottom: none;
-	}
+    margin-top: 8px;
+    border: 1px solid #DCDCDC;
+    border-bottom: none;
+    }
 .connectionManagers tr.head {
-	background-color: #F3F7FA;
-	border-bottom: 1px solid red;
-	}
+    background-color: #F3F7FA;
+    border-bottom: 1px solid red;
+    }
 .connectionManagers tr.head td {
-	padding: 3px 6px 3px 6px;
-	border-bottom: 1px solid #DCDCDC;
-	}
+    padding: 3px 6px 3px 6px;
+    border-bottom: 1px solid #DCDCDC;
+    }
 .connectionManagers tr td {
-	padding: 3px;
-	border-bottom: 1px solid #DCDCDC;
-	}
+    padding: 3px;
+    border-bottom: 1px solid #DCDCDC;
+    }
 .connectionManagers tr td img {
-	margin: 3px;
-	}
+    margin: 3px;
+    }
 </style>
 <b><fmt:message key="connection-manager.details.title" >
         <fmt:param value="<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>" />

@@ -15,15 +15,15 @@ import org.xmpp.packet.Presence;
 
 public class Reject extends AbstractRule implements Rule {
 
-	private static final Logger Log = LoggerFactory.getLogger(Reject.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Reject.class);
+    
     @Override
-	public String getDisplayName() {
+    public String getDisplayName() {
         return "Reject";
     }
 
     @Override
-	public Packet doAction(Packet packet) throws PacketRejectedException {
+    public Packet doAction(Packet packet) throws PacketRejectedException {
         SessionManager sessionManager = SessionManager.getInstance();
         ClientSession clientSession = sessionManager.getSession(packet.getFrom());
         Packet rejectPacket;

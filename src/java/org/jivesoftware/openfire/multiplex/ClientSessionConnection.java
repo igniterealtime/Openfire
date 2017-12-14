@@ -171,7 +171,7 @@ public class ClientSessionConnection extends VirtualConnection {
      * to be terminated.
      */
     @Override
-	public void closeVirtualConnection() {
+    public void closeVirtualConnection() {
         // Figure out who requested the connection to be closed
         StreamID streamID = session.getStreamID();
         if (multiplexerManager.getClientSession(connectionManagerName, streamID) == null) {

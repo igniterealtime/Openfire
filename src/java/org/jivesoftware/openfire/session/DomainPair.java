@@ -3,9 +3,10 @@ package org.jivesoftware.openfire.session;
 /**
  * Holds a (possibly authenticated) domain pair.
  */
-public class DomainPair {
+public class DomainPair implements java.io.Serializable {
     private final String local;
     private final String remote;
+    private static final long serialVersionUID = 1L;
 
     public DomainPair(String local, String remote) {
         this.local = local;

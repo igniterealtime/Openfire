@@ -51,31 +51,31 @@
     final PubSubServiceInfo pubSubServiceInfo = webManager.getPubSubInfo();
 
     // Load the node object
-	Node node = pubSubServiceInfo.getNode(nodeID);
+    Node node = pubSubServiceInfo.getNode(nodeID);
 
-	DataForm form = ((LeafNode) node).getConfigurationForm();
+    DataForm form = ((LeafNode) node).getConfigurationForm();
 
-	//Field that will not be returned to the server, i.e. cannot be edited on this page
-	ArrayList<String> nonReturnFields = new ArrayList<String>();
-	//This is the parent collection, this form is not a great way to edit this,
-	//and the back end has issues when the root Collection is the parent.
-	nonReturnFields.add("pubsub#collection");
+    //Field that will not be returned to the server, i.e. cannot be edited on this page
+    ArrayList<String> nonReturnFields = new ArrayList<String>();
+    //This is the parent collection, this form is not a great way to edit this,
+    //and the back end has issues when the root Collection is the parent.
+    nonReturnFields.add("pubsub#collection");
 
-	//owner and publishers are more easily managed through the affiliates admin pages
-	nonReturnFields.add("pubsub#owner");
-	nonReturnFields.add("pubsub#publisher");
+    //owner and publishers are more easily managed through the affiliates admin pages
+    nonReturnFields.add("pubsub#owner");
+    nonReturnFields.add("pubsub#publisher");
 
-	//replyto and replyroom were removed from XEP-60 at version 1.13
-	nonReturnFields.add("pubsub#replyto");
-	nonReturnFields.add("pubsub#replyroom");
+    //replyto and replyroom were removed from XEP-60 at version 1.13
+    nonReturnFields.add("pubsub#replyto");
+    nonReturnFields.add("pubsub#replyroom");
 
-	//nodes that will not be displayed in the form.
-	ArrayList<String> nonDisplayFields = new ArrayList<String>();
-	//changing nodes from leaf to collection is a bad idea, but the value is required in the returned form.
-	nonDisplayFields.add("pubsub#node_type");
+    //nodes that will not be displayed in the form.
+    ArrayList<String> nonDisplayFields = new ArrayList<String>();
+    //changing nodes from leaf to collection is a bad idea, but the value is required in the returned form.
+    nonDisplayFields.add("pubsub#node_type");
 
-	//fields not being returned are not shown
-	nonDisplayFields.addAll(nonReturnFields);
+    //fields not being returned are not shown
+    nonDisplayFields.addAll(nonReturnFields);
 
     // Handle update:
     if (update) {
@@ -92,9 +92,9 @@
         return;
     }
 
-	if (formSubmitted) {
-	    form = pubSubServiceInfo.processForm(form, request, nonReturnFields);
-	}
+    if (formSubmitted) {
+        form = pubSubServiceInfo.processForm(form, request, nonReturnFields);
+    }
 
     Map<String,listType> listTypes = new HashMap<>();
 
@@ -104,7 +104,7 @@
 
     Map<String,String> errors = new HashMap<>();
 
-	pubSubServiceInfo.validateAdditions(form, request, listTypes, errors);
+    pubSubServiceInfo.validateAdditions(form, request, listTypes, errors);
 
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("fields", form.getFields());
@@ -181,7 +181,7 @@
 
 <form action="pubsub-node-edit.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-	<input type="hidden" name="nodeID" value="${node.nodeID}">
+    <input type="hidden" name="nodeID" value="${node.nodeID}">
     <br>
 
 <fieldset>

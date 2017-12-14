@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
@@ -52,7 +53,7 @@ import org.xmpp.packet.StreamError;
  */
 public class LocalClientSession extends LocalSession implements ClientSession {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
@@ -861,7 +862,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already secured
         if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
@@ -875,6 +876,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 !conn.isCompressed()) {
             sb.append(
                     "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        }
+
+        // If a server supports roster versioning, 
+        // then it MUST advertise the following stream feature during stream negotiation.
+        if (RosterManager.isRosterVersioningEnabled()) {
+            sb.append("<ver xmlns=\"urn:xmpp:features:rosterver\"/>");
         }
 
         if (getAuthToken() == null) {
@@ -895,8 +902,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
             // Offer XEP-0198 stream management capabilities if enabled.
             if(JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true)) {
-            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
-            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
+                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
         }
         return sb.toString();
@@ -931,7 +938,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return true if the specified packet must be blocked.
      */
     @Override
-	public boolean canProcess(Packet packet) {
+    public boolean canProcess(Packet packet) {
 
         PrivacyList list = getActiveList();
         if (list != null) {
@@ -947,14 +954,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	public void deliver(Packet packet) throws UnauthorizedException {
-
-        conn.deliver(packet);
+    public void deliver(Packet packet) throws UnauthorizedException {
+        if (conn != null) {
+            conn.deliver(packet);
+        }
         streamManager.sentStanza(packet);
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " presence: " + presence;
     }
 }

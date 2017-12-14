@@ -80,7 +80,7 @@
     border-style: solid;
     border-width: 1px 1px 1px 1px;
     padding: 5px;
-	-moz-border-radius: 3px;
+    -moz-border-radius: 3px;
 }
 
 

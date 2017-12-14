@@ -95,13 +95,13 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildPrivateCommand(Element element)
     {
-		return new PrivateCommand();
-	}
+        return new PrivateCommand();
+    }
 
     private Object buildPublicCommand(Element element)
     {
-		return new PublicCommand();
-	}
+        return new PublicCommand();
+    }
 
     private Object buildMuteCommand(Element element)
     {
@@ -121,7 +121,7 @@ public class HandsetProvider extends BaseProvider {
     private Object buildCompleteCommand(Element element)
     {
         Element reasonElement = (Element)element.elements().get(0);
-    	String reasonValue = reasonElement.getName().toUpperCase();
+        String reasonValue = reasonElement.getName().toUpperCase();
         Reason reason = Reason.valueOf(reasonValue);
 
         SayCompleteEvent complete = new SayCompleteEvent();
@@ -132,28 +132,28 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildOffHookCommand(Element element) throws URISyntaxException {
 
-		Handset handset;
-		String sipuri = element.attributeValue("sipuri");
+        Handset handset;
+        String sipuri = element.attributeValue("sipuri");
 
-		if (sipuri != null && "".equals(sipuri) == false)
-		{
-			handset = new  Handset(	element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
+        if (sipuri != null && "".equals(sipuri) == false)
+        {
+            handset = new  Handset(	element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
 
-		} else {
+        } else {
 
-			handset = new  Handset(	element.attributeValue("cryptosuite"),
-											element.attributeValue("localcrypto"),
-											element.attributeValue("remotecrypto"),
-											element.attributeValue("codec"),
-											element.attributeValue("stereo"),
-											element.attributeValue("mixer"));
-		}
+            handset = new  Handset(	element.attributeValue("cryptosuite"),
+                                            element.attributeValue("localcrypto"),
+                                            element.attributeValue("remotecrypto"),
+                                            element.attributeValue("codec"),
+                                            element.attributeValue("stereo"),
+                                            element.attributeValue("mixer"));
+        }
 
         handset.group = element.attributeValue("group");
         handset.callId = element.attributeValue("callid");
 
- 		OffHookCommand command = new OffHookCommand();
-		command.setHandset(handset);
+        OffHookCommand command = new OffHookCommand();
+        command.setHandset(handset);
 
         return command;
     }
@@ -164,13 +164,13 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildTalkCommand(Element element)
     {
-		return new TalkCommand();
-	}
+        return new TalkCommand();
+    }
 
     private Object buildUntalkCommand(Element element)
     {
-		return new UntalkCommand();
-	}
+        return new UntalkCommand();
+    }
 
     private Object buildOnSpeakerCommand(Element element)
     {
@@ -184,8 +184,8 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildCreateSpeakerCommand(Element element)
     {
-		return new CreateSpeakerCommand(element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
-	}
+        return new CreateSpeakerCommand(element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
+    }
 
     private Object buildDestroySpeakerCommand(Element element)
     {
@@ -198,7 +198,7 @@ public class HandsetProvider extends BaseProvider {
     @Override
     protected void generateDocument(Object object, Document document) throws Exception {
 
-		if (object instanceof OnHookCommand) {
+        if (object instanceof OnHookCommand) {
             createOnHookCommand((OnHookCommand) object, document);
 
         } else if (object instanceof OffHookCommand) {
@@ -234,15 +234,15 @@ public class HandsetProvider extends BaseProvider {
     }
 
     private void createOffHookCommand(OffHookCommand command, Document document) throws Exception {
-		Handset handset = command.getHandset();
+        Handset handset = command.getHandset();
 
         Element root = document.addElement(new QName("offhook", NAMESPACE));
-		root.addAttribute("cryptoSuite", handset.cryptoSuite);
-		root.addAttribute("localCrypto", handset.localCrypto);
-		root.addAttribute("remoteCrypto", handset.cryptoSuite);
-		root.addAttribute("codec", handset.codec);
-		root.addAttribute("stereo", handset.stereo);
-		root.addAttribute("mixer", handset.mixer);
+        root.addAttribute("cryptoSuite", handset.cryptoSuite);
+        root.addAttribute("localCrypto", handset.localCrypto);
+        root.addAttribute("remoteCrypto", handset.cryptoSuite);
+        root.addAttribute("codec", handset.codec);
+        root.addAttribute("stereo", handset.stereo);
+        root.addAttribute("mixer", handset.mixer);
     }
 
 

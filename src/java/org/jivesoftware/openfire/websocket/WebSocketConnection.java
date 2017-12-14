@@ -23,6 +23,8 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -42,39 +44,39 @@ public class WebSocketConnection extends VirtualConnection
     private ConnectionType connectionType;
 
     public WebSocketConnection(XmppWebSocket socket, InetSocketAddress remotePeer) {
-    	this.socket = socket;
-    	this.remotePeer = remotePeer;
-    	this.connectionType = ConnectionType.SOCKET_C2S;
+        this.socket = socket;
+        this.remotePeer = remotePeer;
+        this.connectionType = ConnectionType.SOCKET_C2S;
     }
 
-	@Override
+    @Override
     public void closeVirtualConnection()
     {
         socket.closeSession();
     }
 
-	@Override
+    @Override
     public byte[] getAddress() {
         return remotePeer.getAddress().getAddress();
     }
 
-	@Override
+    @Override
     public String getHostAddress() {
         return remotePeer.getAddress().getHostAddress();
     }
 
-	@Override
+    @Override
     public String getHostName()  {
-    	return remotePeer.getHostName();
+        return remotePeer.getHostName();
     }
 
-	@Override
+    @Override
     public void systemShutdown() {
         deliverRawText(new StreamError(StreamError.Condition.system_shutdown).toXML());
-    	close();
+        close();
     }
 
-	@Override
+    @Override
     public void deliver(Packet packet) throws UnauthorizedException
     {
         final String xml;
@@ -86,49 +88,55 @@ public class WebSocketConnection extends VirtualConnection
         } else {
             xml = packet.toXML();
         }
-    	if (validate()) {
-    		deliverRawText(xml);
-    	} else {
-    		// use fallback delivery mechanism (offline)
-    		getPacketDeliverer().deliver(packet);
-    	}
+        if (validate()) {
+            deliverRawText(xml);
+        } else {
+            // use fallback delivery mechanism (offline)
+            getPacketDeliverer().deliver(packet);
+        }
     }
 
-	@Override
+    @Override
     public void deliverRawText(String text)
     {
-    	socket.deliver(text);
+        socket.deliver(text);
     }
 
-	@Override
+    @Override
     public boolean validate() {
         return socket.isWebSocketOpen();
     }
 
-	@Override
+    @Override
     public boolean isSecure() {
         return socket.isWebSocketSecure();
     }
 
-	@Override
+    @Override
     public PacketDeliverer getPacketDeliverer() {
-    	if (backupDeliverer == null) {
-    		backupDeliverer = new OfflinePacketDeliverer();
-    	}
+        if (backupDeliverer == null) {
+            backupDeliverer = new OfflinePacketDeliverer();
+        }
         return backupDeliverer;
     }
 
-	@Override
-	public ConnectionConfiguration getConfiguration() {
-		if (configuration == null) {
-			final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-			configuration = connectionManager.getListener( connectionType, true ).generateConnectionConfiguration();
-		}
-		return configuration;
-	}
+    @Override
+    public ConnectionConfiguration getConfiguration() {
+        if (configuration == null) {
+            final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+            configuration = connectionManager.getListener( connectionType, true ).generateConnectionConfiguration();
+        }
+        return configuration;
+    }
 
     @Override
-	public boolean isCompressed() {
-		return XmppWebSocket.isCompressionEnabled();
-	}
+    public boolean isCompressed() {
+        return XmppWebSocket.isCompressionEnabled();
+    }
+
+    @Override
+    public void reinit(LocalSession session) {
+        this.socket.setXmppSession((LocalClientSession)session);
+        super.reinit(session);
+    }
 }

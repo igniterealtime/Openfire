@@ -66,7 +66,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ replyPacket;
         Element child = packet.getChildElement();
         Element dataElement = (Element) child.elementIterator().next();
@@ -83,14 +83,14 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 child.add(dataStored);
             }
             else {
-            	replyPacket = IQ.createResultIQ(packet);
-				
-				if (privateStorage.isEnabled()) {
-					privateStorage.add(packet.getFrom().getNode(), dataElement);
-				} else {
-					replyPacket.setChildElement(packet.getChildElement().createCopy());
-					replyPacket.setError(PacketError.Condition.service_unavailable);
-				}
+                replyPacket = IQ.createResultIQ(packet);
+                
+                if (privateStorage.isEnabled()) {
+                    privateStorage.add(packet.getFrom().getNode(), dataElement);
+                } else {
+                    replyPacket.setChildElement(packet.getChildElement().createCopy());
+                    replyPacket.setError(PacketError.Condition.service_unavailable);
+                }
             }
         }
         else {
@@ -101,13 +101,13 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         privateStorage = server.getPrivateStorage();
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 

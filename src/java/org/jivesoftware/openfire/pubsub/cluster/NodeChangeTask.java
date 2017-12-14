@@ -18,46 +18,46 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
  */
 public abstract class NodeChangeTask implements ClusterTask<Void>
 {
-	private String nodeId;
-	transient private Node node;
+    private String nodeId;
+    transient private Node node;
 
-	public NodeChangeTask()
-	{
+    public NodeChangeTask()
+    {
 
-	}
+    }
 
-	public NodeChangeTask(String nodeIdent)
-	{
-		nodeId = nodeIdent;
-	}
+    public NodeChangeTask(String nodeIdent)
+    {
+        nodeId = nodeIdent;
+    }
 
-	public NodeChangeTask(Node node)
-	{
-		this.node = node;
-		nodeId = node.getNodeID();
-	}
+    public NodeChangeTask(Node node)
+    {
+        this.node = node;
+        nodeId = node.getNodeID();
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException
-	{
-		ExternalizableUtil.getInstance().writeSafeUTF(out, nodeId);
-	}
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException
+    {
+        ExternalizableUtil.getInstance().writeSafeUTF(out, nodeId);
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-	{
-		nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+    {
+        nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);
+    }
 
-	public Node getNode()
-	{
-		if (node == null)
-			node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
-		return node;
-	}
+    public Node getNode()
+    {
+        if (node == null)
+            node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
+        return node;
+    }
 
-	public String getNodeId()
-	{
-		return nodeId;
-	}
+    public String getNodeId()
+    {
+        return nodeId;
+    }
 }

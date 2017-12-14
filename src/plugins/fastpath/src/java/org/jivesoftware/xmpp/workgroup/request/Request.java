@@ -48,8 +48,8 @@ import org.xmpp.packet.JID;
  */
 public abstract class Request {
 
-	private static final Logger Log = LoggerFactory.getLogger(Request.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Request.class);
+    
     private static final Map<String, Request> requests = new ConcurrentHashMap<String, Request>();
 
     protected final String requestID;

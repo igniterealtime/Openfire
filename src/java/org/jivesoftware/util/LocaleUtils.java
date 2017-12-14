@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LocaleUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
 
     private static final Map<Locale, String[][]> timeZoneLists =
             new ConcurrentHashMap<>();
@@ -367,11 +367,11 @@ public class LocaleUtils {
         Locale locale = JiveGlobals.getLocale();
 
         try {
-        	ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
-        	return getLocalizedString(key, locale, null, bundle);
+            ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+            return getLocalizedString(key, locale, null, bundle);
         } catch (MissingResourceException mre) {
-        	Log.error(mre.getMessage());
-        	return key;
+            Log.error(mre.getMessage());
+            return key;
         }
     }
 
@@ -437,42 +437,42 @@ public class LocaleUtils {
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
-    	return getLocalizedString(key, pluginName, arguments, null, false);
+        return getLocalizedString(key, pluginName, arguments, null, false);
     }
 
-	/**
-	 * Returns an internationalized string loaded from a resource bundle from
-	 * the passed in plugin, using the passed in Locale.
-	 * 
-	 * If the plugin name is <tt>null</tt>, the key will be looked up using the
-	 * standard resource bundle.
-	 * 
-	 * If the locale is <tt>null</tt>, the Jive Global locale will be used.
-	 * 
-	 * @param key
-	 *            the key to use for retrieving the string from the appropriate
-	 *            resource bundle.
-	 * @param pluginName
-	 *            the name of the plugin to load the require resource bundle
-	 *            from.
-	 * @param arguments
-	 *            a list of objects to use which are formatted, then inserted
-	 *            into the pattern at the appropriate places.
-	 * @param locale
-	 *            the locale to use for retrieving the appropriate
-	 *            locale-specific string.
-	 * @param fallback
-	 *            if <tt>true</tt>, the global locale used by Openfire will be
-	 *            used if the requested locale is not available)
-	 * @return the localized string.
-	 */
+    /**
+     * Returns an internationalized string loaded from a resource bundle from
+     * the passed in plugin, using the passed in Locale.
+     * 
+     * If the plugin name is <tt>null</tt>, the key will be looked up using the
+     * standard resource bundle.
+     * 
+     * If the locale is <tt>null</tt>, the Jive Global locale will be used.
+     * 
+     * @param key
+     *            the key to use for retrieving the string from the appropriate
+     *            resource bundle.
+     * @param pluginName
+     *            the name of the plugin to load the require resource bundle
+     *            from.
+     * @param arguments
+     *            a list of objects to use which are formatted, then inserted
+     *            into the pattern at the appropriate places.
+     * @param locale
+     *            the locale to use for retrieving the appropriate
+     *            locale-specific string.
+     * @param fallback
+     *            if <tt>true</tt>, the global locale used by Openfire will be
+     *            used if the requested locale is not available)
+     * @return the localized string.
+     */
     public static String getLocalizedString(String key, String pluginName, List<?> arguments, Locale locale, boolean fallback) {
         if (pluginName == null) {
             return getLocalizedString(key, arguments);
         }
 
         if (locale == null) {
-        	locale = JiveGlobals.getLocale();
+            locale = JiveGlobals.getLocale();
         }
         String i18nFile = getI18nFile(pluginName);
 
@@ -490,12 +490,12 @@ public class LocaleUtils {
             return getLocalizedString(key, locale, arguments, bundle);
         }
         catch (MissingResourceException mre) {
-        	Locale jivesLocale = JiveGlobals.getLocale();
-        	if (fallback && !jivesLocale.equals(locale)) {
-        		Log.info("Could not find the requested locale. Falling back to default locale.", mre);
-            	return getLocalizedString(key, pluginName, arguments, jivesLocale, false);
-        	}
-        	
+            Locale jivesLocale = JiveGlobals.getLocale();
+            if (fallback && !jivesLocale.equals(locale)) {
+                Log.info("Could not find the requested locale. Falling back to default locale.", mre);
+                return getLocalizedString(key, pluginName, arguments, jivesLocale, false);
+            }
+            
             Log.error(mre.getMessage(), mre);
             return key;
         }
@@ -525,9 +525,9 @@ public class LocaleUtils {
         return ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
     }
 
-	private static String getI18nFile(String pluginName) {
-		return pluginName.replace('.', '_') + "_i18n";
-	}
+    private static String getI18nFile(String pluginName) {
+        return pluginName.replace('.', '_') + "_i18n";
+    }
 
     /**
      * Returns an internationalized string loaded from a resource bundle using

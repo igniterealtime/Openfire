@@ -48,19 +48,19 @@
     int numPages = 1;
     int curPage = (start / range) + 1;
 
-    if (anyText.equals(participant1)) {
+    if (anyText.equalsIgnoreCase(participant1)) {
         participant1 = null;
     }
 
-    if (anyText.equals(participant2)) {
+    if (anyText.equalsIgnoreCase(participant2)) {
         participant2 = null;
     }
 
-    if (anyText.equals(startDate)) {
+    if (anyText.equalsIgnoreCase(startDate)) {
         startDate = null;
     }
 
-    if (anyText.equals(endDate)) {
+    if (anyText.equalsIgnoreCase(endDate)) {
         endDate = null;
     }
 
@@ -367,7 +367,7 @@
 </style>
 
 <style type="text/css" title="setupStyle" media="screen">
-	@import "../../style/lightbox.css";
+    @import "../../style/lightbox.css";
 </style>
 
 <script language="JavaScript" type="text/javascript" src="../../js/lightbox.js"></script>
@@ -379,10 +379,10 @@
         selectedConversation = conv;
         
         new Ajax.Request('/plugins/monitoring/api/conversations/' +conv, {
-        	method: 'get',
-        	onSuccess: function(transport) {
-        		showConv(transport.responseText.evalJSON());
-        	}
+            method: 'get',
+            onSuccess: function(transport) {
+                showConv(transport.responseText.evalJSON());
+            }
         });
     }
 
@@ -471,7 +471,7 @@
         '.textfield' : function(el) {
             el.onblur = function() {
                 var va = el.value;
-                if (va.length == 0 || va == 'Any') {
+                if (va.length == 0 || va == 'Any' || va == 'any') {
                     this.style.backgroundColor = '#efefef';
                     el.value = "<%= anyText%>";
                 }
@@ -494,7 +494,7 @@
     Behaviour.register(myrules);
 </script>
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 <body>

@@ -30,17 +30,17 @@ import org.slf4j.LoggerFactory;
  * Auth provider for Atlassian Crowd
  */
 public class CrowdAuthProvider implements AuthProvider {
-	private static final Logger LOG = LoggerFactory.getLogger(CrowdAuthProvider.class);
-	
-	private CrowdManager manager = null;
-	
-	public CrowdAuthProvider() {
-		try {
-			manager = CrowdManager.getInstance();
-		} catch (Exception e) {
-			LOG.error("Failure to load the Crowd manager", e);
-		}
-	}
+    private static final Logger LOG = LoggerFactory.getLogger(CrowdAuthProvider.class);
+    
+    private CrowdManager manager = null;
+    
+    public CrowdAuthProvider() {
+        try {
+            manager = CrowdManager.getInstance();
+        } catch (Exception e) {
+            LOG.error("Failure to load the Crowd manager", e);
+        }
+    }
 
     /**
      * Returns if the username and password are valid; otherwise this
@@ -53,11 +53,11 @@ public class CrowdAuthProvider implements AuthProvider {
      * @throws ConnectionException it there is a problem connecting to user and group sytem
      * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
-	@Override
-	public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-		if (manager == null) {
-			throw new ConnectionException("Unable to connect to Crowd");
-		}
+    @Override
+    public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
+        if (manager == null) {
+            throw new ConnectionException("Unable to connect to Crowd");
+        }
 
         if (username == null || password == null || "".equals(password.trim())) {
             throw new UnauthorizedException();
@@ -76,26 +76,26 @@ public class CrowdAuthProvider implements AuthProvider {
         }
 
         try {
-			manager.authenticate(username, password);
-		} catch (RemoteException re) {
-			throw new UnauthorizedException();
-		}
-	}
+            manager.authenticate(username, password);
+        } catch (RemoteException re) {
+            throw new UnauthorizedException();
+        }
+    }
 
-	@Override
-	public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
-		throw new UnsupportedOperationException("Retrieve password not supported by this version of authentication provider");
-	}
+    @Override
+    public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
+        throw new UnsupportedOperationException("Retrieve password not supported by this version of authentication provider");
+    }
 
-	@Override
-	public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
-		throw new UnsupportedOperationException("Setting password not implemented by this version of authentication provider");
-	}
+    @Override
+    public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
+        throw new UnsupportedOperationException("Setting password not implemented by this version of authentication provider");
+    }
 
-	@Override
-	public boolean supportsPasswordRetrieval() {
-		return false;
-	}
+    @Override
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 
     @Override
     public boolean isScramSupported() {
@@ -104,23 +104,23 @@ public class CrowdAuthProvider implements AuthProvider {
     }
 
 
-	@Override
-	public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -22,98 +22,98 @@ import org.xmpp.packet.Packet;
 
 public class PacketFilterPlugin implements Plugin, PacketInterceptor, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PacketFilterPlugin.class);
+    private static final Logger Log = LoggerFactory.getLogger(PacketFilterPlugin.class);
 
-	private static PluginManager pluginManager;
+    private static PluginManager pluginManager;
 
-	public PacketFilterPlugin() {
-		interceptorManager = InterceptorManager.getInstance();
-	}
+    public PacketFilterPlugin() {
+        interceptorManager = InterceptorManager.getInstance();
+    }
 
-	// Packet Filter
-	private PacketFilter pf;
+    // Packet Filter
+    private PacketFilter pf;
 
-	// Hook for intercpetorn
-	private InterceptorManager interceptorManager;
+    // Hook for intercpetorn
+    private InterceptorManager interceptorManager;
 
-	private RuleGroupEventListener groupEvListener;
+    private RuleGroupEventListener groupEvListener;
 
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
-		// register with interceptor manager
-		interceptorManager.addInterceptor(this);
-		pluginManager = manager;
-		pf = PacketFilter.getInstance();
-		RuleManager ruleManager = new RuleManagerProxy();
-		pf.setRuleManager(ruleManager);
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        // register with interceptor manager
+        interceptorManager.addInterceptor(this);
+        pluginManager = manager;
+        pf = PacketFilter.getInstance();
+        RuleManager ruleManager = new RuleManagerProxy();
+        pf.setRuleManager(ruleManager);
 
-		if (JiveGlobals.getBooleanProperty(PacketFilterConstants.Properties.AUTOCREATE_GROUP_RULES, true)) {
-			groupEvListener = new RuleGroupEventListener();
-			GroupEventDispatcher.addListener(groupEvListener);
-		}
-	}
+        if (JiveGlobals.getBooleanProperty(PacketFilterConstants.Properties.AUTOCREATE_GROUP_RULES, true)) {
+            groupEvListener = new RuleGroupEventListener();
+            GroupEventDispatcher.addListener(groupEvListener);
+        }
+    }
 
-	public void destroyPlugin() {
-		// unregister with interceptor manager
-		interceptorManager.removeInterceptor(this);
-		GroupEventDispatcher.removeListener(groupEvListener);
-	}
+    public void destroyPlugin() {
+        // unregister with interceptor manager
+        interceptorManager.removeInterceptor(this);
+        GroupEventDispatcher.removeListener(groupEvListener);
+    }
 
-	public String getName() {
-		return "packetFilter";
+    public String getName() {
+        return "packetFilter";
 
-	}
+    }
 
-	public static PluginManager getPluginManager() {
-		return pluginManager;
-	}
+    public static PluginManager getPluginManager() {
+        return pluginManager;
+    }
 
-	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
+    public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
 
-		if (processed) {
-			return;
-		}
+        if (processed) {
+            return;
+        }
 
-		Rule rule = pf.findMatch(packet);
+        Rule rule = pf.findMatch(packet);
 
-		if (rule != null) {
-			rule.doAction(packet);
-		}
-	}
+        if (rule != null) {
+            rule.doAction(packet);
+        }
+    }
 
-	@Override
-	public void propertySet(String property, Map<String, Object> params) {
-		if (property.equals(PacketFilterConstants.Properties.AUTOCREATE_GROUP_RULES)) {
-			if (Boolean.parseBoolean((String) params.get("value"))) {
-				GroupEventDispatcher.removeListener(groupEvListener);
+    @Override
+    public void propertySet(String property, Map<String, Object> params) {
+        if (property.equals(PacketFilterConstants.Properties.AUTOCREATE_GROUP_RULES)) {
+            if (Boolean.parseBoolean((String) params.get("value"))) {
+                GroupEventDispatcher.removeListener(groupEvListener);
 
-				groupEvListener = new RuleGroupEventListener();
-				GroupEventDispatcher.addListener(groupEvListener);
-			} else {
-				GroupEventDispatcher.removeListener(groupEvListener);
-				groupEvListener = null;
-			}
-			
-		}
-	}
+                groupEvListener = new RuleGroupEventListener();
+                GroupEventDispatcher.addListener(groupEvListener);
+            } else {
+                GroupEventDispatcher.removeListener(groupEvListener);
+                groupEvListener = null;
+            }
+            
+        }
+    }
 
-	@Override
-	public void propertyDeleted(String property, Map<String, Object> params) {
-		GroupEventDispatcher.removeListener(groupEvListener);
+    @Override
+    public void propertyDeleted(String property, Map<String, Object> params) {
+        GroupEventDispatcher.removeListener(groupEvListener);
 
-		groupEvListener = new RuleGroupEventListener();
-		GroupEventDispatcher.addListener(groupEvListener);
-	}
+        groupEvListener = new RuleGroupEventListener();
+        GroupEventDispatcher.addListener(groupEvListener);
+    }
 
-	@Override
-	public void xmlPropertySet(String property, Map<String, Object> params) {
-		// TODO Auto-generated method stub
+    @Override
+    public void xmlPropertySet(String property, Map<String, Object> params) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	@Override
-	public void xmlPropertyDeleted(String property, Map<String, Object> params) {
-		// TODO Auto-generated method stub
+    @Override
+    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
 }

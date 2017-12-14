@@ -8,142 +8,142 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "session")
 @XmlType(propOrder = { "sessionId", "username", "resource", "node", "sessionStatus", "presenceStatus", "presenceMessage", "priority",
-		"hostAddress", "hostName", "creationDate", "lastActionDate", "secure" })
+        "hostAddress", "hostName", "creationDate", "lastActionDate", "secure" })
 public class SessionEntity {
 
-	private String sessionId;
-	private String username;
-	private String resource;
-	private String node;
-	private String sessionStatus;
-	private String presenceStatus;
-	private String presenceMessage;
-	private int priority;
-	private String hostAddress;
-	private String hostName;
+    private String sessionId;
+    private String username;
+    private String resource;
+    private String node;
+    private String sessionStatus;
+    private String presenceStatus;
+    private String presenceMessage;
+    private int priority;
+    private String hostAddress;
+    private String hostName;
 
-	private Date creationDate;
-	private Date lastActionDate;
+    private Date creationDate;
+    private Date lastActionDate;
 
-	private boolean secure;
+    private boolean secure;
 
-	public SessionEntity() {
-	}
+    public SessionEntity() {
+    }
 
-	@XmlElement
-	public String getSessionId() {
-		return sessionId;
-	}
+    @XmlElement
+    public String getSessionId() {
+        return sessionId;
+    }
 
-	public void setSessionId(String sessionId) {
-		this.sessionId = sessionId;
-	}
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
 
-	@XmlElement
-	public String getUsername() {
-		return username;
-	}
+    @XmlElement
+    public String getUsername() {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	@XmlElement
-	public String getResource() {
-		return resource;
-	}
+    @XmlElement
+    public String getResource() {
+        return resource;
+    }
 
-	public void setResource(String resource) {
-		this.resource = resource;
-	}
+    public void setResource(String resource) {
+        this.resource = resource;
+    }
 
-	@XmlElement
-	public String getNode() {
-		return node;
-	}
+    @XmlElement
+    public String getNode() {
+        return node;
+    }
 
-	public void setNode(String node) {
-		this.node = node;
-	}
+    public void setNode(String node) {
+        this.node = node;
+    }
 
-	@XmlElement
-	public String getSessionStatus() {
-		return sessionStatus;
-	}
+    @XmlElement
+    public String getSessionStatus() {
+        return sessionStatus;
+    }
 
-	public void setSessionStatus(String sessionStatus) {
-		this.sessionStatus = sessionStatus;
-	}
+    public void setSessionStatus(String sessionStatus) {
+        this.sessionStatus = sessionStatus;
+    }
 
-	@XmlElement
-	public String getPresenceStatus() {
-		return presenceStatus;
-	}
+    @XmlElement
+    public String getPresenceStatus() {
+        return presenceStatus;
+    }
 
-	public void setPresenceStatus(String presenceStatus) {
-		this.presenceStatus = presenceStatus;
-	}
+    public void setPresenceStatus(String presenceStatus) {
+        this.presenceStatus = presenceStatus;
+    }
 
-	public String getPresenceMessage() {
-		return presenceMessage;
-	}
+    public String getPresenceMessage() {
+        return presenceMessage;
+    }
 
-	public void setPresenceMessage(String presenceMessage) {
-		this.presenceMessage = presenceMessage;
-	}
+    public void setPresenceMessage(String presenceMessage) {
+        this.presenceMessage = presenceMessage;
+    }
 
-	@XmlElement
-	public int getPriority() {
-		return priority;
-	}
+    @XmlElement
+    public int getPriority() {
+        return priority;
+    }
 
-	public void setPriority(int priority) {
-		this.priority = priority;
-	}
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
 
-	@XmlElement
-	public String getHostAddress() {
-		return hostAddress;
-	}
+    @XmlElement
+    public String getHostAddress() {
+        return hostAddress;
+    }
 
-	public void setHostAddress(String hostAddress) {
-		this.hostAddress = hostAddress;
-	}
+    public void setHostAddress(String hostAddress) {
+        this.hostAddress = hostAddress;
+    }
 
-	@XmlElement
-	public String getHostName() {
-		return hostName;
-	}
+    @XmlElement
+    public String getHostName() {
+        return hostName;
+    }
 
-	public void setHostName(String hostName) {
-		this.hostName = hostName;
-	}
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
 
-	@XmlElement
-	public Date getCreationDate() {
-		return creationDate;
-	}
+    @XmlElement
+    public Date getCreationDate() {
+        return creationDate;
+    }
 
-	public void setCreationDate(Date creationDate) {
-		this.creationDate = creationDate;
-	}
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
 
-	@XmlElement
-	public Date getLastActionDate() {
-		return lastActionDate;
-	}
+    @XmlElement
+    public Date getLastActionDate() {
+        return lastActionDate;
+    }
 
-	public void setLastActionDate(Date lastActionDate) {
-		this.lastActionDate = lastActionDate;
-	}
+    public void setLastActionDate(Date lastActionDate) {
+        this.lastActionDate = lastActionDate;
+    }
 
-	@XmlElement
-	public boolean isSecure() {
-		return secure;
-	}
+    @XmlElement
+    public boolean isSecure() {
+        return secure;
+    }
 
-	public void setSecure(boolean secure) {
-		this.secure = secure;
-	}
+    public void setSecure(boolean secure) {
+        this.secure = secure;
+    }
 
 }

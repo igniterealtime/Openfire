@@ -41,12 +41,12 @@ public class QueueInterceptorManager extends InterceptorManager {
     }
 
     @Override
-	protected String getPropertySuffix() {
+    protected String getPropertySuffix() {
         return "queue";
     }
 
     @Override
-	protected Collection<Class> getBuiltInInterceptorClasses() {
+    protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class)TrafficMonitor.class, (Class)UserInterceptor.class);
     }
 }

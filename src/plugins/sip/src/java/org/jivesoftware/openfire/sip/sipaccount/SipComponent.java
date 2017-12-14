@@ -40,8 +40,8 @@ import org.xmpp.packet.PacketError;
  */
 public class SipComponent implements Component, SessionEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(SipComponent.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SipComponent.class);
+    
     ComponentManager componentManager = null;
 
     /**
@@ -206,6 +206,6 @@ public class SipComponent implements Component, SessionEventListener {
     }
 
     public void resourceBound(Session session) {
-    	// Do nothing.
+        // Do nothing.
     }
 }

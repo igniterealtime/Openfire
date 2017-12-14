@@ -20,43 +20,43 @@ import org.jivesoftware.openfire.plugin.UserServicePluginNG;
 @Path("userService/users")
 public class UserService {
 
-	private UserServicePluginNG plugin;
+    private UserServicePluginNG plugin;
 
-	@PostConstruct
-	public void init() {
-		plugin = UserServicePluginNG.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        plugin = UserServicePluginNG.getInstance();
+    }
 
-	@GET
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public UserEntities getUsers(@QueryParam("search") String userSearch) {
-		return plugin.getUserEntities(userSearch);
-	}
+    @GET
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public UserEntities getUsers(@QueryParam("search") String userSearch) {
+        return plugin.getUserEntities(userSearch);
+    }
 
-	@POST
-	public Response createUser(UserEntity userEntity) throws ServiceException {
-		plugin.createUser(userEntity);
-		return Response.status(Response.Status.CREATED).build();
-	}
+    @POST
+    public Response createUser(UserEntity userEntity) throws ServiceException {
+        plugin.createUser(userEntity);
+        return Response.status(Response.Status.CREATED).build();
+    }
 
-	@GET
-	@Path("/{username}")
-	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-	public UserEntity getUser(@PathParam("username") String username) throws ServiceException {
-		return plugin.getUserEntity(username);
-	}
+    @GET
+    @Path("/{username}")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public UserEntity getUser(@PathParam("username") String username) throws ServiceException {
+        return plugin.getUserEntity(username);
+    }
 
-	@PUT
-	@Path("/{username}")
-	public Response updateUser(@PathParam("username") String username, UserEntity userEntity) throws ServiceException {
-		plugin.updateUser(username, userEntity);
-		return Response.status(Response.Status.OK).build();
-	}
+    @PUT
+    @Path("/{username}")
+    public Response updateUser(@PathParam("username") String username, UserEntity userEntity) throws ServiceException {
+        plugin.updateUser(username, userEntity);
+        return Response.status(Response.Status.OK).build();
+    }
 
-	@DELETE
-	@Path("/{username}")
-	public Response deleteUser(@PathParam("username") String username) throws ServiceException {
-		plugin.deleteUser(username);
-		return Response.status(Response.Status.OK).build();
-	}
+    @DELETE
+    @Path("/{username}")
+    public Response deleteUser(@PathParam("username") String username) throws ServiceException {
+        plugin.deleteUser(username);
+        return Response.status(Response.Status.OK).build();
+    }
 }

@@ -76,7 +76,7 @@ import org.xmpp.packet.PacketError;
  */
 public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQRosterHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQRosterHandler.class);
 
     private IQHandlerInfo info;
 
@@ -106,7 +106,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @return The reply or null if no reply
      */
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
             IQ returnPacket;
             org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
@@ -182,7 +182,23 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
             Roster cachedRoster = userManager.getUser(sender.getNode()).getRoster();
             if (IQ.Type.get == type) {
-                returnPacket = cachedRoster.getReset();
+
+                if (RosterManager.isRosterVersioningEnabled()) {
+                    String clientVersion = packet.getChildElement().attributeValue("ver");
+                    String latestVersion = String.valueOf( cachedRoster.hashCode() );
+                    // Whether or not the roster has been modified since the version ID enumerated by the client, ...
+                    if (!latestVersion.equals(clientVersion)) {
+                        // ... the server MUST either return the complete roster
+                        // (including a 'ver' attribute that signals the latest version)
+                        returnPacket = cachedRoster.getReset();
+                        returnPacket.getChildElement().addAttribute("ver", latestVersion );
+                    } else {
+                        // ... or return an empty IQ-result
+                        returnPacket = new org.xmpp.packet.IQ();
+                    }
+                } else {
+                    returnPacket = cachedRoster.getReset();
+                }
                 returnPacket.setType(IQ.Type.result);
                 returnPacket.setTo(sender);
                 returnPacket.setID(packet.getID());
@@ -327,7 +343,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         userManager = server.getUserManager();
@@ -335,7 +351,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 

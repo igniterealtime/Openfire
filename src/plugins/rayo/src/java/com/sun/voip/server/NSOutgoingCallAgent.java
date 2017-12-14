@@ -49,135 +49,135 @@ public class NSOutgoingCallAgent extends CallSetupAgent {
     private MediaInfo mixerMediaPreference;
 
     public NSOutgoingCallAgent(CallHandler callHandler) {
-		super(callHandler);
+        super(callHandler);
 
-		cp = callHandler.getCallParticipant();
+        cp = callHandler.getCallParticipant();
 
-		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
+        mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
-		sipUtil = new SipUtil(mixerMediaPreference);
-	}
+        sipUtil = new SipUtil(mixerMediaPreference);
+    }
 
-	public void initiateCall() throws IOException {
-		InetSocketAddress isa = callHandler.getReceiveAddress();
+    public void initiateCall() throws IOException {
+        InetSocketAddress isa = callHandler.getReceiveAddress();
 
-			if (isa == null) {
-				throw new IOException("can't get receiver socket!");
-			}
+            if (isa == null) {
+                throw new IOException("can't get receiver socket!");
+            }
 
-		setState(CallState.INVITED);
+        setState(CallState.INVITED);
 
-		TreatmentManager treatmentManager = null;
+        TreatmentManager treatmentManager = null;
 
-		if (cp.getInputTreatment() != null)
-		{
-			if (cp.getInputTreatment().length() > 0)
-			{
-				try {
-				/*
-				 * Just make sure we can open the file
-				 */
-				treatmentManager = new TreatmentManager(cp.getInputTreatment(),
-							RtpPacket.PCM_ENCODING, mixerMediaPreference.getSampleRate(),
-					mixerMediaPreference.getChannels());
+        if (cp.getInputTreatment() != null)
+        {
+            if (cp.getInputTreatment().length() > 0)
+            {
+                try {
+                /*
+                 * Just make sure we can open the file
+                 */
+                treatmentManager = new TreatmentManager(cp.getInputTreatment(),
+                            RtpPacket.PCM_ENCODING, mixerMediaPreference.getSampleRate(),
+                    mixerMediaPreference.getChannels());
 
-					treatmentManager.stopTreatment(false);
-				} catch (IOException e) {
-				Logger.println("Invalid input treatment:  " + cp.getInputTreatment());
-				throw new IOException(
-					"Invalid input treatment:  " + cp.getInputTreatment());
-				}
-			}
+                    treatmentManager.stopTreatment(false);
+                } catch (IOException e) {
+                Logger.println("Invalid input treatment:  " + cp.getInputTreatment());
+                throw new IOException(
+                    "Invalid input treatment:  " + cp.getInputTreatment());
+                }
+            }
 
-			/*
-			 * This is a special call which is used to play
-			 * an input treatment as its input.
-			 * There is no remote endpoint.
-			 */
-			try {
-				setRemoteMediaInfo(treatmentManager);
-			} catch (ParseException e) {
-			throw new IOException(e.getMessage());
-			}
-		}
-	}
+            /*
+             * This is a special call which is used to play
+             * an input treatment as its input.
+             * There is no remote endpoint.
+             */
+            try {
+                setRemoteMediaInfo(treatmentManager);
+            } catch (ParseException e) {
+            throw new IOException(e.getMessage());
+            }
+        }
+    }
 
-	public String getSdp() {
-		InetSocketAddress isa;
+    public String getSdp() {
+        InetSocketAddress isa;
 
-		if (cp.getInputTreatment() != null) {
-			isa = new InetSocketAddress(Bridge.getPrivateHost(), 0);
-		} else {
-			isa = callHandler.getReceiveAddress();
-		}
+        if (cp.getInputTreatment() != null) {
+            isa = new InetSocketAddress(Bridge.getPrivateHost(), 0);
+        } else {
+            isa = callHandler.getReceiveAddress();
+        }
 
-		return sipUtil.generateSdp(cp, isa);
+        return sipUtil.generateSdp(cp, isa);
     }
 
     public void setRemoteMediaInfo(String sdp) throws ParseException {
 
-		if (getState() != CallState.INVITED) {
-			Logger.println("Call " + cp
-			+ ":  NSOutgoingCallAgent:  bad state "
-			+ getState());
-			return;
-		}
+        if (getState() != CallState.INVITED) {
+            Logger.println("Call " + cp
+            + ":  NSOutgoingCallAgent:  bad state "
+            + getState());
+            return;
+        }
 
-		sdp = sdp.replaceAll("\\+", "\r\n");
+        sdp = sdp.replaceAll("\\+", "\r\n");
 
-		Logger.println("Call " + cp
-			+ ":  NSOutgoingCallAgent:  remote SDP:  " + sdp);
+        Logger.println("Call " + cp
+            + ":  NSOutgoingCallAgent:  remote SDP:  " + sdp);
 
-		SdpInfo sdpInfo = sipUtil.getSdpInfo(sdp, false);
+        SdpInfo sdpInfo = sipUtil.getSdpInfo(sdp, false);
 
-		MediaInfo mediaInfo = sdpInfo.getMediaInfo();
+        MediaInfo mediaInfo = sdpInfo.getMediaInfo();
 
-			InetSocketAddress isa = new InetSocketAddress(
-			sdpInfo.getRemoteHost(), sdpInfo.getRemotePort());
+            InetSocketAddress isa = new InetSocketAddress(
+            sdpInfo.getRemoteHost(), sdpInfo.getRemotePort());
 
-		Logger.println("Call " + cp
-			+ ":  NSOutgoingCallAgent:  " + mediaInfo
-			+ " remote " + isa);
+        Logger.println("Call " + cp
+            + ":  NSOutgoingCallAgent:  " + mediaInfo
+            + " remote " + isa);
 
-			setEndpointAddress(isa, mediaInfo.getPayload(),
-			sdpInfo.getTransmitMediaInfo().getPayload(),
-			sdpInfo.getTelephoneEventPayload());
+            setEndpointAddress(isa, mediaInfo.getPayload(),
+            sdpInfo.getTransmitMediaInfo().getPayload(),
+            sdpInfo.getTelephoneEventPayload());
 
-		if (callAnswered) {
-			Logger.writeFile("Call " + cp
-			+ ":  NSOutgoingCallAgent: done remote SDP");
-			return;
-		}
+        if (callAnswered) {
+            Logger.writeFile("Call " + cp
+            + ":  NSOutgoingCallAgent: done remote SDP");
+            return;
+        }
 
-		/*
-		 * The CallParticipant has answered.
-		 * If join confirmation is required, we remain in the
-		 * INVITED state.
-		 */
-		callAnswered = true;
+        /*
+         * The CallParticipant has answered.
+         * If join confirmation is required, we remain in the
+         * INVITED state.
+         */
+        callAnswered = true;
 
-		if (cp.getJoinConfirmationTimeout() == 0) {
-			setState(CallState.ANSWERED);
-		}
+        if (cp.getJoinConfirmationTimeout() == 0) {
+            setState(CallState.ANSWERED);
+        }
 
-		/*
-		 * Start treatment if any and wait for it to finish.
-		 * When the treatment finishes, notification will
-		 * be delivered to our parent which will indicate
-		 * we're ready for the conference.
-		 *
-		 * If there's no treatment to be played, we're ready now
-		 * unless we're waiting for join confirmation..
-		 */
-		initializeCallAnsweredTreatment();
+        /*
+         * Start treatment if any and wait for it to finish.
+         * When the treatment finishes, notification will
+         * be delivered to our parent which will indicate
+         * we're ready for the conference.
+         *
+         * If there's no treatment to be played, we're ready now
+         * unless we're waiting for join confirmation..
+         */
+        initializeCallAnsweredTreatment();
 
-		if (callAnsweredTreatment != null) {
-			startCallAnsweredTreatment();
-		} else {
-			if (cp.getJoinConfirmationTimeout() == 0) {
-					setState(CallState.ESTABLISHED);
-			}
-		}
+        if (callAnsweredTreatment != null) {
+            startCallAnsweredTreatment();
+        } else {
+            if (cp.getJoinConfirmationTimeout() == 0) {
+                    setState(CallState.ESTABLISHED);
+            }
+        }
     }
 
     /*
@@ -189,75 +189,75 @@ public class NSOutgoingCallAgent extends CallSetupAgent {
 
 
     public void setRemoteMediaInfo(TreatmentManager treatmentManager)
-	    throws ParseException {
+        throws ParseException {
 
-		if (getState() != CallState.INVITED) {
-			Logger.println("Call " + cp
-			+ ":  NSOutgoingCallAgent:  bad state "
-			+ getState());
-			return;
-		}
+        if (getState() != CallState.INVITED) {
+            Logger.println("Call " + cp
+            + ":  NSOutgoingCallAgent:  bad state "
+            + getState());
+            return;
+        }
 
-		MediaInfo mediaInfo = mixerMediaPreference;
+        MediaInfo mediaInfo = mixerMediaPreference;
 
-		if (treatmentManager != null) {
-			int sampleRate = treatmentManager.getSampleRate();
-			int channels = treatmentManager.getChannels();
+        if (treatmentManager != null) {
+            int sampleRate = treatmentManager.getSampleRate();
+            int channels = treatmentManager.getChannels();
 
-			try {
-				mediaInfo = MediaInfo.findMediaInfo(RtpPacket.PCM_ENCODING,
-				sampleRate, channels);
-			} catch (IOException e) {
-				Logger.println("Using conference media preference "
-				+ mediaInfo + ": " + e.getMessage());
-			}
-		}
+            try {
+                mediaInfo = MediaInfo.findMediaInfo(RtpPacket.PCM_ENCODING,
+                sampleRate, channels);
+            } catch (IOException e) {
+                Logger.println("Using conference media preference "
+                + mediaInfo + ": " + e.getMessage());
+            }
+        }
 
-			InetSocketAddress isa =
-			callHandler.getMember().getMemberReceiver().getReceiveAddress();
+            InetSocketAddress isa =
+            callHandler.getMember().getMemberReceiver().getReceiveAddress();
 
-		Logger.println("Call " + cp
-			+ ":  NSOutgoingCallAgent:  " + mediaInfo
-			+ " remote " + isa);
+        Logger.println("Call " + cp
+            + ":  NSOutgoingCallAgent:  " + mediaInfo
+            + " remote " + isa);
 
-			setEndpointAddress(isa, mediaInfo.getPayload(),
-			mediaInfo.getPayload(), (byte) 0);
+            setEndpointAddress(isa, mediaInfo.getPayload(),
+            mediaInfo.getPayload(), (byte) 0);
 
-		if (callAnswered) {
-			Logger.writeFile("Call " + cp
-			+ ":  NSOutgoingCallAgent: done remote SDP");
-			return;
-		}
+        if (callAnswered) {
+            Logger.writeFile("Call " + cp
+            + ":  NSOutgoingCallAgent: done remote SDP");
+            return;
+        }
 
-		/*
-		 * The CallParticipant has answered.
-		 * If join confirmation is required, we remain in the
-		 * INVITED state.
-		 */
-		callAnswered = true;
+        /*
+         * The CallParticipant has answered.
+         * If join confirmation is required, we remain in the
+         * INVITED state.
+         */
+        callAnswered = true;
 
-		if (cp.getJoinConfirmationTimeout() == 0) {
-			setState(CallState.ANSWERED);
-		}
+        if (cp.getJoinConfirmationTimeout() == 0) {
+            setState(CallState.ANSWERED);
+        }
 
-		/*
-		 * Start treatment if any and wait for it to finish.
-		 * When the treatment finishes, notification will
-		 * be delivered to our parent which will indicate
-		 * we're ready for the conference.
-		 *
-		 * If there's no treatment to be played, we're ready now
-		 * unless we're waiting for join confirmation..
-		 */
-		initializeCallAnsweredTreatment();
+        /*
+         * Start treatment if any and wait for it to finish.
+         * When the treatment finishes, notification will
+         * be delivered to our parent which will indicate
+         * we're ready for the conference.
+         *
+         * If there's no treatment to be played, we're ready now
+         * unless we're waiting for join confirmation..
+         */
+        initializeCallAnsweredTreatment();
 
-		if (callAnsweredTreatment != null) {
-			startCallAnsweredTreatment();
-		} else {
-			if (cp.getJoinConfirmationTimeout() == 0) {
-					setState(CallState.ESTABLISHED);
-			}
-		}
+        if (callAnsweredTreatment != null) {
+            startCallAnsweredTreatment();
+        } else {
+            if (cp.getJoinConfirmationTimeout() == 0) {
+                    setState(CallState.ESTABLISHED);
+            }
+        }
     }
 
     public void terminateCall() {

@@ -66,8 +66,8 @@ import org.xmpp.packet.Packet;
  * @author Gaston Dombiak
  */
 public class LocalIncomingServerSession extends LocalServerSession implements IncomingServerSession {
-	
-	private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
 
     /**
      * List of domains, subdomains and virtual hostnames of the remote server that were
@@ -147,21 +147,21 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (serverVersion[0] >= 1) {        	
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
 
-	            // Indicate the TLS policy to use for this connection
-	            Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
-	            boolean hasCertificates = false;
-	            try {
-	                hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
-	            }
-	            catch (Exception e) {
-	                Log.error(e.getMessage(), e);
-	            }
-	            if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
-	                Log.error("Server session rejected. TLS is required but no certificates " +
-	                        "were created.");
-	                return null;
-	            }
-	            connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
+                // Indicate the TLS policy to use for this connection
+                Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
+                boolean hasCertificates = false;
+                try {
+                    hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }
+                if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
+                    Log.error("Server session rejected. TLS is required but no certificates " +
+                            "were created.");
+                    return null;
+                }
+                connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
             }
 
             // Indicate the compression policy to use for this connection
@@ -171,28 +171,28 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             
             if (serverVersion[0] >= 1) {        	
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
-            	// Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
+                // Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
                 sb.append("<stream:features>");
 
-	            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
-	                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-	                if (!ServerDialback.isEnabled()) {
-	                    // Server dialback is disabled so TLS is required
-	                    sb.append("<required/>");
-	                }
-	                sb.append("</starttls>");
-	            }
-	            
-	            // Include available SASL Mechanisms
-	            sb.append(SASLAuthentication.getSASLMechanisms(session));
-	            
-	            if (ServerDialback.isEnabled()) {
-	                // Also offer server dialback (when TLS is not required). Server dialback may be offered
-	                // after TLS has been negotiated and a self-signed certificate is being used
-	                sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
-	            }
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
+                    sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                    if (!ServerDialback.isEnabled()) {
+                        // Server dialback is disabled so TLS is required
+                        sb.append("<required/>");
+                    }
+                    sb.append("</starttls>");
+                }
+                
+                // Include available SASL Mechanisms
+                sb.append(SASLAuthentication.getSASLMechanisms(session));
+                
+                if (ServerDialback.isEnabled()) {
+                    // Also offer server dialback (when TLS is not required). Server dialback may be offered
+                    // after TLS has been negotiated and a self-signed certificate is being used
+                    sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+                }
 
-	            sb.append("</stream:features>");
+                sb.append("</stream:features>");
             }
             
             connection.deliverRawText(sb.toString());
@@ -219,13 +219,13 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     @Override
-	boolean canProcess(Packet packet) {
+    boolean canProcess(Packet packet) {
         return true;
     }
 
 
     @Override
-	void deliver(Packet packet) throws UnauthorizedException {
+    void deliver(Packet packet) throws UnauthorizedException {
         // Do nothing
     }
 
@@ -352,7 +352,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder();
         
         // Include Stream Compression Mechanism
@@ -365,7 +365,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         boolean usingSelfSigned;
         final Certificate[] chain = conn.getLocalCertificates();
         if (chain == null || chain.length == 0) {
-        	usingSelfSigned = true;
+            usingSelfSigned = true;
         } else {
             usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
         }

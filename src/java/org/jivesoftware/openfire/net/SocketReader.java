@@ -51,7 +51,7 @@ import org.xmpp.packet.StreamError;
  */
 public abstract class SocketReader implements Runnable {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

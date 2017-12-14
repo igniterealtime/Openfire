@@ -1,6 +1,6 @@
 strong.erroritem {
-	color: #6E1F1F;
-	}
+    color: #6E1F1F;
+    }
 
 
 
@@ -28,17 +28,17 @@ table.settingsTable tr {
 }
 
 fieldset {
-	display: block;
-	position: relative;
-	-moz-border-radius: 3px;
-	border: 1px solid #CCCCCC;
-	padding: 2px 0px 0px 0px;
-	margin: 0px 0px 0px 0px;
-	}
+    display: block;
+    position: relative;
+    -moz-border-radius: 3px;
+    border: 1px solid #CCCCCC;
+    padding: 2px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+    }
 fieldset legend {
-	color: #000000;
-	margin-left: 15px;
-	}
+    color: #000000;
+    margin-left: 15px;
+    }
 
   .horizontalrule {
     display: block;

@@ -29,10 +29,10 @@ package com.sun.voip;
 public interface SpatialAudio {
 
     public void initialize(String conferenceId, String callId, 
-	int sampleRate, int channels, int samplesPerPacket);
+    int sampleRate, int channels, int samplesPerPacket);
 
     public int[] generateSpatialAudio(String sourceId, 
-	int[] previousContribution, int[] currentContribution, 
-	double[] spatialValues);
+    int[] previousContribution, int[] currentContribution, 
+    double[] spatialValues);
 
 }

@@ -39,12 +39,12 @@ public class OfferInterceptorManager extends InterceptorManager {
     }
 
     @Override
-	protected String getPropertySuffix() {
+    protected String getPropertySuffix() {
         return "offer";
     }
 
     @Override
-	protected Collection<Class> getBuiltInInterceptorClasses() {
+    protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class) TrafficMonitor.class);
     }
 }

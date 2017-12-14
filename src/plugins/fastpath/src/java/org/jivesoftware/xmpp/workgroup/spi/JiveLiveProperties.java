@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  */
 public class JiveLiveProperties implements DbProperties {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveLiveProperties.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(JiveLiveProperties.class);
+    
     private long id;
     private Map<String, String> properties = new ConcurrentHashMap<String, String>();
     private String tableName;

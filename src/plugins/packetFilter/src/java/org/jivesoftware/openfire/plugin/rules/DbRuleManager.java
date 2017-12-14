@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DbRuleManager {
-	
-	private static final Logger Log = LoggerFactory.getLogger(DbRuleManager.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(DbRuleManager.class);
+    
     //SQL Statements
 
     private static final String UPDATE_RULE =

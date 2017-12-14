@@ -60,14 +60,14 @@ public class FreeTTSClient {
     }
 
     public static void initialize() throws IOException {
-	if (initialized) {
-	    return;
-	}
+    if (initialized) {
+        return;
+    }
 
-	initialized = true;
+    initialized = true;
 
         VoiceManager voiceManager = VoiceManager.getInstance();
-	voice = voiceManager.getVoice(voice16kName);
+    voice = voiceManager.getVoice(voice16kName);
         voice.allocate();
     }
 
@@ -75,26 +75,26 @@ public class FreeTTSClient {
      * Run the TTS protocol.
      */
     public static int[] textToSpeech(String text) throws IOException {
-	long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-	try {
-	    ServerAudioPlayer serverAudioPlayer = new ServerAudioPlayer();
+    try {
+        ServerAudioPlayer serverAudioPlayer = new ServerAudioPlayer();
 
-	    voice.setAudioPlayer(serverAudioPlayer);
-	    voice.speak(text);
+        voice.setAudioPlayer(serverAudioPlayer);
+        voice.speak(text);
 
-	    int[] linearData = serverAudioPlayer.getLinearData();
+        int[] linearData = serverAudioPlayer.getLinearData();
 
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("TTS time for '" + text + "' "
-		    + (System.currentTimeMillis() - startTime));
-	    }
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("TTS time for '" + text + "' "
+            + (System.currentTimeMillis() - startTime));
+        }
 
-	    return linearData;
-	} catch (Exception ioe) {
-	    ioe.printStackTrace();
-	}
-	return null;
+        return linearData;
+    } catch (Exception ioe) {
+        ioe.printStackTrace();
+    }
+    return null;
     }
 
 }
@@ -126,10 +126,10 @@ class ServerAudioPlayer implements AudioPlayer {
      * @param format the audio format
      */
     public void setAudioFormat(AudioFormat format) {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("setAudioFormat");
-	}
-	this.audioFormat = format;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("setAudioFormat");
+    }
+    this.audioFormat = format;
     }
 
     /**
@@ -139,10 +139,10 @@ class ServerAudioPlayer implements AudioPlayer {
      *
      */
     public AudioFormat getAudioFormat() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("getAudioFormat");
-	}
-	return this.audioFormat;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("getAudioFormat");
+    }
+    return this.audioFormat;
     }
 
     /**
@@ -150,18 +150,18 @@ class ServerAudioPlayer implements AudioPlayer {
      * with a call to resume. Not implemented in this Player.
      */
     public void pause() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("pause");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("pause");
+    }
     }
 
     /**
      * Resumes audio output on this player. Not implemented in this Player.
      */
     public void resume() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("resume");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("resume");
+    }
     }
 
     /**
@@ -170,9 +170,9 @@ class ServerAudioPlayer implements AudioPlayer {
      * should be grouped between a reset/drain pair.
      */
     public void reset() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("reset");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("reset");
+    }
     }
 
     /**
@@ -181,10 +181,10 @@ class ServerAudioPlayer implements AudioPlayer {
      * @return <code>true</code> all the time
      */
     public boolean drain() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("drain");
-	}
-	return true;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("drain");
+    }
+    return true;
     }
 
     /**
@@ -195,18 +195,18 @@ class ServerAudioPlayer implements AudioPlayer {
      *    <code>end</code> is called.
      */
     public void begin(int size) {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("begin size " + size);
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("begin size " + size);
+    }
     }
 
     /**
      * Starts the first sample timer (none in this player)
      */
     public void startFirstSampleTimer() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("startFirstSampleTimer");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("startFirstSampleTimer");
+    }
     }
 
     /**
@@ -219,18 +219,18 @@ class ServerAudioPlayer implements AudioPlayer {
      *
      */
     public boolean end() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("end bytesPlayed " + bytesPlayed);
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("end bytesPlayed " + bytesPlayed);
+    }
 
-	if (bytesPlayed < bytesToPlay) {
-	    int bytesNotPlayed = bytesToPlay - bytesPlayed;
-	    write(new byte[bytesNotPlayed], 0, bytesNotPlayed);
-	}
+    if (bytesPlayed < bytesToPlay) {
+        int bytesNotPlayed = bytesToPlay - bytesPlayed;
+        write(new byte[bytesNotPlayed], 0, bytesNotPlayed);
+    }
 
-	bytesToPlay = 0;
-	bytesPlayed = 0;
-	return true;
+    bytesToPlay = 0;
+    bytesPlayed = 0;
+    return true;
     }
 
     /**
@@ -239,9 +239,9 @@ class ServerAudioPlayer implements AudioPlayer {
      *
      */
     public void cancel() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("cancel");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("cancel");
+    }
     }
 
     /**
@@ -249,9 +249,9 @@ class ServerAudioPlayer implements AudioPlayer {
      * Not implemented in this Player.
      */
     public void close() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("close");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("close");
+    }
     }
 
     /**
@@ -262,10 +262,10 @@ class ServerAudioPlayer implements AudioPlayer {
      * @return the current volume (between 0 and 1)
      */
     public float getVolume() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("getVolume");
-	}
-	return -1;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("getVolume");
+    }
+    return -1;
     }
 
     /**
@@ -276,9 +276,9 @@ class ServerAudioPlayer implements AudioPlayer {
      * @param volume the new volume (between 0 and 1)
      */
     public void setVolume(float volume) {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("setVolume");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("setVolume");
+    }
     }
 
     /**
@@ -288,28 +288,28 @@ class ServerAudioPlayer implements AudioPlayer {
      * @returns the amount of audio in milliseconds
      */
     public long getTime() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("getTime");
-	}
-	return -1;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("getTime");
+    }
+    return -1;
     }
 
     /**
      * Resets the audio clock. Not implemented in this Player.
      */
     public void resetTime() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("reset");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("reset");
+    }
     }
 
     /**
      * Shows metrics for this audio player. Not implemented in this Player.
      */
     public void showMetrics() {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("showMetrics");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("showMetrics");
+    }
     }
 
     /**
@@ -321,7 +321,7 @@ class ServerAudioPlayer implements AudioPlayer {
      *          <code> false </code>if the write was cancelled.
      */
     public boolean write(byte[] audioData) {
-	return write(audioData, 0, audioData.length);
+    return write(audioData, 0, audioData.length);
     }
 
 
@@ -336,27 +336,27 @@ class ServerAudioPlayer implements AudioPlayer {
      *          <code> false </code>if the write was cancelled.
      */
     public boolean write(byte[] audioData, int offset, int size) {
-	/*
-	 * get a new buffer which will hold all of the data
-	 */
+    /*
+     * get a new buffer which will hold all of the data
+     */
         byte[] b = new byte[bytesPlayed + audioData.length];
 
         for (int i = 0; i < bytesPlayed; i++) {
             b[i] = byteLinearData[i];	// copy old data
-	}
+    }
 
-	for (int i = 0; i < size; i++) {
-	    b[i + bytesPlayed] = audioData[i + offset];  // new data
-	}
+    for (int i = 0; i < size; i++) {
+        b[i + bytesPlayed] = audioData[i + offset];  // new data
+    }
 
         byteLinearData = b;
 
-	bytesPlayed += size;
+    bytesPlayed += size;
 
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("bytesPlayed " + bytesPlayed);
-	}
-	return true;
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("bytesPlayed " + bytesPlayed);
+    }
+    return true;
     }
 
     /**
@@ -364,7 +364,7 @@ class ServerAudioPlayer implements AudioPlayer {
      * @return data int[] voice data
      */
     public int[] getLinearData() {
-	return AudioConversion.bytesToInts(byteLinearData);
+    return AudioConversion.bytesToInts(byteLinearData);
     }
 
 }

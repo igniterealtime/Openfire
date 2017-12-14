@@ -36,53 +36,53 @@ public class TickerFactory {
     }
 
     public static TickerFactory getInstance() {
-	if (tickerFactory != null) {
-	    return tickerFactory;	
-	}
+    if (tickerFactory != null) {
+        return tickerFactory;	
+    }
 
-	tickerFactory = new TickerFactory();
-	return tickerFactory;
+    tickerFactory = new TickerFactory();
+    return tickerFactory;
     }
 
     public Ticker createTicker(String tickerClassName, String id) 
-	    throws TickerException {
+        throws TickerException {
 
-	Ticker ticker = null;
+    Ticker ticker = null;
 
-	if (tickerClassName != null && tickerClassName.length() > 0) {
-	    try {
-	        Class tickerClass = Class.forName(tickerClassName);
+    if (tickerClassName != null && tickerClassName.length() > 0) {
+        try {
+            Class tickerClass = Class.forName(tickerClassName);
 
-	        Class[] params = new Class[] {String.class};
+            Class[] params = new Class[] {String.class};
 
                 Constructor constructor = tickerClass.getConstructor(params);
 
                 if (constructor != null) {
                     Object[] args = new Object[] {
-		        new String("TickerTest") 
-	            };
+                new String("TickerTest") 
+                };
 
                     ticker = (Ticker) (constructor.newInstance(args));
                 } else {
-	            Logger.println(id 
-		        + ":  Unable to find constructor for class " 
-	                + tickerClassName);
-	        }
-	    } catch (Exception e) {
-	        Logger.println(id + ":  Unable to create ticker for class " 
-	        + tickerClassName + " " + e.getMessage());
-	    }
-	}
+                Logger.println(id 
+                + ":  Unable to find constructor for class " 
+                    + tickerClassName);
+            }
+        } catch (Exception e) {
+            Logger.println(id + ":  Unable to create ticker for class " 
+            + tickerClassName + " " + e.getMessage());
+        }
+    }
 
-	if (ticker == null) {
-	    ticker = new TickerSleep(id);
+    if (ticker == null) {
+        ticker = new TickerSleep(id);
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println(id + ":  using default ticker TickerSleep");
-	    }
-	}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println(id + ":  using default ticker TickerSleep");
+        }
+    }
 
-	return ticker;
+    return ticker;
     }
 
 }

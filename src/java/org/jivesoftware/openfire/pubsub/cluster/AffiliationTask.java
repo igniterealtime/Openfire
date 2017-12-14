@@ -16,64 +16,64 @@ public class AffiliationTask extends NodeTask
     private static final Logger log = LoggerFactory.getLogger(AffiliationTask.class);
 
     private JID jid;
-	private NodeAffiliate.Affiliation affiliation;
+    private NodeAffiliate.Affiliation affiliation;
 
-	public AffiliationTask()
-	{
-	}
+    public AffiliationTask()
+    {
+    }
 
-	public AffiliationTask(Node node, JID jid, NodeAffiliate.Affiliation affiliation)
-	{
-		super(node);
-		this.jid = jid;
-		this.affiliation = affiliation;
-	}
+    public AffiliationTask(Node node, JID jid, NodeAffiliate.Affiliation affiliation)
+    {
+        super(node);
+        this.jid = jid;
+        this.affiliation = affiliation;
+    }
 
-	public JID getJID()
-	{
-		return jid;
-	}
+    public JID getJID()
+    {
+        return jid;
+    }
 
-	public NodeAffiliate.Affiliation getAffilation()
-	{
-		return affiliation;
-	}
-	
-	@Override
-	public void run() {
-		log.debug("[TASK] New affiliation : {}", toString());
+    public NodeAffiliate.Affiliation getAffilation()
+    {
+        return affiliation;
+    }
+    
+    @Override
+    public void run() {
+        log.debug("[TASK] New affiliation : {}", toString());
 
-		Node node = getNode();
-		NodeAffiliate affiliate = node.getAffiliate(jid);
-		if (affiliate == null) {
-        	affiliate = new NodeAffiliate(node, jid);
-        	affiliate.setAffiliation(affiliation);
-        	node.addAffiliate(affiliate);
-		} else {
-			affiliate.setAffiliation(affiliation);
-		}
-	}
+        Node node = getNode();
+        NodeAffiliate affiliate = node.getAffiliate(jid);
+        if (affiliate == null) {
+            affiliate = new NodeAffiliate(node, jid);
+            affiliate.setAffiliation(affiliation);
+            node.addAffiliate(affiliate);
+        } else {
+            affiliate.setAffiliation(affiliation);
+        }
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException
-	{
-		super.writeExternal(out);
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException
+    {
+        super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, jid);
         ExternalizableUtil.getInstance().writeSerializable(out, affiliation);
-	}
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
-	{
-		super.readExternal(in);
-		jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
-		affiliation = (NodeAffiliate.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
+    {
+        super.readExternal(in);
+        jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        affiliation = (NodeAffiliate.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
+    }
 
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName() + " [(service=" + serviceId + "), (nodeId=" + nodeId + 
-				"), (JID=" + jid + "),(affiliation=" + affiliation + ")]";
-	}
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + " [(service=" + serviceId + "), (nodeId=" + nodeId + 
+                "), (JID=" + jid + "),(affiliation=" + affiliation + ")]";
+    }
 }

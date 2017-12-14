@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.update;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.PluginMetadata;
+import org.jivesoftware.util.JavaSpecVersion;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +128,13 @@ public class AvailablePlugin extends PluginMetadata
             priorToServerVersion = new Version( priorToServerVersionValue );
         }
 
+        JavaSpecVersion minJavaVersion = null;
+        String minJavaVersionValue = plugin.attributeValue( "minJavaVersion" );
+        if ( minJavaVersionValue != null && !minJavaVersionValue.isEmpty() )
+        {
+            minJavaVersion = new JavaSpecVersion( minJavaVersionValue );
+        }
+
         long fileSize = -1;
         String fileSizeValue = plugin.attributeValue("fileSize");
         if ( fileSizeValue != null && !fileSizeValue.isEmpty() )
@@ -148,6 +156,7 @@ public class AvailablePlugin extends PluginMetadata
                 license,
                 minServerVersion,
                 priorToServerVersion,
+                minJavaVersion,
                 downloadUrl,
                 fileSize
         );
@@ -155,7 +164,8 @@ public class AvailablePlugin extends PluginMetadata
     }
     public AvailablePlugin( String name, String canonicalName, String description, Version latestVersion, String author,
                             URL icon, URL changelog, URL readme, String license,
-                            Version minServerVersion, Version priorToServerVersion, URL downloadUrl, long fileSize ) {
+                            Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion,
+                            URL downloadUrl, long fileSize ) {
         super(
                 name,
                 canonicalName,
@@ -167,7 +177,8 @@ public class AvailablePlugin extends PluginMetadata
                 readme,
                 license,
                 minServerVersion,
-                priorToServerVersion
+                priorToServerVersion,
+                minJavaVersion
         );
         this.downloadURL = downloadUrl;
         this.fileSize = fileSize;

@@ -43,13 +43,13 @@ import java.util.List;
 public class SparkDownloadServlet extends HttpServlet {
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
         AuthCheckFilter.addExclude("clientcontrol/getspark");
     }
 
     @Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Handle Version Request. Only handle windows and mac version at this time.
         final String clientBuild = request.getParameter("client");
         final String os = request.getParameter("os");

@@ -42,121 +42,121 @@ import java.util.Map;
  */
 public class Log {
 
-	private static final org.slf4j.Logger Logger = org.slf4j.LoggerFactory.getLogger(Log.class);
-	public static final String LOG_DEBUG_ENABLED = "log.debug.enabled";
-	
-	// listen for changes to the log.debug.enabled property
-	static {
-    	PropertyEventDispatcher.addListener(new PropertyEventListener() {
-    		
-			@Override
-			public void propertySet(String property, Map<String, Object> params) {
-				enableDebugLog(property, Boolean.parseBoolean(params.get("value").toString()));
-			}
-			
-			@Override
-			public void propertyDeleted(String property, Map<String, Object> params) {
-				enableDebugLog(property, false);
-			}
-			
-			// ignore these events
-			@Override
-			public void xmlPropertySet(String property, Map<String, Object> params) { }
-			@Override
-			public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
-			
-			private void enableDebugLog(String property, boolean enabled) {
-				if ((LOG_DEBUG_ENABLED).equals(property)) {
-					Log.setDebugEnabled(enabled);
-				}
-			}
-		});
-	}
-	
+    private static final org.slf4j.Logger Logger = org.slf4j.LoggerFactory.getLogger(Log.class);
+    public static final String LOG_DEBUG_ENABLED = "log.debug.enabled";
+    
+    // listen for changes to the log.debug.enabled property
+    static {
+        PropertyEventDispatcher.addListener(new PropertyEventListener() {
+            
+            @Override
+            public void propertySet(String property, Map<String, Object> params) {
+                enableDebugLog(property, Boolean.parseBoolean(params.get("value").toString()));
+            }
+            
+            @Override
+            public void propertyDeleted(String property, Map<String, Object> params) {
+                enableDebugLog(property, false);
+            }
+            
+            // ignore these events
+            @Override
+            public void xmlPropertySet(String property, Map<String, Object> params) { }
+            @Override
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
+            
+            private void enableDebugLog(String property, boolean enabled) {
+                if ((LOG_DEBUG_ENABLED).equals(property)) {
+                    Log.setDebugEnabled(enabled);
+                }
+            }
+        });
+    }
+    
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
-	 *             Functionality of this method is delegated there.
-	 */
-	@Deprecated
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
+     *             Functionality of this method is delegated there.
+     */
+    @Deprecated
     public static boolean isErrorEnabled() {
         return Logger.isErrorEnabled();
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static boolean isDebugEnabled() {
+    public static boolean isDebugEnabled() {
         return Logger.isDebugEnabled();
     }
 
     public static void setDebugEnabled(boolean enabled) {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-    	final org.apache.log4j.Level newLevel;
-    	if (enabled) {
-    		newLevel = org.apache.log4j.Level.ALL;
-    	} else {
-    		newLevel = org.apache.log4j.Level.INFO;
-    	}
-    		
-    	org.apache.log4j.LogManager.getRootLogger().setLevel(newLevel);
+        final org.apache.log4j.Level newLevel;
+        if (enabled) {
+            newLevel = org.apache.log4j.Level.ALL;
+        } else {
+            newLevel = org.apache.log4j.Level.INFO;
+        }
+            
+        org.apache.log4j.LogManager.getRootLogger().setLevel(newLevel);
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static boolean isInfoEnabled() {
+    public static boolean isInfoEnabled() {
         return Logger.isInfoEnabled();
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static boolean isWarnEnabled() {
+    public static boolean isWarnEnabled() {
         return Logger.isWarnEnabled();
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#debug(String)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void debug(String s) {
+    public static void debug(String s) {
         if (isDebugEnabled()) {
             Logger.debug(s);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void debug(Throwable throwable) {
+    public static void debug(Throwable throwable) {
         if (isDebugEnabled()) {
             Logger.debug("", throwable);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void debug(String s, Throwable throwable) {
+    public static void debug(String s, Throwable throwable) {
         if (isDebugEnabled()) {
             Logger.debug(s, throwable);
         }
     }
 
     public static void markDebugLogFile(String username) {
-    	String message = getMarkMessage(username);
+        String message = getMarkMessage(username);
         debug(message);
     }
 
@@ -166,41 +166,41 @@ public class Log {
         emptyFile(logFile);
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void info(String s) {
+    public static void info(String s) {
         if (isInfoEnabled()) {
             Logger.info(s);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void info(Throwable throwable) {
+    public static void info(Throwable throwable) {
         if (isInfoEnabled()) {
             Logger.info("", throwable);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void info(String s, Throwable throwable) {
+    public static void info(String s, Throwable throwable) {
         if (isInfoEnabled()) {
             Logger.info(s, throwable);
         }
     }
 
     public static void markInfoLogFile(String username) {
-    	String message = getMarkMessage(username);
+        String message = getMarkMessage(username);
         info(message);
     }
 
@@ -210,41 +210,41 @@ public class Log {
         emptyFile(logFile);
     }
     
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#warn(String)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#warn(String)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void warn(String s) {
+    public static void warn(String s) {
         if (isWarnEnabled()) {
             Logger.warn(s);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#warn(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#warn(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void warn(Throwable throwable) {
+    public static void warn(Throwable throwable) {
         if (isWarnEnabled()) {
             Logger.warn("", throwable);
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void warn(String s, Throwable throwable) {
+    public static void warn(String s, Throwable throwable) {
         if (isWarnEnabled()) {
             Logger.warn(s, throwable);
         }
     }
 
     public static void markWarnLogFile(String username) {
-    	String message = getMarkMessage(username);
+        String message = getMarkMessage(username);
         warn(message);
     }
 
@@ -254,12 +254,12 @@ public class Log {
         emptyFile(logFile);
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#error(String)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#error(String)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void error(String s) {
+    public static void error(String s) {
         if (isErrorEnabled()) {
             Logger.error(s);
             if (isDebugEnabled()) {
@@ -268,12 +268,12 @@ public class Log {
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void error(Throwable throwable) {
+    public static void error(Throwable throwable) {
         if (isErrorEnabled()) {
             Logger.error("", throwable);
             if (isDebugEnabled()) {
@@ -282,12 +282,12 @@ public class Log {
         }
     }
 
-	/**
-	 * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
-	 *             Functionality of this method is delegated there.
-	 */
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
+     *             Functionality of this method is delegated there.
+     */
     @Deprecated
-	public static void error(String s, Throwable throwable) {
+    public static void error(String s, Throwable throwable) {
         if (isErrorEnabled()) {
             Logger.error(s, throwable);
             if (isDebugEnabled()) {
@@ -297,7 +297,7 @@ public class Log {
     }
 
     public static void markErrorLogFile(String username) {
-    	String message = getMarkMessage(username);
+        String message = getMarkMessage(username);
         error(message);
     }
 
@@ -322,14 +322,14 @@ public class Log {
      */
     public static String getLogDirectory() {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-    	final StringBuilder sb = new StringBuilder();
-    	sb.append(JiveGlobals.getHomeDirectory());
-    	if (!sb.substring(sb.length()-1).startsWith(File.separator)) {
-    		sb.append(File.separator);
-    	}
-    	sb.append("logs");
-    	sb.append(File.separator);
-    	return sb.toString();
+        final StringBuilder sb = new StringBuilder();
+        sb.append(JiveGlobals.getHomeDirectory());
+        if (!sb.substring(sb.length()-1).startsWith(File.separator)) {
+            sb.append(File.separator);
+        }
+        sb.append("logs");
+        sb.append(File.separator);
+        return sb.toString();
     }
 
     private static String getMarkMessage(String username) {
@@ -353,20 +353,20 @@ public class Log {
     }
 
     private static void emptyFile(File logFile) {
-    	BufferedWriter out = null;
+        BufferedWriter out = null;
         try {
             out = new BufferedWriter(new FileWriter(logFile));
             out.write("");
         } catch (IOException ex) {
-        	Log.warn("Could not empty file " + logFile.getName(), ex);
+            Log.warn("Could not empty file " + logFile.getName(), ex);
         } finally {
-        	if (out != null) {
-        		try {
-					out.close();
-				} catch (IOException ex) {
-					Log.warn("Could not close file.", ex);
-				}
-        	}
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException ex) {
+                    Log.warn("Could not close file.", ex);
+                }
+            }
         }
-	}
+    }
 }

@@ -22,21 +22,21 @@ package org.jivesoftware.openfire.nio;
  */
 public class XMLNotWellFormedException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public XMLNotWellFormedException() {
-		super();
-	}
+    public XMLNotWellFormedException() {
+        super();
+    }
 
-	public XMLNotWellFormedException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public XMLNotWellFormedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public XMLNotWellFormedException(String message) {
-		super(message);
-	}
+    public XMLNotWellFormedException(String message) {
+        super(message);
+    }
 
-	public XMLNotWellFormedException(Throwable cause) {
-		super(cause);
-	}
+    public XMLNotWellFormedException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -11,15 +11,15 @@
 
 <a name="top"></a>
 
-	<div id="pageHeader">
-		<div id="logo"></div>
-		<h1>Installation Guide</h1>
-	</div>
-	<div class="navigation">
-		<a href="index.html">&laquo; Back to documentation index</a>
-	</div>
-	
-	<div id="pageBody">
+    <div id="pageHeader">
+        <div id="logo"></div>
+        <h1>Installation Guide</h1>
+    </div>
+    <div class="navigation">
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </div>
+    
+    <div id="pageBody">
 
 <p>Openfire is a powerful instant messaging (IM) and chat
 server that implements the XMPP protocol. This document will guide 
@@ -34,7 +34,7 @@ visit the Openfire website: <a href="http://www.igniterealtime.org/projects/open
 
 <p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder. If Openfire is running via launcher without Run as administrator option from Program files it can't get proper permissions to write changes. It shows errors (in red) when running the launcher and during the setup will require the current password for the administrator account (although this is a new installation and normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to initialize the database and other resources.</p>
  <p><b>Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so one don't need to run it as administrator manually.</b></p>
-	
+    
  <h3>Linux/Unix</h3>
  
  Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
@@ -90,7 +90,7 @@ sub-directories omitted for brevity): </p>
  |- documentation/</pre>
 
 <ul> 
-	 <li>The <tt>conf</tt> directory is where Openfire stores
+     <li>The <tt>conf</tt> directory is where Openfire stores
 configuration files.</li>
 
   <li>The <tt>bin</tt> directory contains the server executables. Depending
@@ -155,10 +155,10 @@ the service.
 
 From a console window, you can run the following commands:
 <ul>
-		<li><tt>openfire-service /install</tt> -- installs the service.
-		<li><tt>openfire-service /uninstall</tt> -- uninstalls the service.
-		<li><tt>openfire-service /start</tt> -- starts the service
-		<li><tt>openfire-service /stop</tt> -- stops the service.
+        <li><tt>openfire-service /install</tt> -- installs the service.
+        <li><tt>openfire-service /uninstall</tt> -- uninstalls the service.
+        <li><tt>openfire-service /start</tt> -- starts the service
+        <li><tt>openfire-service /stop</tt> -- stops the service.
 
 </ul>
 
@@ -263,7 +263,7 @@ Plugins can be managed inside the Openfire admin console. You can also manually 
 deleting its JAR file (Openfire will automatically remove the plugin from memory and delete it's directory when you
 do so).
 
-	</div>
+    </div>
 
 </div>
 

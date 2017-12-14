@@ -11,121 +11,121 @@ public class NodeThread implements Runnable {
 
     private static final Logger Log = LoggerFactory.getLogger(NodeThread.class);
 
-	private Thread thread = null;
-	private Process nodeProcess = null;
-	private BufferedReader input = null;
-	private BufferedReader error = null;
+    private Thread thread = null;
+    private Process nodeProcess = null;
+    private BufferedReader input = null;
+    private BufferedReader error = null;
 
 
-	public NodeThread()
-	{
+    public NodeThread()
+    {
 
-	}
-
-
-	public void start(String path, File dir) {
-
-		stopThread();
-
-		try {
-			nodeProcess = Runtime.getRuntime().exec(path, null, dir);
-			Log.info("Started Node");
-
-      		input = new BufferedReader (new InputStreamReader(nodeProcess.getInputStream()));
-      		error = new BufferedReader (new InputStreamReader(nodeProcess.getErrorStream()));
-			Log.info("Started Node Console Reader");
-
-		} catch (Exception e) {
-			Log.info("Started Node exception " + e);
-		}
+    }
 
 
-		// All ok: start a receiver thread
-		thread = new Thread(this);
-		thread.start();
-	}
+    public void start(String path, File dir) {
 
-	public void run() {
-		Log.info("Start run()");
+        stopThread();
 
-		// Get events while we're alive.
-		while (thread != null && thread.isAlive()) {
+        try {
+            nodeProcess = Runtime.getRuntime().exec(path, null, dir);
+            Log.info("Started Node");
 
-			try {
+            input = new BufferedReader (new InputStreamReader(nodeProcess.getInputStream()));
+            error = new BufferedReader (new InputStreamReader(nodeProcess.getErrorStream()));
+            Log.info("Started Node Console Reader");
 
-				String line = input.readLine();
+        } catch (Exception e) {
+            Log.info("Started Node exception " + e);
+        }
 
-			  	while (line != null) {
-					Log.info(line);
-					line = input.readLine();
-			  	}
 
-				line = error.readLine();
+        // All ok: start a receiver thread
+        thread = new Thread(this);
+        thread.start();
+    }
 
-			  	while (line != null) {
-					Log.error(line);
-					line = error.readLine();
-			  	}
+    public void run() {
+        Log.info("Start run()");
 
-     		  	Thread.sleep(500);
+        // Get events while we're alive.
+        while (thread != null && thread.isAlive()) {
 
-			} catch (Throwable t) {
+            try {
 
-			}
+                String line = input.readLine();
 
-		}
-	}
+                while (line != null) {
+                    Log.info(line);
+                    line = input.readLine();
+                }
 
-	public void stop() {
+                line = error.readLine();
 
-		Log.info("Stopped Node");
+                while (line != null) {
+                    Log.error(line);
+                    line = error.readLine();
+                }
 
-		nodeProcess.destroy();
-		stopThread();
-	}
+                Thread.sleep(500);
 
-	public void stopThread() {
-		Log.info("In stopThread()");
+            } catch (Throwable t) {
 
-		// Keep a reference such that we can kill it from here.
-		Thread targetThread = thread;
+            }
 
-		thread = null;
+        }
+    }
 
-		// This should stop the main loop for this thread.
-		// Killing a thread on a blcing read is tricky.
-		// See also http://gee.cs.oswego.edu/dl/cpj/cancel.html
-		if ((targetThread != null) && targetThread.isAlive()) {
+    public void stop() {
 
-			targetThread.interrupt();
+        Log.info("Stopped Node");
 
-			try {
+        nodeProcess.destroy();
+        stopThread();
+    }
 
-				// Wait for it to die
-				targetThread.join(500);
-			}
-			catch (InterruptedException ignore) {
-			}
+    public void stopThread() {
+        Log.info("In stopThread()");
 
-			// If current thread refuses to die,
-			// take more rigorous methods.
-			if (targetThread.isAlive()) {
+        // Keep a reference such that we can kill it from here.
+        Thread targetThread = thread;
 
-				// Not preferred but may be needed
-				// to stop during a blocking read.
-				targetThread.stop();
+        thread = null;
 
-				// Wait for it to die
-				try {
-					targetThread.join(500);
-				}
-				catch (InterruptedException ignore) {
-				}
-			}
+        // This should stop the main loop for this thread.
+        // Killing a thread on a blcing read is tricky.
+        // See also http://gee.cs.oswego.edu/dl/cpj/cancel.html
+        if ((targetThread != null) && targetThread.isAlive()) {
 
-			Log.info("Stopped thread alive=" + targetThread.isAlive());
+            targetThread.interrupt();
 
-		}
-	}
+            try {
+
+                // Wait for it to die
+                targetThread.join(500);
+            }
+            catch (InterruptedException ignore) {
+            }
+
+            // If current thread refuses to die,
+            // take more rigorous methods.
+            if (targetThread.isAlive()) {
+
+                // Not preferred but may be needed
+                // to stop during a blocking read.
+                targetThread.stop();
+
+                // Wait for it to die
+                try {
+                    targetThread.join(500);
+                }
+                catch (InterruptedException ignore) {
+                }
+            }
+
+            Log.info("Stopped thread alive=" + targetThread.isAlive());
+
+        }
+    }
 
 }

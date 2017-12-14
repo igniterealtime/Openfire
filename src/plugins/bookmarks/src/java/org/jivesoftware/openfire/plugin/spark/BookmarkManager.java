@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BookmarkManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(BookmarkManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(BookmarkManager.class);
 
     private static final String DELETE_BOOKMARK = "DELETE FROM ofBookmark where bookmarkID=?";
     private static final String SELECT_BOOKMARKS = "SELECT bookmarkID from ofBookmark";

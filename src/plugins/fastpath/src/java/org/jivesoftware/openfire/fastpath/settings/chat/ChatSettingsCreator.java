@@ -45,7 +45,7 @@ import com.thoughtworks.xstream.XStream;
  */
 public class ChatSettingsCreator {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatSettingsCreator.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatSettingsCreator.class);
 
     private static final ChatSettingsCreator instance = new ChatSettingsCreator();
 

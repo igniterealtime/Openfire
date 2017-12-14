@@ -47,12 +47,12 @@ import javax.xml.XMLConstants;
  * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
-	
-	private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
 
     private SessionManager sessionManager;
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>(
-    		JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
+            JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
@@ -74,7 +74,7 @@ public class HttpSessionManager {
      * Creates a new HttpSessionManager instance.
      */
     public HttpSessionManager() {
-    	
+        
         JiveGlobals.migrateProperty("xmpp.httpbind.worker.threads");
         JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
     }
@@ -85,9 +85,9 @@ public class HttpSessionManager {
     @Deprecated
     public void init() {}
 
-	private int getCorePoolSize(int maxPoolSize) {
-		return (maxPoolSize/4)+1;
-	}
+    private int getCorePoolSize(int maxPoolSize) {
+        return (maxPoolSize/4)+1;
+    }
 
     /**
      * Starts the services used by the HttpSessionManager.
@@ -175,7 +175,7 @@ public class HttpSessionManager {
         
         String version = rootNode.attributeValue("ver");
         if (version == null || "".equals(version)) {
-        	version = "1.5";
+            version = "1.5";
         }
 
         HttpSession session = createSession(connection.getRequestId(), address, connection, Locale.forLanguageTag(language));
@@ -187,12 +187,12 @@ public class HttpSessionManager {
         session.setMaxPause(getMaxPause());
         
         if(session.isPollingSession()) {
-        	session.setDefaultInactivityTimeout(getPollingInactivityTimeout());
+            session.setDefaultInactivityTimeout(getPollingInactivityTimeout());
         }
         else {
-        	session.setDefaultInactivityTimeout(getInactivityTimeout());
+            session.setDefaultInactivityTimeout(getInactivityTimeout());
         }
-    	session.resetInactivityTimeout();
+        session.resetInactivityTimeout();
         
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
@@ -325,12 +325,12 @@ public class HttpSessionManager {
         response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
         response.addAttribute("wait", String.valueOf(session.getWait()));
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
-        	session.getMajorVersion() > 1) {
+            session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
             response.addAttribute("ack", String.valueOf(session.getLastAcknowledged()));
             response.addAttribute("maxpause", String.valueOf(session.getMaxPause()));
             response.addAttribute("ver", String.valueOf(session.getMajorVersion())
-            		+ "." + String.valueOf(session.getMinorVersion()));
+                    + "." + String.valueOf(session.getMinorVersion()));
         }
 
         Element features = response.addElement("stream:features");
@@ -344,21 +344,21 @@ public class HttpSessionManager {
     private class HttpSessionReaper extends TimerTask {
 
         @Override
-		public void run() {
+        public void run() {
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
-            	try {
+                try {
                     long lastActive = currentTime - session.getLastActivity();
                     if (Log.isDebugEnabled()) {
-                    	Log.debug("Session was last active " + lastActive + " ms ago: " + session.getAddress());
+                        Log.debug("Session was last active " + lastActive + " ms ago: " + session.getAddress());
                     }
                     if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
-                    	Log.info("Closing idle session: " + session.getAddress());
+                        Log.info("Closing idle session: " + session.getAddress());
                         session.close();
                     }
-            	} catch (Exception e) {
-            		Log.error("Failed to determine idle state for session: " + session, e);
-            	}
+                } catch (Exception e) {
+                    Log.error("Failed to determine idle state for session: " + session, e);
+                }
             }
         }
     }

@@ -36,9 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SendMail {
-	
-	private static final Logger Log = LoggerFactory.getLogger(SendMail.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(SendMail.class);
+    
     private String toField;
     private String subjectField;
     private String messageText;
@@ -152,7 +152,7 @@ public class SendMail {
         }
 
         @Override
-		protected PasswordAuthentication getPasswordAuthentication() {
+        protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(smtpUsername, smtpPassword);
         }
     }

@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
  * @author Daniel Henninger
  */
 public class ServiceUpdatedEvent implements ClusterTask<Void> {
-	
-	private static final Logger Log = LoggerFactory.getLogger(ServiceUpdatedEvent.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(ServiceUpdatedEvent.class);
 
     private String subdomain;
 

@@ -18,7 +18,7 @@ public class EmailScheduler implements Job {
     public Scheduler scheduler=null;
     public void startMonitoring() {
         try {
-			String schedule = JiveGlobals.getProperty("jmxweb.crontrigger.schedule", "0 0 0/12 * * ?");
+            String schedule = JiveGlobals.getProperty("jmxweb.crontrigger.schedule", "0 0 0/12 * * ?");
             scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             JobDetail job = newJob(EmailScheduler.class)
@@ -36,8 +36,8 @@ public class EmailScheduler implements Job {
     public void stopMonitoring() {
 
         try {
-			Log.info("Email Monitoring Stopped");
-			scheduler.shutdown(true);
+            Log.info("Email Monitoring Stopped");
+            scheduler.shutdown(true);
         } catch (SchedulerException se) {
             Log.error("stopMonitoring", se);
         }

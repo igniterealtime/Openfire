@@ -28,17 +28,17 @@ public class WordMatchRouterBeanInfo extends WorkgroupBeanInfo {
     }
 
     @Override
-	public Class getBeanClass() {
+    public Class getBeanClass() {
         return org.jivesoftware.xmpp.workgroup.spi.routers.WordMatchRouter.class;
     }
 
     @Override
-	public String[] getPropertyNames() {
+    public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "WordMatchRouter";
     }
 }

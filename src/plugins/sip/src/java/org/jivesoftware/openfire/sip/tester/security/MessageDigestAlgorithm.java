@@ -151,6 +151,6 @@ public class MessageDigestAlgorithm {
             c[pos++] = MessageDigestAlgorithm.toHex[b[i] & 0x0f];
         }
         return new String(c);
-	}
+    }
 
 }

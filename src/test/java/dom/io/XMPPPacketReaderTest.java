@@ -141,4 +141,24 @@ public class XMPPPacketReaderTest
         Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
         Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
     }
+
+    /**
+     * Check that a websocket connection woudl also work.
+     */
+    @Test
+    public void testStripNamespacesForWebsocket() throws Exception
+    {
+        final String input_header = "<open xmlns='urn:ietf:params:xml:ns:xmpp-framing' to='example.com' version='1.0' />";
+        final Document doc_header = packetReader.read( new StringReader( input_header ) );
+        final String input = "  <message xmlns='jabber:client'>" +
+            "    <other xmlns='something:else'>" +
+            "      <message xmlns='jabber:client'/>" +
+            "    </other>" +
+            "  </message>";
+        final Document result = packetReader.read( new StringReader( input ) );
+
+        // Verify result.
+        Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+        Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+    }
 }

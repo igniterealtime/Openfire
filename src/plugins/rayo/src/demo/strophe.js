@@ -209,7 +209,7 @@ Strophe = {
      */
     addNamespace: function (name, value)
     {
-	Strophe.NS[name] = value;
+    Strophe.NS[name] = value;
     },
 
     /** Constants: Connection Status Constants
@@ -487,8 +487,8 @@ Strophe = {
      */
     xmlTextNode: function (text)
     {
-	   //ensure text is escaped
-	   text = Strophe.xmlescape(text);
+       //ensure text is escaped
+       text = Strophe.xmlescape(text);
        return Strophe.xmlGenerator().createTextNode(text);
     },
 
@@ -1463,12 +1463,12 @@ Strophe.Connection = function (service)
     // initialize plugins
     for (var k in Strophe._connectionPlugins) {
         if (Strophe._connectionPlugins.hasOwnProperty(k)) {
-	    var ptype = Strophe._connectionPlugins[k];
+        var ptype = Strophe._connectionPlugins[k];
             // jslint complaints about the below line, but this is fine
             var F = function () {};
             F.prototype = ptype;
             this[k] = new F();
-	    this[k].init(this);
+        this[k].init(this);
         }
     }
 };
@@ -1813,54 +1813,54 @@ Strophe.Connection.prototype = {
         if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
-	var id = elem.getAttribute('id');
+    var id = elem.getAttribute('id');
 
-	// inject id if not found
-	if (!id) {
-	    id = this.getUniqueId("sendIQ");
-	    elem.setAttribute("id", id);
-	}
+    // inject id if not found
+    if (!id) {
+        id = this.getUniqueId("sendIQ");
+        elem.setAttribute("id", id);
+    }
 
-	var handler = this.addHandler(function (stanza) {
-	    // remove timeout handler if there is one
+    var handler = this.addHandler(function (stanza) {
+        // remove timeout handler if there is one
             if (timeoutHandler) {
                 that.deleteTimedHandler(timeoutHandler);
             }
 
             var iqtype = stanza.getAttribute('type');
-	    if (iqtype == 'result') {
-		if (callback) {
+        if (iqtype == 'result') {
+        if (callback) {
                     callback(stanza);
                 }
-	    } else if (iqtype == 'error') {
-		if (errback) {
+        } else if (iqtype == 'error') {
+        if (errback) {
                     errback(stanza);
                 }
-	    } else {
+        } else {
                 throw {
                     name: "StropheError",
                     message: "Got bad IQ type of " + iqtype
                 };
             }
-	}, null, 'iq', null, id);
+    }, null, 'iq', null, id);
 
-	// if timeout specified, setup timeout handler.
-	if (timeout) {
-	    timeoutHandler = this.addTimedHandler(timeout, function () {
+    // if timeout specified, setup timeout handler.
+    if (timeout) {
+        timeoutHandler = this.addTimedHandler(timeout, function () {
                 // get rid of normal handler
                 that.deleteHandler(handler);
 
-	        // call errback on timeout with null stanza
+            // call errback on timeout with null stanza
                 if (errback) {
-		    errback(null);
+            errback(null);
                 }
-		return false;
-	    });
-	}
+        return false;
+        });
+    }
 
-	this.send(elem);
+    this.send(elem);
 
-	return id;
+    return id;
     },
 
     /** PrivateFunction: _queueData
@@ -2202,11 +2202,11 @@ Strophe.Connection.prototype = {
             // or on a gradually expanding retry window for reconnects
             var sendFunc = function () {
                 req.date = new Date();
-				try {
+                try {
                     req.xhr.send(req.data);
-				} catch (e3) {
+                } catch (e3) {
 
-				}
+                }
             };
 
             // Implement progressive backoff for reconnects --

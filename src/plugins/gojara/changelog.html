@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title>GoJara Plugin Changelog</title>
+    <title>GoJara Plugin Changelog</title>
     <style type="text/css">
         BODY {
             font-size : 100%;
@@ -44,6 +44,11 @@
 GoJara Plugin Changelog
 </h1>
 
+<p><b>2.2.1</b> -- November 17, 2017</p>
+<ul>
+  <li>Correct missing table only found in upgrade scripts</li>
+</ul>
+
 <p><b>2.2.0</b> -- October 12, 2015</p>
 <ul>
     <li>[<a href='http://www.igniterealtime.org/issues/browse/OF-953'>OF-953</a>] - Updated JSP libraries.</li>
@@ -53,71 +58,71 @@ GoJara Plugin Changelog
 <p><b>2.1.5</b> -- Okt 21, 2013</p>
 
 <ul>
-	<li>Fixed: Mistakenly sent second unregister command when already unregistering.</li>
-	<li>Fixed: Only remove tracked user registration from our db when we receive proper response</li>
-	<li>Better handling of unregisters when in persistent / nonpersistant modes</li>
+    <li>Fixed: Mistakenly sent second unregister command when already unregistering.</li>
+    <li>Fixed: Only remove tracked user registration from our db when we receive proper response</li>
+    <li>Better handling of unregisters when in persistent / nonpersistant modes</li>
 </ul>
 
 <p><b>2.1.4</b> -- Okt 15, 2013</p>
 
 <ul>
-	<li>Added option to disable presence Pushing that we implemented for Spark but may cause trouble with other clients.</li>
-	<li>Added option to let user decide if he wants subdomains to show up as contact on roster</li>
+    <li>Added option to disable presence Pushing that we implemented for Spark but may cause trouble with other clients.</li>
+    <li>Added option to let user decide if he wants subdomains to show up as contact on roster</li>
 </ul>
 
 <p><b>2.1.3</b> -- Aug 20, 2013</p>
 
 <ul>
-	<li>Changed registration tracking once again, now properly works with Gajim 0.15</li>
-	<li>Push presence when receiving gajim Registration info as gajim does not push presences to transport</li>
-	<li>Added option to push available presence to all transport on roster of user so gajim does auto connect on startup.</li>
+    <li>Changed registration tracking once again, now properly works with Gajim 0.15</li>
+    <li>Push presence when receiving gajim Registration info as gajim does not push presences to transport</li>
+    <li>Added option to push available presence to all transport on roster of user so gajim does auto connect on startup.</li>
 </ul>
 
 
 <p><b>2.1.2</b> -- Aug 09, 2013</p>
 
 <ul>
-	<li>Fixed changed Un-/ registration tracking to look for more specific packets, currently spark and gajim compatible, other not tested</li>
+    <li>Fixed changed Un-/ registration tracking to look for more specific packets, currently spark and gajim compatible, other not tested</li>
 </ul>
 
 <p><b>2.1.1</b> -- Aug 01, 2013</p>
 
 <ul>
-	<li>Made time differences prettier</li>
-	<li>Renamed Settings page</li>
-	<li>Hopefully fixed instant-unregister bug</li>
-	<li>Fixed Mysql schema typo</li>
-	<li>Change the way gojaraadmin works so we dont actually create a user, better this way for LDAP databases etc</li>
-	<li>Fixed pagination</li>
+    <li>Made time differences prettier</li>
+    <li>Renamed Settings page</li>
+    <li>Hopefully fixed instant-unregister bug</li>
+    <li>Fixed Mysql schema typo</li>
+    <li>Change the way gojaraadmin works so we dont actually create a user, better this way for LDAP databases etc</li>
+    <li>Fixed pagination</li>
 </ul>
 
 <p><b>2.1.0</b> -- Jul 25, 2013</p>
 
 <ul>
-	<li>Added new functionality: "Admin Panel". See below for further info</li>
-	<li>active Sessions: see which users are currently connected to a transport and time of login.</li>
-	<li>Session details: Overview of active Sessions and existing Registrations for specific User.</li>
-	<li>Registration Overview: manage existing Registrations, even of users that never logged in (probably due to wrong credentials)</li>
-	<li>Spectrum2 Stats: Overview of Spectrum2 backend Statistics, uptime, used Memory, Memory Per User...</li>
-	<li>Configure spectrum2 transport.cfgs with admin_jid = gojaraadmin@domain for all this to properly work</li>
+    <li>Added new functionality: "Admin Panel". See below for further info</li>
+    <li>active Sessions: see which users are currently connected to a transport and time of login.</li>
+    <li>Session details: Overview of active Sessions and existing Registrations for specific User.</li>
+    <li>Registration Overview: manage existing Registrations, even of users that never logged in (probably due to wrong credentials)</li>
+    <li>Spectrum2 Stats: Overview of Spectrum2 backend Statistics, uptime, used Memory, Memory Per User...</li>
+    <li>Configure spectrum2 transport.cfgs with admin_jid = gojaraadmin@domain for all this to properly work</li>
 </ul>
 
 <p><b>2.0.0</b> -- Mar 19, 2013</p>
 
 <ul>
-	<li>Major refactoring of the Interceptor- and Processor-Structure used by GoJara.</li>
-	<li>One-Interceptor structure should allow easier Debugging & control of Features.</li>
-	<li>We completely ignore Packets with malformed JIDs now, this should cause less Warnings/Errors.</li>
-	<li>Freezing the Interceptor on Destroy of the Plugin should make GoJara properly shutdown and not cause trouble on reload/update.</li>
-	<li>Optimized Processors to have better performance.</li>
-	<li>Reject iq:roster packets with item jid=subdomain as they will throw errors on register:remove.</li>
-	<li>Fixed auto-connecting to transports in Persistant-mode by blocking Presence forwarding to legacy-roster items.</li>
-	<li>New Feature: MUC-Filter allows to filter MUC from disco#info of transports if only internal conference service should be allowed.</li>
-	<li>Persistent Roster has its place in GoJara Options view back.</li>
-	<li>Fixed Errors thrown after unloading GoJara by unloading ComponentEventListener properly.</li>
-	<li>Reject IQ:Last Packets when Filter activated instead of responding to them, as S2 is responding too.</li>
+    <li>Major refactoring of the Interceptor- and Processor-Structure used by GoJara.</li>
+    <li>One-Interceptor structure should allow easier Debugging & control of Features.</li>
+    <li>We completely ignore Packets with malformed JIDs now, this should cause less Warnings/Errors.</li>
+    <li>Freezing the Interceptor on Destroy of the Plugin should make GoJara properly shutdown and not cause trouble on reload/update.</li>
+    <li>Optimized Processors to have better performance.</li>
+    <li>Reject iq:roster packets with item jid=subdomain as they will throw errors on register:remove.</li>
+    <li>Fixed auto-connecting to transports in Persistant-mode by blocking Presence forwarding to legacy-roster items.</li>
+    <li>New Feature: MUC-Filter allows to filter MUC from disco#info of transports if only internal conference service should be allowed.</li>
+    <li>Persistent Roster has its place in GoJara Options view back.</li>
+    <li>Fixed Errors thrown after unloading GoJara by unloading ComponentEventListener properly.</li>
+    <li>Reject IQ:Last Packets when Filter activated instead of responding to them, as S2 is responding too.</li>
 </ul>
-	
+    
 
 <p><b>1.2.5</b> -- Feb 22, 2013</p>
 

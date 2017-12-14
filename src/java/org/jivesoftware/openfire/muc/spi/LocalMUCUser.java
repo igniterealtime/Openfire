@@ -287,7 +287,7 @@ public class LocalMUCUser implements MUCUser {
                                     
                                     // Send invitations to invitees
                                     @SuppressWarnings("unchecked")
-									Iterator<Element> it = userInfo.elementIterator("invite");
+                                    Iterator<Element> it = userInfo.elementIterator("invite");
                                     while(it.hasNext()) {
                                         Element info = it.next();
                                         JID jid = new JID(info.attributeValue("to"));
@@ -435,10 +435,6 @@ public class LocalMUCUser implements MUCUser {
     }
 
     public void process(Presence packet) {
-        // Ignore presences of type ERROR sent to a room
-        if (Presence.Type.error == packet.getType()) {
-            return;
-        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
@@ -503,20 +499,17 @@ public class LocalMUCUser implements MUCUser {
                             sendErrorPacket(packet, PacketError.Condition.not_allowed);
                         }
                     }
-                    else {
-                        // TODO: send error message to user (can't send presence to group you
-                        // haven't joined)
+                    else if (packet.getType() != Presence.Type.error) {
+                        sendErrorPacket(packet, PacketError.Condition.unexpected_request);
                     }
                 }
                 else {
-                    if (packet.isAvailable()) {
+                    if (packet.getType() != Presence.Type.error) {
                         // A resource is required in order to join a room
                         // http://xmpp.org/extensions/xep-0045.html#enter
                         // If the user does not specify a room nickname (note the bare JID on the 'from' address in the following example), the service MUST return a <jid-malformed/> error
                         sendErrorPacket(packet, PacketError.Condition.jid_malformed);
                     }
-                    // TODO: send error message to user (can't send packets to group you haven't
-                    // joined)
                 }
             }
             else {
@@ -550,8 +543,11 @@ public class LocalMUCUser implements MUCUser {
                                 // Occupant has changed his nickname. Send two presences
                                 // to each room occupant
 
+                                if (role.getChatRoom().getOccupantsByBareJID(packet.getFrom().asBareJID()).size() > 1) {
+                                    sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                                }
                                 // Check if occupants are allowed to change their nicknames
-                                if (!role.getChatRoom().canChangeNickname()) {
+                                else if (!role.getChatRoom().canChangeNickname()) {
                                     sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                                 }
                                 // Answer a conflic error if the new nickname is taken
@@ -589,28 +585,28 @@ public class LocalMUCUser implements MUCUser {
         }
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LocalMUCUser other = (LocalMUCUser) obj;
-		if (realjid == null) {
-			if (other.realjid != null)
-				return false;
-		} else if (!realjid.equals(other.realjid))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LocalMUCUser other = (LocalMUCUser) obj;
+        if (realjid == null) {
+            if (other.realjid != null)
+                return false;
+        } else if (!realjid.equals(other.realjid))
+            return false;
+        return true;
+    }
 }

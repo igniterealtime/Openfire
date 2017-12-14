@@ -19,8 +19,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -200,14 +200,14 @@
 <body>
 
 
-	<h1>
-	<fmt:message key="setup.admin.settings.account" />
-	</h1>
+    <h1>
+    <fmt:message key="setup.admin.settings.account" />
+    </h1>
 
 <% if(!ldap){ %>
     <p>
-	<fmt:message key="setup.admin.settings.info" />
-	</p>
+    <fmt:message key="setup.admin.settings.info" />
+    </p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -230,8 +230,8 @@
 <%  } %>
 
 
-	<!-- BEGIN jive-contentBox -->
-	<div class="jive-contentBox">
+    <!-- BEGIN jive-contentBox -->
+    <div class="jive-contentBox">
 
 
 <script language="JavaScript" type="text/javascript">
@@ -359,14 +359,14 @@ function checkClick() {
 </table>
 
 <br>
-		<div align="right">
-			<input type="submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-			<input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
-		</div>
+        <div align="right">
+            <input type="submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
+        </div>
 
-	</form>
-	</div>
-	<!-- END jive-contentBox -->
+    </form>
+    </div>
+    <!-- END jive-contentBox -->
 
 
 <script language="JavaScript" type="text/javascript">

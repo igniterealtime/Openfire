@@ -16,31 +16,31 @@ import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 @Path("restapi/v1/sessions")
 public class SessionService {
 
-	private SessionController sessionController;
+    private SessionController sessionController;
 
-	@PostConstruct
-	public void init() {
-		sessionController = SessionController.getInstance();
-	}
+    @PostConstruct
+    public void init() {
+        sessionController = SessionController.getInstance();
+    }
 
-	@GET
-	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	public SessionEntities getAllSessions() throws ServiceException {
-		return sessionController.getAllSessions();
-	}
-	
-	@GET
-	@Path("/{username}")
-	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
-	public SessionEntities getUserSessions(@PathParam("username") String username) throws ServiceException {
-		return sessionController.getUserSessions(username);
-	}
-	
-	@DELETE
-	@Path("/{username}")
-	public Response kickSession(@PathParam("username") String username) throws ServiceException {
-		sessionController.removeUserSessions(username);
-		return Response.status(Response.Status.OK).build();
-	}
-	
+    @GET
+    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    public SessionEntities getAllSessions() throws ServiceException {
+        return sessionController.getAllSessions();
+    }
+    
+    @GET
+    @Path("/{username}")
+    @Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON })
+    public SessionEntities getUserSessions(@PathParam("username") String username) throws ServiceException {
+        return sessionController.getUserSessions(username);
+    }
+    
+    @DELETE
+    @Path("/{username}")
+    public Response kickSession(@PathParam("username") String username) throws ServiceException {
+        sessionController.removeUserSessions(username);
+        return Response.status(Response.Status.OK).build();
+    }
+    
 }

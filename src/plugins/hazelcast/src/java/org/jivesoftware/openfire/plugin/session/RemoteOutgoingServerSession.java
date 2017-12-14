@@ -36,9 +36,11 @@ import java.util.Collection;
 public class RemoteOutgoingServerSession extends RemoteSession implements OutgoingServerSession {
 
     private long usingServerDialback = -1;
+    private final DomainPair pair;
 
-    public RemoteOutgoingServerSession(byte[] nodeID, JID address) {
-        super(nodeID, address);
+    public RemoteOutgoingServerSession(byte[] nodeID, DomainPair address) {
+        super(nodeID, new JID(null, address.getRemote(), null, true));
+        this.pair = address;
     }
 
     public Collection<DomainPair> getOutgoingDomainPairs()
@@ -49,11 +51,11 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
 
     public void addOutgoingDomainPair( String local, String remote )
     {
-        doClusterTask(new AddOutgoingDomainPair(address, local, remote ));
+        doClusterTask(new AddOutgoingDomainPair(pair, local, remote ));
     }
 
     public boolean authenticateSubdomain(String domain, String hostname) {
-        ClusterTask task = new AuthenticateSubdomainTask(address, domain, hostname);
+        ClusterTask task = new AuthenticateSubdomainTask(pair, domain, hostname);
         return (Boolean) doSynchronousClusterTask(task);
     }
 
@@ -66,20 +68,47 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
     }
 
     public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
-        ClusterTask task = new CheckOutgoingDomainPairTask(address, localDomain, remoteDomain);
+        ClusterTask task = new CheckOutgoingDomainPairTask(pair, localDomain, remoteDomain);
         return (Boolean)doSynchronousClusterTask(task);
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
-        return new OutgoingServerSessionTask(address, operation);
+        return new OutgoingServerSessionTask(pair, operation);
     }
 
     ClusterTask getDeliverRawTextTask(String text) {
-        return new DeliverRawTextTask(this, address, text);
+        return new DeliverRawTextServerTask(pair, text);
     }
 
     ClusterTask getProcessPacketTask(Packet packet) {
         return new ProcessPacketTask(this, address, packet);
+    }
+
+    private static class DeliverRawTextServerTask extends OutgoingServerSessionTask {
+        private String text;
+
+        public DeliverRawTextServerTask() {
+            super();
+        }
+
+        protected DeliverRawTextServerTask(DomainPair address, String text) {
+            super(address, null);
+            this.text = text;
+        }
+
+        public void run() {
+            getSession().deliverRawText(text);
+        }
+
+        public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, text);
+        }
+
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
+            text = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
     }
 
     private static class AddOutgoingDomainPair extends OutgoingServerSessionTask {
@@ -90,7 +119,7 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super();
         }
 
-        protected AddOutgoingDomainPair(JID address, String local, String remote) {
+        protected AddOutgoingDomainPair(DomainPair address, String local, String remote) {
             super(address, null);
             this.local = local;
             this.remote = remote;
@@ -121,7 +150,7 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super();
         }
 
-        protected AuthenticateSubdomainTask(JID address, String domain, String hostname) {
+        protected AuthenticateSubdomainTask(DomainPair address, String domain, String hostname) {
             super(address, null);
             this.domain = domain;
             this.hostname = hostname;
@@ -152,7 +181,7 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super();
         }
 
-        protected CheckOutgoingDomainPairTask(JID address, String local, String remote) {
+        protected CheckOutgoingDomainPairTask(DomainPair address, String local, String remote) {
             super(address, null);
             this.local = local;
             this.remote = remote;

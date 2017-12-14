@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthorizationManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
 
     private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<>();
     private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<>();

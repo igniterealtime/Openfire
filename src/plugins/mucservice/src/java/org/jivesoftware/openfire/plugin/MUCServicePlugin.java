@@ -26,28 +26,28 @@ import org.jivesoftware.openfire.container.PluginManager;
  */
 public class MUCServicePlugin implements Plugin {
 
-	/**
-	 * Instantiates a new mUC service plugin.
-	 */
-	public MUCServicePlugin() {
-	}
+    /**
+     * Instantiates a new mUC service plugin.
+     */
+    public MUCServicePlugin() {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.jivesoftware.openfire.container.Plugin#initializePlugin(org.jivesoftware
-	 * .openfire.container.PluginManager, java.io.File)
-	 */
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.jivesoftware.openfire.container.Plugin#initializePlugin(org.jivesoftware
+     * .openfire.container.PluginManager, java.io.File)
+     */
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.container.Plugin#destroyPlugin()
-	 */
-	public void destroyPlugin() {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.container.Plugin#destroyPlugin()
+     */
+    public void destroyPlugin() {
+    }
 
 }

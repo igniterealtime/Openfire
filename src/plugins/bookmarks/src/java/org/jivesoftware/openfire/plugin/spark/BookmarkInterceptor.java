@@ -44,7 +44,7 @@ import org.xmpp.packet.Packet;
  */
 public class BookmarkInterceptor implements PacketInterceptor {
 
-	private static final Logger Log = LoggerFactory.getLogger(BookmarkInterceptor.class);
+    private static final Logger Log = LoggerFactory.getLogger(BookmarkInterceptor.class);
 
     /**
      * Initializes the BookmarkInterceptor and needed Server instances.
@@ -201,9 +201,9 @@ public class BookmarkInterceptor implements PacketInterceptor {
                     conferenceElement.addAttribute("jid", bookmark.getValue());
                     boolean nameasnick = Boolean.valueOf(bookmark.getProperty("nameasnick"));
                     if (nameasnick) {
-                    	User currentUser = userManager.getUser(jid.getNode());
-                    	Element nick = conferenceElement.addElement("nick");
-                    	nick.addText(currentUser.getName());
+                        User currentUser = userManager.getUser(jid.getNode());
+                        Element nick = conferenceElement.addElement("nick");
+                        nick.addText(currentUser.getName());
                     }
                 }
                 appendSharedElement(conferenceElement);

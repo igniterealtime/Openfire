@@ -40,57 +40,57 @@ public abstract class Resampler {
     protected LowPassFilter lowPassFilter;
 
     protected Resampler(String id, int inSampleRate, int inChannels,
-	    int outSampleRate, int outChannels) throws IOException {
+        int outSampleRate, int outChannels) throws IOException {
 
-	this.id = id;
+    this.id = id;
 
-	if (inChannels != 1 && inChannels != 2) {
-	    Logger.println("invalid in channels " + inChannels);
+    if (inChannels != 1 && inChannels != 2) {
+        Logger.println("invalid in channels " + inChannels);
 
-	    throw new IOException("invalid in channels " + inChannels);
-	}
+        throw new IOException("invalid in channels " + inChannels);
+    }
 
-	if (outChannels != 1 && outChannels != 2) {
-	    Logger.println("SampleRateConverter:  invalid out channels " 
-		+ outChannels);
+    if (outChannels != 1 && outChannels != 2) {
+        Logger.println("SampleRateConverter:  invalid out channels " 
+        + outChannels);
 
-	    throw new IOException("SampleRateConverter:  invalid in channels " 
-		+ inChannels);
-	}
+        throw new IOException("SampleRateConverter:  invalid in channels " 
+        + inChannels);
+    }
 
-	if (inSampleRate <= 0) {
-	    Logger.println("SampleRateConverter:  invalid input sample rate " 
-		+ inSampleRate);
+    if (inSampleRate <= 0) {
+        Logger.println("SampleRateConverter:  invalid input sample rate " 
+        + inSampleRate);
 
-	    throw new IOException("SampleRateConverter:  "
-		+ " invalid input sample rate " + inSampleRate);
-	}
+        throw new IOException("SampleRateConverter:  "
+        + " invalid input sample rate " + inSampleRate);
+    }
 
-	if (outSampleRate <= 0) {
-	    Logger.println("SampleRateConverter:  invalid output sample rate " 
-		+ outSampleRate);
+    if (outSampleRate <= 0) {
+        Logger.println("SampleRateConverter:  invalid output sample rate " 
+        + outSampleRate);
 
-	    throw new IOException("SampleRateConverter:  "
-		+ " invalid output sample rate " + outSampleRate);
-	}
+        throw new IOException("SampleRateConverter:  "
+        + " invalid output sample rate " + outSampleRate);
+    }
 
-	this.inSampleRate = inSampleRate;
-	this.inChannels = inChannels;
+    this.inSampleRate = inSampleRate;
+    this.inChannels = inChannels;
 
-	this.outSampleRate = outSampleRate;
-	this.outChannels = outChannels;
+    this.outSampleRate = outSampleRate;
+    this.outChannels = outChannels;
 
-	if (inSampleRate > outSampleRate) {
-	    lowPassFilter = new LowPassFilter(id, inSampleRate, inChannels);
-	} else {
-	    lowPassFilter = new LowPassFilter(id, outSampleRate, outChannels);
-	}
+    if (inSampleRate > outSampleRate) {
+        lowPassFilter = new LowPassFilter(id, inSampleRate, inChannels);
+    } else {
+        lowPassFilter = new LowPassFilter(id, outSampleRate, outChannels);
+    }
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("New Sample Converter:  from " 
-	        + inSampleRate + "/" + inChannels + " to " 
-	        + outSampleRate + "/" + outChannels);
-	}
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("New Sample Converter:  from " 
+            + inSampleRate + "/" + inChannels + " to " 
+            + outSampleRate + "/" + outChannels);
+    }
     }
 
     protected byte[] resample(byte[] inSamples, int offset, int length)
@@ -114,7 +114,7 @@ public abstract class Resampler {
     protected abstract int[] resample(int[] inSamples) throws IOException;
 
     protected int[] reChannel(int[] inSamples) throws IOException {
-	if ((inSamples.length % inChannels) != 0) {
+    if ((inSamples.length % inChannels) != 0) {
             Logger.println("length " + inSamples.length
                 + " is not a multiple of the frame size " + inChannels);
 
@@ -122,60 +122,60 @@ public abstract class Resampler {
                 + " is not a multiple of the frame size " + inChannels);
         }
 
-	/*
-	 * XXX Possible optimization here.  Always reduce channels before
-	 * resampling and wait to increase channels until after resampling.
-	 * The assumption is that resampling takes longer than resampling.
-	 */
-	int[] outSamples;
+    /*
+     * XXX Possible optimization here.  Always reduce channels before
+     * resampling and wait to increase channels until after resampling.
+     * The assumption is that resampling takes longer than resampling.
+     */
+    int[] outSamples;
 
-	if (inChannels > outChannels) {
-	    outSamples = reduceChannels(inSamples);
-	} else if (inChannels < outChannels) {
-	    outSamples = increaseChannels(inSamples);
-	} else {
-	    outSamples = inSamples;
-	}
+    if (inChannels > outChannels) {
+        outSamples = reduceChannels(inSamples);
+    } else if (inChannels < outChannels) {
+        outSamples = increaseChannels(inSamples);
+    } else {
+        outSamples = inSamples;
+    }
 
-	return outSamples;
+    return outSamples;
     }
 
     private int[] reduceChannels(int[] inSamples) {
-	/*
-	 * inChannels is 2 and outChannels is 1
-	 */	
-	int outIx = 0;
+    /*
+     * inChannels is 2 and outChannels is 1
+     */	
+    int outIx = 0;
 
-	int[] outSamples = new int[inSamples.length / 2];
+    int[] outSamples = new int[inSamples.length / 2];
 
-	for (int inIx = 0; inIx < inSamples.length; inIx += 2) {
-	    int s1 = inSamples[inIx];
-	    int s2 = inSamples[inIx + 1];
+    for (int inIx = 0; inIx < inSamples.length; inIx += 2) {
+        int s1 = inSamples[inIx];
+        int s2 = inSamples[inIx + 1];
 
-	    //outSamples[outIx] = (int) ((s1 + s2) / 2);
-	    outSamples[outIx] = (int) s1;
-	    outIx ++;
-	}
-	
-	return outSamples;
+        //outSamples[outIx] = (int) ((s1 + s2) / 2);
+        outSamples[outIx] = (int) s1;
+        outIx ++;
+    }
+    
+    return outSamples;
     }
 
     private int[] increaseChannels(int[] inSamples) {
-	/*
-	 * inChannels is 1 and outChannels is 2
-	 */	
-	int[] outSamples = new int[inSamples.length * 2];
+    /*
+     * inChannels is 1 and outChannels is 2
+     */	
+    int[] outSamples = new int[inSamples.length * 2];
 
-	int outIx = 0;
+    int outIx = 0;
 
-	for (int inIx = 0; inIx < inSamples.length; inIx++) {
-	    outSamples[outIx] = inSamples[inIx];
-	    outIx++;
-	    outSamples[outIx] = inSamples[inIx];
-	    outIx++;
-	}
-	
-	return outSamples;
+    for (int inIx = 0; inIx < inSamples.length; inIx++) {
+        outSamples[outIx] = inSamples[inIx];
+        outIx++;
+        outSamples[outIx] = inSamples[inIx];
+        outIx++;
+    }
+    
+    return outSamples;
     }
 
     public abstract void reset();

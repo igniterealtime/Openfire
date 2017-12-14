@@ -8,14 +8,14 @@
     <version>1.7.1</version>
     <date>07/11/2017</date>
     <minServerVersion>4.0.0</minServerVersion>
-	
-	<adminconsole>
-		<tab id="tab-users">
-			<sidebar id="sidebar-users">
-				<item id="registration-props-form" name="Registration Properties"
-						url="registration-props-form.jsp"
-						description="User Registration" />
-			</sidebar>
+    
+    <adminconsole>
+        <tab id="tab-users">
+            <sidebar id="sidebar-users">
+                <item id="registration-props-form" name="Registration Properties"
+                        url="registration-props-form.jsp"
+                        description="User Registration" />
+            </sidebar>
         </tab>
     </adminconsole>
 </plugin>

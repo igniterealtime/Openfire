@@ -31,8 +31,8 @@ import org.xmpp.packet.JID;
 
 public class WorkgroupPropertiesProvider implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPropertiesProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupPropertiesProvider.class);
+    
     public boolean handleGet(IQ packet) {
         Element iq = packet.getChildElement();
         String name = iq.getName();

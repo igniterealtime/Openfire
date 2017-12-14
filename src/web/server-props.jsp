@@ -26,6 +26,7 @@
                  java.util.HashMap"
 %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -90,6 +91,11 @@
     pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         if (serverName == null) {
+            errors.put("serverName", "");
+        }
+        try {
+            JID.domainprep(serverName);
+        } catch (Exception e) {
             errors.put("serverName", "");
         }
         if (port < 1) {
@@ -235,7 +241,7 @@
             <fmt:message key="server.props.name" />
         </td>
         <td class="c2">
-            <input type="text" name="serverName" value="<%= (serverName != null) ? serverName : "" %>"
+            <input type="text" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
              size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>

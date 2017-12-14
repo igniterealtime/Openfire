@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JiveProperties implements Map<String, String> {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
+    private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue, encrypted FROM ofProperty";
     private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue, encrypted) VALUES(?,?,?)";
@@ -60,11 +60,11 @@ public class JiveProperties implements Map<String, String> {
      * @return an instance of JiveProperties.
      */
     public synchronized static JiveProperties getInstance() {
-    	if (instance == null) {
-    		JiveProperties props = new JiveProperties();
-    		props.init();
-    		instance = props;
-    	}
+        if (instance == null) {
+            JiveProperties props = new JiveProperties();
+            props.init();
+            instance = props;
+        }
         return instance;
     }
     private JiveProperties() { }
@@ -348,7 +348,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void insertProperty(String name, String value, boolean isEncrypted) {
-    	Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -368,7 +368,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void updateProperty(String name, String value, boolean isEncrypted) {
-    	Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -405,7 +405,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void loadProperties() {
-    	Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -418,16 +418,16 @@ public class JiveProperties implements Map<String, String> {
                 String value = rs.getString(2);
                 boolean isEncrypted = rs.getInt(3) == 1 || JiveGlobals.isXMLPropertyEncrypted(name);
                 if (isEncrypted) {
-                	try { 
-                		value = encryptor.decrypt(value); 
-                	} catch (Exception ex) {
-                    	Log.error("Failed to load encrypted property value for " + name, ex);
-                    	value = null;
-                	}
+                    try { 
+                        value = encryptor.decrypt(value); 
+                    } catch (Exception ex) {
+                        Log.error("Failed to load encrypted property value for " + name, ex);
+                        value = null;
+                    }
                 }
                 if (value != null) { 
-                	properties.put(name, value);
-                	encrypted.put(name, isEncrypted);
+                    properties.put(name, value);
+                    encrypted.put(name, isEncrypted);
                 }
             }
         }
@@ -440,6 +440,6 @@ public class JiveProperties implements Map<String, String> {
     }
     
     private Encryptor getEncryptor() {
-    	return JiveGlobals.getPropertyEncryptor();
+        return JiveGlobals.getPropertyEncryptor();
     }
 }

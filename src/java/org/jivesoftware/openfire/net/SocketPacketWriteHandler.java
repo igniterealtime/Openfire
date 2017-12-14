@@ -37,7 +37,7 @@ import org.xmpp.packet.Presence;
  */
 public class SocketPacketWriteHandler implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
 
     private XMPPServer server;
     private RoutingTable routingTable;

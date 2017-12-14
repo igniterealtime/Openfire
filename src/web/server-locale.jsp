@@ -103,11 +103,11 @@
 <!-- BEGIN locale settings -->
 <form action="server-locale.jsp" method="post" name="sform">
     <input type="hidden" name="csrf" value="${csrf}">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="locale.system.set" />
-	</div>
-	<div class="jive-contentBox">
-		<p>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="locale.system.set" />
+    </div>
+    <div class="jive-contentBox">
+        <p>
         <b><fmt:message key="locale.current" />:</b> <%= locale.getDisplayName(locale) %> /
             <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
@@ -254,7 +254,7 @@
             <option value="<%= timeZone1[0] %>"<%= selected %>><%= timeZone1[1] %>
                 <%  } %>
         </select>
-	</div>
+    </div>
 <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END locale settings -->

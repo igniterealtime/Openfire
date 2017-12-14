@@ -19,5 +19,5 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="password")
 public class AuthenticatePost {
-	public String value;
+    public String value;
 }

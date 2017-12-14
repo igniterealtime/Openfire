@@ -52,7 +52,7 @@ import de.javawi.jstun.test.demo.StunServer;
  */
 public class STUNService implements Plugin {
 
-	private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
+    private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
     public static final String STUN_ADDRESS_PRIMARY = "stun.address.primary";
     public static final String STUN_ADDRESS_SECONDARY = "stun.address.secondary";
     public static final String STUN_PORT_PRIMARY = "stun.port.primary";
@@ -77,7 +77,7 @@ public class STUNService implements Plugin {
 
     private List<StunServerAddress> externalServers = null;
 
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
         this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
 
         primaryAddress = JiveGlobals.getProperty(STUN_ADDRESS_PRIMARY);
@@ -149,11 +149,11 @@ public class STUNService implements Plugin {
         });
     }
 
-	public void destroyPlugin() {
-		stop();
-	}
+    public void destroyPlugin() {
+        stop();
+    }
 
-	public void start() {
+    public void start() {
         if (isEnabled()) {
             startSTUNService();
             if (isLocalEnabled()) {
@@ -202,7 +202,7 @@ public class STUNService implements Plugin {
         }
     }
 
-	public void stop() {
+    public void stop() {
         this.enabled = false;
         stopSTUNService();
         stopLocal();
@@ -389,7 +389,7 @@ public class STUNService implements Plugin {
         }
 
         @Override
-		public IQ handleIQ(IQ iq) throws UnauthorizedException {
+        public IQ handleIQ(IQ iq) throws UnauthorizedException {
             IQ reply = IQ.createResultIQ(iq);
             Element childElement = iq.getChildElement();
             String namespace = childElement.getNamespaceURI();
@@ -442,7 +442,7 @@ public class STUNService implements Plugin {
         }
 
         @Override
-		public IQHandlerInfo getInfo() {
+        public IQHandlerInfo getInfo() {
             return new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
         }
     }

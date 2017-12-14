@@ -84,7 +84,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     @Override
     public Connection getConnection() throws SQLException {
         if (dataSource == null) {
-            throw new SQLException("JDBC Data was not be initialised");
+            throw new SQLException("Check JDBC properties; data source was not be initialised");
         }
         // DBCP doesn't expose the number of refused connections, so count them ourselves
         try {

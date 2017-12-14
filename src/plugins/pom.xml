@@ -108,6 +108,7 @@
         <module>fastpath</module>
         <module>gojara</module>
         <module>hazelcast</module>
+        <module>httpFileUpload</module>
         <module>inverse</module>
         <!-- jnsapi not in Maven Central-->
         <!--<module>jingleNodes</module>-->

@@ -98,16 +98,18 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
                 boolean available = presenceManager.isAvailable(userTo);
 
                 if (debug) {
-                    Log.debug("intercepted message from {} to {}, recipient is available {}", new Object[] { packet.getFrom().toBareJID(), to.toBareJID(), available });
+                    Log.debug("intercepted message from {} to {}, recipient is available {}", new Object[]{packet.getFrom().toBareJID(), to.toBareJID(), available});
                 }
 
                 if (!available) {
                     JID from = packet.getFrom();
+                    String body = msg.getBody();
 
                     WebTarget target = client.target(url)
                             .queryParam("token", token)
                             .queryParam("from", from.toBareJID())
-                            .queryParam("to", to.toBareJID());
+                            .queryParam("to", to.toBareJID())
+                            .queryParam("body", body);
 
                     if (debug) {
                         Log.debug("sending request to url='{}'", target);

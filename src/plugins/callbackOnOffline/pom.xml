@@ -33,5 +33,12 @@
             <artifactId>jersey-client</artifactId>
             <version>2.21</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <scope>runtime</scope>
+            <version>2.26</version>
+        </dependency>
     </dependencies>
 </project>

@@ -55,7 +55,7 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
 
         if (debug) {
             Log.debug("initialize CallbackOnOffline plugin. Start.");
-            Log.debug("Loaded properties: \n\turl=%s, \n\ttoken=%s, \n\tsendBody=%s");
+            Log.debug("Loaded properties: \nurl={}, \ntoken={}, \nsendBody={}", new Object[]{url, token, sendBody});
         }
 
         interceptorManager = InterceptorManager.getInstance();

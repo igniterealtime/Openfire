@@ -124,7 +124,7 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
 
                     MessageData data = new MessageData(token, from.toBareJID(), to.toBareJID(), body);
 
-                    Future<Response> responseFuture = client.target(url)
+                    Future<Response> responseFuture = target
                             .request()
                             .async()
                             .post(Entity.json(data));

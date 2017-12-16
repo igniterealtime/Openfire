@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>HTTP File Upload Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H3 {
+            font-size : 10pt;
+            font-style: italic;
+            color: #004444;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>HTTP File Upload Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+    The HTTP File Upload plugin adds functionality to Openfire that allows compliant clients to exchange files.
+</p>
+
+<h2>Installation</h2>
+
+<p>
+    Copy httpfileupload.jar into the plugins directory of your Openfire installation. The plugin will then be
+    automatically deployed. To upgrade to a new version, copy the new httpfileupload.jar file over the existing file.
+</p>
+
+<h2>Using the Plugin</h2>
+
+<p>
+    After intallation, the functionality provided by the plugin is automatically available to clients. While exchanging
+    files, the plugin by default stores the files that are being transferred in a temporary directory that is removed
+    when Openfire is shut down. The content of this directory is purged when its total size is larger than the remaining
+    disc space.
+</p>
+
+<h2>Attribution</h2>
+<p>
+    Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from
+    <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by
+    <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
+</p>
+</body>
+</html>

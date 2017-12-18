@@ -172,7 +172,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         try {
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
-                if (!engine.process(this, (IQ) packet)) {
+                if (engine.process(this, (IQ) packet) == null) {
                     process((IQ) packet);
                 }
             }

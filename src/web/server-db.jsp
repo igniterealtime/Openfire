@@ -15,16 +15,18 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
+<%@ page import="org.jivesoftware.database.ConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
-                 java.sql.*"
+                 org.jivesoftware.database.DefaultConnectionProvider"
     errorPage="error.jsp"
 %>
-<%@ page import="org.logicalcobwebs.proxool.ConnectionPoolDefinitionIF" %>
-<%@ page import="org.logicalcobwebs.proxool.ProxoolFacade" %>
-<%@ page import="org.logicalcobwebs.proxool.admin.SnapshotIF" %>
-<%@ page import="org.logicalcobwebs.proxool.ConnectionInfoIF" %>
-<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="org.jivesoftware.util.JiveConstants" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.DatabaseMetaData" %>
+<%@ page import="java.sql.SQLException" %>
+<%@ page import="org.slf4j.Logger" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -39,6 +41,7 @@
     <body>
 
 <%  // Get metadata about the database
+    final Logger Log = LoggerFactory.getLogger("server-db.jsp");
     Connection con = null;
     try {
         con = DbConnectionManager.getConnection();
@@ -160,18 +163,18 @@
 <%  }
     finally {
         try { if (con != null) { con.close(); } }
-        catch (SQLException e) { Log.error(e); }
+        catch (SQLException e) { Log.error("Unable to close connection", e); }
     }
 
-    if (DbConnectionManager.getConnectionProvider().isPooled()) {
-        try {
-            // Get metadata about the connection pool
-            ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
-            SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);
-            Integer active = 100 * poolStats.getActiveConnectionCount() / poolStats.getMaximumConnectionCount();
-            Integer inactive = 100 * (poolStats.getAvailableConnectionCount() - poolStats.getActiveConnectionCount()) / poolStats.getMaximumConnectionCount();
-            Integer notopened = 100 - active - inactive;
-            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+    final ConnectionProvider connectionProvider = DbConnectionManager.getConnectionProvider();
+    if (connectionProvider instanceof DefaultConnectionProvider) {
+        final DefaultConnectionProvider defaultConnectionProvider = (DefaultConnectionProvider) connectionProvider;
+        final int activeConnections = defaultConnectionProvider.getActiveConnections();
+        final int idleConnections = defaultConnectionProvider.getIdleConnections();
+        final int maxConnections = defaultConnectionProvider.getMaxConnections();
+        final int activePercent = 100 * activeConnections / maxConnections;
+        final int idlePercent = 100 * idleConnections / maxConnections;
+        final int unopenedPercent = 100 - idlePercent - activePercent;
 %>
 
 <br/><br/>
@@ -189,7 +192,15 @@
             <fmt:message key="server.db.house_keeping_sleep" />
         </td>
         <td class="c2">
-            <%= (poolDef.getHouseKeepingSleepTime() / 1000) %> <fmt:message key="server.db_stats.seconds" />
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getTimeBetweenEvictionRunsMillis())%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.db.connection_idle_time" />
+        </td>
+        <td class="c2">
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getMinIdleTime())%>
         </td>
     </tr>
     <tr>
@@ -197,7 +208,15 @@
             <fmt:message key="server.db.connection_lifetime" />
         </td>
         <td class="c2">
-            <%= (poolDef.getMaximumConnectionLifetime() / 1000) %> <fmt:message key="server.db_stats.seconds" />
+            <%=StringUtils.getFullElapsedTime((long) (defaultConnectionProvider.getConnectionTimeout() * JiveConstants.DAY))%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.db.connection_max_wait_time" />
+        </td>
+        <td class="c2">
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getMaxWaitTime())%>
         </td>
     </tr>
     <tr>
@@ -205,7 +224,7 @@
             <fmt:message key="server.db.connection_min" />
         </td>
         <td class="c2">
-            <%= poolDef.getMinimumConnectionCount() %>
+            <%= defaultConnectionProvider.getMinConnections() %>
         </td>
     </tr>
     <tr>
@@ -213,7 +232,7 @@
             <fmt:message key="server.db.connection_max" />
         </td>
         <td class="c2">
-            <%= poolDef.getMaximumConnectionCount() %>
+            <%= maxConnections %>
         </td>
     </tr>
     <tr>
@@ -221,7 +240,7 @@
             <fmt:message key="server.db.house_keeping_sql" />
         </td>
         <td class="c2">
-            <%= poolDef.getHouseKeepingTestSql() %>
+            <%= defaultConnectionProvider.getTestSQL() %>
         </td>
     </tr>
     <tr>
@@ -229,7 +248,7 @@
             <fmt:message key="server.db.test_before_use" />
         </td>
         <td class="c2">
-            <%= (poolDef.isTestBeforeUse() ? "Yes" : "No") %>
+            <%= (defaultConnectionProvider.getTestBeforeUse() ? "Yes" : "No") %>
         </td>
     </tr>
     <tr>
@@ -237,7 +256,15 @@
             <fmt:message key="server.db.test_after_use" />
         </td>
         <td class="c2">
-            <%= (poolDef.isTestAfterUse() ? "Yes" : "No") %>
+            <%= (defaultConnectionProvider.getTestAfterUse() ? "Yes" : "No") %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.db.test_timeout" />
+        </td>
+        <td class="c2">
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getTestTimeout())%>
         </td>
     </tr>
     <tr>
@@ -245,14 +272,14 @@
             <fmt:message key="server.db.connections" />
         </td>
         <td class="c2">
-            <%= poolStats.getActiveConnectionCount() %> (<fmt:message key="server.db.connections.active"/>),
-            <%= poolStats.getAvailableConnectionCount() %> (<fmt:message key="server.db.connections.available"/>),
-            <%= poolStats.getMaximumConnectionCount() %> (<fmt:message key="server.db.connections.max"/>)<br/>
+            <%= activeConnections %> (<fmt:message key="server.db.connections.active"/>),
+            <%= idleConnections %> (<fmt:message key="server.db.connections.available"/>),
+            <%= maxConnections %> (<fmt:message key="server.db.connections.max"/>)<br/>
             <table border="0" cellspacing="0" cellpadding="0" width="250px" style="margin: 8px; font-size: 50%">
                 <tr>
-                    <% if (active > 0) { %><td style="border: 1.0px solid #000000; background-color: #ffffaa" width="<%= active %>%">&nbsp;</td><% } %>
-                    <% if (inactive > 0) { %><td style="border: 1.0px solid #000000; background-color: #aaffaa" width="<%= inactive %>%">&nbsp;</td><% } %>
-                    <td style="border: 1.0px solid #000000; background-color: #eeeeee" width="<%= notopened %>%">&nbsp;</td>
+                    <% if (activePercent > 0) { %><td style="border: 1px solid #000000; background-color: #ffffaa" width="<%= activePercent %>%">&nbsp;</td><% } %>
+                    <% if (idlePercent > 0) { %><td style="border: 1px solid #000000; background-color: #aaffaa" width="<%= idlePercent %>%">&nbsp;</td><% } %>
+                    <td style="border: 1px solid #000000; background-color: #eeeeee" width="<%= unopenedPercent %>%">&nbsp;</td>
                 </tr>
             </table>
         </td>
@@ -262,7 +289,7 @@
             <fmt:message key="server.db.connections_served" />
         </td>
         <td class="c2">
-            <%= poolStats.getServedCount() %>
+            <%= defaultConnectionProvider.getConnectionsServed() %>
         </td>
     </tr>
     <tr>
@@ -270,49 +297,29 @@
             <fmt:message key="server.db.connections_refused" />
         </td>
         <td class="c2">
-            <%= poolStats.getRefusedCount() %>
+            <%= defaultConnectionProvider.getRefusedCount() %>
         </td>
     </tr>
     <tr>
         <td class="c1">
-            <fmt:message key="server.db.connection_details" />
+            <fmt:message key="server.db.connection_mean_borrow_time" />
         </td>
         <td class="c2">
-            <table cellspacing="0">
-                <thead>
-                    <tr>
-                        <th><fmt:message key="server.db.connection_details.id"/></th>
-                        <th><fmt:message key="server.db.connection_details.when_created"/></th>
-                        <th><fmt:message key="server.db.connection_details.last_used"/></th>
-                        <th><fmt:message key="server.db.connection_details.thread"/></th>
-                    </tr>
-                </thead>
-                <tbody>
-<%
-                        for (ConnectionInfoIF info : poolStats.getConnectionInfos()) {
-%>
-                    <tr>
-                        <td align="center" style="padding: 2px"><%= info.getId() %></td>
-                        <td align="center" style="padding: 2px"><%= dateFormat.format(info.getBirthDate()) %></td>
-                        <td align="center" style="padding: 2px"><%= info.getTimeLastStartActive() > 0 ? dateFormat.format(new Date(info.getTimeLastStartActive())) : "-" %></td>
-                        <td align="center" style="padding: 2px"><%= info.getRequester() != null ? info.getRequester() : "-" %></td>
-                    </tr>
-<%
-                        }
-%>
-                </tbody>
-            </table>
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getMeanBorrowWaitTime())%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.db.connection_max_borrow_time" />
+        </td>
+        <td class="c2">
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getMaxBorrowWaitTime())%>
         </td>
     </tr>
 </tbody>
 </table>
 </div>
 <%
-        }
-        catch (Exception e) {
-            // Nothing
-            Log.error("AdminConsole: Error while displaying connection pool information: ", e);
-        }
     }
 %>
 

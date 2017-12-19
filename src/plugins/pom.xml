@@ -163,7 +163,7 @@
         <plugin.name>${project.artifactId}</plugin.name>
 
         <!-- Versions -->
-        <openfire.version>4.2.0</openfire.version>
+        <openfire.version>4.3.0-SNAPSHOT</openfire.version>
     </properties>
 
     <profiles>

@@ -70,6 +70,7 @@ mina-filter-compression.jar         | Apache Mina 2.0.7                         
 mina-integration-beans.jar          | Apache Mina 2.0.7                                            | Apache 2.0
 mina-integration-jmx.jar            | Apache Mina 2.0.7                                            | Apache 2.0
 mina-integration-ognl.jar           | Apache Mina 2.0.7                                            | Apache 2.0
+mssql-jdbc-6.2.2.jre7.jar           | 6.2.2.jre7                                                   | MIT
 javassist.jar                       | 3.11.0.GA (Apache Mina 2.0.7)                                | Apache 2.0
 ognl.jar                            | 3.0.5 (Apache Mina 2.0.7)                                    | Apache 2.0
 mysql.jar                           | 5.1.42                                                       | GPL

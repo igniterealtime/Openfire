@@ -26,17 +26,12 @@ database, you must setup and manage an external database for the application.
 This document provides setup instructions for all of the currently supported databases.
 </p>
 <p>
-JDBC 2.0 drivers are required for Openfire to communicate with your database. Suggested
+JDBC drivers are required for Openfire to communicate with your database. Suggested
 drivers for particular databases are noted below where applicable. Openfire bundles JDBC
 drivers for MySQL, Postgres, Microsoft SQL Server, and HSQLDB.
 </p>
 <p>
-For a full list of available JDBC drivers, please see:
-<a href="http://industry.java.sun.com/products/jdbc/drivers">
-http://industry.java.sun.com/products/jdbc/drivers</a>.</p>
-
-<p>
-All database schemas can be found in the <tt>resources/database</tt> directory of the
+All supported database schemas can be found in the <tt>resources/database</tt> directory of the
 Openfire installation.
 </p>
 
@@ -50,7 +45,7 @@ Choose your database from the list below for setup details:
 <ul>
     <li> <a href="#mysql">MySQL</a>
     <li> <a href="#oracle">Oracle</a>
-    <li> <a href="#sqlserver">Microsoft SQLServer</a>
+    <li> <a href="#sqlserver">Microsoft SQL Server</a>
     <li> <a href="#postgres">PostgreSQL</a>
     <li> <a href="#db2">IBM DB2</a>
     <li> <a href="#hsql">HSQLDB</a>
@@ -153,24 +148,30 @@ Choose your database from the list below for setup details:
     That will import the schema file. Your database is now setup.</p>
 </ul>
 
-<p><h2><a name="sqlserver">SQL Server</a></h2><p>
+<p><h2><a name="sqlserver">Microsoft SQL Server</a></h2><p>
 
 <ul>
     <p><b>SQL Server</b></p>
     <b>JDBC Drivers</b><p>
 
-    Openfire includes the <a href="http://www.freetds.org/">Free TDS</a> JDBC driver, which
-    is the recommended way to connect to SQL Server databases. To
-    connect to SQL Server, simply use the following values in the Openfire
-    web-based setup tool:<p>
-
+    Openfire bundles two SQL Server compatible JDBC drivers.
+    <ul>
+        <li>The <a href="http://www.freetds.org/">Free TDS JDBC driver</a></li>
         <ul>
-        <li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
-        <li>server -- <tt>jdbc:jtds:sqlserver://[host-name]:[port-number]/[database-name];appName=jive</tt>
+            <li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
+            <li>server -- <tt>jdbc:jtds:sqlserver://[host-name]:[port-number]/[database-name];appName=Openfire</tt>
+        </ul>
+        <li>The <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server">Microsoft JDBC driver</a></li>
+        <ul>
+            <li>driver -- <tt>com.microsoft.sqlserver.jdbc.SQLServerDriver</tt>
+            <li>server -- <tt>jdbc:sqlserver://[host-name]:[port-number];databaseName=[database-name];applicationName=Openfire</tt>
+        </ul>
     </ul>
+    You can use either of these, but the Microsoft driver is more up to date.
+
     <p>
-    where [host-name] is the host name or IP address of your database server,
-    and [port-number] is the port that SQLServer is listening on (normally 1433)
+    For the above server settings, [host-name] is the host name or IP address of your database server,
+    [port-number] is the port that SQL Server is listening on (normally 1433)
     and [database-name] is the name of the database (this parameter is optional).
 
     <p><b>Setup Instructions</b><p>
@@ -181,12 +182,6 @@ Choose your database from the list below for setup details:
         <li>Create a user to access the database if you do not already have one you'd
             like to use. Consider making the default database for the user be the
             one you created in step 1.
-        <li>Open the Query Analyser and connect to the server.
-        <li>Select the database you want to use for Openfire
-            from the DB drop down (the one you created in step 1 if you're using a new database).
-        <li>Open the openfire_sqlserver.sql file.
-        <li>Press F5 to run the script. The script will run and create the
-            necessary tables.
         <li>Proceed to the Openfire setup tool and use the appropriate JDBC settings
             when prompted.
    </ol>

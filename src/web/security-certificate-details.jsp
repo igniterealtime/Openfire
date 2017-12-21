@@ -201,15 +201,15 @@
                     <th colspan="2">
                         <fmt:message key="ssl.certificates.subject"/> <fmt:message key="ssl.certificates.alternative-name"/>
                         <c:choose>
-                            <c:when test="${alternativeName[0] eq 0}">(Other Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 1}">(RFC-822 Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 2}">(DNS Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 3}">(X400 Address)</c:when>
-                            <c:when test="${alternativeName[0] eq 4}">(Directory Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 5}">(EDI Party Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 6}">(Uniform Resource Identifier)</c:when>
-                            <c:when test="${alternativeName[0] eq 7}">(IP Address)</c:when>
-                            <c:when test="${alternativeName[0] eq 8}">(Registered ID)</c:when>
+                            <c:when test="${alternativeName[0] eq 0}"><fmt:message key="ssl.certificates.alternative-name.other"/></c:when>
+                            <c:when test="${alternativeName[0] eq 1}"><fmt:message key="ssl.certificates.alternative-name.rfc822"/></c:when>
+                            <c:when test="${alternativeName[0] eq 2}"><fmt:message key="ssl.certificates.alternative-name.dns"/></c:when>
+                            <c:when test="${alternativeName[0] eq 3}"><fmt:message key="ssl.certificates.alternative-name.x400"/></c:when>
+                            <c:when test="${alternativeName[0] eq 4}"><fmt:message key="ssl.certificates.alternative-name.directory"/></c:when>
+                            <c:when test="${alternativeName[0] eq 5}"><fmt:message key="ssl.certificates.alternative-name.edi-party"/></c:when>
+                            <c:when test="${alternativeName[0] eq 6}"><fmt:message key="ssl.certificates.alternative-name.url"/></c:when>
+                            <c:when test="${alternativeName[0] eq 7}"><fmt:message key="ssl.certificates.alternative-name.ip-addres"/></c:when>
+                            <c:when test="${alternativeName[0] eq 8}"><fmt:message key="ssl.certificates.alternative-name.registered-id"/></c:when>
                         </c:choose>
                     </th>
                 </tr>

@@ -258,7 +258,7 @@
                             <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>
-                            <td nowrap class="table-header">File Size</td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.available.file_size"/></td>
                             <td nowrap class="table-header-right"><fmt:message key="plugin.available.install"/></td>
                         </tr>
                     </thead>

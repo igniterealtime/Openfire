@@ -273,14 +273,14 @@
     </tr>
     <tr>
         <td class="c1">
-            Groups:
+            <fmt:message key="user.properties.groups" />:
         </td>
         <td>
             <%
                 Collection<Group> groups = webManager.getGroupManager().getGroups(user);
                 if (groups.isEmpty()) {
             %>
-                <i>None</i>
+                <i><fmt:message key="user.properties.none" /></i>
             <%
                 }
                 else {

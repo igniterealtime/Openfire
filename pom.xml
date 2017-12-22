@@ -18,6 +18,7 @@
         <module>src/plugins</module>
         <module>webadmin</module>
         <module>webadmintld</module>
+        <module>distribution</module>
     </modules>
 
     <organization>
@@ -117,9 +118,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <openfireHome>${project.build.directory}/openfire</openfireHome>
-        <releaseDirectory>${project.build.directory}/release</releaseDirectory>
-        <openfireSource>${releaseDirectory}/openfire_src</openfireSource>
+
         <!-- Versions -->
         <jetty.version>9.2.14.v20151106</jetty.version>
         <mina.version>2.0.7</mina.version>
@@ -139,6 +138,7 @@
             </properties>
         </profile>
 
+        <!-- Generates artifacts required for uploading to Sonatypes Maven repository. -->
         <profile>
             <id>release</id>
             <build>
@@ -261,73 +261,6 @@
 
         </pluginManagement>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>Copy directories</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${openfireHome}</outputDirectory>
-                            <resources>
-                                <!-- Copy the conf directory to ${openfireHome}/conf -->
-                                <resource>
-                                    <directory>src/conf</directory>
-                                    <targetPath>conf</targetPath>
-                                </resource>
-                                <!-- Copy the bin directory to ${openfireHome}/bin -->
-                                <resource>
-                                    <directory>src/bin</directory>
-                                    <targetPath>bin</targetPath>
-                                </resource>
-                                <!-- Copy log4j.xml to ${openfireHome}/lib -->
-                                <resource>
-                                    <directory>build/lib/dist</directory>
-                                    <includes>
-                                        <include>log4j.xml</include>
-                                    </includes>
-                                    <targetPath>lib</targetPath>
-                                </resource>
-                                <!-- Copy the spank directory to ${openfireHome}/resources -->
-                                <resource>
-                                    <directory>src/spank</directory>
-                                    <targetPath>resources/spank</targetPath>
-                                </resource>
-                                <!-- Copy the nativeAuth directory to ${openfireHome}/resources -->
-                                <resource>
-                                    <directory>src/resources/nativeAuth</directory>
-                                    <targetPath>resources/nativeAuth</targetPath>
-                                </resource>
-                                <!-- Copy the database directory to ${openfireHome}/resources -->
-                                <resource>
-                                    <directory>src/database</directory>
-                                    <targetPath>resources/database</targetPath>
-                                </resource>
-                                <!-- Copy the security directory to ${openfireHome}/resources -->
-                                <resource>
-                                    <directory>src/security</directory>
-                                    <targetPath>resources/security</targetPath>
-                                </resource>
-                                <!-- Copy the documentation/docs directory to ${openfireHome}/documentation -->
-                                <resource>
-                                    <directory>documentation/docs</directory>
-                                    <targetPath>documentation</targetPath>
-                                </resource>
-                                <!-- Copy the documentation/docs directory to ${openfireHome}/dist -->
-                                <resource>
-                                    <directory>documentation/dist</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

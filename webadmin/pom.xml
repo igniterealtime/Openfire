@@ -11,40 +11,23 @@
     <packaging>war</packaging>
 
     <properties>
-        <openfireHome>${project.parent.build.directory}/openfire</openfireHome>
         <warSourceDirectory>${project.basedir}/../src/web</warSourceDirectory>
     </properties>
 
     <build>
         <plugins>
-            <!-- Create the (exploded) web archive in the ${openfireHome}/plugins/admin/webapp directory -->
+            <!-- Create the admin console web archive. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.6</version>
                 <configuration>
-                    <!-- Copy the webapp folder directly to the admin plugin -->
-                    <webappDirectory>${openfireHome}/plugins/admin/webapp</webappDirectory>
                     <!-- Exclude JSP files, they will be compiled -->
                     <warSourceExcludes>**/*.jsp,**/*.jspf,WEB-INF/lib/*.*</warSourceExcludes>
                     <warSourceDirectory>${warSourceDirectory}</warSourceDirectory>
                     <!-- Use the web.xml, which contains the generated servlet declarations from the jetty-jspc-maven-plugin -->
                     <webXml>${project.build.directory}/web.xml</webXml>
                 </configuration>
-                <executions>
-                    <!-- Skip the creation of a *.war file, we don't need it -->
-                    <execution>
-                        <id>default-war</id>
-                        <phase>none</phase>
-                    </execution>
-                    <!-- Only create the exploded webapp folder -->
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>exploded</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <!-- Compile the JSP pages -->
@@ -82,38 +65,6 @@
                 </dependencies>
             </plugin>
 
-            <!-- We don't generate a war file (only the exploded directory), so there's no artifact to install -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.2</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-
-            <!-- Copy the plugin.xml -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>Copy plugin.xml</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${openfireHome}/plugins/admin</outputDirectory>
-                            <resources>
-                                <resources>
-                                    <directory>${project.basedir}/../src/plugins/admin</directory>
-                                </resources>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 

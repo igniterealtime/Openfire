@@ -8,9 +8,6 @@
     </parent>
     <artifactId>xmppserver</artifactId>
     <name>Core XMPP Server</name>
-    <properties>
-        <openfireHome>${project.parent.build.directory}/openfire</openfireHome>
-    </properties>
 
     <build>
         <plugins>
@@ -44,47 +41,6 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>3.0.0</version>
                 <extensions>true</extensions>
-            </plugin>
-
-            <!-- Copy all dependencies to ${openfireHome}/lib -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>${project.artifactId}</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>${project.packaging}</type>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${openfireHome}/lib</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${openfireHome}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeScope>runtime</includeScope>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>

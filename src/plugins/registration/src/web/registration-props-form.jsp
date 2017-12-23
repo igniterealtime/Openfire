@@ -16,7 +16,6 @@
 
 <%@ page
    import="java.util.*,
-           org.jivesoftware.admin.*,
            org.jivesoftware.openfire.XMPPServer,
            org.jivesoftware.openfire.user.*,
            org.jivesoftware.openfire.plugin.RegistrationPlugin,
@@ -24,6 +23,7 @@
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -45,6 +45,9 @@
     boolean reCaptchaNoScript = ParamUtils.getBooleanParameter(request, "recaptchanoscript", false);
     String reCaptchaPublicKey = ParamUtils.getParameter(request, "recaptchapublickey");
     String reCaptchaPrivateKey = ParamUtils.getParameter(request, "recaptchaprivatekey");
+
+    long autoExpiry = ParamUtils.getLongParameter( request, "autoexpiry", -1 );
+    String autoExpiryCustom = ParamUtils.getParameter( request, "autoexpiry_custom" );
 
     String contactIM = ParamUtils.getParameter(request, "contactIM");
     boolean addIM = ParamUtils.getBooleanParameter(request, "addIM");
@@ -131,6 +134,19 @@
         plugin.setReCaptchaPublicKey(reCaptchaPublicKey);
         plugin.setReCaptchaPrivateKey(reCaptchaPrivateKey);
         plugin.setPrivacyListEnabled(privacyListEnabled);
+
+        if (autoExpiry == -2 )
+        {
+            try
+            {
+                autoExpiry = Long.parseLong( autoExpiryCustom ) * 60;
+            }
+            catch ( NumberFormatException e )
+            {
+                errors.put("autoexpirycustom", "autoexpirycustom");
+            }
+        }
+        plugin.setAutomaticAccountLockoutAfter( autoExpiry );
         
         if (groupEnabled) {
             group = plugin.getGroup();
@@ -227,6 +243,7 @@
     reCaptchaNoScript = plugin.reCaptchaNoScript();
     reCaptchaPublicKey = plugin.getReCaptchaPublicKey();
     reCaptchaPrivateKey = plugin.getReCaptchaPrivateKey();
+    autoExpiry = plugin.getAutomaticAccountLockoutAfter();
 %>
 
 <html>
@@ -287,7 +304,22 @@ function addEmailContact() {
     </div>
    
     <% } %>
-   
+
+    <% if (errors.containsKey("autoexpirycustom")) { %>
+
+    <div class="jive-error">
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+            <tr>
+                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+                <td class="jive-icon-label"><fmt:message key="registration.props.form.invalid_autoexpirycustom" /></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <% } %>
+
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
@@ -332,6 +364,40 @@ function addEmailContact() {
             <td width="24%" align="left"><fmt:message key="registration.props.form.recaptcha_private_key" /></td>
             <td width="75%" align="left"><input type="text" name="recaptchaprivatekey" size="40" maxlength="100" value="<%= (reCaptchaPrivateKey != null ? reCaptchaPrivateKey : "") %>"/></td>
         </tr>
+
+        <% if ( LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
+        <tr>
+            <td width="100%" colspan="3">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="100%" align="left" colspan="3"><fmt:message key="registration.props.form.auto_expiry_caption" /></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpirydisabled" value="-1" <%= autoExpiry == -1 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpirydisabled"><fmt:message key="registration.props.form.auto_expiry_disabled" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1minute" value="60" <%= autoExpiry == 60 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1minute"><fmt:message key="registration.props.form.auto_expiry_1minute" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1hour" value="3600" <%= autoExpiry == 3600 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1hour"><fmt:message key="registration.props.form.auto_expiry_1hour" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1day" value="86400" <%= autoExpiry == 86400 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1day"><fmt:message key="registration.props.form.auto_expiry_1day" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1week" value="604800" <%= autoExpiry == 604800 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1week"><fmt:message key="registration.props.form.auto_expiry_1week" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry_custom" value="-2" <%= autoExpiry != -1 && autoExpiry != 60 && autoExpiry != 3600 && autoExpiry != 86400 && autoExpiry != 604800? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry_custom"><fmt:message key="registration.props.form.auto_expiry_custom" /> </label><input type="text" size="5" maxlength="10" name="autoexpiry_custom" value="<%= autoExpiry != -1 && autoExpiry != -2 && autoExpiry != 60 && autoExpiry != 3600 && autoExpiry != 86400 && autoExpiry != 604800 ? autoExpiry / 60 : "" %>"/><label for="autoexpiry_custom"> <fmt:message key="registration.props.form.auto_expiry_minutes" /></label></td>
+        </tr>
+        <% } %>
+
     </tbody>
     </table>
     <br>

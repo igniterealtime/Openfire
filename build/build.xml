@@ -44,7 +44,7 @@
     <property name="spank.dir" value="${src.dir}/spank"/>
     <property name="lib.ant.dir" value="${basedir}/build/lib/ant"/>
     <property name="lib.build.dir" value="${basedir}/build/lib"/>
-    <property name="lib.build.installer.dir" value="${basedir}/distribution/src/installer"/>
+    <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
     <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
@@ -104,7 +104,7 @@
     <property name="copy.dbscripts" value="true"/>
 
     <property name="installer.install4j.home" value="/home/bamboo/install4j"/>
-    <property name="installer.src" value="${basedir}/distribution/src/installer"/>
+    <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}"/>
     <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>
     <property name="installer.app_name" value="Openfire"/>

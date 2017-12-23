@@ -9,7 +9,7 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>registration</artifactId>
     <name>Registration Plugin</name>
-    <version>1.7.1</version>
+    <version>1.7.2</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

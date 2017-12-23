@@ -17,13 +17,7 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -39,6 +33,7 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
@@ -152,7 +147,14 @@ public class RegistrationPlugin implements Plugin {
      * privacy list, if the property #PRIVACYLIST_ENABLED is set to true.
      */
     private static final String REGISTRAION_PRIVACYLIST_NAME = "registration.privacylist.name";
-    
+
+    /**
+     * The expected value is a numeric (long) value that defines the number of seconds after which
+     * a newly created User will be automatically locked out. A non-positive value (zero or less) will
+     * disable this feature (it is disabled by default).
+     */
+    private static final String REGISTRATION_AUTO_LOCKOUT = "registration.automatic.lockout.seconds";
+
     /**
      * The expected value is a String that contains the text that will be displayed in the header
      * of the sign-up.jsp, if the property #WEB_ENABLED is set to true.
@@ -364,7 +366,21 @@ public class RegistrationPlugin implements Plugin {
     public String getPrivacyListName() {
         return JiveGlobals.getProperty(REGISTRAION_PRIVACYLIST_NAME);
     }
-    
+
+    public boolean isAutomaticAccountLockoutEnabled()
+    {
+        return getAutomaticAccountLockoutAfter() > 0;
+    }
+
+    public void setAutomaticAccountLockoutAfter( long seconds )
+    {
+        JiveGlobals.setProperty( REGISTRATION_AUTO_LOCKOUT, Long.toString( seconds ) );
+    }
+    public long getAutomaticAccountLockoutAfter()
+    {
+        return JiveGlobals.getLongProperty( REGISTRATION_AUTO_LOCKOUT, -1 );
+    }
+
     public void setHeader(String message) {
         JiveGlobals.setProperty(HEADER, message);
     }
@@ -398,6 +414,11 @@ public class RegistrationPlugin implements Plugin {
             
             if (privacyListEnabled()) {
                 addDefaultPrivacyList(user);
+            }
+
+            if (isAutomaticAccountLockoutEnabled())
+            {
+                addAutomaticAccountLockout(user);
             }
         }
 
@@ -485,6 +506,12 @@ public class RegistrationPlugin implements Plugin {
                 PrivacyList newPrivacyList = privacyListManager.createPrivacyList(user.getUsername(), getPrivacyListName(), privacyListCache);
                 privacyListManager.changeDefaultList(user.getUsername(), newPrivacyList, null);
             }
+        }
+
+        private void addAutomaticAccountLockout(User user)
+        {
+            final long start = System.currentTimeMillis() + ( getAutomaticAccountLockoutAfter() * 1000 );
+            LockOutManager.getInstance().disableAccount( user.getUsername(), new Date( start ), null );
         }
     }
     

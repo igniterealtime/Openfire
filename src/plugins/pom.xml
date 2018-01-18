@@ -92,7 +92,7 @@
     </contributors>
 
     <modules>
-        <module>openfire-plugin-assembly-descriptor</module>
+        <module>openfire-plugin-assembly-descriptor</module>        
         <module>bookmarks</module>
         <module>broadcast</module>
         <module>callbackOnOffline</module>
@@ -110,6 +110,7 @@
         <module>hazelcast</module>
         <module>httpFileUpload</module>
         <module>inverse</module>
+        <module>ipfs</module>          
         <!-- jnsapi not in Maven Central-->
         <!--<module>jingleNodes</module>-->
         <module>jmxweb</module>
@@ -119,7 +120,7 @@
         <module>monitoring</module>
         <module>motd</module>
         <module>mucservice</module>
-        <module>nodejs</module>
+        <module>nodejs</module>      
         <module>nonSaslAuthentication</module>
         <module>packetFilter</module>
         <!--<module>rayo</module>-->

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin>
+    <author>igniterealtime.org</author>
+    <class>org.ifsoft.ipfs.openfire.PluginImpl</class>
+    <name>IPFS</name>
+    <description>Enables Openfire to become an IPFS node.</description>
+    <licenseType>Apache 2.0</licenseType>
+    <version>0.0.1</version>
+    <date>01/18/2018</date>
+    <minServerVersion>4.0.0</minServerVersion>
+
+   <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="siderbar-ipfs"
+                     name="${plugin.title}">
+                <item id="ipfs-settings"
+                      name="${plugin.title}"
+                      description="${plugin.title.description}"
+                      url="ipfs.jsp"/>
+            </sidebar>
+        </tab>
+    </adminconsole> 
+</plugin>

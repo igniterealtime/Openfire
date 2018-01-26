@@ -279,13 +279,15 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         }
 
         // Remove outgoing server sessions hosted in node that left the cluster
-        Set<DomainPair> remoteServers = nodeRoutes.get(key);
-        if (!remoteServers.isEmpty()) {
-            for (DomainPair domainPair : remoteServers) {
-                routingTable.removeServerRoute(domainPair);
+        if (nodeRoutes.containsKey(key)) {
+            Set<DomainPair> remoteServers = nodeRoutes.get(key);
+            if (!remoteServers.isEmpty()) {
+                for (DomainPair domainPair : remoteServers) {
+                    routingTable.removeServerRoute(domainPair);
+                }
             }
+            nodeRoutes.remove(key);
         }
-        nodeRoutes.remove(key);
 
         Set<String> components = lookupJIDList(key, componentsCache.getName());
         if (!components.isEmpty()) {

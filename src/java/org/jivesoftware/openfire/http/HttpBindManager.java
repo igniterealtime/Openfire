@@ -625,7 +625,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
     protected Handler createWebsocketHandler()
     {
         final ServletContextHandler context = new ServletContextHandler( null, "/ws", ServletContextHandler.SESSIONS );
-
+        context.setAllowNullPathInfo(true);
         // Add the functionality-providers.
         context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
 

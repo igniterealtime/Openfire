@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <class>org.igniterealtime.openfire.plugins.externalservicediscovery.ExternalServiceDiscoveryPlugin</class>
+    <name>External Service Discovery</name>
+    <description>Allows XMPP entities to discover services external to the XMPP network, such as STUN and TURN servers.</description>
+    <author>Guus der Kinderen</author>
+    <version>1.0.0</version>
+    <date>01/26/2018</date>
+
+    <databaseKey>externalservicediscovery</databaseKey>
+    <databaseVersion>1</databaseVersion>
+
+    <adminconsole>
+        <tab id="sidebar-media-services">
+            <item id="external-service-discovery-config" name="${sidebar.external-service-discovery}"
+                  url="external-service-discovery-config.jsp"
+                  description="${sidebar.external-service-discovery.descr}"/>
+        </tab>
+    </adminconsole>
+</plugin>

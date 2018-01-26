@@ -105,6 +105,7 @@
         <module>dbaccess</module>
         <module>emailListener</module>
         <module>emailOnAway</module>
+        <module>externalservicediscovery</module>
         <module>fastpath</module>
         <module>gojara</module>
         <module>hazelcast</module>

@@ -213,7 +213,7 @@ public class TrustStore extends CertificateStore
         }
         catch ( Exception e )
         {
-            Log.warn( "Unkown exception while validating certificate chain:" + e.getMessage() );
+            Log.warn( "Unknown exception while validating certificate chain:", e );
         }
         return null;
     }

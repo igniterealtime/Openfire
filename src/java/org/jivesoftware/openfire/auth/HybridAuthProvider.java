@@ -216,7 +216,42 @@ public class HybridAuthProvider implements AuthProvider {
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
-        throw new UnsupportedOperationException();
+      // Check overrides first.
+      if (primaryOverrides.contains(username.toLowerCase())) {
+          primaryProvider.setPassword(username, password);
+          return;
+      }
+      else if (secondaryOverrides.contains(username.toLowerCase())) {
+          secondaryProvider.setPassword(username, password);
+          return;
+      }
+      else if (tertiaryOverrides.contains(username.toLowerCase())) {
+          tertiaryProvider.setPassword(username, password);
+          return;
+      }
+
+      // Now perform normal
+      try {
+          primaryProvider.setPassword(username, password);
+      }
+      catch (UserNotFoundException | UnsupportedOperationException ue) {
+          if (secondaryProvider != null) {
+              try {
+                  secondaryProvider.setPassword(username, password);
+              }
+              catch (UserNotFoundException | UnsupportedOperationException ue2) {
+                  if (tertiaryProvider != null) {
+                      tertiaryProvider.setPassword(username, password);
+                  }
+                  else {
+                      throw ue2;
+                  }
+              }
+          }
+          else {
+              throw ue;
+          }
+      }
     }
 
     @Override

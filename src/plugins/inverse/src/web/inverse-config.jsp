@@ -67,6 +67,14 @@
 
             JiveGlobals.setProperty( "inverse.config.locked_domain", Boolean.toString( ParamUtils.getBooleanParameter( request, "locked_domain" ) ) );
 
+            if ( ParamUtils.getParameter( request, "view_mode" ) != null )
+            {
+                JiveGlobals.setProperty( "inverse.config.view_mode", URLEncoder.encode( ParamUtils.getParameter( request, "view_mode" ) ) );
+            }
+            else
+            {
+                JiveGlobals.deleteProperty( "inverse.config.view_mode" );
+            }
             response.sendRedirect("inverse-config.jsp?success=update");
             return;
         }
@@ -102,6 +110,7 @@
     final boolean debugEnabled = JiveGlobals.getBooleanProperty( "inverse.config.debug", false );
     final String defaultDomain = JiveGlobals.getProperty( "inverse.config.default_domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
     final boolean lockedDomain = JiveGlobals.getBooleanProperty( "inverse.config.locked_domain", false );
+    final String viewMode = JiveGlobals.getProperty( "inverse.config.view_mode", "overlayed" );
 %>
 <html>
 <head>
@@ -202,18 +211,47 @@
                 </td>
             </tr>
             <tr valign="top">
-                <td width="1%" nowrap>
+                <td width="1%" nowrap style="padding-top: 1em;">
                     <b><label for="default_domain"><fmt:message key="config.page.default_domain.label" /></label></b>
                 </td>
-                <td width="99%">
+                <td width="99%" style="padding-top: 1em;">
                     <input type="text" name="default_domain" id="default_domain" size="30" value="<%=defaultDomain%>">
                 </td>
             </tr>
             <tr valign="top">
-                <td colspan="2">
+                <td colspan="2" style="padding-top: 1em;">
                     <input type="checkbox" name="locked_domain" id="locked_domain" <%= lockedDomain ? "checked" : "" %>/>&nbsp;
                     <label for="locked_domain">
                         <b><fmt:message key="config.page.locked_domain.label"/></b> - <fmt:message key="config.page.locked_domain.description"/>
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td colspan="2" style="padding-top: 1em;">
+                    <b><fmt:message key="config.page.view_mode.label"/></b> - <fmt:message key="config.page.view_mode.description"/>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td colspan="2">
+                    <input type="radio" name="view_mode" id="overlayed" value="overlayed" <%= "overlayed".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
+                    <label for="overlayed">
+                        <fmt:message key="config.page.view_mode.overlayed.label"/>
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td colspan="2">
+                    <input type="radio" name="view_mode" id="fullscreen" value="fullscreen" <%= "fullscreen".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
+                    <label for="fullscreen">
+                        <fmt:message key="config.page.view_mode.fullscreen.label"/>
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td colspan="2">
+                    <input type="radio" name="view_mode" id="mobile" value="mobile" <%= "mobile".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
+                    <label for="mobile">
+                        <fmt:message key="config.page.view_mode.mobile.label"/>
                     </label>
                 </td>
             </tr>

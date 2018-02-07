@@ -81,7 +81,7 @@
             if(affiliateComp != 0) {
                 return affiliateComp;
             } else {
-                return affiliate1.getJID().toFullJID().toLowerCase().compareTo(affiliate2.getJID().toFullJID().toLowerCase());
+                return affiliate1.getJID().compareTo(affiliate2.getJID());
             }
 
         }

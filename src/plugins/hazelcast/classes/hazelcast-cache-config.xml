@@ -14,10 +14,10 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.5.xsd"
-           xmlns="http://www.hazelcast.com/schema/config"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+           http://www.hazelcast.com/schema/config/hazelcast-config-3.9.xsd">
     <group>
         <name>openfire</name>
         <password>openfire</password>
@@ -190,10 +190,9 @@
             penalty due to invalidations on the other cluster members.
         -->
         <near-cache>
-            <max-size>1000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="1000"/>
             <time-to-live-seconds>0</time-to-live-seconds>
             <max-idle-seconds>600</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>
@@ -457,9 +456,8 @@
         <time-to-live-seconds>21600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
         <near-cache>
-            <max-size>10000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="10000"/>
             <max-idle-seconds>1800</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>
@@ -470,9 +468,8 @@
         <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
         <near-cache>
-            <max-size>10000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="10000"/>
             <max-idle-seconds>60</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>

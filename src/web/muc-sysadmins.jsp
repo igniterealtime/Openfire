@@ -227,8 +227,8 @@
                             <img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="groupchat.admins.user" />" alt="<fmt:message key="groupchat.admins.user" />"/>
                           <% } %>
                           <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
-                          <c:out value="${jidDisplay}"/></a>
-                        </td>
+                          <%= StringUtils.escapeForXML(jidDisplay)%>
+                          </a>
                         </td>
                         <td width="1%" align="center">
                             <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"

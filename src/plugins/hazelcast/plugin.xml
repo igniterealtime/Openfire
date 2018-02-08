@@ -6,6 +6,6 @@
     <description>Adds clustering support</description>
     <author>Tom Evans</author>
     <version>2.3.0-SNAPSHOT</version>
-    <date>mm/dd/2018</date>
+    <date>02/08/2018</date>
     <minServerVersion>4.0.0</minServerVersion>
 </plugin>

@@ -32,6 +32,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -507,6 +508,50 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getExtendedInfo(name, node, senderJID);
+                }
+                if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                    // Answer extended info of the server itself.
+
+                    // XEP-0157 Contact addresses for XMPP Services
+                    if ( !JiveGlobals.getBooleanProperty( "admin.disable-exposure" ) )
+                    {
+                        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+                        if ( admins == null || admins.isEmpty() )
+                        {
+                            return null;
+                        }
+
+                        final DataForm dataForm = new DataForm(DataForm.Type.result);
+
+                        final FormField fieldType = dataForm.addField();
+                        fieldType.setVariable("FORM_TYPE");
+                        fieldType.setType(FormField.Type.hidden);
+                        fieldType.addValue("http://jabber.org/network/serverinfo");
+
+                        final FormField fieldAdminAddresses = dataForm.addField();
+                        fieldAdminAddresses.setVariable("admin-addresses");
+
+                        final UserManager userManager = UserManager.getInstance();
+                        for ( final JID admin : admins )
+                        {
+                            fieldAdminAddresses.addValue( "xmpp:" + admin.asBareJID() );
+                            if ( admin.getDomain().equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain() ) )
+                            try
+                            {
+                                final String email = userManager.getUser( admin.getNode() ).getEmail();
+                                if ( email != null && !email.trim().isEmpty() )
+                                {
+                                    fieldAdminAddresses.addValue( "mailto:" + email );
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                continue;
+                            }
+                        }
+
+                        return dataForm;
+                    }
                 }
                 if (node != null && name != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfo(name, node, senderJID);

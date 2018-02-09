@@ -62,7 +62,7 @@ public class CacheFactory {
      */
     private static Map<String, Cache> caches = new ConcurrentHashMap<>();
     private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
-    
+
     private static String localCacheFactoryClass;
     private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy = new DefaultLocalCacheStrategy();
@@ -434,7 +434,7 @@ public class CacheFactory {
             return cache;
         }
         cache = (T) cacheFactoryStrategy.createCache(name);
-        
+
         log.info("Created cache [" + cacheFactoryStrategy.getClass().getName() + "] for " + name);
 
         return wrapCache(cache, name);
@@ -456,7 +456,7 @@ public class CacheFactory {
         localOnly.add(name);
 
         log.info("Created local-only cache [" + localCacheFactoryClass + "] for " + name);
-        
+
         return wrapCache(cache, name);
     }
 
@@ -612,12 +612,12 @@ public class CacheFactory {
     public static int getMaxClusterNodes() {
         return cacheFactoryStrategy.getMaxClusterNodes();
     }
-    
+
     /**
      * Gets the pseudo-synchronized time from the cluster. While the cluster members may
      * have varying system times, this method is expected to return a timestamp that is
      * synchronized (or nearly so; best effort) across the cluster.
-     * 
+     *
      * @return Synchronized time for all cluster members
      */
     public static long getClusterTime() {
@@ -628,7 +628,7 @@ public class CacheFactory {
             return localCacheFactoryStrategy.getClusterTime();
         }
     }
-    
+
     /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
      * executed on the local cluster member. If clustering is not enabled, this method
@@ -678,7 +678,7 @@ public class CacheFactory {
     public static Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
-    
+
     /**
      * Returns the node info for the given cluster node
      * @param nodeID The target cluster node 
@@ -731,9 +731,11 @@ public class CacheFactory {
 
     public static void startClustering() {
         if (isClusteringAvailable()) {
-            clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
+            clusteringStarting = true;
+            clusteringStarted = clusteredCacheFactoryStrategy.startCluster();
+            clusteringStarting = false;
         }
-        if (clusteringStarting) {
+        if (clusteringStarted) {
             if (statsThread == null) {
                 // Start a timing thread with 1 second of accuracy.
                 statsThread = new Thread("Cache Stats") {

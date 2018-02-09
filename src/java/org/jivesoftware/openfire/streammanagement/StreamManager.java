@@ -253,11 +253,18 @@ public class StreamManager {
         }
         Log.debug("Found existing session, checking status");
         // Previd identifies proper session. Now check SM status
-        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
+        if (!otherSession.getStreamManager().resume) {
+            Log.debug("Not allowing a client to resume a session, the session to be resumed does not have the stream management resumption feature enabled." );
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
-        if (!otherSession.getStreamManager().resume) {
+        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
+            Log.debug("Not allowing a client to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", otherSession.getStreamManager().namespace, namespace);
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
+        if (!validateClientAcknowledgement(h)) {
+            Log.debug("Not allowing a client to resume a session, as it reports it received more stanzas from us than that we've send it." );
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
@@ -336,6 +343,17 @@ public class StreamManager {
     }
 
     /**
+     * Checks if the amount of stanzas that the client acknowledges is equal to or less than the amount of stanzas that
+     * we've sent to the client.
+     *
+     * @param h Then number of stanzas that the client acknowledges it has received from us.
+     * @return false if we sent less stanzas to the client than the number it is acknowledging.
+     */
+    private synchronized boolean validateClientAcknowledgement(long h) {
+        return h <= ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+    }
+
+    /**
      * Process client acknowledgements for a given value of h.
      *
      * @param h Last handled stanza to be acknowledged.
@@ -343,8 +361,9 @@ public class StreamManager {
     private void processClientAcknowledgement(long h) {
         synchronized (this) {
 
-            if ( !unacknowledgedServerStanzas.isEmpty() && h > unacknowledgedServerStanzas.getLast().x ) {
-                Log.warn( "Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
+            if ( !validateClientAcknowledgement(h) ) {
+                // All paths leading up to here should have checked for this. Race condition?
+                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
             }
 
             clientProcessedStanzas = h;
@@ -384,6 +403,15 @@ public class StreamManager {
                 final long h = Long.valueOf(ack.attributeValue("h"));
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
+
+                if (!validateClientAcknowledgement(h)) {
+                    Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
+
                 processClientAcknowledgement(h);
             }
         }

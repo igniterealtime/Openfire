@@ -2723,7 +2723,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subject);
         ExternalizableUtil.getInstance().writeLong(out, roomID);
         ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
-        ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
+        if (modificationDate!=null) {
+            ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
+        }
+        else {
+            ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
+        }
         ExternalizableUtil.getInstance().writeBoolean(out, emptyDate != null);
         if (emptyDate != null) {
             ExternalizableUtil.getInstance().writeLong(out, emptyDate.getTime());

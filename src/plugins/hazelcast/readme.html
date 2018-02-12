@@ -204,17 +204,20 @@ the Hazelcast cluster if JMX has been enabled via the Openfire admin console.
 Refer to the <a href="http://docs.hazelcast.org/docs/3.9.2/manual/html-single/index.html#monitoring-with-jmx">
 Hazelcast JMX docs</a> for additional information.</li>
 </ol>
+<em>Note:</em> The default <code>hazelcast-cache-config.xml</code> file included with the plugin will include a file
+<code>conf/hazelcast-local-config.xml</code> that will be preserved between plugin updates. It is recommended that
+local changes are kept in this file.
 <p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.9.2/manual/html-single/index.html#configuring-declaratively">
-XML configuration builder</a> to initialize the cluster from the XML file described above.
-By default the cluster members will attempt to discover each other via multicast at the
+XML configuration builder</a> to initialize the cluster from the XML file <code>conf/hazelcast-local-config.xml</code>.
+By default the cluster members will attempt to discover each other via UDP multicast at the
 following location:
 </p>
 <ul>
 <li>IP Address: 224.2.2.3</li>
 <li>Port: 54327</li>
 </ul>
-Note that these values can be overridden in the plugin's /classes/hazelcast-cache-config.xml
-file (via the multicast-group and multicast-port elements). Many other initialization and
+These values can be overridden in the <code>conf/hazelcast-local-config.xml</code>
+file via the multicast-group and multicast-port elements. Many other initialization and
 discovery options exist, as documented in the Hazelcast configuration docs noted above. For
 example, to set up a two-node cluster using well-known DNS name/port values, try the
 following alternative:
@@ -223,10 +226,9 @@ following alternative:
 &lt;join&gt;
     &lt;multicast enabled="false"/&gt;
     &lt;tcp-ip enabled="true"&gt;
-      &lt;member&gt;of-node-a.example.com:5701&lt;/member&gt;
-      &lt;member&gt;of-node-b.example.com:5701&lt;/member&gt;
+      &lt;member&gt;of-node-a.example.com&lt;/member&gt;
+      &lt;member&gt;of-node-b.example.com&lt;/member&gt;
     &lt;/tcp-ip&gt;
-    &lt;aws enabled="false"/&gt;
 &lt;/join&gt;
 ...
 </pre>

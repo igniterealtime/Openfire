@@ -244,7 +244,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     @Override
     public boolean isSeniorClusterMember() {
-        if (cluster == null) {
+        if (clusterListener == null || !clusterListener.isClusterMember()) {
             return false;
         }
         // first cluster member is the oldest

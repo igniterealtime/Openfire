@@ -85,33 +85,33 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     /**
      * Caches stored in RoutingTable
      */
-    private Cache<String, ClientRoute> C2SCache;
-    private Cache<String, ClientRoute> anonymousC2SCache;
-    private Cache<DomainPair, byte[]> S2SCache;
-    private Cache<String, Set<NodeID>> componentsCache;
+    private final Cache<String, ClientRoute> C2SCache;
+    private final Cache<String, ClientRoute> anonymousC2SCache;
+    private final Cache<DomainPair, byte[]> S2SCache;
+    private final Cache<String, Set<NodeID>> componentsCache;
 
     /**
      * Caches stored in SessionManager
      */
-    private Cache<String, ClientSessionInfo> sessionInfoCache;
-    private Cache<String, byte[]> componentSessionsCache;
-    private Cache<String, byte[]> multiplexerSessionsCache;
-    private Cache<String, byte[]> incomingServerSessionsCache;
+    private final Cache<String, ClientSessionInfo> sessionInfoCache;
+    private final Cache<String, byte[]> componentSessionsCache;
+    private final Cache<String, byte[]> multiplexerSessionsCache;
+    private final Cache<String, byte[]> incomingServerSessionsCache;
 
     /**
      * Caches stored in PresenceUpdateHandler
      */
-    private Cache<String, Collection<DirectedPresence>> directedPresencesCache;
+    private final Cache<String, Collection<DirectedPresence>> directedPresencesCache;
 
-    private Map<NodeID, Set<String>[]> nodeSessions = new ConcurrentHashMap<>();
-    private Map<NodeID, Set<DomainPair>> nodeRoutes = new ConcurrentHashMap<>();
-    private Map<NodeID, Map<String, Collection<String>>> nodePresences = new ConcurrentHashMap<>();
+    private final Map<NodeID, Set<String>[]> nodeSessions = new ConcurrentHashMap<>();
+    private final Map<NodeID, Set<DomainPair>> nodeRoutes = new ConcurrentHashMap<>();
+    private final Map<NodeID, Map<String, Collection<String>>> nodePresences = new ConcurrentHashMap<>();
     private boolean seniorClusterMember = CacheFactory.isSeniorClusterMember();
 
-    private Map<Cache<?,?>, EntryListener> entryListeners = new HashMap<>();
+    private final Map<Cache<?,?>, EntryListener> entryListeners = new HashMap<>();
     
-    private Cluster cluster;
-    private Map<String, ClusterNodeInfo> clusterNodesInfo = new ConcurrentHashMap<>();
+    private final Cluster cluster;
+    private final Map<String, ClusterNodeInfo> clusterNodesInfo = new ConcurrentHashMap<>();
     
     /**
      * Flag that indicates if the listener has done all clean up work when noticed that the

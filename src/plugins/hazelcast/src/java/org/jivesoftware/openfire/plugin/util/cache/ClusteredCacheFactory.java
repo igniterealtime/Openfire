@@ -83,7 +83,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     private static final boolean HAZELCAST_JMX_ENABLED =
         JiveGlobals.getBooleanProperty("hazelcast.config.jmx.enabled", false);
 
-    private static Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
 
     /**
      * Keep serialization strategy the server was using before we set our strategy. We will

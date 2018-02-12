@@ -42,6 +42,7 @@ import javax.naming.ldap.SortControl;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
+import java.io.Serializable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
@@ -2382,7 +2383,7 @@ public class LdapManager {
     // Set the pattern to use to wrap DN values with "
     private static Pattern dnPattern;
 
-    private static class DNCacheEntry
+    private static class DNCacheEntry implements Serializable
     {
         private final String userDN;
         private final String baseDN;

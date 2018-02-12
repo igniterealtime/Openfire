@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import java.io.File;
-import java.io.FileFilter;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
@@ -27,6 +24,13 @@ import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Hazelcast clustering plugin. This implementation is based upon
@@ -38,38 +42,51 @@ import org.slf4j.LoggerFactory;
  */
 public class HazelcastPlugin implements Plugin {
 
-    private static Logger logger = LoggerFactory.getLogger(HazelcastPlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastPlugin.class);
 
+    @Override
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
-        logger.info("Waiting for other plugins to initialize before initializing clustering");
+        LOGGER.info("Waiting for other plugins to initialize before initializing clustering");
         manager.addPluginManagerListener(new PluginManagerListener() {
             @Override
             public void pluginsMonitored() {
                 manager.removePluginManagerListener(this);
-                initializeClustering();
+                initializeClustering(pluginDirectory);
             }
         });
     }
 
-    private void initializeClustering() {
-        logger.info("All plugins have initialized; initializing clustering");
+    private void initializeClustering(final File hazelcastPluginDirectory) {
+        LOGGER.info("All plugins have initialized; initializing clustering");
         // Check if another cluster is installed and stop loading this plugin if found
-        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        final String openfireHome = JiveGlobals.getHomeDirectory();
+        File pluginDir = new File(openfireHome, "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {
+            @Override
             public boolean accept(File pathname) {
                 String fileName = pathname.getName().toLowerCase();
                 return (fileName.equalsIgnoreCase("enterprise.jar") || 
                         fileName.equalsIgnoreCase("coherence.jar"));
             }
         });
-        if (jars.length > 0) {
+        if (jars != null && jars.length > 0) {
             // Do not load this plugin if a conflicting implementation exists
-            logger.warn("Conflicting clustering plugins found; remove Coherence and/or Enterprise jar files");
-            throw new IllegalStateException("Clustering plugin configuration conflict (Coherence)");
+            LOGGER.warn("Conflicting clustering plugins found; remove Coherence and/or Enterprise jar files");
+            return;
         }
-        ClusterManager.startup();
+
+        try {
+            final Path pathToLocalHazelcastConfig = Paths.get(openfireHome, "conf/hazelcast-local-config.xml");
+            if (!Files.exists(pathToLocalHazelcastConfig)) {
+                Files.copy(Paths.get(hazelcastPluginDirectory.getAbsolutePath(), "classes/hazelcast-local-config.xml.template"), pathToLocalHazelcastConfig);
+            }
+            ClusterManager.startup();
+        } catch (final IOException e) {
+            LOGGER.warn("Unable to create local Hazelcast configuration file from template; clustering will not start", e);
+        }
     }
 
+    @Override
     public void destroyPlugin() {
         // Shutdown is initiated by XMPPServer before unloading plugins
         if (!XMPPServer.getInstance().isShuttingDown()) {

@@ -106,7 +106,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     private final Map<NodeID, Set<String>[]> nodeSessions = new ConcurrentHashMap<>();
     private final Map<NodeID, Set<DomainPair>> nodeRoutes = new ConcurrentHashMap<>();
     private final Map<NodeID, Map<String, Collection<String>>> nodePresences = new ConcurrentHashMap<>();
-    private boolean seniorClusterMember = CacheFactory.isSeniorClusterMember();
+    private boolean seniorClusterMember = false;
 
     private final Map<Cache<?,?>, EntryListener> entryListeners = new HashMap<>();
     
@@ -119,6 +119,10 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
      * up (e.g. changing caches implementations) is done before destroying the plugin.
      */
     private boolean done = true;
+    /**
+     * Flag that indicates if we've joined a cluster or not
+     */
+    private boolean clusterMember = false;
 
     ClusterListener(Cluster cluster) {
 
@@ -597,8 +601,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         if (!isDone()) { // already joined
             return;
         }
-        // Trigger events
-        ClusterManager.fireJoinedCluster(false);
         addEntryListener(C2SCache, new CacheListener(this, C2SCache.getName()));
         addEntryListener(anonymousC2SCache, new CacheListener(this, anonymousC2SCache.getName()));
         addEntryListener(S2SCache, new S2SCacheListener());
@@ -622,7 +624,9 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         simulateCacheInserts(incomingServerSessionsCache);
         simulateCacheInserts(directedPresencesCache);
 
-        
+        // Trigger events
+        clusterMember = true;
+        ClusterManager.fireJoinedCluster(false);
         if (CacheFactory.isSeniorClusterMember()) {
             seniorClusterMember = true;
             ClusterManager.fireMarkedAsSeniorClusterMember();
@@ -636,6 +640,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         if (isDone()) { // not a cluster member
             return;
         }
+        clusterMember = false;
         seniorClusterMember = false;
         // Clean up all traces. This will set all remote sessions as unavailable
         List<NodeID> nodeIDs = new ArrayList<>(nodeSessions.keySet());
@@ -789,4 +794,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 
     }
 
+    boolean isClusterMember() {
+        return clusterMember;
+    }
 }

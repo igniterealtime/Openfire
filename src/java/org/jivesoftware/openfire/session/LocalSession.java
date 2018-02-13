@@ -410,6 +410,11 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
+        if ( conn == null )
+        {
+            Log.debug( "Unable to deliver raw text in session, as its connection is null. Dropping: " + text );
+            return;
+        }
         conn.deliverRawText(text);
     }
 

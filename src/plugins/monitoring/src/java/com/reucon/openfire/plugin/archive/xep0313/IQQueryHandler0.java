@@ -1,6 +1,7 @@
 package com.reucon.openfire.plugin.archive.xep0313;
 
 import org.dom4j.*;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -51,6 +52,10 @@ class IQQueryHandler0 extends IQQueryHandler {
 
         Message finalMessage = new Message();
         finalMessage.setTo(session.getAddress());
+        if ( XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService( queryRequest.getArchive() ) != null )
+        {
+            finalMessage.setFrom( queryRequest.getArchive().asBareJID() );
+        }
         Element fin = finalMessage.addChildElement("fin", NAMESPACE);
         completeFinElement(queryRequest, fin);
 

@@ -264,6 +264,10 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
         Message messagePacket = new Message();
         messagePacket.setTo(session.getAddress());
+        if ( XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService( queryRequest.getArchive() ) != null )
+        {
+            messagePacket.setFrom( queryRequest.getArchive().asBareJID() );
+        }
         Forwarded fwd;
 
         Document stanza;

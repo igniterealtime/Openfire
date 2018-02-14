@@ -300,14 +300,14 @@ tr.lowerhalf > td:last-child {
     function download(url, hashCode) {
         document.getElementById(hashCode + "-row").style.display = 'none';
         document.getElementById(hashCode + "-update").style.display = '';
-        downloader.downloadPlugin(downloadComplete, url);
+        downloader.installPlugin(url, hashCode, downloadComplete);
     }
 
-    function downloadComplete(update) {
-        document.getElementById(update.hashCode + "-row").style.display = 'none';
-        document.getElementById(update.hashCode + "-update").style.display = '';
-        document.getElementById(update.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0" alt=""/>';
-        document.getElementById(update.hashCode + "-text").innerHTML = '<fmt:message key="plugin.admin.update.complete" />';
+    function downloadComplete(status) {
+        document.getElementById(status.hashCode + "-row").style.display = 'none';
+        document.getElementById(status.hashCode + "-update").style.display = '';
+        document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0" alt=""/>';
+        document.getElementById(status.hashCode + "-text").innerHTML = '<fmt:message key="plugin.admin.update.complete" />';
     }
 </script>
 </head>

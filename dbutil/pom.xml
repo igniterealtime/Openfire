@@ -4,7 +4,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.2.2</version>
+        <version>4.2.3-SNAPSHOT</version>
     </parent>
     <artifactId>dbutil</artifactId>
     <name>Database Utilities</name>

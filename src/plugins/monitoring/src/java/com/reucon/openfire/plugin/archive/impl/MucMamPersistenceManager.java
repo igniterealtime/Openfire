@@ -6,39 +6,28 @@ import com.reucon.openfire.plugin.archive.model.ArchivedMessage;
 import com.reucon.openfire.plugin.archive.model.Conversation;
 import com.reucon.openfire.plugin.archive.model.Participant;
 import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
-import org.dom4j.Attribute;
-import org.dom4j.Element;
-import org.dom4j.Namespace;
-import org.dom4j.io.SAXReader;
-import org.eclipse.jdt.internal.compiler.apt.util.Archive;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import java.io.StringReader;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by dwd on 25/07/16.
  */
 public class MucMamPersistenceManager implements PersistenceManager {
+    private final static Logger Log = LoggerFactory.getLogger( MucMamPersistenceManager.class );
     private static final String LOAD_HISTORY =
             "SELECT sender, nickname, logTime, subject, body, stanza, messageId FROM ofMucConversationLog " +
                     "WHERE messageId IS NOT NULL AND logTime>? AND logTime <= ? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ";
@@ -83,6 +72,7 @@ public class MucMamPersistenceManager implements PersistenceManager {
 
     @Override
     public Collection<ArchivedMessage> findMessages(Date startDate, Date endDate, String owner, String with, XmppResultSet xmppResultSet) {
+        Log.debug( "Finding messages of owner '{}' with start date '{}', end date '{}' with '{}' and resultset '{}'.", new Object[] { owner, startDate, endDate, with, xmppResultSet } );
         JID mucRoom = new JID(owner);
         MultiUserChatManager manager = XMPPServer.getInstance().getMultiUserChatManager();
         MultiUserChatService service =  manager.getMultiUserChatService(mucRoom);
@@ -166,11 +156,18 @@ public class MucMamPersistenceManager implements PersistenceManager {
         }
         // TODO - Not great, really should be done by suitable LIMIT stuff.
         // Would need to reverse ordering in some cases and then reverse results.
+        boolean pagingBackwards = xmppResultSet.getBefore() != null && xmppResultSet.getAfter() == null;
+        if ( pagingBackwards ) {
+            Collections.reverse(msgs);
+        }
         boolean complete = true;
         xmppResultSet.setCount(msgs.size());
         while (msgs.size() > max) {
             msgs.remove(msgs.size() - 1);
             complete = false;
+        }
+        if ( pagingBackwards ) {
+            Collections.reverse(msgs);
         }
         xmppResultSet.setComplete(complete);
         if (msgs.size() > 0) {

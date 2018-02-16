@@ -212,4 +212,20 @@ public class XmppResultSet
 
         return set;
     }
+
+    @Override
+    public String toString()
+    {
+        return "XmppResultSet{" +
+            "after=" + after +
+            ", before=" + before +
+            ", index=" + index +
+            ", max=" + max +
+            ", first=" + first +
+            ", firstIndex=" + firstIndex +
+            ", last=" + last +
+            ", count=" + count +
+            ", complete=" + complete +
+            '}';
+    }
 }

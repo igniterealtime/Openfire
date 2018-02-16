@@ -16,7 +16,8 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.archive.ConversationManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import com.reucon.openfire.plugin.archive.ArchivedMessageConsumer;
@@ -31,6 +32,7 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
  * Manages database persistence.
  */
 public class JdbcPersistenceManager implements PersistenceManager {
+    private static final Logger Log = LoggerFactory.getLogger( JdbcPersistenceManager.class );
     public static final int DEFAULT_MAX = 1000;
 
     public static final String SELECT_MESSAGES_BY_CONVERSATION = "SELECT DISTINCT " + "ofConversation.conversationID, " + "ofConversation.room, "
@@ -422,6 +424,9 @@ public class JdbcPersistenceManager implements PersistenceManager {
     @Override
     public Collection<ArchivedMessage> findMessages(Date startDate,
             Date endDate, String ownerJid, String withJid, XmppResultSet xmppResultSet) {
+
+        Log.debug( "Finding messages of owner '{}' with start date '{}', end date '{}' with '{}' and resultset '{}'.", new Object[] { ownerJid, startDate, endDate, withJid, xmppResultSet } );
+
         final boolean isOracleDB = isOracleDB();
 
         final StringBuilder querySB;

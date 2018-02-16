@@ -3,6 +3,8 @@ package com.reucon.openfire.plugin.archive.xep0136;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 
 import com.reucon.openfire.plugin.archive.xep.AbstractIQHandler;
@@ -16,7 +18,7 @@ import java.util.List;
  */
 public class IQPrefHandler extends AbstractIQHandler implements ServerFeaturesProvider
 {
-
+    private static final Logger Log = LoggerFactory.getLogger( IQPrefHandler.class );
     private static final String NAMESPACE = "urn:xmpp:archive";
     private static final String NAMESPACE_PREF = "urn:xmpp:archive:pref";
 
@@ -31,7 +33,7 @@ public class IQPrefHandler extends AbstractIQHandler implements ServerFeaturesPr
         IQ reply = IQ.createResultIQ(packet);
         Element prefRequest = packet.getChildElement();
 
-        System.err.println("Received pref message from " + packet.getFrom());
+        Log.debug("Received pref request from {}", packet.getFrom());
 
         if (prefRequest.element("default") != null)
         {

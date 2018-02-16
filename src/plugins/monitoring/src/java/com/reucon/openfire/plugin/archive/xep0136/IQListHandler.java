@@ -7,6 +7,8 @@ import java.util.Iterator;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -21,6 +23,7 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
 public class IQListHandler extends AbstractIQHandler implements
         ServerFeaturesProvider {
 
+    private static final Logger Log = LoggerFactory.getLogger( IQListHandler.class );
     private static final String NAMESPACE = "urn:xmpp:archive";
     private static final String NAMESPACE_MANAGE = "urn:xmpp:archive:manage";
 
@@ -32,9 +35,11 @@ public class IQListHandler extends AbstractIQHandler implements
         IQ reply = IQ.createResultIQ(packet);
         ListRequest listRequest = new ListRequest(packet.getChildElement());
         JID from = packet.getFrom();
+        Log.debug( "Processing a request to retrieve lists. Requestor: {}", from );
 
         Element listElement = reply.setChildElement("list", NAMESPACE);
         Collection<Conversation> conversations = list(from, listRequest);
+        Log.debug( "Retrieved {} conversations for requestor {}", conversations.size(), from );
         XmppResultSet resultSet = listRequest.getResultSet();
 
         for (Conversation conversation : conversations) {
@@ -44,7 +49,7 @@ public class IQListHandler extends AbstractIQHandler implements
         if (resultSet != null) {
             listElement.add(resultSet.createResultElement());
         }
-
+        Log.debug( "Finished processing a request to retrieve lists. Requestor: {}", from );
         return reply;
     }
 

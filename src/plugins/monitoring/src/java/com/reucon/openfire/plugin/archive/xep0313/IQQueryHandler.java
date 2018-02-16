@@ -33,7 +33,7 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
 abstract class IQQueryHandler extends AbstractIQHandler implements
         ServerFeaturesProvider {
 
-    private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQQueryHandler.class);
     protected final String NAMESPACE;
 
     private final XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
@@ -88,6 +88,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
             MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(archiveJid);
             MUCRoom room = service.getChatRoom(archiveJid.getNode());
             if (room == null) {
+                Log.debug("Unable to process query as room name '{}' is not recognized.", archiveJid);
                 return buildErrorResponse(packet);
             }
             boolean pass = false;
@@ -107,26 +108,30 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
                 }
             }
             if (!pass) {
+                Log.debug("Unable to process query as requestor '{}' is forbidden to retrieve archive for room '{}'.", requestor, archiveJid);
                 return buildForbiddenResponse(packet);
             }
         } else if(!archiveJid.equals(requestor)) { // Not user's own
             // ... disallow unless admin.
             if (!XMPPServer.getInstance().getAdmins().contains(requestor)) {
+                Log.debug("Unable to process query as requestor '{}' is forbidden to retrieve personal archives other than his own. Unable to access archives of '{}'.", requestor, archiveJid);
                 return buildForbiddenResponse(packet);
             }
         }
 
         sendMidQuery(packet, session);
 
+        Log.debug("Retrieving messages from archive...");
         final QueryRequest queryRequest = new QueryRequest(packet.getChildElement(), archiveJid);
         Collection<ArchivedMessage> archivedMessages = retrieveMessages(queryRequest);
+        Log.debug("Retrieved {} messages from archive.", archivedMessages.size());
 
         for(ArchivedMessage archivedMessage : archivedMessages) {
             sendMessageResult(session, queryRequest, archivedMessage);
         }
 
         sendEndQuery(packet, session, queryRequest);
-
+        Log.debug("Done with request.");
         return null;
     }
 

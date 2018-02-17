@@ -235,6 +235,15 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      */
     protected String parseOtherNameXmppAddr( ASN1Primitive xmppAddr )
     {
+        // Get the nested object if the value is an ASN1TaggedObject or a sub-type of it
+        if (ASN1TaggedObject.class.isAssignableFrom(xmppAddr.getClass())) {
+            ASN1TaggedObject taggedObject = (ASN1TaggedObject) xmppAddr;
+            ASN1Primitive objectPrimitive = taggedObject.getObject();
+            if (ASN1String.class.isAssignableFrom(objectPrimitive.getClass())) {
+                return ((ASN1String) objectPrimitive).getString();
+            }
+        }
+
         // RFC 6120 says that this should be a UTF8String. Lets be tolerant and allow all text-based values.
         return ( (ASN1String) xmppAddr ).getString();
     }

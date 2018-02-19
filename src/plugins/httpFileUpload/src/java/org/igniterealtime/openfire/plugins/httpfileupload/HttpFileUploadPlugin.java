@@ -1,6 +1,8 @@
 package org.igniterealtime.openfire.plugins.httpfileupload;
 
 import nl.goodbytes.xmpp.xep0363.Component;
+import nl.goodbytes.xmpp.xep0363.Slot;
+import nl.goodbytes.xmpp.xep0363.SlotManager;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
@@ -12,6 +14,9 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentException;
@@ -21,13 +26,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by guus on 18-11-17.
  */
-public class HttpFileUploadPlugin implements Plugin
+public class HttpFileUploadPlugin implements Plugin, PropertyEventListener
 {
     private static final Logger Log = LoggerFactory.getLogger( HttpFileUploadPlugin.class );
+
     private Component component;
     private WebAppContext context;
 
@@ -42,6 +49,9 @@ public class HttpFileUploadPlugin implements Plugin
     {
         try
         {
+            SlotManager.getInstance().setMaxFileSize( JiveGlobals.getLongProperty( "plugin.httpfileupload.maxFileSize", SlotManager.DEFAULT_MAX_FILE_SIZE ) );
+            PropertyEventDispatcher.addListener( this );
+
             final URL endpoint = new URL( "https", XMPPServer.getInstance().getServerInfo().getHostname(), HttpBindManager.getInstance().getHttpBindSecurePort(), "/httpfileupload");
             component = new Component( XMPPServer.getInstance().getServerInfo().getXMPPDomain(), endpoint );
 
@@ -78,6 +88,8 @@ public class HttpFileUploadPlugin implements Plugin
     @Override
     public void destroyPlugin()
     {
+        PropertyEventDispatcher.removeListener( this );
+
         for ( final String publicResource : publicResources )
         {
             AuthCheckFilter.removeExclude( publicResource );
@@ -93,6 +105,42 @@ public class HttpFileUploadPlugin implements Plugin
         if ( component != null )
         {
             InternalComponentManager.getInstance().removeComponent( "httpfileupload" );
+        }
+    }
+
+    @Override
+    public void propertySet( String property, Map params )
+    {
+        if ( "plugin.httpfileupload.maxFileSize".equals( property ) )
+        {
+            SlotManager.getInstance().setMaxFileSize( JiveGlobals.getLongProperty( "plugin.httpfileupload.maxFileSize", SlotManager.DEFAULT_MAX_FILE_SIZE ) );
+        }
+    }
+
+    @Override
+    public void propertyDeleted( String property, Map params )
+    {
+        if ( "plugin.httpfileupload.maxFileSize".equals( property ) )
+        {
+            SlotManager.getInstance().setMaxFileSize( JiveGlobals.getLongProperty( "plugin.httpfileupload.maxFileSize", SlotManager.DEFAULT_MAX_FILE_SIZE ) );
+        }
+    }
+
+    @Override
+    public void xmlPropertySet( String property, Map params )
+    {
+        if ( "plugin.httpfileupload.maxFileSize".equals( property ) )
+        {
+            SlotManager.getInstance().setMaxFileSize( JiveGlobals.getLongProperty( "plugin.httpfileupload.maxFileSize", SlotManager.DEFAULT_MAX_FILE_SIZE ) );
+        }
+    }
+
+    @Override
+    public void xmlPropertyDeleted( String property, Map params )
+    {
+        if ( "plugin.httpfileupload.maxFileSize".equals( property ) )
+        {
+            SlotManager.getInstance().setMaxFileSize( JiveGlobals.getLongProperty( "plugin.httpfileupload.maxFileSize", SlotManager.DEFAULT_MAX_FILE_SIZE ) );
         }
     }
 }

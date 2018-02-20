@@ -61,24 +61,24 @@ Choose your database from the list below for setup details:
     <p>
     In the Openfire setup tool, use the following values:<p><ul>
         <li>driver: <tt>com.mysql.jdbc.Driver</tt>
-        <li>server: <tt>jdbc:mysql://[YOUR_HOST]/[DATABASE_NAME]</tt>
+        <li>server: <tt>jdbc:mysql://HOSTNAME/DATABASENAME</tt>
     </ul><p>
         
-    where [YOUR_HOST] and [DATABASE_NAME] are the actual values for you server.
-    In many cases <tt>localhost</tt> is a suitable value for [YOUR_HOST] when
+    where HOSTNAME and DATABASENAME are the actual values for you server.
+    In many cases <tt>localhost</tt> is a suitable value for HOSTNAME when
     your database is running on the same server as your webserver.
 
     <p><b>Setup Instructions</b><p>
     <ol>
         <li>Make sure that you are using MySQL 4.1.18 or later (5.x recommended) <a href="#note1">&sup1;</a>.
         <li>Create a database for the Openfire tables:<br>
-        <code>mysqladmin create [databaseName]</code><br>
-        (note: "databaseName" can be something like 'openfire')
+        <code>mysqladmin create DATABASENAME</code><br>
+        (note: "DATABASENAME" can be something like 'openfire')
 
         <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
-        Unix/Linux: <code>cat openfire_mysql.sql | mysql [databaseName];</code>
+        Unix/Linux: <code>cat openfire_mysql.sql | mysql DATABASENAME;</code>
         <br>   
-        Windows: <code>type openfire_mysql.sql | mysql [databaseName];</code>
+        Windows: <code>type openfire_mysql.sql | mysql DATABASENAME;</code>
         
         <li>Start the Openfire setup tool, and use the appropriate JDBC connection
             settings.
@@ -124,12 +124,12 @@ Choose your database from the list below for setup details:
     
     <ul>
         <li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
-        <li>server: <tt>jdbc:oracle:thin:@[HOST]:[PORT]/[SERVICE]</tt>
+        <li>server: <tt>jdbc:oracle:thin:@HOST:PORT/SERVICE</tt>
     </ul><p>
         
-    where [HOST], [PORT] and [SERVICE] are the actual values for you server.
+    where HOST, PORT and SERVICE are the actual values for you server.
     In many cases <code>localhost</code> and <code>1521</code>
-    are suitable values for [HOST] and [PORT] when
+    are suitable values for HOST and PORT when
     your database is running on the same server as your webserver.
     Ask your DBA for the service name.
 
@@ -159,20 +159,20 @@ Choose your database from the list below for setup details:
         <li>The <a href="http://www.freetds.org/">Free TDS JDBC driver</a></li>
         <ul>
             <li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
-            <li>server -- <tt>jdbc:jtds:sqlserver://[host-name]:[port-number]/[database-name];appName=Openfire</tt>
+            <li>server -- <tt>jdbc:jtds:sqlserver://HOSTNAME:PORTNUMBER/DATABASENAME;appName=Openfire</tt>
         </ul>
         <li>The <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server">Microsoft JDBC driver</a></li>
         <ul>
             <li>driver -- <tt>com.microsoft.sqlserver.jdbc.SQLServerDriver</tt>
-            <li>server -- <tt>jdbc:sqlserver://[host-name]:[port-number];databaseName=[database-name];applicationName=Openfire</tt>
+            <li>server -- <tt>jdbc:sqlserver://HOSTNAME:PORTNUMBER;databaseName=DATABASENAME;applicationName=Openfire</tt>
         </ul>
     </ul>
     You can use either of these, but the Microsoft driver is more up to date.
 
     <p>
-    For the above server settings, [host-name] is the host name or IP address of your database server,
-    [port-number] is the port that SQL Server is listening on (normally 1433)
-    and [database-name] is the name of the database (this parameter is optional).
+    For the above server settings, HOSTNAME is the host name or IP address of your database server,
+    PORTNUMBER is the port that SQL Server is listening on (normally 1433)
+    and DATABASENAME is the name of the database (this parameter is optional).
 
     <p><b>Setup Instructions</b><p>
 
@@ -192,31 +192,32 @@ Choose your database from the list below for setup details:
 <ul>
     <b>JDBC Drivers</b>
     <p>
-    The JDBC driver for Postgres is bundled with Openfire, so you do not need
+    The JDBC driver for PostgreSQL is bundled with Openfire, so you do not need
     to download and install a separate driver.
     <p>
     In the Openfire web-based setup tool, use the following values:<p><ul>
         <li>driver -- <tt>org.postgresql.Driver</tt>
-        <li>server -- <tt>jdbc:postgresql://[HOST_NAME]:[PORT_NUMBER]/dbname</tt>
+        <li>server -- <tt>jdbc:postgresql://HOSTNAME:PORTNUMBER/DATABASENAME</tt>
     </ul><p>
         
-    If left out, host defaults to localhost (not 127.0.0.1) and port to 5432.
+    If left out, host defaults to localhost (not 127.0.0.1) for HOST-NAME and 5432 for PORT-NUMBER.
     
     <p>
     <b>Setup Instructions</b>
+
+<p>A general best practice is to create a PostgreSQL user dedicated for Openfire's use.  This user
+need not be a super-user, but should own the dedicated database used by Openfire.</p>
+
     <p>
     <ol>
-      <li>Create the database. For example, using the 
+      <li>Create a user for Openfire to connect as
+      <br /><code>createuser -P openfireuser</code>
+      </li>
+      <li>Create the database owned by this openfireuser. For example, using the 
         PostgreSQL <code>&quot;createdb&quot;</code> utility:
         <br>
-        <code>createdb -E UNICODE openfire</code>
-      <li>Import the schema from the <tt>resources/database</tt> directory of the installation.
-        Use psql (or your favorite Postgres sql 
-        utility) to import the Openfire database schema:
-        <br>
-        <code>psql -d openfire -f openfire_postgresql.sql</code>
-      <li>Proceed to Openfire setup and use the appropriate JDBC settings when
-        prompted.	  
+        <code>createdb -E UNICODE -O openfireuser openfire</code></li>
+      <li>Proceed with Openfire install setup via the admin console, the setup process with install the schema.</li>
     </ol>
 </ul>
 
@@ -279,7 +280,7 @@ Choose your database from the list below for setup details:
     JDBC driver separately. Values for the config file are:
     <ul>
         <li>driver: <code>org.hsqldb.jdbcDriver</code>
-        <li>server: <code>jdbc:hsqldb:[PATH_TO_DB_FILES/DB_NAME]</code>
+        <li>server: <code>jdbc:hsqldb:PATH_TO_DB_FILES/DB_NAME</code>
     </ul>
     <p>
     For example, the server URL might be <tt>jdbc:hsqldb:../database/defaultdb</tt>

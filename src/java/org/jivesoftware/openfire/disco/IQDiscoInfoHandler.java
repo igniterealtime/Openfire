@@ -139,7 +139,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 boolean hasDiscoInfoFeature = false;
                 boolean hasDiscoItemsFeature = false;
                 boolean hasResultSetManagementFeature = false;
-                
+
                 while (features.hasNext()) {
                     final String feature = features.next();
                     queryElement.addElement("feature").addAttribute("var", feature);
@@ -158,13 +158,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     queryElement.addElement("feature").addAttribute("var",
                             ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
                 }
-                
+
                 if (!hasDiscoInfoFeature) {
                     // XEP-0030 requires that every entity that supports service
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
                 }
-                
+
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
                 DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
@@ -251,9 +251,33 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      *
      * @param provider the ServerFeaturesProvider that provides new server features.
      */
-    private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
+    public void addServerFeaturesProvider(ServerFeaturesProvider provider) {
         for (Iterator<String> it = provider.getFeatures(); it.hasNext();) {
             addServerFeature(it.next());
+        }
+    }
+
+    /**
+     * Adds the "discoverable" identities provided by the provider. This information will be used whenever a disco for
+     * info is made against the server.
+     *
+     * @param provider The provider of identities.
+     */
+    public void addServerIdentitiesProvider(ServerIdentitiesProvider provider) {
+        for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
+            serverIdentities.add(it.next());
+        }
+    }
+
+    /**
+     * Adds the "discoverable" user identities provided by the provider. This information will be used whenever a disco
+     * for info is made against users of the server.
+     *
+     * @param provider The provider of user identities.
+     */
+    public void addUserIdentitiesProvider(UserIdentitiesProvider provider) {
+        for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
+            registeredUserIdentities.add( it.next() );
         }
     }
 
@@ -314,26 +338,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         super.initialize(server);
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);
-        // Track the implementors of ServerFeaturesProvider so that we can collect the features
-        // provided by the server
-        for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
-            addServerFeaturesProvider(provider);
-        }
-        // Collect the implementors of ServerIdentitiesProvider so that we can collect the identities
-        // for protocols supported by the server
-        for (ServerIdentitiesProvider provider : server.getServerIdentitiesProviders()) {
-            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
-                serverIdentities.add(it.next());
-            }
-        }
-        // Collect the implementors of UserIdentitiesProvider so that we can collect identities
-        // for registered users.
-        for (UserIdentitiesProvider provider : server.getUserIdentitiesProviders()) {
-            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
-                registeredUserIdentities.add(it.next());
-            }
-        }
-
         setProvider(server.getServerInfo().getXMPPDomain(), getServerInfoProvider());
         // Listen to cluster events
         ClusterManager.addListener(this);

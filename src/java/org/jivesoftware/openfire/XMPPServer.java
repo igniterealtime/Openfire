@@ -667,6 +667,33 @@ public class XMPPServer {
                 logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
+
+        // Register modules with service discovery provides where applicable.
+        for (Module module : modules.values() )
+        {
+            // Service discovery info
+            if (module instanceof ServerFeaturesProvider) {
+                getIQDiscoInfoHandler().addServerFeaturesProvider( (ServerFeaturesProvider) module );
+            }
+
+            if (module instanceof ServerIdentitiesProvider) {
+                getIQDiscoInfoHandler().addServerIdentitiesProvider( (ServerIdentitiesProvider) module );
+            }
+
+            if (module instanceof UserIdentitiesProvider) {
+                getIQDiscoInfoHandler().addUserIdentitiesProvider( (UserIdentitiesProvider) module );
+            }
+
+            // Service discovery items
+            if (module instanceof ServerItemsProvider) {
+                getIQDiscoItemsHandler().addServerItemsProvider( (ServerItemsProvider) module );
+            }
+
+            if (module instanceof UserItemsProvider) {
+                getIQDiscoItemsHandler().addUserItemsProvider( (UserItemsProvider) module);
+            }
+        }
+
     }
 
     /**
@@ -1330,7 +1357,9 @@ public class XMPPServer {
      * Returns a list with all the modules that provide "discoverable" features.
      *
      * @return a list with all the modules that provide "discoverable" features.
+     * @deprecated Use {@link IQDiscoInfoHandler} instead.
      */
+    @Deprecated
     public List<ServerFeaturesProvider> getServerFeaturesProviders() {
         List<ServerFeaturesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
@@ -1340,12 +1369,14 @@ public class XMPPServer {
         }
         return answer;
     }
- 
+
     /**
      * Returns a list with all the modules that provide "discoverable" identities.
      *
      * @return a list with all the modules that provide "discoverable" identities.
+     * @deprecated Use {@link IQDiscoInfoHandler} instead.
      */
+    @Deprecated
     public List<ServerIdentitiesProvider> getServerIdentitiesProviders() {
         List<ServerIdentitiesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
@@ -1362,7 +1393,9 @@ public class XMPPServer {
      *
      * @return a list with all the modules that provide "discoverable" items associated with
      *         the server.
+     * @deprecated Use {@link IQDiscoItemsHandler} instead.
      */
+    @Deprecated
     public List<ServerItemsProvider> getServerItemsProviders() {
         List<ServerItemsProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
@@ -1372,12 +1405,14 @@ public class XMPPServer {
         }
         return answer;
     }
-    
+
     /**
      * Returns a list with all the modules that provide "discoverable" user identities.
      *
      * @return a list with all the modules that provide "discoverable" user identities.
+     * @deprecated Use {@link IQDiscoInfoHandler} instead.
      */
+    @Deprecated
     public List<UserIdentitiesProvider> getUserIdentitiesProviders() {
         List<UserIdentitiesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
@@ -1394,7 +1429,9 @@ public class XMPPServer {
      *
      * @return a list with all the modules that provide "discoverable" items associated with
      *         users.
+     * @deprecated Use {@link IQDiscoInfoHandler} instead.
      */
+    @Deprecated
     public List<UserItemsProvider> getUserItemsProviders() {
         List<UserItemsProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {

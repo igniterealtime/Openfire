@@ -11,6 +11,8 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.util.CertificateManager" %>
+<%@ page import="org.bouncycastle.cert.X509CertificateHolder" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -445,6 +447,30 @@
                     <td class="c1"><fmt:message key="ssl.certificates.signature"/></td>
                     <td style="font-family: monospace;"><%=sb.toString()%></td>
                 </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <br/>
+
+    <div class="jive-table">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <thead>
+            <tr>
+                <th>
+                    PEM representation
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <%
+                    final String pemRepresentation = CertificateManager.toPemRepresentation( (X509Certificate) pageContext.getAttribute( "certificate" ) );
+                %>
+                <td class="c1" align="center">
+                    <textarea readonly cols="72" rows="<%= pemRepresentation.split( "\n" ).length + 5 %>"><%= pemRepresentation %></textarea>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

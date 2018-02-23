@@ -456,6 +456,8 @@ public class IdentityStore extends CertificateStore
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final int validityInDays = 5*365;
+        final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
+        final Set<String> sanXmppAddrs = CertificateManager.determineSubjectAlternateNameXmppAddrValues();
 
         Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys
@@ -464,7 +466,7 @@ public class IdentityStore extends CertificateStore
             final KeyPair keyPair = generateKeyPair( algorithm.toUpperCase(), keySize );
 
             // Create X509 certificate with keys and specified domain
-            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, name, name, name, signAlgorithm );
+            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, name, name, name, signAlgorithm, sanDnsNames, sanXmppAddrs );
 
             // Store new certificate and private key in the key store
             store.setKeyEntry( alias, keyPair.getPrivate(), configuration.getPassword(), new X509Certificate[]{cert} );

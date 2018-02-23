@@ -1273,7 +1273,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().setServerNodeInfoProvider(this.getServiceDomain(), this);
-        XMPPServer.getInstance().getServerItemsProviders().add(this);
 
         ArrayList<String> params = new ArrayList<>();
         params.clear();
@@ -1288,7 +1287,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private void stop() {
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().removeServerNodeInfoProvider(this.getServiceDomain());
-        XMPPServer.getInstance().getServerItemsProviders().remove(this);
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
         broadcastShutdown();

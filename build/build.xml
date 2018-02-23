@@ -9,7 +9,7 @@
     Build Requirements:
 
         * Ant 1.7.1 or higher (including optional tasks)
-        * JDK 1.7 or higher
+        * JDK 1.8 or higher
         * jUnit in your Ant or Java classpath
 -->
 
@@ -28,8 +28,8 @@
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
 
-    <property name="javac.source" value="1.7"/>
-    <property name="javac.target" value="1.7"/>
+    <property name="javac.source" value="1.8"/>
+    <property name="javac.target" value="1.8"/>
     <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>
@@ -295,7 +295,7 @@
             </not>
         </condition>
         <fail if="ant.not.ok" message="Must use Ant 1.7.1 or higher to build Openfire"/>
-        <fail if="java.not.ok" message="Must use JDK 1.7 or higher to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.8 or higher to build Openfire"/>
 
         <tstamp/>
         <tstamp>
@@ -591,8 +591,8 @@
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>
-            <link offline="true" href="http://docs.oracle.com/javase/7/docs/api/"
-                  packagelistLoc="${javadoc.src.dir}/jdk15"/>
+            <link offline="true" href="http://docs.oracle.com/javase/8/docs/api/"
+                  packagelistLoc="${javadoc.src.dir}/jdk18"/>
         </javadoc>
     </target>
 

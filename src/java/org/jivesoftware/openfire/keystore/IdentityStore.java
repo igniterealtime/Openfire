@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -97,7 +98,7 @@ public class IdentityStore extends CertificateStore
 
             return pemCSR;
         }
-        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException e )
+        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException | CertificateParsingException e )
         {
             throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"'", e );
         }

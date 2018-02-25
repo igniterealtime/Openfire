@@ -31,6 +31,7 @@ import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.*;
+import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
@@ -251,6 +252,24 @@ public class CertificateManager {
         pemWriter.close();
 
         return string.toString();
+    }
+
+    /**
+     * Generates a PEM representation of the input argument.
+     *
+     * @param object the input argument (cannot be null).
+     * @return PEM representation of the input argument.
+     * @throws IOException When a PEM representation of the input could not be created.
+     */
+    public static String toPemRepresentation( Object object ) throws IOException
+    {
+        final StringWriter result = new StringWriter();
+        try ( final PemWriter pemWriter = new PemWriter(result) )
+        {
+            final PemObjectGenerator objGen = new JcaMiscPEMGenerator ( object );
+            pemWriter.writeObject( objGen );
+        }
+        return result.toString();
     }
 
     public static PrivateKey parsePrivateKey(String pemRepresentation, String passPhrase) throws IOException {
@@ -475,10 +494,15 @@ public class CertificateManager {
 
         // add subjectAlternativeName extension
         boolean critical = subjectDN.getRDNs().length == 0;
-        ASN1Sequence othernameSequence = new DERSequence(new ASN1Encodable[]{
-                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERUTF8String( domain )});
-        GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);
-        GeneralNames subjectAltNames = new GeneralNames(new GeneralName[]{othernameGN});
+        ASN1Sequence othernameSequence = new DERSequence(
+            new ASN1Encodable[] {
+                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"),
+                new DERTaggedObject( true, GeneralName.otherName, new DERUTF8String( domain ) )
+            }
+        );
+        DERTaggedObject othernameGN = new DERTaggedObject(false, GeneralName.otherName, othernameSequence);
+
+        GeneralNames subjectAltNames = GeneralNames.getInstance( new DERSequence( othernameGN ) );
         certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAltNames);
 
         // add keyIdentifiers extensions

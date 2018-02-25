@@ -16,6 +16,14 @@
 
 package org.jivesoftware.database;
 
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +33,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.DriverManager;
-import java.util.Properties;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
@@ -40,10 +46,8 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(EmbeddedConnectionProvider.class);
 
-    private Properties settings;
     private String serverURL;
-    private String driver = "org.hsqldb.jdbcDriver";
-    private String proxoolURL;
+    private PoolingDataSource<PoolableConnection> dataSource;
 
     public EmbeddedConnectionProvider() {
     }
@@ -55,13 +59,10 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
 
     @Override
     public Connection getConnection() throws SQLException {
-        try {
-            Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
-            return DriverManager.getConnection(proxoolURL, settings);
+        if (dataSource == null) {
+            throw new SQLException("Check HSQLDB properties; data source was not be initialised");
         }
-        catch (ClassNotFoundException e) {
-            throw new SQLException("EmbeddedConnectionProvider: Unable to find driver: "+e);
-        }
+        return dataSource.getConnection();
     }
 
     @Override
@@ -78,13 +79,16 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         catch (IOException ioe) {
             Log.error("EmbeddedConnectionProvider: Error starting connection pool: ", ioe);
         }
-        proxoolURL = "proxool.openfire:"+driver+":"+serverURL;
-        settings = new Properties();
-        settings.setProperty("proxool.maximum-connection-count", "25");
-        settings.setProperty("proxool.minimum-connection-count", "3");
-        settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * 0.5)));
-        settings.setProperty("user", "sa");
-        settings.setProperty("password", "");
+        final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, "sa", "");
+        final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        poolableConnectionFactory.setMaxConnLifetimeMillis((long) (0.5 * JiveConstants.DAY));
+
+        final GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        poolConfig.setMinIdle(3);
+        poolConfig.setMaxTotal(25);
+        final GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
+        poolableConnectionFactory.setPool(connectionPool);
+        dataSource = new PoolingDataSource<>(connectionPool);
     }
 
     @Override
@@ -111,13 +115,11 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        // Blank out the settings
-        settings = null;
     }
 
     @Override
     public void finalize() throws Throwable {
-        super.finalize();
         destroy();
+        super.finalize();
     }
 }

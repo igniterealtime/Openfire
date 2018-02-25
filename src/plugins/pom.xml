@@ -105,9 +105,11 @@
         <module>dbaccess</module>
         <module>emailListener</module>
         <module>emailOnAway</module>
+        <module>externalservicediscovery</module>
         <module>fastpath</module>
         <module>gojara</module>
         <module>hazelcast</module>
+        <module>httpFileUpload</module>
         <module>inverse</module>
         <!-- jnsapi not in Maven Central-->
         <!--<module>jingleNodes</module>-->
@@ -134,6 +136,7 @@
         <module>userCreation</module>
         <module>userImportExport</module>
         <module>userservice</module>
+        <module>userStatus</module>
         <module>xmldebugger</module>
     </modules>
 
@@ -162,7 +165,7 @@
         <plugin.name>${project.artifactId}</plugin.name>
 
         <!-- Versions -->
-        <openfire.version>4.2.0</openfire.version>
+        <openfire.version>4.3.0-SNAPSHOT</openfire.version>
     </properties>
 
     <profiles>

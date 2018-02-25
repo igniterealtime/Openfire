@@ -32,7 +32,6 @@ import org.jivesoftware.openfire.plugin.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.plugin.util.cluster.ClusterPacketRouter;
 import org.jivesoftware.openfire.plugin.util.cluster.HazelcastClusterNodeInfo;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
@@ -44,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -69,20 +70,20 @@ import java.util.concurrent.locks.Lock;
  */
 public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
-    public static final String HAZELCAST_EXECUTOR_SERVICE_NAME =
-            JiveGlobals.getProperty("hazelcast.executor.service.name", "openfire::cluster::executor");
-    private static final long MAX_CLUSTER_EXECUTION_TIME = 
-            JiveGlobals.getLongProperty("hazelcast.max.execution.seconds", 30);
-    private static final long CLUSTER_STARTUP_RETRY_TIME = 
-            JiveGlobals.getLongProperty("hazelcast.startup.retry.seconds", 10);
-    private static final long CLUSTER_STARTUP_RETRY_COUNT = 
-            JiveGlobals.getLongProperty("hazelcast.startup.retry.count", 1);
-    private static final String HAZELCAST_CONFIG_FILE = 
-            JiveGlobals.getProperty("hazelcast.config.xml.filename", "hazelcast-cache-config.xml");
-    private static final boolean HAZELCAST_JMX_ENABLED = 
-            JiveGlobals.getBooleanProperty("hazelcast.config.jmx.enabled", false);
+    private static final String HAZELCAST_EXECUTOR_SERVICE_NAME =
+        JiveGlobals.getProperty("hazelcast.executor.service.name", "openfire::cluster::executor");
+    private static final long MAX_CLUSTER_EXECUTION_TIME =
+        JiveGlobals.getLongProperty("hazelcast.max.execution.seconds", 30);
+    private static final long CLUSTER_STARTUP_RETRY_TIME =
+        JiveGlobals.getLongProperty("hazelcast.startup.retry.seconds", 10);
+    private static final long CLUSTER_STARTUP_RETRY_COUNT =
+        JiveGlobals.getLongProperty("hazelcast.startup.retry.count", 1);
+    private static final String HAZELCAST_CONFIG_FILE =
+        JiveGlobals.getProperty("hazelcast.config.xml.filename", "hazelcast-cache-config.xml");
+    private static final boolean HAZELCAST_JMX_ENABLED =
+        JiveGlobals.getBooleanProperty("hazelcast.config.jmx.enabled", false);
 
-    private static Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
 
     /**
      * Keep serialization strategy the server was using before we set our strategy. We will
@@ -106,9 +107,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      */
     private State state = State.stopped;
 
+    @Override
     public boolean startCluster() {
         state = State.starting;
-        
+
         // Set the serialization strategy to use for transmitting objects between node clusters
         serializationStrategy = ExternalizableUtil.getInstance().getStrategy();
         ExternalizableUtil.getInstance().setStrategy(new ClusterExternalizableUtil());
@@ -117,7 +119,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         // Set packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new ClusterPacketRouter());
 
-        ClassLoader oldLoader = null;
+        ClassLoader oldLoader;
         // Store previous class loader (in case we change it)
         oldLoader = Thread.currentThread().getContextClassLoader();
         ClassLoader loader = new ClusterClassLoader();
@@ -134,10 +136,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
                 }
                 hazelcast = Hazelcast.newHazelcastInstance(config);
                 cluster = hazelcast.getCluster();
-    
+
                 // Update the running state of the cluster
                 state = cluster != null ? State.started : State.stopped;
-    
+
                 // Set the ID of this cluster node
                 XMPPServer.getInstance().setNodeID(NodeID.getInstance(getClusterMemberID()));
                 // CacheFactory is now using clustered caches. We can add our listeners.
@@ -146,18 +148,22 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
                 membershipListener = cluster.addMembershipListener(clusterListener);
                 break;
             } catch (Exception e) {
+                cluster = null;
                 if (retry < CLUSTER_STARTUP_RETRY_COUNT) {
-                    logger.warn("Failed to start clustering (" +  e.getMessage() + "); " +
-                            "will retry in " + CLUSTER_STARTUP_RETRY_TIME + " seconds");
-                    try { Thread.sleep(CLUSTER_STARTUP_RETRY_TIME*1000); }
-                    catch (InterruptedException ie) { /* ignore */ }
+                    logger.warn("Failed to start clustering (" + e.getMessage() + "); " +
+                        "will retry in " + CLUSTER_STARTUP_RETRY_TIME + " seconds");
+                    try {
+                        Thread.sleep(CLUSTER_STARTUP_RETRY_TIME * 1000);
+                    } catch (final InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
                 } else {
                     logger.error("Unable to start clustering - continuing in local mode", e);
                     state = State.stopped;
                 }
             }
-        } while (retry++ < CLUSTER_STARTUP_RETRY_COUNT);
-        
+        } while (retry++ < CLUSTER_STARTUP_RETRY_COUNT && !Thread.currentThread().isInterrupted());
+
         if (oldLoader != null) {
             // Restore previous class loader
             Thread.currentThread().setContextClassLoader(oldLoader);
@@ -165,6 +171,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         return cluster != null;
     }
 
+    @Override
     public void stopCluster() {
         // Stop the cache services.
         cacheStats = null;
@@ -175,11 +182,11 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         cluster = null;
         if (clusterListener != null) {
             // Wait until the server has updated its internal state
-            while (!clusterListener.isDone()) {
+            while (!clusterListener.isDone() && !Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    // Ignore
+                } catch (final InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
                 }
             }
             hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListener);
@@ -199,14 +206,14 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         ExternalizableUtil.getInstance().setStrategy(serializationStrategy);
     }
 
+    @Override
     public Cache createCache(String name) {
         // Check if cluster is being started up
         while (state == State.starting) {
             // Wait until cluster is fully started (or failed)
             try {
                 Thread.sleep(250);
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 // Ignore
             }
         }
@@ -225,46 +232,52 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         return new ClusteredCache(name, hazelcast.getMap(name), hazelcastLifetimeInSeconds);
     }
 
+    @Override
     public void destroyCache(Cache cache) {
         if (cache instanceof CacheWrapper) {
-            cache = ((CacheWrapper)cache).getWrappedCache();
+            cache = ((CacheWrapper) cache).getWrappedCache();
         }
 
-        ClusteredCache clustered = (ClusteredCache)cache;
+        ClusteredCache clustered = (ClusteredCache) cache;
         clustered.destroy();
     }
 
+    @Override
     public boolean isSeniorClusterMember() {
-        if (cluster == null) { return false; }
+        if (clusterListener == null || !clusterListener.isClusterMember()) {
+            return false;
+        }
         // first cluster member is the oldest
         Iterator<Member> members = cluster.getMembers().iterator();
         return members.next().getUuid().equals(cluster.getLocalMember().getUuid());
     }
 
-    public Collection<ClusterNodeInfo> getClusterNodesInfo() {
-        return clusterListener == null ? Collections.EMPTY_LIST : clusterListener.getClusterNodesInfo();
+    @Override
+    public List<ClusterNodeInfo> getClusterNodesInfo() {
+        return clusterListener == null ? Collections.<ClusterNodeInfo>emptyList() : clusterListener.getClusterNodesInfo();
     }
 
+    @Override
     public int getMaxClusterNodes() {
         // No longer depends on license code so just return a big number
         return 10000;
     }
 
+    @Override
     public byte[] getSeniorClusterMemberID() {
         if (cluster != null && !cluster.getMembers().isEmpty()) {
             Member oldest = cluster.getMembers().iterator().next();
-            return StringUtils.getBytes(oldest.getUuid());
-        }
-        else {
+            return oldest.getUuid().getBytes(StandardCharsets.UTF_8);
+        } else {
             return null;
         }
     }
 
+    @Override
     public byte[] getClusterMemberID() {
         if (cluster != null) {
-            return StringUtils.getBytes(cluster.getLocalMember().getUuid());
-        }
-        else {
+            return cluster.getLocalMember().getUuid().getBytes(StandardCharsets.UTF_8);
+        } else {
             return null;
         }
     }
@@ -273,9 +286,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Gets the pseudo-synchronized time from the cluster. While the cluster members may
      * have varying system times, this method is expected to return a timestamp that is
      * synchronized (or nearly so; best effort) across the cluster.
-     * 
+     *
      * @return Synchronized time for all cluster members
      */
+    @Override
     public long getClusterTime() {
         return cluster == null ? System.currentTimeMillis() : cluster.getClusterTime();
     }
@@ -285,20 +299,22 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method does not provide the result set for the given
      * task, as the task is run asynchronously across the cluster.
      */
-    public void doClusterTask(final ClusterTask task) {
-        if (cluster == null) { return; }
-        Set<Member> members = new HashSet<Member>();
+    @Override
+    public void doClusterTask(final ClusterTask<?> task) {
+        if (cluster == null) {
+            return;
+        }
+        Set<Member> members = new HashSet<>();
         Member current = cluster.getLocalMember();
-        for(Member member : cluster.getMembers()) {
+        for (Member member : cluster.getMembers()) {
             if (!member.getUuid().equals(current.getUuid())) {
                 members.add(member);
             }
         }
-        if (members.size() > 0) {
+        if (!members.isEmpty()) {
             // Asynchronously execute the task on the other cluster members
             logger.debug("Executing asynchronous MultiTask: " + task.getClass().getName());
-            hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(
-                new CallableTask<Object>(task), members);
+            hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(new CallableTask<>(task), members);
         } else {
             logger.warn("No cluster members selected for cluster task " + task.getClass().getName());
         }
@@ -309,17 +325,19 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method does not provide the result set for the given
      * task, as the task is run asynchronously across the cluster.
      */
-    public void doClusterTask(final ClusterTask task, byte[] nodeID) {
-        if (cluster == null) { return; }
+    @Override
+    public void doClusterTask(final ClusterTask<?> task, byte[] nodeID) {
+        if (cluster == null) {
+            return;
+        }
         Member member = getMember(nodeID);
         // Check that the requested member was found
         if (member != null) {
             // Asynchronously execute the task on the target member
             logger.debug("Executing asynchronous DistributedTask: " + task.getClass().getName());
-            hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(
-                    new CallableTask<Object>(task), member);
+            hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(new CallableTask<>(task), member);
         } else {
-            String msg = MessageFormat.format("Requested node {0} not found in cluster", StringUtils.getString(nodeID));
+            String msg = MessageFormat.format("Requested node {0} not found in cluster", new String(nodeID, StandardCharsets.UTF_8));
             logger.warn(msg);
             throw new IllegalArgumentException(msg);
         }
@@ -330,24 +348,26 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method blocks for up to MAX_CLUSTER_EXECUTION_TIME
      * (seconds) per member until the task is run on all members.
      */
-    public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
-        if (cluster == null) { return Collections.emptyList(); }
-        Set<Member> members = new HashSet<Member>();
+    @Override
+    public Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember) {
+        if (cluster == null) {
+            return Collections.emptyList();
+        }
+        Set<Member> members = new HashSet<>();
         Member current = cluster.getLocalMember();
-        for(Member member : cluster.getMembers()) {
+        for (Member member : cluster.getMembers()) {
             if (includeLocalMember || (!member.getUuid().equals(current.getUuid()))) {
                 members.add(member);
             }
         }
-        Collection<Object> result = new ArrayList<Object>();
-        if (members.size() > 0) {
+        Collection<Object> result = new ArrayList<>();
+        if (!members.isEmpty()) {
             // Asynchronously execute the task on the other cluster members
             try {
                 logger.debug("Executing MultiTask: " + task.getClass().getName());
-                Map<Member, Future<Object>> futures = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME)
-                    .submitToMembers(new CallableTask<Object>(task), members);
-                long nanosLeft = TimeUnit.SECONDS.toNanos(MAX_CLUSTER_EXECUTION_TIME*members.size());
-                for (Future<Object> future : futures.values()) {
+                Map<Member, ? extends Future<?>> futures = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(new CallableTask<>(task), members);
+                long nanosLeft = TimeUnit.SECONDS.toNanos(MAX_CLUSTER_EXECUTION_TIME * members.size());
+                for (Future<?> future : futures.values()) {
                     long start = System.nanoTime();
                     result.add(future.get(nanosLeft, TimeUnit.NANOSECONDS));
                     nanosLeft = nanosLeft - (System.nanoTime() - start);
@@ -368,17 +388,19 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method blocks for up to MAX_CLUSTER_EXECUTION_TIME
      * (seconds) until the task is run on the given member.
      */
-    public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
-        if (cluster == null) { return null; }
+    @Override
+    public Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID) {
+        if (cluster == null) {
+            return null;
+        }
         Member member = getMember(nodeID);
         Object result = null;
         // Check that the requested member was found
         if (member != null) {
             // Asynchronously execute the task on the target member
             logger.debug("Executing DistributedTask: " + task.getClass().getName());
-            try { 
-                Future<Object> future = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME)
-                        .submitToMember(new CallableTask<Object>(task), member);
+            try {
+                Future<?> future = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(new CallableTask<>(task), member);
                 result = future.get(MAX_CLUSTER_EXECUTION_TIME, TimeUnit.SECONDS);
                 logger.debug("DistributedTask result: " + (result == null ? "null" : result));
             } catch (TimeoutException te) {
@@ -387,15 +409,18 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
                 logger.error("Failed to execute cluster task", e);
             }
         } else {
-            String msg = MessageFormat.format("Requested node {0} not found in cluster", StringUtils.getString(nodeID));
+            String msg = MessageFormat.format("Requested node {0} not found in cluster", new String(nodeID, StandardCharsets.UTF_8));
             logger.warn(msg);
             throw new IllegalArgumentException(msg);
         }
         return result;
     }
-    
+
+    @Override
     public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
-        if (cluster == null) { return null; }
+        if (cluster == null) {
+            return null;
+        }
         ClusterNodeInfo result = null;
         Member member = getMember(nodeID);
         if (member != null) {
@@ -403,11 +428,11 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
         return result;
     }
-    
+
     private Member getMember(byte[] nodeID) {
         Member result = null;
-        for(Member member: cluster.getMembers()) {
-            if (Arrays.equals(StringUtils.getBytes(member.getUuid()), nodeID)) {
+        for (Member member : cluster.getMembers()) {
+            if (Arrays.equals(member.getUuid().getBytes(StandardCharsets.UTF_8), nodeID)) {
                 result = member;
                 break;
             }
@@ -415,20 +440,21 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         return result;
     }
 
+    @Override
     public void updateCacheStats(Map<String, Cache> caches) {
-        if (caches.size() > 0 && cluster != null) {
+        if (!caches.isEmpty() && cluster != null) {
             // Create the cacheStats map if necessary.
             if (cacheStats == null) {
                 cacheStats = hazelcast.getMap("opt-$cacheStats");
             }
             String uid = cluster.getLocalMember().getUuid();
-            Map<String, long[]> stats = new HashMap<String, long[]>();
+            Map<String, long[]> stats = new HashMap<>();
             for (String cacheName : caches.keySet()) {
                 Cache cache = caches.get(cacheName);
                 // The following information is published:
                 // current size, max size, num elements, cache
                 // hits, cache misses.
-                long [] info = new long[5];
+                long[] info = new long[5];
                 info[0] = cache.getCacheSize();
                 info[1] = cache.getMaxCacheSize();
                 info[2] = cache.size();
@@ -441,13 +467,15 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
+    @Override
     public String getPluginName() {
         return "hazelcast";
     }
 
+    @Override
     public Lock getLock(Object key, Cache cache) {
         if (cache instanceof CacheWrapper) {
-            cache = ((CacheWrapper)cache).getWrappedCache();
+            cache = ((CacheWrapper) cache).getWrappedCache();
         }
         return new ClusterLock(key, (ClusteredCache) cache);
     }
@@ -457,31 +485,37 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         private Object key;
         private ClusteredCache cache;
 
-        public ClusterLock(Object key, ClusteredCache cache) {
+        ClusterLock(Object key, ClusteredCache cache) {
             this.key = key;
             this.cache = cache;
         }
 
+        @Override
         public void lock() {
             cache.lock(key, -1);
         }
 
-        public void lockInterruptibly() throws InterruptedException {
+        @Override
+        public void lockInterruptibly() {
             cache.lock(key, -1);
         }
 
+        @Override
         public boolean tryLock() {
             return cache.lock(key, 0);
         }
 
-        public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        @Override
+        public boolean tryLock(long time, TimeUnit unit) {
             return cache.lock(key, unit.toMillis(time));
         }
 
+        @Override
         public void unlock() {
             cache.unlock(key);
         }
 
+        @Override
         public Condition newCondition() {
             throw new UnsupportedOperationException();
         }
@@ -489,19 +523,20 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     private static class CallableTask<V> implements Callable<V>, Serializable {
         private ClusterTask<V> task;
-        
-        public CallableTask(ClusterTask<V> task) {
+
+        CallableTask(ClusterTask<V> task) {
             this.task = task;
         }
 
+        @Override
         public V call() {
             task.run();
             logger.debug("CallableTask[" + task.getClass().getName() + "] result: " + task.getResult());
             return task.getResult();
         }
     }
-    
-    private static enum State {
+
+    private enum State {
         stopped,
         starting,
         started

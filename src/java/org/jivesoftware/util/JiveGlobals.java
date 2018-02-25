@@ -930,6 +930,31 @@ public class JiveGlobals {
         }
         openfireProperties.migrateProperty(name);
     }
+
+    /**
+     * Convenience routine to migrate a tree of XML propertis into the database
+     * storage method.
+     *
+     * @param name the name of the base property to migrate.
+     */
+    public static void migratePropertyTree(String name) {
+        if (isSetupMode()) {
+            return;
+        }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+
+        final String[] children = openfireProperties.getChildrenProperties( name );
+        if ( children != null )
+        {
+            for ( final String child : children )
+            {
+                migratePropertyTree( name + "." + child );
+            }
+        }
+        openfireProperties.migrateProperty(name);
+    }
     
     /**
      * Flags certain properties as being sensitive, based on

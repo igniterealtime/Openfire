@@ -197,7 +197,7 @@ public class HistoryStrategy {
                 // message because we want to preserve the room subject if
                 // possible.
                 Iterator<Message> historyIter = history.iterator();
-                while (historyIter.hasNext() && history.size() > strategyMaxNumber) {
+                while (historyIter.hasNext() && history.size() >= strategyMaxNumber) {
                     if (historyIter.next() != roomSubject) {
                         historyIter.remove();
                     }

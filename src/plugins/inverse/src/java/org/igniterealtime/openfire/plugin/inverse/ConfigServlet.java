@@ -51,6 +51,7 @@ public class ConfigServlet extends HttpServlet
         final boolean lockedDomain = JiveGlobals.getBooleanProperty( "inverse.config.locked_domain", false );
         final String endpoint = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/http-bind/";
         final boolean debug = JiveGlobals.getBooleanProperty( "inverse.config.debug", false );
+        final String viewMode = JiveGlobals.getProperty( "inverse.config.view_mode" );
 
         // The language of the inVerse UI.
         final Language language = InversePlugin.getLanguage();
@@ -76,6 +77,10 @@ public class ConfigServlet extends HttpServlet
         config.put( "domain_placeholder", defaultDomain );
         config.put( "bosh_service_url", endpoint );
         config.put( "debug", debug );
+        if ( viewMode != null && !viewMode.isEmpty() )
+        {
+            config.put( "view_mode", viewMode );
+        }
 
         final JSONArray whitelistedPlugins = new JSONArray(); // TODO make configurable.
         whitelistedPlugins.put( "converse-singleton" );
@@ -91,6 +96,7 @@ public class ConfigServlet extends HttpServlet
         config.put( "message_carbons", true ); // TODO make configurable.
         config.put( "message_archiving", "always" ); // TODO make configurable.
         config.put( "roster_groups", true ); // TODO make configurable.
+        config.put( "show_message_load_animation", false ); // TODO make configurable
 
         // inVerse.js requires some hard-coded converse.js configuration options (look in the upstream source of
         // src/converse-inverse.js at the settings in passed into `updateSettings`). We should not allow overrides of

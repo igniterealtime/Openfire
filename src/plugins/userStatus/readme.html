@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>UserStatus Plugin Readme</title>
+<style type="text/css">
+/* global font and body settings */
+body {
+    font-size: 100%;
+    background-color: #d3d6d9;
+    padding: 0;
+    margin: 0 0 30px 0;
+}
+
+body, td, th {
+    font-family: arial, helvetica, sans-serif;
+    font-size: 10pt;
+}
+
+pre, tt, code {
+    font-family: courier new, monospace;
+    font-size: 9pt;
+}
+
+#pageContainer {
+    display: block;
+    position: relative;
+    clear: both;
+    background-color: #fff;
+    border: 1px solid #999;
+    padding: 40px;
+    margin: 30px;
+}
+
+#pageHeader {
+    display: block;
+    position: relative;
+    height: 80px;
+    background-color: #e7eaee;
+    border: 1px solid #cccccc;
+    border-bottom: none;
+    margin: 10px 0 0 0;
+}
+
+#pageBody {
+    margin: 0 18px 0 20px;
+}
+
+/* anchors */
+a:link {
+    color: #11568c;
+}
+
+a:visited {
+    color: #571c8d;
+}
+
+a:hover {
+    color: #7a1d42;
+    text-decoration: underline;
+}
+
+a:active {
+    color: #7a1d42;
+}
+
+/* page header elements (logo and navigation) */
+.navigation {
+    display: block;
+    position: relative;
+    height: 20px;
+    background-color: #335588;
+    border: 1px solid #cccccc;
+    border-top: none;
+    color: #ffffff;
+    font-size: 11px;
+    line-height: 18px;
+    padding: 0 0 0 0;
+    margin: 0 0 25px 0;
+    overflow: hidden;
+}
+
+.navigation a {
+    margin: 0 20px 0 20px;
+}
+
+.navigation a:link {
+    color: #ffffff;
+}
+
+.navigation a:visited {
+    color: #ffffff;
+}
+
+.navigation a:hover {
+    color: #ffffff;
+}
+
+.navigation a:active {
+    color: #ffffff;
+}
+
+/* headings */
+h1 {
+    display: block;
+    position: relative;
+    font-size: 1.7em;
+    font-weight: bold;
+    color: #670e15;
+    padding: 0;
+    margin: 30px 0 0 20px;
+}
+
+h2 {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 40px 0 6px 0;
+    padding: 0;
+    color: #335588;
+}
+
+h3 {
+    font-size: 1.0em;
+    font-weight: bold;
+    margin: 25px 0 3px 0;
+    padding: 0;
+    color: #334466;
+}
+
+/* general elements */
+p {
+    margin: 0 0 15px 0;
+}
+
+ul {
+    margin: 5px 0 15px 35px;
+}
+
+li {
+    padding-bottom: 4px;
+}
+
+tt {
+    font-family: courier new, monospace;
+    font-weight: bold;
+    color: #060;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    background-color: #999999;
+    border: none;
+    margin: 40px 0 20px 0;
+}
+
+.footer {
+    font-size: 8pt;
+    color: #666;
+    text-align: center;
+    margin-top: 2em;
+    padding-top: 0.5em;
+    border-top: 1px #CCC solid;
+}
+</style>
+</head>
+<body>
+
+<div id="pageContainer">
+
+    <div id="pageHeader">
+        <h1>UserStatus Plugin Readme</h1>
+    </div>
+
+    <div id="pageBody">
+        <h2>Overview</h2>
+
+        <p>
+            Openfire plugin to save the user status to the database.
+        </p>
+
+        <p>
+            This plugin automatically saves the last status
+            (presence, IP address, logon and logoff time) per user and resource to <tt>userStatus</tt>
+            table in the Openfire database.
+        </p>
+
+        <p>
+            Optionally you can archive user status entries (IP address, logon and logoff time)
+            for a specified time. History entries are stored in the <tt>userStatusHistory</tt> table.
+            The settings for history archiving can be configured on the "User Status Settings" page
+            that you'll find on the "Server" tab of the Openfire Admin Console.
+        </p>
+
+        <h2>Limitations</h2>
+
+        <p>
+            Of the databases supported by Openfire, this plugin does not
+support Oracle. This is not due to any technical reason, just nobody has
+submitted the needed sql script to initialize the userStatus plugin database
+schema for Oracle.
+        </p>
+
+        <h2>Database Schema</h2>
+
+        <p>
+            The <tt>userStatus</tt> table contains the last status per user and resource:
+        </p>
+
+<pre>
+CREATE TABLE userStatus (
+    username        VARCHAR(64)         NOT NULL,
+    resource        VARCHAR(64)         NOT NULL,
+    online          TINYINT             NOT NULL,
+    presence        CHAR(15),
+    lastIpAddress   CHAR(15)            NOT NULL,
+    lastLoginDate   CHAR(15)            NOT NULL,
+    lastLogoffDate  CHAR(15),
+    PRIMARY KEY pk_userStatus (username, resource)
+);
+</pre>
+
+        <p>
+            The <tt>userStatusHistory</tt> table contains the archived status entries if enabled:
+        </p>
+
+<pre>
+CREATE TABLE userStatusHistory (
+    historyID       BIGINT              NOT NULL,
+    username        VARCHAR(64)         NOT NULL,
+    resource        VARCHAR(64)         NOT NULL,
+    lastIpAddress   CHAR(15)            NOT NULL,
+    lastLoginDate   CHAR(15)            NOT NULL,
+    lastLogoffDate  CHAR(15)            NOT NULL,
+    PRIMARY KEY pk_userStatusHistory (historyID)
+);
+</pre>
+
+    </div>
+
+    <div class="footer">
+        Copyright &copy; 2007,2017 Stefan Reuter
+    </div>
+
+</div>
+</body>
+</html>

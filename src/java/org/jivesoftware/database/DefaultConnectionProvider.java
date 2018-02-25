@@ -16,18 +16,20 @@
 
 package org.jivesoftware.database;
 
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.logicalcobwebs.proxool.ConnectionPoolDefinitionIF;
-import org.logicalcobwebs.proxool.ProxoolException;
-import org.logicalcobwebs.proxool.ProxoolFacade;
-import org.logicalcobwebs.proxool.admin.SnapshotIF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 /**
  * Default Jive connection provider, which uses an internal connection pool.<p>
@@ -38,18 +40,22 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultConnectionProvider.class);
 
-    private Properties settings;
     private String driver;
     private String serverURL;
-    private String proxoolURL;
     private String username;
     private String password;
     private int minConnections = 3;
     private int maxConnections = 10;
-    private int activeTimeout = 900000; // 15 minutes in milliseconds
     private String testSQL = "";
     private Boolean testBeforeUse = true;
     private Boolean testAfterUse = true;
+    private int testTimeout = (int) JiveConstants.SECOND / 2;
+    private long timeBetweenEvictionRuns = 30 * JiveConstants.SECOND;
+    private long minIdleTime = 15 * JiveConstants.MINUTE;
+    private long maxWaitTime = (int) JiveConstants.SECOND / 2;
+    private long refusedCount = 0;
+    private PoolingDataSource<PoolableConnection> dataSource;
+    private GenericObjectPool<PoolableConnection> connectionPool;
 
     /**
      * Maximum time a connection can be open before it's reopened (in days)
@@ -77,28 +83,44 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
     @Override
     public Connection getConnection() throws SQLException {
-        try {
-            Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
-                return DriverManager.getConnection(proxoolURL, settings);
+        if (dataSource == null) {
+            throw new SQLException("Check JDBC properties; data source was not be initialised");
         }
-        catch (ClassNotFoundException e) {
-            throw new SQLException("DbConnectionProvider: Unable to find driver: "+e);
+        // DBCP doesn't expose the number of refused connections, so count them ourselves
+        try {
+            return dataSource.getConnection();
+        } catch (final SQLException e) {
+            refusedCount++;
+            throw e;
         }
     }
 
     @Override
     public void start() {
-        proxoolURL = "proxool.openfire:"+getDriver()+":"+getServerURL();
-        settings = new Properties();
-        settings.setProperty("proxool.maximum-active-time", Integer.toString(activeTimeout));
-        settings.setProperty("proxool.maximum-connection-count", Integer.toString(getMaxConnections()));
-        settings.setProperty("proxool.minimum-connection-count", Integer.toString(getMinConnections()));
-        settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * getConnectionTimeout())));
-        settings.setProperty("proxool.test-before-use", testBeforeUse.toString());
-        settings.setProperty("proxool.test-after-use", testAfterUse.toString());
-        settings.setProperty("proxool.house-keeping-test-sql", testSQL);
-        settings.setProperty("user", getUsername());
-        settings.setProperty("password", (getPassword() != null ? getPassword() : ""));
+
+        try {
+            Class.forName(driver);
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException("Unable to find JDBC driver " + driver, e);
+        }
+
+        final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, username, password);
+        final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        poolableConnectionFactory.setValidationQuery(testSQL);
+        poolableConnectionFactory.setValidationQueryTimeout(testTimeout);
+        poolableConnectionFactory.setMaxConnLifetimeMillis((long) (connectionTimeout * JiveConstants.DAY));
+
+        final GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        poolConfig.setTestOnBorrow(testBeforeUse);
+        poolConfig.setTestOnReturn(testAfterUse);
+        poolConfig.setMinIdle(minConnections);
+        poolConfig.setMaxTotal(maxConnections);
+        poolConfig.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRuns);
+        poolConfig.setSoftMinEvictableIdleTimeMillis(minIdleTime);
+        poolConfig.setMaxWaitMillis(maxWaitTime);
+        connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
+        poolableConnectionFactory.setPool(connectionPool);
+        dataSource = new PoolingDataSource<>(connectionPool);
     }
 
     @Override
@@ -107,7 +129,11 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
     @Override
     public void destroy() {
-        settings = null;
+        try {
+            dataSource.close();
+        } catch (final Exception e) {
+            Log.error("Unable to close the data source", e);
+        }
     }
 
     /**
@@ -269,6 +295,46 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return testSQL;
     }
 
+    public int getTestTimeout() {
+        return testTimeout;
+    }
+
+    public long getTimeBetweenEvictionRunsMillis() {
+        return connectionPool.getTimeBetweenEvictionRunsMillis();
+    }
+
+    public long getMinIdleTime() {
+        return connectionPool.getSoftMinEvictableIdleTimeMillis();
+    }
+
+    public int getActiveConnections() {
+        return connectionPool.getNumActive();
+    }
+
+    public int getIdleConnections() {
+        return connectionPool.getNumIdle();
+    }
+
+    public long getConnectionsServed() {
+        return connectionPool.getBorrowedCount();
+    }
+
+    public long getRefusedCount() {
+        return refusedCount;
+    }
+
+    public long getMaxWaitTime() {
+        return connectionPool.getMaxWaitMillis();
+    }
+
+    public long getMeanBorrowWaitTime() {
+        return connectionPool.getMeanBorrowWaitTimeMillis();
+    }
+
+    public long getMaxBorrowWaitTime() {
+        return connectionPool.getMaxBorrowWaitTimeMillis();
+    }
+
     /**
      * Sets the SQL statement used to test if a connection is valid.  House keeping
      * and before/after connection tests make use of this.  This
@@ -338,6 +404,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(driver));
         testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", false);
         testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", false);
+        testTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.testTimeout", (int) JiveConstants.SECOND / 2);
+        timeBetweenEvictionRuns = JiveGlobals.getXMLProperty("database.defaultProvider.timeBetweenEvictionRuns", (int) (30 * JiveConstants.SECOND));
+        minIdleTime = JiveGlobals.getXMLProperty("database.defaultProvider.minIdleTime", (int) (15 * JiveConstants.MINUTE));
+        maxWaitTime = JiveGlobals.getXMLProperty("database.defaultProvider.maxWaitTime", (int) JiveConstants.SECOND / 2);
 
         // See if we should use Unicode under MySQL
         mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
@@ -370,25 +440,13 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", testSQL);
         JiveGlobals.setXMLProperty("database.defaultProvider.testBeforeUse", testBeforeUse.toString());
         JiveGlobals.setXMLProperty("database.defaultProvider.testAfterUse", testAfterUse.toString());
+        JiveGlobals.setXMLProperty("database.defaultProvider.testTimeout", String.valueOf(testTimeout));
+        JiveGlobals.setXMLProperty("database.defaultProvider.timeBetweenEvictionRuns", String.valueOf(timeBetweenEvictionRuns));
+        JiveGlobals.setXMLProperty("database.defaultProvider.minIdleTime", String.valueOf(minIdleTime));
+        JiveGlobals.setXMLProperty("database.defaultProvider.maxWaitTime", String.valueOf(maxWaitTime));
 
-        JiveGlobals.setXMLProperty("database.defaultProvider.minConnections",
-                Integer.toString(minConnections));
-        JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections",
-                Integer.toString(maxConnections));
-        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
-                Double.toString(connectionTimeout));
-    }
-
-    @Override
-    public String toString() {
-        try {
-            ConnectionPoolDefinitionIF poolDef = ProxoolFacade.getConnectionPoolDefinition("openfire");
-            SnapshotIF poolStats = ProxoolFacade.getSnapshot("openfire", true);
-            return poolDef.getMinimumConnectionCount()+","+poolDef.getMaximumConnectionCount()+","
-                    +poolStats.getAvailableConnectionCount()+","+poolStats.getActiveConnectionCount();
-        }
-        catch (ProxoolException e) {
-            return "Default Connection Provider";
-        }
+        JiveGlobals.setXMLProperty("database.defaultProvider.minConnections", Integer.toString(minConnections));
+        JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections", Integer.toString(maxConnections));
+        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout", Double.toString(connectionTimeout));
     }
 }

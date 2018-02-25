@@ -32,6 +32,7 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
 import org.jivesoftware.openfire.user.property.UserPropertyProvider;
 import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -411,6 +412,10 @@ public class UserManager implements IQResultListener {
      * remote users (i.e. domain does not match local domain) a disco#info request is going
      * to be sent to the bare JID of the user.
      *
+     * <p>WARNING: If the supplied JID could be a remote user and the disco#info result packet comes back on the same
+     * thread as the one the calls this method then it will not be processed, and this method will block for 60 seconds
+     * by default. To change the timeout, update the system property <code>usermanager.remote-disco-info-timeout-seconds</code>
+     *
      * @param user to JID of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local or remote registered user.
      */
@@ -444,9 +449,9 @@ public class UserManager implements IQResultListener {
                     server.getIQRouter().addIQResultListener(iq.getID(), this);
                     synchronized (user.toBareJID().intern()) {
                         server.getIQRouter().route(iq);
-                        // Wait for the reply to be processed. Time out in 1 minute.
+                        // Wait for the reply to be processed. Time out in 1 minute by default
                         try {
-                            user.toBareJID().intern().wait(60000);
+                            user.toBareJID().intern().wait(JiveGlobals.getLongProperty("usermanager.remote-disco-info-timeout-seconds", 60) * JiveConstants.SECOND);
                         }
                         catch (InterruptedException e) {
                             // Do nothing

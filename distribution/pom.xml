@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>parent</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.3.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>distribution</artifactId>
+
+    <name>Distribution</name>
+    <description>Provides Openfire distributables.</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <releaseDirectory>${project.build.directory}/release</releaseDirectory>
+        <openfireSource>${releaseDirectory}/openfire_src</openfireSource>
+    </properties>
+
+    <build>
+        <finalName>distribution</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/basic-distribution.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Generates the platform-specific installers. -->
+        <profile>
+            <id>install4j</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.install4j</groupId>
+                        <artifactId>install4j-maven-plugin</artifactId>
+                        <version>1.1.1</version>
+
+                        <executions>
+                            <execution>
+                                <id>compile-installers</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <projectFile>${project.basedir}/src/installer/openfire.install4j</projectFile>
+                                    <variables>
+                                        <sys.version>${project.version}</sys.version>
+                                        <maven-build-directory>${project.build.directory}</maven-build-directory>
+                                    </variables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>ej-technologies</id>
+            <url>https://maven.ej-technologies.com/repository/</url>
+        </repository>
+    </repositories>
+</project>

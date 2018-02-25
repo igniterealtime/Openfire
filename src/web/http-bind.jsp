@@ -186,7 +186,8 @@
         </table>
     </admin:contentBox>
 
-    <admin:contentBox title="Script Syntax">
+    <fmt:message key="httpbind.settings.script.group" var="script_boxtitle"/>
+    <admin:contentBox title="${script_boxtitle}">
         <table cellpadding="3" cellspacing="0" border="0">
         <tbody>
             <tr valign="middle">
@@ -275,7 +276,8 @@
     </admin:contentBox>
     <!-- XFF -->
 
-    <admin:contentBox title="Cross-domain policy">
+    <fmt:message key="httpbind.settings.crossdomain.group" var="crossdomain_boxtitle"/>
+    <admin:contentBox title="${crossdomain_boxtitle}">
         <p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>
         <p><fmt:message key="httpbind.settings.crossdomain.info.override"><fmt:param value="<tt>&lt;openfireHome&gt;/conf/crossdomain.xml</tt>" /></fmt:message></p>
         <p><fmt:message key="httpbind.settings.crossdomain.info.policy" /></p>

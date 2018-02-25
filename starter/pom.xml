@@ -10,7 +10,6 @@
     <name>Starter for Openfire</name>
     <description>Starts Openfire and also launches the web admin interface in a web browser</description>
     <properties>
-        <openfireHome>${project.parent.build.directory}/openfire</openfireHome>
     </properties>
     <build>
         <plugins>
@@ -19,7 +18,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <finalName>startup</finalName>
-                    <outputDirectory>${openfireHome}/lib</outputDirectory>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>

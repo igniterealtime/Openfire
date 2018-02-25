@@ -339,7 +339,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
         if(stanzaText == null || stanzaText.equals("")) {
             // Try creating a fake one from the body.
             if (archivedMessage.getBody() != null && !archivedMessage.getBody().equals("")) {
-                stanzaText = String.format("<message from=\"{}\" to=\"{}\" type=\"chat\"><body>{}</body>", archivedMessage.getWithJid(), archivedMessage.getWithJid(), archivedMessage.getBody());
+                stanzaText = String.format("<message from=\"%s\" to=\"%s\" type=\"chat\"><body>%s</body>", archivedMessage.getWithJid(), archivedMessage.getWithJid(), archivedMessage.getBody());
             } else {
                 // Don't send legacy archived messages (that have no stanza)
                 return;

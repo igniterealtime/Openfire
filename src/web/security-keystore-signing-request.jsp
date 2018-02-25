@@ -117,8 +117,7 @@
 
                        // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN
                        final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
-                       final Set<String> sanXmppAddrs = CertificateManager.determineSubjectAlternateNameXmppAddrValues();
-                       X509Certificate newCertificate = CertificateManager.createX509V3Certificate(new KeyPair(pubKey, privKey), days, builder, builder, domain, signAlgoritm, sanDnsNames, sanXmppAddrs);
+                       X509Certificate newCertificate = CertificateManager.createX509V3Certificate(new KeyPair(pubKey, privKey), days, builder, builder, domain, signAlgoritm, sanDnsNames);
                        keyStore.setKeyEntry(alias, privKey, identityStore.getConfiguration().getPassword(), new X509Certificate[] { newCertificate });
                    }
                }

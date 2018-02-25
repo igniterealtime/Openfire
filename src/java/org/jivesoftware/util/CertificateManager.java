@@ -447,12 +447,12 @@ public class CertificateManager {
                                                                         String subjectCommonName, String domain,
                                                                         String signAlgoritm)
             throws GeneralSecurityException, IOException {
-        return createX509V3Certificate( kp, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, null, null );
+        return createX509V3Certificate( kp, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, null );
     }
 
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerCommonName,
                                                                         String subjectCommonName, String domain,
-                                                                        String signAlgoritm, Set<String> sanDnsNames, Set<String> sanXmppAddrs)
+                                                                        String signAlgoritm, Set<String> sanDnsNames)
             throws GeneralSecurityException, IOException {
 
         // subjectDN
@@ -463,7 +463,7 @@ public class CertificateManager {
         X500NameBuilder issuerBuilder = new X500NameBuilder();
         issuerBuilder.addRDN(BCStyle.CN, issuerCommonName);
 
-        return createX509V3Certificate(kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, sanDnsNames, sanXmppAddrs);
+        return createX509V3Certificate(kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, sanDnsNames);
     }
 
     /**
@@ -482,11 +482,11 @@ public class CertificateManager {
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, X500NameBuilder issuerBuilder,
             X500NameBuilder subjectBuilder, String domain, String signAlgoritm ) throws GeneralSecurityException, IOException
     {
-        return createX509V3Certificate( kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, null, null );
+        return createX509V3Certificate( kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, null );
     }
 
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, X500NameBuilder issuerBuilder,
-            X500NameBuilder subjectBuilder, String domain, String signAlgoritm, Set<String> sanDnsNames, Set<String> sanXmppAddrs ) throws GeneralSecurityException, IOException {
+            X500NameBuilder subjectBuilder, String domain, String signAlgoritm, Set<String> sanDnsNames ) throws GeneralSecurityException, IOException {
         PublicKey pubKey = kp.getPublic();
         PrivateKey privKey = kp.getPrivate();
 
@@ -510,7 +510,7 @@ public class CertificateManager {
                 );
 
         // add subjectAlternativeName extension that includes all relevant names.
-        final GeneralNames subjectAlternativeNames = getSubjectAlternativeNames( sanDnsNames, sanXmppAddrs );
+        final GeneralNames subjectAlternativeNames = getSubjectAlternativeNames( sanDnsNames );
 
         final boolean critical = subjectDN.getRDNs().length == 0;
         certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAlternativeNames);
@@ -543,7 +543,7 @@ public class CertificateManager {
         }
     }
 
-    protected static GeneralNames getSubjectAlternativeNames( Set<String> sanDnsNames, Set<String> sanXmppAddrs )
+    protected static GeneralNames getSubjectAlternativeNames( Set<String> sanDnsNames )
     {
         final ASN1EncodableVector subjectAlternativeNames = new ASN1EncodableVector();
         if ( sanDnsNames != null )
@@ -552,24 +552,6 @@ public class CertificateManager {
             {
                 subjectAlternativeNames.add(
                     new GeneralName( GeneralName.dNSName, dnsNameValue )
-                );
-            }
-        }
-
-        if ( sanXmppAddrs != null )
-        {
-            for ( final String xmppAddrValue : sanXmppAddrs )
-            {
-                subjectAlternativeNames.add(
-                    new DERTaggedObject( false,
-                                         GeneralName.otherName,
-                                          new DERSequence(
-                                              new ASN1Encodable[] {
-                                                  new ASN1ObjectIdentifier( "1.3.6.1.5.5.7.8.5" ),
-                                                  new DERTaggedObject( true, GeneralName.otherName, new DERUTF8String( xmppAddrValue ) )
-                                              }
-                                          )
-                    )
                 );
             }
         }
@@ -589,24 +571,11 @@ public class CertificateManager {
     {
         final HashSet<String> result = new HashSet<>();
 
-        // The fully qualified domain name of the server
-        result.add( XMPPServer.getInstance().getServerInfo().getHostname() );
-
-        return result;
-    }
-
-    /**
-     * Finds all values that aught to be added as a Subject Alternate Name of the dnsName type to a certificate that
-     * identifies this XMPP server.
-     *
-     * @return A set of names, possibly empty, never null.
-     */
-    public static Set<String> determineSubjectAlternateNameXmppAddrValues()
-    {
-        final HashSet<String> result = new HashSet<>();
-
         // Add the XMPP domain name itself.
         result.add( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+
+        // The fully qualified domain name of the server
+        result.add( XMPPServer.getInstance().getServerInfo().getHostname() );
 
         if ( XMPPServer.getInstance().getIQDiscoItemsHandler() != null ) // When we're not in setup any longer...
         {
@@ -616,6 +585,7 @@ public class CertificateManager {
                 result.add( item.getJID().toBareJID() );
             }
         }
+
         return result;
     }
 }

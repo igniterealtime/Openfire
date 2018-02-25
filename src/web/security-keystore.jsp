@@ -1,5 +1,4 @@
 <%@page import="org.jivesoftware.util.StringUtils"%>
-<%@page import="java.util.LinkedHashMap"%>
 <%@page import="java.security.PrivateKey"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
@@ -12,10 +11,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.security.cert.X509Certificate" %>
-<%@ page import="java.util.Collections" %>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.util.Set" %>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -28,6 +24,7 @@
 
 <% // Get parameters:
     boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
+    boolean generateFull      = ParamUtils.getBooleanParameter(request, "generateFull");
     boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
     boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
     final String alias              = ParamUtils.getParameter( request, "alias" );
@@ -37,9 +34,10 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (generate | delete | importReply) {
+    if (generate | generateFull | delete | importReply) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             generate = false;
+            generateFull = false;
             delete = false;
             importReply = false;
             errors.put("csrf", "CSRF Failure!");
@@ -78,6 +76,8 @@
 
         pageContext.setAttribute( "validRSACert", identityStore.containsDomainCertificate( "RSA" ) );
         pageContext.setAttribute( "validDSACert", identityStore.containsDomainCertificate( "DSA" ) );
+        pageContext.setAttribute( "allIDRSACert", identityStore.containsAllIdentityCertificate( "RSA" ) );
+        pageContext.setAttribute( "allIDDSACert", identityStore.containsAllIdentityCertificate( "DSA" ) );
 
         if ( delete )
         {
@@ -108,7 +108,6 @@
 
 
     if (generate) {
-        String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         try {
             if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate("DSA")) {
                 identityStore.addSelfSignedDomainCertificate("DSA");
@@ -128,6 +127,25 @@
         }
     }
 
+    if (generateFull) {
+        try {
+            if (!identityStore.containsAllIdentityCertificate("DSA")) {
+                identityStore.addSelfSignedDomainCertificate("DSA");
+            }
+            if (!identityStore.containsAllIdentityCertificate("RSA")) {
+                identityStore.addSelfSignedDomainCertificate("RSA");
+            }
+            // Save new certificates into the key store
+            identityStore.persist();
+            // Log the event
+            webManager.logEvent("generated SSL self-signed certs", null);
+            response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
+            return;
+        } catch (Exception e) {
+            e.printStackTrace();
+            errors.put("generate", e.getMessage());
+        }
+    }
     if (importReply) {
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
@@ -187,16 +205,29 @@
             </admin:infobox>
         </c:forEach>
 
-        <c:if test="${not validDSACert or not validRSACert}">
-            <admin:infobox type="warning">
-                <fmt:message key="ssl.certificates.keystore.no_installed">
-                    <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
-                    <fmt:param value="</a>"/>
-                    <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
-                    <fmt:param value="</a>"/>
-                </fmt:message>
-            </admin:infobox>
-        </c:if>
+        <c:choose>
+            <c:when test="${not validDSACert or not validRSACert}">
+                <admin:infobox type="warning">
+                    <fmt:message key="ssl.certificates.keystore.no_installed">
+                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
+                        <fmt:param value="</a>"/>
+                        <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
+                        <fmt:param value="</a>"/>
+                    </fmt:message>
+                </admin:infobox>
+            </c:when>
+            <c:when test="${not allIDDSACert or not allIDRSACert}">
+                <admin:infobox type="info">
+                    <fmt:message key="ssl.certificates.keystore.no_complete_installed">
+                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generateFull=true&connectionType=${connectionType}'>"/>
+                        <fmt:param value="</a>"/>
+                        <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
+                        <fmt:param value="</a>"/>
+                    </fmt:message>
+                </admin:infobox>
+            </c:when>
+
+        </c:choose>
 
         <c:if test="${param.addupdatesuccess}"><admin:infobox type="success"><fmt:message key="ssl.certificates.added_updated"/></admin:infobox></c:if>
         <c:if test="${param.generatesuccess}"><admin:infobox type="success"><fmt:message key="ssl.certificates.generated"/></admin:infobox></c:if>

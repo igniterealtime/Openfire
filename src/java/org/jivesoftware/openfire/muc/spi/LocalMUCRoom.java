@@ -2723,11 +2723,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subject);
         ExternalizableUtil.getInstance().writeLong(out, roomID);
         ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
-        if (modificationDate!=null) {
+        ExternalizableUtil.getInstance().writeBoolean(out, modificationDate != null);
+        if (modificationDate != null) {
             ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
-        }
-        else {
-            ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
         }
         ExternalizableUtil.getInstance().writeBoolean(out, emptyDate != null);
         if (emptyDate != null) {
@@ -2765,7 +2763,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         subject = ExternalizableUtil.getInstance().readSafeUTF(in);
         roomID = ExternalizableUtil.getInstance().readLong(in);
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
-        modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
+        }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             emptyDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         }

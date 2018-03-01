@@ -18,26 +18,29 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
-<%@ page import="org.jivesoftware.database.DbConnectionManager"
-    errorPage="error.jsp"
-%>
+<%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" errorPage="error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterNodeInfo" %>
 <%@ page import="org.jivesoftware.openfire.cluster.GetBasicStatistics" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.Log" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.Base64" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
+<%@ page import="org.slf4j.Logger" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.Arrays" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="java.net.URLEncoder" %>
-<%@ page import="org.jivesoftware.util.Base64" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterEventListener" %>
+<%@ page import="java.util.concurrent.Semaphore" %>
+<%@ page import="java.util.concurrent.TimeUnit" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -57,7 +60,8 @@
 <% // Get parameters
     boolean update = request.getParameter("update") != null;
     boolean clusteringEnabled = ParamUtils.getBooleanParameter(request, "clusteringEnabled");
-    boolean updateSucess = false;
+    boolean updateSuccess = false;
+    final Logger LOGGER = LoggerFactory.getLogger("system-clustering.jsp");
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -72,20 +76,78 @@
     pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         if (!clusteringEnabled) {
-            ClusterManager.setClusteringEnabled(false);
+            LOGGER.info("Disabling clustering");
             // Log the event
             webManager.logEvent("disabled clustering", null);
-            updateSucess = true;
-        }
-        else {
+            final Semaphore leftClusterSemaphore = new Semaphore(0);
+            final ClusterEventListener listener = new ClusterEventListener() {
+                @Override
+                public void joinedCluster() {
+                }
+
+                @Override
+                public void joinedCluster(byte[] nodeID) {
+                }
+
+                @Override
+                public void leftCluster() {
+                    leftClusterSemaphore.release();
+                }
+
+                @Override
+                public void leftCluster(byte[] nodeID) {
+                }
+
+                @Override
+                public void markedAsSeniorClusterMember() {
+                }
+            };
+            ClusterManager.addListener(listener);
+            ClusterManager.setClusteringEnabled(false);
+            try {
+                updateSuccess = leftClusterSemaphore.tryAcquire(30, TimeUnit.SECONDS);
+            } finally {
+                ClusterManager.removeListener(listener);
+            }
+            LOGGER.info("Clustering disabled");
+        } else {
             if (ClusterManager.isClusteringAvailable()) {
-                ClusterManager.setClusteringEnabled(true);
+                LOGGER.info("Enabling clustering");
                 // Log the event
                 webManager.logEvent("enabled clustering", null);
-                updateSucess = ClusterManager.isClusteringStarted();
-            }
-            else {
-                Log.error("Failed to enable clustering. Clustering is not installed.");
+                final Semaphore joinedClusterSemaphore = new Semaphore(0);
+                final ClusterEventListener listener = new ClusterEventListener() {
+                    @Override
+                    public void joinedCluster() {
+                        joinedClusterSemaphore.release();
+                    }
+
+                    @Override
+                    public void joinedCluster(byte[] nodeID) {
+                    }
+
+                    @Override
+                    public void leftCluster() {
+                    }
+
+                    @Override
+                    public void leftCluster(byte[] nodeID) {
+                    }
+
+                    @Override
+                    public void markedAsSeniorClusterMember() {
+                    }
+                };
+                ClusterManager.addListener(listener);
+                ClusterManager.setClusteringEnabled(true);
+                try {
+                    updateSuccess = joinedClusterSemaphore.tryAcquire(30, TimeUnit.SECONDS);
+                } finally {
+                    ClusterManager.removeListener(listener);
+                }
+                LOGGER.info("Clustering enabled");
+            } else {
+                LOGGER.error("Failed to enable clustering. Clustering is not available.");
             }
         }
     }
@@ -135,7 +197,7 @@
 </p>
 
 <%  if (update) {
-        if (updateSucess) { %>
+        if (updateSuccess) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -180,6 +242,7 @@
             <b><fmt:message key="system.clustering.not-available" /></b><br/><br/>
             </td>
         </tr>
+        <tr>
         <td valign="top" align="left" colspan="2">
             <% if (usingEmbeddedDB) { %>
                 <span><fmt:message key="system.clustering.using-embedded-db"/></span>
@@ -189,6 +252,7 @@
                 <span><fmt:message key="system.clustering.not-valid-license"/></span>
             <% } %>
         </td>
+        </tr>
     </tbody>
     </table>
     </div>
@@ -294,12 +358,12 @@
             %>
               <tr class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
                   <td align="center" width="1%">
-                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID) %>"
+                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>"
                        title="Click for more details"
                        ><img src="images/server-network-24x24.gif" width="24" height="24" border="0" alt=""></a>
                   </td>
                   <td class="jive-description" nowrap width="1%" valign="middle">
-                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID) %>">
+                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>">
                       <%  if (isLocalMember) { %>
                           <b><%= nodeInfo.getHostName() %></b>
                       <%  } else { %>
@@ -341,7 +405,7 @@
                           <tr>
                               <%  if (percent == 0) { %>
 
-                                  <td width="100%"><img src="images/percent-bar-left.gif" width="100%" height="4" border="0" alt=""></td>
+                                  <td width="100%"><img src="images/percent-bar-left.gif" width="30" height="4" border="0" alt=""></td>
 
                               <%  } else { %>
 

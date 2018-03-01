@@ -8,8 +8,8 @@
                  org.xmpp.packet.Presence"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <html>
     <head>
@@ -164,10 +164,10 @@
            <a href="../../user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
        </td>
        <td width="33">
-           <%= user.getName() %> &nbsp;
+           <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
        </td>
        <td width="15%">
-           <%= JiveGlobals.formatDate(user.getCreationDate()) %> &nbsp;
+           <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
        </td>
         <td width="25%">
             <% long logoutTime = presenceManager.getLastActivity(user);

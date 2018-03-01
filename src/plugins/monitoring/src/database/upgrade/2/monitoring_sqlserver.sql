@@ -1,5 +1,3 @@
--- $Revision$
--- $Date$
 
 ALTER TABLE ofMessageArchive ALTER COLUMN body NVARCHAR(MAX) NULL;
 

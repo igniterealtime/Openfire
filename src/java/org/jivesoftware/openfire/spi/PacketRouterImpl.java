@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 943 $
- * $Date: 2005-02-04 01:53:20 -0300 (Fri, 04 Feb 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,6 +53,7 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      *
      * @param packet The packet to route
      */
+    @Override
     public void route(Packet packet) {
         if (packet instanceof Message) {
             route((Message)packet);
@@ -72,20 +69,23 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
         }
     }
 
+    @Override
     public void route(IQ packet) {
         iqRouter.route(packet);
     }
 
+    @Override
     public void route(Message packet) {
         messageRouter.route(packet);
     }
 
+    @Override
     public void route(Presence packet) {
         presenceRouter.route(packet);
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         iqRouter = server.getIQRouter();
         messageRouter = server.getMessageRouter();

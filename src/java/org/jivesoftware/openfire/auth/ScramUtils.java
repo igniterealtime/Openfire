@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright 2015 Surevine Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,13 +31,13 @@ import javax.security.sasl.SaslException;
  * @author Richard Midwinter
  */
 public class ScramUtils {
-	
-	public static final int DEFAULT_ITERATION_COUNT = 4096;
+    
+    public static final int DEFAULT_ITERATION_COUNT = 4096;
 
-	private ScramUtils() {}
+    private ScramUtils() {}
 
     public static byte[] createSaltedPassword(byte[] salt, String password, int iters) throws SaslException {
-        Mac mac = createSha1Hmac(password.getBytes(StandardCharsets.US_ASCII));
+        Mac mac = createSha1Hmac(password.getBytes(StandardCharsets.UTF_8));
         mac.update(salt);
         mac.update(new byte[]{0, 0, 0, 1});
         byte[] result = mac.doFinal();
@@ -61,7 +57,7 @@ public class ScramUtils {
     public static byte[] computeHmac(final byte[] key, final String string)
             throws SaslException {
         Mac mac = createSha1Hmac(key);
-        mac.update(string.getBytes(StandardCharsets.US_ASCII));
+        mac.update(string.getBytes(StandardCharsets.UTF_8));
         return mac.doFinal();
     }
 

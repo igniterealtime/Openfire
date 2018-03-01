@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
 
+import javax.net.ssl.SSLHandshakeException;
+
 /**
  * Abstract class for {@link BlockingReadingMode}.
  *
@@ -39,7 +37,7 @@ import org.xmpp.packet.StreamError;
  */
 abstract class SocketReadingMode {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -81,11 +79,18 @@ abstract class SocketReadingMode {
         }
         // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
-            // Temporary workaround to force the usage of ServerTrustManager. This code is only used for s2s
-            socketReader.connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+            // This code is only used for s2s
+            socketReader.connection.startTLS(false);
         }
-        catch (IOException e) {
-            Log.error("Error while negotiating TLS: " + socketReader.connection, e);
+        catch (SSLHandshakeException e) {
+            // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending any more data (<failure/> nor </stream>).
+            Log.info( "STARTTLS negotiation (with: {}) failed.", socketReader.connection, e );
+            socketReader.connection.forceClose();
+            return false;
+        }
+        catch (IOException | RuntimeException e) {
+            // RFC3620, section 5.4.2.2 "Failure case" - Send a <failure/> element, then close the socket.
+            Log.warn( "An exception occurred while performing STARTTLS negotiation (with: {})", socketReader.connection, e);
             socketReader.connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             socketReader.connection.close();
             return false;
@@ -269,7 +274,7 @@ abstract class SocketReadingMode {
         sb.append("\" id=\"");
         sb.append(socketReader.session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
-        sb.append(socketReader.connection.getLanguage());
+        sb.append(socketReader.session.getLanguage().toLanguageTag());
         sb.append("\" version=\"");
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");

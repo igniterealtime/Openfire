@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 29557 $
- * $Date: 2006-04-19 21:21:28 -0700 (Wed, 19 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,8 +30,8 @@ import org.slf4j.LoggerFactory;
  */
 public class DbWorkgroup {
 
-	private static final Logger Log = LoggerFactory.getLogger(DbWorkgroup.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(DbWorkgroup.class);
+    
     private static final String UPDATE_TRANSCRIPT =
             "UPDATE fpSession SET transcript=?, endTime=? WHERE sessionID=?";
     private static final String INSERT_AGENT_SESSION =

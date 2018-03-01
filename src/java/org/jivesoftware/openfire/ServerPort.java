@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1378 $
- * $Date: 2005-05-23 15:25:24 -0300 (Mon, 23 May 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,11 +26,13 @@ import java.util.List;
  * regarding the port while hiding implementation details.
  *
  * @author Iain Shigeoka
+ * @deprecated
  */
+@Deprecated
 public class ServerPort {
 
     private int port;
-    private List<String> names = new ArrayList<String>(1);
+    private List<String> names = new ArrayList<>(1);
     private String address;
     private boolean secure;
     private String algorithm;

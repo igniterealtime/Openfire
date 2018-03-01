@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -92,10 +89,10 @@ public class GatewayDWR extends DWRServlet {
     
     @Override
     protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
-	    throws IOException, ServletException {
+        throws IOException, ServletException {
 
-		super.doPost(new MyServletRequestWrapper(httpServletRequest), httpServletResponse);
-	}
+        super.doPost(new MyServletRequestWrapper(httpServletRequest), httpServletResponse);
+    }
     
     /**
      * Custom HTTP request wrapper that overrides the path to use

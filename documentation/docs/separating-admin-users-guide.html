@@ -1,0 +1,263 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<title>Openfire: Separating Administative Users Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+    <div id="pageHeader">
+        <div id="logo"></div>
+        <h1>Separating Administative Users Guide</h1>
+    </div>
+    <div class="navigation">
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </div>
+
+    <div id="pageBody">
+
+<h2>Introduction</h2>
+
+<p>
+    Openfire can be configured to use a variety of external sources for authentication, users and groups. This is useful
+    when your users already have accounts in an external system, and you do not wish to duplicate those accounts. More
+    information on this subjct is available in the the <a href="db-integration-guide.html">Custom Database Integration
+    Guide</a>, as well as the <a href="ldap-guide.html">LDAP guide</a>.
+</p>
+<p>
+    This document takes the concept one step further, and provides instructions on how to configure Openfire to obtain
+    it's users from multiple backend systems. Specifically, this document describes how Openfire can be configured to
+    get its <em>administrative</em> users from Openfire's internal database, while obtaining all other users from an
+    external system. This is a configuration that will prevent administrators from loosing access to Openfire when the
+    external system is unavailable.
+</p>
+
+<h2>Mapped providers</h2>
+
+<p>
+    The integration requires that you configure Openfire to use an User Provider and an Authentication Provider that,
+    based on a particular characteristic of a user, use different providers to perform the actual operations. Providers
+    that delegate responsibility in this manner are referred to as <em>mapped</em> providers.
+</p>
+<p>
+    A mapped provider is configured with a Mapper. The Mapper will determine which secondary provider to use for a
+    particular user. For the purpose of differentiating between administrative users and non-administrative users,
+    Openfire provides <em>Authorization Based</em> Mappers, specifically:
+</p>
+<ul>
+    <li><tt>org.jivesoftware.openfire.auth.AuthorizationBasedAuthProviderMapper</tt> -- for a mapped authentication provider</li>
+    <li><tt>org.jivesoftware.openfire.user.AuthorizationBasedUserProviderMapper</tt> -- for a mapped user provider</li>
+</ul>
+<p>
+    Both Mappers are configured with exactly two Providers: a provider for administrative, and one for regular usage. In
+    total, that makes for four Providers: two authentication providers, and two user providers.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+    In order to configure your server to integrate with your custom database tables:
+</p>
+    <ul>
+        <li>an user provider and an authentication provider for the administrative users</li>
+        <li>an user provider and an authentication provider for the regular users</li>
+    </ul>
+<p>
+    A third set of providers is added, that will act as a proxy: it determines for each request which of the two sets
+    of providers mentioned above should be used. This latter set is used as the primary set of providers by Openfire.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+    In order to configure your server:
+</p>
+<ol>
+    <li>Stop Openfire.</li>
+    <li>Edit <tt>conf/openfire.xml</tt> in your Openfire installation folder as
+        described below using your favorite editor.
+    </li>
+    <li>Restart Openfire.</li>
+</ol>
+
+<p>The following lists each component that needs configuration:</p>
+
+<h3>Authentication Providers</h3>
+
+<p>
+    Instead of the default authentication provider, Openfire must be configured to use the <tt>MappedAuthProvider</tt>.
+    This is achieved by configuring the following setting in the <tt>conf/openfire.xml</tt> file:
+</p>
+<ul>
+    <li>provider.auth.className -- set the value to <tt>org.jivesoftware.openfire.auth.MappedAuthProvider</tt></li>
+</ul>
+
+<p>
+    The Mapped Authentication Provider itself requires another settings, which tells it what Mapper is to be used. The
+    Mapper that distinguishes between administrative and non-administartive users is <tt>AuthorizationBasedAuthProviderMapper</tt>,
+    and is configured in by the following setting:
+</p>
+<ul>
+    <li>mappedAuthProvider.mapper.className -- set the value to <tt>org.jivesoftware.openfire.auth.AuthorizationBasedAuthProviderMapper</tt></li>
+</ul>
+
+<p>
+    Finally, the Mapper needs configuration to define what secondary provider is to be used for each type of user:
+</p>
+<ul>
+    <li>authorizationBasedAuthMapper.adminProvider.className -- used for administrative users, typically: <tt>org.jivesoftware.openfire.auth.DefaultAuthProvider</tt></li>
+    <li>authorizationBasedAuthMapper.userProvider.className -- used for regular users, for example <tt>org.jivesoftware.openfire.auth.JDBCAuthProvider</tt></li>
+</ul>
+<p>
+    Note that each of the providers can require further configuration! The <tt>Default</tt> providers do not, but the
+    JDBC-based providers, for instance, require configuration as documented in the
+    <a href="db-integration-guide.html">Custom Database Integration Guide</a>.
+</p>
+
+<h3>User Providers</h3>
+
+<p>
+    Similar to the authentiation providers above, Openfire must be configured to use the <tt>MappedUserProvider</tt>
+    instead of the default user provider. This is  achieved by configuring the following setting in the
+    <tt>conf/openfire.xml</tt> file:
+</p>
+<ul>
+    <li>provider.user.className -- set the value to <tt>org.jivesoftware.openfire.user.MappedUserProvider</tt></li>
+</ul>
+
+<p>
+    The Mapped User Provider itself requires another settings, which tells it what Mapper is to be used. The Mapper
+    that distinguishes between administrative and non-administartive users is <tt>AuthorizationBasedUserProviderMapper</tt>,
+    and is configured in by the following setting:
+</p>
+<ul>
+    <li>mappedUserProvider.mapper.className -- set the value to <tt>org.jivesoftware.openfire.user.AuthorizationBasedUserProviderMapper</tt></li>
+</ul>
+
+<p>
+    Finally, the Mapper needs configuration to define what secondary provider is to be used for each type of user:
+</p>
+<ul>
+    <li>authorizationBasedUserMapper.adminProvider.className -- used for administrative users, typically: <tt>org.jivesoftware.openfire.user.DefaultUserProvider</tt></li>
+    <li>authorizationBasedUserMapper.userProvider.className -- used for regular users, for example <tt>org.jivesoftware.openfire.user.JDBCUserProvider</tt></li>
+</ul>
+<p>
+    Note that each of the providers can require further configuration! The <tt>Default</tt> providers do not, but the
+    JDBC-based providers, for instance, require configuration as documented in the
+    <a href="db-integration-guide.html">Custom Database Integration Guide</a>.
+</p>
+
+<h3>Example configuration</h3>
+
+<p>
+    Below is a sample config file section that combines the settings as described above (note: the "..." sections in the
+    examples indicate areas where the rest of the config file would exist).
+</p>
+
+<p>
+    First, Openfire is configured to use the Mapped providers:
+</p>
+<pre>
+&lt;jive&gt;
+    ...
+    &lt;provider&gt;
+        &lt;auth&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.MappedAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+        &lt;user&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.MappedUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+    &lt;/provider&gt;
+    ...
+&lt;/jive&gt;
+</pre>
+
+<p>
+    Next, each MappedProvider is configured with a Mapper:
+</p>
+<pre>
+&lt;jive&gt;
+    ...
+    &lt;mappedAuthProvider&gt;
+        &lt;mapper&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.AuthorizationBasedAuthProviderMapper&lt;/className&gt;
+        &lt;/mapper&gt;
+    &lt;/mappedAuthProvider&gt;
+    &lt;mappedUserProvider&gt;
+        &lt;mapper&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.AuthorizationBasedUserProviderMapper&lt;/className&gt;
+        &lt;/mapper&gt;
+    &lt;/mappedUserProvider&gt;
+    ...
+&lt;/jive&gt;
+</pre>
+
+<p>
+    Each of the Mappers is told what provider to user for administrative and regular users:
+</p>
+<pre>
+&lt;jive&gt;
+    ...
+    &lt;authorizationBasedAuthMapper&gt;
+        &lt;adminProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.DefaultAuthProvider&lt;/className&gt;
+        &lt;/adminProvider&gt;
+        &lt;userProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
+        &lt;/userProvider&gt;
+    &lt;/authorizationBasedAuthMapper&gt;
+    &lt;authorizationBasedUserMapper&gt;
+        &lt;adminProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.DefaultUserProvider&lt;/className&gt;
+        &lt;/adminProvider&gt;
+        &lt;userProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.JDBCUserProvider&lt;/className&gt;
+        &lt;/userProvider&gt;
+    &lt;/authorizationBasedUserMapper&gt;
+    ...
+&lt;/jive&gt;
+</pre>
+
+<p>
+    And finally, each of the secondary providers that are used are to be configured. In this example, <tt>Default</tt>
+    and <tt>JDBC</tt> providers are used. The former requires no further configuration. The configuration from the
+    <tt>JDBC</tt> providers as used here is taken from the <a href="db-integration-guide.html">Custom Database
+    Integration Guide</a>. Please refer to that guide for more information.
+</p>
+<pre>
+&lt;jive&gt;
+    ...
+    &lt;provider&gt;
+        &lt;auth&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.JDBCAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+        &lt;user&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.JDBCUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+    &lt;/provider&gt;
+    &lt;jdbcAuthProvider&gt;
+        &lt;passwordSQL&gt;SELECT password FROM user_account WHERE username=?&lt;/passwordSQL&gt;
+        &lt;passwordType&gt;plain&lt;/passwordType&gt;
+    &lt;/jdbcAuthProvider&gt;
+    &lt;jdbcUserProvider&gt;
+        &lt;loadUserSQL&gt;SELECT name,email FROM myUser WHERE username=?&lt;/loadUserSQL&gt;
+        &lt;userCountSQL&gt;SELECT COUNT(*) FROM myUser&lt;/userCountSQL&gt;
+        &lt;allUsersSQL&gt;SELECT username FROM myUser&lt;/allUsersSQL&gt;
+        &lt;searchSQL&gt;SELECT username FROM myUser WHERE&lt;/searchSQL&gt;
+        &lt;usernameField&gt;username&lt;/usernameField&gt;
+        &lt;nameField&gt;name&lt;/nameField&gt;
+        &lt;emailField&gt;email&lt;/emailField&gt;
+    &lt;/jdbcUserProvider&gt;
+    ...
+&lt;/jive&gt;
+</pre>
+
+    </div>
+</div>
+</body>
+</html>

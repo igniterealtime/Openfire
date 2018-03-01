@@ -3,7 +3,7 @@
                  org.jivesoftware.openfire.auth.UnauthorizedException"
     isErrorPage="true"
 %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%  boolean debug = "true".equals(JiveGlobals.getProperty("skin.default.debug"));
     if (debug) {
         exception.printStackTrace();

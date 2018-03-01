@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +37,7 @@ public class XMLPropertiesTest {
 
     @Test
     public void testGetProperty() throws Exception {
-        XMLProperties props = new XMLProperties(
-                "./resources/org/jivesoftware/util/XMLProperties.test01.xml");
+        XMLProperties props = new XMLProperties(getClass().getResourceAsStream("XMLProperties.test01.xml"));
         assertEquals("123", props.getProperty("foo.bar"));
         assertEquals("456", props.getProperty("foo.bar.baz"));
         assertNull(props.getProperty("foo"));
@@ -51,8 +46,7 @@ public class XMLPropertiesTest {
 
     @Test
     public void testGetChildPropertiesIterator() throws Exception {
-        XMLProperties props = new XMLProperties(
-                "./resources/org/jivesoftware/util/XMLProperties.test02.xml");
+        XMLProperties props = new XMLProperties(getClass().getResourceAsStream("XMLProperties.test02.xml"));
         String[] names = {"a","b","c","d"};
         String[] values = {"1","2","3","4"};
         String[] children = props.getChildrenProperties("foo.bar");

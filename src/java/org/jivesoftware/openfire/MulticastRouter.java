@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: 2705 $
- * $Date: 2005-08-22 19:00:05 -0300 (Mon, 22 Aug 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +61,7 @@ import org.xmpp.packet.Packet;
  */
 public class MulticastRouter extends BasicModule implements ServerFeaturesProvider, IQResultListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
+    private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
 
     private static final String NAMESPACE = "http://jabber.org/protocol/address";
 
@@ -90,19 +86,19 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
      * pending to be sent.
      */
     private Map<String, Collection<Packet>> remotePackets =
-            new HashMap<String, Collection<Packet>>();
+            new HashMap<>();
     /**
      * Keeps the list of nodes discovered in remote servers. This information is used
      * when discovering whether remote servers support multicast service or not.
      * Note: key=domain, value=list of nodes
      */
-    private Map<String, Collection<String>> nodes = new ConcurrentHashMap<String, Collection<String>>();
+    private Map<String, Collection<String>> nodes = new ConcurrentHashMap<>();
     /**
      * Keeps an association of node and server where the node was discovered. This information
      * is used when discovering whether remote servers support multicast service or not.
      * Note: key=node, value=domain of remote server
      */
-    private Map<String, String> roots = new ConcurrentHashMap<String, String>();
+    private Map<String, String> roots = new ConcurrentHashMap<>();
 
     public MulticastRouter() {
         super("Multicast Packet Router");
@@ -112,8 +108,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     }
 
     public void route(Packet packet) {
-        Set<String> remoteServers = new HashSet<String>();
-        List<String> targets = new ArrayList<String>();
+        Set<String> remoteServers = new HashSet<>();
+        List<String> targets = new ArrayList<>();
         Packet localBroadcast = packet.createCopy();
         Element addresses = getAddresses(localBroadcast);
         String localDomain = "@" + server.getServerInfo().getXMPPDomain();
@@ -152,7 +148,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             synchronized (domain.intern()) {
                 Collection<Packet> packets = remotePackets.get(domain);
                 if (packets == null) {
-                    packets = new ArrayList<Packet>();
+                    packets = new ArrayList<>();
                     remotePackets.put(domain, packets);
                     shouldDiscover = true;
                 }
@@ -260,7 +256,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             // to each address
             for (Packet packet : packets) {
                 Element addresses = getAddresses(packet);
-                List<String> targets = new ArrayList<String>();
+                List<String> targets = new ArrayList<>();
 
                 for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
                     Element address = (Element) it.next();
@@ -286,6 +282,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         }
     }
 
+    @Override
     public void receivedAnswer(IQ packet) {
         // Look for the root node being discovered
         String domain = packet.getFrom().toString();
@@ -364,14 +361,14 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             }
             else {
                 // Keep the list of items found in the requested domain
-                List<String> jids = new ArrayList<String>();
+                List<String> jids = new ArrayList<>();
                 for (Element item : items) {
                     String jid = item.attributeValue("jid");
                     jids.add(jid);
                     // Add that this item was found for the following domain
                     roots.put(jid, domain);
                 }
-                nodes.put(domain, new CopyOnWriteArrayList<String>(jids));
+                nodes.put(domain, new CopyOnWriteArrayList<>(jids));
 
                 // Send disco#info to each discovered item
                 for (Element item : items) {
@@ -392,16 +389,18 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         }
     }
 
+    @Override
     public void answerTimeout(String packetId) {
         Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         this.packetRouter = server.getPacketRouter();

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date: 2006-08-07 21:12:21 -0700 (Mon, 07 Aug 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,8 +86,8 @@ import org.xmpp.packet.Presence;
  */
 public class Workgroup {
 
-	private static final Logger Log = LoggerFactory.getLogger(Workgroup.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Workgroup.class);
+
     private static final String LOAD_WORKGROUP =
             "SELECT jid, displayName, description, status, modes, creationDate, " +
             "modificationDate, maxchats, minchats, offerTimeout, requestTimeout, " +
@@ -823,10 +819,11 @@ public class Workgroup {
             values = new ArrayList<String>();
             values.add("0");
             fields.put("anonymous", values);
-            // Only broadcast presences of participants and visitors
+            // Broadcast presences of moderators, participants and visitors
             values = new ArrayList<String>();
             values.add("participant");
             values.add("visitor");
+            values.add("moderators");
             fields.put("muc#roomconfig_presencebroadcast", values);
 
             RoomConfiguration conf = new RoomConfiguration(fields);
@@ -1062,7 +1059,7 @@ public class Workgroup {
 
     public Status getStatus() {
         // TODO: The logic in this method appears too complex. May need refactor after
-        // TODO: removing schedule feature. 
+        // TODO: removing schedule feature.
         boolean actualOpenStatus = open;
 
         // Workgroup can only be open if there are agents in the workgroup.

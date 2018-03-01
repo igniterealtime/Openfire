@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 1999-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +31,7 @@ import org.xmpp.packet.Message;
  *
  * @author Gaston Dombiak
  */
-public class BroadcastMessage implements ClusterTask {
+public class BroadcastMessage implements ClusterTask<Void> {
 
     private Message packet;
 
@@ -46,7 +43,7 @@ public class BroadcastMessage implements ClusterTask {
         this.packet = packet;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         // Not used since we are using #execute and not #query when using InvocationService
         return null;
     }

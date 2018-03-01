@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
-/**
+/*
  * This is a work in progress and is checked in for future use.
  */
 
@@ -57,7 +57,7 @@ import org.xmpp.packet.JID;
  */
 public class WebDAVLiteServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(WebDAVLiteServlet.class);
+    private static final Logger Log = LoggerFactory.getLogger(WebDAVLiteServlet.class);
 
     // Storage directory under the Openfire install root
     private static String WEBDAV_SUBDIR = "mucFiles";
@@ -119,7 +119,7 @@ public class WebDAVLiteServlet extends HttpServlet {
             return true;
         }
         catch (Exception e) {
-            /**
+            /*
              * This covers all possible authentication issues.  Eg:
              * - not enough of auth info passed in
              * - failed auth
@@ -161,7 +161,7 @@ public class WebDAVLiteServlet extends HttpServlet {
             return true;
         }
         catch (Exception e) {
-            /**
+            /*
              * This covers all possible authorization issues.  Eg:
              * - accessing a room that doesn't exist
              * - accessing a room that user isn't a member of

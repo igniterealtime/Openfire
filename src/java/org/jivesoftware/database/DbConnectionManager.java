@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -456,25 +452,6 @@ public class DbConnectionManager {
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
-        }
-    }
-
-    /**
-     * Creates a scroll insensitive Statement if the JDBC driver supports it, or a normal
-     * Statement otherwise.
-     *
-     * @param con the database connection.
-     * @return a Statement
-     * @throws SQLException if an error occurs.
-     */
-    @Deprecated
-    public static Statement createScrollableStatement(Connection con) throws SQLException {
-        if (isScrollResultsSupported()) {
-            return con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    ResultSet.CONCUR_READ_ONLY);
-        }
-        else {
-            return con.createStatement();
         }
     }
 

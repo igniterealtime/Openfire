@@ -6,8 +6,8 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     String errorDetail = null;
@@ -54,14 +54,14 @@
 
 <!-- BEGIN connection settings test panel -->
 <div class="jive-testPanel">
-	<div class="jive-testPanel-content">
+    <div class="jive-testPanel-content">
 
-		<div align="right" class="jive-testPanel-close">
-			<a href="#" class="lbAction" rel="deactivate">Close</a>
-		</div>
+        <div align="right" class="jive-testPanel-close">
+            <a href="#" class="lbAction" rel="deactivate">Close</a>
+        </div>
 
 
-		<h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h2>
+        <h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h2>
 
         <p><fmt:message key="setup.ldap.group.test.description" /></p>
 

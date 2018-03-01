@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -68,7 +65,7 @@ import org.xmpp.packet.Presence;
  * @author Daniel Henninger
  */
 public class MSNListener implements MsnContactListListener, MsnMessageListener, MsnMessengerListener,
-									MsnSwitchboardListener, MsnEmailListener, SessionListener {
+                                    MsnSwitchboardListener, MsnEmailListener, SessionListener {
 
     static Logger Log = Logger.getLogger(MSNListener.class);
 
@@ -352,8 +349,8 @@ public class MSNListener implements MsnContactListListener, MsnMessageListener, 
      */
     public void contactAddedMe(MsnMessenger messenger, MsnContact friend) {
         Log.debug("MSN: Contact added me: "+ friend.getFriendlyName());
-    	
-    	final JID from = getSession().getTransport().convertIDToJID(friend.getEmail().toString());
+        
+        final JID from = getSession().getTransport().convertIDToJID(friend.getEmail().toString());
         
         final Presence p = new Presence();
         p.setType(Presence.Type.subscribe);
@@ -470,71 +467,71 @@ public class MSNListener implements MsnContactListListener, MsnMessageListener, 
         }
     }
 
-	public void contactAddInGroupCompleted(MsnMessenger arg0, MsnContact arg1,
-			MsnGroup arg2) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void contactAddInGroupCompleted(MsnMessenger arg0, MsnContact arg1,
+            MsnGroup arg2) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void contactAddedMe(MsnMessenger arg0, MsnContactPending[] arg1) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void contactAddedMe(MsnMessenger arg0, MsnContactPending[] arg1) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void contactPersonalMessageChanged(MsnMessenger arg0, MsnContact arg1) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void contactPersonalMessageChanged(MsnMessenger arg0, MsnContact arg1) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void contactRemoveFromGroupCompleted(MsnMessenger arg0,
-			MsnContact arg1, MsnGroup arg2) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void contactRemoveFromGroupCompleted(MsnMessenger arg0,
+            MsnContact arg1, MsnGroup arg2) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void ownerDisplayNameChanged(MsnMessenger arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void ownerDisplayNameChanged(MsnMessenger arg0) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void offlineMessageReceived(String arg0, String arg1, String arg2,
-			MsnContact arg3) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void offlineMessageReceived(String arg0, String arg1, String arg2,
+            MsnContact arg3) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void p2pMessageReceived(MsnSwitchboard arg0, MsnP2PMessage arg1,
-			MsnContact arg2) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void p2pMessageReceived(MsnSwitchboard arg0, MsnP2PMessage arg1,
+            MsnContact arg2) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void logout(MsnMessenger arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void logout(MsnMessenger arg0) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void contactJoinSwitchboard(MsnSwitchboard arg0, MsnContact arg1) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void contactJoinSwitchboard(MsnSwitchboard arg0, MsnContact arg1) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void contactLeaveSwitchboard(MsnSwitchboard arg0, MsnContact arg1) {
+    public void contactLeaveSwitchboard(MsnSwitchboard arg0, MsnContact arg1) {
         final JID to = getSession().getJID();
         final JID from = getSession().getTransport().convertIDToJID(arg1.getEmail().toString());
         getSession().getTransport().getChatStateEventSource().isGone(from, to);
-	}
+    }
 
-	public void switchboardClosed(MsnSwitchboard arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void switchboardClosed(MsnSwitchboard arg0) {
+        // TODO Auto-generated method stub
+        
+    }
 
-	public void switchboardStarted(MsnSwitchboard arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-	
+    public void switchboardStarted(MsnSwitchboard arg0) {
+        // TODO Auto-generated method stub
+        
+    }
+    
     public void exceptionCaught(Session arg0, Throwable t) throws Exception{
         Log.debug("MSN: Session exceptionCaught for "+getSession().getRegistration().getUsername()+" : "+t);
     }

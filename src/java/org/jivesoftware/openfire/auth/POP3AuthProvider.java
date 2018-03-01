@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2654 $
- * $Date: 2005-08-14 14:40:32 -0300 (Sun, 14 Aug 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +69,7 @@ import org.slf4j.LoggerFactory;
  */
 public class POP3AuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
 
     private Cache<String, String> authCache = null;
     private String host = null;
@@ -130,6 +126,7 @@ public class POP3AuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
@@ -218,35 +215,45 @@ public class POP3AuthProvider implements AuthProvider {
         }
     }
 
-    public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
-        throw new UnauthorizedException("Digest authentication not supported.");
-    }
-
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    public boolean isDigestSupported() {
-        return false;
-    }
-
+    @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
     }
 
+     @Override
      public void setPassword(String username, String password) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
         return false;
     }
     
+    @Override
     public boolean isScramSupported() {
         return false;
+    }
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
     }
 }

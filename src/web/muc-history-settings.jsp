@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -26,8 +24,8 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 
 <%!  // Global vars and methods:
 
@@ -58,6 +56,18 @@
     HistoryStrategy historyStrat = mucService.getHistoryStrategy();
 
     Map<String,String> errors = new HashMap<String,String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         if (policy != ALL && policy != NONE && policy != NUMBER) {
             errors.put("general", "Please choose a valid chat history policy.");
@@ -135,52 +145,53 @@
 
 <!-- BEGIN 'History Settings' -->
 <form action="muc-history-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="groupchat.history.settings.legend" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0" >
-		<tbody>
-			<tr valign="middle" class="">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_no_history" />
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
-				</td>
-				<td width="99%">
-					<label for="rb02">
-					<b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_entire_history" />
-				</td>
-			</tr>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
-				</td>
-				<td width="99%">
-					<label for="rb03">
-					<b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
-					</label><fmt:message key="groupchat.history.settings.label2_number_messages" />
-				</td>
-			</tr>
-			<tr valign="middle" class="">
-				<td width="1%" nowrap>&nbsp;</td>
-				<td width="99%">
-					<input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
-				</td>
-			</tr>
-		</tbody>
-		</table>
-	</div>
+        <fmt:message key="groupchat.history.settings.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0" >
+        <tbody>
+            <tr valign="middle" class="">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_no_history" />
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                    <b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_entire_history" />
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
+                </td>
+                <td width="99%">
+                    <label for="rb03">
+                    <b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
+                    </label><fmt:message key="groupchat.history.settings.label2_number_messages" />
+                </td>
+            </tr>
+            <tr valign="middle" class="">
+                <td width="1%" nowrap>&nbsp;</td>
+                <td width="99%">
+                    <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="groupchat.history.settings.save" />"/>
 </form>
 <!-- END 'History Settings' -->

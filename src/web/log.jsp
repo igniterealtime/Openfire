@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -29,7 +26,7 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%!
@@ -86,13 +83,13 @@
     String mode = ParamUtils.getParameter(request,"mode");
 
     // Only allow requests for valid log file names.
-    if (!("debug".equals(log) || "warn".equals(log) || "info".equals(log) || "error".equals(log))) {
+    if (!("debug".equals(log) || "warn".equals(log) || "info".equals(log) || "error".equals(log) || "all".equals(log))) {
         log = null;
     }
 
     // Set defaults
     if (log == null) {
-        log = "error";
+        log = "all";
     }
     if (mode == null) {
         mode = "asc";
@@ -109,48 +106,48 @@
     String lines[] = new String[0];
     int start = 0;
     try {
-	    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-	    String line;
-	    int totalNumLines = 0;
-	    while ((line=in.readLine()) != null) {
-	        totalNumLines++;
-	    }
-	    in.close();
-	    // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
-	    if ("All".equals(numLinesParam)) {
-	        numLines = totalNumLines;
-	    }
-	    lines = new String[numLines];
-	    in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-	    // skip lines
-	    start = totalNumLines - numLines;
-	    if (start < 0) { start = 0; }
-	    for (int i=0; i<start; i++) {
-	        in.readLine();
-	    }
-	    int i = 0;
-	    if ("asc".equals(mode)) {
-	        while ((line=in.readLine()) != null && i<numLines) {
-	            line = StringUtils.escapeHTMLTags(line);
-	            line = parseDate(line);
-	            line = hilite(line);
-	            lines[i] = line;
-	            i++;
-	        }
-	    }
-	    else {
-	        int end = lines.length-1;
-	        while ((line=in.readLine()) != null && i<numLines) {
-	            line = StringUtils.escapeHTMLTags(line);
-	            line = parseDate(line);
-	            line = hilite(line);
-	            lines[end-i] = line;
-	            i++;
-	        }
-	    }
-	    numLines = start + i;
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
+        String line;
+        int totalNumLines = 0;
+        while ((line=in.readLine()) != null) {
+            totalNumLines++;
+        }
+        in.close();
+        // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
+        if ("All".equals(numLinesParam)) {
+            numLines = totalNumLines;
+        }
+        lines = new String[numLines];
+        in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
+        // skip lines
+        start = totalNumLines - numLines;
+        if (start < 0) { start = 0; }
+        for (int i=0; i<start; i++) {
+            in.readLine();
+        }
+        int i = 0;
+        if ("asc".equals(mode)) {
+            while ((line=in.readLine()) != null && i<numLines) {
+                line = StringUtils.escapeHTMLTags(line);
+                line = parseDate(line);
+                line = hilite(line);
+                lines[i] = line;
+                i++;
+            }
+        }
+        else {
+            int end = lines.length-1;
+            while ((line=in.readLine()) != null && i<numLines) {
+                line = StringUtils.escapeHTMLTags(line);
+                line = parseDate(line);
+                line = hilite(line);
+                lines[end-i] = line;
+                i++;
+            }
+        }
+        numLines = start + i;
     } catch (FileNotFoundException ex) {
-    	Log.info("Could not open (log)file.", ex);
+        Log.info("Could not open (log)file.", ex);
     }
 %>
 

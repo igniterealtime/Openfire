@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +49,7 @@ import org.xmpp.packet.StreamError;
  */
 public class IQBindHandler extends IQHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQBindHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQBindHandler.class);
 
     private IQHandlerInfo info;
     private String serverName;
@@ -65,7 +61,7 @@ public class IQBindHandler extends IQHandler {
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
         // If no session was found then answer an error (if possible)
         if (session == null) {
@@ -163,14 +159,14 @@ public class IQBindHandler extends IQHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
      }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 }

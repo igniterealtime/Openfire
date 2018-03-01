@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ public class IQSharedGroupHandler extends IQHandler {
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ result = IQ.createResultIQ(packet);
         String username = packet.getFrom().getNode();
         if (!serverName.equals(packet.getFrom().getDomain()) || username == null) {
@@ -71,12 +71,12 @@ public class IQSharedGroupHandler extends IQHandler {
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         rosterManager = server.getRosterManager();

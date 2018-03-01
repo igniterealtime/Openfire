@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -19,13 +17,15 @@
 
 <%@ page import="org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.AlreadyExistsException,
                  java.util.*"
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
    // Handle a cancel
@@ -45,6 +45,17 @@
     boolean success = request.getParameter("success") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
     String mucdesc = ParamUtils.getParameter(request,"mucdesc");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Load the service object
     if (!create && !webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
@@ -66,6 +77,12 @@
         // do validation
         if (mucname == null || mucname.indexOf('.') >= 0 || mucname.length() < 1) {
             errors.put("mucname","mucname");
+        } else {
+            try {
+                mucname = JID.domainprep(mucname);
+            } catch (Exception e) {
+                errors.put("mucname", e.getMessage());
+            }
         }
         if (errors.size() == 0) {
             if (!create) {
@@ -146,6 +163,7 @@
 
 <!-- BEGIN 'Service Name'-->
 <form action="muc-service-edit-form.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="save" value="true">
 <% if (!create) { %>
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
@@ -154,10 +172,10 @@
 <% } %>
 
     <div class="jive-contentBoxHeader">
-		<fmt:message key="groupchat.service.properties.legend" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
+        <fmt:message key="groupchat.service.properties.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td class="c1">
                    <fmt:message key="groupchat.service.properties.label_service_name" />
@@ -187,7 +205,7 @@
                 </td>
             </tr>
         </table>
-	</div>
+    </div>
     <input type="submit" value="<fmt:message key="groupchat.service.properties.save" />">
 </form>
 <!-- END 'Service Name'-->

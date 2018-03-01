@@ -3,79 +3,79 @@
 /* --------------------------------------------- */
 
 body {
-	margin:0;
-	padding:0;
+    margin:0;
+    padding:0;
 }
 #jive-main {
-	padding-bottom:20px;
+    padding-bottom:20px;
 }
 body, div, p, td, th {
-	font-family:arial,helvetica,sans-serif;
-	font-size:9pt;
+    font-family:arial,helvetica,sans-serif;
+    font-size:9pt;
 }
 body {
-	background-color:#FFFFFF;
-	color:#333333;
-	margin:0;
-	padding:0;
+    background-color:#FFFFFF;
+    color:#333333;
+    margin:0;
+    padding:0;
 }
 a {
-	color:#D76C0D;
+    color:#D76C0D;
 }
 a:hover {
-	text-decoration:underline;
+    text-decoration:underline;
 }
 p {
-	margin-top:0;
+    margin-top:0;
 }
 fieldset div {
-	margin:10px;
-	padding:5px 3px 5px 0;
-	width:100%;
+    margin:10px;
+    padding:5px 3px 5px 0;
+    width:100%;
 }
 fieldset div .jive-table {
-	margin:0;
-	padding:0;
+    margin:0;
+    padding:0;
 }
 fieldset {
-	-moz-border-radius-bottomleft:3px;
-	-moz-border-radius-bottomright:3px;
-	-moz-border-radius-topleft:3px;
-	-moz-border-radius-topright:3px;
-	border:2px solid #CCCCCC;
-	width:95%;
+    -moz-border-radius-bottomleft:3px;
+    -moz-border-radius-bottomright:3px;
+    -moz-border-radius-topleft:3px;
+    -moz-border-radius-topright:3px;
+    border:2px solid #CCCCCC;
+    width:95%;
 }
 fieldset legend {
-	color:#000000;
+    color:#000000;
 }
 h1 {
-	color:#555555;
-	font-size:14pt;
-	margin:12px 0 15px;
-	padding:0;
+    color:#555555;
+    font-size:14pt;
+    margin:12px 0 15px;
+    padding:0;
 }
 h1 select {
-	color:#666666;
+    color:#666666;
 }
 h2 {
-	font-size:11pt;
-	margin:18px 0 5px;
-	padding:0;
+    font-size:11pt;
+    margin:18px 0 5px;
+    padding:0;
 }
 h3 {
-	font-size:10pt;
-	margin:18px 0 5px;
-	padding:0;
+    font-size:10pt;
+    margin:18px 0 5px;
+    padding:0;
 }
 h4 {
-	font-size:10pt;
-	margin:8px 0 3px;
-	padding:0 0 4px;
+    font-size:10pt;
+    margin:8px 0 3px;
+    padding:0 0 4px;
 }
 h5 {
-	font-size:10pt;
-	margin:18px 0 -8px;
-	padding:0;
+    font-size:10pt;
+    margin:18px 0 -8px;
+    padding:0;
 }
 p {
     margin-top:0;
@@ -587,6 +587,9 @@ pre, tt {
 .jive-table .jive-even td {
     background-color:#FBFBFB;
 }
+.jive-table .jive-highlight td {
+    background-color:#FFFFCC;
+}
 .jive-table tfoot td {
     background-color:#EEEEEE;
     border-bottom:1px solid #CCCCCC;
@@ -941,13 +944,13 @@ th.jive-table-th-center {
 /* --------------------------------------------- */
 
 #jive-main-content {
-	-moz-border-radius-bottomleft:4px;
-	-moz-border-radius-bottomright:4px;
-	-moz-border-radius-topleft:4px;
-	-moz-border-radius-topright:4px;
-	background:#F5F5F5 url(../images/jive-body-contentbox-bg.gif) repeat-x scroll center top;
-	border:1px solid #DCDCDC;
-	margin:15px 0 20px 0;
-	padding:18px 20px;
+    -moz-border-radius-bottomleft:4px;
+    -moz-border-radius-bottomright:4px;
+    -moz-border-radius-topleft:4px;
+    -moz-border-radius-topright:4px;
+    background:#F5F5F5 url(../images/jive-body-contentbox-bg.gif) repeat-x scroll center top;
+    border:1px solid #DCDCDC;
+    margin:15px 0 20px 0;
+    padding:18px 20px;
     width: 95%;
 }

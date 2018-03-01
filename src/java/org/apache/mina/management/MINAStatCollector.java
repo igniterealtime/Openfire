@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * https://svn.apache.org/repos/asf/mina/branches/1.1/core/src/main/java/org/apache/mina/management.
  *
  * @author The Apache Directory Project (mina-dev@directory.apache.org)
- * @version $Rev: 477648 $, $Date: 2006-11-21 04:33:38 -0800 (Tue, 21 Nov 2006) $
  */
 public class MINAStatCollector {
     /**
@@ -66,11 +65,13 @@ public class MINAStatCollector {
     private final IoServiceListener serviceListener = new IoServiceListener()
     {
 
+        @Override
         public void sessionCreated( IoSession session )
         {
             addSession( session );
         }
 
+        @Override
         public void sessionDestroyed( IoSession session )
         {
             removeSession( session );
@@ -122,7 +123,7 @@ public class MINAStatCollector {
 
             // add all current sessions
 
-            polledSessions = new ConcurrentLinkedQueue<IoSession>();
+            polledSessions = new ConcurrentLinkedQueue<>();
 
             Map<Long, IoSession> sessions = service.getManagedSessions();
             if (sessions != null) {
@@ -205,10 +206,10 @@ public class MINAStatCollector {
         IoSessionStat sessStat = ( IoSessionStat ) session.removeAttribute( KEY );
 
         if (sessStat != null) {
-	        totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
-	        totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
-	        totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
-	        totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
+            totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
+            totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
+            totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
+            totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
         }
     }
 
@@ -219,28 +220,28 @@ public class MINAStatCollector {
      */
     public long getTotalProcessedSessions()
     {
-    	return totalProcessedSessions.longValue();
+        return totalProcessedSessions.longValue();
     }
 
-	public long getBytesRead()
-	{
-		return totalBytesRead.get();
-	}
+    public long getBytesRead()
+    {
+        return totalBytesRead.get();
+    }
 
-	public long getBytesWritten()
-	{
-		return totalBytesWritten.get();
-	}
+    public long getBytesWritten()
+    {
+        return totalBytesWritten.get();
+    }
 
-	public long getMsgRead()
-	{
-		return totalMsgRead.get();
-	}
+    public long getMsgRead()
+    {
+        return totalMsgRead.get();
+    }
 
-	public long getMsgWritten()
-	{
-		return totalMsgWritten.get();
-	}
+    public long getMsgWritten()
+    {
+        return totalMsgWritten.get();
+    }
 
     public long getScheduledWrites() {
         return totalScheduledWrites.get();
@@ -251,9 +252,9 @@ public class MINAStatCollector {
     }
 
     public long getSessionCount()
-	{
-		return polledSessions.size();
-	}
+    {
+        return polledSessions.size();
+    }
 
     private class Worker extends Thread
     {
@@ -266,10 +267,10 @@ public class MINAStatCollector {
         }
 
         /*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.lang.Thread#run()
-		 */
+         * (non-Javadoc)
+         * 
+         * @see java.lang.Thread#run()
+         */
         @Override 
         public void run()
         {
@@ -293,7 +294,7 @@ public class MINAStatCollector {
 
                 for (IoSession session : polledSessions)
                 {
-                	// upadating individual session statistics
+                    // upadating individual session statistics
                     IoSessionStat sessStat = ( IoSessionStat ) session.getAttribute( KEY );
 
                     long currentTimestamp = System.currentTimeMillis();

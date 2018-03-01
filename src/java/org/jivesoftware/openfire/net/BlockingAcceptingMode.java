@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +21,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +29,16 @@ import org.slf4j.LoggerFactory;
  * Accepts new socket connections and uses a thread for each new connection.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 class BlockingAcceptingMode extends SocketAcceptingMode {
 
-	private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
+    private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
 
-    protected BlockingAcceptingMode(ConnectionManager connManager, ServerPort serverPort,
-            InetAddress bindInterface) throws IOException {
-        super(connManager, serverPort);
-        serverSocket = new ServerSocket(serverPort.getPort(), -1, bindInterface);
+    protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface) throws IOException {
+        super();
+        serverSocket = new ServerSocket(tcpPort, -1, bindInterface);
     }
 
     /**
@@ -51,14 +46,14 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
      * call getting sockets and creating new reading threads for each new connection.
      */
     @Override
-	public void run() {
+    public void run() {
         while (notTerminated) {
             try {
                 Socket sock = serverSocket.accept();
                 if (sock != null) {
                     Log.debug("Connect " + sock.toString());
-                    SocketReader reader =
-                            connManager.createSocketReader(sock, false, serverPort, true);
+
+                    SocketReader reader = createServerSocketReader(  sock, false, true );
                     Thread thread = new Thread(reader, reader.getName());
                     thread.setDaemon(true);
                     thread.setPriority(Thread.NORM_PRIORITY);

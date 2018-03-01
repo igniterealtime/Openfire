@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date: 2005-07-26 19:10:33 +0200 (Tue, 26 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +36,7 @@ public class VCardEventDispatcher {
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
-    private static List<VCardListener> listeners = new CopyOnWriteArrayList<VCardListener>();
+    private static List<VCardListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events when a vCard is created, updated or deleted.

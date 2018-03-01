@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +37,8 @@ import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
@@ -68,7 +66,7 @@ import org.xmpp.packet.Presence;
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
         DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
+    private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
 
     /**
      * the chat service's hostname
@@ -83,7 +81,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Nodes managed by this manager, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    private Map<String, Node> nodes = new ConcurrentHashMap<>();
     
     /**
      * Keep a registry of the presence's show value of users that subscribed to a node of
@@ -93,7 +91,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * is full JID of connected resource and value is show value of the last received presence.
      */
     private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<String, Map<String, String>>();
+            new ConcurrentHashMap<>();
     
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
@@ -118,13 +116,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
      * create nodes.
      */
-    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<String>();
+    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
 
     /**
      * Bare jids of users that are system administrators of the PubSub service. A sysadmin
      * has the same permissions as a node owner.
      */
-    private Collection<String> sysadmins = new CopyOnWriteArrayList<String>();
+    private Collection<String> sysadmins = new CopyOnWriteArrayList<>();
 
     /**
      * The packet router for the server.
@@ -132,6 +130,15 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     private PacketRouter router = null;
 
     private RoutingTable routingTable = null;
+
+    /**
+     * The disco info handler for this module
+     */
+    private IQDiscoInfoHandler iqDiscoInfoHandler = null;
+   /**
+    * The disco items handler for this module
+    */ 
+    private IQDiscoItemsHandler iqDiscoItemsHandler = null;
 
     /**
      * Default configuration to use for newly created leaf nodes.
@@ -160,11 +167,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         manager.addCommand(new PendingSubscriptionsCommand(this));
     }
 
+    @Override
     public void process(Packet packet) {
         try {
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
-                if (!engine.process(this, (IQ) packet)) {
+                if (engine.process(this, (IQ) packet) == null) {
                     process((IQ) packet);
                 }
             }
@@ -186,6 +194,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
     }
 
+    private void sendServiceUnavailablePacket(IQ iq) {
+        engine.sendErrorPacket(iq, PacketError.Condition.service_unavailable, null);
+    }
+
     private void process(IQ iq) {
         // Ignore IQs of type ERROR
         if (IQ.Type.error == iq.getType()) {
@@ -198,27 +210,36 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             namespace = childElement.getNamespaceURI();
         }
         if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            // TODO PubSub should have an IQDiscoInfoHandler of its own when PubSub becomes
-            // a component
-            IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-            router.route(reply);
+            if (iqDiscoInfoHandler != null) {
+                IQ reply = iqDiscoInfoHandler.handleIQ(iq);
+                router.route(reply);
+            } else {
+                sendServiceUnavailablePacket(iq);
+                return;
+            }
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            // TODO PubSub should have an IQDiscoItemsHandler of its own when PubSub becomes
-            // a component
-            IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-            router.route(reply);
+            if (iqDiscoItemsHandler != null) {
+                IQ reply = iqDiscoItemsHandler.handleIQ(iq);
+                router.route(reply);
+            } else {
+                sendServiceUnavailablePacket(iq);
+                return;
+            }
+            
         }
         else {
             // Unknown namespace requested so return error to sender
-            engine.sendErrorPacket(iq, PacketError.Condition.service_unavailable, null);
+            sendServiceUnavailablePacket(iq);
         }
     }
 
+    @Override
     public String getServiceID() {
         return "pubsub";
     }
 
+    @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
         if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
@@ -228,23 +249,28 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return true;
     }
 
+    @Override
     public boolean isServiceAdmin(JID user) {
         return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID()) ||
                 InternalComponentManager.getInstance().hasComponent(user);
     }
 
+    @Override
     public boolean isInstantNodeSupported() {
         return true;
     }
 
+    @Override
     public boolean isCollectionNodesSupported() {
         return true;
     }
 
+    @Override
     public CollectionNode getRootCollectionNode() {
         return rootCollectionNode;
     }
 
+    @Override
     public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
         if (leafType) {
             return leafDefaultConfiguration;
@@ -252,14 +278,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return collectionDefaultConfiguration;
     }
 
+    @Override
     public Collection<String> getShowPresences(JID subscriber) {
         return PubSubEngine.getShowPresences(this, subscriber);
     }
 
+    @Override
     public void presenceSubscriptionNotRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionNotRequired(this, node, user);
     }
 
+    @Override
     public void presenceSubscriptionRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionRequired(this, node, user);
     }
@@ -272,6 +301,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
+    @Override
     public JID getAddress() {
         // TODO Cache this JID for performance?
         return new JID(null, getServiceDomain(), null);
@@ -285,17 +315,27 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return sysadmins;
     }
 
+    public void setSysadmins(Collection<String> userJIDs) {
+        sysadmins.clear();
+        for (String JID : userJIDs) {
+            sysadmins.add(JID.trim().toLowerCase());
+        }
+        updateSysadminProperty();
+    }
+
     public void addSysadmin(String userJID) {
         sysadmins.add(userJID.trim().toLowerCase());
         // Update the config.
-        String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
+        updateSysadminProperty();
     }
 
     public void removeSysadmin(String userJID) {
         sysadmins.remove(userJID.trim().toLowerCase());
         // Update the config.
+        updateSysadminProperty();
+    }
+
+    private void updateSysadminProperty() {
         String[] jids = new String[sysadmins.size()];
         jids = sysadmins.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
@@ -305,6 +345,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return nodeCreationRestricted;
     }
 
+    @Override
     public boolean isMultipleSubscriptionsEnabled() {
         return multipleSubscriptionsEnabled;
     }
@@ -314,26 +355,36 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(nodeCreationRestricted));
     }
 
+    public void setUserAllowedToCreate(Collection<String> userJIDs) {
+        allowedToCreate.clear();
+        for (String JID : userJIDs) {
+            allowedToCreate.add(JID.trim().toLowerCase());
+        }
+        updateUserAllowedToCreateProperty();
+    }
+
     public void addUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create nodes.
         allowedToCreate.add(userJID.trim().toLowerCase());
         // Update the config.
-        String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
+        updateUserAllowedToCreateProperty();
     }
 
     public void removeUserAllowedToCreate(String userJID) {
         // Update the list of allowed JIDs to create nodes.
         allowedToCreate.remove(userJID.trim().toLowerCase());
         // Update the config.
+        updateUserAllowedToCreateProperty();
+    }
+
+    private void updateUserAllowedToCreateProperty() {
         String[] jids = new String[allowedToCreate.size()];
         jids = allowedToCreate.toArray(jids);
         JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         
         JiveGlobals.migrateProperty("xmpp.pubsub.enabled");
@@ -345,6 +396,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);
 
+        setIQDiscoItemsHandler(XMPPServer.getInstance().getIQDiscoItemsHandler());
+        setIQDiscoInfoHandler(XMPPServer.getInstance().getIQDiscoInfoHandler());
         serviceEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.enabled", true);
         serviceName = JiveGlobals.getProperty("xmpp.pubsub.service");
         if (serviceName == null) {
@@ -353,7 +406,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Load the list of JIDs that are sysadmins of the PubSub service
         String property = JiveGlobals.getProperty("xmpp.pubsub.sysadmin.jid");
         String[] jids;
-        if (property != null) {
+        if (property != null && !property.isEmpty()) {
             jids = property.split(",");
             for (String jid : jids) {
                 sysadmins.add(jid.trim().toLowerCase());
@@ -362,7 +415,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         nodeCreationRestricted = JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", false);
         // Load the list of JIDs that are allowed to create nodes
         property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
-        if (property != null) {
+        if (property != null && !property.isEmpty()) {
             jids = property.split(",");
             for (String jid : jids) {
                 allowedToCreate.add(jid.trim().toLowerCase());
@@ -390,7 +443,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setNotifyDelete(true);
             leafDefaultConfiguration.setNotifyRetract(true);
             leafDefaultConfiguration.setPersistPublishedItems(false);
-            leafDefaultConfiguration.setMaxPublishedItems(-1);
+            leafDefaultConfiguration.setMaxPublishedItems(1);
             leafDefaultConfiguration.setPresenceBasedDelivery(false);
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
@@ -441,7 +494,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-	public void start() {
+    public void start() {
         // Check that the service is enabled
         if (!isServiceEnabled()) {
             return;
@@ -451,14 +504,14 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine
         engine.start(this);
-        ArrayList<String> params = new ArrayList<String>();
+        ArrayList<String> params = new ArrayList<>();
         params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
@@ -467,15 +520,24 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine.shutdown(this);
     }
 
+    public void setIQDiscoItemsHandler(IQDiscoItemsHandler iqDiscoItemsHandler) {
+        this.iqDiscoItemsHandler = iqDiscoItemsHandler;
+    }
+    
+    public void setIQDiscoInfoHandler(IQDiscoInfoHandler iqDiscoInfoHandler) {
+        this.iqDiscoInfoHandler = iqDiscoInfoHandler ;
+    }
+
     private void enableService(boolean enabled) {
         if (serviceEnabled == enabled) {
             // Do nothing if the service status has not changed
             return;
         }
-        XMPPServer server = XMPPServer.getInstance();
         if (!enabled) {
             // Disable disco information
-            server.getIQDiscoItemsHandler().removeServerItemsProvider(this);
+            if (iqDiscoItemsHandler != null) {
+                iqDiscoItemsHandler.removeServerItemsProvider(this);
+            }
             // Stop the service/module
             stop();
         }
@@ -484,7 +546,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // Start the service/module
             start();
             // Enable disco information
-            server.getIQDiscoItemsHandler().addServerItemsProvider(this);
+            if (iqDiscoItemsHandler != null) {
+                iqDiscoItemsHandler.addServerItemsProvider(this);
+            }
         }
     }
 
@@ -507,24 +571,26 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public void markedAsSeniorClusterMember() {
         // Offer the service since we are the senior cluster member
-		// enableService(true);
+        // enableService(true);
     }
 
+    @Override
     public Iterator<DiscoServerItem> getItems() {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return null;
         }
-        ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-		final DiscoServerItem item = new DiscoServerItem(new JID(
-			getServiceDomain()), "Publish-Subscribe service", null, null, this,
-			this);
-		items.add(item);
-		return items.iterator();
+        ArrayList<DiscoServerItem> items = new ArrayList<>();
+        final DiscoServerItem item = new DiscoServerItem(new JID(
+            getServiceDomain()), "Publish-Subscribe service", null, null, this,
+            this);
+        items.add(item);
+        return items.iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
+        ArrayList<Element> identities = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the identity of the PubSub service
             Element identity = DocumentHelper.createElement("identity");
@@ -548,8 +614,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return identities.iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        ArrayList<String> features = new ArrayList<String>();
+        ArrayList<String> features = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the features of the PubSub service
             features.add("http://jabber.org/protocol/pubsub");
@@ -624,6 +691,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return features.iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
@@ -636,6 +704,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
@@ -652,20 +721,21 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return false;
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return null;
         }
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         String serviceDomain = getServiceDomain();
         if (name == null && node == null) {
             // Answer all first level nodes
             for (Node pubNode : rootCollectionNode.getNodes()) {
                 if (canDiscoverNode(pubNode)) {
-                	final DiscoItem item = new DiscoItem(
-						new JID(serviceDomain), pubNode.getName(),
-						pubNode.getNodeID(), null);
+                    final DiscoItem item = new DiscoItem(
+                        new JID(serviceDomain), pubNode.getName(),
+                        pubNode.getNodeID(), null);
                     answer.add(item);
                 }
             }
@@ -677,8 +747,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     // Answer all nested nodes as items
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
-                        	final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
-								nestedNode.getNodeID(), null);
+                            final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
+                                nestedNode.getNodeID(), null);
                             answer.add(item);
                         }
                     }
@@ -698,33 +768,36 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return answer.iterator();
     }
 
+    @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
         // TODO Possibly use a thread pool for sending packets (based on the jids size)
         message.setFrom(getAddress());
         for (JID jid : jids) {
             message.setTo(jid);
-            message.setID(
-                    node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+            message.setID(StringUtils.randomString(8));
             router.route(message);
         }
     }
 
+    @Override
     public void send(Packet packet) {
         router.route(packet);
     }
 
+    @Override
     public void sendNotification(Node node, Message message, JID jid) {
         message.setFrom(getAddress());
         message.setTo(jid);
-        message.setID(
-                node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+        message.setID(StringUtils.randomString(8));
         router.route(message);
     }
 
+    @Override
     public Node getNode(String nodeID) {
         return nodes.get(nodeID);
     }
 
+    @Override
     public Collection<Node> getNodes() {
         return nodes.values();
     }
@@ -733,10 +806,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return getNode(nodeID) != null;
     }
 
+    @Override
     public void addNode(Node node) {
         nodes.put(node.getNodeID(), node);
     }
 
+    @Override
     public void removeNode(String nodeID) {
         nodes.remove(nodeID);
     }
@@ -762,14 +837,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return buf.toString();
     }
 
+    @Override
     public Map<String, Map<String, String>> getBarePresences() {
         return barePresences;
     }
 
+    @Override
     public AdHocCommandManager getManager() {
         return manager;
     }
 
+    @Override
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("xmpp.pubsub.enabled")) {
             boolean enabled = Boolean.parseBoolean((String)params.get("value"));
@@ -778,6 +856,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
     }
 
+    @Override
     public void propertyDeleted(String property, Map<String, Object> params) {
         if (property.equals("xmpp.pubsub.enabled")) {
             // Enable/disable the service
@@ -785,10 +864,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
     }
 
+    @Override
     public void xmlPropertySet(String property, Map<String, Object> params) {
         // Do nothing
     }
 
+    @Override
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
     }

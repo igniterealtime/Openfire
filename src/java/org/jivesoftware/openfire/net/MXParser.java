@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: 3135 $
- * $Date: 2005-12-01 02:03:04 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +38,7 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
     private long lastHeartbeat = 0;
 
     @Override
-	protected int nextImpl()
+    protected int nextImpl()
         throws XmlPullParserException, IOException
     {
         text = null;
@@ -362,48 +358,48 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
         inputEncoding = oldEncoding;
     }
 
-	private boolean highSurrogateSeen = false;
+    private boolean highSurrogateSeen = false;
 
-	/**
-	 * Makes sure that each individual character is a valid XML character.
-	 * 
-	 * Note that when MXParser is being modified to handle multibyte chars correctly, this method needs to change (as
-	 * then, there are more codepoints to check).
-	 * 
-	 */
+    /**
+     * Makes sure that each individual character is a valid XML character.
+     * 
+     * Note that when MXParser is being modified to handle multibyte chars correctly, this method needs to change (as
+     * then, there are more codepoints to check).
+     * 
+     */
     @Override
     protected char more() throws IOException, XmlPullParserException {
-    	final char codePoint  = super.more(); // note - this does NOT return a codepoint now, but simply a (double byte) character!
-		boolean validCodepoint = false;
-		boolean isLowSurrogate = Character.isLowSurrogate(codePoint);
-		if ((codePoint == 0x0) ||  // 0x0 is not allowed, but flash clients insist on sending this as the very first character of a stream. We should stop allowing this codepoint after the first byte has been parsed.
-				(codePoint == 0x9) ||
-				(codePoint == 0xA) ||
-				(codePoint == 0xD) ||
-				((codePoint >= 0x20) && (codePoint <= 0xD7FF)) ||
-				((codePoint >= 0xE000) && (codePoint <= 0xFFFD))) {
-			validCodepoint = true;
-		}
-		else if (highSurrogateSeen) {
-			if (isLowSurrogate) {
-				validCodepoint = true;
-			} else {
-				throw new XmlPullParserException("High surrogate followed by non low surrogate '0x" + String.format("%x", (int) codePoint) + "'");
-			}
-		}
-		else if (isLowSurrogate) {
-			throw new XmlPullParserException("Low surrogate '0x " + String.format("%x", (int) codePoint) + " without preceeding high surrogate");
-		}
-		else if (Character.isHighSurrogate(codePoint)) {
-			highSurrogateSeen = true;
-			// Return here so that highSurrogateSeen is not reset
-			return codePoint;
-		}
-		// Always reset high surrogate seen
-		highSurrogateSeen = false;
-		if (validCodepoint)
-			return codePoint;
+        final char codePoint  = super.more(); // note - this does NOT return a codepoint now, but simply a (double byte) character!
+        boolean validCodepoint = false;
+        boolean isLowSurrogate = Character.isLowSurrogate(codePoint);
+        if ((codePoint == 0x0) ||  // 0x0 is not allowed, but flash clients insist on sending this as the very first character of a stream. We should stop allowing this codepoint after the first byte has been parsed.
+                (codePoint == 0x9) ||
+                (codePoint == 0xA) ||
+                (codePoint == 0xD) ||
+                ((codePoint >= 0x20) && (codePoint <= 0xD7FF)) ||
+                ((codePoint >= 0xE000) && (codePoint <= 0xFFFD))) {
+            validCodepoint = true;
+        }
+        else if (highSurrogateSeen) {
+            if (isLowSurrogate) {
+                validCodepoint = true;
+            } else {
+                throw new XmlPullParserException("High surrogate followed by non low surrogate '0x" + String.format("%x", (int) codePoint) + "'");
+            }
+        }
+        else if (isLowSurrogate) {
+            throw new XmlPullParserException("Low surrogate '0x " + String.format("%x", (int) codePoint) + " without preceeding high surrogate");
+        }
+        else if (Character.isHighSurrogate(codePoint)) {
+            highSurrogateSeen = true;
+            // Return here so that highSurrogateSeen is not reset
+            return codePoint;
+        }
+        // Always reset high surrogate seen
+        highSurrogateSeen = false;
+        if (validCodepoint)
+            return codePoint;
 
-		throw new XmlPullParserException("Illegal XML character '0x" + String.format("%x", (int) codePoint) + "'");
+        throw new XmlPullParserException("Illegal XML character '0x" + String.format("%x", (int) codePoint) + "'");
     }
 }

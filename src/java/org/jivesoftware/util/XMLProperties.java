@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,21 +17,19 @@
 package org.jivesoftware.util;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -75,17 +69,17 @@ import org.slf4j.LoggerFactory;
  */
 public class XMLProperties {
 
-	private static final Logger Log = LoggerFactory.getLogger(XMLProperties.class);
-	private static final String ENCRYPTED_ATTRIBUTE = "encrypted";
+    private static final Logger Log = LoggerFactory.getLogger(XMLProperties.class);
+    private static final String ENCRYPTED_ATTRIBUTE = "encrypted";
 
-    private File file;
+    private Path file;
     private Document document;
 
     /**
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map<String, String> propertyCache = new HashMap<String, String>();
+    private Map<String, String> propertyCache = new HashMap<>();
 
     /**
      * Creates a new empty XMLPropertiesTest object.
@@ -104,7 +98,7 @@ public class XMLProperties {
      * @throws IOException if an error occurs loading the properties.
      */
     public XMLProperties(String fileName) throws IOException {
-        this(new File(fileName));
+        this(Paths.get(fileName));
     }
 
     /**
@@ -125,37 +119,48 @@ public class XMLProperties {
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.
      */
+    @Deprecated
     public XMLProperties(File file) throws IOException {
+        this(file.toPath());
+    }
+
+    /**
+     * Creates a new XMLPropertiesTest object.
+     *
+     * @param file the file that properties should be read from and written to.
+     * @throws IOException if an error occurs loading the properties.
+     */
+    public XMLProperties(Path file) throws IOException {
         this.file = file;
-        if (!file.exists()) {
+        if (Files.notExists(file)) {
             // Attempt to recover from this error case by seeing if the
             // tmp file exists. It's possible that the rename of the
             // tmp file failed the last time Jive was running,
             // but that it exists now.
-            File tempFile;
-            tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-            if (tempFile.exists()) {
-                Log.error("WARNING: " + file.getName() + " was not found, but temp file from " +
+            Path tempFile;
+            tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
+            if (Files.exists(tempFile)) {
+                Log.error("WARNING: " + file.getFileName() + " was not found, but temp file from " +
                         "previous write operation was. Attempting automatic recovery." +
                         " Please check file for data consistency.");
-                tempFile.renameTo(file);
+                Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
             }
             // There isn't a possible way to recover from the file not
             // being there, so throw an error.
             else {
-                throw new FileNotFoundException("XML properties file does not exist: "
-                        + file.getName());
+                throw new NoSuchFileException("XML properties file does not exist: "
+                        + file.getFileName());
             }
         }
         // Check read and write privs.
-        if (!file.canRead()) {
-            throw new IOException("XML properties file must be readable: " + file.getName());
+        if (!Files.isReadable(file)) {
+            throw new IOException("XML properties file must be readable: " + file.getFileName());
         }
-        if (!file.canWrite()) {
-            throw new IOException("XML properties file must be writable: " + file.getName());
+        if (!Files.isWritable(file)) {
+            throw new IOException("XML properties file must be writable: " + file.getFileName());
         }
 
-        try (FileReader reader = new FileReader(file)) {
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
              buildDoc(reader);
         }
     }
@@ -167,7 +172,7 @@ public class XMLProperties {
      * @return the value of the specified property.
      */
     public synchronized String getProperty(String name) {
-    	return getProperty(name, true);
+        return getProperty(name, true);
     }
 
     /**
@@ -201,17 +206,17 @@ public class XMLProperties {
             return null;
         }
         else {
-        	// check to see if the property is marked as encrypted
-        	if (JiveGlobals.isPropertyEncrypted(name)) {
-        		Attribute encrypted = element.attribute(ENCRYPTED_ATTRIBUTE);
-        		if (encrypted != null) {
-            		value = JiveGlobals.getPropertyEncryptor().decrypt(value);
-        		} else {
-        			// rewrite property as an encrypted value
-        			Log.info("Rewriting XML property " + name + " as an encrypted value");
-        			setProperty(name, value);
-        		}
-        	}
+            // check to see if the property is marked as encrypted
+            if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                Attribute encrypted = element.attribute(ENCRYPTED_ATTRIBUTE);
+                if (encrypted != null) {
+                    value = JiveGlobals.getPropertyEncryptor().decrypt(value);
+                } else {
+                    // rewrite property as an encrypted value
+                    Log.info("Rewriting XML property " + name + " as an encrypted value");
+                    setProperty(name, value);
+                }
+            }
             // Add to cache so that getting property next time is fast.
             propertyCache.put(name, value);
             return value;
@@ -240,7 +245,7 @@ public class XMLProperties {
      * @return all child property values for the given node name.
      */
     public List<String> getProperties(String name, boolean asList) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML hierarchy,
         // stopping one short.
@@ -259,27 +264,27 @@ public class XMLProperties {
         String value;
         boolean updateEncryption = false;
         while (iter.hasNext()) {
-        	prop = iter.next();
+            prop = iter.next();
             // Empty strings are skipped.
             value = prop.getTextTrim();
             if (!"".equals(value)) {
-            	// check to see if the property is marked as encrypted
-            	if (JiveGlobals.isPropertyEncrypted(name)) {
-            		Attribute encrypted = prop.attribute(ENCRYPTED_ATTRIBUTE);
-            		if (encrypted != null) {
-                		value = JiveGlobals.getPropertyEncryptor().decrypt(value);
-            		} else {
-            			// rewrite property as an encrypted value
-            			prop.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
-            			updateEncryption = true;
-            		}
-            	}
+                // check to see if the property is marked as encrypted
+                if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                    Attribute encrypted = prop.attribute(ENCRYPTED_ATTRIBUTE);
+                    if (encrypted != null) {
+                        value = JiveGlobals.getPropertyEncryptor().decrypt(value);
+                    } else {
+                        // rewrite property as an encrypted value
+                        prop.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+                        updateEncryption = true;
+                    }
+                }
                 result.add(value);
             }
         }
         if (updateEncryption) {
-			Log.info("Rewriting values for XML property " + name + " using encryption");
-        	saveProperties();
+            Log.info("Rewriting values for XML property " + name + " using encryption");
+            saveProperties();
         }
         return result;
     }
@@ -307,7 +312,7 @@ public class XMLProperties {
      * @return all child property values for the given node name.
      */
     public String[] getProperties(String name) {
-    	return (String[]) getProperties(name, false).toArray();
+        return (String[]) getProperties(name, false).toArray();
     }
 
     /**
@@ -346,16 +351,16 @@ public class XMLProperties {
         }
         // We found matching property, return values of the children.
         Iterator<Element> iter = element.elementIterator(propName[propName.length - 1]);
-        ArrayList<String> props = new ArrayList<String>();
+        ArrayList<String> props = new ArrayList<>();
         Element prop;
         String value;
         while (iter.hasNext()) {
-        	prop = iter.next();
-        	value = prop.getText();
-        	// check to see if the property is marked as encrypted
-        	if (JiveGlobals.isPropertyEncrypted(name) && Boolean.parseBoolean(prop.attribute(ENCRYPTED_ATTRIBUTE).getText())) {
-        		value = JiveGlobals.getPropertyEncryptor().decrypt(value);
-        	}
+            prop = iter.next();
+            value = prop.getText();
+            // check to see if the property is marked as encrypted
+            if (JiveGlobals.isPropertyEncrypted(name) && Boolean.parseBoolean(prop.attribute(ENCRYPTED_ATTRIBUTE).getText())) {
+                value = JiveGlobals.getPropertyEncryptor().decrypt(value);
+            }
             props.add(value);
         }
         return props.iterator();
@@ -418,7 +423,7 @@ public class XMLProperties {
         String result = null;
         if (element != null) {
             // Get the attribute value and then remove the attribute
-        	Attribute attr = element.attribute(attribute);
+            Attribute attr = element.attribute(attribute);
             result = attr.getValue();
             element.remove(attr);
         }
@@ -458,7 +463,7 @@ public class XMLProperties {
         }
         String childName = propName[propName.length - 1];
         // We found matching property, clear all children.
-        List<Element> toRemove = new ArrayList<Element>();
+        List<Element> toRemove = new ArrayList<>();
         Iterator<Element> iter = element.elementIterator(childName);
         while (iter.hasNext()) {
             toRemove.add(iter.next());
@@ -481,19 +486,19 @@ public class XMLProperties {
                 childElement.addCDATA(value.substring(9, value.length()-3));
             }
             else {
-            	String propValue = StringEscapeUtils.escapeXml(value);
-            	// check to see if the property is marked as encrypted
-            	if (JiveGlobals.isPropertyEncrypted(name)) {
-            		propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
-            		childElement.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
-            	}
+                String propValue = StringEscapeUtils.escapeXml(value);
+                // check to see if the property is marked as encrypted
+                if (JiveGlobals.isPropertyEncrypted(name)) {
+                    propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
+                    childElement.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+                }
                 childElement.setText(propValue);
             }
         }
         saveProperties();
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", values);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -508,13 +513,13 @@ public class XMLProperties {
      * @return True if the value was added to the list; false if the value was already present
      */
     public boolean addToList(String propertyName, String value) {
-    	
-    	List<String> properties = getProperties(propertyName, true);
-    	boolean propertyWasAdded = properties.add(value);
-    	if (propertyWasAdded) {
-    		setProperties(propertyName, properties);
-    	}
-    	return propertyWasAdded;
+        
+        List<String> properties = getProperties(propertyName, true);
+        boolean propertyWasAdded = properties.add(value);
+        if (propertyWasAdded) {
+            setProperties(propertyName, properties);
+        }
+        return propertyWasAdded;
     }
     
     /**
@@ -526,13 +531,13 @@ public class XMLProperties {
      * @return True if the value was removed from the list; false if the value was not found
      */
     public boolean removeFromList(String propertyName, String value) {
-    	
-    	List<String> properties = getProperties(propertyName, true);
-    	boolean propertyWasRemoved = properties.remove(value);
-    	if (propertyWasRemoved) {
-    		setProperties(propertyName, properties);
-    	}
-    	return propertyWasRemoved;
+        
+        List<String> properties = getProperties(propertyName, true);
+        boolean propertyWasRemoved = properties.remove(value);
+        if (propertyWasRemoved) {
+            setProperties(propertyName, properties);
+        }
+        return propertyWasRemoved;
     }
 
     /**
@@ -541,28 +546,28 @@ public class XMLProperties {
      * @return Names for all properties in the file
      */
     public List<String> getAllPropertyNames() {
-    	List<String> result = new ArrayList<String>();
-    	for (String propertyName : getChildPropertyNamesFor(document.getRootElement(), "")) {
-    		if (getProperty(propertyName) != null) {
-    			result.add(propertyName);
-    		}
-    	}
-    	return result;
+        List<String> result = new ArrayList<>();
+        for (String propertyName : getChildPropertyNamesFor(document.getRootElement(), "")) {
+            if (getProperty(propertyName) != null) {
+                result.add(propertyName);
+            }
+        }
+        return result;
     }
     
     private List<String> getChildPropertyNamesFor(Element parent, String parentName) {
-    	List<String> result = new ArrayList<String>();
-    	for (Element child : (Collection<Element>) parent.elements()) {
-    		String childName = new StringBuilder(parentName)
-							.append(parentName.isEmpty() ? "" : ".")
-							.append(child.getName())
-							.toString();
-    		if (!result.contains(childName)) {
-	    		result.add(childName);
-	    		result.addAll(getChildPropertyNamesFor(child, childName));
-    		}
-    	}
-    	return result;
+        List<String> result = new ArrayList<>();
+        for (Element child : (Collection<Element>) parent.elements()) {
+            String childName = new StringBuilder(parentName)
+                            .append(parentName.isEmpty() ? "" : ".")
+                            .append(child.getName())
+                            .toString();
+            if (!result.contains(childName)) {
+                result.add(childName);
+                result.addAll(getChildPropertyNamesFor(child, childName));
+            }
+        }
+        return result;
     }
 
     /**
@@ -642,19 +647,19 @@ public class XMLProperties {
             element.addCDATA(value.substring(9, value.length()-3));
         }
         else {
-        	String propValue = StringEscapeUtils.escapeXml(value);
-        	// check to see if the property is marked as encrypted
-        	if (JiveGlobals.isPropertyEncrypted(name)) {
-        		propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
-        		element.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
-        	}
-        	element.setText(propValue);
+            String propValue = StringEscapeUtils.escapeXml(value);
+            // check to see if the property is marked as encrypted
+            if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
+                element.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+            }
+            element.setText(propValue);
         }
         // Write the XML properties to disk
         saveProperties();
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -682,7 +687,7 @@ public class XMLProperties {
         // Found the correct element to remove, so remove it...
         element.remove(element.element(propName[propName.length - 1]));
         if (element.elements().size() == 0) {
-        	element.getParent().remove(element);
+            element.getParent().remove(element);
         }
         // .. then write to disk.
         saveProperties();
@@ -739,14 +744,14 @@ public class XMLProperties {
      * used during the writing process for maximum safety.
      */
     private synchronized void saveProperties() {
-    	if (file == null) {
-    		Log.error("Unable to save XML properties; no file specified");
-    		return;
-    	}
+        if (file == null) {
+            Log.error("Unable to save XML properties; no file specified");
+            return;
+        }
         boolean error = false;
         // Write data out to a temporary file first.
-        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
+        Path tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
+        try (Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
@@ -760,13 +765,15 @@ public class XMLProperties {
         // No errors occurred, so delete the main file.
         if (!error) {
             // Delete the old file so we can replace it.
-            if (!file.delete()) {
-                Log.error("Error deleting property file: " + file.getAbsolutePath());
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                Log.error("Error deleting property file: " + file);
                 return;
             }
             // Copy new contents to the file.
             try {
-                copy(tempFile, file);
+                Files.copy(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
@@ -775,7 +782,11 @@ public class XMLProperties {
             }
             // If no errors, delete the temp file.
             if (!error) {
-                tempFile.delete();
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    Log.error("Error deleting temp file: " + tempFile);
+                }
             }
         }
     }
@@ -789,7 +800,7 @@ public class XMLProperties {
      * @return an array representation of the given Jive property.
      */
     private String[] parsePropertyName(String name) {
-        List<String> propName = new ArrayList<String>(5);
+        List<String> propName = new ArrayList<>(5);
         // Use a StringTokenizer to tokenize the property name.
         StringTokenizer tokenizer = new StringTokenizer(name, ".");
         while (tokenizer.hasMoreTokens()) {
@@ -802,42 +813,6 @@ public class XMLProperties {
         for (String propertyName : propertyMap.keySet()) {
             String propertyValue = propertyMap.get(propertyName);
             setProperty(propertyName, propertyValue);
-        }
-    }
-
-    /**
-     * Copies the inFile to the outFile.
-     *
-     * @param inFile  The file to copy from
-     * @param outFile The file to copy to
-     * @throws IOException If there was a problem making the copy
-     */
-    private static void copy(File inFile, File outFile) throws IOException {
-        try (FileInputStream fin = new FileInputStream(inFile)) {
-            try (FileOutputStream fout = new FileOutputStream(outFile)) {
-                copy(fin, fout);
-            }
-        }
-    }
-
-    /**
-     * Copies data from an input stream to an output stream
-     *
-     * @param in the stream to copy data from.
-     * @param out the stream to copy data to.
-     * @throws IOException if there's trouble during the copy.
-     */
-    private static void copy(InputStream in, OutputStream out) throws IOException {
-        // Do not allow other threads to intrude on streams during copy.
-        synchronized (in) {
-            synchronized (out) {
-                byte[] buffer = new byte[256];
-                while (true) {
-                    int bytesRead = in.read(buffer);
-                    if (bytesRead == -1) break;
-                    out.write(buffer, 0, bytesRead);
-                }
-            }
         }
     }
 }

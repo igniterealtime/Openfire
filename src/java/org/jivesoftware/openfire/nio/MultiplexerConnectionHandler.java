@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +17,7 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.session.IoSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
@@ -34,22 +32,22 @@ import org.jivesoftware.openfire.net.StanzaHandler;
  */
 public class MultiplexerConnectionHandler extends ConnectionHandler {
 
-    public MultiplexerConnectionHandler(String serverName) {
-        super(serverName);
+    public MultiplexerConnectionHandler(ConnectionConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
-	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, new MultiplexerPacketDeliverer());
+    NIOConnection createNIOConnection(IoSession session) {
+        return new NIOConnection(session, new MultiplexerPacketDeliverer(), configuration );
     }
 
     @Override
-	StanzaHandler createStanzaHandler(NIOConnection connection) {
-        return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
+    StanzaHandler createStanzaHandler(NIOConnection connection) {
+        return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
-	int getMaxIdleTime() {
+    int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000) / 1000;
     }
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,8 +38,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.EmailService;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
@@ -61,7 +57,7 @@ import org.xmpp.packet.JID;
  */
 public class ChatTranscriptManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatTranscriptManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatTranscriptManager.class);
 
     private static final String GET_WORKGROUP_SESSIONS =
             "SELECT sessionID, userID, startTime, endTime, queueWaitTime, state " +
@@ -175,7 +171,7 @@ public class ChatTranscriptManager {
         }
 
         // Define time zone used in the transcript.
-        SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
+        SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT);
         UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         final SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
@@ -378,7 +374,7 @@ public class ChatTranscriptManager {
         if (transcript == null || "".equals(transcript)) {
             return "";
         }
-        final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
+        final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT);
         UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         final SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");

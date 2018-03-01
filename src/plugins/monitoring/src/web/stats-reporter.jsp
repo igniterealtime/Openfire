@@ -10,8 +10,8 @@
 <%@ page import="java.util.List"%>
 <%@ page import="org.jivesoftware.openfire.plugin.MonitoringPlugin" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     List<String> statList = Arrays.asList(getStatsViewer().getAllHighLevelStatKeys());
@@ -128,7 +128,7 @@
 
         function createCookie(name,value,days) {
             if (days) {
-		        var date = new Date();
+                var date = new Date();
                 date.setTime(date.getTime()+(days*24*60*60*1000));
                 var expires = "; expires="+date.toGMTString();
             }
@@ -225,8 +225,8 @@
 
             var monthLength = new Array(31,28,31,30,31,30,31,31,30,31,30,31);
             var day = parseInt(dateSplit[1]);
-	        var month = parseInt(dateSplit[0]);
-	        var year = parseInt(dateSplit[2]);
+            var month = parseInt(dateSplit[0]);
+            var year = parseInt(dateSplit[2]);
 
             if (!day || !month || !year)
                 return false;
@@ -274,7 +274,7 @@
         }
     </script>
     <style type="text/css">
-	    @import "style/style.css";
+        @import "style/style.css";
     </style>
 </head>
 

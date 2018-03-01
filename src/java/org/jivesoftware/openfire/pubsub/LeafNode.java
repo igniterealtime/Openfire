@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,8 +41,8 @@ import org.xmpp.packet.Message;
  */
 public class LeafNode extends Node {
 
-	private static final String genIdSeed = UUID.randomUUID().toString();
-	private static final AtomicLong sequenceCounter = new AtomicLong();
+    private static final String genIdSeed = UUID.randomUUID().toString();
+    private static final AtomicLong sequenceCounter = new AtomicLong();
 
     /**
      * Flag that indicates whether to persist items to storage. Note that when the
@@ -87,7 +83,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	protected void configure(FormField field) throws NotAcceptableException {
+    protected void configure(FormField field) throws NotAcceptableException {
         List<String> values;
         String booleanValue;
         if ("pubsub#persist_items".equals(field.getVariable())) {
@@ -107,7 +103,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	void postConfigure(DataForm completedForm) {
+    void postConfigure(DataForm completedForm) {
         List<String> values;
         if (!persistPublishedItems) {
             // Always save the last published item when not configured to use persistent items
@@ -123,7 +119,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	protected void addFormFields(DataForm form, boolean isEditing) {
+    protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
         FormField typeField = form.getField("pubsub#node_type");
@@ -165,13 +161,13 @@ public class LeafNode extends Node {
     }
 
     @Override
-	protected void deletingNode() {
+    protected void deletingNode() {
     }
 
-	public synchronized void setLastPublishedItem(PublishedItem item)
-	{
-		if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate()))
-			lastPublished = item;
+    public synchronized void setLastPublishedItem(PublishedItem item)
+    {
+        if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate()))
+            lastPublished = item;
     }
 
     public int getMaxPayloadSize() {
@@ -225,7 +221,7 @@ public class LeafNode extends Node {
      * @param itemElements list of dom4j elements that contain info about the published items.
      */
     public void publishItems(JID publisher, List<Element> itemElements) {
-        List<PublishedItem> newPublishedItems = new ArrayList<PublishedItem>();
+        List<PublishedItem> newPublishedItems = new ArrayList<>();
         if (isItemRequired()) {
             String itemID;
             Element payload;
@@ -237,7 +233,7 @@ public class LeafNode extends Node {
                 
                 // Make sure that the published item has a unique ID if NOT assigned by publisher
                 if (itemID == null) {
-                	itemID = genIdSeed + sequenceCounter.getAndIncrement();
+                    itemID = genIdSeed + sequenceCounter.getAndIncrement();
                 }
 
                 // Create a new published item
@@ -249,7 +245,7 @@ public class LeafNode extends Node {
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
                 if (isPersistPublishedItems()) {
-                	PubSubPersistenceManager.savePublishedItem(newItem);
+                    PubSubPersistenceManager.savePublishedItem(newItem);
                 }
             }
         }
@@ -258,7 +254,7 @@ public class LeafNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         // Broadcast event notification to subscribers and parent node subscribers
-        Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
+        Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
         for (CollectionNode parentNode : getParents()) {
             for (NodeSubscription subscription : parentNode.getSubscriptions()) {
@@ -287,6 +283,9 @@ public class LeafNode extends Node {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
             PubSubPersistenceManager.removePublishedItem(item);
+            if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
+                lastPublished = null;
+            }
         }
         if (isNotifiedOfRetract()) {
             // Broadcast notification deletion to subscribers
@@ -296,7 +295,7 @@ public class LeafNode extends Node {
                     message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
             // Send notification that items have been deleted to subscribers and parent node
             // subscribers
-            Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
+            Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
             // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
             for (CollectionNode parentNode : getParents()) {
                 for (NodeSubscription subscription : parentNode.getSubscriptions()) {
@@ -354,7 +353,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	public List<PublishedItem> getPublishedItems() {
+    public List<PublishedItem> getPublishedItems() {
         return getPublishedItems(getMaxPublishedItems());
     }
 
@@ -385,11 +384,11 @@ public class LeafNode extends Node {
     }
 
     @Override
-	public synchronized PublishedItem getLastPublishedItem() {
-    	if (lastPublished == null){
-    		lastPublished = PubSubPersistenceManager.getLastPublishedItem(this);
-    	}
-    	return lastPublished;
+    public synchronized PublishedItem getLastPublishedItem() {
+        if (lastPublished == null){
+            lastPublished = PubSubPersistenceManager.getLastPublishedItem(this);
+        }
+        return lastPublished;
     }
 
     /**
@@ -398,7 +397,7 @@ public class LeafNode extends Node {
      * @return true if the last published item is going to be sent to new subscribers.
      */
     @Override
-	public boolean isSendItemSubscribe() {
+    public boolean isSendItemSubscribe() {
         return sendItemSubscribe;
     }
 

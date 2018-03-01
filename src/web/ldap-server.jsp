@@ -9,8 +9,8 @@
 %>
 
 <style type="text/css" title="setupStyle" media="screen">
-	@import "style/lightbox.css";
-	@import "style/ldap.css";
+    @import "style/lightbox.css";
+    @import "style/ldap.css";
 </style>
 
 <script language="JavaScript" type="text/javascript" src="js/prototype.js"></script>

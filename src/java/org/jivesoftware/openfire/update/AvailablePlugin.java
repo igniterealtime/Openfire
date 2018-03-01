@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,191 +16,188 @@
 
 package org.jivesoftware.openfire.update;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.container.PluginMetadata;
+import org.jivesoftware.util.JavaSpecVersion;
+import org.jivesoftware.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Plugin available at igniterealtime.org. The plugin may or may not be locally installed.
  *
  * @author Gaston Dombiak
  */
-public class AvailablePlugin {
+public class AvailablePlugin extends PluginMetadata
+{
+    private static final Logger Log = LoggerFactory.getLogger( AvailablePlugin.class );
 
-    /**
-     * Name of the plugin.
-     */
-    private String name;
-    /**
-     * Latest version of the plugin that was found.
-     */
-    private String latestVersion;
     /**
      * URL from where the latest version of the plugin can be downloaded.
      */
-    private String url;
-    /**
-     * Icon's URL of the latest version of the plugin.
-     */
-    private String icon;
-    /**
-     * README URL of the latest version of the plugin.
-     */
-    private String readme;
-    /**
-     * Changelog URL of the latest version of the plugin.
-     */
-    private String changelog;
-    /**
-     * Type of license of the plugin.
-     */
-    private String licenseType;
-    /**
-     * Description of the plugin as specified in plugin.xml.
-     */
-    private String description;
-    /**
-     * Author of the plugin as specified in plugin.xml.
-     */
-    private String author;
-    /**
-     * Minimum server version required by this plugin as specified in plugin.xml.
-     */
-    private String minServerVersion;
+    private final URL downloadURL;
+
     /**
      * Size in bytes of the plugin jar file.
      */
-    private String fileSize;
+    private final long fileSize;
 
-    public AvailablePlugin(String name, String description, String latestVersion, String author,
-            String icon, String changelog, String readme, String licenseType,
-            String minServerVersion, String url, String fileSize) {
-        this.author = author;
-        this.icon = icon;
-        this.changelog = changelog;
-        this.readme = readme;
-        this.licenseType = licenseType;
-        this.description = description;
-        this.latestVersion = latestVersion;
-        this.minServerVersion = minServerVersion;
-        this.name = name;
-        this.url = url;
+    public static AvailablePlugin getInstance( Element plugin )
+    {
+        String pluginName = plugin.attributeValue("name");
+        Version latestVersion = null;
+        String latestVersionValue = plugin.attributeValue("latest");
+        if ( latestVersionValue != null && !latestVersionValue.isEmpty() )
+        {
+            latestVersion = new Version( latestVersionValue );
+        }
+
+        URL icon = null;
+        String iconValue = plugin.attributeValue("icon");
+        if ( iconValue != null && !iconValue.isEmpty() )
+        {
+            try
+            {
+                icon = new URL( iconValue );
+            }
+            catch ( MalformedURLException e )
+            {
+                Log.warn( "Unable to create icon URL from value '{}' for plugin {}.", iconValue, pluginName, e );
+            }
+        }
+
+        URL readme = null;
+        String readmeValue = plugin.attributeValue("readme");
+        if ( readmeValue != null && !readmeValue.isEmpty() )
+        {
+            try
+            {
+                readme = new URL( readmeValue );
+            }
+            catch ( MalformedURLException e )
+            {
+                Log.warn( "Unable to create readme URL from value '{}' for plugin {}.", readmeValue, pluginName, e );
+            }
+        }
+
+        URL changelog = null;
+        String changelogValue = plugin.attributeValue("changelog");
+        if ( changelogValue != null && !changelogValue.isEmpty() )
+        {
+            try
+            {
+                changelog = new URL( changelogValue );
+            }
+            catch ( MalformedURLException e )
+            {
+                Log.warn( "Unable to create changelog URL from value '{}' for plugin {}.", changelogValue, pluginName, e );
+            }
+        }
+        URL downloadUrl = null;
+        String downloadUrlValue = plugin.attributeValue("url");
+        if ( downloadUrlValue != null && !downloadUrlValue.isEmpty() )
+        {
+            try
+            {
+                downloadUrl = new URL( downloadUrlValue );
+            }
+            catch ( MalformedURLException e )
+            {
+                Log.warn( "Unable to create download URL from value '{}' for plugin {}.", downloadUrlValue, pluginName, e );
+            }
+        }
+
+        String license = plugin.attributeValue("licenseType");
+        String description = plugin.attributeValue("description");
+        String author = plugin.attributeValue("author");
+
+        Version minServerVersion = null;
+        String minServerVersionValue = plugin.attributeValue("minServerVersion");
+        if ( minServerVersionValue != null && !minServerVersionValue.isEmpty() )
+        {
+            minServerVersion = new Version( minServerVersionValue );
+        }
+
+        Version priorToServerVersion = null;
+        String priorToServerVersionValue = plugin.attributeValue("priorToServerVersion");
+        if ( priorToServerVersionValue != null && !priorToServerVersionValue.isEmpty() )
+        {
+            priorToServerVersion = new Version( priorToServerVersionValue );
+        }
+
+        JavaSpecVersion minJavaVersion = null;
+        String minJavaVersionValue = plugin.attributeValue( "minJavaVersion" );
+        if ( minJavaVersionValue != null && !minJavaVersionValue.isEmpty() )
+        {
+            minJavaVersion = new JavaSpecVersion( minJavaVersionValue );
+        }
+
+        long fileSize = -1;
+        String fileSizeValue = plugin.attributeValue("fileSize");
+        if ( fileSizeValue != null && !fileSizeValue.isEmpty() )
+        {
+            fileSize = Long.parseLong( fileSizeValue );
+        }
+
+        String canonical = downloadUrlValue != null ? downloadUrlValue.substring( downloadUrlValue.lastIndexOf( '/' ) + 1, downloadUrlValue.lastIndexOf( '.' ) ) : null;
+
+        return new AvailablePlugin(
+                pluginName,
+                canonical,
+                description,
+                latestVersion,
+                author,
+                icon,
+                changelog,
+                readme,
+                license,
+                minServerVersion,
+                priorToServerVersion,
+                minJavaVersion,
+                downloadUrl,
+                fileSize
+        );
+
+    }
+    public AvailablePlugin( String name, String canonicalName, String description, Version latestVersion, String author,
+                            URL icon, URL changelog, URL readme, String license,
+                            Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion,
+                            URL downloadUrl, long fileSize ) {
+        super(
+                name,
+                canonicalName,
+                description,
+                latestVersion,
+                author,
+                icon,
+                changelog,
+                readme,
+                license,
+                minServerVersion,
+                priorToServerVersion,
+                minJavaVersion
+        );
+        this.downloadURL = downloadUrl;
         this.fileSize = fileSize;
     }
 
     /**
-     * Returns the name of the plugin that is not installed.
+     * URL from where the latest version of the plugin can be downloaded.
      *
-     * @return the name of the plugin that is not installed.
+     * @return download URL.
      */
-    public String getName() {
-        return name;
+    public URL getDownloadURL() {
+        return downloadURL;
     }
-
-    /**
-     * Returns the latest version of the plugin that is not installed.
-     *
-     * @return the latest version of the plugin that is not installed.
-     */
-    public String getLatestVersion() {
-        return latestVersion;
-    }
-
-    /**
-     * Return the icon's URL of the latest version of the plugin.
-     *
-     * @return the icon's URL of the latest version of the plugin.
-     */
-    public String getIcon() {
-        return icon;
-    }
-
-    /**
-     * Returns the URL to the README file of the latest version of the plugin.
-     *
-     * @return the URL to the README file of the latest version of the plugin.
-     */
-    public String getReadme() {
-        return readme;
-    }
-
-    /**
-     * Returns the URL to the change log of the plugin.
-     *
-     * @return the URL to the change log of the plugin.
-     */
-    public String getChangelog() {
-        return changelog;
-    }
-
-    /**
-     * Returns the URL from where the plugin.
-     *
-     * @return the URL from where the plugin.
-     */
-    public String getURL() {
-        return url;
-    }
-
-    /**
-     * Returns the author of the plugin as specified in plugin.xml.
-     *
-     * @return author of the plugin as specified in plugin.xml.
-     */
-    public String getAuthor() {
-        return author;
-    }
-
-    /**
-     * Returns true if the plugin is commercial.
-     *
-     * @return true if the plugin is commercial.
-     */
-    public boolean isCommercial() {
-        return "commercial".equals(licenseType);
-    }
-
-    /**
-     * Returns the type of license the plugin is being released under.
-     *
-     * @return the type of license of the plugin.
-     */
-    public String getLicenseType() {
-        return licenseType;
-    }
-
-    /**
-     * Returns the description of the plugin as specified in plugin.xml.
-     *
-     * @return description of the plugin as specified in plugin.xml.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Returns the minimum server version required by this plugin as specified in plugin.xml.
-     *
-     * @return minimum server version required by this plugin as specified in plugin.xml.
-     */
-    public String getMinServerVersion() {
-        return minServerVersion;
-    }
-
     /**
      * Returns the size in bytes of the plugin jar file.
      *
      * @return the size in bytes of the plugin jar file.
      */
     public long getFileSize() {
-        if (fileSize == null) {
-            // Dummy value for old xml files that didn't contain this piece of information
-            return -1L;
-        }
-        return Long.parseLong(fileSize);
-    }
-
-    /**
-     * Returns the hash code for this object.
-     * @return the hash code.
-     */
-    public int getHashCode(){
-        return hashCode();
+        return fileSize;
     }
 }

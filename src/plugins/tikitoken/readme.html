@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>TikiToken Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+
+        H2 {
+            font-size : 10pt;
+            font-weight : bold;
+        }
+
+        A:hover {
+            text-decoration : none;
+        }
+
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    TikiToken Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+<p>
+    This plugin adds a SASL mechanism to Openfire that allows users to authenticate with a Tiki-generated access token.
+</p>
+
+<h2>Installation</h2>
+<p>
+    Copy the plugin JAR file into the plugins directory of your Openfire installation. The plugin will then be
+    automatically deployed.
+</p>
+
+<h2>Upgrade</h2>
+<p>
+    To upgrade to a new version, copy the new plugin JAR file into the plugins directory of your Openfire installation,
+    overwriting the JAR file from the previous version. Within a minute or so, Openfire will detect the new plugin,
+    unload the previous version and load the new version. You can verify that the new version has been loaded by
+    observing the plugin version number in the Openfire Admin Console.
+</p>
+
+<h2>Configuration</h2>
+<p>
+    The base URL of the Tiki suite against which authentication is performed needs to be defined in a property named
+    <tt>org.tiki.tikitoken.baseUrl</tt>
+</p>
+
+</body>
+</html>

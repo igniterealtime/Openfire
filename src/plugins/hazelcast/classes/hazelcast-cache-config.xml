@@ -14,14 +14,11 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.5.xsd"
-           xmlns="http://www.hazelcast.com/schema/config"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <group>
-        <name>openfire</name>
-        <password>openfire</password>
-    </group>
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+           http://www.hazelcast.com/schema/config/hazelcast-config-3.9.xsd">
+    <import resource="${openfireHome}/conf/hazelcast-local-config.xml"/>
     <properties>
       <property name="hazelcast.logging.type">slf4j</property>
       <property name="hazelcast.operation.call.timeout.millis">30000</property>
@@ -29,42 +26,6 @@
       <property name="hazelcast.rest.enabled">false</property>
     </properties>
     <management-center enabled="false"/>
-    <network>
-        <port auto-increment="true" port-count="100">5701</port>
-        <outbound-ports>
-            <ports>0</ports>
-        </outbound-ports>
-        <join>
-            <multicast enabled="true">
-                <multicast-group>224.2.2.3</multicast-group>
-                <multicast-port>54327</multicast-port>
-            </multicast>
-            <tcp-ip enabled="false"/>
-            <aws enabled="false"/>
-        </join>
-        <interfaces enabled="false">
-            <interface>10.10.1.*</interface>
-        </interfaces>
-        <ssl enabled="false"/>
-        <socket-interceptor enabled="false"/>
-        <symmetric-encryption enabled="false">
-            <!--
-               encryption algorithm such as
-               DES/ECB/PKCS5Padding,
-               PBEWithMD5AndDES,
-               AES/CBC/PKCS5Padding,
-               Blowfish,
-               DESede
-            -->
-            <algorithm>PBEWithMD5AndDES</algorithm>
-            <!-- salt value to use when generating the secret key -->
-            <salt>thesalt</salt>
-            <!-- pass phrase to use when generating the secret key -->
-            <password>thepass</password>
-            <!-- iteration count to use when generating the secret key -->
-            <iteration-count>19</iteration-count>
-        </symmetric-encryption>
-    </network>
     <partition-group enabled="false"/>
     <executor-service name="default">
         <pool-size>16</pool-size>
@@ -95,7 +56,7 @@
         <empty-queue-ttl>-1</empty-queue-ttl>
     </queue>
     <!--
-    	Default Hazelcast cache configuration for Openfire. 
+        Default Hazelcast cache configuration for Openfire. 
     -->
     <map name="default">
         <!--
@@ -124,18 +85,18 @@
         -->
         <read-backup-data>true</read-backup-data>
         <!--
-			Maximum number of seconds for each entry to stay in the map. Entries that are
-			older than <time-to-live-seconds> and not updated for <time-to-live-seconds>
-			will get automatically evicted from the map.
-			Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
-		-->
+            Maximum number of seconds for each entry to stay in the map. Entries that are
+            older than <time-to-live-seconds> and not updated for <time-to-live-seconds>
+            will get automatically evicted from the map.
+            Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
+        -->
         <time-to-live-seconds>0</time-to-live-seconds>
         <!--
-			Maximum number of seconds for each entry to stay idle in the map. Entries that are
-			idle(not touched) for more than <max-idle-seconds> will get
-			automatically evicted from the map. Entry is touched if get, put or containsKey is called.
-			Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
-		-->
+            Maximum number of seconds for each entry to stay idle in the map. Entries that are
+            idle(not touched) for more than <max-idle-seconds> will get
+            automatically evicted from the map. Entry is touched if get, put or containsKey is called.
+            Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
+        -->
         <max-idle-seconds>0</max-idle-seconds>
         <!--
             Valid values are:
@@ -181,19 +142,18 @@
             com.hazelcast.map.merge.LatestUpdateMapMergePolicy ; entry with the latest update wins.
         -->
         <merge-policy>com.hazelcast.map.merge.PassThroughMergePolicy</merge-policy>
-		<!--
-			Near cache provides a local view of the clustered map, which is
-			ideal for high-read caches. Each cluster member retains a local
-			copy of entries retrieved from the distributed map. This reduces 
-			network load for caches that require frequent reads. However, if 
-			the	entries are updated frequently, there can be a performance 
-			penalty due to invalidations on the other cluster members.
-		-->
+        <!--
+            Near cache provides a local view of the clustered map, which is
+            ideal for high-read caches. Each cluster member retains a local
+            copy of entries retrieved from the distributed map. This reduces 
+            network load for caches that require frequent reads. However, if 
+            the	entries are updated frequently, there can be a performance 
+            penalty due to invalidations on the other cluster members.
+        -->
         <near-cache>
-            <max-size>1000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="1000"/>
             <time-to-live-seconds>0</time-to-live-seconds>
             <max-idle-seconds>600</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>
@@ -339,11 +299,6 @@
         <time-to-live-seconds>600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
-    <map name="Clearspace SSO Nonce">
-        <backup-count>1</backup-count>
-        <time-to-live-seconds>120</time-to-live-seconds>
-        <eviction-policy>LRU</eviction-policy>
-    </map>
     <map name="Javascript Cache">
         <backup-count>1</backup-count>
         <max-size policy="PER_NODE">10000</max-size>
@@ -425,6 +380,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="Group">
@@ -432,6 +388,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="Roster">
@@ -439,6 +396,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>21600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="User">
@@ -446,6 +404,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>1800</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     
@@ -458,9 +417,8 @@
         <time-to-live-seconds>21600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
         <near-cache>
-            <max-size>10000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="10000"/>
             <max-idle-seconds>1800</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>
@@ -471,9 +429,8 @@
         <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
         <near-cache>
-            <max-size>10000</max-size>
+            <eviction eviction-policy="LRU" max-size-policy="ENTRY_COUNT" size="10000"/>
             <max-idle-seconds>60</max-idle-seconds>
-            <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
     </map>

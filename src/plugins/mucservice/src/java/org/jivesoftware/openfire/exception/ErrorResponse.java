@@ -5,40 +5,40 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "error")
 public class ErrorResponse {
 
-	private String ressource;
-	private String message;
-	private String exception;
-	private String exceptionStack;
+    private String resource;
+    private String message;
+    private String exception;
+    private String exceptionStack;
 
-	public String getRessource() {
-		return ressource;
-	}
+    public String getResource() {
+        return resource;
+    }
 
-	public void setRessource(String ressource) {
-		this.ressource = ressource;
-	}
+    public void setResource(String resource) {
+        this.resource = resource;
+    }
 
-	public String getMessage() {
-		return message;
-	}
+    public String getMessage() {
+        return message;
+    }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
-	public String getException() {
-		return exception;
-	}
+    public String getException() {
+        return exception;
+    }
 
-	public void setException(String exception) {
-		this.exception = exception;
-	}
+    public void setException(String exception) {
+        this.exception = exception;
+    }
 
-	public String getExceptionStack() {
-		return exceptionStack;
-	}
+    public String getExceptionStack() {
+        return exceptionStack;
+    }
 
-	public void setExceptionStack(String exceptionStack) {
-		this.exceptionStack = exceptionStack;
-	}
+    public void setExceptionStack(String exceptionStack) {
+        this.exceptionStack = exceptionStack;
+    }
 }

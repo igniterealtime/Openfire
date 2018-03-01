@@ -1,12 +1,11 @@
-/**
- * 
- */
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
+
+import java.util.Locale;
 
 /**
  * @author dwd
@@ -19,7 +18,7 @@ public class LocalServerSession extends LocalSession implements ServerSession {
 
     public LocalServerSession(String serverName, Connection connection,
             StreamID streamID) {
-        super(serverName, connection, streamID);
+        super(serverName, connection, streamID, Locale.getDefault());
     }
 
     /* (non-Javadoc)
@@ -50,6 +49,7 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     }
 
 
+    @Override
     public boolean isUsingServerDialback() {
         return usingServerDialback;
     }

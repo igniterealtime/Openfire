@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19545 $
- * $Date: 2005-08-18 16:07:35 -0700 (Thu, 18 Aug 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +37,8 @@ import java.sql.ResultSet;
  */
 public class WorkgroupSettings {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupSettings.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupSettings.class);
+    
     private static final String LOAD_SETTINGS =
             "SELECT value FROM fpSetting WHERE workgroupName=? AND namespace=?";
     private static final String INSERT_SETTINGS =

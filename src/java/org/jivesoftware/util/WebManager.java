@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +35,8 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
+import org.jivesoftware.openfire.pubsub.PubSubInfo;
+import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.user.User;
@@ -48,17 +46,28 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpSession;
+
 /**
  * A utility bean for Openfire admin console pages.
  */
 public class WebManager extends WebBean {
 
-	private static final Logger Log = LoggerFactory.getLogger(WebManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(WebManager.class);
 
     private int start = 0;
     private int range = 15;
 
     public WebManager() {
+    }
+
+    /**
+     * Invalidates and recreates session (do this on login/logout).
+     */
+    public HttpSession invalidateSession() {
+        session.invalidate();
+        session = request.getSession(true);
+        return session;
     }
 
     /**
@@ -128,6 +137,10 @@ public class WebManager extends WebBean {
         return getXMPPServer().getServerInfo();
     }
 
+    public PubSubServiceInfo getPubSubInfo() {
+        return new PubSubInfo();
+    }
+
     /**
      * Logs a security event as the currently logged in user.  (convenience routine for SecurityAuditManager)
      *
@@ -144,7 +157,19 @@ public class WebManager extends WebBean {
     public User getUser() {
         User pageUser = null;
         try {
-            pageUser = getUserManager().getUser(getAuthToken().getUsername());
+            final AuthToken authToken = getAuthToken();
+            if (authToken == null )
+            {
+                Log.debug( "Unable to get user: no auth token on session." );
+                return null;
+            }
+            final String username = authToken.getUsername();
+            if (username == null || username.isEmpty())
+            {
+                Log.debug( "Unable to get user: no username in auth token on session." );
+                return null;
+            }
+            pageUser = getUserManager().getUser(username);
         }
         catch (Exception ex) {
             Log.debug("Unexpected exception (which is ignored) while trying to obtain user.", ex);
@@ -383,6 +408,7 @@ public class WebManager extends WebBean {
     public Cache[] getCaches() {
         Cache[] caches =CacheFactory.getAllCaches();
         Arrays.sort(caches, new Comparator<Cache>() {
+            @Override
             public int compare(Cache cache1, Cache cache2) {
                 return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
             }

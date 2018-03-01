@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,27 +121,33 @@ public class ServerTrafficCounter {
     private static void addReadBytesStat() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.label");
             }
 
+            @Override
             public double sample() {
                 // Divide result by 1024 so that we return the result in Kb.
                 return incomingCounter.getAndSet(0)/1024d;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return true;
             }
@@ -157,26 +159,32 @@ public class ServerTrafficCounter {
     private static void addWrittenBytesStat() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.label");
             }
 
+            @Override
             public double sample() {
                 return outgoingCounter.getAndSet(0)/1024d;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return true;
             }
@@ -199,7 +207,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read() throws IOException {
+        public int read() throws IOException {
             int readByte = originalStream.read();
             if (readByte > -1) {
                 incrementIncomingCounter(1);
@@ -208,7 +216,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read(byte b[]) throws IOException {
+        public int read(byte b[]) throws IOException {
             int bytes = originalStream.read(b);
             if (bytes > -1) {
                 incrementIncomingCounter(bytes);
@@ -217,7 +225,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int read(byte b[], int off, int len) throws IOException {
+        public int read(byte b[], int off, int len) throws IOException {
             int bytes = originalStream.read(b, off, len);
             if (bytes > -1) {
                 incrementIncomingCounter(bytes);
@@ -226,32 +234,32 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public int available() throws IOException {
+        public int available() throws IOException {
             return originalStream.available();
         }
 
         @Override
-		public void close() throws IOException {
+        public void close() throws IOException {
             originalStream.close();
         }
 
         @Override
-		public synchronized void mark(int readlimit) {
+        public synchronized void mark(int readlimit) {
             originalStream.mark(readlimit);
         }
 
         @Override
-		public boolean markSupported() {
+        public boolean markSupported() {
             return originalStream.markSupported();
         }
 
         @Override
-		public synchronized void reset() throws IOException {
+        public synchronized void reset() throws IOException {
             originalStream.reset();
         }
 
         @Override
-		public long skip(long n) throws IOException {
+        public long skip(long n) throws IOException {
             return originalStream.skip(n);
         }
     }
@@ -270,7 +278,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(int b) throws IOException {
+        public void write(int b) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
@@ -278,7 +286,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(byte b[]) throws IOException {
+        public void write(byte b[]) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b);
             // update outgoingCounter
@@ -286,7 +294,7 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void write(byte b[], int off, int len) throws IOException {
+        public void write(byte b[], int off, int len) throws IOException {
             // forward request to wrapped stream
             originalStream.write(b, off, len);
             // update outgoingCounter
@@ -294,12 +302,12 @@ public class ServerTrafficCounter {
         }
 
         @Override
-		public void close() throws IOException {
+        public void close() throws IOException {
             originalStream.close();
         }
 
         @Override
-		public void flush() throws IOException {
+        public void flush() throws IOException {
             originalStream.flush();
         }
     }
@@ -314,6 +322,7 @@ public class ServerTrafficCounter {
             this.originalChannel = originalChannel;
         }
 
+        @Override
         public int read(ByteBuffer dst) throws IOException {
             int bytes = originalChannel.read(dst);
             if (bytes > -1) {
@@ -322,10 +331,12 @@ public class ServerTrafficCounter {
             return bytes;
         }
 
+        @Override
         public void close() throws IOException {
             originalChannel.close();
         }
 
+        @Override
         public boolean isOpen() {
             return originalChannel.isOpen();
         }
@@ -341,14 +352,17 @@ public class ServerTrafficCounter {
             this.originalChannel = originalChannel;
         }
 
+        @Override
         public void close() throws IOException {
             originalChannel.close();
         }
 
+        @Override
         public boolean isOpen() {
             return originalChannel.isOpen();
         }
 
+        @Override
         public int write(ByteBuffer src) throws IOException {
             int bytes = originalChannel.write(src);
             incrementOutgoingCounter(bytes);

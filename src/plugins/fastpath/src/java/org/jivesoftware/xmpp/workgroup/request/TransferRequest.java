@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +43,9 @@ import org.xmpp.packet.PacketError;
  * @author Gaston Dombiak
  */
 public class TransferRequest extends Request {
-	
-	private static final Logger Log = LoggerFactory.getLogger(TransferRequest.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(TransferRequest.class);
+    
     /**
      * Time limit to wait for the invitee to join the support room. The limit is verified once the agent
      * accepted the offer or a MUC invitation was sent to the user.
@@ -101,10 +97,10 @@ public class TransferRequest extends Request {
             }
             else {
                 JID workgroupJID = new JID(jid);
-		// Replace the workgroup if the original offer originated from a different
-		// workgroup
-		this.workgroup = WorkgroupManager.getInstance().getWorkgroup(workgroupJID);
-		userRequest = this.workgroup.getUserRequest(sessionID);
+        // Replace the workgroup if the original offer originated from a different
+        // workgroup
+        this.workgroup = WorkgroupManager.getInstance().getWorkgroup(workgroupJID);
+        userRequest = this.workgroup.getUserRequest(sessionID);
             }
             // Notify the user request that is now related to this new request
             userRequest.addRelatedRequest(this);
@@ -184,26 +180,26 @@ public class TransferRequest extends Request {
 
 
     @Override
-	public void updateSession(int state, long offerTime) {
+    public void updateSession(int state, long offerTime) {
         // Ignore
     }
 
     @Override
-	public void offerAccepted(AgentSession agentSession) {
+    public void offerAccepted(AgentSession agentSession) {
         super.offerAccepted(agentSession);
         // Keep track when the offer was accepted by the agent
         offerAccepted = System.currentTimeMillis();
     }
 
     @Override
-	public boolean sendOffer(AgentSession session, RequestQueue queue) {
+    public boolean sendOffer(AgentSession session, RequestQueue queue) {
         // Keep track of the actual entity that received the transfer offer
         actualInvitee = session.getJID();
         return super.sendOffer(session, queue);
     }
 
     @Override
-	void addOfferContent(Element offerElement) {
+    void addOfferContent(Element offerElement) {
         Element inviteElement = offerElement.addElement("transfer", "http://jabber.org/protocol/workgroup");
 
         inviteElement.addAttribute("type", type.toString());
@@ -219,11 +215,11 @@ public class TransferRequest extends Request {
     }
 
     @Override
-	void addRevokeContent(Element revoke) {
+    void addRevokeContent(Element revoke) {
     }
 
     @Override
-	public Element getSessionElement() {
+    public Element getSessionElement() {
         // Add the workgroup of the original user request
         QName qName = DocumentHelper.createQName("session", DocumentHelper.createNamespace("", "http://jivesoftware.com/protocol/workgroup"));
         Element sessionElement = DocumentHelper.createElement(qName);
@@ -233,12 +229,12 @@ public class TransferRequest extends Request {
     }
 
     @Override
-	JID getUserJID() {
+    JID getUserJID() {
         return userRequest.getUserJID();
     }
 
     @Override
-	public void userJoinedRoom(JID roomJID, JID user) {
+    public void userJoinedRoom(JID roomJID, JID user) {
         Log.debug("User "+user+" has joined "+roomJID+". User should be kicked.");
         if (actualInvitee != null && actualInvitee.toBareJID().equals(user.toBareJID())) {
             joinedRoom = System.currentTimeMillis();
@@ -260,7 +256,7 @@ public class TransferRequest extends Request {
     }
 
     @Override
-	public void checkRequest(String roomID) {
+    public void checkRequest(String roomID) {
         // Monitor that the agent/user joined the room and if not send back an error to the inviter
         if (offerAccepted > 0 && !hasJoinedRoom() && System.currentTimeMillis() - offerAccepted > JOIN_TIMEOUT) {
             Log.debug("Agent or user failed to join room "+roomID);

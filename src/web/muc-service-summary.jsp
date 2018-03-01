@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 9909 $
-  -	$Date: 2008-02-13 22:32:17 -0500 (Wed, 13 Feb 2008) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -26,8 +23,8 @@
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="java.util.List" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%!
     final int DEFAULT_RANGE = 15;
@@ -200,7 +197,7 @@
             <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
         </td>
         <td width="33%">
-            <%= service.getDescription() %> &nbsp;
+            <%= StringUtils.escapeHTMLTags(service.getDescription()) %> &nbsp;
         </td>
         <td width="5%">
             <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>

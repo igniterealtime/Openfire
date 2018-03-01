@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,5 +57,5 @@ class CredentialsCacheEntry {
      */
     boolean processResponse(String responseBranchID) {
         return transactionHistory.remove(responseBranchID);
-	}
+    }
 }

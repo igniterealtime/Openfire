@@ -1,8 +1,4 @@
-/**
- * $RCSfile: BroadcastPlugin.java,v $
- * $Revision: 3117 $
- * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +61,7 @@ import org.xmpp.packet.Presence;
  */
 public class BroadcastPlugin implements Plugin, Component, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(BroadcastPlugin.class);
+    private static final Logger Log = LoggerFactory.getLogger(BroadcastPlugin.class);
 
     private String serviceName;
     private SessionManager sessionManager;
@@ -227,26 +223,26 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             }
 
             if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
-         		message.setBody(messagePrefix + " " + message.getBody());
-         	}
+                message.setBody(messagePrefix + " " + message.getBody());
+            }
            
             if (all2ofline==false) {
-            	// send to online users
-            	sessionManager.broadcast(message);
+                // send to online users
+                sessionManager.broadcast(message);
             } else {
- 	            // send to all users
-	      		Collection<User> users = userManager.getUsers();
-	      		String xmppdomain = "@" + JiveGlobals.getProperty("xmpp.domain");
-	      		for (User u : users)
-	      		{
-	      			Message newMessage = message.createCopy();
-	      			newMessage.setTo(u.getUsername() + xmppdomain);
-	               try {
-	                  componentManager.sendPacket(this, newMessage);
-	              } catch (Exception e) {
-	                  Log.error(e.getMessage(), e);
-	              }
-	      		}
+                // send to all users
+                Collection<User> users = userManager.getUsers();
+                String xmppdomain = "@" + JiveGlobals.getProperty("xmpp.domain");
+                for (User u : users)
+                {
+                    Message newMessage = message.createCopy();
+                    newMessage.setTo(u.getUsername() + xmppdomain);
+                   try {
+                      componentManager.sendPacket(this, newMessage);
+                  } catch (Exception e) {
+                      Log.error(e.getMessage(), e);
+                  }
+                }
             }
         }
         // See if the name is a group.
@@ -274,8 +270,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 // Broadcast message to group users. Users that are offline will get
                 // the message when they come back online
                if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
-            		message.setBody(messagePrefix + " " + message.getBody());
-            	}
+                    message.setBody(messagePrefix + " " + message.getBody());
+                }
                 for (JID userJID : group.getMembers()) {
                     Message newMessage = message.createCopy();
                     newMessage.setTo(userJID);

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,13 +30,15 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetNumberConnectedUsers implements ClusterTask{
+public class GetNumberConnectedUsers implements ClusterTask<Integer> {
     private Integer count;
 
-    public Object getResult() {
+    @Override
+    public Integer getResult() {
         return count;
     }
 
+    @Override
     public void run() {
         count = 0;
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
@@ -48,10 +46,12 @@ public class GetNumberConnectedUsers implements ClusterTask{
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

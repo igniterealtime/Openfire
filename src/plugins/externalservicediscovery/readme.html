@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>External Service Discovery Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H3 {
+            font-size : 10pt;
+            font-style: italic;
+            color: #004444;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    External Service Discovery Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+    The External Service Discovery plugin allows XMPP entities to discover services that are external to the XMPP
+    network. It is typically used to allow clients to interact with STUN and TURN services, possibly making use of
+    temporary credentials for those servers. This plugin provides an implementation of
+    <a href="https://xmpp.org/extensions/xep-0215.html">XEP-0215: External Service Discovery</a>.
+</p>
+
+<h2>Installation</h2>
+
+<p>
+    Copy externalservicediscovery.jar into the plugins directory of your Openfire installation. The plugin will then be
+    automatically deployed. To upgrade to a new version, copy the new externalservicediscovery.jar file over the
+    existing file.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+    The plugin is configured via the Openfire Admin Console. After installation, a new Admin Console page is available.
+    The page can be found on a main menu in the "Server" tab, "Media Services" sub-tab. The name of the page is
+    "Ext. Service Discovery".
+</p>
+
+<h2>Attribution</h2>
+<p>
+    Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from
+    <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by
+    <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
+</p>
+</body>
+</html>

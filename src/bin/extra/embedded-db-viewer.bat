@@ -1,7 +1,5 @@
 @echo off
 
-REM # $Revision$
-REM # $Date$
 
 REM # Script to start the HSQLDB database viewer. The embedded-db.rc file 
 REM # contains connection settings. Visit http://hsqldb.org for documentation

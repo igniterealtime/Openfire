@@ -48,121 +48,121 @@ public class SdpManager {
         String s = System.getProperty("os.name");
 
         if (s.equals("Mac OS X")) {
-	    isMacOS = true;
+        isMacOS = true;
 
-	    maxSampleRate = RtpPacket.MAC_SAMPLE_RATE;
-	    maxChannels = RtpPacket.MAC_CHANNELS;
-	} else {
-	    maxSampleRate = RtpPacket.MAX_SAMPLE_RATE;
-	    maxChannels = RtpPacket.MAX_CHANNELS;
-	}
+        maxSampleRate = RtpPacket.MAC_SAMPLE_RATE;
+        maxChannels = RtpPacket.MAC_CHANNELS;
+    } else {
+        maxSampleRate = RtpPacket.MAX_SAMPLE_RATE;
+        maxChannels = RtpPacket.MAX_CHANNELS;
+    }
     }
 
     public static void useTelephoneEvent(boolean useTelephoneEvent) {
-	SdpManager.useTelephoneEvent = useTelephoneEvent;
+    SdpManager.useTelephoneEvent = useTelephoneEvent;
     }
 
     public static boolean useTelephoneEvent() {
-	return useTelephoneEvent;
+    return useTelephoneEvent;
     }
 
     public SdpManager(Vector supportedMedia) {
-	this.supportedMedia = supportedMedia;
+    this.supportedMedia = supportedMedia;
     }
 
     public static void setSupportedMedia(Vector supportedMedia) {
-	SdpManager.supportedMedia = supportedMedia;
+    SdpManager.supportedMedia = supportedMedia;
     }
 
     public void setPreferredMedia(int encoding, int sampleRate, int channels)
-	    throws ParseException {
+        throws ParseException {
 
-	if (sampleRate == 8000 && channels == 1) {
-	    encoding = RtpPacket.PCMU_ENCODING;
-	}
+    if (sampleRate == 8000 && channels == 1) {
+        encoding = RtpPacket.PCMU_ENCODING;
+    }
 
-	setPreferredMediaInfo(findMediaInfo(encoding, sampleRate, channels));
+    setPreferredMediaInfo(findMediaInfo(encoding, sampleRate, channels));
     }
 
     public void setPreferredMediaInfo(MediaInfo preferredMediaInfo) {
-	localMediaPreference = preferredMediaInfo;
+    localMediaPreference = preferredMediaInfo;
 
         maxSampleRate = localMediaPreference.getSampleRate();
         maxChannels = localMediaPreference.getChannels();
     }
 
     public MediaInfo getPreferredMediaInfo() {
-	return localMediaPreference;
+    return localMediaPreference;
     }
 
     public void setTransmitMediaInfo(int encoding, int sampleRate,
-	    int channels) throws ParseException {
+        int channels) throws ParseException {
 
-	transmitMediaInfo = findMediaInfo(encoding, sampleRate, channels);
+    transmitMediaInfo = findMediaInfo(encoding, sampleRate, channels);
     }
 
     public void setTransmitMediaInfo(MediaInfo transmitMediaInfo) {
-	this.transmitMediaInfo = transmitMediaInfo;
+    this.transmitMediaInfo = transmitMediaInfo;
     }
 
     public MediaInfo getTransmitMediaInfo() {
-    	return transmitMediaInfo;
+        return transmitMediaInfo;
     }
 
     public static SdpInfo parseSdp(String sdpData) throws ParseException {
-	return new SdpParser().parseSdp(sdpData);
+    return new SdpParser().parseSdp(sdpData);
     }
 
     /*
      * Get supported media
      */
     private String getSupportedMedia() {
-	String s = "";
+    String s = "";
 
-	int n = 0;
+    int n = 0;
 
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
 
-	    if (mediaInfo.getSampleRate() > maxSampleRate || mediaInfo.getChannels() > maxChannels) {
-	 		continue;
-	    }
+        if (mediaInfo.getSampleRate() > maxSampleRate || mediaInfo.getChannels() > maxChannels) {
+            continue;
+        }
 
-	    if (useTelephoneEvent == false && mediaInfo.isTelephoneEventPayload())
-	    {
-			continue;
-	    }
+        if (useTelephoneEvent == false && mediaInfo.isTelephoneEventPayload())
+        {
+            continue;
+        }
 
-	    if (n > 0) {
-		s += " ";
-	    }
+        if (n > 0) {
+        s += " ";
+        }
 
-	    s += mediaInfo.getPayload();
-	    n++;
-	}
+        s += mediaInfo.getPayload();
+        n++;
+    }
 
-	return s;
+    return s;
     }
 
     /*
      * Get supported rtpmaps
      */
     private String getRtpmaps() {
-	String rtpmaps = "";
+    String rtpmaps = "";
 
-	for (int i = 0; i < supportedMedia.size(); i++)
-	{
-	    MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
+    for (int i = 0; i < supportedMedia.size(); i++)
+    {
+        MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
 
-	    if (mediaInfo.getSampleRate() > maxSampleRate || mediaInfo.getChannels() > maxChannels)
-	    {
-			continue;
-	    }
+        if (mediaInfo.getSampleRate() > maxSampleRate || mediaInfo.getChannels() > maxChannels)
+        {
+            continue;
+        }
 
-	    rtpmaps += generateRtpmap(mediaInfo) + "\r\n";
-	}
+        rtpmaps += generateRtpmap(mediaInfo) + "\r\n";
+    }
 
-	return rtpmaps;
+    return rtpmaps;
     }
 
     /*
@@ -176,196 +176,196 @@ public class SdpManager {
      * Generate an rtpmap entry for a speicifed MediaInfo.
      */
     private String generateRtpmap(MediaInfo mediaInfo) {
-	if (mediaInfo.isTelephoneEventPayload()) {
-	//    if (useTelephoneEvent == false) {
-	//	return "";
-	//    }
+    if (mediaInfo.isTelephoneEventPayload()) {
+    //    if (useTelephoneEvent == false) {
+    //	return "";
+    //    }
 
-	    return "a=rtpmap:" + mediaInfo.getPayload()
-		+ " telephone-event/8000";
-	}
+        return "a=rtpmap:" + mediaInfo.getPayload()
+        + " telephone-event/8000";
+    }
 
-	return "a=rtpmap:" + mediaInfo.getPayload() + " "
-		+ mediaInfo.getEncodingString() + "/"
-		+ mediaInfo.getSampleRate() + "/"
-		+ mediaInfo.getChannels();
+    return "a=rtpmap:" + mediaInfo.getPayload() + " "
+        + mediaInfo.getEncodingString() + "/"
+        + mediaInfo.getSampleRate() + "/"
+        + mediaInfo.getChannels();
     }
 
     /*
      * Find the MediaInfo for a specified payload
      */
     public static MediaInfo findMediaInfo(byte payload)
-	    throws ParseException {
+        throws ParseException {
 
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo)
-		supportedMedia.elementAt(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo)
+        supportedMedia.elementAt(i);
 
             if (mediaInfo.getPayload() == payload) {
                 return mediaInfo;
             }
-	}
+    }
 
-	throw new ParseException("Unsupported payload " + payload, 0);
+    throw new ParseException("Unsupported payload " + payload, 0);
     }
 
     /*
      * Find the MediaInfo for specified parameters
      */
     public static MediaInfo findMediaInfo(int encoding, int sampleRate,
-	int channels) throws ParseException {
+    int channels) throws ParseException {
 
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo)
-		supportedMedia.elementAt(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo)
+        supportedMedia.elementAt(i);
 
-	    if (mediaInfo.isTelephoneEventPayload()) {
-		continue;	// skip this one
-	    }
+        if (mediaInfo.isTelephoneEventPayload()) {
+        continue;	// skip this one
+        }
 
-	    if (mediaInfo.getEncoding() == encoding &&
-		    mediaInfo.getSampleRate() == sampleRate &&
-		    mediaInfo.getChannels() == channels) {
+        if (mediaInfo.getEncoding() == encoding &&
+            mediaInfo.getSampleRate() == sampleRate &&
+            mediaInfo.getChannels() == channels) {
 
-		return mediaInfo;
-	    }
-	}
+        return mediaInfo;
+        }
+    }
 
-	throw new ParseException("Unsupported media " +
-	    "encoding " + encoding + " sample rate " + sampleRate
-	    + " channels " + channels, 0);
+    throw new ParseException("Unsupported media " +
+        "encoding " + encoding + " sample rate " + sampleRate
+        + " channels " + channels, 0);
     }
 
     public String generateSdp(CallParticipant cp, String name, InetSocketAddress isa)
     {
-		String toNumber = cp.getPhoneNumber();
+        String toNumber = cp.getPhoneNumber();
 
-			String sdp = "v=0\r\n"
-				+ "o=" + name + " 1 1 IN IP4 "
-				+ isa.getAddress().getHostAddress() + "\r\n"
-				+ "s=SIP Call\r\n"
-				+ "c=IN IP4 "
-				+ isa.getAddress().getHostAddress() + "\r\n"
-				+ "t=0 0 \r\n"
-				+ "m=audio " + isa.getPort();
+            String sdp = "v=0\r\n"
+                + "o=" + name + " 1 1 IN IP4 "
+                + isa.getAddress().getHostAddress() + "\r\n"
+                + "s=SIP Call\r\n"
+                + "c=IN IP4 "
+                + isa.getAddress().getHostAddress() + "\r\n"
+                + "t=0 0 \r\n"
+                + "m=audio " + isa.getPort();
 
-   			if (toNumber.indexOf("sip:") == 0)	// TODO hack for Lync DTMF
-   			{
-				sdp += " RTP/AVP " + "13 " + getSupportedMedia() + "\r\n"
-						+ "a=rtpmap:13 CN/8000" + "\r\n";
+            if (toNumber.indexOf("sip:") == 0)	// TODO hack for Lync DTMF
+            {
+                sdp += " RTP/AVP " + "13 " + getSupportedMedia() + "\r\n"
+                        + "a=rtpmap:13 CN/8000" + "\r\n";
 
-			} else {	// Lync, add DTMF support
+            } else {	// Lync, add DTMF support
 
-				sdp += " RTP/AVP " + "13 101 " + getSupportedMedia() + "\r\n"
-						+ "a=rtpmap:13 CN/8000" + "\r\n"
-						+ "a=rtpmap:101 telephone-event/8000" + "\r\n"
-						+ "a=fmtp:101 0-16" + "\r\n";
-			}
+                sdp += " RTP/AVP " + "13 101 " + getSupportedMedia() + "\r\n"
+                        + "a=rtpmap:13 CN/8000" + "\r\n"
+                        + "a=rtpmap:101 telephone-event/8000" + "\r\n"
+                        + "a=fmtp:101 0-16" + "\r\n";
+            }
 
-			sdp += getRtpmaps();
+            sdp += getRtpmaps();
 
-			if (localMediaPreference != null)
-			{
-				sdp += "a=PreferredPayload:" + localMediaPreference.getPayload() + "\r\n";
-			}
+            if (localMediaPreference != null)
+            {
+                sdp += "a=PreferredPayload:" + localMediaPreference.getPayload() + "\r\n";
+            }
 
-	if (transmitMediaInfo != null) {
-	    sdp += "a=transmitPayload:"
-	 	+ transmitMediaInfo.getPayload() + "\r\n";
-	}
+    if (transmitMediaInfo != null) {
+        sdp += "a=transmitPayload:"
+        + transmitMediaInfo.getPayload() + "\r\n";
+    }
 
         return sdp;
     }
 
     public String generateSdp(String name, InetSocketAddress isa, SdpInfo remoteSdpInfo) throws IOException
     {
-		MediaInfo mediaInfo = null;
+        MediaInfo mediaInfo = null;
 
-		if (localMediaPreference != null)
-		{
-			if (remoteSdpInfo.isSupported(localMediaPreference)) {
-				mediaInfo = localMediaPreference;
-				Logger.println("Using local media preference:  " + mediaInfo);
-			}
-		}
-
-		/*
-		 * Try remote media preference
-		 */
-		if (remoteSdpInfo.preferredMediaSpecified())
-		{
-			MediaInfo remoteMediaPreference = remoteSdpInfo.getMediaInfo();
-
-			if (remoteMediaPreference.getSampleRate() <= maxSampleRate &&
-				remoteMediaPreference.getChannels() <= maxChannels) {
-
-				/*
-				 * See if remote media preference is supported
-				 */
-				try {
-					mediaInfo = findMediaInfo(remoteMediaPreference.getPayload());
-					Logger.println("Using remote media preference:  " + mediaInfo);
-				} catch (ParseException e) {
-				}
-			}
+        if (localMediaPreference != null)
+        {
+            if (remoteSdpInfo.isSupported(localMediaPreference)) {
+                mediaInfo = localMediaPreference;
+                Logger.println("Using local media preference:  " + mediaInfo);
+            }
         }
 
-		if (mediaInfo == null) {
-			/*
-			 * default to 8000/1 ulaw
-			 */
-			mediaInfo = remoteSdpInfo.findBestMediaInfo(supportedMedia,	localMediaPreference);
+        /*
+         * Try remote media preference
+         */
+        if (remoteSdpInfo.preferredMediaSpecified())
+        {
+            MediaInfo remoteMediaPreference = remoteSdpInfo.getMediaInfo();
 
-			Logger.println("Using best media " + mediaInfo);
-		}
+            if (remoteMediaPreference.getSampleRate() <= maxSampleRate &&
+                remoteMediaPreference.getChannels() <= maxChannels) {
 
-		remoteSdpInfo.setMediaInfo(mediaInfo);
+                /*
+                 * See if remote media preference is supported
+                 */
+                try {
+                    mediaInfo = findMediaInfo(remoteMediaPreference.getPayload());
+                    Logger.println("Using remote media preference:  " + mediaInfo);
+                } catch (ParseException e) {
+                }
+            }
+        }
 
-		String payloads = "13 101 " + mediaInfo.getPayload();
+        if (mediaInfo == null) {
+            /*
+             * default to 8000/1 ulaw
+             */
+            mediaInfo = remoteSdpInfo.findBestMediaInfo(supportedMedia,	localMediaPreference);
 
-		byte telephoneEventPayload = remoteSdpInfo.getTelephoneEventPayload();
+            Logger.println("Using best media " + mediaInfo);
+        }
 
-		String telephoneEvent = "";
+        remoteSdpInfo.setMediaInfo(mediaInfo);
 
-		if (useTelephoneEvent == true && telephoneEventPayload != 0) {
-			try {
-				MediaInfo m = findMediaInfo(telephoneEventPayload);
-			payloads += " " + telephoneEventPayload;
-				telephoneEvent += generateRtpmap(m) + "\r\n";
-			} catch (ParseException e) {
-			Logger.println("Failed to add rtpmap for telephone event " + telephoneEventPayload);
-			}
-		}
+        String payloads = "13 101 " + mediaInfo.getPayload();
 
-		String transmitMap = "";
+        byte telephoneEventPayload = remoteSdpInfo.getTelephoneEventPayload();
 
-		if (transmitMediaInfo != null) {
-			transmitMap = generateRtpmap(transmitMediaInfo) + "\r\n";
-		}
+        String telephoneEvent = "";
 
-		String sdp =
-			"v=0\r\n"
-				+ "o=" + name + " 1 1 IN IP4 "
-				+ isa.getAddress().getHostAddress() + "\r\n"
-				+ "s=SIP Call\r\n"
-				+ "c=IN IP4 "
-				+ isa.getAddress().getHostAddress() + "\r\n"
-				+ "t=0 0 \r\n"
-				+ "m=audio " + isa.getPort()
-				+ " RTP/AVP " + payloads + "\r\n"
-				+ "a=rtpmap:13 CN/8000" + "\r\n"
-				+ "a=rtpmap:101 telephone-event/8000" + "\r\n"
-				+ "a=fmtp:101 0-16" + "\r\n"
-				+ generateRtpmap(mediaInfo) + "\r\n"
-			+ transmitMap
-			+ telephoneEvent;
+        if (useTelephoneEvent == true && telephoneEventPayload != 0) {
+            try {
+                MediaInfo m = findMediaInfo(telephoneEventPayload);
+            payloads += " " + telephoneEventPayload;
+                telephoneEvent += generateRtpmap(m) + "\r\n";
+            } catch (ParseException e) {
+            Logger.println("Failed to add rtpmap for telephone event " + telephoneEventPayload);
+            }
+        }
+
+        String transmitMap = "";
+
+        if (transmitMediaInfo != null) {
+            transmitMap = generateRtpmap(transmitMediaInfo) + "\r\n";
+        }
+
+        String sdp =
+            "v=0\r\n"
+                + "o=" + name + " 1 1 IN IP4 "
+                + isa.getAddress().getHostAddress() + "\r\n"
+                + "s=SIP Call\r\n"
+                + "c=IN IP4 "
+                + isa.getAddress().getHostAddress() + "\r\n"
+                + "t=0 0 \r\n"
+                + "m=audio " + isa.getPort()
+                + " RTP/AVP " + payloads + "\r\n"
+                + "a=rtpmap:13 CN/8000" + "\r\n"
+                + "a=rtpmap:101 telephone-event/8000" + "\r\n"
+                + "a=fmtp:101 0-16" + "\r\n"
+                + generateRtpmap(mediaInfo) + "\r\n"
+            + transmitMap
+            + telephoneEvent;
 
         if (transmitMediaInfo != null) {
             sdp += "a=transmitPayload:"
                 + transmitMediaInfo.getPayload() + "\r\n";
         }
 
-		return sdp;
+        return sdp;
     }
 
 }

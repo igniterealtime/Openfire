@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19357 $
- * $Date: 2005-07-21 09:40:33 -0700 (Thu, 21 Jul 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,7 @@ import org.xmpp.packet.PacketError;
 
 public class ChatMetadataProvider implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatMetadataProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatMetadataProvider.class);
 
     private static final String GET_SESSION_METADATA =
             "SELECT metadataName, metadataValue FROM fpSessionMetadata WHERE sessionID=?";

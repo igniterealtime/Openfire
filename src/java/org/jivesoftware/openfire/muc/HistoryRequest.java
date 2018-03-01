@@ -1,8 +1,4 @@
-/**
- * $RCSfile: HistoryRequest.java,v $
- * $Revision: 2899 $
- * $Date: 2005-09-28 15:30:42 -0300 (Wed, 28 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,8 +43,8 @@ import org.xmpp.packet.Message;
  */
 public class HistoryRequest {
 
-	private static final Logger Log = LoggerFactory.getLogger(HistoryRequest.class);
-	private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
+    private static final Logger Log = LoggerFactory.getLogger(HistoryRequest.class);
+    private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
     private int maxChars = -1;
     private int maxStanzas = -1;
@@ -143,19 +139,14 @@ public class HistoryRequest {
             }
         }
         else {
-            Message changedSubject = roomHistory.getChangedSubject();
-            boolean addChangedSubject = (changedSubject != null) ? true : false;
             if (getMaxChars() == 0) {
                 // The user requested to receive no history
-                if (addChangedSubject) {
-                    joinRole.send(changedSubject);
-                }
                 return;
             }
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
             Element delayInformation;
-            LinkedList<Message> historyToSend = new LinkedList<Message>();
+            LinkedList<Message> historyToSend = new LinkedList<>();
             ListIterator<Message> iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
                 Message message = iterator.previous();
@@ -178,7 +169,7 @@ public class HistoryRequest {
                 }
 
                 if (getSeconds() > -1 || getSince() != null) {
-                    delayInformation = message.getChildElement("x", "jabber:x:delay");
+                    delayInformation = message.getChildElement("delay", "urn:xmpp:delay");
                     try {
                         // Get the date when the historic message was sent
                         Date delayedDate = xmppDateTime.parseString(delayInformation.attributeValue("stamp"));
@@ -201,18 +192,7 @@ public class HistoryRequest {
 
                 }
 
-                // Don't add the latest subject change if it's already in the history.
-                if (addChangedSubject) {
-                    if (changedSubject != null && changedSubject.equals(message)) {
-                        addChangedSubject = false;
-                    }
-                }
-
                 historyToSend.addFirst(message);
-            }
-            // Check if we should add the latest subject change.
-            if (addChangedSubject) {
-                historyToSend.addFirst(changedSubject);
             }
             // Send the smallest amount of traffic to the user
             for (Object aHistoryToSend : historyToSend) {

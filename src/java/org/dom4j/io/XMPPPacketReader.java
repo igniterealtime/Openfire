@@ -4,7 +4,6 @@
  * This software is open source.
  * See the bottom of this file for the licence.
  *
- * $Id: XMPPPacketReader.java 3190 2005-12-12 15:00:46Z gato $
  */
 
 package org.dom4j.io;
@@ -17,6 +16,8 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * <p><code>XMPPPacketReader</code> is a Reader of DOM4J documents that
@@ -26,7 +27,6 @@ import java.net.URL;
  *
  * @author <a href="mailto:pelle@neubia.com">Pelle Braendgaard</a>
  * @author <a href="mailto:jstrachan@apache.org">James Strachan</a>
- * @version $Revision: 3190 $
  */
 public class XMPPPacketReader {
 
@@ -56,6 +56,15 @@ public class XMPPPacketReader {
      */
     private long lastActive = System.currentTimeMillis();
 
+    /**
+     * Stream of various endpoints (eg: s2s, c2s) use different default namespaces. To be able to use a stanza that's
+     * parsed on one type of endpoint in the context of another endpoint, we explicitly ignore these namespaced. This
+     * allows us to forward, for instance, a stanza received via C2S (which has the "jabber:client" default namespace)
+     * on a S2S stream (which has the "jabber:server" default namespace).
+     *
+     * @see <a href="https://xmpp.org/rfcs/rfc6120.html#streams-ns-xmpp">RFC 6120, 4.8.3. XMPP Content Namespaces</a>
+     */
+    public static final Collection<String> IGNORED_NAMESPACE_ON_STANZA = Arrays.asList( "jabber:client", "jabber:server", "jabber:connectionmanager", "jabber:component:accept", "http://jabber.org/protocol/httpbind" );
 
     public XMPPPacketReader() {
     }
@@ -366,15 +375,31 @@ public class XMPPPacketReader {
                 }
                 case XmlPullParser.START_TAG: {
                     QName qname = (pp.getPrefix() == null) ? df.createQName(pp.getName(), pp.getNamespace()) : df.createQName(pp.getName(), pp.getPrefix(), pp.getNamespace());
-                    Element newElement = null;
-                    // Do not include the namespace if this is the start tag of a new packet
-                    // This avoids including "jabber:client", "jabber:server" or
-                    // "jabber:component:accept"
-                    if ("jabber:client".equals(qname.getNamespaceURI()) ||
-                            "jabber:server".equals(qname.getNamespaceURI()) ||
-                            "jabber:connectionmanager".equals(qname.getNamespaceURI()) ||
-                            "jabber:component:accept".equals(qname.getNamespaceURI()) ||
-                            "http://jabber.org/protocol/httpbind".equals(qname.getNamespaceURI())) {
+                    Element newElement;
+
+                    // Strip namespace from all default-namespaced elements if
+                    // all ancestors have the same namespace and it's a content
+                    // namespace.
+                    boolean dropNamespace = false;
+                    if (pp.getPrefix() == null && IGNORED_NAMESPACE_ON_STANZA.contains(qname.getNamespaceURI())) {
+                        // Default namespaced element which is in a content namespace,
+                        // so we'll drop. Example, stanzas, <message><body/></message>
+                        dropNamespace = true;
+                        for (Element el = parent; el != null; el = el.getParent()) {
+                            final String defaultNS = el.getNamespaceForPrefix("").getURI();
+                            if (defaultNS.equals("")) {
+                                // We've cleared this one already, just bail.
+                                break;
+                            }
+                            if (!defaultNS.equals(qname.getNamespaceURI())) {
+                                // But if there's an ancestor element, we shouldn't drop
+                                // after all. Example: forwarded message.
+                                dropNamespace = false;
+                                break;
+                            }
+                        }
+                    }
+                    if ( dropNamespace ) {
                         newElement = df.createElement(pp.getName());
                     }
                     else {
@@ -383,9 +408,15 @@ public class XMPPPacketReader {
                     int nsStart = pp.getNamespaceCount(pp.getDepth() - 1);
                     int nsEnd = pp.getNamespaceCount(pp.getDepth());
                     for (int i = nsStart; i < nsEnd; i++) {
-                        if (pp.getNamespacePrefix(i) != null) {
-                            newElement
-                                    .addNamespace(pp.getNamespacePrefix(i), pp.getNamespaceUri(i));
+                        final String namespacePrefix = pp.getNamespacePrefix( i );
+                        final String namespaceUri = pp.getNamespaceUri( i );
+                        if ( namespacePrefix != null ) {
+                            newElement.addNamespace(namespacePrefix, namespaceUri);
+                        } else if ( parent == null && IGNORED_NAMESPACE_ON_STANZA.contains( namespaceUri ) ) {
+                            // Don't copy.
+                        } else if ( !(dropNamespace && namespaceUri.equals( qname.getNamespaceURI() ) ) ) {
+                            // Do not include certain default namespace on the root-element ('stream') or stanza level. This makes stanzas re-usable between, for example, c2s and s2s.
+                            newElement.addNamespace( "", namespaceUri );
                         }
                     }
                     for (int i = 0; i < pp.getAttributeCount(); i++) {
@@ -499,5 +530,4 @@ public class XMPPPacketReader {
  *
  * Copyright 2001-2004 (C) MetaStuff, Ltd. All Rights Reserved.
  *
- * $Id: XMPPPacketReader.java 3190 2005-12-12 15:00:46Z gato $
  */

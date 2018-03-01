@@ -1,4 +1,0 @@
-<h3>Master Slave Broker</h3>
-
-<p>Master Slave uses two or more containers running the same broker; one becomes the master and the other broker(s) the slave(s). If the master dies then a slave takes over being the master.</p>
-<p> Master and slave brokers should all be configured to point to the same highly available storage location (such as a networked file system or SAN). If the Master fails, the Slave will come up and look at the same location for message logs as the Master. If not using a HA storage option, then the file location for the broker transaction logs becomes a single point of failure and you risk losing all persistent messages.</p>

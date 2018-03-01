@@ -80,14 +80,14 @@ public abstract class FileAudioSource implements AudioSource {
                     clazz.getConstructor(String.class);
             return c.newInstance(path);
         } catch (Exception e) {
-	    if (e instanceof IOException) {
-	        Logger.println("getAudioSource for " + path + " got IOException: "
-		    + e.getMessage()); 
-	    } else {
-	        if (Logger.logLevel >= Logger.LOG_INFO) {
+        if (e instanceof IOException) {
+            Logger.println("getAudioSource for " + path + " got IOException: "
+            + e.getMessage()); 
+        } else {
+            if (Logger.logLevel >= Logger.LOG_INFO) {
                     Logger.exception("Error instantiating class " + clazz, e);
-	        }
-	    }
+            }
+        }
             return null;
         }
     }
@@ -113,41 +113,41 @@ public abstract class FileAudioSource implements AudioSource {
      * @throws IOException if there is an error loading the stream
      */
     protected InputStream getInputStream(String path) throws IOException {
-	/*
-	 * replace back slashes with slash.
-	 */
+    /*
+     * replace back slashes with slash.
+     */
         path = path.replaceAll(Matcher.quoteReplacement("\\"), "/");
 
         // try to load the stream as a resource
-	InputStream in = getClass().getResourceAsStream(path);
+    InputStream in = getClass().getResourceAsStream(path);
 
-	if (in != null) {
-	    in = new BufferedInputStream(in, 16*1024);
+    if (in != null) {
+        in = new BufferedInputStream(in, 16*1024);
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-		Logger.println("Successfully opened as stream '" + path + "'");
-	    }
-	} else {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("Successfully opened as stream '" + path + "'");
+        }
+    } else {
             // no luck, try the file system
-	    if (File.separator.equals("\\")) {
-		/*
-		 * Replace slash with back slash
-		 */
+        if (File.separator.equals("\\")) {
+        /*
+         * Replace slash with back slash
+         */
                 path = path.replaceAll("/", Matcher.quoteReplacement("\\"));
-	    }
+        }
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("can't read audio resource, trying as a file: " 
-		    + path);
-	    }
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("can't read audio resource, trying as a file: " 
+            + path);
+        }
 
             try {
                 in = new FileInputStream(path);
             } catch (FileNotFoundException e) {
                 throw new IOException("DotAuAudioSource error " + path + ":  " +
                     e.getMessage());
-	    }
-	}
+        }
+    }
         
         return in;
     }

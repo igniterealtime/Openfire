@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,10 +30,10 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
 
     private static List<SessionEventListener> listeners =
-            new CopyOnWriteArrayList<SessionEventListener>();
+            new CopyOnWriteArrayList<>();
 
     private SessionEventDispatcher() {
         // Not instantiable.

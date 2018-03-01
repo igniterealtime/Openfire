@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,14 +50,19 @@ import org.xmpp.packet.StreamError;
  */
 public class ServerStanzaHandler extends StanzaHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
 
+    public ServerStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public ServerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        super(router, serverName, connection);
+        super(router, connection);
     }
 
     @Override
-	boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
@@ -78,23 +80,23 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:server";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return true;
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         // TODO Should we trust other servers???
         return false;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         // TODO Finish implementation
         /*if ("jabber:server".equals(namespace)) {
@@ -106,30 +108,29 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the remote server if we want to validate certificates of the remote server that requested TLS
-
+    void startTLS() throws Exception {
         boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
                 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-        connection.startTLS(false, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+        //needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted
+        connection.startTLS(false);
     }
     @Override
-	protected void processIQ(IQ packet) throws UnauthorizedException {
+    protected void processIQ(IQ packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processIQ(packet);
     }
 
     @Override
-	protected void processPresence(Presence packet) throws UnauthorizedException {
+    protected void processPresence(Presence packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processPresence(packet);
     }
 
     @Override
-	protected void processMessage(Message packet) throws UnauthorizedException {
+    protected void processMessage(Message packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processMessage(packet);

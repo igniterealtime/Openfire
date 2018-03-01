@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +37,7 @@ public class ConversationEvent implements Externalizable {
     private Type type;
     private Date date;
     private String body;
+    private String stanza;
 
     private JID sender;
     private JID receiver;
@@ -77,7 +75,7 @@ public class ConversationEvent implements Externalizable {
             conversationManager.joinedGroupConversation(roomJID, user, nickname, new Date(date.getTime() + 1));
         }
         else if (Type.roomMessageReceived == type) {
-            conversationManager.processRoomMessage(roomJID, user, nickname, body, date);
+            conversationManager.processRoomMessage(roomJID, user, nickname, body, stanza, date);
         }
     }
 
@@ -185,13 +183,14 @@ public class ConversationEvent implements Externalizable {
     }
 
     public static ConversationEvent roomMessageReceived(JID roomJID, JID user, String nickname, String body,
-                                                        Date date) {
+                                                        String stanza, Date date) {
         ConversationEvent event = new ConversationEvent();
         event.type = Type.roomMessageReceived;
         event.roomJID = roomJID;
         event.user = user;
         event.nickname = nickname;
         event.body = body;
+        event.stanza = stanza;
         event.date = date;
         return event;
     }

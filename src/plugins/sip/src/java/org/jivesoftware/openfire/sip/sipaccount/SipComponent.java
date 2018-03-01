@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +40,8 @@ import org.xmpp.packet.PacketError;
  */
 public class SipComponent implements Component, SessionEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(SipComponent.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SipComponent.class);
+    
     ComponentManager componentManager = null;
 
     /**
@@ -210,6 +206,6 @@ public class SipComponent implements Component, SessionEventListener {
     }
 
     public void resourceBound(Session session) {
-    	// Do nothing.
+        // Do nothing.
     }
 }

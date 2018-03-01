@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdateHistoryStrategy implements ClusterTask {
+public class UpdateHistoryStrategy implements ClusterTask<Void> {
     private String serviceName;
     private int type;
     private int maxNumber;
@@ -51,10 +47,12 @@ public class UpdateHistoryStrategy implements ClusterTask {
         maxNumber = historyStrategy.getMaxNumber();
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         MultiUserChatServiceImpl mucServer = (MultiUserChatServiceImpl) XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
         if (mucServer == null) throw new IllegalArgumentException("MUC service not found for subdomain: "+serviceName);
@@ -63,12 +61,14 @@ public class UpdateHistoryStrategy implements ClusterTask {
         strategy.setMaxNumber(maxNumber);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, serviceName);
         ExternalizableUtil.getInstance().writeInt(out, type);
         ExternalizableUtil.getInstance().writeInt(out, maxNumber);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         serviceName = ExternalizableUtil.getInstance().readSafeUTF(in);
         type = ExternalizableUtil.getInstance().readInt(in);

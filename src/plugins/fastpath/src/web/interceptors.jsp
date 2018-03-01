@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 10204 $
-  -	$Date: 2008-04-11 18:44:25 -0400 (Fri, 11 Apr 2008) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -601,7 +599,7 @@ var routerInfo = new Array(
         "<%= StringUtils.replace(descriptor.getShortDescription(), "\"", "\\\"") %>"
     )
 <%          if ((interceptorManager.getAvailableInterceptors().size() - i) > 1) { %>
-		,
+        ,
 <%	        }
         } catch (Exception e) {}
          i++;
@@ -669,18 +667,18 @@ Configure interceptors of the realm:
 </tr>
 </table><br>
 <ul>
-	<table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0">
     <tr><td>
     <table cellpadding="4" cellspacing="1" border="0" width="100%">
-	<tr bgcolor="#eeeeee">
-	<td align="center"><font size="-2" face="verdana"><b>ORDER</b></font></td>
-	<td align="center"><font size="-2" face="verdana"><b>NAME</b></font></td>
-	<td align="center"><font size="-2" face="verdana"><b>DESCRIPTION</b></font></td>
+    <tr bgcolor="#eeeeee">
+    <td align="center"><font size="-2" face="verdana"><b>ORDER</b></font></td>
+    <td align="center"><font size="-2" face="verdana"><b>NAME</b></font></td>
+    <td align="center"><font size="-2" face="verdana"><b>DESCRIPTION</b></font></td>
     <%  if (interceptorCount > 1) { %>
-	<td align="center"><font size="-2" face="verdana"><b>MOVE</b></font></td>
+    <td align="center"><font size="-2" face="verdana"><b>MOVE</b></font></td>
     <%  } %>
-	<td align="center"><font size="-2" face="verdana"><b>EDIT</b></font></td>
-	<td align="center"><font size="-2" face="verdana"><b>DELETE</b></font></td>
+    <td align="center"><font size="-2" face="verdana"><b>EDIT</b></font></td>
+    <td align="center"><font size="-2" face="verdana"><b>DELETE</b></font></td>
     </tr>
 <%  // Loop through all interceptors
     for (PacketInterceptor interceptor : activeInterceptors) {
@@ -819,7 +817,7 @@ Configure interceptors of the realm:
 </table><br>
 
 <ul>
-	<table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="1%">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="1%">
     <tr><td>
         <table cellpadding="4" cellspacing="1" border="0" width="100%">
         <tr bgcolor="#eeeeee">
@@ -911,9 +909,9 @@ Configure interceptors of the realm:
 <ul>
     <table cellpadding="2" cellspacing="0" border="0">
     <tr>
-    	<td>Class Name:</td>
-    	<td><input type="text" name="newClassname" value="" size="30" maxlength="100"></td>
-    	<td><input type="submit" value="Add Interceptor"></td>
+        <td>Class Name:</td>
+        <td><input type="text" name="newClassname" value="" size="30" maxlength="100"></td>
+        <td><input type="submit" value="Add Interceptor"></td>
     </tr>
     </table>
 </ul>

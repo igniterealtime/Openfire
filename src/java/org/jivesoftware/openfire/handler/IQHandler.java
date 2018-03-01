@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1556 $
- * $Date: 2005-06-25 19:32:42 -0300 (Sat, 25 Jun 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +41,7 @@ import org.xmpp.packet.PacketError;
  */
 public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
 
     protected PacketDeliverer deliverer;
     protected SessionManager sessionManager;
@@ -59,6 +55,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         super(moduleName);
     }
 
+    @Override
     public void process(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
         try {
@@ -115,7 +112,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     public abstract IQHandlerInfo getInfo();
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
         sessionManager = server.getSessionManager();

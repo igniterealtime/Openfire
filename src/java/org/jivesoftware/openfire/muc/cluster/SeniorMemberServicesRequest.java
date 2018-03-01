@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,28 +38,32 @@ import java.util.List;
  *
  * @author Daniel Henninger
  */
-public class SeniorMemberServicesRequest implements ClusterTask {
+public class SeniorMemberServicesRequest implements ClusterTask<List<ServiceInfo>> {
     private List<ServiceInfo> services;
 
     public SeniorMemberServicesRequest() {
     }
 
-    public Object getResult() {
+    @Override
+    public List<ServiceInfo> getResult() {
         return services;
     }
 
+    @Override
     public void run() {
-        services = new ArrayList<ServiceInfo>();
+        services = new ArrayList<>();
         // Get all services and include them in the reply
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
             services.add(new ServiceInfo(mucService));
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

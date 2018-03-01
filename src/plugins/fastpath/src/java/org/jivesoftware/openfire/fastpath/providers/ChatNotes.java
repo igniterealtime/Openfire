@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19303 $
- * $Date: 2005-07-14 10:43:49 -0700 (Thu, 14 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,7 @@ import org.xmpp.packet.PacketError;
  */
 public class ChatNotes implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatNotes.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatNotes.class);
 
     private static final String GET_NOTES = "SELECT notes FROM fpSession WHERE sessionID=?";
     private static final String SET_NOTES = "UPDATE fpSession SET notes=? WHERE sessionID=?";

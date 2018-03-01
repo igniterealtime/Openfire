@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,34 +32,34 @@ public class OpenAccess extends AccessModel {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         return true;
     }
 
     @Override
-	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return true;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "open";
     }
 
     @Override
-	public PacketError.Condition getSubsriptionError() {
+    public PacketError.Condition getSubsriptionError() {
         // Return nothing since users can always subscribe to the node
         return null;
     }
 
     @Override
-	public Element getSubsriptionErrorDetail() {
+    public Element getSubsriptionErrorDetail() {
         // Return nothing since users can always subscribe to the node
         return null;
     }
 
     @Override
-	public boolean isAuthorizationRequired() {
+    public boolean isAuthorizationRequired() {
         return false;
     }
 }

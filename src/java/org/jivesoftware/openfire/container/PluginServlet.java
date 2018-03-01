@@ -1,7 +1,4 @@
-/**
- * $Revision: 3067 $
- * $Date: 2005-11-12 22:29:01 -0300 (Sat, 12 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,29 +22,22 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.GenericServlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
+import javax.servlet.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.jasper.JasperException;
 import org.apache.jasper.JspC;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
+import org.dom4j.*;
+import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.WebXmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -72,26 +62,26 @@ import org.xml.sax.SAXException;
  */
 public class PluginServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
+    private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
 
-    private static Map<String, GenericServlet> servlets;
+    private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
     static {
-        servlets = new ConcurrentHashMap<String, GenericServlet>();
+        servlets = new ConcurrentHashMap<>();
     }
-	
-	public static final String PLUGINS_WEBROOT = "/plugins/";
+    
+    public static final String PLUGINS_WEBROOT = "/plugins/";
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
         servletConfig = config;
     }
 
     @Override
-	public void service(HttpServletRequest request, HttpServletResponse response)
+    public void service(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
@@ -130,62 +120,125 @@ public class PluginServlet extends HttpServlet {
      * @param webXML the web.xml file containing JSP page names to servlet class file
      *      mappings.
      */
-    public static void registerServlets(PluginManager manager, Plugin plugin, File webXML) {
+    public static void registerServlets( PluginManager manager, final Plugin plugin, File webXML)
+    {
         pluginManager = manager;
-        if (!webXML.exists()) {
-            Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +
-                " does not exist.");
+
+        if ( !webXML.exists() )
+        {
+            Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() + " does not exist.");
             return;
         }
-        // Find the name of the plugin directory given that the webXML file
-        // lives in plugins/[pluginName]/web/web.xml
-        String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
-        try {
-            // Make the reader non-validating so that it doesn't try to resolve external
-            // DTD's. Trying to resolve external DTD's can break on some firewall configurations.
-            SAXReader saxReader = new SAXReader(false);
-            try {
-                saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
-            }
-            catch (SAXException e) {
-                Log.warn("Error setting SAXReader feature", e);
-            }
-            Document doc = saxReader.read(webXML);
-            // Find all <servlet> entries to discover name to class mapping.
-            List classes = doc.selectNodes("//servlet");
-            Map<String, Class> classMap = new HashMap<String, Class>();
-            for (int i = 0; i < classes.size(); i++) {
-                Element servletElement = (Element)classes.get(i);
-                String name = servletElement.element("servlet-name").getTextTrim();
-                String className = servletElement.element("servlet-class").getTextTrim();
-                classMap.put(name, manager.loadClass(plugin, className));
-            }
-            // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
-            for (int i = 0; i < names.size(); i++) {
-                Element nameElement = (Element)names.get(i);
-                String name = nameElement.element("servlet-name").getTextTrim();
-                String url = nameElement.element("url-pattern").getTextTrim();
-                // Register the servlet for the URL.
-                Class servletClass = classMap.get(name);
-                if(servletClass == null) {
-                    Log.error("Unable to load servlet, " + name + ", servlet-class not found.");
+
+        // Find the name of the plugin directory given that the webXML file lives in plugins/[pluginName]/web/web.xml
+        final String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
+        try
+        {
+            final Document webXmlDoc = WebXmlUtils.asDocument( webXML );
+
+            final List<String> servletNames = WebXmlUtils.getServletNames( webXmlDoc );
+            for ( final String servletName : servletNames )
+            {
+                Log.debug( "Loading servlet '{}' of plugin '{}'...", servletName, pluginName );
+
+                final String className = WebXmlUtils.getServletClassName( webXmlDoc, servletName );
+                if ( className == null || className.isEmpty() )
+                {
+                    Log.warn( "Could not load servlet '{}' of plugin '{}'. web-xml does not define a class name for this servlet.", servletName, pluginName );
                     continue;
                 }
-                Object instance = servletClass.newInstance();
-                if (instance instanceof GenericServlet) {
-                    // Initialize the servlet then add it to the map..
-                    ((GenericServlet)instance).init(servletConfig);
-                    servlets.put(pluginName + url, (GenericServlet)instance);
+
+                final Class theClass = manager.loadClass( plugin, className );
+
+                final Object instance = theClass.newInstance();
+                if ( !(instance instanceof GenericServlet) )
+                {
+                    Log.warn( "Could not load servlet '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.GenericServlet.", servletName, pluginName, className );
+                    continue;
                 }
-                else {
-                    Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
+
+                Log.debug( "Initializing servlet '{}' of plugin '{}'...", servletName, pluginName );
+                ( (GenericServlet) instance ).init( servletConfig );
+
+                Log.debug( "Registering servlet '{}' of plugin '{}' URL patterns.", servletName, pluginName );
+                final Set<String> urlPatterns = WebXmlUtils.getServletUrlPatterns( webXmlDoc, servletName );
+                for ( final String urlPattern : urlPatterns )
+                {
+                    servlets.put( ( pluginName + urlPattern ).toLowerCase(), (GenericServlet) instance );
                 }
+                Log.debug( "Servlet '{}' of plugin '{}' loaded successfully.", servletName, pluginName );
+            }
+
+
+            final List<String> filterNames = WebXmlUtils.getFilterNames( webXmlDoc );
+            for ( final String filterName : filterNames )
+            {
+                Log.debug( "Loading filter '{}' of plugin '{}'...", filterName, pluginName );
+                final String className = WebXmlUtils.getFilterClassName( webXmlDoc, filterName );
+                if ( className == null || className.isEmpty() )
+                {
+                    Log.warn( "Could not load filter '{}' of plugin '{}'. web-xml does not define a class name for this filter.", filterName, pluginName );
+                    continue;
+                }
+                final Class theClass = manager.loadClass( plugin, className );
+
+                final Object instance = theClass.newInstance();
+                if ( !(instance instanceof Filter) )
+                {
+                    Log.warn( "Could not load filter '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.Filter.", filterName, pluginName, className );
+                    continue;
+                }
+
+                Log.debug( "Initializing filter '{}' of plugin '{}'...", filterName, pluginName );
+                ( (Filter) instance ).init( new FilterConfig()
+                {
+                    @Override
+                    public String getFilterName()
+                    {
+                        return filterName;
+                    }
+
+                    @Override
+                    public ServletContext getServletContext()
+                    {
+                        return new PluginServletContext( servletConfig.getServletContext(), pluginManager, plugin );
+                    }
+
+                    @Override
+                    public String getInitParameter( String s )
+                    {
+                        final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );
+                        if ( params == null || params.isEmpty() )
+                        {
+                            return null;
+                        }
+                        return params.get( s );
+                    }
+
+                    @Override
+                    public Enumeration<String> getInitParameterNames()
+                    {
+                        final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );;
+                        if ( params == null || params.isEmpty() )
+                        {
+                            return Collections.emptyEnumeration();
+                        }
+                        return Collections.enumeration( params.keySet() );
+                    }
+                } );
+
+                Log.debug( "Registering filter '{}' of plugin '{}' URL patterns.", filterName, pluginName );
+                final Set<String> urlPatterns = WebXmlUtils.getFilterUrlPatterns( webXmlDoc, filterName );
+                for ( final String urlPattern : urlPatterns )
+                {
+                    PluginFilter.addPluginFilter( urlPattern, ( (Filter) instance ) );
+                }
+                Log.debug( "Filter '{}' of plugin '{}' loaded successfully.", filterName, pluginName );
             }
         }
-        catch (Throwable e) {
-            Log.error(e.getMessage(), e);
+        catch (Throwable e)
+        {
+            Log.error( "An unexpected problem occurred while attempting to register servlets for plugin '{}'.", plugin, e);
         }
     }
 
@@ -195,83 +248,118 @@ public class PluginServlet extends HttpServlet {
      * @param webXML the web.xml file containing JSP page names to servlet class file
      *               mappings.
      */
-    public static void unregisterServlets(File webXML) {
-        if (!webXML.exists()) {
-            Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() +
-                " does not exist.");
+    public static void unregisterServlets(File webXML)
+    {
+        if ( !webXML.exists() )
+        {
+            Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() + " does not exist.");
             return;
         }
-        // Find the name of the plugin directory given that the webXML file
-        // lives in plugins/[pluginName]/web/web.xml
-        String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
-        try {
-            SAXReader saxReader = new SAXReader(false);
-            saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                false);
-            Document doc = saxReader.read(webXML);
-            // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
-            for (int i = 0; i < names.size(); i++) {
-                Element nameElement = (Element)names.get(i);
-                String url = nameElement.element("url-pattern").getTextTrim();
-                // Destroy the servlet than remove from servlets map.
-                GenericServlet servlet = servlets.get(pluginName + url);
-                if (servlet != null) {
+
+        // Find the name of the plugin directory given that the webXML file lives in plugins/[pluginName]/web/web.xml
+        final String pluginName = webXML.getParentFile().getParentFile().getParentFile().getName();
+        try
+        {
+            final Document webXmlDoc = WebXmlUtils.asDocument( webXML );
+
+            // Un-register and destroy all servlets.
+            final List<String> servletNames = WebXmlUtils.getServletNames( webXmlDoc );
+            for ( final String servletName : servletNames )
+            {
+                Log.debug( "Unregistering servlet '{}' of plugin '{}'", servletName, pluginName );
+                final Set<Servlet> toDestroy = new HashSet<>();
+                final Set<String> urlPatterns = WebXmlUtils.getServletUrlPatterns( webXmlDoc, servletName );
+                for ( final String urlPattern : urlPatterns )
+                {
+                    final GenericServlet servlet = servlets.remove( ( pluginName + urlPattern ).toLowerCase() );
+                    if (servlet != null)
+                    {
+                        toDestroy.add( servlet );
+                    }
+                }
+
+                for ( final Servlet servlet : toDestroy )
+                {
                     servlet.destroy();
                 }
-                servlets.remove(pluginName + url);
-                servlet = null;
+
+                Log.debug( "Servlet '{}' of plugin '{}' unregistered and destroyed successfully.", servletName, pluginName );
+
+            }
+
+            // Un-register and destroy all servlet filters.
+            final List<String> filterNames = WebXmlUtils.getFilterNames( webXmlDoc );
+            for ( final String filterName : filterNames )
+            {
+                Log.debug( "Unregistering filter '{}' of plugin '{}'", filterName, pluginName );
+                final Set<Filter> toDestroy = new HashSet<>();
+                final String className = WebXmlUtils.getFilterClassName( webXmlDoc, filterName );
+                final Set<String> urlPatterns = WebXmlUtils.getFilterUrlPatterns( webXmlDoc, filterName );
+                for ( final String urlPattern : urlPatterns )
+                {
+                    final Filter filter = PluginFilter.removePluginFilter( urlPattern, className );
+                    if (filter != null)
+                    {
+                        toDestroy.add( filter );
+                    }
+                }
+
+                for ( final Filter filter : toDestroy )
+                {
+                    filter.destroy();
+                }
+
+                Log.debug( "Filter '{}' of plugin '{}' unregistered and destroyesd successfully.", filterName, pluginName );
             }
         }
         catch (Throwable e) {
-            Log.error(e.getMessage(), e);
+            Log.error( "An unexpected problem occurred while attempting to unregister servlets.", e);
         }
     }
 
+    /**
+     * Registers a live servlet for a plugin programmatically, does not
+     * initialize the servlet.
+     * 
+     * @param pluginManager the plugin manager
+     * @param plugin the owner of the servlet
+     * @param servlet the servlet.
+     * @param relativeUrl the relative url where the servlet should be bound
+     * @return the effective url that can be used to initialize the servlet
+     */
+    public static String registerServlet(PluginManager pluginManager,
+            Plugin plugin, GenericServlet servlet, String relativeUrl)
+            throws ServletException {
 
-	/**
-	 * Registers a live servlet for a plugin programmatically, does not
-	 * initialize the servlet.
-	 * 
-	 * @param pluginManager the plugin manager
-	 * @param plugin the owner of the servlet
-	 * @param servlet the servlet.
-	 * @param relativeUrl the relative url where the servlet should be bound
-	 * @return the effective url that can be used to initialize the servlet
-	 */
-	public static String registerServlet(PluginManager pluginManager,
-			Plugin plugin, GenericServlet servlet, String relativeUrl)
-			throws ServletException {
+        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        PluginServlet.pluginManager = pluginManager;
+        if (servlet == null) {
+            throw new ServletException("Servlet is missing");
+        }
+        String pluginServletUrl = pluginName + relativeUrl;
+        servlets.put((pluginName + relativeUrl).toLowerCase(), servlet);
+        return PLUGINS_WEBROOT + pluginServletUrl;
+        
+    }
 
-		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
-		PluginServlet.pluginManager = pluginManager;
-		if (servlet == null) {
-			throw new ServletException("Servlet is missing");
-		}
-		String pluginServletUrl = pluginName + relativeUrl;
-		servlets.put(pluginName + relativeUrl, servlet);
-		return PLUGINS_WEBROOT + pluginServletUrl;
-		
-	}
-
-	/**
-	 * Unregister a live servlet for a plugin programmatically. Does not call
-	 * the servlet destroy method.
-	 * 
-	 * @param plugin the owner of the servlet
-	 * @param url the relative url where servlet has been bound
-	 * @return the unregistered servlet, so that it can be destroyed
-	 */
-	public static GenericServlet unregisterServlet(Plugin plugin, String url)
-			throws ServletException {
-		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
-		if (url == null) {
-			throw new ServletException("Servlet URL is missing");
-		}
-		String fullUrl = pluginName + url;
-		GenericServlet servlet = servlets.remove(fullUrl);
-		return servlet;
-	}
+    /**
+     * Unregister a live servlet for a plugin programmatically. Does not call
+     * the servlet destroy method.
+     * 
+     * @param plugin the owner of the servlet
+     * @param url the relative url where servlet has been bound
+     * @return the unregistered servlet, so that it can be destroyed
+     */
+    public static GenericServlet unregisterServlet(Plugin plugin, String url)
+            throws ServletException {
+        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        if (url == null) {
+            throw new ServletException("Servlet URL is missing");
+        }
+        String fullUrl = pluginName + url;
+        GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
+        return servlet;
+    }
     
     /**
      * Handles a request for a JSP page. It checks to see if a servlet is mapped
@@ -289,7 +377,7 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
-        GenericServlet servlet = servlets.get(jspURL);
+        GenericServlet servlet = servlets.get(jspURL.toLowerCase());
         if (servlet != null) {
             servlet.service(request, response);
         }
@@ -490,23 +578,17 @@ public class PluginServlet extends HttpServlet {
             jspc.setCompile(true);
 
             jspc.setClassPath(getClasspathForPlugin(plugin));
+            jspc.execute();
+
             try {
-                jspc.execute();
-
-                try {
-                    Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
-                        relativeDir + filename).newInstance();
-                    HttpServlet servlet = (HttpServlet)servletInstance;
-                    servlet.init(servletConfig);
-                    servlet.service(request, response);
-                    return true;
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-
+                Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
+                    relativeDir + filename).newInstance();
+                HttpServlet servlet = (HttpServlet)servletInstance;
+                servlet.init(servletConfig);
+                servlet.service(request, response);
+                return true;
             }
-            catch (JasperException e) {
+            catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
         }

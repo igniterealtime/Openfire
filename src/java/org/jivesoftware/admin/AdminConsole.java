@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,11 +28,8 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,40 +45,15 @@ import org.slf4j.LoggerFactory;
  */
 public class AdminConsole {
 
-	private static final Logger Log = LoggerFactory.getLogger(AdminConsole.class);
+    private static final Logger Log = LoggerFactory.getLogger(AdminConsole.class);
 
     private static Element coreModel;
     private static Map<String,Element> overrideModels;
     private static Element generatedModel;
 
     static {
-        overrideModels = new LinkedHashMap<String,Element>();
+        overrideModels = new LinkedHashMap<>();
         load();
-        
-        // Detect when a new auth provider class is set to ClearspaceAuthProvider
-        // then rebuild the model to add the Clearspace tab
-        // This is to add the tab after Openfire setup
-        PropertyEventListener propListener = new PropertyEventListener() {
-            public void propertySet(String property, Map params) {
-                if ("provider.auth.className".equals(property)) {
-                    String value = (String) params.get("value");
-                    if ("org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(value)) {
-                        rebuildModel();
-                    }
-                }
-            }
-
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
     }
 
     /** Not instantiatable */
@@ -113,7 +81,7 @@ public class AdminConsole {
      * @param element the Element
      * @throws Exception if an error occurs.
      */
-    public static void addModel(String name, Element element) throws Exception {
+    public static synchronized void addModel(String name, Element element) throws Exception {
         overrideModels.put(name, element);
         rebuildModel();
     }
@@ -123,7 +91,7 @@ public class AdminConsole {
      *
      * @param name the name.
      */
-    public static void removeModel(String name) {
+    public static synchronized void removeModel(String name) {
         overrideModels.remove(name);
         rebuildModel();
     }
@@ -379,32 +347,6 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
-        }
-
-        // Special case: show a link to Clearspace admin console if it is integrated with
-        // Openfire.
-        if (ClearspaceManager.isEnabled()) {
-            Element clearspace = generatedModel.addElement("tab");
-            clearspace.addAttribute("id", "tab-clearspace");
-            clearspace.addAttribute("name", LocaleUtils.getLocalizedString("tab.tab-clearspace"));
-            clearspace.addAttribute("url", "clearspace-status.jsp");
-            clearspace.addAttribute("description", LocaleUtils.getLocalizedString("tab.tab-clearspace.descr"));
-            Element sidebar = clearspace.addElement("sidebar");
-            sidebar.addAttribute("id", "sidebar-clearspace");
-            sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace"));
-
-            Element statusItem = sidebar.addElement("item");
-            statusItem.addAttribute("id", "clearspace-status");
-            statusItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-status"));
-            statusItem.addAttribute("url", "clearspace-status.jsp");
-            statusItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-status.descr"));
-
-            Element adminItem = sidebar.addElement("item");
-            adminItem.addAttribute("id", "clearspace-admin");
-            adminItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-admin"));
-            adminItem.addAttribute("url", "clearspace-admin.jsp");
-            adminItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-admin.descr"));
-
         }
     }
 

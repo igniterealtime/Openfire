@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2003-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +83,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EmailService {
 
-	private static final Logger Log = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger Log = LoggerFactory.getLogger(EmailService.class);
 
     private static final String SSL_FACTORY = "org.jivesoftware.util.SimpleSSLSocketFactory";
 
@@ -479,6 +475,7 @@ public class EmailService {
             this.messages = messages;
         }
 
+        @Override
         public void run() {
             try {
                 sendMessages();
@@ -504,11 +501,8 @@ public class EmailService {
                         transport.sendMessage(message,
                             message.getRecipients(MimeMessage.RecipientType.TO));
                     }
-                    catch (AddressException ae) {
+                    catch (AddressException | SendFailedException ae) {
                         Log.error(ae.getMessage(), ae);
-                    }
-                    catch (SendFailedException sfe) {
-                        Log.error(sfe.getMessage(), sfe);
                     }
                 }
             }

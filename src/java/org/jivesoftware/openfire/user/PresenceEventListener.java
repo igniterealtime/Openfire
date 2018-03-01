@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +38,7 @@ public interface PresenceEventListener {
      * @param session the session that is now available.
      * @param presence the received available presence.
      */
-    public void availableSession(ClientSession session, Presence presence);
+    void availableSession( ClientSession session, Presence presence );
 
     /**
      * Notification message indicating that a session that was available is no longer
@@ -53,7 +49,7 @@ public interface PresenceEventListener {
      * @param session the session that is no longer available.
      * @param presence the received unavailable presence.
      */
-    public void unavailableSession(ClientSession session, Presence presence);
+    void unavailableSession( ClientSession session, Presence presence );
 
     /**
      * Notification message indicating that an available session has changed its
@@ -63,7 +59,7 @@ public interface PresenceEventListener {
      * @param session the affected session.
      * @param presence the received available presence with the new information.
      */
-    public void presenceChanged(ClientSession session, Presence presence);
+    void presenceChanged( ClientSession session, Presence presence );
 
     /**
      * Notification message indicating that a user has successfully subscribed
@@ -72,7 +68,7 @@ public interface PresenceEventListener {
      * @param subscriberJID the user that initiated the subscription.
      * @param authorizerJID the user that authorized the subscription.
      */
-    public void subscribedToPresence(JID subscriberJID, JID authorizerJID);
+    void subscribedToPresence( JID subscriberJID, JID authorizerJID );
 
     /**
      * Notification message indicating that a user has unsubscribed
@@ -81,5 +77,5 @@ public interface PresenceEventListener {
      * @param unsubscriberJID the user that initiated the unsubscribe request.
      * @param recipientJID    the recipient user of the unsubscribe request.
      */
-    public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID);
+    void unsubscribedToPresence( JID unsubscriberJID, JID recipientJID );
 }

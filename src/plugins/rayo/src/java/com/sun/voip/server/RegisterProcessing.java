@@ -105,86 +105,86 @@ class RegisterProcessing implements SipListener {
 
     public RegisterProcessing(String address, String registrar, ProxyCredentials proxyCredentials)
     {
-		Logger.println("Start registering...." + registrar);
+        Logger.println("Start registering...." + registrar);
 
-		this.registrar = registrar;
-		this.proxyCredentials = proxyCredentials;
-		this.address = address;
+        this.registrar = registrar;
+        this.proxyCredentials = proxyCredentials;
+        this.address = address;
 
-		sipServerCallback = SipServer.getSipServerCallback();
+        sipServerCallback = SipServer.getSipServerCallback();
 
-		try {
-			register();
-		} catch (IOException e) {
-			Logger.println(e.getMessage());
-		}
+        try {
+            register();
+        } catch (IOException e) {
+            Logger.println(e.getMessage());
+        }
     }
 
     public void processRequest(RequestEvent requestReceivedEvent) {
-	Logger.println("Request ignored:  "
-	    + requestReceivedEvent.getRequest());
+    Logger.println("Request ignored:  "
+        + requestReceivedEvent.getRequest());
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
 
-		//Logger.println("Registering response...." + sipCallId);
+        //Logger.println("Registering response...." + sipCallId);
 
-		Response response = (Response)responseReceivedEvent.getResponse();
+        Response response = (Response)responseReceivedEvent.getResponse();
         int statusCode = response.getStatusCode();
         String method = ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getMethod();
 
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-			Logger.println("Got response " + response);
-		}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Got response " + response);
+        }
 
-		if (statusCode == Response.OK) {
-				isRegistered = true;
+        if (statusCode == Response.OK) {
+                isRegistered = true;
 
-			Logger.println("Voice bridge successfully registered with "	+ registrar + " for " + proxyCredentials.getXmppUserName());
-			Application.registerNotification("Registered", proxyCredentials);
+            Logger.println("Voice bridge successfully registered with "	+ registrar + " for " + proxyCredentials.getXmppUserName());
+            Application.registerNotification("Registered", proxyCredentials);
 
-        	sipServerCallback.removeSipListener(sipCallId);
+            sipServerCallback.removeSipListener(sipCallId);
 
-		} else if (statusCode == Response.UNAUTHORIZED || statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) {
+        } else if (statusCode == Response.UNAUTHORIZED || statusCode == Response.PROXY_AUTHENTICATION_REQUIRED) {
 
             if (method.equals(Request.REGISTER))
             {
                 CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-            	if (cseq.getSequenceNumber() < 2) {
+                if (cseq.getSequenceNumber() < 2) {
 
-					ClientTransaction regTrans = SipServer.handleChallenge(response, responseReceivedEvent.getClientTransaction(), proxyCredentials);
+                    ClientTransaction regTrans = SipServer.handleChallenge(response, responseReceivedEvent.getClientTransaction(), proxyCredentials);
 
-					if (regTrans != null)
-					{
-						try {
-							regTrans.sendRequest();
+                    if (regTrans != null)
+                    {
+                        try {
+                            regTrans.sendRequest();
 
-						} catch (Exception e) {
+                        } catch (Exception e) {
 
-							Logger.println("Registration failed, cannot send transaction " + e);
-							Application.registerNotification("RegistrationFailed", proxyCredentials);
-						}
+                            Logger.println("Registration failed, cannot send transaction " + e);
+                            Application.registerNotification("RegistrationFailed", proxyCredentials);
+                        }
 
-					} else {
-						Logger.println("Registration failed, cannot create transaction");
-						Application.registerNotification("RegistrationFailed", proxyCredentials);
-					}
+                    } else {
+                        Logger.println("Registration failed, cannot create transaction");
+                        Application.registerNotification("RegistrationFailed", proxyCredentials);
+                    }
 
                 } else {
                     Logger.println("Registration failed " + responseReceivedEvent);
-					Application.registerNotification("RegistrationFailed", proxyCredentials);
-				}
+                    Application.registerNotification("RegistrationFailed", proxyCredentials);
+                }
             }
 
-		} else {
-			Logger.println("Unrecognized response:  " + response);
-		}
+        } else {
+            Logger.println("Unrecognized response:  " + response);
+        }
 
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
-	Logger.println("Timeout trying to register with " + registrar);
+    Logger.println("Timeout trying to register with " + registrar);
         sipServerCallback.removeSipListener(sipCallId);
     }
 
@@ -211,9 +211,9 @@ class RegisterProcessing implements SipListener {
 
     private void register() throws IOException
     {
-		Logger.println("Registering with " + registrar);
+        Logger.println("Registering with " + registrar);
 
-		Application.registerNotification("Registering", proxyCredentials);
+        Application.registerNotification("Registering", proxyCredentials);
 
         FromHeader fromHeader = getFromHeader();
 
@@ -224,7 +224,7 @@ class RegisterProcessing implements SipListener {
         try {
             requestURI = addressFactory.createSipURI(null, registrar);
 
-	} catch (ParseException e) {
+    } catch (ParseException e) {
             throw new IOException("Bad registrar address:" + registrar + " " + e.getMessage());
         }
         //requestURI.setPort(registrarPort);
@@ -232,10 +232,10 @@ class RegisterProcessing implements SipListener {
 
         try {
             requestURI.setTransportParam(
-		sipProvider.getListeningPoint().getTransport());
+        sipProvider.getListeningPoint().getTransport());
         } catch (ParseException e) {
             throw new IOException(sipProvider.getListeningPoint().getTransport()
-		+ " is not a valid transport! " + e.getMessage());
+        + " is not a valid transport! " + e.getMessage());
         }
         //Call ID Header
         CallIdHeader callIdHeader = sipProvider.getNewCallId();
@@ -266,7 +266,7 @@ class RegisterProcessing implements SipListener {
                 toURI.setUser(System.getProperty("user.name"));
 
                 toHeader = headerFactory.createToHeader(
-		    addressFactory.createAddress(toURI), null);
+            addressFactory.createAddress(toURI), null);
             } else {
                 toHeader = headerFactory.createToHeader(fromAddress, null);
             }
@@ -281,7 +281,7 @@ class RegisterProcessing implements SipListener {
         ArrayList viaHeaders = getLocalViaHeaders();
         //MaxForwardsHeader
         MaxForwardsHeader maxForwardsHeader = getMaxForwardsHeader();
-	//Request
+    //Request
         Request request = null;
         try {
             request = messageFactory.createRequest(requestURI,
@@ -292,8 +292,8 @@ class RegisterProcessing implements SipListener {
                 maxForwardsHeader);
         } catch (ParseException e) {
             throw new IOException(
-		"Could not create the register request! " + e.getMessage());
-	}
+        "Could not create the register request! " + e.getMessage());
+    }
 
         //Expires Header
         ExpiresHeader expHeader = null;
@@ -315,17 +315,17 @@ class RegisterProcessing implements SipListener {
         request.addHeader(expHeader);
         //Contact Header should contain IP - bug report - Eero Vaarnas
         ContactHeader contactHeader = getRegistrationContactHeader();
-	request.addHeader(contactHeader);
+    request.addHeader(contactHeader);
 
-	try {
-		SipURI routeURI = (SipURI) addressFactory.createURI("sip:" + proxyCredentials.getProxy() + ";lr");
-		RouteHeader routeHeader = headerFactory.createRouteHeader(addressFactory.createAddress(routeURI));
-		request.addHeader(routeHeader);
+    try {
+        SipURI routeURI = (SipURI) addressFactory.createURI("sip:" + proxyCredentials.getProxy() + ";lr");
+        RouteHeader routeHeader = headerFactory.createRouteHeader(addressFactory.createAddress(routeURI));
+        request.addHeader(routeHeader);
 
-	} catch (Exception e) {
+    } catch (Exception e) {
 
-		Logger.error("Creating registration route error " + e);
-	}
+        Logger.error("Creating registration route error " + e);
+    }
 
         //Transaction
         ClientTransaction regTrans = null;
@@ -334,29 +334,29 @@ class RegisterProcessing implements SipListener {
         } catch (TransactionUnavailableException e) {
             throw new IOException("Could not create a register transaction!\n"
                 + "Check that the Registrar address is correct! "
-		+ e.getMessage());
+        + e.getMessage());
         }
 
 
 
         try {
-	    sipCallId = callIdHeader.getCallId();
-	    sipServerCallback.addSipListener(sipCallId, this);
-	    registerRequest = request;
+        sipCallId = callIdHeader.getCallId();
+        sipServerCallback.addSipListener(sipCallId, this);
+        registerRequest = request;
             regTrans.sendRequest();
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println("Sent register request " + registerRequest);
-	    }
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Sent register request " + registerRequest);
+        }
 
 
-	    if (expires > 0) {
+        if (expires > 0) {
                 scheduleReRegistration();
-	    }
+        }
         } catch (Exception e) {
             //we sometimes get a null pointer exception here so catch them all
-	    throw new IOException("Could not send out the register request! "
-		+ e.getMessage());
+        throw new IOException("Could not send out the register request! "
+        + e.getMessage());
         }
 
 
@@ -388,27 +388,27 @@ class RegisterProcessing implements SipListener {
             cSeqHeader.setSequenceNumber(cSeqHeader.getSequenceNumber()+1);
         } catch (InvalidArgumentException e) {
             Logger.println("Unable to set Expires Header " + e.getMessage());
-	    return;
+        return;
         }
 
         ClientTransaction unregisterTransaction = null;
 
         try {
             unregisterTransaction = sipProvider.getNewClientTransaction(
-		unregisterRequest);
+        unregisterRequest);
         } catch (TransactionUnavailableException e) {
             throw new IOException("Unable to create a unregister transaction "
-		+ e.getMessage());
+        + e.getMessage());
         }
         try {
             unregisterTransaction.sendRequest();
         } catch (SipException e) {
             Logger.println("Faied to send unregister request "
-		+ e.getMessage());
-	    return;
+        + e.getMessage());
+        return;
         }
 
-		Application.registerNotification("Unregistering", proxyCredentials);
+        Application.registerNotification("Unregistering", proxyCredentials);
     }
 
     public boolean isRegistered() {
@@ -419,12 +419,12 @@ class RegisterProcessing implements SipListener {
 
     private FromHeader getFromHeader() throws IOException {
 
-	if (fromHeader != null) {
-	    return fromHeader;
+    if (fromHeader != null) {
+        return fromHeader;
         }
 
-	try {
-	    SipURI fromURI = (SipURI) addressFactory.createURI("sip:" + proxyCredentials.getUserName() + "@" + registrar);
+    try {
+        SipURI fromURI = (SipURI) addressFactory.createURI("sip:" + proxyCredentials.getUserName() + "@" + registrar);
 
             fromURI.setTransportParam(sipProvider.getListeningPoint().getTransport());
 
@@ -434,21 +434,21 @@ class RegisterProcessing implements SipListener {
 
             fromAddress.setDisplayName(proxyCredentials.getUserDisplay());
 
-	    fromHeader = headerFactory.createFromHeader(fromAddress, Integer.toString(hashCode()));
+        fromHeader = headerFactory.createFromHeader(fromAddress, Integer.toString(hashCode()));
 
         } catch (ParseException e) {
             throw new IOException(
-		"A ParseException occurred while creating From Header! "
-		+ e.getMessage());
+        "A ParseException occurred while creating From Header! "
+        + e.getMessage());
         }
 
-	return fromHeader;
+    return fromHeader;
     }
 
     private ArrayList viaHeaders;
 
     private ArrayList getLocalViaHeaders() throws IOException {
-	/*
+    /*
          * We can't keep a cached copy because the callers
          * of this method change the viaHeaders.  In particular
          * a branch may be added which causes INVITES to fail.
@@ -458,25 +458,25 @@ class RegisterProcessing implements SipListener {
         }
 
         ListeningPoint lp = sipProvider.getListeningPoint();
-	viaHeaders = new ArrayList();
+    viaHeaders = new ArrayList();
 
         try {
-	    String addr = lp.getIPAddress();
+        String addr = lp.getIPAddress();
 
             ViaHeader viaHeader = headerFactory.createViaHeader(
                 addr, lp.getPort(), lp.getTransport(), null);
 
-	    viaHeader.setRPort();
+        viaHeader.setRPort();
 
             viaHeaders.add(viaHeader);
             return viaHeaders;
         } catch (ParseException e) {
             throw new IOException (
-		"A ParseException occurred while creating Via Headers! "
-		+ e.getMessage());
+        "A ParseException occurred while creating Via Headers! "
+        + e.getMessage());
         } catch (InvalidArgumentException e) {
             throw new IOException(
-		"Unable to create a via header for port " + lp.getPort()
+        "Unable to create a via header for port " + lp.getPort()
                     + " " + e.getMessage());
         }
     }
@@ -486,17 +486,17 @@ class RegisterProcessing implements SipListener {
 
     private MaxForwardsHeader getMaxForwardsHeader() throws IOException {
         if (maxForwardsHeader != null) {
-	    return maxForwardsHeader;
+        return maxForwardsHeader;
         }
 
-	try {
+    try {
             maxForwardsHeader =
-		headerFactory.createMaxForwardsHeader(MAX_FORWARDS);
+        headerFactory.createMaxForwardsHeader(MAX_FORWARDS);
             return maxForwardsHeader;
         } catch (InvalidArgumentException e) {
                 throw new IOException(
                     "A problem occurred while creating MaxForwardsHeader "
-		    + e.getMessage());
+            + e.getMessage());
         }
     }
 
@@ -511,16 +511,16 @@ class RegisterProcessing implements SipListener {
             SipURI contactURI = (SipURI) addressFactory.createURI("sip:" + proxyCredentials.getUserName() + "@" + Config.getInstance().getPublicHost());
 
             contactURI.setTransportParam(
-		sipProvider.getListeningPoint().getTransport());
-	    contactURI.setPort(sipProvider.getListeningPoint().getPort());
+        sipProvider.getListeningPoint().getTransport());
+        contactURI.setPort(sipProvider.getListeningPoint().getPort());
             Address contactAddress = addressFactory.createAddress(contactURI);
             contactAddress.setDisplayName(proxyCredentials.getUserDisplay());
             contactHeader = headerFactory.createContactHeader(contactAddress);
             return contactHeader;
-	} catch (ParseException e) {
+    } catch (ParseException e) {
              throw new IOException(
                     "A ParseException occurred while creating From Header! "
-		+ " " + e.getMessage());
+        + " " + e.getMessage());
         }
     }
 
@@ -533,7 +533,7 @@ class ReRegisterTask extends TimerTask {
             try {
                 if (isRegistered()) {
                     register();
-		}
+        }
             } catch (IOException e) {
                 Logger.println("Failed to reRegister " + e.getMessage());
             }
@@ -550,7 +550,7 @@ class ReRegisterTask extends TimerTask {
     private void scheduleReRegistration() {
         ReRegisterTask reRegisterTask = new ReRegisterTask();
 
-	//java.util.Timer thinks in miliseconds
+    //java.util.Timer thinks in miliseconds
         //bug report and fix by Willem Romijn (romijn at lucent.com)
         reRegisterTimer.schedule(reRegisterTask, expires * 1000);
     }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3084 $
- * $Date: 2005-11-15 23:51:41 -0300 (Tue, 15 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,42 +16,20 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.HistoryRequest;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MUCUser;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAcceptableException;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.RegistrationRequiredException;
-import org.jivesoftware.openfire.muc.RoomLockedException;
-import org.jivesoftware.openfire.muc.ServiceUnavailableException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Representation of users interacting with the chat service. A user
@@ -71,7 +45,7 @@ import org.xmpp.packet.Presence;
  */
 public class LocalMUCUser implements MUCUser {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalMUCUser.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalMUCUser.class);
 
     /** The chat server this user belongs to. */
     private MultiUserChatService server;
@@ -80,7 +54,7 @@ public class LocalMUCUser implements MUCUser {
     private JID realjid;
 
     /** Table: key roomName.toLowerCase(); value LocalMUCRole. */
-    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<String, LocalMUCRole>();
+    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<>();
 
     /** Deliver packets to users. */
     private PacketRouter router;
@@ -182,10 +156,12 @@ public class LocalMUCUser implements MUCUser {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress() {
         return realjid;
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (packet instanceof IQ) {
             process((IQ)packet);
@@ -221,10 +197,8 @@ public class LocalMUCUser implements MUCUser {
         JID recipient = packet.getTo();
         String group = recipient.getNode();
         if (group == null) {
-            // Ignore packets to the groupchat server
-            // In the future, we'll need to support TYPE_IQ queries to the server for MUC
-            Log.info(LocaleUtils.getLocalizedString("muc.error.not-supported") + " "
-                    + packet.toString());
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
         else {
             MUCRole role = roles.get(group);
@@ -269,9 +243,7 @@ public class LocalMUCUser implements MUCUser {
                 }
                 else {
                     try {
-                        if (packet.getSubject() != null && packet.getSubject().trim().length() > 0 &&
-                                Message.Type.groupchat == packet.getType() &&
-                                (packet.getBody() == null || packet.getBody().trim().length() == 0)) {
+                        if (role.getChatRoom().getRoomHistory().isSubjectChangeRequest(packet)) {
                             // An occupant is trying to change the room's subject
                             role.getChatRoom().changeSubject(packet, role);
 
@@ -309,13 +281,13 @@ public class LocalMUCUser implements MUCUser {
                                     // message invitation. These extensions will be sent to the
                                     // invitees.
                                     @SuppressWarnings("unchecked")
-                                    List<Element> extensions = new ArrayList<Element>(packet
+                                    List<Element> extensions = new ArrayList<>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
                                     
                                     // Send invitations to invitees
                                     @SuppressWarnings("unchecked")
-									Iterator<Element> it = userInfo.elementIterator("invite");
+                                    Iterator<Element> it = userInfo.elementIterator("invite");
                                     while(it.hasNext()) {
                                         Element info = it.next();
                                         JID jid = new JID(info.attributeValue("to"));
@@ -371,19 +343,28 @@ public class LocalMUCUser implements MUCUser {
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
-        if (group == null) {
-            // Ignore packets to the groupchat server
-            // In the future, we'll need to support TYPE_IQ queries to the server for MUC
-            Log.info(LocaleUtils.getLocalizedString("muc.error.not-supported") + " "
-                    + packet.toString());
+        if (group == null)
+        {
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            if ( packet.isRequest() )
+            {
+                sendErrorPacket( packet, PacketError.Condition.feature_not_implemented );
+            }
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
-        else {
+        else
+        {
+            // Packets to a specific node/group/room
             MUCRole role = roles.get(group);
             if (role == null) {
-                // If a non-occupant sends a disco to an address of the form <room@service/nick>,
-                // a MUC service MUST return a <bad-request/> error.
-                // http://xmpp.org/extensions/xep-0045.html#disco-occupant
-                sendErrorPacket(packet, PacketError.Condition.bad_request);
+                Log.debug( "Ignoring stanza received from a non-occupant of '{}': {}", group, packet.toXML() );
+                if ( packet.isRequest() )
+                {
+                    // If a non-occupant sends a disco to an address of the form <room@service/nick>,
+                    // a MUC service MUST return a <bad-request/> error.
+                    // http://xmpp.org/extensions/xep-0045.html#disco-occupant
+                    sendErrorPacket( packet, PacketError.Condition.bad_request );
+                }
             }
             else if (IQ.Type.result == packet.getType()
                     || IQ.Type.error == packet.getType()) {
@@ -394,7 +375,7 @@ public class LocalMUCUser implements MUCUser {
                         // User is sending an IQ result packet to another room occupant
                         role.getChatRoom().sendPrivatePacket(packet, role);
                     }
-                    catch (NotFoundException e) {
+                    catch (NotFoundException | ForbiddenException e) {
                         // Do nothing. No error will be sent to the sender of the IQ result packet
                     }
                 }
@@ -426,6 +407,9 @@ public class LocalMUCUser implements MUCUser {
                             }
                         }
                     }
+                    catch (NotAcceptableException e) {
+                        sendErrorPacket(packet, PacketError.Condition.not_acceptable );
+                    }
                     catch (ForbiddenException e) {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);
                     }
@@ -451,18 +435,17 @@ public class LocalMUCUser implements MUCUser {
     }
 
     public void process(Presence packet) {
-        // Ignore presences of type ERROR sent to a room
-        if (Presence.Type.error == packet.getType()) {
-            return;
-        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
         if (group != null) {
             MUCRole role = roles.get(group);
-            if (role == null) {
-                // If we're not already in a room, we either are joining it or it's not
+            Element mucInfo = packet.getChildElement("x",
+                    "http://jabber.org/protocol/muc");
+            if (role == null || mucInfo != null) {
+                // If we're not already in a room (role == null), we either are joining it or it's not
                 // properly addressed and we drop it silently
+                // Alternative is that mucInfo is not null, in which case the client thinks it isn't in the room, so we should join anyway.
                 if (recipient.getResource() != null
                         && recipient.getResource().trim().length() > 0) {
                     if (packet.isAvailable()) {
@@ -470,8 +453,6 @@ public class LocalMUCUser implements MUCUser {
                             // Get or create the room
                             MUCRoom room = server.getChatRoom(group, packet.getFrom());
                             // User must support MUC in order to create a room
-                            Element mucInfo = packet.getChildElement("x",
-                                    "http://jabber.org/protocol/muc");
                             HistoryRequest historyRequest = null;
                             String password = null;
                             // Check for password & requested history if client supports MUC
@@ -499,7 +480,7 @@ public class LocalMUCUser implements MUCUser {
                         catch (ServiceUnavailableException e) {
                             sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
-                        catch (UserAlreadyExistsException e) {
+                        catch (UserAlreadyExistsException | ConflictException e) {
                             sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                         catch (RoomLockedException e) {
@@ -511,31 +492,24 @@ public class LocalMUCUser implements MUCUser {
                         }
                         catch (RegistrationRequiredException e) {
                             sendErrorPacket(packet, PacketError.Condition.registration_required);
-                        }
-                        catch (ConflictException e) {
-                            sendErrorPacket(packet, PacketError.Condition.conflict);
-                        }
-                        catch (NotAcceptableException e) {
+                        } catch (NotAcceptableException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                         }
                         catch (NotAllowedException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_allowed);
                         }
                     }
-                    else {
-                        // TODO: send error message to user (can't send presence to group you
-                        // haven't joined)
+                    else if (packet.getType() != Presence.Type.error) {
+                        sendErrorPacket(packet, PacketError.Condition.unexpected_request);
                     }
                 }
                 else {
-                    if (packet.isAvailable()) {
+                    if (packet.getType() != Presence.Type.error) {
                         // A resource is required in order to join a room
                         // http://xmpp.org/extensions/xep-0045.html#enter
                         // If the user does not specify a room nickname (note the bare JID on the 'from' address in the following example), the service MUST return a <jid-malformed/> error
                         sendErrorPacket(packet, PacketError.Condition.jid_malformed);
                     }
-                    // TODO: send error message to user (can't send packets to group you haven't
-                    // joined)
                 }
             }
             else {
@@ -569,8 +543,11 @@ public class LocalMUCUser implements MUCUser {
                                 // Occupant has changed his nickname. Send two presences
                                 // to each room occupant
 
+                                if (role.getChatRoom().getOccupantsByBareJID(packet.getFrom().asBareJID()).size() > 1) {
+                                    sendErrorPacket(packet, PacketError.Condition.not_acceptable);
+                                }
                                 // Check if occupants are allowed to change their nicknames
-                                if (!role.getChatRoom().canChangeNickname()) {
+                                else if (!role.getChatRoom().canChangeNickname()) {
                                     sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                                 }
                                 // Answer a conflic error if the new nickname is taken
@@ -602,31 +579,34 @@ public class LocalMUCUser implements MUCUser {
                     }
                 }
             }
+        } else {
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LocalMUCUser other = (LocalMUCUser) obj;
-		if (realjid == null) {
-			if (other.realjid != null)
-				return false;
-		} else if (!realjid.equals(other.realjid))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LocalMUCUser other = (LocalMUCUser) obj;
+        if (realjid == null) {
+            if (other.realjid != null)
+                return false;
+        } else if (!realjid.equals(other.realjid))
+            return false;
+        return true;
+    }
 }

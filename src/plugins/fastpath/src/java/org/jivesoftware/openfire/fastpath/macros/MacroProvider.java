@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19255 $
- * $Date: 2005-07-07 18:49:41 -0700 (Thu, 07 Jul 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +33,8 @@ import com.thoughtworks.xstream.XStream;
 
 public class MacroProvider implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(MacroProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(MacroProvider.class);
+    
     public boolean handleGet(IQ packet) {
         Element iq = packet.getChildElement();
         String name = iq.getName();

@@ -13,8 +13,8 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%
     // Get handle on the Monitoring plugin
     MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
@@ -48,19 +48,19 @@
     int numPages = 1;
     int curPage = (start / range) + 1;
 
-    if (anyText.equals(participant1)) {
+    if (anyText.equalsIgnoreCase(participant1)) {
         participant1 = null;
     }
 
-    if (anyText.equals(participant2)) {
+    if (anyText.equalsIgnoreCase(participant2)) {
         participant2 = null;
     }
 
-    if (anyText.equals(startDate)) {
+    if (anyText.equalsIgnoreCase(startDate)) {
         startDate = null;
     }
 
-    if (anyText.equals(endDate)) {
+    if (anyText.equalsIgnoreCase(endDate)) {
         endDate = null;
     }
 
@@ -153,9 +153,6 @@
 <meta name="pageID" content="archive-search"/>
 <script src="/js/prototype.js" type="text/javascript"></script>
 <script src="/js/scriptaculous.js" type="text/javascript"></script>
-<script src="dwr/engine.js" type="text/javascript"></script>
-<script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/conversations.js" type="text/javascript"></script>
 <script type="text/javascript" language="javascript" src="scripts/tooltips/domLib.js"></script>
 <script type="text/javascript" language="javascript" src="scripts/tooltips/domTT.js"></script>
 
@@ -370,7 +367,7 @@
 </style>
 
 <style type="text/css" title="setupStyle" media="screen">
-	@import "../../style/lightbox.css";
+    @import "../../style/lightbox.css";
 </style>
 
 <script language="JavaScript" type="text/javascript" src="../../js/lightbox.js"></script>
@@ -380,7 +377,13 @@
 
     function showConversation(conv) {
         selectedConversation = conv;
-        conversations.getConversationInfo(showConv, conv, true);
+        
+        new Ajax.Request('/plugins/monitoring/api/conversations/' +conv, {
+            method: 'get',
+            onSuccess: function(transport) {
+                showConv(transport.responseText.evalJSON());
+            }
+        });
     }
 
     function showConv(results) {
@@ -424,6 +427,8 @@
             ele.style.backgroundColor = "#ffffff";
         }
     }
+    
+  //# sourceURL=archive-search.jsp
 </script>
 <script type="text/javascript" src="/js/behaviour.js"></script>
 <script type="text/javascript">
@@ -466,7 +471,7 @@
         '.textfield' : function(el) {
             el.onblur = function() {
                 var va = el.value;
-                if (va.length == 0 || va == 'Any') {
+                if (va.length == 0 || va == 'Any' || va == 'any') {
                     this.style.backgroundColor = '#efefef';
                     el.value = "<%= anyText%>";
                 }
@@ -489,7 +494,7 @@
     Behaviour.register(myrules);
 </script>
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 <body>

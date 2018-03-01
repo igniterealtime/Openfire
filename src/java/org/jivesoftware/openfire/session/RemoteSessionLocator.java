@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.openfire.StreamID;
 import org.xmpp.packet.JID;
 
 /**
@@ -78,7 +75,7 @@ public interface RemoteSessionLocator {
      * @param streamID the stream ID that uniquely identifies the session.
      * @return a session surrogate of an incoming server session hosted by a remote cluster node.
      */
-    IncomingServerSession getIncomingServerSession(byte[] nodeID, String streamID);
+    IncomingServerSession getIncomingServerSession(byte[] nodeID, StreamID streamID);
 
     /**
      * Returns a session surrogate of an outgoing server session hosted by a remote cluster node. It is
@@ -90,5 +87,5 @@ public interface RemoteSessionLocator {
      * @param address the address that uniquely identifies the session.
      * @return a session surrogate of an incoming server session hosted by a remote cluster node.
      */
-    OutgoingServerSession getOutgoingServerSession(byte[] nodeID, JID address);
+    OutgoingServerSession getOutgoingServerSession(byte[] nodeID, DomainPair address);
 }

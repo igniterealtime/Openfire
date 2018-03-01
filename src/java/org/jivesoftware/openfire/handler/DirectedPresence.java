@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +56,7 @@ public class DirectedPresence implements Externalizable {
      * List of JIDs with the TO value of the directed presences.
      * E.g.: paul@js.com or room1@conference.js.com
      */
-    private Set<String> receivers = new HashSet<String>();
+    private Set<String> receivers = new HashSet<>();
 
     public DirectedPresence() {
     }
@@ -94,12 +90,14 @@ public class DirectedPresence implements Externalizable {
         return receivers.isEmpty();
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID);
         ExternalizableUtil.getInstance().writeSerializable(out, handler);
         ExternalizableUtil.getInstance().writeStrings(out, receivers);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         nodeID = ExternalizableUtil.getInstance().readByteArray(in);
         handler = (JID) ExternalizableUtil.getInstance().readSerializable(in);

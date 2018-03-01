@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3187 $
- * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +24,12 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -54,12 +51,18 @@ import org.xmpp.packet.StreamError;
  */
 public abstract class SocketReader implements Runnable {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     private static String CHARSET = "UTF-8";
+
+    /**
+     * A factory that generates random stream IDs
+     */
+    private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
+
     /**
      * Reuse the same factory for all the connections.
      */
@@ -133,6 +136,7 @@ public abstract class SocketReader implements Runnable {
      * A dedicated thread loop for reading the stream and sending incoming
      * packets to the appropriate router.
      */
+    @Override
     public void run() {
         readingMode.run();
     }
@@ -392,8 +396,8 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
+            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");
@@ -421,8 +425,8 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
+            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");

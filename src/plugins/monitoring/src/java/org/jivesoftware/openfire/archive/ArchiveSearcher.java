@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +63,7 @@ import org.xmpp.packet.JID;
  */
 public class ArchiveSearcher implements Startable {
 
-	private static final Logger Log = LoggerFactory.getLogger(ArchiveSearch.class);
+    private static final Logger Log = LoggerFactory.getLogger(ArchiveSearch.class);
 
     private ConversationManager conversationManager;
     private ArchiveIndexer archiveIndexer;
@@ -426,7 +423,7 @@ public class ArchiveSearcher implements Startable {
         }
 
         @Override
-		public Iterator<Conversation> iterator() {
+        public Iterator<Conversation> iterator() {
             final Iterator<Long> convIterator = conversationIDs.iterator();
             return new Iterator<Conversation>() {
 
@@ -443,7 +440,7 @@ public class ArchiveSearcher implements Startable {
                 }
 
                 public Conversation next() {
-                	Conversation element;
+                    Conversation element;
                     if (nextElement != null) {
                         element = nextElement;
                         nextElement = null;
@@ -480,7 +477,7 @@ public class ArchiveSearcher implements Startable {
         }
 
         @Override
-		public int size() {
+        public int size() {
             return conversationIDs.size();
         }
     }
@@ -509,7 +506,7 @@ public class ArchiveSearcher implements Startable {
         }
 
         @Override
-		public Iterator<Conversation> iterator() {
+        public Iterator<Conversation> iterator() {
             final Iterator<Hit> hitsIterator = hits.iterator();
             // Advance the iterator until we hit the index.
             for (int i=0; i<index; i++) {
@@ -530,7 +527,7 @@ public class ArchiveSearcher implements Startable {
                 }
 
                 public Conversation next() {
-                	Conversation element;
+                    Conversation element;
                     if (nextElement != null) {
                         element = nextElement;
                         nextElement = null;
@@ -575,7 +572,7 @@ public class ArchiveSearcher implements Startable {
         }
 
         @Override
-		public int size() {
+        public int size() {
             return hits.length();
         }
     }

@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,11 +40,11 @@ import java.util.List;
  * TODO Use i18n
  */
 public class AddGroupUsers extends AdHocCommand {
-	
-	private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Add members or admins to a group");
         form.addInstruction("Fill out this form to add new members or admins to a group.");
@@ -81,7 +78,7 @@ public class AddGroupUsers extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
@@ -119,27 +116,27 @@ public class AddGroupUsers extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#add-group-members";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Add members or admins to a group";
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 }

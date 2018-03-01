@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,20 +34,23 @@ public class PrivacyListManager {
     private static final PrivacyListManager instance = new PrivacyListManager();
     private static Cache<String, PrivacyList> listsCache;
 
-    private PrivacyListProvider provider = new PrivacyListProvider();
+    private PrivacyListProvider provider = PrivacyListProvider.getInstance();
 
-    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<PrivacyListEventListener>();
+    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {
+            @Override
             public void privacyListCreated(PrivacyList list) {
                 // Do nothing
             }
 
+            @Override
             public void privacyListDeleting(String listName) {
                 // Do nothing
             }
 
+            @Override
             public void privacyListModified(PrivacyList list) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object

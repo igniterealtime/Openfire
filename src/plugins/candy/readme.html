@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>Candy Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H3 {
+            font-size : 10pt;
+            font-style: italic;
+            color: #004444;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    Candy Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+    The Candy plugin adds the web client to Openfire. Candy is a third party web client implementation. It's project
+    home page is <a href="https://candy-chat.github.io/candy/">https://candy-chat.github.io/candy/</a>
+</p>
+
+<h2>Installation</h2>
+
+<p>
+    Copy candy.jar into the plugins directory of your Openfire installation. The plugin will then be automatically
+    deployed. To upgrade to a new version, copy the new candy.jar file over the existing file.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+    The plugin is configured via the Openfire Admin Console. After installation, a new Admin Console page is available.
+    The page can be found on a main menu in the "Web Clients" tab. The name of the page is "Candy".
+</p>
+
+<h3>Important! Before the plugin can be used, it must be configured! </h3>
+<p>
+    When logged in, users of the Candy web chat will automatically join one or more pre-defined Group Chat Rooms. When
+    installing the Candy plugin, you must configure what rooms the Candy users will join. This is done in two steps:
+</p>
+<ol>
+    <li>
+        Create the Group Chat Room(s) that you wish to use. If desired, existing rooms can be used. In Openfire, Group
+        Chat Rooms are managed in  the Admin Console, via the tab "Group Chat".
+    </li>
+    <li>
+        In the "Candy" Admin Console configuration page ('Server' > 'Web Clients' > 'Candy'), add the names of the Group
+        Chat Rooms to the list of Auto-join rooms.
+    </li>
+</ol>
+
+<p>
+    Candy depends on HTTP binding, and will not work if the HTTP binding service of Openfire is disabled. It can be enabled on
+    the Server > Server Settings > HTTP Binding page.
+</p>
+
+<h2>Using the Plugin</h2>
+
+<p>
+    When properly configured, the Candy web client will be made available on the same ports as the HTTP binding
+    interface. The exact URLs for your instance of Openfire are displayed on the Candy Configuration Admin Console page.
+    By default, these URLs are:
+</p>
+<ul>
+    <li><tt>http://&lt;your-server-name&gt;:7070/candy/</tt> (unencrypted HTTP)</li>
+    <li><tt>https://&lt;your-server-name&gt;:7443/candy/</tt> (encrypted HTTPS)</li>
+</ul>
+<p>
+    After opening one of these addresses in a browser, the user is presented with a login form. After logging in, the
+    user will automatically join all of the configured auto-join rooms.
+</p>
+
+</body>
+</html>

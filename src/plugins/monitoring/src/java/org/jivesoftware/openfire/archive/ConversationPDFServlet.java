@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,22 +33,22 @@ import org.slf4j.LoggerFactory;
 
 public class ConversationPDFServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(ConversationPDFServlet.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(ConversationPDFServlet.class);
+    
     @Override
-	public void init() throws ServletException {
+    public void init() throws ServletException {
 
     }
 
     @Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         long conversationID = ParamUtils.getLongParameter(request, "conversationID", -1);
         if (conversationID == -1) {
             return;
         }
 
         MonitoringPlugin plugin = (MonitoringPlugin)XMPPServer.getInstance().getPluginManager().getPlugin(
-        		MonitoringConstants.NAME);
+                MonitoringConstants.NAME);
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         Conversation conversation;
         if (conversationID > -1) {

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,18 +16,21 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.TimerTask;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Hazelcast clustering plugin. This implementation is based upon
@@ -41,45 +40,58 @@ import org.slf4j.LoggerFactory;
  * @author Tom Evans
  * @author Matt Tucker
  */
-public class HazelcastPlugin extends TimerTask implements Plugin {
+public class HazelcastPlugin implements Plugin {
 
-    private static Logger logger = LoggerFactory.getLogger(HazelcastPlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastPlugin.class);
 
-    private static final long CLUSTER_STARTUP_DELAY_TIME = 
-    		JiveGlobals.getLongProperty("hazelcast.startup.delay.seconds", 5);
-    
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
-    	// start cluster using a separate thread after a short delay
-    	// this will allow other plugins to initialize during startup
-    	TaskEngine.getInstance().schedule(this, CLUSTER_STARTUP_DELAY_TIME*1000);
+    @Override
+    public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
+        LOGGER.info("Waiting for other plugins to initialize before initializing clustering");
+        manager.addPluginManagerListener(new PluginManagerListener() {
+            @Override
+            public void pluginsMonitored() {
+                manager.removePluginManagerListener(this);
+                initializeClustering(pluginDirectory);
+            }
+        });
     }
 
-	@Override
-	public void run() {
-        System.out.println("Starting Hazelcast Clustering Plugin");
-
+    private void initializeClustering(final File hazelcastPluginDirectory) {
+        LOGGER.info("All plugins have initialized; initializing clustering");
         // Check if another cluster is installed and stop loading this plugin if found
-        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        final String openfireHome = JiveGlobals.getHomeDirectory();
+        File pluginDir = new File(openfireHome, "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {
+            @Override
             public boolean accept(File pathname) {
                 String fileName = pathname.getName().toLowerCase();
                 return (fileName.equalsIgnoreCase("enterprise.jar") || 
-                		fileName.equalsIgnoreCase("coherence.jar"));
+                        fileName.equalsIgnoreCase("coherence.jar"));
             }
         });
-        if (jars.length > 0) {
+        if (jars != null && jars.length > 0) {
             // Do not load this plugin if a conflicting implementation exists
-            logger.warn("Conflicting clustering plugins found; remove Coherence and/or Enterprise jar files");
-            throw new IllegalStateException("Clustering plugin configuration conflict (Coherence)");
+            LOGGER.warn("Conflicting clustering plugins found; remove Coherence and/or Enterprise jar files");
+            return;
         }
-        ClusterManager.startup();
-	}
 
+        try {
+            final Path pathToLocalHazelcastConfig = Paths.get(openfireHome, "conf/hazelcast-local-config.xml");
+            if (!Files.exists(pathToLocalHazelcastConfig)) {
+                Files.copy(Paths.get(hazelcastPluginDirectory.getAbsolutePath(), "classes/hazelcast-local-config.xml.template"), pathToLocalHazelcastConfig);
+            }
+            ClusterManager.startup();
+        } catch (final IOException e) {
+            LOGGER.warn("Unable to create local Hazelcast configuration file from template; clustering will not start", e);
+        }
+    }
+
+    @Override
     public void destroyPlugin() {
         // Shutdown is initiated by XMPPServer before unloading plugins
-    	if (!XMPPServer.getInstance().isShuttingDown()) {
-    		ClusterManager.shutdown();
-    	}
+        if (!XMPPServer.getInstance().isShuttingDown()) {
+            ClusterManager.shutdown();
+        }
     }
 
 }

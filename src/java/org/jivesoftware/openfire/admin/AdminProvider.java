@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,14 +32,14 @@ public interface AdminProvider {
      *
      * @return The list of admin users.
      */
-    public List<JID> getAdmins();
+    List<JID> getAdmins();
 
     /**
      * Sets the list of admin accounts, by JID.
      *
      * @param admins List of JIDs of accounts to grant admin access to.
      */
-    public void setAdmins(List<JID> admins);
+    void setAdmins( List<JID> admins );
 
     /**
      * Indicates whether the admin list is read-only or not.  In other words, whether an admin can
@@ -50,6 +47,6 @@ public interface AdminProvider {
      *
      * @return True or false if the admin list can be edited.
      */
-    public boolean isReadOnly();
+    boolean isReadOnly();
 
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,12 +36,12 @@ public class AuthorizeAccess extends AccessModel {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         return true;
     }
 
     @Override
-	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always get node items
         if (node.isAdmin(owner)) {
             return true;
@@ -67,23 +63,23 @@ public class AuthorizeAccess extends AccessModel {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "authorize";
     }
 
     @Override
-	public PacketError.Condition getSubsriptionError() {
+    public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
     @Override
-	public Element getSubsriptionErrorDetail() {
+    public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(QName.get("not-subscribed",
                 "http://jabber.org/protocol/pubsub#errors"));
     }
 
     @Override
-	public boolean isAuthorizationRequired() {
+    public boolean isAuthorizationRequired() {
         return true;
     }
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,16 +40,19 @@ import org.slf4j.LoggerFactory;
  */
 public class JiveProperties implements Map<String, String> {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
+    private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
 
-    private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofProperty";
-    private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue) VALUES(?,?)";
-    private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=? WHERE name=?";
+    private static final String LOAD_PROPERTIES = "SELECT name, propValue, encrypted FROM ofProperty";
+    private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue, encrypted) VALUES(?,?,?)";
+    private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=?, encrypted=? WHERE name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name LIKE ?";
 
     private static JiveProperties instance = null;
 
+    // The map of property keys to their values
     private Map<String, String> properties;
+    // The map of property keys to a boolean indicating if they are encrypted or not
+    private Map<String, Boolean> encrypted;
 
     /**
      * Returns a singleton instance of JiveProperties.
@@ -61,11 +60,11 @@ public class JiveProperties implements Map<String, String> {
      * @return an instance of JiveProperties.
      */
     public synchronized static JiveProperties getInstance() {
-    	if (instance == null) {
-    		JiveProperties props = new JiveProperties();
-    		props.init();
-    		instance = props;
-    	}
+        if (instance == null) {
+            JiveProperties props = new JiveProperties();
+            props.init();
+            instance = props;
+        }
         return instance;
     }
     private JiveProperties() { }
@@ -79,57 +78,102 @@ public class JiveProperties implements Map<String, String> {
      */
     public void init() {
         if (properties == null) {
-            properties = new ConcurrentHashMap<String, String>();
+            properties = new ConcurrentHashMap<>();
+            encrypted = new ConcurrentHashMap<>();
         }
         else {
             properties.clear();
+            encrypted.clear();
         }
 
         loadProperties();
     }
 
+    @Override
     public int size() {
         return properties.size();
     }
 
+    @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isEmpty() {
         return properties.isEmpty();
     }
 
+    @Override
     public boolean containsKey(Object key) {
         return properties.containsKey(key);
     }
 
+    @Override
     public boolean containsValue(Object value) {
         return properties.containsValue(value);
     }
 
+    @Override
     public Collection<String> values() {
         return Collections.unmodifiableCollection(properties.values());
     }
 
+    @Override
     public void putAll(Map<? extends String, ? extends String> t) {
         for (Map.Entry<? extends String, ? extends String> entry : t.entrySet() ) {
             put(entry.getKey(), entry.getValue());
         }
     }
 
+    @Override
     public Set<Map.Entry<String, String>> entrySet() {
         return Collections.unmodifiableSet(properties.entrySet());
     }
 
+    @Override
     public Set<String> keySet() {
         return Collections.unmodifiableSet(properties.keySet());
     }
 
+    @Override
     public String get(Object key) {
         return properties.get(key);
     }
 
+    /**
+     * Indicates the encryption status for the given property.
+     * 
+     * @param name
+     *            The name of the property
+     * @return {@code true} if the property exists and is encrypted, otherwise {@code false}
+     */
+    boolean isEncrypted(final String name) {
+        if (name == null) {
+            return false;
+        }
+        final Boolean isEncrypted = encrypted.get(name);
+        return isEncrypted != null && isEncrypted;
+    }
+
+    /**
+     * Set the encryption status for the given property.
+     *
+     * @param name
+     *            The name of the property
+     * @param encrypt
+     *            True to encrypt the property, false to decrypt
+     * @return {@code true} if the property's encryption status changed, otherwise {@code false}
+     */
+    boolean setPropertyEncrypted(String name, boolean encrypt) {
+        final boolean encryptionWasChanged = name != null && properties.containsKey(name) && isEncrypted(name) != encrypt;
+        if (encryptionWasChanged) {
+            final String value = get(name);
+            put(name, value, encrypt);
+        }
+        return encryptionWasChanged;
+    }
+    
     /**
      * Return all children property names of a parent property as a Collection
      * of String objects. For example, given the properties <tt>X.Y.A</tt>,
@@ -141,7 +185,7 @@ public class JiveProperties implements Map<String, String> {
      * @return all child property names for the given parent.
      */
     public Collection<String> getChildrenNames(String parentKey) {
-        Collection<String> results = new HashSet<String>();
+        Collection<String> results = new HashSet<>();
         for (String key : properties.keySet()) {
             if (key.startsWith(parentKey + ".")) {
                 if (key.equals(parentKey)) {
@@ -171,6 +215,7 @@ public class JiveProperties implements Map<String, String> {
         return properties.keySet();
     }
 
+    @Override
     public String remove(Object key) {
         String value;
         synchronized (this) {
@@ -210,7 +255,19 @@ public class JiveProperties implements Map<String, String> {
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_deleted, params);
     }
 
-    public String put(String key, String value) {
+    /**
+     * Saves a property, optionally encrypting it
+     * 
+     * @param key
+     *            The name of the property
+     * @param value
+     *            The value of the property
+     * @param isEncrypted
+     *            {@code true} to encrypt the property, {@code true} to leave in plain text
+     * @return The previous value associated with {@code key}, or {@code null} if there was no mapping for
+     *         {@code key}.
+     */
+    public String put(String key, String value, boolean isEncrypted) {
         if (value == null) {
             // This is the same as deleting, so remove it.
             return remove(key);
@@ -226,33 +283,42 @@ public class JiveProperties implements Map<String, String> {
         String result;
         synchronized (this) {
             if (properties.containsKey(key)) {
-                if (!properties.get(key).equals(value)) {
-                    updateProperty(key, value);
-                }
+                updateProperty(key, value, isEncrypted);
             }
             else {
-                insertProperty(key, value);
+                insertProperty(key, value, isEncrypted);
             }
 
             result = properties.put(key, value);
+            encrypted.put(key, isEncrypted);
+            // We now know the database is correct - so we can remove the entry from security.conf
+            JiveGlobals.clearXMLPropertyEncryptionEntry(key);
         }
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
 
         // Send update to other cluster members.
-        CacheFactory.doClusterTask(PropertyClusterEventTask.createPutTask(key, value));
+        CacheFactory.doClusterTask(PropertyClusterEventTask.createPutTask(key, value, isEncrypted));
 
         return result;
     }
 
-    void localPut(String key, String value) {
+    @Override
+    public String put(String key, String value) {
+        return put(key, value, isEncrypted(key));
+    }
+
+    void localPut(String key, String value, boolean isEncrypted) {
         properties.put(key, value);
+        encrypted.put(key, isEncrypted);
+        // We now know the database is correct - so we can remove the entry from security.conf
+        JiveGlobals.clearXMLPropertyEncryptionEntry(key);
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
     }
@@ -281,15 +347,16 @@ public class JiveProperties implements Map<String, String> {
         }
     }
 
-    private void insertProperty(String name, String value) {
-    	Encryptor encryptor = getEncryptor();
+    private void insertProperty(String name, String value, boolean isEncrypted) {
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
             pstmt.setString(1, name);
-            pstmt.setString(2, JiveGlobals.isPropertyEncrypted(name) ? encryptor.encrypt(value) : value);
+            pstmt.setString(2, isEncrypted ? encryptor.encrypt(value) : value);
+            pstmt.setInt(3, isEncrypted ? 1 : 0);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -300,15 +367,16 @@ public class JiveProperties implements Map<String, String> {
         }
     }
 
-    private void updateProperty(String name, String value) {
-    	Encryptor encryptor = getEncryptor();
+    private void updateProperty(String name, String value, boolean isEncrypted) {
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, JiveGlobals.isPropertyEncrypted(name) ? encryptor.encrypt(value) : value);
-            pstmt.setString(2, name);
+            pstmt.setString(1, isEncrypted ? encryptor.encrypt(value) : value);
+            pstmt.setInt(2, isEncrypted ? 1 : 0);
+            pstmt.setString(3, name);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -337,7 +405,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void loadProperties() {
-    	Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -348,16 +416,18 @@ public class JiveProperties implements Map<String, String> {
             while (rs.next()) {
                 String name = rs.getString(1);
                 String value = rs.getString(2);
-                if (JiveGlobals.isPropertyEncrypted(name)) {
-                	try { 
-                		value = encryptor.decrypt(value); 
-                	} catch (Exception ex) {
-                    	Log.error("Failed to load encrypted property value for " + name, ex);
-                    	value = null;
-                	}
+                boolean isEncrypted = rs.getInt(3) == 1 || JiveGlobals.isXMLPropertyEncrypted(name);
+                if (isEncrypted) {
+                    try { 
+                        value = encryptor.decrypt(value); 
+                    } catch (Exception ex) {
+                        Log.error("Failed to load encrypted property value for " + name, ex);
+                        value = null;
+                    }
                 }
                 if (value != null) { 
-                	properties.put(name, value); 
+                    properties.put(name, value);
+                    encrypted.put(name, isEncrypted);
                 }
             }
         }
@@ -370,6 +440,6 @@ public class JiveProperties implements Map<String, String> {
     }
     
     private Encryptor getEncryptor() {
-    	return JiveGlobals.getPropertyEncryptor();
+        return JiveGlobals.getPropertyEncryptor();
     }
 }

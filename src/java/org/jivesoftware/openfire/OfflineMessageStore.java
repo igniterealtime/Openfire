@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2911 $
- * $Date: 2005-10-03 12:35:52 -0300 (Mon, 03 Oct 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +18,7 @@ package org.jivesoftware.openfire;
 
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -63,13 +60,13 @@ import java.util.regex.Pattern;
  */
 public class OfflineMessageStore extends BasicModule implements UserEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStore.class);
+    private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStore.class);
 
     private static final String INSERT_OFFLINE =
         "INSERT INTO ofOffline (username, messageID, creationDate, messageSize, stanza) " +
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-        "SELECT stanza, creationDate FROM ofOffline WHERE username=?";
+        "SELECT stanza, creationDate FROM ofOffline WHERE username=? ORDER BY creationDate ASC";
     private static final String LOAD_OFFLINE_MESSAGE =
         "SELECT stanza FROM ofOffline WHERE username=? AND creationDate=?";
     private static final String SELECT_SIZE_OFFLINE =
@@ -103,7 +100,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /**
      * Constructs a new offline message store.
@@ -181,7 +178,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * @return An iterator of packets containing all offline messages.
      */
     public Collection<OfflineMessage> getMessages(String username, boolean delete) {
-        List<OfflineMessage> messages = new ArrayList<OfflineMessage>();
+        List<OfflineMessage> messages = new ArrayList<>();
         SAXReader xmlReader = null;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -207,11 +204,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         msgXML = matcher.replaceAll("");
                     }
                     try {
-                    	message = new OfflineMessage(creationDate,
+                        message = new OfflineMessage(creationDate,
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
                     } catch (DocumentException de) {
-                    	Log.error("Failed to route packet (offline message): " + msgXML, de);
-                    	continue; // skip and process remaining offline messages
+                        Log.error("Failed to route packet (offline message): " + msgXML, de);
+                        continue; // skip and process remaining offline messages
                     }
                 }
 
@@ -222,10 +219,6 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                     delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                     delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
-                    // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
-                    delay = message.addChildElement("x", "jabber:x:delay");
-                    delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                    delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
                 }
                 messages.add(message);
             }
@@ -290,10 +283,6 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
-                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
-                delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
             }
         }
         catch (Exception e) {
@@ -436,21 +425,24 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         return size;
     }
 
+    @Override
     public void userCreated(User user, Map params) {
         //Do nothing
     }
 
+    @Override
     public void userDeleting(User user, Map params) {
         // Delete all offline messages of the user
         deleteMessages(user.getUsername());
     }
 
+    @Override
     public void userModified(User user, Map params) {
         //Do nothing
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -464,7 +456,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();
@@ -497,7 +489,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
                     if (item instanceof Element) {
                         Element el = (Element) item;
-
+                        if (Namespace.NO_NAMESPACE.equals(el.getNamespace())) {
+                            continue;
+                        }
                         if (!el.getNamespaceURI().equals("http://jabber.org/protocol/chatstates")
                                 && !(el.getQName().equals(QName.get("rtt", "urn:xmpp:rtt:0")))
                                 ) {
@@ -506,7 +500,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     }
                 }
 
-                return false;
+                return message.getBody() != null && !message.getBody().isEmpty();
 
             case groupchat:
             case headline:

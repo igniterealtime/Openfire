@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,7 +82,7 @@ public class DefaultRouter extends RequestRouter {
      * @return True if the router was able to route the request
      */
     @Override
-	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         for (RequestQueue requestQueue : workgroup.getRequestQueues()) {
             // Skip queues that doesn't have agents at the moment
             if (requestQueue != null && requestQueue.isOpened()) {

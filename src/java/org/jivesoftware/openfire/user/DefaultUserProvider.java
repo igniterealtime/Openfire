@@ -1,8 +1,4 @@
-/**
- * $RCSfile: DefaultUserProvider.java,v $
- * $Revision: 3116 $
- * $Date: 2005-11-24 06:25:00 -0300 (Thu, 24 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +33,6 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +53,7 @@ import org.xmpp.packet.JID;
  */
 public class DefaultUserProvider implements UserProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
             "SELECT salt, serverKey, storedKey, iterations, name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
@@ -86,6 +80,7 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE ofUser SET modificationDate=? WHERE username=?";
     private static final boolean IS_READ_ONLY = false;
     
+    @Override
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -128,6 +123,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
@@ -161,8 +157,8 @@ public class DefaultUserProvider implements UserProvider {
                 pstmt.setString(5, StringUtils.dateToMillis(now));
                 pstmt.execute();
             }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            catch (SQLException e) {
+                throw new RuntimeException(e);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
@@ -177,6 +173,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void deleteUser(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -209,6 +206,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public int getUserCount() {
         int count = 0;
         Connection con = null;
@@ -231,17 +229,19 @@ public class DefaultUserProvider implements UserProvider {
         return count;
     }
 
+    @Override
     public Collection<User> getUsers() {
         Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public Collection<String> getUsernames() {
         return getUsernames(0, Integer.MAX_VALUE);
     }
 
     private Collection<String> getUsernames(int startIndex, int numResults) {
-        List<String> usernames = new ArrayList<String>(500);
+        List<String> usernames = new ArrayList<>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -283,11 +283,13 @@ public class DefaultUserProvider implements UserProvider {
         return usernames;
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public void setName(String username, String name) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -295,10 +297,10 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_NAME);
             if (name == null || name.matches("\\s*")) {
-            	pstmt.setNull(1, Types.VARCHAR);
+                pstmt.setNull(1, Types.VARCHAR);
             } 
             else {
-            	pstmt.setString(1, name);
+                pstmt.setString(1, name);
             }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
@@ -311,6 +313,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setEmail(String username, String email) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -318,10 +321,10 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_EMAIL);
             if (email == null || email.matches("\\s*")) {
-            	pstmt.setNull(1, Types.VARCHAR);
+                pstmt.setNull(1, Types.VARCHAR);
             } 
             else {
-            	pstmt.setString(1, email);
+                pstmt.setString(1, email);
             }
             pstmt.setString(2, username);
             pstmt.executeUpdate();
@@ -334,6 +337,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -352,6 +356,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -370,14 +375,17 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
         return findUsers(fields, query, 0, Integer.MAX_VALUE);
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
@@ -399,7 +407,7 @@ public class DefaultUserProvider implements UserProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> usernames = new ArrayList<String>(50);
+        List<String> usernames = new ArrayList<>(50);
         Connection con = null;
         PreparedStatement pstmt = null;
         int queries=0;
@@ -445,7 +453,7 @@ public class DefaultUserProvider implements UserProvider {
                 DbConnectionManager.limitRowsAndFetchSize(pstmt, startIndex, numResults);
                 for (int i=1; i<=queries; i++)
                 {
-                	pstmt.setString(i, query);
+                    pstmt.setString(i, query);
                 }
                 rs = pstmt.executeQuery();
                 // Scroll to the start index.
@@ -471,14 +479,17 @@ public class DefaultUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return IS_READ_ONLY;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }

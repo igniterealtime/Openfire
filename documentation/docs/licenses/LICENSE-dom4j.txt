@@ -1,5 +1,4 @@
 /*
- $Id$
 
  Copyright 2001-2004 (C) MetaStuff, Ltd. All Rights Reserved.
  

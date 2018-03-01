@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +35,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdateOccupantRequest extends MUCRoomTask {
+public class UpdateOccupantRequest extends MUCRoomTask<Element> {
     private Element answer;
     private String nickname;
     private int role;
@@ -73,10 +69,12 @@ public class UpdateOccupantRequest extends MUCRoomTask {
         return affiliation != null;
     }
 
-    public Object getResult() {
+    @Override
+    public Element getResult() {
         return answer;
     }
 
+    @Override
     public void run() {
         try {
             Presence presence = getRoom().updateOccupant(this);
@@ -89,7 +87,7 @@ public class UpdateOccupantRequest extends MUCRoomTask {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
         ExternalizableUtil.getInstance().writeInt(out, role);
@@ -100,7 +98,7 @@ public class UpdateOccupantRequest extends MUCRoomTask {
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         role = ExternalizableUtil.getInstance().readInt(in);

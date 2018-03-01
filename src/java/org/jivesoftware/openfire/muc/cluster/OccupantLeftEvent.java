@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +31,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class OccupantLeftEvent extends MUCRoomTask {
+public class OccupantLeftEvent extends MUCRoomTask<Void> {
     private MUCRole role;
     private String nickname;
 
@@ -59,13 +55,16 @@ public class OccupantLeftEvent extends MUCRoomTask {
         return role;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().leaveRoom(OccupantLeftEvent.this);
             }
@@ -73,13 +72,13 @@ public class OccupantLeftEvent extends MUCRoomTask {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

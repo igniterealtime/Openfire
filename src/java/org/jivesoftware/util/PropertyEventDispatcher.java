@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,10 +42,10 @@ import org.slf4j.LoggerFactory;
  */
 public class PropertyEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
+    private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
 
     private static Set<PropertyEventListener> listeners =
-            new CopyOnWriteArraySet<PropertyEventListener>();
+            new CopyOnWriteArraySet<>();
 
     private PropertyEventDispatcher() {
         // Not instantiable.

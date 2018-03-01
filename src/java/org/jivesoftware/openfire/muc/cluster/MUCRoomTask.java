@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,9 +36,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  */
-public abstract class MUCRoomTask implements ClusterTask {
-	
-	private static final Logger Log = LoggerFactory.getLogger(MUCRoomTask.class);
+public abstract class MUCRoomTask<V> implements ClusterTask<V> {
+    
+    private static final Logger Log = LoggerFactory.getLogger(MUCRoomTask.class);
 
     private boolean originator;
     private String roomName;
@@ -105,12 +101,14 @@ public abstract class MUCRoomTask implements ClusterTask {
         this.originator = originator;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, originator);
         ExternalizableUtil.getInstance().writeSafeUTF(out, roomName);
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         originator = ExternalizableUtil.getInstance().readBoolean(in);
         roomName = ExternalizableUtil.getInstance().readSafeUTF(in);

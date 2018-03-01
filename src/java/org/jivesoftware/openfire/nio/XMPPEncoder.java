@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +30,7 @@ import org.apache.mina.filter.codec.ProtocolEncoderOutput;
  */
 public class XMPPEncoder extends ProtocolEncoderAdapter {
 
+    @Override
     public void encode(IoSession session, Object message, ProtocolEncoderOutput out)
             throws Exception {
         // Ignore. Do nothing. Content being sent is already a bytebuffer (of strings) 

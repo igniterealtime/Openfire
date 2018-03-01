@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -25,30 +23,41 @@
 %>
 <%@ page import="org.xmpp.packet.JID" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
     JID alternateJID = null;
     if (alternateJIDString != null && alternateJIDString.trim().length() > 0 ) {
-    	// OF-526: Ignore invalid alternative JIDs.
-    	try {
-    		alternateJID = new JID(alternateJIDString.trim());
-    		if (alternateJID.getNode() == null) {
-    			alternateJID = null;
-    		}
-    	} catch (IllegalArgumentException ex) {
-    		alternateJID = null;
-    	}
+        // OF-526: Ignore invalid alternative JIDs.
+        try {
+            alternateJID = new JID(alternateJIDString.trim());
+            if (alternateJID.getNode() == null) {
+                alternateJID = null;
+            }
+        } catch (IllegalArgumentException ex) {
+            alternateJID = null;
+        }
     } else {
-    	alternateJID = null;
+        alternateJID = null;
     }
     String reason = ParamUtils.getParameter(request,"reason");
     String roomName = roomJID.getNode();
@@ -93,6 +102,7 @@
 </p>
 
 <form action="muc-room-delete.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 
 <fieldset>

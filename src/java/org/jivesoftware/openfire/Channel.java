@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 617 $
- * $Date: 2004-12-03 05:59:50 -0300 (Fri, 03 Dec 2004) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +47,7 @@ import org.xmpp.packet.Packet;
  */
 public class Channel<T extends Packet> {
 
-	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
+    private static final Logger Log = LoggerFactory.getLogger(Channel.class);
 
     private String name;
     private ChannelHandler<T> channelHandler;
@@ -89,6 +85,7 @@ public class Channel<T extends Packet> {
      */
     public void add(final T packet) {
         Runnable r = new Runnable() {
+            @Override
             public void run() {
                 try {
                     channelHandler.process(packet);

@@ -1,3 +1,15 @@
 sudo: false
 language: java
-script: ant -Dhalt.on.plugin.error=true -f build/build.xml openfire test plugins
+jdk:
+  - oraclejdk8
+env:
+  global:
+    - ANT_OPTS='-Xmx1G'
+  matrix:
+    - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean compile"
+    - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean test"
+    - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean openfire"
+    - SCRIPT="ant -Dhalt.on.plugin.error=true -f build/build.xml clean plugins"
+    - SCRIPT="mvn clean verify"
+script: $SCRIPT
+install: true

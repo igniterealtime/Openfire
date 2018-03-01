@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -23,8 +20,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -39,6 +36,17 @@
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean privateEnabled = ParamUtils.getBooleanParameter(request,"privateEnabled");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Get an audit manager:
     PrivateStorage privateStorage = webManager.getPrivateStore();
@@ -72,39 +80,40 @@
 
 <!-- BEGIN 'Set Private Data Policy' -->
 <form action="private-data-settings.jsp">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="private.data.settings.policy" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="privateEnabled" value="true" id="rb01"
-					 <%= (privateEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01">
-					<b><fmt:message key="private.data.settings.enable_storage" /></b> -
-					<fmt:message key="private.data.settings.enable_storage_info" />
-					</label>
-				</td>
-			</tr>
-			<tr valign="top">
-				<td width="1%" nowrap>
-					<input type="radio" name="privateEnabled" value="false" id="rb02"
-					 <%= (!privateEnabled ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb02">
-					<b><fmt:message key="private.data.settings.disable_storage" /></b> -
-					<fmt:message key="private.data.settings.disable_storage_info" />
-					</label>
-				</td>
-			</tr>
-		</tbody>
-		</table>
-	</div>
+    <input type="hidden" name="csrf" value="${csrf}">
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="private.data.settings.policy" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="privateEnabled" value="true" id="rb01"
+                     <%= (privateEnabled ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01">
+                    <b><fmt:message key="private.data.settings.enable_storage" /></b> -
+                    <fmt:message key="private.data.settings.enable_storage_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="radio" name="privateEnabled" value="false" id="rb02"
+                     <%= (!privateEnabled ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                    <b><fmt:message key="private.data.settings.disable_storage" /></b> -
+                    <fmt:message key="private.data.settings.disable_storage_info" />
+                    </label>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END 'Set Private Data Policy' -->

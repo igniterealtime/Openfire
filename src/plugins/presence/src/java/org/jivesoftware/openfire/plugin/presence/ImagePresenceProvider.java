@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1682 $
- * $Date: 2005-07-22 18:13:38 -0300 (Fri, 22 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,8 +57,8 @@ import org.xmpp.packet.Presence;
  */
 class ImagePresenceProvider extends PresenceInfoProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(ImagePresenceProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(ImagePresenceProvider.class);
+    
     private PresenceStatusServlet servlet;
     private Map<String, byte[]> imageCache = new HashMap<String, byte[]>();
     private Map<String, String> imageTypeCache = new HashMap<String, String>();
@@ -72,7 +68,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
     }
 
     @Override
-	public void sendInfo(HttpServletRequest request,
+    public void sendInfo(HttpServletRequest request,
             HttpServletResponse response, Presence presence) throws IOException {
         if (presence == null) {
             writeImageContent(request, response, "offline", servlet.offline);
@@ -95,7 +91,7 @@ class ImagePresenceProvider extends PresenceInfoProvider {
     }
 
     @Override
-	public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
+    public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         writeImageContent(request, response, "forbidden", servlet.offline);
     }

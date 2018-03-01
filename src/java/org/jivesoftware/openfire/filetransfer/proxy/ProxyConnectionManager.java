@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3762 $
- * $Date: 2006-04-12 18:07:15 -0500 (Mon, 12 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +23,6 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -57,7 +52,7 @@ import org.xmpp.packet.JID;
  */
 public class ProxyConnectionManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
 
     private static final String proxyTransferRate = "proxyTransferRate";
 
@@ -100,6 +95,7 @@ public class ProxyConnectionManager {
         }
         reset();
         socketProcess = executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     serverSocket = new ServerSocket(port, -1, bindInterface);
@@ -123,6 +119,7 @@ public class ProxyConnectionManager {
                         }
                     }
                     executor.submit(new Runnable() {
+                        @Override
                         public void run() {
                             try {
                                 processConnection(socket);
@@ -301,6 +298,7 @@ public class ProxyConnectionManager {
         transfer.setTarget(target.toString());
         transfer.setSessionID(sid);
         transfer.setTransferFuture(executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     transferManager.fireFileTransferStart( transfer.getSessionID(), true );
@@ -375,10 +373,12 @@ public class ProxyConnectionManager {
             super("filetransferproxy.transfered", Statistic.Type.rate);
         }
 
+        @Override
         public double sample() {
             return (ProxyOutputStream.amountTransferred.getAndSet(0) / 1000d);
         }
 
+        @Override
         public boolean isPartialSample() {
             return true;
         }

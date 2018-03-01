@@ -25,8 +25,8 @@
 <%@ page import="java.text.SimpleDateFormat"%>
 <%@ page import="org.xmpp.packet.JID" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -53,6 +53,18 @@
 
     // Validate input
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (doTest) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            doTest = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (doTest) {
         if (from == null) {
             errors.put("from", "");
@@ -159,13 +171,13 @@ function checkClick(el) {
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-	        <td class="jive-icon-label">
-		        <fmt:message key="system.emailtest.no_host">
-				    <fmt:param value="<a href=\"system-email.jsp\">"/>
-				    <fmt:param value="</a>"/>
-				</fmt:message>
-	        </td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label">
+                <fmt:message key="system.emailtest.no_host">
+                    <fmt:param value="<a href=\"system-email.jsp\">"/>
+                    <fmt:param value="</a>"/>
+                </fmt:message>
+            </td>
         </tr>
     </tbody>
     </table>
@@ -181,8 +193,8 @@ function checkClick(el) {
         <table cellpadding="0" cellspacing="0" border="0">
         <tbody>
             <tr>
-            	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            	<td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
+                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
             </tr>
         </tbody>
         </table>
@@ -198,7 +210,7 @@ function checkClick(el) {
                 <fmt:message key="system.emailtest.failure" />
                 <%  if (mex != null) { %>
                     <%  if (mex instanceof AuthenticationFailedException) { %>
-                    	<fmt:message key="system.emailtest.failure_authentication" />                        
+                        <fmt:message key="system.emailtest.failure_authentication" />                        
                     <%  } else { %>
                         (Message: <%= StringUtils.escapeHTMLTags(mex.getMessage()) %>)
                     <%  } %>
@@ -215,6 +227,7 @@ function checkClick(el) {
 <%  } %>
 
 <form action="system-emailtest.jsp" method="post" name="f" onsubmit="return checkClick(this);">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <table cellpadding="3" cellspacing="0" border="0">
 <tbody>
@@ -248,7 +261,7 @@ function checkClick(el) {
             <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>">Update Address</a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>"><fmt:message key="system.emailtest.update-address" /></a>)
             </span>
         </td>
     </tr>

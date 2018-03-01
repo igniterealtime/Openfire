@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,16 +110,16 @@ public interface CacheFactoryStrategy {
      * 
      * @return Synchronized time for all cluster members
      */
-    public long getClusterTime();
+    long getClusterTime();
 
-    	/**
+        /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
      * executed on the local cluster member. If clustering is not enabled, this method
      * will do nothing.
      *
      * @param task the task to be invoked on all other cluster members.
      */
-    void doClusterTask(final ClusterTask task);
+    void doClusterTask(final ClusterTask<?> task);
 
 
     /**
@@ -134,7 +130,7 @@ public interface CacheFactoryStrategy {
      * @param nodeID the byte array that identifies the target cluster member.
      * @throws IllegalStateException if requested node was not found.
      */
-    void doClusterTask(ClusterTask task, byte[] nodeID);
+    void doClusterTask(ClusterTask<?> task, byte[] nodeID);
 
     /**
      * Invokes a task on other cluster members synchronously and returns the result as a Collection
@@ -146,7 +142,7 @@ public interface CacheFactoryStrategy {
      * @param includeLocalMember true to run the task on the local member, false otherwise
      * @return collection with the result of the execution.
      */
-    Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember);
+    Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember);
 
     /**
      * Invokes a task on a given cluster member synchronously and returns the result of
@@ -157,7 +153,7 @@ public interface CacheFactoryStrategy {
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found.
      */
-    Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID);
+    Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID);
 
     /**
      * Updates the statistics of the specified caches and publishes them into
@@ -203,5 +199,5 @@ public interface CacheFactoryStrategy {
      * @param nodeID The target cluster node
      * @return The info for the cluster node, or null if not found
      */
-	ClusterNodeInfo getClusterNodeInfo(byte[] nodeID);
+    ClusterNodeInfo getClusterNodeInfo(byte[] nodeID);
 }

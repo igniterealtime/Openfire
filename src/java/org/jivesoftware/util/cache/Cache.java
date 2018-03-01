@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,7 @@ package org.jivesoftware.util.cache;
  *
  * If the cache does grow too large, objects will be removed such that those
  * that are accessed least frequently are removed first. Because expiration
- * happens automatically, the cache makes <b>no</b> gaurantee as to how long
+ * happens automatically, the cache makes <b>no</b> guarantee as to how long
  * an object will remain in cache after it is put in.<p>
  *
  * Optionally, a maximum lifetime for all objects can be specified. In that
@@ -40,6 +36,9 @@ package org.jivesoftware.util.cache;
  * information from a database.<p>
  *
  * All cache operations are thread safe.<p>
+ *
+ * Note that neither keys or values can be null; A {@link NullPointerException}
+ * will be thrown attempting to place or retrieve null values in to the cache.
  *
  * @see Cacheable
  */
@@ -73,6 +72,9 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
      * than the max size, the least frequently used items will be removed. If
      * the max cache size is set to -1, there is no size limit.
      *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
+     *
      * @param maxSize the maximum size of the cache in bytes.
      */
     void setMaxCacheSize(int maxSize);
@@ -80,7 +82,7 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
     /**
      * Returns the maximum number of milliseconds that any object can live
      * in cache. Once the specified number of milliseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
      *
      * @return the maximum number of milliseconds before objects are expired.
@@ -90,8 +92,11 @@ public interface Cache<K,V> extends java.util.Map<K,V> {
     /**
      * Sets the maximum number of milliseconds that any object can live
      * in cache. Once the specified number of milliseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
+     *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
      *
      * @param maxLifetime the maximum number of milliseconds before objects are expired.
      */

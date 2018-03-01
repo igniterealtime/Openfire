@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +43,7 @@ import org.xmpp.packet.JID;
  */
 public class AdminManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(AdminManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(AdminManager.class);
 
     // Wrap this guy up so we can mock out the AdminManager class.
     private static class AdminManagerContainer {
@@ -87,20 +84,24 @@ public class AdminManager {
 
         // Detect when a new admin provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map<String, Object> params) {
                 if ("provider.admin.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map<String, Object> params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }
@@ -280,7 +281,7 @@ public class AdminManager {
     public void clearAdminUsers() {
         // Clear the admin list cache.
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
@@ -296,12 +297,12 @@ public class AdminManager {
      */
     public void setAdminUsers(List<String> usernames) {
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
         }
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         for (String username : usernames) {
             admins.add(XMPPServer.getInstance().createJID(username, null));
         }
@@ -316,19 +317,19 @@ public class AdminManager {
      */
     public void setAdminJIDs(List<JID> jids) {
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
         }
 
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         for (JID jid : jids)
-		{
+        {
             if (jid != null) {
-        	    admins.add(jid.asBareJID());
+                admins.add(jid.asBareJID());
             }
-		}
+        }
         adminList.addAll(admins);
         provider.setAdmins(admins);
     }

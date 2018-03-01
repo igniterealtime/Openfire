@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +16,8 @@
 
 package org.jivesoftware.openfire.roster;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.openfire.PresenceManager;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.SharedGroupException;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -58,6 +36,14 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>A roster is a list of users that the user wishes to know if they are online.</p>
@@ -78,24 +64,14 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Roster item cache - table: key jabberid string; value roster item.
      */
-    protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<String, RosterItem>();
+    protected ConcurrentMap<String, RosterItem> rosterItems = new ConcurrentHashMap<>();
     /**
      * Contacts with subscription FROM that only exist due to shared groups
      * key: jabberid string; value: groups why the implicit roster item exists (aka invisibleSharedGroups).
      */
-    protected ConcurrentHashMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<String, Set<String>>();
+    protected ConcurrentMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<>();
 
-    private RosterItemProvider rosterItemProvider;
     private String username;
-    private SessionManager sessionManager;
-    private XMPPServer server = XMPPServer.getInstance();
-    private RoutingTable routingTable;
-    private PresenceManager presenceManager;
-    /**
-     * Note: Used only for shared groups logic.
-     */
-    private RosterManager rosterManager;
-
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -118,10 +94,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param username The username of the user that owns this roster
      */
     Roster(String username) {
-        presenceManager = XMPPServer.getInstance().getPresenceManager();
-        rosterManager = XMPPServer.getInstance().getRosterManager();
-        sessionManager = SessionManager.getInstance();
-        routingTable = XMPPServer.getInstance().getRoutingTable();
+        final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
+
         this.username = username;
 
         // Get the shared groups of this user
@@ -129,8 +103,7 @@ public class Roster implements Cacheable, Externalizable {
         //Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
 
         // Add RosterItems that belong to the personal roster
-        rosterItemProvider = RosterManager.getRosterItemProvider();
-        Iterator<RosterItem> items = rosterItemProvider.getItems(username);
+        Iterator<RosterItem> items = RosterManager.getRosterItemProvider().getItems(username);
         while (items.hasNext()) {
             RosterItem item = items.next();
             // Check if the item (i.e. contact) belongs to a shared group of the user. Add the
@@ -150,7 +123,7 @@ public class Roster implements Cacheable, Externalizable {
             JID jid = entry.getKey();
             List<Group> groups = entry.getValue();
             try {
-                Collection<Group> itemGroups = new ArrayList<Group>();
+                Collection<Group> itemGroups = new ArrayList<>();
                 String nickname = "";
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname, null);
@@ -159,8 +132,6 @@ public class Roster implements Cacheable, Externalizable {
                     if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
-                        item.setNickname(UserNameManager.getUserName(jid));
-                        broadcast(item, true);
                     } else {
                         item.addInvisibleSharedGroup(group);
                     }
@@ -310,7 +281,7 @@ public class Roster implements Cacheable, Externalizable {
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, SharedGroupException {
-        provideRosterItem(item.getJID(), item.getName(), new ArrayList<String>(item.getGroups()), true, true);
+        provideRosterItem(item.getJID(), item.getName(), new ArrayList<>(item.getGroups()), true, true);
     }
 
     /**
@@ -329,17 +300,17 @@ public class Roster implements Cacheable, Externalizable {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
             for (String groupDisplayName : groups) {
-				Collection<Group> groupsWithProp = GroupManager
-						.getInstance()
-						.search("sharedRoster.displayName", groupDisplayName);
-				Iterator<Group> itr = groupsWithProp.iterator();
-            	while(itr.hasNext()) {
-            		Group group = itr.next();
-            		String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            		if(showInRoster != null && !showInRoster.equals("nobody")) {
-            			throw new SharedGroupException("Cannot add an item to a shared group");
-            		}
-            	}
+                Collection<Group> groupsWithProp = GroupManager
+                        .getInstance()
+                        .search("sharedRoster.displayName", groupDisplayName);
+                for ( Group group : groupsWithProp )
+                {
+                    String showInRoster = group.getProperties().get( "sharedRoster.showInRoster" );
+                    if ( showInRoster != null && !showInRoster.equals( "nobody" ) )
+                    {
+                        throw new SharedGroupException( "Cannot add an item to a shared group" );
+                    }
+                }
             }
         }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
@@ -353,7 +324,7 @@ public class Roster implements Cacheable, Externalizable {
 
         // Check if we need to make the new roster item persistent
         if (persistent) {
-            rosterItem = rosterItemProvider.createItem(username, rosterItem);
+            rosterItem = RosterManager.getRosterItemProvider().createItem(username, rosterItem);
         }
 
         if (push) {
@@ -408,21 +379,22 @@ public class Roster implements Cacheable, Externalizable {
                     }
                 }
                 try {
-                    rosterItemProvider.createItem(username, item);
+                    RosterManager.getRosterItemProvider().createItem(username, item);
                 } catch (UserAlreadyExistsException e) {
                     // Do nothing. We shouldn't be here.
+                    Log.warn( "Unexpected error while updating roster item for user '{}'!", username, e);
                 }
             } else {
                 // Item is not persistent and it does not belong to a shared contact so do nothing
             }
         } else {
             // Update the backend data store
-            rosterItemProvider.updateItem(username, item);
+            RosterManager.getRosterItemProvider().updateItem(username, item);
         }
         // broadcast roster update
         // Do not push items with a state of "None + Pending In"
         if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
             broadcast(item, true);
         }
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
@@ -430,6 +402,18 @@ public class Roster implements Cacheable, Externalizable {
         }*/
         // Fire event indicating that a roster item has been updated
         RosterEventDispatcher.contactUpdated(this, item);
+    }
+
+    /**
+     * Returns true if roster item represents a rejected subscription request.
+     *
+     * @param item The roster item.
+     * @return True, if the roster item represents a rejected subscription request.
+     */
+    private static boolean isSubscriptionRejected(RosterItem item) {
+        return item.getSubStatus() == RosterItem.SUB_NONE &&
+                item.getRecvStatus() == RosterItem.RECV_NONE &&
+                item.getAskStatus() == RosterItem.AskType.NONE;
     }
 
     /**
@@ -453,19 +437,19 @@ public class Roster implements Cacheable, Externalizable {
             // Cancel any existing presence subscription between the user and the contact
             if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
                 Presence presence = new Presence();
-                presence.setFrom(server.createJID(username, null));
+                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
                 presence.setTo(itemToRemove.getJid());
                 presence.setType(Presence.Type.unsubscribe);
-                server.getPacketRouter().route(presence);
+                XMPPServer.getInstance().getPacketRouter().route(presence);
             }
 
             // cancel any existing presence subscription between the contact and the user
             if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
                 Presence presence = new Presence();
-                presence.setFrom(server.createJID(username, null));
+                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
                 presence.setTo(itemToRemove.getJid());
                 presence.setType(Presence.Type.unsubscribed);
-                server.getPacketRouter().route(presence);
+                XMPPServer.getInstance().getPacketRouter().route(presence);
             }
 
             // If removing the user was successful, remove the user from the subscriber list:
@@ -476,7 +460,7 @@ public class Roster implements Cacheable, Externalizable {
                 // belong to shared groups won't be persistent
                 if (item.getID() > 0) {
                     // If removing the user was successful, remove the user from the backend store
-                    rosterItemProvider.deleteItem(username, item.getID());
+                    RosterManager.getRosterItemProvider().deleteItem(username, item.getID());
                 }
 
                 // Broadcast the update to the user
@@ -496,12 +480,12 @@ public class Roster implements Cacheable, Externalizable {
             if (item != null) {
                 implicitFrom.remove(user.toBareJID());
                 // If the contact being removed is not a local user then ACK unsubscription
-                if (!server.isLocal(user)) {
+                if (!XMPPServer.getInstance().isLocal(user)) {
                     Presence presence = new Presence();
-                    presence.setFrom(server.createJID(username, null));
+                    presence.setFrom(XMPPServer.getInstance().createJID(username, null));
                     presence.setTo(user);
                     presence.setType(Presence.Type.unsubscribed);
-                    server.getPacketRouter().route(presence);
+                    XMPPServer.getInstance().getPacketRouter().route(presence);
                 }
                 // Fire event indicating that a roster item has been deleted
                 RosterEventDispatcher.contactDeleted(this, item);
@@ -538,7 +522,7 @@ public class Roster implements Cacheable, Externalizable {
             org.xmpp.packet.Roster.Subscription sub = org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus()
                     .getName());
             // Set the groups to broadcast (include personal and shared groups)
-            List<String> groups = new ArrayList<String>(item.getGroups());
+            List<String> groups = new ArrayList<>(item.getGroups());
             if (groups.contains(null)) {
                 Log.warn("A group is null in roster item: " + item.getJid() + " of user: " +
                         getUsername());
@@ -555,7 +539,7 @@ public class Roster implements Cacheable, Externalizable {
             }
             // Do not push items with a state of "None + Pending In"
             if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
             }
         }
@@ -576,6 +560,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param packet The presence packet to broadcast
      */
     public void broadcastPresence(Presence packet) {
+        final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+
         if (routingTable == null) {
             return;
         }
@@ -585,7 +571,7 @@ public class Roster implements Cacheable, Externalizable {
         if (from != null) {
             // Try to use the active list of the session. If none was found then try to use
             // the default privacy list of the session
-            ClientSession session = sessionManager.getSession(from);
+            ClientSession session = SessionManager.getInstance().getSession(from);
             if (session != null) {
                 list = session.getActiveList();
                 list = list == null ? session.getDefaultList() : list;
@@ -639,7 +625,7 @@ public class Roster implements Cacheable, Externalizable {
         }
         if (from != null) {
             // Broadcast presence to other user's resources
-            sessionManager.broadcastPresenceToOtherResources(from, packet);
+            SessionManager.getInstance().broadcastPresenceToOtherResources(from, packet);
         }
     }
 
@@ -651,9 +637,10 @@ public class Roster implements Cacheable, Externalizable {
      * @return the list of users that belong ONLY to a shared group of this user.
      */
     private Map<JID, List<Group>> getSharedUsers(Collection<Group> sharedGroups) {
+        final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
         // Get the users to process from the shared groups. Users that belong to different groups
         // will have one entry in the map associated with all the groups
-        Map<JID, List<Group>> sharedGroupUsers = new HashMap<JID, List<Group>>();
+        Map<JID, List<Group>> sharedGroupUsers = new HashMap<>();
         for (Group group : sharedGroups) {
             // Get all the users that should be in this roster
             Collection<JID> users = rosterManager.getSharedUsersForRoster(group, this);
@@ -666,7 +653,7 @@ public class Roster implements Cacheable, Externalizable {
                 if (!isRosterItem && !userJID.equals(jid)) {
                     List<Group> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
-                        groups = new ArrayList<Group>();
+                        groups = new ArrayList<>();
                         sharedGroupUsers.put(jid, groups);
                     }
                     groups.add(group);
@@ -677,12 +664,15 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     private void broadcast(org.xmpp.packet.Roster roster) {
-        JID recipient = server.createJID(username, null, true);
+        JID recipient = XMPPServer.getInstance().createJID(username, null, true);
         roster.setTo(recipient);
-        if (sessionManager == null) {
-            sessionManager = SessionManager.getInstance();
+
+        // When roster versioning is enabled, the server MUST include 
+        // the updated roster version with each roster push.
+        if (RosterManager.isRosterVersioningEnabled()) {
+            roster.getChildElement().addAttribute("ver", String.valueOf( roster.hashCode() ) );
         }
-        sessionManager.userBroadcast(username, roster);
+        SessionManager.getInstance().userBroadcast(username, roster);
     }
 
     /**
@@ -701,7 +691,7 @@ public class Roster implements Cacheable, Externalizable {
             return;
         }
         // Set the groups to broadcast (include personal and shared groups)
-        List<String> groups = new ArrayList<String>(item.getGroups());
+        List<String> groups = new ArrayList<>(item.getGroups());
         for (Group sharedGroup : item.getSharedGroups()) {
             String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
             if (displayName != null) {
@@ -722,11 +712,13 @@ public class Roster implements Cacheable, Externalizable {
      * Sends a presence probe to the probee for each connected resource of this user.
      */
     private void probePresence(JID probee) {
-        for (ClientSession session : sessionManager.getSessions(username)) {
+        final PresenceManager presenceManager = XMPPServer.getInstance().getPresenceManager();
+        for (ClientSession session : SessionManager.getInstance().getSessions(username)) {
             presenceManager.probePresence(session.getAddress(), probee);
         }
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of the content of each field, if that content is likely to be eligable for
@@ -757,8 +749,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param addedUser the contact to update in the roster.
      */
     void addSharedUser(Group group, JID addedUser) {
-        boolean newItem = false;
-        RosterItem item = null;
+        boolean newItem;
+        RosterItem item;
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(addedUser);
@@ -781,6 +773,7 @@ public class Roster implements Cacheable, Externalizable {
                 Log.error("Group (" + group.getName() + ") includes non-existent username (" +
                         addedUser +
                         ")");
+                return;
             }
         }
 
@@ -792,12 +785,13 @@ public class Roster implements Cacheable, Externalizable {
 
         // Update the subscription of the item **based on the item groups**
         Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
-        Collection<Group> sharedGroups = new ArrayList<Group>();
+        Collection<Group> sharedGroups = new ArrayList<>();
         sharedGroups.addAll(item.getSharedGroups());
         // Add the new group to the list of groups to check
         sharedGroups.add(group);
         // Set subscription type to BOTH if the roster user belongs to a shared group
         // that is mutually visible with a shared group of the new roster item
+        final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
         if (rosterManager.hasMutualVisibility(getUsername(), userGroups, addedUser, sharedGroups)) {
             item.setSubStatus(RosterItem.SUB_BOTH);
         }
@@ -865,8 +859,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param groups    the groups where the contact is a member
      */
     void addSharedUser(JID addedUser, Collection<Group> groups, Group addedGroup) {
-        boolean newItem = false;
-        RosterItem item = null;
+        boolean newItem;
+        RosterItem item;
         try {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(addedUser);
@@ -883,12 +877,14 @@ public class Roster implements Cacheable, Externalizable {
                 newItem = true;
             } catch (UserNotFoundException ex) {
                 Log.error("Couldn't find a user with username (" + addedUser + ")");
+                return;
             }
         }
         // Update the subscription of the item **based on the item groups**
         Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
         // Set subscription type to BOTH if the roster user belongs to a shared group
         // that is mutually visible with a shared group of the new roster item
+        final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
         if (rosterManager.hasMutualVisibility(getUsername(), userGroups, addedUser, groups)) {
             item.setSubStatus(RosterItem.SUB_BOTH);
             for (Group group : groups) {
@@ -1000,10 +996,11 @@ public class Roster implements Cacheable, Externalizable {
                 if (item.isOnlyShared()) {
                     Collection<Group> userGroups =
                             GroupManager.getInstance().getGroups(getUserJID());
-                    Collection<Group> sharedGroups = new ArrayList<Group>();
+                    Collection<Group> sharedGroups = new ArrayList<>();
                     sharedGroups.addAll(item.getSharedGroups());
                     // Set subscription type to BOTH if the roster user belongs to a shared group
                     // that is mutually visible with a shared group of the new roster item
+                    final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
                     if (rosterManager.hasMutualVisibility(getUsername(), userGroups, deletedUser,
                             sharedGroups)) {
                         item.setSubStatus(RosterItem.SUB_BOTH);
@@ -1013,19 +1010,27 @@ public class Roster implements Cacheable, Externalizable {
                     } else {
                         item.setSubStatus(RosterItem.SUB_TO);
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);                	
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
             }
         } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
+            Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
+            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         }
     }
 
     void deleteSharedUser(JID deletedUser, Group deletedGroup) {
         try {
+            final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
             // Get the RosterItem for the *local* user to remove
             RosterItem item = getRosterItem(deletedUser);
             int groupSize = item.getSharedGroups().size() + item.getInvisibleSharedGroups().size();
@@ -1074,14 +1079,21 @@ public class Roster implements Cacheable, Externalizable {
                             }
                         }
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
             }
         } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
+            Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
+            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         }
     }
 
@@ -1101,10 +1113,11 @@ public class Roster implements Cacheable, Externalizable {
             try {
                 // Get the RosterItem for the *local* user to add
                 item = getRosterItem(user);
-                // Brodcast to all the user resources of the updated roster item
+                // Broadcast to all the user resources of the updated roster item
                 broadcast(item, true);
             } catch (UserNotFoundException e) {
                 // Do nothing since the contact does not exist in the user's roster. (strange case!)
+                Log.warn( "Unexpected error while broadcasting shared group rename for user '{}'!", user, e);
             }
         }
     }
@@ -1113,19 +1126,49 @@ public class Roster implements Cacheable, Externalizable {
         return XMPPServer.getInstance().createJID(getUsername(), null, true);
     }
 
+    @Override
+    public boolean equals( Object o )
+    {
+        if ( this == o )
+        {
+            return true;
+        }
+        if ( o == null || getClass() != o.getClass() )
+        {
+            return false;
+        }
+
+        final Roster roster = (Roster) o;
+
+        if ( !rosterItems.equals( roster.rosterItems ) )
+        {
+            return false;
+        }
+        if ( !implicitFrom.equals( roster.implicitFrom ) )
+        {
+            return false;
+        }
+        return username.equals( roster.username );
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = rosterItems.hashCode();
+        result = 31 * result + implicitFrom.hashCode();
+        result = 31 * result + username.hashCode();
+        return result;
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeExternalizableMap(out, rosterItems);
         ExternalizableUtil.getInstance().writeStringsMap(out, implicitFrom);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        presenceManager = XMPPServer.getInstance().getPresenceManager();
-        rosterManager = XMPPServer.getInstance().getRosterManager();
-        sessionManager = SessionManager.getInstance();
-        rosterItemProvider = RosterManager.getRosterItemProvider();
-        routingTable = XMPPServer.getInstance().getRoutingTable();
-
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         ExternalizableUtil.getInstance().readExternalizableMap(in, rosterItems, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readStringsMap(in, implicitFrom);

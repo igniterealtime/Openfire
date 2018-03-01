@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PresenceEventDispatcher {
 
     private static List<PresenceEventListener> listeners =
-            new CopyOnWriteArrayList<PresenceEventListener>();
+            new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events.

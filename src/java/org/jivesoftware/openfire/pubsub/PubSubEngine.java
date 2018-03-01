@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -32,7 +29,9 @@ import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.ImmediateFuture;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 /**
  * A PubSubEngine is responsible for handling packets sent to a pub-sub service.
@@ -61,7 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PubSubEngine {
 
-	private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
+    private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
     /**
      * The packet router for the server.
@@ -77,15 +77,19 @@ public class PubSubEngine {
      * are not being handled by the engine. Instead the service itself should handle disco packets.
      *
      * @param service the PubSub service this action is to be performed for.
-     * @param iq the IQ packet sent to the pubsub service.
-     * @return true if the IQ packet was handled by the engine.
+     * @param iq      the IQ packet sent to the pubsub service.
+     * @return <code>null</code> if the IQ packet was not handled by the engine, otherwise a {@link Future} that
+     * indicates when processing is complete. Processing will be carried out asynchronously if there is the possibility
+     * of sending a disco#info to a remote server, which could block for up to 60 seconds. If processing is carried out
+     * synchronously, the returned future completes immediately. Note that the returned future will only return
+     * <code>null</code> when it completes.
      */
-    public boolean process(PubSubService service, IQ iq) {
+    public Future process(final PubSubService service, final IQ iq) {
         // Ignore IQs of type ERROR or RESULT
         if (IQ.Type.error == iq.getType() || IQ.Type.result == iq.getType()) {
-            return true;
+            return new ImmediateFuture<>();
         }
-        Element childElement = iq.getChildElement();
+        final Element childElement = iq.getChildElement();
         String namespace = null;
 
         if (childElement != null) {
@@ -95,14 +99,19 @@ public class PubSubEngine {
             Element action = childElement.element("publish");
             if (action != null) {
                 // Entity publishes an item
-                publishItemsToNode(service, iq, action);
-                return true;
+                // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+                final Element finalAction = action;
+                return TaskEngine.getInstance().submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        publishItemsToNode(service, iq, finalAction);
+                    }
+                });
             }
             action = childElement.element("subscribe");
             if (action != null) {
                 // Entity subscribes to a node
-                subscribeNode(service, iq, childElement, action);
-                return true;
+                return subscribeNode(service, iq, childElement, action);
             }
             action = childElement.element("options");
             if (action != null) {
@@ -114,47 +123,53 @@ public class PubSubEngine {
                     // Subscriber submits completed options form
                     configureSubscription(service, iq, action);
                 }
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("create");
             if (action != null) {
                 // Entity is requesting to create a new node
-                createNode(service, iq, childElement, action);
-                return true;
+                final Element finalAction = action;
+                // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+                return TaskEngine.getInstance().submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        createNode(service, iq, childElement, finalAction);
+                    }
+                });
             }
             action = childElement.element("unsubscribe");
             if (action != null) {
                 // Entity unsubscribes from a node
                 unsubscribeNode(service, iq, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("subscriptions");
             if (action != null) {
                 // Entity requests all current subscriptions
                 getSubscriptions(service, iq, childElement);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("affiliations");
             if (action != null) {
                 // Entity requests all current affiliations
                 getAffiliations(service, iq, childElement);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("items");
             if (action != null) {
                 // Subscriber requests all active items
                 getPublishedItems(service, iq, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("retract");
             if (action != null) {
                 // Entity deletes an item
                 deleteItems(service, iq, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             // Unknown action requested
             sendErrorPacket(iq, PacketError.Condition.bad_request, null);
-            return true;
+            return new ImmediateFuture<>();
         }
         else if ("http://jabber.org/protocol/pubsub#owner".equals(namespace)) {
             Element action = childElement.element("configure");
@@ -168,7 +183,7 @@ public class PubSubEngine {
                         Element pubsubError = DocumentHelper.createElement(QName.get(
                                 "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
                         sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                        return true;
+                        return new ImmediateFuture<>();
                     }
                     else {
                         // Sysadmin is trying to configure root collection node
@@ -183,20 +198,20 @@ public class PubSubEngine {
                     // Owner submits or cancels node configuration form
                     configureNode(service, iq, action, nodeID);
                 }
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("default");
             if (action != null) {
                 // Owner requests default configuration options for
                 // leaf or collection nodes
                 getDefaultNodeConfiguration(service, iq, childElement, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("delete");
             if (action != null) {
                 // Owner deletes a node
                 deleteNode(service, iq, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("subscriptions");
             if (action != null) {
@@ -207,7 +222,7 @@ public class PubSubEngine {
                 else {
                     modifyNodeSubscriptions(service, iq, action);
                 }
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("affiliations");
             if (action != null) {
@@ -218,25 +233,25 @@ public class PubSubEngine {
                 else {
                     modifyNodeAffiliations(service, iq, action);
                 }
-                return true;
+                return new ImmediateFuture<>();
             }
             action = childElement.element("purge");
             if (action != null) {
                 // Owner purges items from a node
                 purgeNode(service, iq, action);
-                return true;
+                return new ImmediateFuture<>();
             }
             // Unknown action requested so return error to sender
             sendErrorPacket(iq, PacketError.Condition.bad_request, null);
-            return true;
+            return new ImmediateFuture<>();
         }
         else if ("http://jabber.org/protocol/commands".equals(namespace)) {
             // Process ad-hoc command
             IQ reply = service.getManager().process(iq);
             router.route(reply);
-            return true;
+            return new ImmediateFuture<>();
         }
-        return false;
+        return null;
     }
 
     /**
@@ -254,7 +269,7 @@ public class PubSubEngine {
                 synchronized (subscriber.toBareJID().intern()) {
                     fullPresences = service.getBarePresences().get(subscriber.toBareJID());
                     if (fullPresences == null) {
-                        fullPresences = new ConcurrentHashMap<String, String>();
+                        fullPresences = new ConcurrentHashMap<>();
                         service.getBarePresences().put(subscriber.toBareJID(), fullPresences);
                     }
                 }
@@ -336,8 +351,7 @@ public class PubSubEngine {
                     // If it is a PEP service & publisher is service owner -
                     // auto create nodes.
                     Element childElement = iq.getChildElement();
-                    Element createElement = publishElement.element("publish");
-                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement);
+                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, publishElement);
 
                     if (response.newNode == null) {
                         // New node creation failed. Since pep#auto-create is advertised 
@@ -388,7 +402,7 @@ public class PubSubEngine {
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
-        List<Element> items = new ArrayList<Element>();
+        List<Element> items = new ArrayList<>();
         List entries;
         Element payload;
         while (itemElements.hasNext()) {
@@ -466,7 +480,7 @@ public class PubSubEngine {
             return;
         }
 
-        List<PublishedItem> items = new ArrayList<PublishedItem>();
+        List<PublishedItem> items = new ArrayList<>();
         while (itemElements.hasNext()) {
             Element itemElement = (Element) itemElements.next();
             String itemID = itemElement.attributeValue("id");
@@ -502,9 +516,9 @@ public class PubSubEngine {
         leafNode.deleteItems(items);
     }
 
-    private void subscribeNode(PubSubService service, IQ iq, Element childElement, Element subscribeElement) {
+    private Future subscribeNode(final PubSubService service, final IQ iq, final Element childElement, Element subscribeElement) {
         String nodeID = subscribeElement.attributeValue("node");
-        Node node;
+        final Node node;
         if (nodeID == null) {
             if (service.isCollectionNodesSupported()) {
                 // Entity subscribes to root collection node
@@ -515,7 +529,7 @@ public class PubSubEngine {
                 Element pubsubError = DocumentHelper.createElement(QName.get(
                         "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
+                return new ImmediateFuture<>();
             }
         }
         else {
@@ -524,30 +538,42 @@ public class PubSubEngine {
             if (node == null) {
                 // Node does not exist. Return item-not-found error
                 sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
-                return;
+                return new ImmediateFuture<>();
             }
         }
         // Check if sender and subscriber JIDs match or if a valid "trusted proxy" is being used
-        JID from = iq.getFrom();
-        JID subscriberJID = new JID(subscribeElement.attributeValue("jid"));
+        final JID from = iq.getFrom();
+        final JID subscriberJID = new JID(subscribeElement.attributeValue("jid"));
         if (!from.toBareJID().equals(subscriberJID.toBareJID()) && !service.isServiceAdmin(from)) {
             // JIDs do not match and requestor is not a service admin so return an error
             Element pubsubError = DocumentHelper.createElement(
                     QName.get("invalid-jid", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-            return;
+            return new ImmediateFuture<>();
         }
         // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-        JID owner = subscriberJID.asBareJID();
+        final JID owner = subscriberJID.asBareJID();
         // Check if the node's access model allows the subscription to proceed
-        AccessModel accessModel = node.getAccessModel();
+        final AccessModel accessModel = node.getAccessModel();
         if (!accessModel.canSubscribe(node, owner, subscriberJID)) {
             sendErrorPacket(iq, accessModel.getSubsriptionError(),
                     accessModel.getSubsriptionErrorDetail());
-            return;
+            return new ImmediateFuture<>();
         }
+
+        // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
+        return TaskEngine.getInstance().submit(new Runnable() {
+            @Override
+            public void run() {
+                subscribeNodeAsync(iq, subscriberJID, node, owner, service, from, childElement, accessModel);
+            }
+        });
+    }
+
+    private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {
+
         // Check if the subscriber is an anonymous user
-        if (!UserManager.getInstance().isRegisteredUser(subscriberJID)) {
+        if (!isComponent(subscriberJID) && !isRemoteServer(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID)) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
@@ -893,7 +919,7 @@ public class PubSubEngine {
         Element subscriptionsElement = childElement.element("subscriptions");
         
         String nodeID = subscriptionsElement.attributeValue("node");
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        Collection<NodeSubscription> subscriptions = new ArrayList<>();
         
         if (nodeID == null)
         {
@@ -935,7 +961,7 @@ public class PubSubEngine {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = iq.getFrom().asBareJID();
         // Collect affiliations of owner for all nodes at the service
-        Collection<NodeAffiliate> affiliations = new ArrayList<NodeAffiliate>();
+        Collection<NodeAffiliate> affiliations = new ArrayList<>();
         for (Node node : service.getNodes()) {
             NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
             if (nodeAffiliate != null) {
@@ -1018,7 +1044,7 @@ public class PubSubEngine {
         if (node.isMultipleSubscriptionsEnabled() && (node.getSubscriptions(owner).size() > 1)) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions and the user
-            	// has multiple subscriptions
+                // has multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(
                         QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
@@ -1063,16 +1089,16 @@ public class PubSubEngine {
         }
         if (max_items != null) {
             // Get the N most recent published items
-            items = new ArrayList<PublishedItem>(leafNode.getPublishedItems(recentItems));
+            items = new ArrayList<>(leafNode.getPublishedItems(recentItems));
         }
         else {
             List requestedItems = itemsElement.elements("item");
             if (requestedItems.isEmpty()) {
                 // Get all the active items that were published to the node
-                items = new ArrayList<PublishedItem>(leafNode.getPublishedItems());
+                items = new ArrayList<>(leafNode.getPublishedItems());
             }
             else {
-                items = new ArrayList<PublishedItem>();
+                items = new ArrayList<>();
                 // Indicate that payload should be included (if exists) no matter
                 // the node configuration
                 forceToIncludePayload = true;
@@ -1144,7 +1170,9 @@ public class PubSubEngine {
      * - Node does not already exist
      * - New node configuration is valid
      *
-     * NOTE: This method should not reply to the client
+     * <br/>NOTE 1: This method should not reply to the client
+     * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
+     * do not call this method in the same thread in which a response might arrive
      *
      * @param service
      * @param iq
@@ -1156,7 +1184,7 @@ public class PubSubEngine {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(from) || (!UserManager.getInstance().isRegisteredUser(from) && !isComponent(from)) ) {
+        if (!service.canCreateNode(from) || (!isComponent(from) && !UserManager.getInstance().isRegisteredUser(from))) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }
@@ -1361,7 +1389,7 @@ public class PubSubEngine {
                 // (and update the backend store)
                 node.configure(completedForm);
 
-				CacheFactory.doClusterTask(new RefreshNodeTask(node));
+                CacheFactory.doClusterTask(new RefreshNodeTask(node));
                 // Return that node configuration was successful
                 router.route(IQ.createResultIQ(iq));
             }
@@ -1578,7 +1606,7 @@ public class PubSubEngine {
         }
 
         IQ reply = IQ.createResultIQ(iq);
-        Collection<JID> invalidAffiliates = new ArrayList<JID>();
+        Collection<JID> invalidAffiliates = new ArrayList<>();
 
         // Process modifications or creations of affiliations
         for (Iterator it = entitiesElement.elementIterator("affiliation"); it.hasNext();) {
@@ -1767,10 +1795,12 @@ public class PubSubEngine {
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                @Override
                 public void serverStarted() {
                     probePresences(service);
                 }
 
+                @Override
                 public void serverStopping() {
                 }
             });
@@ -1778,7 +1808,7 @@ public class PubSubEngine {
     }
 
     private void probePresences(final PubSubService service) {
-        Set<JID> affiliates = new HashSet<JID>();
+        Set<JID> affiliates = new HashSet<>();
         for (Node node : service.getNodes()) {
             affiliates.addAll(node.getPresenceBasedSubscribers());
         }
@@ -1792,17 +1822,17 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-    	PubSubPersistenceManager.shutdown();
-    	if (service != null) {
+        PubSubPersistenceManager.shutdown();
+        if (service != null) {
 
-    		if (service.getManager() != null) {
-		    	// Stop executing ad-hoc commands
-		        service.getManager().stop();
-    		}
-	        
-	        // clear all nodes for this service, to remove circular references back to the service instance.
-			service.getNodes().clear(); // FIXME: this is an ugly hack. getNodes() is documented to return an unmodifiable collection (but does not).
-    	}
+            if (service.getManager() != null) {
+                // Stop executing ad-hoc commands
+                service.getManager().stop();
+            }
+            
+            // clear all nodes for this service, to remove circular references back to the service instance.
+            service.getNodes().clear(); // FIXME: this is an ugly hack. getNodes() is documented to return an unmodifiable collection (but does not).
+        }
     }
 
     /*******************************************************************************
@@ -1892,17 +1922,38 @@ public class PubSubEngine {
     }
 
     /**
-	 * Checks to see if the jid given is a component by looking at the routing
-	 * table. Similar to {@link InternalComponentManager#hasComponent(JID)}.
-	 * 
-	 * @param jid
-	 * @return <tt>true</tt> if the JID is a component, <tt>false<.tt> if not.
-	 */
-	private boolean isComponent(JID jid) {
-		final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-		if (routingTable != null) {
-			return routingTable.hasComponentRoute(jid);
-		}
-		return false;
-	}
+     * Checks to see if the jid given is a component by looking at the routing
+     * table. Similar to {@link InternalComponentManager#hasComponent(JID)}.
+     * 
+     * @param jid
+     * @return <tt>true</tt> if the JID is a component, <tt>false<.tt> if not.
+     */
+    private boolean isComponent(JID jid) {
+        final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        if (routingTable != null) {
+            return routingTable.hasComponentRoute(jid);
+        }
+        return false;
+    }
+
+    /**
+     * Checks to see if the supplied JID is that of a connected remote server
+     * @param jid the JID representing the remote server
+     * @return true if the supplied JID is a connected server session
+     */
+    private boolean isRemoteServer(final JID jid) {
+        final String jidString = jid.toString();
+        final SessionManager sessionManager = SessionManager.getInstance();
+        for (final String incomingServer : sessionManager.getIncomingServers()) {
+            if(incomingServer.equals(jidString)) {
+                return true;
+            }
+        }
+        for (final String outgoingServer : sessionManager.getOutgoingServers()) {
+            if(outgoingServer.equals(jidString)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

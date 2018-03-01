@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,8 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FlashCrossDomainHandler extends BasicModule {
-	
-	private static final Logger Log = LoggerFactory.getLogger(FlashCrossDomainHandler.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(FlashCrossDomainHandler.class);
 
     private ServerSocket serverSocket;
 
@@ -51,8 +47,9 @@ public class FlashCrossDomainHandler extends BasicModule {
     }
 
     @Override
-	public void start() {
+    public void start() {
         Thread thread = new Thread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     startServer();
@@ -67,7 +64,7 @@ public class FlashCrossDomainHandler extends BasicModule {
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         try {
             if (serverSocket != null) {
                 serverSocket.close();
@@ -118,12 +115,12 @@ public class FlashCrossDomainHandler extends BasicModule {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 
                 String request = "";
-            	request = read(in);
+                request = read(in);
                 
                 if (request.contains("<policy-file-request/>") || request.contains("GET /crossdomain.xml")) {
-	                out.write(CROSS_DOMAIN_TEXT +
-	                        XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
-	                        CROSS_DOMAIN_END_TEXT+"\u0000");
+                    out.write(CROSS_DOMAIN_TEXT +
+                            XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
+                            CROSS_DOMAIN_END_TEXT+"\u0000");
                 }
             }
             catch (IOException e) {
@@ -133,16 +130,16 @@ public class FlashCrossDomainHandler extends BasicModule {
                 Log.error(e.getMessage(), e);
             }
             finally {
-            	if (out != null) {
-            		out.flush();
-            		out.close();
-            	}
-            	if (in != null) {
-            		in.close();
-            	}
-            	if (clientSocket != null) {
-            		clientSocket.close();
-            	}
+                if (out != null) {
+                    out.flush();
+                    out.close();
+                }
+                if (in != null) {
+                    in.close();
+                }
+                if (clientSocket != null) {
+                    clientSocket.close();
+                }
             }
         }
     }

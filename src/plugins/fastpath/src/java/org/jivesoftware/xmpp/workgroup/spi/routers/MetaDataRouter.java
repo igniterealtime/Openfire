@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public class MetaDataRouter extends RequestRouter {
 
-	private static final Logger Log = LoggerFactory.getLogger(MetaDataRouter.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(MetaDataRouter.class);
+    
     public MetaDataRouter() {
     }
 
@@ -51,12 +47,12 @@ public class MetaDataRouter extends RequestRouter {
     }
 
     @Override
-	public boolean isConfigurable(){
+    public boolean isConfigurable(){
         return false;
     }
 
     @Override
-	public boolean handleRequest(Workgroup workgroup, UserRequest request) {
+    public boolean handleRequest(Workgroup workgroup, UserRequest request) {
         boolean success = false;
         Map<String,List<String>> metaData = request.getMetaData();
         if (metaData != null) {

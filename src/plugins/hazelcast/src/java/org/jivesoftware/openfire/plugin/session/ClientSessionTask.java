@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,17 +56,17 @@ public class ClientSessionTask extends RemoteSessionTask {
     }
 
     Session getSession() {
-    	if (session == null) {
-    		session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
-    	}
-    	return session;
+        if (session == null) {
+            session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+        }
+        return session;
     }
 
     public void run() {
-    	if (getSession() == null || getSession().isClosed()) {
-    		logger.error("Session not found for JID: " + address);
-    		return;
-    	}
+        if (getSession() == null || getSession().isClosed()) {
+            logger.error("Session not found for JID: " + address);
+            return;
+        }
         super.run();
 
         ClientSession session = (ClientSession) getSession();

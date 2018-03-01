@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,17 +16,19 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.openfire.*;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * Abstract class for {@link BlockingAcceptingMode}.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 abstract class SocketAcceptingMode {
 
     /**
@@ -39,20 +37,11 @@ abstract class SocketAcceptingMode {
     protected boolean notTerminated = true;
 
     /**
-     * Holds information about the port on which the server will listen for connections.
-     */
-    protected ServerPort serverPort;
-
-    /**
      * socket that listens for connections.
      */
     protected ServerSocket serverSocket;
 
-    protected ConnectionManager connManager;
-
-    protected SocketAcceptingMode(ConnectionManager connManager, ServerPort serverPort) {
-        this.connManager = connManager;
-        this.serverPort = serverPort;
+    protected SocketAcceptingMode() {
     }
 
     public abstract void run();
@@ -69,5 +58,15 @@ abstract class SocketAcceptingMode {
         catch (IOException e) {
             // we don't care, no matter what, the socket should be dead
         }
+    }
+
+    public SocketReader createServerSocketReader(Socket sock, boolean isSecure, boolean useBlockingMode) throws IOException {
+        final XMPPServer server = XMPPServer.getInstance();
+        final String serverName = server.getServerInfo().getXMPPDomain();
+        final PacketRouter router = server.getPacketRouter();
+        final RoutingTable routingTable = server.getRoutingTable();
+        final PacketDeliverer deliverer = server.getPacketDeliverer();
+        final SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
+        return new ServerSocketReader(router, routingTable, serverName, sock, conn, useBlockingMode);
     }
 }

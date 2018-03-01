@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,12 +41,12 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     /**
      * Identities included in these entity capabilities.
      */
-    private Set<String> identities = new HashSet<String>();
+    private Set<String> identities = new HashSet<>();
 
     /**
      * Features included in these entity capabilities.
      */
-    private Set<String> features = new HashSet<String>();
+    private Set<String> features = new HashSet<>();
 
     /**
      * Hash string that corresponds to the entity capabilities. To be
@@ -114,29 +110,32 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     }
     
     String getVerAttribute() {
-    	return this.verAttribute;
+        return this.verAttribute;
     }
 
     void setHashAttribute(String hashAttribute) {
-    	this.hashAttribute = hashAttribute;
+        this.hashAttribute = hashAttribute;
     }
 
     String getHashAttribute() {
-    	return this.hashAttribute;
+        return this.hashAttribute;
     }
     
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ExternalizableUtil.getInstance().readStrings(in, identities);
         ExternalizableUtil.getInstance().readStrings(in, features);
         verAttribute = ExternalizableUtil.getInstance().readSafeUTF(in);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeStrings(out, identities);
         ExternalizableUtil.getInstance().writeStrings(out, features);
         ExternalizableUtil.getInstance().writeSafeUTF(out, verAttribute);
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = CacheSizes.sizeOfCollection(identities);
         size += CacheSizes.sizeOfCollection(features);

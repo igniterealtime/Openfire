@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,10 +22,12 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionPacketRouter;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -48,7 +46,7 @@ import org.xmpp.packet.PacketError;
  */
 public class MultiplexerPacketHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketHandler.class);
 
     private String connectionManagerDomain;
     private final ConnectionMultiplexerManager multiplexerManager;
@@ -76,15 +74,16 @@ public class MultiplexerPacketHandler {
             }
             else if (iq.getType() == IQ.Type.set) {
                 Element child = iq.getChildElement();
-                String streamID = child.attributeValue("id");
-                if (streamID == null) {
+                String streamIDValue = child.attributeValue("id");
+                if (streamIDValue == null) {
                     // No stream ID was included so return a bad_request error
                     Element extraError = DocumentHelper.createElement(QName.get(
                             "id-required", "http://jabber.org/protocol/connectionmanager#errors"));
                     sendErrorPacket(iq, PacketError.Condition.bad_request, extraError);
                 }
                 else if ("session".equals(child.getName())) {
-                    Element create = child.element("create");
+                    StreamID streamID = BasicStreamIDFactory.createStreamID( streamIDValue );
+                    Element create = child.element( "create" );
                     if (create != null) {
                         // Get the InetAddress of the client
                         Element hostElement = create.element("host");
@@ -97,7 +96,7 @@ public class MultiplexerPacketHandler {
                             sendResultPacket(iq);
                         }
                         else {
-                            // Send error to CM. The CM should close the new-borned connection
+                            // Send error to CM. The CM should close the new-born connection
                             sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
                         }
                     }
@@ -167,7 +166,7 @@ public class MultiplexerPacketHandler {
      * @param route the route packet.
      */
     public void route(Route route) {
-        String streamID = route.getStreamID();
+        StreamID streamID = route.getStreamID();
         if (streamID == null) {
             // No stream ID was included so return a bad_request error
             Element extraError = DocumentHelper.createElement(QName.get(

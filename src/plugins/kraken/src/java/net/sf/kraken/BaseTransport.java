@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -49,7 +46,11 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardListener;
 import org.jivesoftware.openfire.vcard.VCardEventDispatcher;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.Base64;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;

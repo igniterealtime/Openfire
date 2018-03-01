@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 128 $
- * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,26 +36,26 @@ import org.xmpp.packet.JID;
  */
 public class DiscoServerItem extends DiscoItem {
 
-	private final DiscoInfoProvider infoProvider;
-	private final DiscoItemsProvider itemsProvider;
-	
-	public DiscoServerItem(JID jid, String name, String node, String action, DiscoInfoProvider infoProvider, DiscoItemsProvider itemsProvider) {
-		super(jid, name, node, action);
-		
-		if (infoProvider == null)
-		{
-			throw new IllegalArgumentException("Argument 'infoProvider' cannot be null.");
-		}
-		
-		if (itemsProvider == null)
-		{
-			throw new IllegalArgumentException("Argument 'itemsProvider' cannot be null.");
-		}
-		
-		this.infoProvider = infoProvider;
-		this.itemsProvider = itemsProvider;
-	}
-	
+    private final DiscoInfoProvider infoProvider;
+    private final DiscoItemsProvider itemsProvider;
+    
+    public DiscoServerItem(JID jid, String name, String node, String action, DiscoInfoProvider infoProvider, DiscoItemsProvider itemsProvider) {
+        super(jid, name, node, action);
+        
+        if (infoProvider == null)
+        {
+            throw new IllegalArgumentException("Argument 'infoProvider' cannot be null.");
+        }
+        
+        if (itemsProvider == null)
+        {
+            throw new IllegalArgumentException("Argument 'itemsProvider' cannot be null.");
+        }
+        
+        this.infoProvider = infoProvider;
+        this.itemsProvider = itemsProvider;
+    }
+    
     /**
      * Returns the DiscoInfoProvider responsible for providing the information related to this item.
      * The DiscoInfoProvider will be automatically included in IQDiscoInfoHandler as the provider
@@ -69,7 +65,7 @@ public class DiscoServerItem extends DiscoItem {
      */
     public DiscoInfoProvider getDiscoInfoProvider()
     {
-    	return infoProvider;
+        return infoProvider;
     }
 
     /**
@@ -81,6 +77,6 @@ public class DiscoServerItem extends DiscoItem {
      */
     public DiscoItemsProvider getDiscoItemsProvider()
     {
-    	return itemsProvider;
+        return itemsProvider;
     }
 }

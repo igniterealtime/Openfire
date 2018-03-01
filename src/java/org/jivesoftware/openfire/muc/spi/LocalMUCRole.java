@@ -1,8 +1,4 @@
-/**
- * $RCSfile: LocalMUCRole.java,v $
- * $Revision: 3168 $
- * $Date: 2005-12-07 13:55:47 -0300 (Wed, 07 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,10 +143,12 @@ public class LocalMUCRole implements MUCRole {
         user.addRole(room.getName(), this);
     }
 
+    @Override
     public Presence getPresence() {
         return presence;
     }
 
+    @Override
     public void setPresence(Presence newPresence) {
         // Try to remove the element whose namespace is "http://jabber.org/protocol/muc" since we
         // don't need to include that element in future presence broadcasts
@@ -160,12 +158,10 @@ public class LocalMUCRole implements MUCRole {
         }
         this.presence = newPresence;
         this.presence.setFrom(getRoleAddress());
-        if (extendedInformation != null) {
-            extendedInformation.setParent(null);
-            presence.getElement().add(extendedInformation);
-        }
+        updatePresence();
     }
 
+    @Override
     public void setRole(MUCRole.Role newRole) throws NotAllowedException {
         // Don't allow to change the role to an owner or admin unless the new role is moderator
         if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin == affiliation) {
@@ -188,10 +184,12 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
     }
 
+    @Override
     public MUCRole.Role getRole() {
         return role;
     }
 
+    @Override
     public void setAffiliation(MUCRole.Affiliation newAffiliation) throws NotAllowedException {
         // Don't allow to ban an owner or an admin
         if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin== affiliation) {
@@ -204,40 +202,49 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
     }
 
+    @Override
     public MUCRole.Affiliation getAffiliation() {
         return affiliation;
     }
 
+    @Override
     public String getNickname() {
         return nick;
     }
 
+    @Override
     public void changeNickname(String nickname) {
         this.nick = nickname;
         setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
     }
 
+    @Override
     public void destroy() {
         // Notify the user that he/she is no longer in the room
         user.removeRole(room.getName());
     }
 
+    @Override
     public MUCRoom getChatRoom() {
         return room;
     }
 
+    @Override
     public JID getRoleAddress() {
         return rJID;
     }
 
+    @Override
     public JID getUserAddress() {
         return user.getAddress();
     }
 
+    @Override
     public boolean isLocal() {
         return true;
     }
 
+    @Override
     public NodeID getNodeID() {
         return XMPPServer.getInstance().getNodeID();
     }
@@ -248,10 +255,12 @@ public class LocalMUCRole implements MUCRole {
         presence.setFrom(jid);
     }
 
+    @Override
     public boolean isVoiceOnly() {
         return voiceOnly;
     }
 
+    @Override
     public void send(Packet packet) {
         if (packet == null) {
             return;
@@ -275,49 +284,62 @@ public class LocalMUCRole implements MUCRole {
         ElementUtil.setProperty(extendedInformation, "x.item:jid", user.getAddress().toString());
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
+        updatePresence();
     }
 
+    private void updatePresence() {
+        if (extendedInformation != null && presence != null) {
+            // Remove any previous extendedInformation, then re-add it.
+            Element mucUser = presence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc#user"));
+            if (mucUser != null) {
+                // Remove any previous extendedInformation, then re-add it.
+                presence.getElement().remove(mucUser);
+            }
+            Element exi = extendedInformation.createCopy();
+            presence.getElement().add(exi);
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((nick == null) ? 0 : nick.hashCode());
-		result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
-		result = prime * result + ((room == null) ? 0 : room.hashCode());
-		result = prime * result + ((user == null) ? 0 : user.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((nick == null) ? 0 : nick.hashCode());
+        result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
+        result = prime * result + ((room == null) ? 0 : room.hashCode());
+        result = prime * result + ((user == null) ? 0 : user.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LocalMUCRole other = (LocalMUCRole) obj;
-		if (nick == null) {
-			if (other.nick != null)
-				return false;
-		} else if (!nick.equals(other.nick))
-			return false;
-		if (rJID == null) {
-			if (other.rJID != null)
-				return false;
-		} else if (!rJID.equals(other.rJID))
-			return false;
-		if (room == null) {
-			if (other.room != null)
-				return false;
-		} else if (!room.equals(other.room))
-			return false;
-		if (user == null) {
-			if (other.user != null)
-				return false;
-		} else if (!user.equals(other.user))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LocalMUCRole other = (LocalMUCRole) obj;
+        if (nick == null) {
+            if (other.nick != null)
+                return false;
+        } else if (!nick.equals(other.nick))
+            return false;
+        if (rJID == null) {
+            if (other.rJID != null)
+                return false;
+        } else if (!rJID.equals(other.rJID))
+            return false;
+        if (room == null) {
+            if (other.room != null)
+                return false;
+        } else if (!room.equals(other.room))
+            return false;
+        if (user == null) {
+            if (other.user != null)
+                return false;
+        } else if (!user.equals(other.user))
+            return false;
+        return true;
+    }
 }

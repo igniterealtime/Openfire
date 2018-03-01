@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19158 $
- * $Date: 2005-06-27 15:15:06 -0700 (Mon, 27 Jun 2005) $
- *
+/*
  * Copyright (C) 1999-2006 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +46,7 @@ public class FormUtils {
         else if (WorkgroupForm.FormEnum.dropdown_box == answerType) {
             builder.append("<select name=\"").append(name).append("\">");
             if (items != null) {
-            	for(String item : items) {
+                for(String item : items) {
                     builder.append("<option value=\"").append(item).append("\">").append(item)
                             .append("</option>");
                 }

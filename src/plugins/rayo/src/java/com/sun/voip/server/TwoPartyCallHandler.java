@@ -32,72 +32,72 @@ public class TwoPartyCallHandler extends Thread {
     private CallParticipant cp;
 
     public TwoPartyCallHandler(CallEventListener csl, CallParticipant cp) {
-	this.callEventListener = csl;
-	this.cp = cp;
+    this.callEventListener = csl;
+    this.cp = cp;
     }
 
     /*
      * start a two party call
      */
     public void run() {
-	OutgoingCallHandler callHandler1 =
-	    new OutgoingCallHandler(callEventListener, cp);
+    OutgoingCallHandler callHandler1 =
+        new OutgoingCallHandler(callEventListener, cp);
 
-	synchronized(this) {
-	    callHandler1.start();		// call first party
+    synchronized(this) {
+        callHandler1.start();		// call first party
 
-	    /*
-	     * Wait for first party to answer.
-	     */
-	    if (callHandler1.waitForCallToBeAnswered() == false) {
-	        return;
-	    }
-	}
+        /*
+         * Wait for first party to answer.
+         */
+        if (callHandler1.waitForCallToBeAnswered() == false) {
+            return;
+        }
+    }
 
-	CallParticipant cp2 = new CallParticipant();
+    CallParticipant cp2 = new CallParticipant();
 
-	cp2.setCallAnswerTimeout(cp.getCallAnswerTimeout());
-	cp2.setCallAnsweredTreatment(cp.getSecondPartyTreatment());
-	cp2.setCallEndTreatment(cp.getSecondPartyCallEndTreatment());
-	cp2.setCallId(cp.getSecondPartyCallId());
-	cp2.setConferenceId(cp.getConferenceId());
+    cp2.setCallAnswerTimeout(cp.getCallAnswerTimeout());
+    cp2.setCallAnsweredTreatment(cp.getSecondPartyTreatment());
+    cp2.setCallEndTreatment(cp.getSecondPartyCallEndTreatment());
+    cp2.setCallId(cp.getSecondPartyCallId());
+    cp2.setConferenceId(cp.getConferenceId());
 
-	if (cp.getSecondPartyName() != null) {
-	    cp2.setName(cp.getSecondPartyName());
-	} else {
-	    cp2.setName(cp.getSecondPartyNumber());
-	}
+    if (cp.getSecondPartyName() != null) {
+        cp2.setName(cp.getSecondPartyName());
+    } else {
+        cp2.setName(cp.getSecondPartyNumber());
+    }
 
-	cp2.setDisplayName(cp.getName());
+    cp2.setDisplayName(cp.getName());
 
-	if (cp2.getCallId() == null) {
-	    cp2.setCallId(CallHandler.getNewCallId());
-	}
+    if (cp2.getCallId() == null) {
+        cp2.setCallId(CallHandler.getNewCallId());
+    }
 
-	cp2.setPhoneNumber(cp.getSecondPartyNumber());
-	cp2.setVoiceDetection(cp.getSecondPartyVoiceDetection());
+    cp2.setPhoneNumber(cp.getSecondPartyNumber());
+    cp2.setVoiceDetection(cp.getSecondPartyVoiceDetection());
 
-	OutgoingCallHandler callHandler2 =
-	    new OutgoingCallHandler(callEventListener, cp2);
+    OutgoingCallHandler callHandler2 =
+        new OutgoingCallHandler(callEventListener, cp2);
 
-	synchronized(this) {
- 	    /*
-	     * Each call has to know about the other so that when
-	     * one hangs up, the other call is terminated.
-	     */
-	    callHandler1.setOtherCall(callHandler2);
-	    callHandler2.setOtherCall(callHandler1);
+    synchronized(this) {
+        /*
+         * Each call has to know about the other so that when
+         * one hangs up, the other call is terminated.
+         */
+        callHandler1.setOtherCall(callHandler2);
+        callHandler2.setOtherCall(callHandler1);
 
-	    callHandler2.start();		// call second party
+        callHandler2.start();		// call second party
 
-	    if (callHandler2.waitForCallToBeAnswered() == true) {
-	        /*
-	         * Second party answered, stop treatment to first party.
-	         */
-	        callHandler1.stopCallAnsweredTreatment();
-		callHandler1.stopCallEstablishedTreatment();
-	    }
-	}
+        if (callHandler2.waitForCallToBeAnswered() == true) {
+            /*
+             * Second party answered, stop treatment to first party.
+             */
+            callHandler1.stopCallAnsweredTreatment();
+        callHandler1.stopCallEstablishedTreatment();
+        }
+    }
     }
 
 }

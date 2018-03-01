@@ -2,10 +2,13 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.StringTokenizer" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.plugin.ClientControlPlugin" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 
 <%!
@@ -73,6 +76,22 @@
     boolean submit = request.getParameter("submit") != null;
     boolean addOther = request.getParameter("addOther") != null;
     boolean remove = request.getParameter("removeClient") != null;
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrfStatus = true;
+
+    if (submit || addOther || remove) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            submit = false;
+            addOther = false;
+            remove = false;
+            csrfStatus = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
 
     if (submit) {
         String[] cls = request.getParameterValues("client");
@@ -155,7 +174,7 @@
                         var boxall = document.getElementById('boxall');
                         var boxspecify = document.getElementById('boxspecify');
                         boxall.style.background = "#fffbe2"
-					    boxspecify.style.background = "#F4F4F4"
+                        boxspecify.style.background = "#F4F4F4"
                 }
                 else {
                     document.f.client[i].disabled = false;
@@ -163,7 +182,7 @@
                         var boxall = document.getElementById('boxall');
                         var boxspecify = document.getElementById('boxspecify');
                         boxall.style.background = "#F4F4F4"
-					    boxspecify.style.background = "#fffbe2"
+                        boxspecify.style.background = "#fffbe2"
                 }
             }
         }
@@ -235,6 +254,9 @@
 </div>
 <br>
 <% }%>
+<% if (csrfStatus == false) { %>
+    <admin:infobox type="error"><fmt:message key="global.csrf.failed" /></admin:infobox>
+<% } %>
 
 
 
@@ -245,16 +267,16 @@
 
     <div class="clientscontent">
 
-		<div class="permitclientbox permitclientActive" id="boxall">
-		<input type="radio" name="all" value="true" onclick="disableAll();" <%= clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.all.clients"/></strong> - <fmt:message key="permitted.client.all.clients.description"/>
-		</div>
+        <div class="permitclientbox permitclientActive" id="boxall">
+        <input type="radio" name="all" value="true" onclick="disableAll();" <%= clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.all.clients"/></strong> - <fmt:message key="permitted.client.all.clients.description"/>
+        </div>
 
-		<div class="permitclientbox" id="boxspecify">
-		<input type="radio" name="all" value="false" onclick="disableAll();" <%= !clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.specific.clients"/></strong><br>
-			<div class="specifyclients">
+        <div class="permitclientbox" id="boxspecify">
+        <input type="radio" name="all" value="false" onclick="disableAll();" <%= !clients.contains("all") ? "checked" : ""%> /><strong><fmt:message key="permitted.client.specific.clients"/></strong><br>
+            <div class="specifyclients">
                 <table border="0">
                     <tr>
-				        <td valign="top" nowrap>
+                        <td valign="top" nowrap>
                             <div style="display: block; width: 260px;">
                                <%
                                 int count = 0;
@@ -267,27 +289,27 @@
                         <td valign="top" nowrap>
                             <div style="display: block; width: 205px;">
                                     <% } %>
-                            <label for="<%= client.getName() %>"><input type="checkbox" name="client" value="<%= client.getName() %>" id="<%= client.getName() %>" <%= clients.contains(client.getName()) ? "checked" : ""%> /> <img src="<%= client.getImage() %>" width="16" height="16" border="0" alt=""> <strong><%= client.getName() %></strong></label><span>(<a href="<%= client.getURL() %>" target="_blank"><fmt:message key="permitted.client.website"/></a>)</span><br>
+                            <label for="<%= StringUtils.escapeForXML(client.getName()) %>"><input type="checkbox" name="client" value="<%= StringUtils.escapeForXML(client.getName()) %>" id="<%= StringUtils.escapeForXML(client.getName()) %>" <%= clients.contains(client.getName()) ? "checked" : ""%> /> <img src="<%= client.getImage() %>" width="16" height="16" border="0" alt=""> <strong><%= StringUtils.escapeHTMLTags(client.getName()) %></strong></label><span>(<a href="<%= client.getURL() %>" target="_blank"><fmt:message key="permitted.client.website"/></a>)</span><br>
                                 <% } %>
                             </div>
                         </td>
-				    </tr>
-				</table>
+                    </tr>
+                </table>
 
             <span class="horizontalrule" style="height:1px;"></span>
 
             <strong><fmt:message key="permitted.client.add.other.client" />:</strong>
             <a onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="permitted.client.tooltip" />', 'trail', true, 'direction', 'northeast', 'width', '220');"><img src="images/icon_help_14x14.gif" align="texttop" /></a><br>
-			<input type="text" name="other" style="width: 160px;">&nbsp;<input type="submit" name="addOther" value="<fmt:message key="permitted.client.add" />"/><br>
+            <input type="text" name="other" style="width: 160px;">&nbsp;<input type="hidden" value="${csrf}" name="csrf"><input type="submit" name="addOther" value="<fmt:message key="permitted.client.add" />"/><br>
             <% for (String otherClient : otherClients) { %>
-                <%= otherClient%>&nbsp(<a href="permitted-clients.jsp?removeClient=<%=otherClient%>" name="removeClient" id="<%= otherClient %>"><fmt:message key="permitted.client.remove" /></a>)<br>
+                <%= otherClient%>&nbsp(<a href="permitted-clients.jsp?csrf=${csrf}&removeClient=<%=StringUtils.escapeForXML(otherClient)%>" name="removeClient" id="<%= StringUtils.escapeForXML(otherClient) %>"><fmt:message key="permitted.client.remove" /></a>)<br>
             <% } %>
 
             </div>
 
         </div>
 
-	</div>
+    </div>
 
     </fieldset>
 

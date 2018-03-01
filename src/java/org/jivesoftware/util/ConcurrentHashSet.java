@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +18,7 @@ package org.jivesoftware.util;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class implements the <tt>Set</tt> interface, backed by a ConcurrentHashMap instance.
@@ -34,7 +31,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
         java.io.Serializable
 {
 
-    private transient ConcurrentHashMap<E,Object> map;
+    private transient ConcurrentMap<E,Object> map;
 
     // Dummy value to associate with an Object in the backing Map
     private static final Object PRESENT = new Object();
@@ -44,7 +41,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      * default initial capacity (16) and load factor (0.75).
      */
     public ConcurrentHashSet() {
-	    map = new ConcurrentHashMap<E,Object>();
+        map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -57,8 +54,8 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      * @throws NullPointerException   if the specified collection is null.
      */
     public ConcurrentHashSet(Collection<? extends E> c) {
-	    map = new ConcurrentHashMap<E,Object>(Math.max((int) (c.size()/.75f) + 1, 16));
-	    addAll(c);
+        map = new ConcurrentHashMap<>(Math.max((int) (c.size()/.75f) + 1, 16));
+        addAll(c);
     }
 
     /**
@@ -71,7 +68,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      *      than zero, or if the load factor is nonpositive.
      */
     public ConcurrentHashSet(int initialCapacity, float loadFactor) {
-	    map = new ConcurrentHashMap<E,Object>(initialCapacity, loadFactor, 16);
+        map = new ConcurrentHashMap<>(initialCapacity, loadFactor, 16);
     }
 
     /**
@@ -84,46 +81,46 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      *             than zero.
      */
     public ConcurrentHashSet(int initialCapacity) {
-	    map = new ConcurrentHashMap<E,Object>(initialCapacity);
+        map = new ConcurrentHashMap<>(initialCapacity);
     }
 
     @Override
-	public Iterator<E> iterator() {
-	    return map.keySet().iterator();
+    public Iterator<E> iterator() {
+        return map.keySet().iterator();
     }
 
     @Override
-	public int size() {
-	    return map.size();
+    public int size() {
+        return map.size();
     }
 
     @Override
-	public boolean isEmpty() {
-	    return map.isEmpty();
+    public boolean isEmpty() {
+        return map.isEmpty();
     }
 
     @Override
-	public boolean contains(Object o) {
-	    return map.containsKey(o);
+    public boolean contains(Object o) {
+        return map.containsKey(o);
     }
 
     @Override
-	public boolean add(E o) {
-	    return map.put(o, PRESENT)==null;
+    public boolean add(E o) {
+        return map.put(o, PRESENT)==null;
     }
 
     @Override
-	public boolean remove(Object o) {
-	    return map.remove(o)==PRESENT;
+    public boolean remove(Object o) {
+        return map.remove(o)==PRESENT;
     }
 
     @Override
-	public void clear() {
-	    map.clear();
+    public void clear() {
+        map.clear();
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         try {
             ConcurrentHashSet<E> newSet = (ConcurrentHashSet<E>)super.clone();
             newSet.map.putAll(map);
@@ -135,7 +132,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     }
 
     private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
-	    s.defaultWriteObject();
+        s.defaultWriteObject();
 
         // Write out size
         s.writeInt(map.size());
@@ -152,9 +149,9 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     private void readObject(java.io.ObjectInputStream s)
             throws java.io.IOException, ClassNotFoundException
     {
-	    s.defaultReadObject();
+        s.defaultReadObject();
 
-        map = new ConcurrentHashMap<E, Object>();
+        map = new ConcurrentHashMap<>();
 
         // Read in size
         int size = s.readInt();

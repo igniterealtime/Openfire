@@ -1,0 +1,41 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>parent</artifactId>
+        <groupId>org.igniterealtime.openfire</groupId>
+        <version>4.3.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+    <artifactId>i18n</artifactId>
+    <name>Internationalization files for Openfire</name>
+    <description>These files are shared among the starter and xmppserver modules</description>
+    <build>
+        <resources>
+            <resource>
+                <directory>../src/i18n</directory>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <!--
+                    Java has trouble reading translations from UTF-8 files. To work around that,
+                    this plugin ensures that Java-compatible encoding is used.
+                    See https://stackoverflow.com/questions/4659929/how-to-use-utf-8-in-resource-properties-with-resourcebundle
+                  -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native2ascii-maven-plugin</artifactId>
+                <version>1.0-beta-1</version>
+                <executions>
+                    <execution>
+                        <id>native2ascii</id>
+                        <goals>
+                            <goal>native2ascii</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

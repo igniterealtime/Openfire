@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2008 Daniel Henninger. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),

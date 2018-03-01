@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1410 $
-  -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
@@ -16,13 +13,14 @@
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -73,7 +71,7 @@
         }
         try {
             AuthFactory.authenticate("admin", "admin");
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             errors.put("password", "password");
         }
         if (email == null) {
@@ -125,8 +123,9 @@
     }
 
     if (addAdmin && !doTest) {
-        final String admin = request.getParameter("administrator");
+        String admin = request.getParameter("administrator");
         if (admin != null) {
+            admin = JID.escapeNode( admin );
             if (ldap) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
@@ -175,7 +174,7 @@
         }
     }
 
-    // This handles the case of reverting back to default settings from LDAP/Clearspace. Will
+    // This handles the case of reverting back to default settings from LDAP. Will
     // add admin to the authorizedJIDs list if the authorizedJIDs list contains
     // entries.
     if (!ldap && !doTest) {
@@ -201,14 +200,14 @@
 <body>
 
 
-	<h1>
-	<fmt:message key="setup.admin.settings.account" />
-	</h1>
+    <h1>
+    <fmt:message key="setup.admin.settings.account" />
+    </h1>
 
 <% if(!ldap){ %>
     <p>
-	<fmt:message key="setup.admin.settings.info" />
-	</p>
+    <fmt:message key="setup.admin.settings.info" />
+    </p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -231,8 +230,8 @@
 <%  } %>
 
 
-	<!-- BEGIN jive-contentBox -->
-	<div class="jive-contentBox">
+    <!-- BEGIN jive-contentBox -->
+    <div class="jive-contentBox">
 
 
 <script language="JavaScript" type="text/javascript">
@@ -258,7 +257,7 @@ function checkClick() {
         AuthFactory.authenticate("admin", "admin");
         defaultPassword = true;
     }
-    catch (Exception e) {
+    catch (UnauthorizedException e) {
         // Ignore.
     }
     if (defaultPassword) {
@@ -275,7 +274,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="password" size="20" maxlength="50"
-         value="<%= ((password!=null) ? password : "") %>"><br>
+         value="<%= ((password!=null) ? StringUtils.escapeForXML(password) : "") %>"><br>
 
         <%  if (errors.get("password") != null) { %>
             <span class="jive-error-text">
@@ -311,7 +310,7 @@ function checkClick() {
     </td>
     <td>
         <input type="text" name="email" size="40" maxlength="150"
-         value="<%= ((email!=null) ? email : currentEmail) %>"><br>
+         value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : StringUtils.escapeForXML(currentEmail)) %>"><br>
 
         <%  if (errors.get("email") != null) { %>
             <span class="jive-error-text">
@@ -330,7 +329,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPassword" size="20" maxlength="50"
-         value="<%= ((newPassword!=null) ? newPassword : "") %>"><br>
+         value="<%= ((newPassword!=null) ? StringUtils.escapeForXML(newPassword) : "") %>"><br>
 
         <%  if (errors.get("newPassword") != null) { %>
             <span class="jive-error-text">
@@ -349,7 +348,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPasswordConfirm" size="20" maxlength="50"
-         value="<%= ((newPasswordConfirm!=null) ? newPasswordConfirm : "") %>"><br>
+         value="<%= ((newPasswordConfirm!=null) ? StringUtils.escapeForXML(newPasswordConfirm) : "") %>"><br>
         <%  if (errors.get("newPasswordConfirm") != null) { %>
             <span class="jive-error-text">
             <fmt:message key="setup.admin.settings.valid_confirm" />
@@ -360,14 +359,14 @@ function checkClick() {
 </table>
 
 <br>
-		<div align="right">
-			<input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
-			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-		</div>
+        <div align="right">
+            <input type="submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
+        </div>
 
-	</form>
-	</div>
-	<!-- END jive-contentBox -->
+    </form>
+    </div>
+    <!-- END jive-contentBox -->
 
 
 <script language="JavaScript" type="text/javascript">
@@ -458,7 +457,7 @@ if (errors.size() > 0) { %>
 %>
     <tr valign="top">
         <td>
-            <%= authJID.getNode()%>
+            <%= JID.unescapeNode( authJID.getNode() )%>
         </td>
         <td width="1%" align="center">
             <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"

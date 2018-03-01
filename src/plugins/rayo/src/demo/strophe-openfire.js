@@ -35,14 +35,14 @@ Openfire.Connection = function(url)
 {
     if (!window.WebSocket) 
     {
-	window.WebSocket=window.MozWebSocket;
+    window.WebSocket=window.MozWebSocket;
 
-	if (!window.WebSocket)
-	{
-		var msg = "WebSocket not supported by this browser";			
-		alert(msg);
-		throw Error(msg);
-	}
+    if (!window.WebSocket)
+    {
+        var msg = "WebSocket not supported by this browser";			
+        alert(msg);
+        throw Error(msg);
+    }
     }
     
     this.host = url.indexOf("/") < 0 ? url : url.split("/")[2];   
@@ -77,12 +77,12 @@ Openfire.Connection = function(url)
     for (var k in Strophe._connectionPlugins) 
     {   
         if (Strophe._connectionPlugins.hasOwnProperty(k)) {
-	    var ptype = Strophe._connectionPlugins[k];
+        var ptype = Strophe._connectionPlugins[k];
             // jslint complaints about the below line, but this is fine
             var F = function () {};
             F.prototype = ptype;
             this[k] = new F();
-	    this[k].init(this);	    
+        this[k].init(this);	    
         }
     }	   
 }
@@ -187,46 +187,45 @@ Openfire.Connection.prototype = {
         this.authenticated = false;
         this.errors = 0;
         
-	this._changeConnectStatus(Strophe.Status.CONNECTING, null);   
-	this.url = this.protocol + "//" + this.host + "/ws/server?username=" + this.username + "&password=" + this.pass + "&resource=" + this.resource;
-	this._ws = new WebSocket(this.url, "xmpp");  
-	
-	this._ws.onopen = this._onopen.bind(this);
-	this._ws.onmessage = this._onmessage.bind(this);
-	this._ws.onclose = this._onclose.bind(this);
- 	
-	window.openfireWebSocket = this;
-	
+    this._changeConnectStatus(Strophe.Status.CONNECTING, null);   
+    this.url = this.protocol + "//" + this.host + "/ws/server?username=" + this.username + "&password=" + this.pass + "&resource=" + this.resource;
+    this._ws = new WebSocket(this.url, "xmpp");  
+    
+    this._ws.onopen = this._onopen.bind(this);
+    this._ws.onmessage = this._onmessage.bind(this);
+    this._ws.onclose = this._onclose.bind(this);
+    
+    window.openfireWebSocket = this;
+    
         this.jid = this.jid.indexOf("@") < 0 ? this.resource + "@" + this.jid  : this.jid;
-	
-	this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
+    
+    this._changeConnectStatus(Strophe.Status.AUTHENTICATING, null);
 
     },
 
 
     /** 
-     *
      * Private Function: _onopen websocket event handler
      *
      */    
  
     _onopen: function() 
     {       
-    	this.connected = true;
-    	this.authenticated = true;
-    	this.resource = Strophe.getResourceFromJid(this.jid);
-    	this.domain = Strophe.getDomainFromJid(this.jid);
-   	
-	try {
-	   
-	   this._changeConnectStatus(Strophe.Status.CONNECTED, null);	
+        this.connected = true;
+        this.authenticated = true;
+        this.resource = Strophe.getResourceFromJid(this.jid);
+        this.domain = Strophe.getDomainFromJid(this.jid);
+    
+    try {
+       
+       this._changeConnectStatus(Strophe.Status.CONNECTED, null);	
 
-	} catch (e) {
+    } catch (e) {
 
-   	    throw Error("User connection callback caused an exception: " + e);
-	} 
-	
-	this.interval = setInterval (function() {window.openfireWebSocket.sendRaw(" ")}, 10000 );	
+        throw Error("User connection callback caused an exception: " + e);
+    } 
+    
+    this.interval = setInterval (function() {window.openfireWebSocket.sendRaw(" ")}, 10000 );	
     },
     
     /** Function: attach
@@ -235,7 +234,7 @@ Openfire.Connection.prototype = {
      
     attach: function()
     {
-    	return 
+        return 
     },
     
     /** Function: xmlInput
@@ -330,13 +329,13 @@ Openfire.Connection.prototype = {
             throw Error("Not connected, cannot send packets.");
         }
 
-	if (xml != " ")
-	{
-		this.xmlOutput(this._textToXML(xml));
-		this.rawOutput(xml);
-	}
-	
-    	this._ws.send(xml);
+    if (xml != " ")
+    {
+        this.xmlOutput(this._textToXML(xml));
+        this.rawOutput(xml);
+    }
+    
+        this._ws.send(xml);
     },
     
 
@@ -382,8 +381,8 @@ Openfire.Connection.prototype = {
             this.xmlOutput(elem);
         }
         
-	this.rawOutput(toSend);
-	this._ws.send(toSend);
+    this.rawOutput(toSend);
+    this._ws.send(toSend);
     },    
 
     /** Function: flush
@@ -418,60 +417,60 @@ Openfire.Connection.prototype = {
         if (typeof(elem.tree) === "function") {
             elem = elem.tree();
         }
-	var id = elem.getAttribute('id');
+    var id = elem.getAttribute('id');
 
-	// inject id if not found
-	
-	if (!id) {
-	    id = this.getUniqueId("sendIQ");
-	    elem.setAttribute("id", id);
-	}
+    // inject id if not found
+    
+    if (!id) {
+        id = this.getUniqueId("sendIQ");
+        elem.setAttribute("id", id);
+    }
 
-	var handler = this.addHandler(function (stanza) {
-	    // remove timeout handler if there is one
-	    
+    var handler = this.addHandler(function (stanza) {
+        // remove timeout handler if there is one
+        
             if (timeoutHandler) {
                 that.deleteTimedHandler(timeoutHandler);
             }
 
             var iqtype = stanza.getAttribute('type');
             
-	    if (iqtype == 'result') 
-	    {
-		if (callback) {
+        if (iqtype == 'result') 
+        {
+        if (callback) {
                     callback(stanza);
                 }
-	    } else if (iqtype == 'error') {
-		if (errback) {
+        } else if (iqtype == 'error') {
+        if (errback) {
                     errback(stanza);
                 }
-	    } else {
+        } else {
                 throw {
                     name: "StropheError",
                     message: "Got bad IQ type of " + iqtype
                 };
             }
-	}, null, 'iq', null, id);
+    }, null, 'iq', null, id);
 
-	// if timeout specified, setup timeout handler.
-	
-	if (timeout) 
-	{
-	    timeoutHandler = this.addTimedHandler(timeout, function () {
+    // if timeout specified, setup timeout handler.
+    
+    if (timeout) 
+    {
+        timeoutHandler = this.addTimedHandler(timeout, function () {
                 // get rid of normal handler
                 that.deleteHandler(handler);
 
-	        // call errback on timeout with null stanza
+            // call errback on timeout with null stanza
                 if (errback) {
-		    errback(null);
+            errback(null);
                 }
-		return false;
-	    });
-	}
+        return false;
+        });
+    }
 
-	this.send(elem);
+    this.send(elem);
 
-	return id;
+    return id;
     },
 
     /** Function: addTimedHandler
@@ -646,7 +645,7 @@ Openfire.Connection.prototype = {
     _doDisconnect: function ()
     {
         Strophe.info("_doDisconnect was called");
-	this._onclose();
+    this._onclose();
     },
     
     /** PrivateFunction: _changeConnectStatus
@@ -682,7 +681,7 @@ Openfire.Connection.prototype = {
 
         // notify the user's callback
         
-   	if (typeof this.connect_callback == 'function')
+    if (typeof this.connect_callback == 'function')
         {
             try {
                 this.connect_callback(status, condition);
@@ -695,17 +694,16 @@ Openfire.Connection.prototype = {
 
 
     /** 
-     *
      * Private Function: _onclose websocket event handler
      *
      */    
 
     _onclose: function() 
     {
-      	Strophe.info("websocket closed");
-	//console.log('_onclose - disconnected');
-	clearInterval(this.interval);
-	
+        Strophe.info("websocket closed");
+    //console.log('_onclose - disconnected');
+    clearInterval(this.interval);
+    
         this.authenticated = false;
         this.disconnecting = false;
         this.streamId = null;
@@ -731,7 +729,6 @@ Openfire.Connection.prototype = {
     },
 
     /** 
-     *
      * Private Function: _onmessage websocket event handler
      *
      */    
@@ -799,13 +796,12 @@ Openfire.Connection.prototype = {
     },
     
     /** 
-     *
      * Private Function: _textToXML convert text to DOM Document object
      *
      */    
 
     _textToXML: function (text) {
-        	
+            
         var doc = null;
         
         if (window['DOMParser']) {

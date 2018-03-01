@@ -1,8 +1,4 @@
-/**
- * $RCSfile: RoutingTable.java,v $
- * $Revision: 3138 $
- * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +16,7 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.*;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -94,7 +87,7 @@ public interface RoutingTable {
      * @param route the address associated to the route.
      * @param destination the outgoing server session.
      */
-    void addServerRoute(JID route, LocalOutgoingServerSession destination);
+    void addServerRoute(DomainPair route, LocalOutgoingServerSession destination);
 
     /**
      * Adds a route to the routing table for the specified internal or external component. <p>
@@ -201,10 +194,10 @@ public interface RoutingTable {
      * as long as a node has a connection to the remote server a true value will be
      * returned.
      *
-     * @param jid JID that specifies the remote server address.
+     * @param pair DomainPair that specifies the local/remote server address.
      * @return true if an outgoing server session exists to the specified remote server.
      */
-    boolean hasServerRoute(JID jid);
+    boolean hasServerRoute(DomainPair pair);
 
     /**
      * Returns true if an internal or external component is hosting the specified address.
@@ -247,10 +240,10 @@ public interface RoutingTable {
      * if none was found. When running inside of a cluster and a remote node is hosting
      * the session then a session surrage will be returned.
      *
-     * @param jid the address of the session.
+     * @param pair DomainPair that specifies the local/remote server address.
      * @return the outgoing server session associated to the specified XMPP address or null if none was found.
      */
-    OutgoingServerSession getServerRoute(JID jid);
+    OutgoingServerSession getServerRoute(DomainPair pair);
 
     /**
      * Returns a collection with the hostnames of the remote servers that currently may receive
@@ -260,6 +253,7 @@ public interface RoutingTable {
      *         packets sent from this server.
      */
     Collection<String> getServerHostnames();
+    Collection<DomainPair> getServerRoutes();
 
     /**
      * Returns the number of outgoing server sessions hosted in this JVM. When runing inside of
@@ -324,7 +318,7 @@ public interface RoutingTable {
      * @param route the route to remove.
      * @return true if the route was successfully removed.
      */
-    boolean removeServerRoute(JID route);
+    boolean removeServerRoute(DomainPair route);
 
     /**
      * Returns true if a route of a component has been successfully removed. Both internal

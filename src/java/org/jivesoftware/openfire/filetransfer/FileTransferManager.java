@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,18 +29,18 @@ public interface FileTransferManager extends Module {
     /**
      * The Stream Initiation, SI, namespace.
      */
-    static final String NAMESPACE_SI = "http://jabber.org/protocol/si";
+    String NAMESPACE_SI = "http://jabber.org/protocol/si";
 
     /**
      * Namespace for the file transfer profile of Stream Initiation.
      */
-    static final String NAMESPACE_SI_FILETRANSFER =
+    String NAMESPACE_SI_FILETRANSFER =
             "http://jabber.org/protocol/si/profile/file-transfer";
 
     /**
      * Bytestreams namespace
      */
-    static final String NAMESPACE_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
+    String NAMESPACE_BYTESTREAMS = "http://jabber.org/protocol/bytestreams";
 
     /**
      * Checks an incoming file transfer request to see if it should be accepted or rejected.

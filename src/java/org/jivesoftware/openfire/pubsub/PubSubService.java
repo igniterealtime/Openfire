@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +23,6 @@ import org.xmpp.packet.Packet;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default
@@ -41,7 +35,7 @@ import java.util.Timer;
  * The separation between <code>PubSubService</code> and <code>PubSubEngine</code> allows to
  * reuse the handling of packets and at the same time be able to create different pubsub
  * services with different configurations. Examples of different pubsub services are:
- * JEP-60: Publish-Subscribe and JEP-163: Personal Eventing Protocol.
+ * XEP-60: Publish-Subscribe and XEP-163: Personal Eventing Protocol.
  *
  * @author Matt Tucker
  */

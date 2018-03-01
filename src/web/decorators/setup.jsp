@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 16:48:22 -0700 (Fri, 19 Aug 2005) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -29,7 +27,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/decorator" prefix="decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 
@@ -76,26 +74,26 @@
                     + "file, then go back to fix the problem.");
             }
             else {
-            	// See if the Jive db schema is installed.
-            	try {
-            		Statement stmt = con.createStatement();
-            		// Pick an arbitrary table to see if it's there.
-            		stmt.executeQuery("SELECT * FROM ofID");
-            		stmt.close();
-            	}
-            	catch (SQLException sqle) {
+                // See if the Jive db schema is installed.
+                try {
+                    Statement stmt = con.createStatement();
+                    // Pick an arbitrary table to see if it's there.
+                    stmt.executeQuery("SELECT * FROM ofID");
+                    stmt.close();
+                }
+                catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
                     errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
-            	}
+                }
             }
         }
         catch (Exception ignored) {}
         finally {
             try {
-        	    con.close();
+                con.close();
             } catch (Exception ignored) {}
         }
         return success;

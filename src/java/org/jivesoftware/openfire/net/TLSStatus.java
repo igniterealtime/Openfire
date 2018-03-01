@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software and Artur Hefczyc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,30 +24,30 @@ package org.jivesoftware.openfire.net;
  */
 public enum TLSStatus {
 
-	/**
-	 * ust send data to the remote side before handshaking can continue.
-	 */
-	NEED_WRITE,
+    /**
+     * ust send data to the remote side before handshaking can continue.
+     */
+    NEED_WRITE,
 
-	/**
-	 * Need to receive data from the remote side before handshaking can continue.
-	 */
-	NEED_READ,
+    /**
+     * Need to receive data from the remote side before handshaking can continue.
+     */
+    NEED_READ,
 
-	/**
-	 * Not be able to unwrap the incoming data because there were not enough source bytes available
-	 * to make a complete packet.
-	 */
-	UNDERFLOW,
+    /**
+     * Not be able to unwrap the incoming data because there were not enough source bytes available
+     * to make a complete packet.
+     */
+    UNDERFLOW,
 
-	/**
-	 * The operation just closed this side of the SSLEngine, or the operation could not be completed
-	 * because it was already closed.
-	 */
-	CLOSED,
+    /**
+     * The operation just closed this side of the SSLEngine, or the operation could not be completed
+     * because it was already closed.
+     */
+    CLOSED,
 
-	/**
-	 * Handshaking is OK.
-	 */
-	OK;
+    /**
+     * Handshaking is OK.
+     */
+    OK;
 }

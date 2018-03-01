@@ -1,7 +1,8 @@
 <%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="java.sql.*" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Get parameters
@@ -68,7 +69,7 @@
                     out.print("<tr>");
                     for (int i=1; i<=count; i++) {
                         out.print("<td>");
-                        out.print(rs.getString(i));
+                        out.print(StringUtils.escapeHTMLTags(rs.getString(i)));
                     }
                     out.println("</tr>");
                 }

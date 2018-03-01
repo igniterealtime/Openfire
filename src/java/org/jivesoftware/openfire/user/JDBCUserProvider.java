@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,19 +76,19 @@ import org.xmpp.packet.JID;
  */
 public class JDBCUserProvider implements UserProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(JDBCUserProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JDBCUserProvider.class);
 
-	private String connectionString;
+    private String connectionString;
 
-	private String loadUserSQL;
-	private String userCountSQL;
-	private String allUsersSQL;
-	private String searchSQL;
-	private String usernameField;
-	private String nameField;
-	private String emailField;
-	private boolean useConnectionProvider;
-	private static final boolean IS_READ_ONLY = true;
+    private String loadUserSQL;
+    private String userCountSQL;
+    private String allUsersSQL;
+    private String searchSQL;
+    private String usernameField;
+    private String nameField;
+    private String emailField;
+    private boolean useConnectionProvider;
+    private static final boolean IS_READ_ONLY = true;
 
     /**
      * Constructs a new JDBC user provider.
@@ -111,108 +108,114 @@ public class JDBCUserProvider implements UserProvider {
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcUserProvider.useConnectionProvider");
 
             // Load the JDBC driver and connection string.
-		if (!useConnectionProvider) {
-			String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-			try {
-				Class.forName(jdbcDriver).newInstance();
-			}
-			catch (Exception e) {
-				Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-				return;
-			}
-			connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
-		}
+        if (!useConnectionProvider) {
+            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
+            try {
+                Class.forName(jdbcDriver).newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+                return;
+            }
+            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
+        }
 
-		// Load database statements for user data.
-		loadUserSQL = JiveGlobals.getProperty("jdbcUserProvider.loadUserSQL");
-		userCountSQL = JiveGlobals.getProperty("jdbcUserProvider.userCountSQL");
-		allUsersSQL = JiveGlobals.getProperty("jdbcUserProvider.allUsersSQL");
-		searchSQL = JiveGlobals.getProperty("jdbcUserProvider.searchSQL");
-		usernameField = JiveGlobals.getProperty("jdbcUserProvider.usernameField");
-		nameField = JiveGlobals.getProperty("jdbcUserProvider.nameField");
-		emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
-	}
+        // Load database statements for user data.
+        loadUserSQL = JiveGlobals.getProperty("jdbcUserProvider.loadUserSQL");
+        userCountSQL = JiveGlobals.getProperty("jdbcUserProvider.userCountSQL");
+        allUsersSQL = JiveGlobals.getProperty("jdbcUserProvider.allUsersSQL");
+        searchSQL = JiveGlobals.getProperty("jdbcUserProvider.searchSQL");
+        usernameField = JiveGlobals.getProperty("jdbcUserProvider.usernameField");
+        nameField = JiveGlobals.getProperty("jdbcUserProvider.nameField");
+        emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
+    }
 
-	public User loadUser(String username) throws UserNotFoundException {
+    @Override
+    public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
                 throw new UserNotFoundException("Cannot load user of remote server: " + username);
             }
             username = username.substring(0,username.lastIndexOf("@"));
         }
-		Connection con = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-        try {
-			con = getConnection();
-			pstmt = con.prepareStatement(loadUserSQL);
-			pstmt.setString(1, username);
-			rs = pstmt.executeQuery();
-			if (!rs.next()) {
-				throw new UserNotFoundException();
-			}
-			String name = rs.getString(1);
-			String email = rs.getString(2);
-
-			return new User(username, name, email, new Date(), new Date());
-		}
-		catch (Exception e) {
-			throw new UserNotFoundException(e);
-		}
-		finally {
-			DbConnectionManager.closeConnection(rs, pstmt, con);
-		}
-	}
-
-	public User createUser(String username, String password, String name, String email)
-			throws UserAlreadyExistsException {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
-
-	public void deleteUser(String username) {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
-
-	public int getUserCount() {
-		int count = 0;
-		Connection con = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			con = getConnection();
-			pstmt = con.prepareStatement(userCountSQL);
-			rs = pstmt.executeQuery();
-			if (rs.next()) {
-				count = rs.getInt(1);
-			}
-		}
-		catch (SQLException e) {
-			Log.error(e.getMessage(), e);
-		}
-		finally {
-			DbConnectionManager.closeConnection(rs, pstmt, con);
-		}
-		return count;
-	}
-
-	public Collection<User> getUsers() {
-		Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
-		return new UserCollection(usernames.toArray(new String[usernames.size()]));
-	}
-
-	public Collection<String> getUsernames() {
-		return getUsernames(0, Integer.MAX_VALUE);
-	}
-
-	private Collection<String> getUsernames(int startIndex, int numResults) {
-		List<String> usernames = new ArrayList<String>(500);
-		Connection con = null;
-		PreparedStatement pstmt = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-			con = getConnection();
+            con = getConnection();
+            pstmt = con.prepareStatement(loadUserSQL);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new UserNotFoundException();
+            }
+            String name = rs.getString(1);
+            String email = rs.getString(2);
+
+            return new User(username, name, email, new Date(), new Date());
+        }
+        catch (Exception e) {
+            throw new UserNotFoundException(e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+    @Override
+    public User createUser(String username, String password, String name, String email)
+            throws UserAlreadyExistsException {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteUser(String username) {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getUserCount() {
+        int count = 0;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(userCountSQL);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return count;
+    }
+
+    @Override
+    public Collection<User> getUsers() {
+        Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+    }
+
+    @Override
+    public Collection<String> getUsernames() {
+        return getUsernames(0, Integer.MAX_VALUE);
+    }
+
+    private Collection<String> getUsernames(int startIndex, int numResults) {
+        List<String> usernames = new ArrayList<>(500);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = getConnection();
             if ((startIndex==0) && (numResults==Integer.MAX_VALUE))
             {
                 pstmt = con.prepareStatement(allUsersSQL);
@@ -249,67 +252,75 @@ public class JDBCUserProvider implements UserProvider {
         return usernames;
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
     
-	public void setName(String username, String name) throws UserNotFoundException {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setName(String username, String name) throws UserNotFoundException {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
 
-	public void setEmail(String username, String email) throws UserNotFoundException {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setEmail(String username, String email) throws UserNotFoundException {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
 
-	public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
 
-	public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
-		// Reject the operation since the provider is read-only
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
+        // Reject the operation since the provider is read-only
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
         if (searchSQL == null) {
             throw new UnsupportedOperationException();
         }
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
-	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
-		return findUsers(fields, query, 0, Integer.MAX_VALUE);
-	}
+    @Override
+    public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
+        return findUsers(fields, query, 0, Integer.MAX_VALUE);
+    }
 
-	public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+    @Override
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
-		if (searchSQL == null) {
+        if (searchSQL == null) {
             throw new UnsupportedOperationException();
         }
         if (fields.isEmpty()) {
-			return Collections.emptyList();
-		}
-		if (!getSearchFields().containsAll(fields)) {
-			throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
-		}
-		if (query == null || "".equals(query)) {
-			return Collections.emptyList();
-		}
-		// SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
-		// Therefore, we do a best approximiation by replacing '*' with '%' and then
-		// surrounding the whole query with two '%'. This will return more data than desired,
-		// but is better than returning less data than desired.
-		query = "%" + query.replace('*', '%') + "%";
-		if (query.endsWith("%%")) {
-			query = query.substring(0, query.length() - 1);
-		}
+            return Collections.emptyList();
+        }
+        if (!getSearchFields().containsAll(fields)) {
+            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        }
+        if (query == null || "".equals(query)) {
+            return Collections.emptyList();
+        }
+        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
+        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // surrounding the whole query with two '%'. This will return more data than desired,
+        // but is better than returning less data than desired.
+        query = "%" + query.replace('*', '%') + "%";
+        if (query.endsWith("%%")) {
+            query = query.substring(0, query.length() - 1);
+        }
 
-        List<String> usernames = new ArrayList<String>(50);
+        List<String> usernames = new ArrayList<>(50);
         Connection con = null;
         PreparedStatement pstmt = null;
         int queries=0;
@@ -387,14 +398,17 @@ public class JDBCUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return IS_READ_ONLY;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }
@@ -423,12 +437,12 @@ public class JDBCUserProvider implements UserProvider {
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 
-	private Connection getConnection() throws SQLException {
-	    if (useConnectionProvider) {
-	        return DbConnectionManager.getConnection();
-	    } else
-	    {
-	        return DriverManager.getConnection(connectionString);
-	    }
-	}
+    private Connection getConnection() throws SQLException {
+        if (useConnectionProvider) {
+            return DbConnectionManager.getConnection();
+        } else
+        {
+            return DriverManager.getConnection(connectionString);
+        }
+    }
 }

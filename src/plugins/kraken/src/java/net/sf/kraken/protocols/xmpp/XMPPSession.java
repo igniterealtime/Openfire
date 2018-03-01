@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -149,11 +146,11 @@ public class XMPPSession extends TransportSession<XMPPBuddy> {
      */
     private Thread runThread = null;
 
-	/**
-	 * Instance that will handle all presence stanzas sent from the legacy
-	 * domain
-	 */
-	private XMPPPresenceHandler presenceHandler = null;
+    /**
+     * Instance that will handle all presence stanzas sent from the legacy
+     * domain
+     */
+    private XMPPPresenceHandler presenceHandler = null;
     
     /*
      * XMPP connection configuration
@@ -391,9 +388,9 @@ public class XMPPSession extends TransportSession<XMPPBuddy> {
                 // Ignore
             }
             try {
-            	conn.removePacketListener(presenceHandler);
+                conn.removePacketListener(presenceHandler);
             } catch (Exception e) {
-            	// Ignore
+                // Ignore
             }
             try {
                 conn.getChatManager().removeChatListener(listener);

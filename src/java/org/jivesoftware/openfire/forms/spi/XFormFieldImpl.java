@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 942 $
- * $Date: 2005-02-02 21:55:43 -0300 (Wed, 02 Feb 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +40,8 @@ public class XFormFieldImpl implements FormField {
     private String label;
     private String variable;
     private String type;
-    private List<Option> options = new ArrayList<Option>();
-    private List<String> values = new ArrayList<String>();
+    private List<Option> options = new ArrayList<>();
+    private List<String> values = new ArrayList<>();
 
     public XFormFieldImpl() {
         super();
@@ -118,6 +114,7 @@ public class XFormFieldImpl implements FormField {
         return field;
     }
 
+    @Override
     public void addValue(String value) {
         if (value == null) {
             value = "";
@@ -127,48 +124,58 @@ public class XFormFieldImpl implements FormField {
         }
     }
 
+    @Override
     public void clearValues() {
         synchronized (values) {
             values.clear();
         }
     }
 
+    @Override
     public void addOption(String label, String value) {
         synchronized (options) {
             options.add(new Option(label, value));
         }
     }
 
+    @Override
     public void setType(String type) {
         this.type = type;
     }
 
+    @Override
     public void setRequired(boolean required) {
         this.required = required;
     }
 
+    @Override
     public void setLabel(String label) {
         this.label = label;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }
 
+    @Override
     public boolean isRequired() {
         return required;
     }
 
+    @Override
     public String getVariable() {
         return variable;
     }
 
+    @Override
     public Iterator<String> getValues() {
         synchronized (values) {
-            return Collections.unmodifiableList(new ArrayList<String>(values)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(values)).iterator();
         }
     }
 
+    @Override
     public String getType() {
         return type;
     }
@@ -181,14 +188,16 @@ public class XFormFieldImpl implements FormField {
      */
     private Iterator<Option> getOptions() {
         synchronized (options) {
-            return Collections.unmodifiableList(new ArrayList<Option>(options)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(options)).iterator();
         }
     }
 
+    @Override
     public String getLabel() {
         return label;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
@@ -218,7 +227,7 @@ public class XFormFieldImpl implements FormField {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return "XFormFieldImpl " + Integer.toHexString(hashCode()) + " " + getVariable() + ">" + values
                 + " o: " + (options.isEmpty() ? "no options" : options.toString());
     }

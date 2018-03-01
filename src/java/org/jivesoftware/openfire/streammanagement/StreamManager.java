@@ -1,13 +1,28 @@
 package org.jivesoftware.openfire.streammanagement;
 
-import java.util.Date;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.math.BigInteger;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
+import org.dom4j.dom.DOMElement;
 import org.jivesoftware.openfire.Connection;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.*;
 
 /**
  * XEP-0198 Stream Manager.
@@ -16,15 +31,21 @@ import org.xmpp.packet.PacketError;
  * @author jonnyheavey
  */
 public class StreamManager {
+
+    private final Logger Log;
+    private boolean resume = false;
     public static class UnackedPacket {
-        public final Date timestamp;
+        public final long x;
+        public final Date timestamp = new Date();
         public final Packet packet;
         
-        public UnackedPacket(Date date, Packet p) {
-            timestamp = date;
+        public UnackedPacket(long x, Packet p) {
+            this.x = x;
             packet = p;
         }
     }
+    
+    public static final String SM_ACTIVE = "stream.management.active";
 
     /**
      * Stanza namespaces
@@ -32,16 +53,10 @@ public class StreamManager {
     public static final String NAMESPACE_V2 = "urn:xmpp:sm:2";
     public static final String NAMESPACE_V3 = "urn:xmpp:sm:3";
 
-	/**
-	 * Connection (stream) to client for the session the manager belongs to
-	 */
-	private final Connection connection;
-
-	/**
-	 * Whether Stream Management is enabled for session
-	 * the manager belongs to.
-	 */
-	private boolean enabled;
+    /**
+     * Session (stream) to client.
+     */
+    private final LocalSession session;
 
     /**
      * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
@@ -50,200 +65,486 @@ public class StreamManager {
 
     /**
      * Count of how many stanzas/packets
-     * have been sent from the server to the client (not necessarily processed)
-     */
-    private long serverSentStanzas = 0;
-
-    /**
-     * Count of how many stanzas/packets
      * sent from the client that the server has processed
      */
     private long serverProcessedStanzas = 0;
 
     /**
- 	 * Count of how many stanzas/packets
+     * Count of how many stanzas/packets
      * sent from the server that the client has processed
      */
     private long clientProcessedStanzas = 0;
-    
-    static private long mask = 0xFFFFFFFF; /* 2**32 - 1; this is used to emulate rollover */
+
+    static private long mask = new BigInteger("2").pow(32).longValue() - 1; // This is used to emulate rollover.
 
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
      */
-    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<UnackedPacket>();
+    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
-    public StreamManager(Connection connection) {
-    	this.connection = connection;
+    public StreamManager(LocalSession session) {
+        String address;
+        try {
+            address = session.getConnection().getHostAddress();
+        }
+        catch ( UnknownHostException e )
+        {
+            address = null;
+        }
+
+        this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
+        this.session = session;
     }
 
     /**
-     * Sends XEP-0198 acknowledgement <a /> to client from server
+     * Returns true if a stream is resumable.
+     *
+     * @return True if a stream is resumable.
      */
-	public void sendServerAcknowledgement() {
-		if(isEnabled()) {
-			String ack = String.format("<a xmlns='%s' h='%s' />", getNamespace(), getServerProcessedStanzas() & mask);
-			getConnection().deliverRawText(ack);
-		}
-	}
+    public boolean getResume() {
+        return resume;
+    }
 
-	/**
-         * Sends XEP-0198 request <r /> to client from server
-	 */
-	public void sendServerRequest() {
-		if(isEnabled()) {
-			String request = String.format("<r xmlns='%s' />", getNamespace());
-			getConnection().deliverRawText(request);
-		}
-	}
+    /**
+     * Processes a stream management element.
+     *
+     * @param element The stream management element to be processed.
+     */
+    public void process( Element element )
+    {
+        switch(element.getName()) {
+            case "enable":
+                String resumeString = element.attributeValue("resume");
+                boolean resume = false;
+                if (resumeString != null) {
+                    if (resumeString.equalsIgnoreCase("true") || resumeString.equalsIgnoreCase("yes") || resumeString.equals("1")) {
+                        resume = true;
+                    }
+                }
+                enable( element.getNamespace().getStringValue(), resume );
+                break;
+            case "resume":
+                long h = new Long(element.attributeValue("h"));
+                String previd = element.attributeValue("previd");
+                startResume( element.getNamespaceURI(), previd, h);
+                break;
+            case "r":
+                sendServerAcknowledgement();
+                break;
+            case "a":
+                processClientAcknowledgement( element);
+                break;
+            default:
+                sendUnexpectedError();
+        }
+    }
 
-	/**
-	 * Send an error if a XEP-0198 stanza is received at an unexpected time.
-	 * e.g. before resource-binding has completed.
-	 */
-	public void sendUnexpectedError() {
-		StringBuilder sb = new StringBuilder(340);
-		sb.append(String.format("<failed xmlns='%s'>", getNamespace()));
-		sb.append(new PacketError(PacketError.Condition.unexpected_request).toXML());
-		sb.append("</failed>");
-		getConnection().deliverRawText(sb.toString());	
-	}
+    /**
+     * Should this session be allowed to resume?
+     * This is used while processed <enable/> and <resume/>
+     *
+     * @return True if the session is allowed to resume.
+     */
+    private boolean allowResume() {
+        boolean allow = false;
+        // Ensure that resource binding has occurred.
+        if (session instanceof ClientSession) {
+            AuthToken authToken = ((LocalClientSession)session).getAuthToken();
+            if (authToken != null) {
+                if (!authToken.isAnonymous()) {
+                    allow = true;
+                }
+            }
+        }
+        return allow;
+    }
 
-	/**
-	 * Receive and process acknowledgement packet from client
-	 * @param ack XEP-0198 acknowledgement <a /> stanza to process
-	 */
-	public void processClientAcknowledgement(Element ack) {
-		if(isEnabled()) {
-			if(ack.attribute("h") != null) {
-				long count = Long.valueOf(ack.attributeValue("h"));
-				// Remove stanzas from temporary storage as now acknowledged
-				Deque<UnackedPacket> unacknowledgedStanzas = getUnacknowledgedServerStanzas();
-				long i = getClientProcessedStanzas();
-                                if (count < i) {
-                                    /* Consider rollover? */
-                                    if (i > mask) {
-                                        while (count < i) {
-                                            count += mask + 1; 
-                                        }
-                                    }
-                                }
-				while(i < count) {
-					unacknowledgedStanzas.removeFirst();
-					i++;
-				}
+    /**
+     * Attempts to enable Stream Management for the entity identified by the provided JID.
+     *
+     * @param namespace The namespace that defines what version of SM is to be enabled.
+     * @param resume Whether the client is requesting a resumable session.
+     */
+    private void enable( String namespace, boolean resume )
+    {
 
-				setClientProcessedStanzas(count);
-			}
-		}
-	}
 
-	/**
-	 * Get connection (stream) for the session
-	 * @return
-	 */
-	public Connection getConnection() {
-		return connection;
-	}
+        boolean offerResume = allowResume();
+        // Ensure that resource binding has occurred.
+        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+            this.namespace = namespace;
+            sendUnexpectedError();
+            return;
+        }
 
-	/**
-	 * Determines whether Stream Management enabled for session this
-	 * manager belongs to.
-	 * @return
-	 */
-	public boolean isEnabled() {
-		return enabled;
-	}
+        String smId = null;
 
-	/**
-	 * Sets whether Stream Management enabled for session this
-	 * manager belongs to.
-	 * @param enabled
-	 */
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
+        synchronized ( this )
+        {
+            // Do nothing if already enabled
+            if ( isEnabled() )
+            {
+                sendUnexpectedError();
+                return;
+            }
+            this.namespace = namespace;
 
-		if(enabled) {
-	    	String enabledStanza = String.format("<enabled xmlns='%s'/>", getNamespace());
-	    	getConnection().deliverRawText(enabledStanza);
-		}
-	}
+            this.resume = resume && offerResume;
+            if ( this.resume ) {
+                // Create SM-ID.
+                smId = StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID());
+            }
+        }
 
-	/**
-	 * Retrieve configured XEP-0198 namespace
-	 * @return
-	 */
-	public String getNamespace() {
-		return namespace;
-	}
+        // Send confirmation to the requestee.
+        Element enabled = new DOMElement(QName.get("enabled", namespace));
+        if (this.resume) {
+            enabled.addAttribute("resume", "true");
+            enabled.addAttribute( "id", smId);
+        }
+        session.deliverRawText(enabled.asXML());
+    }
 
-	/**
-	 * Configure XEP-0198 namespace
-	 * @param namespace
-	 */
-	public void setNamespace(String namespace) {
-		this.namespace = namespace;
-	}
+    private void startResume(String namespace, String previd, long h) {
+        Log.debug("Attempting resumption for {}, h={}", previd, h);
+        this.namespace = namespace;
+        // Ensure that resource binding has NOT occurred.
+        if (!allowResume() ) {
+            sendUnexpectedError();
+            return;
+        }
+        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            sendUnexpectedError();
+            return;
+        }
+        AuthToken authToken = null;
+        // Ensure that resource binding has occurred.
+        if (session instanceof ClientSession) {
+            authToken = ((LocalClientSession) session).getAuthToken();
+        }
+        if (authToken == null) {
+            sendUnexpectedError();
+            return;
+        }
+        // Decode previd.
+        String resource;
+        String streamId;
+        try {
+            StringTokenizer toks = new StringTokenizer(new String(StringUtils.decodeBase64(previd), StandardCharsets.UTF_8), "\0");
+            resource = toks.nextToken();
+            streamId = toks.nextToken();
+        } catch (Exception e) {
+            Log.debug("Exception from previd decode:", e);
+            sendUnexpectedError();
+            return;
+        }
+        JID fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+        Log.debug("Resuming session {}", fullJid);
 
-	/**
-	 * Retrieves number of stanzas sent to client by server.
-	 * @return
-	 */
-	public long getServerSentStanzas() {
-		return serverSentStanzas;
-	}
+        // Locate existing session.
+        LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
+        if (otherSession == null) {
+            sendError(new PacketError(PacketError.Condition.item_not_found));
+            return;
+        }
+        if (!otherSession.getStreamID().getID().equals(streamId)) {
+            sendError(new PacketError(PacketError.Condition.item_not_found));
+            return;
+        }
+        Log.debug("Found existing session, checking status");
+        // Previd identifies proper session. Now check SM status
+        if (!otherSession.getStreamManager().resume) {
+            Log.debug("Not allowing a client to resume a session, the session to be resumed does not have the stream management resumption feature enabled." );
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
+        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
+            Log.debug("Not allowing a client to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", otherSession.getStreamManager().namespace, namespace);
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
+        if (!validateClientAcknowledgement(h)) {
+            Log.debug("Not allowing a client to resume a session, as it reports it received more stanzas from us than that we've send it." );
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
+        if (!otherSession.isDetached()) {
+            Log.debug("Existing session is not detached; detaching.");
+            Connection oldConnection = otherSession.getConnection();
+            otherSession.setDetached();
+            oldConnection.close();
+        }
+        Log.debug("Attaching to other session.");
+        // If we're all happy, disconnect this session.
+        Connection conn = session.getConnection();
+        session.setDetached();
+        // Connect new session.
+        otherSession.reattach(conn, h);
+        // Perform resumption on new session.
+        session.close();
+    }
 
-	/**
-	 * Increments the count of stanzas sent to client by server.
-	 */
-	public void incrementServerSentStanzas() {
-		this.serverSentStanzas++;
-	}
+    /**
+     * Called when a session receives a closing stream tag, this prevents the
+     * session from being detached.
+     */
+    public void formalClose() {
+        this.resume = false;
+    }
 
-	/**
-	 * Retrieve the number of stanzas processed by the server since
-	 * Stream Management was enabled.
-	 * @return
-	 */
-	public long getServerProcessedStanzas() {
-		return serverProcessedStanzas;
-	}
+    /**
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; to client from server
+     */
+    public void sendServerAcknowledgement() {
+        if(isEnabled()) {
+            if (session.isDetached()) {
+                Log.debug("Session is detached, won't request an ack.");
+                return;
+            }
+            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
+            session.deliverRawText( ack );
+        }
+    }
 
-	/**
-	 * Increments the count of stanzas processed by the server since
-	 * Stream Management was enabled.
-	 */
-	public void incrementServerProcessedStanzas() {
-		if(isEnabled()) {
-			this.serverProcessedStanzas++;
-		}
-	}
+    /**
+     * Sends XEP-0198 request <r /> to client from server
+     */
+    private void sendServerRequest() {
+        if(isEnabled()) {
+            if (session.isDetached()) {
+                Log.debug("Session is detached, won't request an ack.");
+                return;
+            }
+            String request = String.format("<r xmlns='%s' />", namespace);
+            session.deliverRawText( request );
+        }
+    }
 
-	/**
-	 * Retrieve the number of stanzas processed by the client since
-	 * Stream Management was enabled.
-	 * @return
-	 */
-	public long getClientProcessedStanzas() {
-		return clientProcessedStanzas;
-	}
+    /**
+     * Send an error if a XEP-0198 stanza is received at an unexpected time.
+     * e.g. before resource-binding has completed.
+     */
+    private void sendUnexpectedError() {
+        sendError(new PacketError( PacketError.Condition.unexpected_request ));
+    }
 
-	/**
-	 * Sets the count of stanzas processed by the client since
-	 * Stream Management was enabled.
-	 */
-	public void setClientProcessedStanzas(long count) {
-		if(count >= clientProcessedStanzas) {
-			clientProcessedStanzas = count;
-		}
-	}
+    /**
+     * Send a generic failed error.
+     *
+     * @param error PacketError describing the failure.
+     */
+    private void sendError(PacketError error) {
+        session.deliverRawText(
+            String.format("<failed xmlns='%s'>", namespace)
+                + String.format("<%s xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>", error.getCondition().toXMPP())
+                + "</failed>"
+        );
+        this.namespace = null; // isEnabled() is testing this.
+    }
 
-	/**
-	 * Retrieves all unacknowledged stanzas sent to client from server.
-	 * @return
-	 */
-	public Deque<UnackedPacket> getUnacknowledgedServerStanzas() {
-		return unacknowledgedServerStanzas;
-	}
+    /**
+     * Checks if the amount of stanzas that the client acknowledges is equal to or less than the amount of stanzas that
+     * we've sent to the client.
+     *
+     * @param h Then number of stanzas that the client acknowledges it has received from us.
+     * @return false if we sent less stanzas to the client than the number it is acknowledging.
+     */
+    private synchronized boolean validateClientAcknowledgement(long h) {
+        return h <= ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+    }
 
+    /**
+     * Process client acknowledgements for a given value of h.
+     *
+     * @param h Last handled stanza to be acknowledged.
+     */
+    private void processClientAcknowledgement(long h) {
+        synchronized (this) {
+
+            if ( !validateClientAcknowledgement(h) ) {
+                // All paths leading up to here should have checked for this. Race condition?
+                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+            }
+
+            clientProcessedStanzas = h;
+
+            // Remove stanzas from temporary storage as now acknowledged
+            Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
+
+            // Pop all acknowledged stanzas.
+            while( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getFirst().x <= h )
+            {
+                unacknowledgedServerStanzas.removeFirst();
+            }
+
+            // Ensure that unacknowledged stanzas are purged after the client rolled over 'h' which occurs at h= (2^32)-1
+            final int maxUnacked = getMaximumUnacknowledgedStanzas();
+            final boolean clientHadRollOver = h < maxUnacked && !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - maxUnacked;
+            if ( clientHadRollOver )
+            {
+                Log.info( "Client rolled over 'h'. Purging high-numbered unacknowledged stanzas." );
+                while ( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - maxUnacked)
+                {
+                    unacknowledgedServerStanzas.removeLast();
+                }
+            }
+
+            Log.trace( "After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
+        }
+    }
+
+    /**
+     * Receive and process acknowledgement packet from client
+     * @param ack XEP-0198 acknowledgement <a /> stanza to process
+     */
+    private void processClientAcknowledgement(Element ack) {
+        if(isEnabled()) {
+            if (ack.attribute("h") != null) {
+                final long h = Long.valueOf(ack.attributeValue("h"));
+
+                Log.debug( "Received acknowledgement from client: h={}", h );
+
+                if (!validateClientAcknowledgement(h)) {
+                    Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
+
+                processClientAcknowledgement(h);
+            }
+        }
+    }
+
+    /**
+     * Registers that Openfire sends a stanza to the client (which is expected to be acknowledged later).
+     * @param packet The stanza that is sent.
+     */
+    public void sentStanza(Packet packet) {
+
+        if(isEnabled()) {
+            final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
+            final int size;
+
+            synchronized (this)
+            {
+                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
+                final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+                unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
+
+                size = unacknowledgedServerStanzas.size();
+
+                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
+
+                // Prevent keeping to many stanzas in memory.
+                if ( size > getMaximumUnacknowledgedStanzas() )
+                {
+                    Log.warn( "To many stanzas go unacknowledged for this connection. Clearing queue and disabling functionality." );
+                    namespace = null;
+                    unacknowledgedServerStanzas.clear();
+                    return;
+                }
+            }
+
+            // When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
+            if ( size % requestFrequency == 0 ) {
+                Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
+                sendServerRequest();
+            }
+        }
+
+    }
+
+    public void onClose(PacketRouter router, JID serverAddress) {
+        // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
+        synchronized (this) {
+            if(isEnabled()) {
+                namespace = null; // disable stream management.
+                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                    if (unacked.packet instanceof Message) {
+                        Message m = (Message) unacked.packet;
+                        if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+                            Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+                            delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                            delayInformation.addAttribute("from", serverAddress.toBareJID());
+                        }
+                        router.route(unacked.packet);
+                    }
+                }
+            }
+        }
+
+    }
+
+    public void onResume(JID serverAddress, long h) {
+        Log.debug("Agreeing to resume");
+        Element resumed = new DOMElement(QName.get("resumed", namespace));
+        resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
+        resumed.addAttribute("h", Long.toString(serverProcessedStanzas));
+        session.getConnection().deliverRawText(resumed.asXML());
+        Log.debug("Resuming session: Ack for {}", h);
+        processClientAcknowledgement(h);
+        Log.debug("Processing remaining unacked stanzas");
+        // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
+        synchronized (this) {
+            if(isEnabled()) {
+                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                    try {
+                        if (unacked.packet instanceof Message) {
+                            Message m = (Message) unacked.packet;
+                            if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+                                Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("from", serverAddress.toBareJID());
+                            }
+                            session.getConnection().deliver(m);
+                        } else if (unacked.packet instanceof Presence) {
+                            Presence p = (Presence) unacked.packet;
+                            if (p.getExtension("delay", "urn:xmpp:delay") == null) {
+                                Element delayInformation = p.addChildElement("delay", "urn:xmpp:delay");
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("from", serverAddress.toBareJID());
+                            }
+                            session.getConnection().deliver(p);
+                        } else {
+                            session.getConnection().deliver(unacked.packet);
+                        }
+                    } catch (UnauthorizedException e) {
+                        Log.warn("Caught unauthorized exception, which seems worrying: ", e);
+                    }
+                }
+
+                sendServerRequest();
+            }
+        }
+    }
+
+    /**
+     * Determines whether Stream Management enabled for session this
+     * manager belongs to.
+     * @return true when stream management is enabled, otherwise false.
+     */
+    public boolean isEnabled() {
+        return namespace != null;
+    }
+
+    /**
+     * Increments the count of stanzas processed by the server since
+     * Stream Management was enabled.
+     */
+    public void incrementServerProcessedStanzas() {
+        if(isEnabled()) {
+            this.serverProcessedStanzas++;
+        }
+    }
+
+    /**
+     * The maximum amount of stanzas we keep, waiting for ack.
+     * @return The maximum number of stanzas.
+     */
+    private int getMaximumUnacknowledgedStanzas()
+    {
+        return JiveGlobals.getIntProperty( "stream.management.max-unacked", 10000 );
+    }
 }

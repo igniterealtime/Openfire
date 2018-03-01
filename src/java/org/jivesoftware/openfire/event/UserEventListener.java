@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1526 $
- * $Date: 2005-06-16 02:50:35 -0300 (Thu, 16 Jun 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +35,7 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userCreated(User user, Map<String,Object> params);
+    void userCreated( User user, Map<String, Object> params );
 
     /**
      * A user is being deleted.
@@ -47,7 +43,7 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userDeleting(User user, Map<String,Object> params);
+    void userDeleting( User user, Map<String, Object> params );
 
     /**
      * A user's name, email, or an extended property was changed.
@@ -55,5 +51,5 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userModified(User user, Map<String,Object> params);
+    void userModified( User user, Map<String, Object> params );
 }

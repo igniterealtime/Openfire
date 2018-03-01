@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 10204 $
-  -	$Date: 2008-04-11 18:44:25 -0400 (Fri, 11 Apr 2008) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -24,8 +22,8 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -34,6 +32,17 @@
     boolean delete = request.getParameter("delete") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
     String reason = ParamUtils.getParameter(request,"reason");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
@@ -78,6 +87,7 @@
 </p>
 
 <form action="muc-service-delete.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
 <fieldset>

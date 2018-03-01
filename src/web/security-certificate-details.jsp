@@ -1,18 +1,22 @@
 <%@ page errorPage="error.jsp"%>
 
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStore"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
+<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.util.CertificateManager" %>
+<%@ page import="org.bouncycastle.cert.X509CertificateHolder" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
@@ -20,20 +24,21 @@
 <%  webManager.init(request, response, session, application, out );
 
     final String alias            = ParamUtils.getParameter( request, "alias" );
-    final String storePurposeText = ParamUtils.getParameter( request, "storePurpose" );
+    final String storePurposeText = ParamUtils.getParameter( request, "connectionType" );
+    final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    Purpose storePurpose;
+    ConnectionType connectionType;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
+        connectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storePurpose", ex.getMessage() );
-        storePurpose = null;
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
 
-    pageContext.setAttribute( "storePurpose", storePurpose );
+    pageContext.setAttribute( "connectionType", connectionType );
 
     if (alias == null) {
         errors.put("alias", "The alias has not been specified.");
@@ -42,10 +47,16 @@
     {
         try
         {
-            final CertificateStoreConfig certificateStoreConfig = SSLConfig.getInstance().getStoreConfig( storePurpose );
+            final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+            final CertificateStore store;
+            if (isTrustStore) {
+                store = certificateStoreManager.getTrustStore( connectionType );
+            } else {
+                store = certificateStoreManager.getIdentityStore( connectionType );
+            }
 
             // Get the certificate
-            final X509Certificate certificate = (X509Certificate) certificateStoreConfig.getStore().getCertificate( alias );
+            final X509Certificate certificate = (X509Certificate) store.getStore().getCertificate( alias );
 
             if ( certificate == null ) {
                 errors.put( "alias", "alias" );
@@ -62,26 +73,28 @@
 
     // Handle a "go back" click:
     if ( request.getParameter( "back" ) != null ) {
-        if ( storePurpose.isTrustStore() ) {
-            response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurpose );
+        if ( isTrustStore ) {
+            response.sendRedirect( "security-truststore.jsp?connectionType=" + connectionType );
         } else {
-            response.sendRedirect( "security-keystore.jsp?storePurpose=" + storePurpose );
+            response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType );
         }
         return;
     }
 
     pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "alias", StringUtils.escapeHTMLTags(alias) );
 %>
 
 <html>
 <head>
     <title><fmt:message key="ssl.certificate.details.title"/></title>
+    <meta name="pageID" content="security-certificate-store-management"/>
     <c:choose>
-        <c:when test="${storePurpose.identityStore}">
-            <meta name="pageID" content="security-keystore"/>
+        <c:when test="${isTrustStore}">
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
         </c:when>
         <c:otherwise>
-            <meta name="pageID" content="security-truststore"/>
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
         </c:otherwise>
     </c:choose>
 </head>
@@ -111,7 +124,7 @@
 <c:if test="${empty errors}">
     <p>
         <fmt:message key="ssl.certificate.details.intro">
-            <fmt:param value="${param.alias}"/>
+            <fmt:param value="${alias}"/>
             <fmt:param>
                 <c:choose>
                     <c:when test="${param.type eq 'c2s'}"><fmt:message key="ssl.certificates.truststore.c2s-title"/></c:when>
@@ -190,15 +203,15 @@
                     <th colspan="2">
                         <fmt:message key="ssl.certificates.subject"/> <fmt:message key="ssl.certificates.alternative-name"/>
                         <c:choose>
-                            <c:when test="${alternativeName[0] eq 0}">(Other Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 1}">(RFC-822 Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 2}">(DNS Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 3}">(X400 Address)</c:when>
-                            <c:when test="${alternativeName[0] eq 4}">(Directory Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 5}">(EDI Party Name)</c:when>
-                            <c:when test="${alternativeName[0] eq 6}">(Uniform Resource Identifier)</c:when>
-                            <c:when test="${alternativeName[0] eq 7}">(IP Address)</c:when>
-                            <c:when test="${alternativeName[0] eq 8}">(Registered ID)</c:when>
+                            <c:when test="${alternativeName[0] eq 0}"><fmt:message key="ssl.certificates.alternative-name.other"/></c:when>
+                            <c:when test="${alternativeName[0] eq 1}"><fmt:message key="ssl.certificates.alternative-name.rfc822"/></c:when>
+                            <c:when test="${alternativeName[0] eq 2}"><fmt:message key="ssl.certificates.alternative-name.dns"/></c:when>
+                            <c:when test="${alternativeName[0] eq 3}"><fmt:message key="ssl.certificates.alternative-name.x400"/></c:when>
+                            <c:when test="${alternativeName[0] eq 4}"><fmt:message key="ssl.certificates.alternative-name.directory"/></c:when>
+                            <c:when test="${alternativeName[0] eq 5}"><fmt:message key="ssl.certificates.alternative-name.edi-party"/></c:when>
+                            <c:when test="${alternativeName[0] eq 6}"><fmt:message key="ssl.certificates.alternative-name.url"/></c:when>
+                            <c:when test="${alternativeName[0] eq 7}"><fmt:message key="ssl.certificates.alternative-name.ip-addres"/></c:when>
+                            <c:when test="${alternativeName[0] eq 8}"><fmt:message key="ssl.certificates.alternative-name.registered-id"/></c:when>
                         </c:choose>
                     </th>
                 </tr>
@@ -440,8 +453,33 @@
 
     <br/>
 
+    <div class="jive-table">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <thead>
+            <tr>
+                <th>
+                    PEM representation
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <%
+                    final String pemRepresentation = CertificateManager.toPemRepresentation( (X509Certificate) pageContext.getAttribute( "certificate" ) );
+                %>
+                <td class="c1" align="center">
+                    <textarea readonly cols="72" rows="<%= pemRepresentation.split( "\n" ).length + 5 %>"><%= pemRepresentation %></textarea>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <br/>
+
     <form action="security-certificate-details.jsp">
-        <input type="hidden" name="storePurpose" value="${storePurpose}"/>
+        <input type="hidden" name="connectionType" value="${connectionType}"/>
+        <input type="hidden" name="isTrustStore" value="${param.isTrustStore}"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

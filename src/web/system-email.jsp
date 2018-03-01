@@ -15,12 +15,12 @@
 --%>
 
 <%@ page import="java.util.*,
-				 org.jivesoftware.util.*"
+                 org.jivesoftware.util.*"
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -36,6 +36,20 @@
     boolean test = request.getParameter("test") != null;
     boolean debug = ParamUtils.getBooleanParameter(request, "debug");
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    Map<String,String> errors = new HashMap<String,String>();
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errors.put("csrf", "CSRF Failure!");
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Handle a test request
     if (test) {
         response.sendRedirect("system-emailtest.jsp");
@@ -44,7 +58,6 @@
 
     EmailService service = EmailService.getInstance();
     // Save the email settings if requested
-    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         if (host != null) {
             service.setHost(host);
@@ -117,8 +130,8 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        	<td class="jive-icon-label"><fmt:message key="system.email.update_success" /></td>
+            <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label"><fmt:message key="system.email.update_success" /></td>
         </tr>
     </tbody>
     </table>
@@ -132,8 +145,8 @@
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr>
-        	<td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        	<td class="jive-icon-label"><fmt:message key="system.email.update_failure" /></td>
+            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+            <td class="jive-icon-label"><fmt:message key="system.email.update_failure" /></td>
         </tr>
     </tbody>
     </table>
@@ -146,84 +159,84 @@
 <!-- BEGIN SMTP settings -->
 <form action="system-email.jsp" name="f" method="post">
 
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="system.email.name" />
-	</div>
-	<div class="jive-contentBox">
-		<table width="80%" cellpadding="3" cellspacing="0" border="0">
-		<tr>
-			<td width="30%" nowrap>
-				<fmt:message key="system.email.mail_host" />:
-			</td>
-			<td nowrap>
-				<input type="text" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
-			</td>
-		</tr>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="system.email.name" />
+    </div>
+    <div class="jive-contentBox">
+        <table width="80%" cellpadding="3" cellspacing="0" border="0">
+        <tr>
+            <td width="30%" nowrap>
+                <fmt:message key="system.email.mail_host" />:
+            </td>
+            <td nowrap>
+                <input type="text" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
+            </td>
+        </tr>
 
-		<%  if (errors.containsKey("host")) { %>
+        <%  if (errors.containsKey("host")) { %>
 
-			<tr>
-				<td nowrap>
-					&nbsp;
-				</td>
-				<td nowrap class="jive-error-text">
-					<fmt:message key="system.email.valid_host_name" />
-				</td>
-			</tr>
+            <tr>
+                <td nowrap>
+                    &nbsp;
+                </td>
+                <td nowrap class="jive-error-text">
+                    <fmt:message key="system.email.valid_host_name" />
+                </td>
+            </tr>
 
-		<%  } %>
+        <%  } %>
 
-		<tr>
-			<td nowrap>
-				<fmt:message key="system.email.server_port" />:
-			</td>
-			<td nowrap>
-				<input type="text" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
-			</td>
-		</tr>
-		<tr>
-			<td nowrap>
-				<fmt:message key="system.email.mail_debugging" />:
-			</td>
-			<td nowrap>
-				<input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01">On</label>
-				&nbsp;
-				<input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02">Off</label>
-				&nbsp; (<fmt:message key="system.email.restart_possible" />)
-			</td>
-		</tr>
+        <tr>
+            <td nowrap>
+                <fmt:message key="system.email.server_port" />:
+            </td>
+            <td nowrap>
+                <input type="text" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>
+                <fmt:message key="system.email.mail_debugging" />:
+            </td>
+            <td nowrap>
+                <input type="radio" name="debug" value="true"<%= (debug ? " checked" : "") %> id="rb01"> <label for="rb01"><fmt:message key="system.email.mail_debugging.enabled" /></label>
+                &nbsp;
+                <input type="radio" name="debug" value="false"<%= (debug ? "" : " checked") %> id="rb02"> <label for="rb02"><fmt:message key="system.email.mail_debugging.disabled" /></label>
+                &nbsp; (<fmt:message key="system.email.restart_possible" />)
+            </td>
+        </tr>
 
-		<%-- spacer --%>
-		<tr><td colspan="2">&nbsp;</td></tr>
+        <%-- spacer --%>
+        <tr><td colspan="2">&nbsp;</td></tr>
 
-		<tr>
-			<td nowrap>
-				<fmt:message key="system.email.server_username" />:
-			</td>
-			<td nowrap>
-				<input type="text" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
-			</td>
-		</tr>
-		<tr>
-			<td nowrap>
-				<fmt:message key="system.email.server_password" />:
-			</td>
-			<td nowrap>
-				<input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
-			</td>
-		</tr>
+        <tr>
+            <td nowrap>
+                <fmt:message key="system.email.server_username" />:
+            </td>
+            <td nowrap>
+                <input type="text" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
+            </td>
+        </tr>
+        <tr>
+            <td nowrap>
+                <fmt:message key="system.email.server_password" />:
+            </td>
+            <td nowrap>
+                <input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
+            </td>
+        </tr>
 
-		<tr>
-			<td nowrap>
-				<fmt:message key="system.email.ssl" />:
-			</td>
-			<td nowrap>
-				<input type="checkbox" name="ssl"<%= (ssl) ? " checked" : "" %>>
-			</td>
-		</tr>
-		</table>
-	</div>
-
+        <tr>
+            <td nowrap>
+                <fmt:message key="system.email.ssl" />:
+            </td>
+            <td nowrap>
+                <input type="checkbox" name="ssl"<%= (ssl) ? " checked" : "" %>>
+            </td>
+        </tr>
+        </table>
+    </div>
+<input type="hidden" name="csrf" value="${csrf}"/>
 <input type="submit" name="save" value="<fmt:message key="system.email.save" />">
 <input type="submit" name="test" value="<fmt:message key="system.email.send_test" />">
 </form>

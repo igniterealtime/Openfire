@@ -1,5 +1,3 @@
--- $Revision: 1650 $
--- $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE ofUser (
   username              VARCHAR2(64)     NOT NULL,
@@ -123,6 +121,7 @@ CREATE TABLE ofID (
 CREATE TABLE ofProperty (
   name        VARCHAR2(100) NOT NULL,
   propValue   VARCHAR2(4000) NOT NULL,
+  encrypted   INTEGER,
   CONSTRAINT ofProperty_pk PRIMARY KEY (name)
 );
 
@@ -216,6 +215,7 @@ CREATE TABLE ofMucRoom(
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
   canRegister         INTEGER       NOT NULL,
+  allowpm             INTEGER       NULL,
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
@@ -249,13 +249,17 @@ CREATE TABLE ofMucMember (
 
 CREATE TABLE ofMucConversationLog (
   roomID              INT            NOT NULL,
+  messageID              INT            NOT NULL,
   sender              VARCHAR2(1024) NOT NULL,
   nickname            VARCHAR2(255)  NULL,
   logTime             CHAR(15)       NOT NULL,
   subject             VARCHAR2(255)  NULL,
-  body                VARCHAR2(4000) NULL
+  body                VARCHAR2(4000) NULL,
+  stanza                VARCHAR2(4000) NULL
 );
 CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConversationLog_msg_id ON ofMucConversationLog (messageID);
+
 
 -- PubSub Tables
 
@@ -373,7 +377,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 22);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 26);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

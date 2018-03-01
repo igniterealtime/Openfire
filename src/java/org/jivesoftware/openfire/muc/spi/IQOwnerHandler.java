@@ -1,7 +1,4 @@
-/**
- * $Revision: 1623 $
- * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +28,7 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -57,8 +51,8 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class IQOwnerHandler {
-	
-	private static final Logger Log = LoggerFactory.getLogger(IQOwnerHandler.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(IQOwnerHandler.class);
 
     private final LocalMUCRoom room;
 
@@ -98,7 +92,8 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     @SuppressWarnings("unchecked")
-	public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException {
+    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
         if (MUCRole.Affiliation.owner != role.getAffiliation()) {
             throw new ForbiddenException();
@@ -161,7 +156,7 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void handleDataFormElement(MUCRole senderRole, Element formElement)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, NotAcceptableException {
         DataForm completedForm = new DataForm(formElement);
 
         switch(completedForm.getType()) {
@@ -194,8 +189,8 @@ public class IQOwnerHandler {
             break;
             
         default:
-        	Log.warn("cannot handle data form element: " + formElement.asXML());
-        	break;
+            Log.warn("cannot handle data form element: " + formElement.asXML());
+            break;
         }
     }
 
@@ -209,7 +204,8 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      */
     private void processConfigurationForm(DataForm completedForm, MUCRole senderRole)
-            throws ForbiddenException, ConflictException {
+            throws ForbiddenException, ConflictException, NotAcceptableException
+    {
         List<String> values;
         String booleanValue;
         FormField field;
@@ -217,31 +213,31 @@ public class IQOwnerHandler {
         // Get the new list of admins
         field = completedForm.getField("muc#roomconfig_roomadmins");
         boolean adminsSent = field != null;
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         if (field != null) {
-        	for (String value : field.getValues()) {
-        		// XEP-0045: "Affiliations are granted, revoked, and 
-        		// maintained based on the user's bare JID, (...)"
+            for (String value : field.getValues()) {
+                // XEP-0045: "Affiliations are granted, revoked, and 
+                // maintained based on the user's bare JID, (...)"
                 if (value != null && value.trim().length() != 0) {
-                	// could be a group jid
+                    // could be a group jid
                     admins.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
-        	}
+            }
         }
 
         // Get the new list of owners
         field = completedForm.getField("muc#roomconfig_roomowners");
         boolean ownersSent = field != null;
-        List<JID> owners = new ArrayList<JID>(); 
+        List<JID> owners = new ArrayList<>();
         if (field != null) {
-        	for(String value : field.getValues()) {
-        		// XEP-0045: "Affiliations are granted, revoked, and 
-        		// maintained based on the user's bare JID, (...)"
+            for(String value : field.getValues()) {
+                // XEP-0045: "Affiliations are granted, revoked, and 
+                // maintained based on the user's bare JID, (...)"
                 if (value != null && value.trim().length() != 0) {
-                	// could be a group jid
-        		    owners.add(GroupJID.fromString((value.trim())).asBareJID());
+                    // could be a group jid
+                    owners.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
-        	}
+            }
         }
 
         // Answer a conflict error if all the current owners will be removed
@@ -250,7 +246,7 @@ public class IQOwnerHandler {
         }
 
         // Keep a registry of the updated presences
-        List<Presence> presences = new ArrayList<Presence>(admins.size() + owners.size());
+        List<Presence> presences = new ArrayList<>(admins.size() + owners.size());
 
         field = completedForm.getField("muc#roomconfig_roomname");
         if (field != null) {
@@ -279,7 +275,7 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_presencebroadcast");
         if (field != null) {
-            values = new ArrayList<String>(field.getValues());
+            values = new ArrayList<>(field.getValues());
             room.setRolesToBroadcastPresence(values);
         }
 
@@ -323,23 +319,56 @@ public class IQOwnerHandler {
             room.setCanOccupantsInvite(("1".equals(booleanValue)));
         }
 
+
+        boolean passwordProtectionChanged = false;
+        boolean passwordChanged = false;
+
+        boolean updatedIsPasswordProtected = false;
+        String updatedPassword = null;
+
         field = completedForm.getField("muc#roomconfig_passwordprotectedroom");
-        if (field != null) {
+        if (field != null)
+        {
+            passwordProtectionChanged = true;
             final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            boolean isPasswordProtected = "1".equals(booleanValue);
-            if (isPasswordProtected) {
-                // The room is password protected so set the new password
-                field = completedForm.getField("muc#roomconfig_roomsecret");
-                if (field != null) {
-                    final String secret = completedForm.getField("muc#roomconfig_roomsecret").getFirstValue();
-                    room.setPassword(secret);
-                }
+            booleanValue = ( ( value != null ? value : "1" ) );
+            updatedIsPasswordProtected = "1".equals( booleanValue );
+        }
+
+        field = completedForm.getField("muc#roomconfig_roomsecret");
+        if (field != null) {
+            passwordChanged = true;
+            updatedPassword = completedForm.getField("muc#roomconfig_roomsecret").getFirstValue();
+            if ( updatedPassword != null && updatedPassword.isEmpty() )
+            {
+                updatedPassword = null;
             }
-            else {
-                // The room is not password protected so remove any previous password
-                room.setPassword(null);
+        }
+
+        if ( passwordProtectionChanged )
+        {
+            // The owner signifies that a change in password-protection status is desired.
+            if ( !updatedIsPasswordProtected )
+            {
+                // The owner lifts password protection.
+                room.setPassword( null );
             }
+            else if ( updatedPassword == null && room.getPassword() == null )
+            {
+                // The owner sets password-protection, but does not provide a password (and the room does not already have a password).
+                throw new NotAcceptableException( "Room is made password-protected, but is missing a password." );
+            }
+            else if ( updatedPassword != null )
+            {
+                // The owner sets password-protection and provided a new password.
+                room.setPassword( updatedPassword );
+            }
+        }
+        else if ( passwordChanged )
+        {
+            // The owner did not explicitly signal a password protection change, but did change the password value.
+            // This implies a change in password protection.
+            room.setPassword( updatedPassword );
         }
 
         field = completedForm.getField("muc#roomconfig_whois");
@@ -347,6 +376,12 @@ public class IQOwnerHandler {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
             room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue)));
+        }
+
+        field = completedForm.getField("muc#roomconfig_allowpm");
+        if (field != null) {
+            final String value = field.getFirstValue();
+            room.setCanSendPrivateMessage(value);
         }
 
         field = completedForm.getField("muc#roomconfig_enablelogging");
@@ -392,28 +427,28 @@ public class IQOwnerHandler {
         if (ownersSent) {
             // Change the affiliation to "member" for the current owners that won't be neither
             // owner nor admin (if the form included the owners field)
-            List<JID> ownersToRemove = new ArrayList<JID>(room.owners);
+            List<JID> ownersToRemove = new ArrayList<>(room.owners);
             ownersToRemove.removeAll(admins);
             ownersToRemove.removeAll(owners);
             for (JID jid : ownersToRemove) {
-            	// ignore group jids
-            	if (!GroupJID.isGroup(jid)) {
-            		presences.addAll(room.addMember(jid, null, senderRole));
-            	}
+                // ignore group jids
+                if (!GroupJID.isGroup(jid)) {
+                    presences.addAll(room.addMember(jid, null, senderRole));
+                }
             }
         }
 
         if (adminsSent) {
             // Change the affiliation to "member" for the current admins that won't be neither
             // owner nor admin (if the form included the admins field)
-            List<JID> adminsToRemove = new ArrayList<JID>(room.admins);
+            List<JID> adminsToRemove = new ArrayList<>(room.admins);
             adminsToRemove.removeAll(admins);
             adminsToRemove.removeAll(owners);
             for (JID jid : adminsToRemove) {
-            	// ignore group jids
-            	if (!GroupJID.isGroup(jid)) {
-            		presences.addAll(room.addMember(jid, null, senderRole));
-            	}
+                // ignore group jids
+                if (!GroupJID.isGroup(jid)) {
+                    presences.addAll(room.addMember(jid, null, senderRole));
+                }
             }
         }
 
@@ -486,6 +521,10 @@ public class IQOwnerHandler {
             field.clearValues();
             field.addValue((room.canAnyoneDiscoverJID() ? "anyone" : "moderators"));
 
+            field = configurationForm.getField("muc#roomconfig_allowpm");
+            field.clearValues();
+            field.addValue((room.canSendPrivateMessage() ));
+
             field = configurationForm.getField("muc#roomconfig_enablelogging");
             field.clearValues();
             field.addValue((room.isLogEnabled() ? "1" : "0"));
@@ -505,37 +544,37 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_roomadmins");
             field.clearValues();
             for (JID jid : room.getAdmins()) {
-            	if (GroupJID.isGroup(jid)) {
-            		try {
-                		// add each group member to the result (clients don't understand groups)
-                		Group group = GroupManager.getInstance().getGroup(jid);
-                		for (JID groupMember : group.getAll()) {
+                if (GroupJID.isGroup(jid)) {
+                    try {
+                        // add each group member to the result (clients don't understand groups)
+                        Group group = GroupManager.getInstance().getGroup(jid);
+                        for (JID groupMember : group.getAll()) {
                             field.addValue(groupMember);
-                		}
-            		} catch (GroupNotFoundException gnfe) {
-            			Log.warn("Invalid group JID in the member list: " + jid);
-            		}
-            	} else {
+                        }
+                    } catch (GroupNotFoundException gnfe) {
+                        Log.warn("Invalid group JID in the member list: " + jid);
+                    }
+                } else {
                     field.addValue(jid.toString());
-            	}
+                }
             }
 
             field = configurationForm.getField("muc#roomconfig_roomowners");
             field.clearValues();
             for (JID jid : room.getOwners()) {
-            	if (GroupJID.isGroup(jid)) {
-            		try {
-                		// add each group member to the result (clients don't understand groups)
-                		Group group = GroupManager.getInstance().getGroup(jid);
-                		for (JID groupMember : group.getAll()) {
+                if (GroupJID.isGroup(jid)) {
+                    try {
+                        // add each group member to the result (clients don't understand groups)
+                        Group group = GroupManager.getInstance().getGroup(jid);
+                        for (JID groupMember : group.getAll()) {
                             field.addValue(groupMember);
-                		}
-            		} catch (GroupNotFoundException gnfe) {
-            			Log.warn("Invalid group JID in the member list: " + jid);
-            		}
-            	} else {
+                        }
+                    } catch (GroupNotFoundException gnfe) {
+                        Log.warn("Invalid group JID in the member list: " + jid);
+                    }
+                } else {
                     field.addValue(jid.toString());
-            	}
+                }
             }
 
             // Remove the old element
@@ -555,29 +594,29 @@ public class IQOwnerHandler {
 
         configurationForm = new DataForm(DataForm.Type.form);
         configurationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.conf.title"));
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add(room.getName());
         configurationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.conf.instruction", params));
 
         configurationForm.addField("FORM_TYPE", null, Type.hidden)
-				.addValue("http://jabber.org/protocol/muc#roomconfig");
+                .addValue("http://jabber.org/protocol/muc#roomconfig");
 
         configurationForm.addField("muc#roomconfig_roomname", 
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomname"),
-				Type.text_single);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomname"),
+                Type.text_single);
 
         configurationForm.addField("muc#roomconfig_roomdesc",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomdesc"),
-        		Type.text_single);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomdesc"),
+                Type.text_single);
 
         configurationForm.addField("muc#roomconfig_changesubject",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_changesubject"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_changesubject"),
+                Type.boolean_type);
         
         final FormField maxUsers = configurationForm.addField(
-        		"muc#roomconfig_maxusers",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_maxusers"),
-        		Type.list_single);
+                "muc#roomconfig_maxusers",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_maxusers"),
+                Type.list_single);
         maxUsers.addOption("10", "10");
         maxUsers.addOption("20", "20");
         maxUsers.addOption("30", "30");
@@ -586,86 +625,95 @@ public class IQOwnerHandler {
         maxUsers.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "0");
 
         final FormField broadcast = configurationForm.addField(
-        		"muc#roomconfig_presencebroadcast",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_presencebroadcast"),
-        		Type.list_multi);
+                "muc#roomconfig_presencebroadcast",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_presencebroadcast"),
+                Type.list_multi);
         broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderator");
         broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participant");
         broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.visitor"), "visitor");
 
         configurationForm.addField("muc#roomconfig_publicroom", 
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_publicroom"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_publicroom"),
+                Type.boolean_type);
 
         configurationForm.addField("muc#roomconfig_persistentroom",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_persistentroom"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_persistentroom"),
+                Type.boolean_type);
 
         configurationForm.addField("muc#roomconfig_moderatedroom",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom"),
+                Type.boolean_type);
 
         configurationForm.addField("muc#roomconfig_membersonly",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_membersonly"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_membersonly"),
+                Type.boolean_type);
 
         configurationForm.addField(null, null, Type.fixed)
-        		.addValue(LocaleUtils.getLocalizedString("muc.form.conf.allowinvitesfixed"));
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.allowinvitesfixed"));
 
         configurationForm.addField("muc#roomconfig_allowinvites",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_allowinvites"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowinvites"),
+                Type.boolean_type);
 
         configurationForm.addField("muc#roomconfig_passwordprotectedroom",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_passwordprotectedroom"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_passwordprotectedroom"),
+                Type.boolean_type);
 
         configurationForm.addField(null, null, Type.fixed)
-        		.addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomsecretfixed"));
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomsecretfixed"));
 
         configurationForm.addField("muc#roomconfig_roomsecret",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomsecret"),
-        		Type.text_private);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomsecret"),
+                Type.text_private);
         
         final FormField whois = configurationForm.addField(
-        		"muc#roomconfig_whois",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_whois"),
-        		Type.list_single);
+                "muc#roomconfig_whois",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_whois"),
+                Type.list_single);
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
 
+        final FormField allowpm = configurationForm.addField(
+                "muc#roomconfig_allowpm",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowpm"),
+                Type.list_single);
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participants");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "none");
+
         configurationForm.addField("muc#roomconfig_enablelogging",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"),
+                Type.boolean_type);
 
         configurationForm.addField("x-muc#roomconfig_reservednick",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick"),
+                Type.boolean_type);
 
         configurationForm.addField("x-muc#roomconfig_canchangenick",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick"),
+                Type.boolean_type);
 
         configurationForm.addField(null, null, Type.fixed)
                 .addValue(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"));
 
         configurationForm.addField("x-muc#roomconfig_registration",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"),
-        		Type.boolean_type);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"),
+                Type.boolean_type);
 
         configurationForm.addField(null, null, Type.fixed)
                 .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomadminsfixed"));
 
         configurationForm.addField("muc#roomconfig_roomadmins",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomadmins"),
-        		Type.jid_multi);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomadmins"),
+                Type.jid_multi);
 
         configurationForm.addField(null, null, Type.fixed)
-				.addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomownersfixed"));
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomownersfixed"));
 
         configurationForm.addField("muc#roomconfig_roomowners",
-        		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomowners"),
-        		Type.jid_multi);
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomowners"),
+                Type.jid_multi);
 
         // Create the probeResult and add the basic info together with the configuration form
         probeResult = element;

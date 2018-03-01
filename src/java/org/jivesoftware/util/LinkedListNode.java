@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +58,7 @@ public class LinkedListNode<E> {
      * sentinel when traversing nodes in a LinkedList.
      */
     public LinkedListNode() {
-    	previous = next = this;
+        previous = next = this;
     }
 
     /**
@@ -73,9 +69,9 @@ public class LinkedListNode<E> {
      * @param previous a reference to the previous LinkedListNode in the list.
      */
     public LinkedListNode(E object, LinkedListNode<E> next, LinkedListNode<E> previous) {
-    	if (next != null && previous != null) {
-    		this.insert(next, previous);
-    	}
+        if (next != null && previous != null) {
+            this.insert(next, previous);
+        }
         this.object = object;
     }
 
@@ -108,7 +104,7 @@ public class LinkedListNode<E> {
      * @return a String representation of the LinkedListNode.
      */
     @Override
-	public String toString() {
+    public String toString() {
         return object == null ? "null" : object.toString();
     }
 }

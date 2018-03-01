@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 18406 $
- * $Date: 2005-02-07 14:32:46 -0800 (Mon, 07 Feb 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,9 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SendMail {
-	
-	private static final Logger Log = LoggerFactory.getLogger(SendMail.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(SendMail.class);
+    
     private String toField;
     private String subjectField;
     private String messageText;
@@ -156,7 +152,7 @@ public class SendMail {
         }
 
         @Override
-		protected PasswordAuthentication getPasswordAuthentication() {
+        protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(smtpUsername, smtpPassword);
         }
     }

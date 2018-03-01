@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 624 $
- * $Date: 2004-12-05 02:38:08 -0300 (Sun, 05 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +33,7 @@ import org.xmpp.packet.Packet;
  */
 public class PacketTransporterImpl extends BasicModule  {
 
-	private static final Logger Log = LoggerFactory.getLogger(PacketTransporterImpl.class);
+    private static final Logger Log = LoggerFactory.getLogger(PacketTransporterImpl.class);
 
     /**
      * The handler that does the actual delivery (could be a channel instead)
@@ -102,7 +98,7 @@ public class PacketTransporterImpl extends BasicModule  {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         xmppServer = server;
         deliverer = server.getPacketDeliverer();

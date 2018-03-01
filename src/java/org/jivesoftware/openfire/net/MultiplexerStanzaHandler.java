@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,12 +43,17 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
      */
     private MultiplexerPacketHandler packetHandler;
 
+    public MultiplexerStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public MultiplexerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, serverName, connection);
     }
 
     @Override
-	protected void processIQ(final IQ packet) {
+    protected void processIQ(final IQ packet) {
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
@@ -68,13 +70,13 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processMessage(final Message packet) throws UnauthorizedException {
+    protected void processMessage(final Message packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
 
     @Override
-	protected void processPresence(final Presence packet) throws UnauthorizedException {
+    protected void processPresence(final Presence packet) throws UnauthorizedException {
         throw new UnauthorizedException("Message packets are not supported. Original packets " +
                 "should be wrapped by route packets.");
     }
@@ -102,7 +104,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	boolean processUnknowPacket(Element doc) {
+    boolean processUnknowPacket(Element doc) {
         String tag = doc.getName();
         if ("route".equals(tag)) {
             // Process stanza wrapped by the route packet
@@ -121,22 +123,22 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:connectionmanager";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return false;
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         return false;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if (getNamespace().equals(namespace)) {
             // The connected client is a connection manager so create a ConnectionMultiplexerSession
@@ -150,8 +152,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
-        connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+    void startTLS() throws Exception {
+        connection.startTLS(false);
     }
 }

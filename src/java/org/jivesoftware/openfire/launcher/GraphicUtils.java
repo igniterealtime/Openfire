@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 128 $
- * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -243,19 +239,6 @@ public final class GraphicUtils {
             }
         }
         return false;
-    }
-
-    /**
-     * Returns the first component in the tree of <code>c</code> that can accept
-     * the focus.
-     *
-     * @param c the root of the component hierarchy to search
-     * @see #focusComponentOrChild
-     * @deprecated replaced by {@link #getFocusableComponentOrChild(Component, boolean)}
-     */
-    @Deprecated
-	public static Component getFocusableComponentOrChild(Component c) {
-        return getFocusableComponentOrChild(c, false);
     }
 
     /**

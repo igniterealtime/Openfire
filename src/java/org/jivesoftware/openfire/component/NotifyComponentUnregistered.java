@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +30,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class NotifyComponentUnregistered implements ClusterTask {
+public class NotifyComponentUnregistered implements ClusterTask<Void> {
     private JID componentJID;
 
     public NotifyComponentUnregistered() {
@@ -44,20 +40,24 @@ public class NotifyComponentUnregistered implements ClusterTask {
         this.componentJID = componentJID;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         final InternalComponentManager manager = InternalComponentManager.getInstance();
         manager.removeComponentInfo(componentJID);
         manager.notifyComponentUnregistered(componentJID);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, componentJID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         componentJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }

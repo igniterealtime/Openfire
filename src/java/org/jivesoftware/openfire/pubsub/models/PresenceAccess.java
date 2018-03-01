@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,68 +36,68 @@ import org.xmpp.packet.PacketError;
  */
 public class PresenceAccess extends AccessModel {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceAccess.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceAccess.class);
 
     PresenceAccess() {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always subcribe to the node
         if (node.isAdmin(owner)) {
             return true;
         }
         XMPPServer server = XMPPServer.getInstance();
         for (JID nodeOwner : node.getOwners()) {
-	        // Give access to the owner of the roster :)
-	        if (nodeOwner.equals(owner)) {
-	            return true;
-	        }
-	        // Check that the node owner is a local user
-	        if (server.isLocal(nodeOwner)) {
-	            try {
-	                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
-	                RosterItem item = roster.getRosterItem(owner);
-	                // Check that the subscriber is subscribe to the node owner's presence
-	                return item != null && (RosterItem.SUB_BOTH == item.getSubStatus() ||
-	                        RosterItem.SUB_FROM == item.getSubStatus());
-	            }
-	            catch (UserNotFoundException e) {
-	            	// Do nothing
-	            }
-	        }
-	        else {
-	            // Owner of the node is a remote user. This should never happen.
-	            Log.warn("Node with access model Presence has a remote user as owner: " +
-	                    node.getNodeID());
-	        }
+            // Give access to the owner of the roster :)
+            if (nodeOwner.equals(owner)) {
+                return true;
+            }
+            // Check that the node owner is a local user
+            if (server.isLocal(nodeOwner)) {
+                try {
+                    Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
+                    RosterItem item = roster.getRosterItem(owner);
+                    // Check that the subscriber is subscribe to the node owner's presence
+                    return item != null && (RosterItem.SUB_BOTH == item.getSubStatus() ||
+                            RosterItem.SUB_FROM == item.getSubStatus());
+                }
+                catch (UserNotFoundException e) {
+                    // Do nothing
+                }
+            }
+            else {
+                // Owner of the node is a remote user. This should never happen.
+                Log.warn("Node with access model Presence has a remote user as owner: " +
+                        node.getNodeID());
+            }
         }
         return false;
     }
 
     @Override
-	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return canSubscribe(node, owner, subscriber);
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "presence";
     }
 
     @Override
-	public PacketError.Condition getSubsriptionError() {
+    public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
     @Override
-	public Element getSubsriptionErrorDetail() {
+    public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(QName.get("presence-subscription-required",
                 "http://jabber.org/protocol/pubsub#errors"));
     }
 
     @Override
-	public boolean isAuthorizationRequired() {
+    public boolean isAuthorizationRequired() {
         return false;
     }
 }

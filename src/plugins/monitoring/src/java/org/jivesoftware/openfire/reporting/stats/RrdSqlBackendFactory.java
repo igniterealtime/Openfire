@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +27,7 @@ public class RrdSqlBackendFactory extends RrdBackendFactory {
     // the second parameter is ignored
     // for the reason of simplicity
     @Override
-	protected RrdBackend open(String path, boolean readOnly)
+    protected RrdBackend open(String path, boolean readOnly)
     throws IOException {
         return new RrdSqlBackend(path, readOnly);
     }
@@ -39,13 +35,13 @@ public class RrdSqlBackendFactory extends RrdBackendFactory {
     // checks if the RRD with the given id (path) already exists
     // in the database
     @Override
-	protected boolean exists(String path) throws IOException {
+    protected boolean exists(String path) throws IOException {
         return RrdSqlBackend.exists(path);
     }
 
     // returns factory name
     @Override
-	public String getFactoryName() {
+    public String getFactoryName() {
         return NAME;
     }
 }

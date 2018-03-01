@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,12 +47,12 @@ import org.slf4j.LoggerFactory;
  * @author Gaston Dombiak
  */
 public class ClusterClassLoader extends ClassLoader {
-	
-	private static Logger logger = LoggerFactory.getLogger(ClusterClassLoader.class);
-	
-	private static final String HAZELCAST_CONFIG_DIR = JiveGlobals.getProperty(
-			"hazelcast.config.xml.directory", JiveGlobals.getHomeDirectory()
-					+ "/conf");
+    
+    private static Logger logger = LoggerFactory.getLogger(ClusterClassLoader.class);
+    
+    private static final String HAZELCAST_CONFIG_DIR = JiveGlobals.getProperty(
+            "hazelcast.config.xml.directory", JiveGlobals.getHomeDirectory()
+                    + "/conf");
 
     private PluginClassLoader hazelcastClassloader;
 
@@ -66,11 +63,11 @@ public class ClusterClassLoader extends ClassLoader {
         // this is meant to allow loading configuration files from outside the plugin JAR file
         File confFolder = new File(HAZELCAST_CONFIG_DIR);
         try {
-			logger.debug("Adding conf folder {}", confFolder);
-        	hazelcastClassloader.addURLFile(confFolder.toURI().toURL());
-		} catch (MalformedURLException e) {
-			logger.error("Error adding folder {} to classpath {}", HAZELCAST_CONFIG_DIR, e.getMessage());
-		}
+            logger.debug("Adding conf folder {}", confFolder);
+            hazelcastClassloader.addURLFile(confFolder.toURI().toURL());
+        } catch (MalformedURLException e) {
+            logger.error("Error adding folder {} to classpath {}", HAZELCAST_CONFIG_DIR, e.getMessage());
+        }
     }
 
     public Class<?> loadClass(String name) throws ClassNotFoundException {

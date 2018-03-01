@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1217 $
-  -	$Date: 2005-04-11 14:11:06 -0700 (Mon, 11 Apr 2005) $
 --%>
 
 <%@ page import="java.lang.reflect.Method,
@@ -64,6 +61,7 @@
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled
             || !openfireHomeExists)
     {
+        pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
 %>
         <html>
         <head>
@@ -82,7 +80,7 @@
 
         <p>
         <fmt:message key="setup.env.check.error_info">
-            <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+            <fmt:param value="${localizedTitle}" />
         </fmt:message>
         </p>
 

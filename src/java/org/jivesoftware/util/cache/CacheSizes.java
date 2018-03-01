@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -122,17 +118,17 @@ public class CacheSizes {
      * @return the size of the Map object.
      */
     public static int sizeOfMap(Map<?,?> map)
-	    throws CannotCalculateSizeException {
+        throws CannotCalculateSizeException {
         if (map == null) {
             return 0;
         }
         // Base map object -- should be something around this size.
         int size = 36;
-		Set<? extends Map.Entry> set = map.entrySet();
+        Set<? extends Map.Entry> set = map.entrySet();
         
         // Add in size of each value
         for (Map.Entry<Object, Object> entry : set) {
-			size += sizeOfAnything(entry.getKey());
+            size += sizeOfAnything(entry.getKey());
             size += sizeOfAnything(entry.getValue());
         }
         return size;
@@ -167,7 +163,7 @@ public class CacheSizes {
      * @return the size of an object in bytes.
      */
     public static int sizeOfAnything(Object object) 
-	    throws CannotCalculateSizeException {
+        throws CannotCalculateSizeException {
         // If the object is Cacheable, ask it its size.
         if (object == null) {
             return 0;

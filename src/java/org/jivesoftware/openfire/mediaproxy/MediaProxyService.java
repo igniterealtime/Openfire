@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +59,7 @@ import org.xmpp.packet.PacketError;
 public class MediaProxyService extends BasicModule
         implements ServerItemsProvider, RoutableChannelHandler, DiscoInfoProvider, DiscoItemsProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(MediaProxyService.class);
+    private static final Logger Log = LoggerFactory.getLogger(MediaProxyService.class);
 
     private String serviceName;
     private RoutingTable routingTable;
@@ -84,7 +81,7 @@ public class MediaProxyService extends BasicModule
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
 
         sessionManager = server.getSessionManager();
@@ -107,16 +104,14 @@ public class MediaProxyService extends BasicModule
     }
 
     @Override
-	public void start() {
+    public void start() {
         if (isEnabled()) {
 
             try {
                 echo = new Echo(echoPort);
                 Thread t = new Thread(echo);
                 t.start();
-            } catch (UnknownHostException e) {
-                // Ignore
-            } catch (SocketException e) {
+            } catch (UnknownHostException | SocketException e) {
                 // Ignore
             }
 
@@ -129,7 +124,7 @@ public class MediaProxyService extends BasicModule
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         mediaProxy.stopProxy();
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeComponentItem(getAddress().toString());
@@ -140,16 +135,18 @@ public class MediaProxyService extends BasicModule
     // Component Interface
 
     @Override
-	public String getName() {
+    public String getName() {
         // Get the name from the plugin.xml file.
         return serviceName;
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
         return new ArrayList<DiscoItem>().iterator();
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Check if user is allowed to send packet to this service
         if (packet instanceof IQ) {
@@ -311,26 +308,29 @@ public class MediaProxyService extends BasicModule
         return serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
+    @Override
     public JID getAddress() {
         return new JID(null, getServiceDomain(), null);
     }
 
+    @Override
     public Iterator<DiscoServerItem> getItems()
-	{
-		List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
-		if (!isEnabled())
-		{
-			return items.iterator();
-		}
+    {
+        List<DiscoServerItem> items = new ArrayList<>();
+        if (!isEnabled())
+        {
+            return items.iterator();
+        }
 
-		final DiscoServerItem item = new DiscoServerItem(new JID(
-			getServiceDomain()), "Media Proxy Service", null, null, this, this);
-		items.add(item);
-		return items.iterator();
-	}
+        final DiscoServerItem item = new DiscoServerItem(new JID(
+            getServiceDomain()), "Media Proxy Service", null, null, this, this);
+        items.add(item);
+        return items.iterator();
+    }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        List<Element> identities = new ArrayList<Element>();
+        List<Element> identities = new ArrayList<>();
         // Answer the identity of the proxy
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "proxy");
@@ -342,15 +342,18 @@ public class MediaProxyService extends BasicModule
         return identities.iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE,
                 "http://jabber.org/protocol/disco#info").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;
     }

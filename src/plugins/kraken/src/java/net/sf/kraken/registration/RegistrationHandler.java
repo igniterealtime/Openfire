@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -268,8 +265,7 @@ public class RegistrationHandler implements ChannelHandler<IQ> {
         }
 
         // Add special indicator for rosterless gateway handling.
-        response.addElement("x")
-                .addNamespace("", NameSpace.IQ_GATEWAY_REGISTER);
+        response.addElement( QName.get( "x", NameSpace.IQ_GATEWAY_REGISTER) );
 
         result.setChildElement(response);
 

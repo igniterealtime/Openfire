@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JNDIDataSourceProvider implements ConnectionProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(JNDIDataSourceProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JNDIDataSourceProvider.class);
 
     private String dataSourceName;
     private DataSource dataSource;
@@ -79,10 +76,12 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
         dataSourceName = JiveGlobals.getXMLProperty("database.JNDIProvider.name");
     }
 
+    @Override
     public boolean isPooled() {
         return true;
     }
 
+    @Override
     public void start() {
         if (dataSourceName == null || dataSourceName.equals("")) {
             Log.error("No name specified for DataSource. JNDI lookup will fail", new Throwable());
@@ -110,15 +109,18 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
         }
     }
 
+    @Override
     public void restart() {
         destroy();
         start();
     }
 
+    @Override
     public void destroy() {
 
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         if (dataSource == null) {
             throw new SQLException("DataSource has not been initialized.");

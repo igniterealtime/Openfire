@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,33 +33,33 @@ public interface SessionEventListener {
      *
      * @param session the authenticated session of a non anonymous user.
      */
-    public void sessionCreated(Session session);    
+    void sessionCreated( Session session );
 
     /**
      * An authenticated session of a non anonymous user was destroyed.
      *
      * @param session the authenticated session of a non anonymous user.
      */
-    public void sessionDestroyed(Session session);
+    void sessionDestroyed( Session session );
 
     /**
      * Notification event indicating that an anonymous user has authenticated with the server.
      *
      * @param session the authenticated session of an anonymous user.
      */
-    public void anonymousSessionCreated(Session session);
+    void anonymousSessionCreated( Session session );
 
     /**
      * An authenticated session of an anonymous user was destroyed.
      *
      * @param session the authenticated session of an anonymous user.
      */
-    public void anonymousSessionDestroyed(Session session);
+    void anonymousSessionDestroyed( Session session );
 
     /**
      * A session has finished resource binding.
      *
      * @param session the session on which resource binding was performed.
      */
-    public void resourceBound(Session session);
+    void resourceBound( Session session );
 }

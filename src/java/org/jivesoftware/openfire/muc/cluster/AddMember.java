@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +29,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public class AddMember extends MUCRoomTask {
+public class AddMember extends MUCRoomTask<Void> {
     private JID bareJID;
     private String nickname;
 
@@ -61,13 +57,16 @@ public class AddMember extends MUCRoomTask {
         return nickname;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().memberAdded(AddMember.this);
             }
@@ -75,14 +74,14 @@ public class AddMember extends MUCRoomTask {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, bareJID);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         bareJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);

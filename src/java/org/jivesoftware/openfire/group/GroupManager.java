@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3117 $
- * $Date: 2005-11-25 22:57:29 -0300 (Fri, 25 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +19,9 @@ package org.jivesoftware.openfire.group;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
@@ -49,7 +45,7 @@ import org.xmpp.packet.JID;
  */
 public class GroupManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
 
     private static final class GroupManagerContainer {
         private static final GroupManager instance = new GroupManager();
@@ -84,6 +80,7 @@ public class GroupManager {
         initProvider();
 
         GroupEventDispatcher.addListener(new GroupEventListener() {
+            @Override
             public void groupCreated(Group group, Map params) {
 
                 // Adds default properties if they don't exists, since the creator of
@@ -110,6 +107,7 @@ public class GroupManager {
                 evictCachedPaginatedGroupNames();
             }
 
+            @Override
             public void groupDeleting(Group group, Map params) {
                 // Since the group could be deleted by the provider, remove it possible again
                 groupCache.remove(group.getName());
@@ -127,43 +125,45 @@ public class GroupManager {
                 evictCachedPaginatedGroupNames();
             }
 
+            @Override
             public void groupModified(Group group, Map params) {
                 String type = (String)params.get("type");
                 // If shared group settings changed, expire the cache.
                 if (type != null) {
-                	if (type.equals("propertyModified") ||
+                    if (type.equals("propertyModified") ||
                         type.equals("propertyDeleted") || type.equals("propertyAdded"))
-	                {
-                		Object key = params.get("propertyKey");
-	                    if (key instanceof String && (key.equals("sharedRoster.showInRoster") || key.equals("*")))
-	                    {
-	                    	groupMetaCache.remove(GROUP_NAMES_KEY);
-	                        groupMetaCache.remove(SHARED_GROUPS_KEY);
-	                    }
-	                }	
-                	// clean up cache for old group name
-                	if (type.equals("nameModified")) {
-                		String originalName = (String) params.get("originalValue");
-                		if (originalName != null) {
-                			groupCache.remove(originalName);
-                		}
+                    {
+                        Object key = params.get("propertyKey");
+                        if (key instanceof String && (key.equals("sharedRoster.showInRoster") || key.equals("*")))
+                        {
+                            groupMetaCache.remove(GROUP_NAMES_KEY);
+                            groupMetaCache.remove(SHARED_GROUPS_KEY);
+                        }
+                    }	
+                    // clean up cache for old group name
+                    if (type.equals("nameModified")) {
+                        String originalName = (String) params.get("originalValue");
+                        if (originalName != null) {
+                            groupCache.remove(originalName);
+                        }
 
                         groupMetaCache.remove(GROUP_NAMES_KEY);
                         groupMetaCache.remove(SHARED_GROUPS_KEY);
-                		
-                		// Evict cached information for affected users
+                        
+                        // Evict cached information for affected users
                         evictCachedUsersForGroup(group);
 
                         // Evict cached paginated group names
                         evictCachedPaginatedGroupNames();
                         
-                	}
+                    }
                 }
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
                 groupCache.put(group.getName(), group);
             }
 
+            @Override
             public void memberAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -172,10 +172,11 @@ public class GroupManager {
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
                 if(member != null) {
-	                groupMetaCache.remove(member);
+                    groupMetaCache.remove(member);
                 }
             }
 
+            @Override
             public void memberRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -184,10 +185,11 @@ public class GroupManager {
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
                 if(member != null) {
-	                groupMetaCache.remove(member);
+                    groupMetaCache.remove(member);
                 }
             }
 
+            @Override
             public void adminAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -196,10 +198,11 @@ public class GroupManager {
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
                 if(member != null) {
-	                groupMetaCache.remove(member);
+                    groupMetaCache.remove(member);
                 }
             }
 
+            @Override
             public void adminRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -208,21 +211,24 @@ public class GroupManager {
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
                 if(member != null) {
-	                groupMetaCache.remove(member);
+                    groupMetaCache.remove(member);
                 }
             }
 
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {
+            @Override
             public void userCreated(User user, Map<String, Object> params) {
                 // ignore
             }
 
+            @Override
             public void userDeleting(User user, Map<String, Object> params) {
                 deleteUser(user);
             }
 
+            @Override
             public void userModified(User user, Map<String, Object> params) {
                 // ignore
             }
@@ -230,20 +236,24 @@ public class GroupManager {
 
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.group.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -305,7 +315,7 @@ public class GroupManager {
      * @throws GroupNotFoundException if the JID represents a group that does not exist
      */
     public Group getGroup(JID jid) throws GroupNotFoundException {
-    	JID groupJID = GroupJID.fromJID(jid);
+        JID groupJID = GroupJID.fromJID(jid);
         return (groupJID instanceof GroupJID) ? getGroup(((GroupJID)groupJID).getGroupName()) : null;
     }
 
@@ -340,8 +350,8 @@ public class GroupManager {
             synchronized (name.intern()) {
                 group = groupCache.get(name);
                 if (group == null) {
-	                group = provider.getGroup(name);
-	                groupCache.put(name, group);
+                    group = provider.getGroup(name);
+                    groupCache.put(name, group);
                 }
             }
         }
@@ -467,9 +477,9 @@ public class GroupManager {
             synchronized(userName.intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
-                	// assume this is a local user
+                    // assume this is a local user
                     groupNames = provider.getSharedGroupNames(new JID(userName, 
-                    		XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null));
+                            XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null));
                     groupMetaCache.put(userName, groupNames);
                 }
             }
@@ -483,8 +493,8 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getVisibleGroups(Group groupToCheck) {
-    	// Get all the public shared groups.
-    	Collection<String> groupNames = (Collection<String>)groupMetaCache.get(PUBLIC_GROUPS);
+        // Get all the public shared groups.
+        Collection<String> groupNames = (Collection<String>)groupMetaCache.get(PUBLIC_GROUPS);
         if (groupNames == null) {
             synchronized(PUBLIC_GROUPS.intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(PUBLIC_GROUPS);
@@ -525,7 +535,7 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> search(String propName, String propValue) {
-    	Collection<String> groupsWithProps = provider.search(propName, propValue);
+        Collection<String> groupsWithProps = provider.search(propName, propValue);
         return new GroupCollection(groupsWithProps);
     }
 
@@ -598,16 +608,6 @@ public class GroupManager {
     }
 
     /**
-     * Returns true if properties of groups are read only.
-     * They are read only if Clearspace is the group provider.
-     *
-     * @return true if properties of groups are read only.
-     */
-    public boolean isPropertyReadOnly() {
-        return ClearspaceManager.isEnabled();
-    }
-    
-    /**
      * Returns true if searching for groups is supported.
      *
      * @return true if searching for groups are supported.
@@ -664,10 +664,44 @@ public class GroupManager {
     private void evictCachedUsersForGroup(Group group) {
         // Evict cached information for affected users
         for (JID user : group.getAdmins()) {
-        	groupMetaCache.remove(user.getNode());
+            groupMetaCache.remove(user.getNode());
         }
         for (JID user : group.getMembers()) {
-        	groupMetaCache.remove(user.getNode());
+            groupMetaCache.remove(user.getNode());
+        }
+
+        final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if (showInRoster != null )
+        {
+            switch ( showInRoster.toLowerCase() )
+            {
+                case "everybody":
+                    groupMetaCache.clear();
+                    break;
+
+                case "spefgroups":
+                    final String groupList = group.getProperties().get( "sharedRoster.groupList" );
+                    if ( groupList != null )
+                    {
+                        final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
+                        while ( tokenizer.hasMoreTokens() )
+                        {
+                            final String spefgroup = tokenizer.nextToken().trim();
+                            try
+                            {
+                                final Group nested = getGroup( spefgroup );
+                                evictCachedUsersForGroup( nested );
+                            }
+                            catch ( GroupNotFoundException e )
+                            {
+                                Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );
+                            }
+                        }
+                    }
+                    break;
+
+
+            }
         }
     }
 

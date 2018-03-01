@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -32,8 +29,8 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%!
     final int DEFAULT_RANGE = 100;
@@ -261,16 +258,19 @@
             %>
         </td>
         <td width="12%">
-            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
         </td>
         <td width="23%">
-            <% long logoutTime = presenceManager.getLastActivity(user);
-                if (logoutTime > -1) {
+            <% if (presenceManager.isAvailable(user)) { %>
+            <fmt:message key="session.details.online" />
+            <% } else {
+                 long logoutTime = presenceManager.getLastActivity(user);
+                 if (logoutTime > -1) {
                     out.println(StringUtils.getElapsedTime(logoutTime));
-                }
-                else {
-                    out.println("&nbsp;");
-                } %>
+                 } else { %>
+            <fmt:message key="user.properties.never_logged_in" />
+            <%   }
+               }%>
         </td>
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>

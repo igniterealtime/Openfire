@@ -1,5 +1,3 @@
-/* $Revision:  $                           */
-/* $Date:  $               */
 
 /* Update jiveVersion to Openfire 2.5 */
 UPDATE jiveVersion SET majorVersion=2, minorVersion=5;

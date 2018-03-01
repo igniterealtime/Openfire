@@ -16,3 +16,8 @@ out/
 
 # Ignore MacOSX files
 .DS_Store
+
+# Ignore Netbeans project files
+nbproject/
+nbbuild/
+/bin/

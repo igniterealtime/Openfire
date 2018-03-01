@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,12 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -35,7 +33,10 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.privacy.PrivacyList;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -77,6 +78,12 @@ public class RegistrationPlugin implements Plugin {
      * specified in the property #REGISTRAION_GROUP. The default value is false.
      */
     private static final String GROUP_ENABLED = "registration.group.enabled";
+    
+    /**
+     * The expected value is a boolean, if true any user who registers will have a Default 
+     * privacy list specified in the property #REGISTRAION_PRIVACYLIST. The default value is false.
+     */
+    private static final String PRIVACYLIST_ENABLED = "registration.privacylist.enabled";
     
     /**
      * The expected value is a boolean, if true any users will be able to register at the following
@@ -130,6 +137,25 @@ public class RegistrationPlugin implements Plugin {
     private static final String REGISTRAION_GROUP = "registration.group";
     
     /**
+     * The expected value is a String that contains the XML contents of the default
+     * privacy list, if the property #PRIVACYLIST_ENABLED is set to true.
+     */
+    private static final String REGISTRAION_PRIVACYLIST = "registration.privacylist";
+    
+    /**
+     * The expected value is a String that contains the name of the default
+     * privacy list, if the property #PRIVACYLIST_ENABLED is set to true.
+     */
+    private static final String REGISTRAION_PRIVACYLIST_NAME = "registration.privacylist.name";
+
+    /**
+     * The expected value is a numeric (long) value that defines the number of seconds after which
+     * a newly created User will be automatically locked out. A non-positive value (zero or less) will
+     * disable this feature (it is disabled by default).
+     */
+    private static final String REGISTRATION_AUTO_LOCKOUT = "registration.automatic.lockout.seconds";
+
+    /**
      * The expected value is a String that contains the text that will be displayed in the header
      * of the sign-up.jsp, if the property #WEB_ENABLED is set to true.
      */
@@ -140,6 +166,8 @@ public class RegistrationPlugin implements Plugin {
     private String serverName;
     private JID serverAddress;
     private MessageRouter router;
+    private boolean privacyListCacheIsSet = false;
+    private Element privacyListCache = null;
     
     private List<String> imContacts = new ArrayList<String>();
     private List<String> emailContacts = new ArrayList<String>();
@@ -261,6 +289,13 @@ public class RegistrationPlugin implements Plugin {
     public boolean groupEnabled() {
         return JiveGlobals.getBooleanProperty(GROUP_ENABLED, false);
     }
+    public void setPrivacyListEnabled(boolean enable) {
+        JiveGlobals.setProperty(PRIVACYLIST_ENABLED, enable ? "true" : "false");
+    }
+    
+    public boolean privacyListEnabled() {
+        return JiveGlobals.getBooleanProperty(PRIVACYLIST_ENABLED, false);
+    }
     
     public void setWebEnabled(boolean enable) {
         JiveGlobals.setProperty(WEB_ENABLED, enable ? "true" : "false");
@@ -315,6 +350,37 @@ public class RegistrationPlugin implements Plugin {
         return JiveGlobals.getProperty(REGISTRAION_GROUP);
     }
     
+    public void setPrivacyList(String privacyList) {
+        JiveGlobals.setProperty(REGISTRAION_PRIVACYLIST, privacyList);
+        privacyListCacheIsSet = false;
+    }
+    
+    public String getPrivacyList() {
+        return JiveGlobals.getProperty(REGISTRAION_PRIVACYLIST);
+    }
+    
+    public void setPrivacyListName(String privacyListName) {
+        JiveGlobals.setProperty(REGISTRAION_PRIVACYLIST_NAME, privacyListName);
+    }
+    
+    public String getPrivacyListName() {
+        return JiveGlobals.getProperty(REGISTRAION_PRIVACYLIST_NAME);
+    }
+
+    public boolean isAutomaticAccountLockoutEnabled()
+    {
+        return getAutomaticAccountLockoutAfter() > 0;
+    }
+
+    public void setAutomaticAccountLockoutAfter( long seconds )
+    {
+        JiveGlobals.setProperty( REGISTRATION_AUTO_LOCKOUT, Long.toString( seconds ) );
+    }
+    public long getAutomaticAccountLockoutAfter()
+    {
+        return JiveGlobals.getLongProperty( REGISTRATION_AUTO_LOCKOUT, -1 );
+    }
+
     public void setHeader(String message) {
         JiveGlobals.setProperty(HEADER, message);
     }
@@ -325,6 +391,11 @@ public class RegistrationPlugin implements Plugin {
     
     private class RegistrationUserEventListener implements UserEventListener {
         public void userCreated(User user, Map<String, Object> params) {
+            
+            if (Log.isDebugEnabled()) {
+                Log.debug("Registration plugin : registering new user");
+            }
+                
             if (imNotificationEnabled()) {
                 sendIMNotificatonMessage(user);
             }
@@ -339,6 +410,15 @@ public class RegistrationPlugin implements Plugin {
             
             if (groupEnabled()) {
                 addUserToGroup(user);
+            }
+            
+            if (privacyListEnabled()) {
+                addDefaultPrivacyList(user);
+            }
+
+            if (isAutomaticAccountLockoutEnabled())
+            {
+                addAutomaticAccountLockout(user);
             }
         }
 
@@ -398,6 +478,40 @@ public class RegistrationPlugin implements Plugin {
             catch (GroupNotFoundException e) {
                 Log.error(e.getMessage(), e);
             }
+        }
+        
+        private void addDefaultPrivacyList(User user) {
+            
+            if (Log.isDebugEnabled()) {
+                Log.debug("Registration plugin : adding default privacy list.");
+                Log.debug("\tName = "+getPrivacyListName());
+                Log.debug("\tContent = "+getPrivacyList());
+            }
+            
+            if(!privacyListCacheIsSet) {
+                privacyListCacheIsSet = true;
+                try {
+                    Document document = DocumentHelper.parseText(getPrivacyList());
+                    privacyListCache = document.getRootElement();
+                }
+                catch (DocumentException e) {
+                    Log.error(e.getMessage(), e);
+                }
+                if(privacyListCache == null) { 
+                    Log.error("registration.privacylist can not be parsed into a valid privacy list");
+                }
+            }
+            if(privacyListCache != null) {
+                PrivacyListManager privacyListManager = PrivacyListManager.getInstance();
+                PrivacyList newPrivacyList = privacyListManager.createPrivacyList(user.getUsername(), getPrivacyListName(), privacyListCache);
+                privacyListManager.changeDefaultList(user.getUsername(), newPrivacyList, null);
+            }
+        }
+
+        private void addAutomaticAccountLockout(User user)
+        {
+            final long start = System.currentTimeMillis() + ( getAutomaticAccountLockoutAfter() * 1000 );
+            LockOutManager.getInstance().disableAccount( user.getUsername(), new Date( start ), null );
         }
     }
     

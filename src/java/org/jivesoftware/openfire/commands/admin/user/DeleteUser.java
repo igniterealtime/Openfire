@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,22 +40,22 @@ import java.util.Map;
  */
 public class DeleteUser extends AdHocCommand {
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#delete-user";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Delete a User";
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
     @Override
-	public void execute(SessionData sessionData, Element command) {
+    public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
         // Check if users cannot be modified (backend is read-only)
         if (UserManager.getUserProvider().isReadOnly()) {
@@ -100,7 +96,7 @@ public class DeleteUser extends AdHocCommand {
     }
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Deleting a user");
         form.addInstruction("Fill out this form to delete a user.");
@@ -121,17 +117,17 @@ public class DeleteUser extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         return (super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester))
                 && !UserManager.getUserProvider().isReadOnly();
     }

@@ -1,7 +1,4 @@
 /*
- * $RCSfile$
- * $Revision: 1089 $
- * $Date: 2005-03-07 02:36:27 -0300 (Mon, 07 Mar 2005) $
  *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
@@ -20,8 +17,7 @@
 
 package org.jivesoftware.openfire.starter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jivesoftware.util.Log;
 
 import java.io.File;
 /**
@@ -46,8 +42,6 @@ import java.io.File;
  * @author Iain Shigeoka
  */
 public class ServerStarter {
-
-    private static final Logger Log = LoggerFactory.getLogger(ServerStarter.class);
 
     /**
      * Default to this location if one has not been specified

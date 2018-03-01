@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,32 +16,14 @@
 
 package org.jivesoftware.openfire.http;
 
-import java.io.File;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-
+import org.apache.jasper.servlet.JasperInitializer;
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ForwardedRequestCustomizer;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -57,25 +35,32 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.openfire.keystore.CertificateStore;
+import org.jivesoftware.openfire.keystore.IdentityStore;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
+import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- */
-public final class HttpBindManager {
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import java.io.File;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
-	private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
+/**
+ * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
+ */
+public final class HttpBindManager implements CertificateEventListener, PropertyEventListener {
+
+    private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
 
     public static final String HTTP_BIND_ENABLED = "httpbind.enabled";
 
@@ -93,17 +78,17 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY = "httpbind.client.cert.policy";
 
-    public static final int HTTP_BIND_THREADS_DEFAULT = 8;
+    public static final int HTTP_BIND_THREADS_DEFAULT = 200;
 
-	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
+    private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
 
-	private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
+    private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
 
-	private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
+    private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
 
-	private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
+    private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
 
-	private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
+    private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
 
     // http binding CORS default properties
 
@@ -125,43 +110,45 @@ public final class HttpBindManager {
 
     public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = 32768;
 
-    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
+    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<>();
 
     private static HttpBindManager instance = new HttpBindManager();
 
-    // Compression "optional" by default; use "disabled" to disable compression (restart required)
-    // When enabled, http response will be compressed if the http request includes an
-    // "Accept" header with a value of "gzip" and/or "deflate"
-    private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
-    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString())
-            .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
-
     private Server httpBindServer;
 
-    private int bindPort;
+    private final HttpSessionManager httpSessionManager;
 
-    private int bindSecurePort;
+    /**
+     * An ordered collection of all handlers (that is created to include the #extensionHandlers).
+     *
+     * A reference to this collection is maintained outside of the Jetty server implementation ({@link #httpBindServer})
+     * as its lifecycle differs from that server: the server is recreated upon configuration changes, while the
+     * collection of handlers need not be.
+     *
+     * This collection is ordered, which ensures that:
+     * <ul>
+     *     <li>The handlers providing BOSH functionality are tried first.</li>
+     *     <li>Any handlers that are registered by external sources ({@link #extensionHandlers}) are tried in between.</li>
+     *     <li>The 'catch-all' handler that maps to static content is tried last.</li>
+     * </ul>
+     *
+     * This collection should be regarded as immutable. When handlers are to be added/removed dynamically, this should
+     * occur in {@link #extensionHandlers}, to which a reference is stored in this list by the constructor of this class.
+     */
+    private final HandlerList handlerList = new HandlerList();
 
-    private Connector httpConnector;
-    private Connector httpsConnector;
-
-    private CertificateListener certificateListener;
-
-    private HttpSessionManager httpSessionManager;
-
-    private ContextHandlerCollection contexts;
-
-    // is all orgin allowed flag
-    private boolean allowAllOrigins;
+    /**
+     * Contains all Jetty handlers that are added as an extension.
+     *
+     * This collection is mutable. Handlers can be added and removed at runtime.
+     */
+    private final HandlerCollection extensionHandlers = new HandlerCollection( true );
 
     public static HttpBindManager getInstance() {
         return instance;
     }
 
     private HttpBindManager() {
-        // JSP 2.0 uses commons-logging, so also override that implementation.
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
-
         JiveGlobals.migrateProperty(HTTP_BIND_ENABLED);
         JiveGlobals.migrateProperty(HTTP_BIND_PORT);
         JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT);
@@ -175,41 +162,85 @@ public final class HttpBindManager {
         JiveGlobals.migrateProperty(HTTP_BIND_CORS_ALLOW_ORIGIN);
         JiveGlobals.migrateProperty(HTTP_BIND_REQUEST_HEADER_SIZE);
 
-        PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
+        PropertyEventDispatcher.addListener( this );
         this.httpSessionManager = new HttpSessionManager();
-
-        // we need to initialise contexts at constructor time in order for plugins to add their contexts before start()
-        contexts = new ContextHandlerCollection();
 
         // setup the cache for the allowed origins
         this.setupAllowedOriginsMap();
+
+        // Setup the default handlers. Order is important here. First, evaluate if the 'standard' handlers can be used to fulfill requests.
+        this.handlerList.addHandler( createBoshHandler() );
+        this.handlerList.addHandler( createWebsocketHandler() );
+        this.handlerList.addHandler( createCrossDomainHandler() );
+
+        // When standard handling does not apply, see if any of the handlers in the extension pool of handlers applies to the request.
+        this.handlerList.addHandler( this.extensionHandlers );
+
+        // When everything else fails, use the static content handler. This one should be last, as it is mapping to the root context.
+        // This means that it will catch everything and prevent the invocation of later handlers.
+        final Handler staticContentHandler = createStaticContentHandler();
+        if ( staticContentHandler != null )
+        {
+            this.handlerList.addHandler( staticContentHandler );
+        }
     }
 
     public void start() {
-        certificateListener = new CertificateListener();
-        CertificateManager.addListener(certificateListener);
 
         if (!isHttpBindServiceEnabled()) {
             return;
         }
-        bindPort = getHttpBindUnsecurePort();
-        bindSecurePort = getHttpBindSecurePort();
-        configureHttpBindServer(bindPort, bindSecurePort);
+
+        // this is the number of threads allocated to each connector/port
+        final int processingThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
+
+        final QueuedThreadPool tp = new QueuedThreadPool(processingThreads);
+        tp.setName("Jetty-QTP-BOSH");
+
+        httpBindServer = new Server(tp);
+        if (JMXManager.isEnabled()) {
+            JMXManager jmx = JMXManager.getInstance();
+            httpBindServer.addBean(jmx.getContainer());
+        }
+
+        final Connector httpConnector = createConnector( httpBindServer );
+        final Connector httpsConnector = createSSLConnector( httpBindServer);
+
+        if (httpConnector == null && httpsConnector == null) {
+            httpBindServer = null;
+            return;
+        }
+        if (httpConnector != null) {
+            httpBindServer.addConnector(httpConnector);
+        }
+        if (httpsConnector != null) {
+            httpBindServer.addConnector(httpsConnector);
+        }
+
+        httpBindServer.setHandler( handlerList );
 
         try {
             httpBindServer.start();
+            handlerList.start();
+            extensionHandlers.start();
+
+            CertificateManager.addListener(this);
+
             Log.info("HTTP bind service started");
         }
         catch (Exception e) {
             Log.error("Error starting HTTP bind service", e);
         }
+
     }
 
     public void stop() {
-        CertificateManager.removeListener(certificateListener);
+        CertificateManager.removeListener(this);
 
         if (httpBindServer != null) {
             try {
+                handlerList.stop();
+                extensionHandlers.stop();
                 httpBindServer.stop();
                 Log.info("HTTP bind service stopped");
             }
@@ -228,111 +259,94 @@ public final class HttpBindManager {
         return JiveGlobals.getBooleanProperty(HTTP_BIND_ENABLED, HTTP_BIND_ENABLED_DEFAULT);
     }
 
-    private void createConnector(int port, int bindThreads) {
-        httpConnector = null;
+    private Connector createConnector( final Server httpBindServer ) {
+        final int port = getHttpBindUnsecurePort();
         if (port > 0) {
-			HttpConfiguration httpConfig = new HttpConfiguration();
-			configureProxiedConnector(httpConfig);
-            ServerConnector connector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
-            		new HttpConnectionFactory(httpConfig));
+            HttpConfiguration httpConfig = new HttpConfiguration();
+            configureProxiedConnector(httpConfig);
+            ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
             connector.setPort(port);
-            httpConnector = connector;
+            return connector;
+        }
+        else
+        {
+            return null;
         }
     }
 
-    private void createSSLConnector(int securePort, int bindThreads) {
-        httpsConnector = null;
+    private Connector createSSLConnector( final Server httpBindServer ) {
+        final int securePort = getHttpBindSecurePort();
         try {
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_IDENTITYSTORE );
-            final KeyStore keyStore = identityStoreConfig.getStore();
+            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
 
-            if (securePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() ) {
-                if ( !identityStoreConfig.containsDomainCertificate( "RSA" ) ) {
+            if (securePort > 0 && identityStore.getStore().aliases().hasMoreElements() ) {
+                if ( !identityStore.containsDomainCertificate( "RSA" ) ) {
                     Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
                             "the hosted domain");
                 }
 
-                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_C2S_TRUSTSTORE );
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+                final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
-                final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
-                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
-                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
-                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
-                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
-                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
+                final HttpConfiguration httpsConfig = new HttpConfiguration();
+                httpsConfig.setSecureScheme("https");
+                httpsConfig.setSecurePort(securePort);
+                configureProxiedConnector(httpsConfig);
+                httpsConfig.addCustomizer(new SecureRequestCustomizer());
 
-                sslContextFactory.addExcludeProtocols( "SSLv3" );
+                final ServerConnector sslConnector;
 
-                // Set policy for checking client certificates
-                String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");
-                if(certPol.equals("needed")) {
-                	sslContextFactory.setNeedClientAuth(true);
-                	sslContextFactory.setWantClientAuth(true);
-                } else if(certPol.equals("wanted")) {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(true);
-                } else {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(false);
+                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+                {
+                    sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
                 }
-
- 				HttpConfiguration httpsConfig = new HttpConfiguration();
-				httpsConfig.setSecureScheme("https");
-				httpsConfig.setSecurePort(securePort);
- 				configureProxiedConnector(httpsConfig);
- 				httpsConfig.addCustomizer(new SecureRequestCustomizer());
-
- 				ServerConnector sslConnector = null;
-
-				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
-				{
-					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
-				} else {
-
-					sslConnector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
-							new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
-				}
+                else
+                {
+                    sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
+                }
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
-                httpsConnector = sslConnector;
+                return sslConnector;
             }
         }
         catch (Exception e) {
             Log.error("Error creating SSL connector for Http bind", e);
         }
+
+        return null;
     }
 
     private void configureProxiedConnector(HttpConfiguration httpConfig) {
         // Check to see if we are deployed behind a proxy
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (isXFFEnabled()) {
-        	ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
-        	// default: "X-Forwarded-For"
-        	String forwardedForHeader = getXFFHeader();
-        	if (forwardedForHeader != null) {
-        		customizer.setForwardedForHeader(forwardedForHeader);
-        	}
-        	// default: "X-Forwarded-Server"
-        	String forwardedServerHeader = getXFFServerHeader();
-        	if (forwardedServerHeader != null) {
-        		customizer.setForwardedServerHeader(forwardedServerHeader);
-        	}
-        	// default: "X-Forwarded-Host"
-        	String forwardedHostHeader = getXFFHostHeader();
-        	if (forwardedHostHeader != null) {
-        		customizer.setForwardedHostHeader(forwardedHostHeader);
-        	}
-        	// default: none
-        	String hostName = getXFFHostName();
-        	if (hostName != null) {
-        		customizer.setHostHeader(hostName);
-        	}
+            ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
+            // default: "X-Forwarded-For"
+            String forwardedForHeader = getXFFHeader();
+            if (forwardedForHeader != null) {
+                customizer.setForwardedForHeader(forwardedForHeader);
+            }
+            // default: "X-Forwarded-Server"
+            String forwardedServerHeader = getXFFServerHeader();
+            if (forwardedServerHeader != null) {
+                customizer.setForwardedServerHeader(forwardedServerHeader);
+            }
+            // default: "X-Forwarded-Host"
+            String forwardedHostHeader = getXFFHostHeader();
+            if (forwardedHostHeader != null) {
+                customizer.setForwardedHostHeader(forwardedHostHeader);
+            }
+            // default: none
+            String hostName = getXFFHostName();
+            if (hostName != null) {
+                customizer.setHostHeader(hostName);
+            }
 
-        	httpConfig.addCustomizer(customizer);
+            httpConfig.addCustomizer(customizer);
         }
         httpConfig.setRequestHeaderSize(JiveGlobals.getIntProperty(HTTP_BIND_REQUEST_HEADER_SIZE, HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT));
    }
@@ -362,8 +376,26 @@ public final class HttpBindManager {
      *
      * @return true if a listener on the HTTP binding port is running.
      */
-    public boolean isHttpBindActive() {
-        return httpConnector != null && httpConnector.isRunning();
+    public boolean isHttpBindActive()
+    {
+        if ( isHttpBindEnabled() )
+        {
+            final int configuredPort = getHttpBindUnsecurePort();
+            for ( final Connector connector : httpBindServer.getConnectors() )
+            {
+                if ( !( connector instanceof ServerConnector ) )
+                {
+                    continue;
+                }
+                final int activePort = ( (ServerConnector) connector ).getLocalPort();
+
+                if ( activePort == configuredPort )
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -371,33 +403,45 @@ public final class HttpBindManager {
      *
      * @return true if a listener on the HTTPS binding port is running.
      */
-    public boolean isHttpsBindActive() {
-        return httpsConnector != null && httpsConnector.isRunning();
+    public boolean isHttpsBindActive()
+    {
+        if ( isHttpBindEnabled() )
+        {
+            final int configuredPort = getHttpBindSecurePort();
+            for ( final Connector connector : httpBindServer.getConnectors() )
+            {
+                if ( !( connector instanceof ServerConnector ) )
+                {
+                    continue;
+                }
+                final int activePort = ( (ServerConnector) connector ).getLocalPort();
+
+                if ( activePort == configuredPort )
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public String getHttpBindUnsecureAddress() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
-                bindPort + "/http-bind/";
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/http-bind/";
     }
 
     public String getHttpBindSecureAddress() {
-        return "https://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
-                bindSecurePort + "/http-bind/";
+        return "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindSecurePort() + "/http-bind/";
     }
 
     public String getJavaScriptUrl() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
-                bindPort + "/scripts/";
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/scripts/";
     }
 
     // http binding CORS support start
 
     private void setupAllowedOriginsMap() {
-        String originString = getCORSAllowOrigin();
-        if (originString.equals(HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT)) {
-            allowAllOrigins = true;
-        } else {
-            allowAllOrigins = false;
+        final String originString = getCORSAllowOrigin();
+        if (!originString.equals(HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT)) {
             String[] origins = originString.split(",");
             // reset the cache
             HTTP_BIND_ALLOWED_ORIGINS.clear();
@@ -431,11 +475,11 @@ public final class HttpBindManager {
     }
 
     public boolean isAllOriginsAllowed() {
-        return allowAllOrigins;
+        return HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT.equals( getCORSAllowOrigin() );
     }
 
     public boolean isThisOriginAllowed(String origin) {
-        return HTTP_BIND_ALLOWED_ORIGINS.get(origin) != null;
+        return isAllOriginsAllowed() || HTTP_BIND_ALLOWED_ORIGINS.get(origin) != null;
     }
 
     // http binding CORS support end
@@ -453,11 +497,11 @@ public final class HttpBindManager {
     }
 
     public void setXFFHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
+        }
     }
 
     public String getXFFServerHeader() {
@@ -465,11 +509,11 @@ public final class HttpBindManager {
     }
 
     public void setXFFServerHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
+        }
     }
 
     public String getXFFHostHeader() {
@@ -477,11 +521,11 @@ public final class HttpBindManager {
     }
 
     public void setXFFHostHeader(String header) {
-    	if (header == null || header.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
-    	}
+        if (header == null || header.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
+        }
     }
 
     public String getXFFHostName() {
@@ -489,11 +533,11 @@ public final class HttpBindManager {
     }
 
     public void setXFFHostName(String name) {
-    	if (name == null || name.trim().length() == 0) {
-    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
-    	} else {
-    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
-    	}
+        if (name == null || name.trim().length() == 0) {
+            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+        } else {
+            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
+        }
     }
 
     public void setHttpBindEnabled(boolean isEnabled) {
@@ -523,95 +567,188 @@ public final class HttpBindManager {
     }
 
     /**
-     * Starts an HTTP Bind server on the specified port and secure port.
+     * Creates a Jetty context handler that can be used to expose BOSH (HTTP-Bind) functionality.
      *
-     * @param port the port to start the normal (unsecured) HTTP Bind service on.
-     * @param securePort the port to start the TLS (secure) HTTP Bind service on.
+     * Note that an invocation of this method will not register the handler (and thus make the related functionality
+     * available to the end user). Instead, the created handler is returned by this method, and will need to be
+     * registered with the embedded Jetty webserver by the caller.
+     *
+     * @return A Jetty context handler (never null).
      */
-    private synchronized void configureHttpBindServer(int port, int securePort) {
-    	// this is the number of threads allocated to each connector/port
-    	int bindThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
+    protected Handler createBoshHandler()
+    {
+        final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", ServletContextHandler.SESSIONS );
 
-        final QueuedThreadPool tp = new QueuedThreadPool();
-        tp.setName("Jetty-QTP-BOSH");
+        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+        final List<ContainerInitializer> initializers = new ArrayList<>();
+        initializers.add( new ContainerInitializer( new JasperInitializer(), null ) );
+        context.setAttribute( "org.eclipse.jetty.containerInitializers", initializers );
+        context.setAttribute( InstanceManager.class.getName(), new SimpleInstanceManager() );
 
-        httpBindServer = new Server(tp);
-        if (JMXManager.isEnabled()) {
-        	JMXManager jmx = JMXManager.getInstance();
-        	httpBindServer.addBean(jmx.getContainer());
+        // Generic configuration of the context.
+        context.setAllowNullPathInfo( true );
+
+        // Add the functionality-providers.
+        context.addServlet( new ServletHolder( new HttpBindServlet() ), "/*" );
+
+        // Add compression filter when needed.
+        if ( isHttpCompressionEnabled() )
+        {
+            final Filter gzipFilter = new AsyncGzipFilter()
+            {
+                @Override
+                public void init( FilterConfig config ) throws ServletException
+                {
+                    super.init( config );
+                    _methods.add( HttpMethod.POST.asString() );
+                    Log.info( "Installed response compression filter" );
+                }
+            };
+
+            final FilterHolder filterHolder = new FilterHolder();
+            filterHolder.setFilter( gzipFilter );
+            context.addFilter( filterHolder, "/*", EnumSet.of( DispatcherType.REQUEST ) );
         }
 
-        createConnector(port, bindThreads);
-        createSSLConnector(securePort, bindThreads);
-        if (httpConnector == null && httpsConnector == null) {
-            httpBindServer = null;
-            return;
-        }
-        if (httpConnector != null) {
-            httpBindServer.addConnector(httpConnector);
-        }
-        if (httpsConnector != null) {
-            httpBindServer.addConnector(httpsConnector);
-        }
-
-        //contexts = new ContextHandlerCollection();
-        // TODO implement a way to get plugins to add their their web services to contexts
-
-        createBoshHandler(contexts, "/http-bind");
-        createCrossDomainHandler(contexts, "/crossdomain.xml");
-        loadStaticDirectory(contexts);
-
-        HandlerCollection collection = new HandlerCollection();
-        httpBindServer.setHandler(collection);
-        collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
+        return context;
     }
 
-    private void createBoshHandler(ContextHandlerCollection contexts, String boshPath)
+    /**
+     * Creates a Jetty context handler that can be used to expose Websocket functionality.
+     *
+     * Note that an invocation of this method will not register the handler (and thus make the related functionality
+     * available to the end user). Instead, the created handler is returned by this method, and will need to be
+     * registered with the embedded Jetty webserver by the caller.
+     *
+     * @return A Jetty context handler (never null).
+     */
+    protected Handler createWebsocketHandler()
     {
-        ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
-        context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
-        if (isHttpCompressionEnabled()) {
-	        Filter gzipFilter = new AsyncGzipFilter() {
-	        	@Override
-	        	public void init(FilterConfig config) throws ServletException {
-	        		super.init(config);
-	        		_methods.add(HttpMethod.POST.asString());
-	        		Log.info("Installed response compression filter");
-	        	}
-	        };
-	        FilterHolder filterHolder = new FilterHolder();
-	        filterHolder.setFilter(gzipFilter);
-        	context.addFilter(filterHolder, "/*", EnumSet.of(DispatcherType.REQUEST));
-        }
+        final ServletContextHandler context = new ServletContextHandler( null, "/ws", ServletContextHandler.SESSIONS );
+        context.setAllowNullPathInfo(true);
+        // Add the functionality-providers.
+        context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
+
+        return context;
     }
 
     // NOTE: enabled by default
     private boolean isHttpCompressionEnabled() {
-		return isCompressionEnabled;
-	}
-
-	private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
-    {
-        ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
-        context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+        return configuration.getCompressionPolicy() == null || configuration.getCompressionPolicy().equals( Connection.CompressionPolicy.optional );
     }
 
-    private void loadStaticDirectory(ContextHandlerCollection contexts) {
-        File spankDirectory = new File(JiveGlobals.getHomeDirectory() + File.separator
-                + "resources" + File.separator + "spank");
-        if (spankDirectory.exists()) {
-            if (spankDirectory.canRead()) {
-                WebAppContext context = new WebAppContext(contexts, spankDirectory.getPath(), "/");
-                context.setWelcomeFiles(new String[]{"index.html"});
+    /**
+     * Creates a Jetty context handler that can be used to expose the cross-domain functionality as implemented by
+     * {@link FlashCrossDomainServlet}.
+     *
+     * Note that an invocation of this method will not register the handler (and thus make the related functionality
+     * available to the end user). Instead, the created handler is returned by this method, and will need to be
+     * registered with the embedded Jetty webserver by the caller.
+     *
+     * @return A Jetty context handler (never null).
+     */
+    protected Handler createCrossDomainHandler()
+    {
+        final ServletContextHandler context = new ServletContextHandler( null, "/crossdomain.xml", ServletContextHandler.SESSIONS );
+
+        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+        final List<ContainerInitializer> initializers = new ArrayList<>();
+        initializers.add( new ContainerInitializer( new JasperInitializer(), null ) );
+        context.setAttribute( "org.eclipse.jetty.containerInitializers", initializers );
+        context.setAttribute( InstanceManager.class.getName(), new SimpleInstanceManager() );
+
+        // Generic configuration of the context.
+        context.setAllowNullPathInfo( true );
+
+        // Add the functionality-providers.
+        context.addServlet( new ServletHolder( new FlashCrossDomainServlet() ), "" );
+
+        return context;
+    }
+
+    /**
+     * Creates a Jetty context handler that can be used to expose static files.
+     *
+     * Note that an invocation of this method will not register the handler (and thus make the related functionality
+     * available to the end user). Instead, the created handler is returned by this method, and will need to be
+     * registered with the embedded Jetty webserver by the caller.
+     *
+     * @return A Jetty context handler, or null when the static content could not be accessed.
+     */
+    protected Handler createStaticContentHandler()
+    {
+        final File spankDirectory = new File( JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" );
+        if ( spankDirectory.exists() )
+        {
+            if ( spankDirectory.canRead() )
+            {
+                final WebAppContext context = new WebAppContext( null, spankDirectory.getPath(), "/" );
+                context.setWelcomeFiles( new String[] { "index.html" } );
+
+                return context;
             }
-            else {
-                Log.warn("Openfire cannot read the directory: " + spankDirectory);
+            else
+            {
+                Log.warn( "Openfire cannot read the directory: " + spankDirectory );
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Adds a Jetty handler to be added to the embedded web server that is used to expose BOSH (HTTP-bind)
+     * functionality.
+     *
+     * @param handler The handler (cannot be null).
+     */
+    public void addJettyHandler( Handler handler )
+    {
+        if ( handler == null )
+        {
+            throw new IllegalArgumentException( "Argument 'handler' cannot be null." );
+        }
+
+        extensionHandlers.addHandler( handler );
+
+        if ( !handler.isStarted() && extensionHandlers.isStarted() )
+        {
+            try
+            {
+                handler.start();
+            }
+            catch ( Exception e )
+            {
+                Log.warn( "Unable to start handler {}", handler, e );
             }
         }
     }
 
-    public ContextHandlerCollection getContexts() {
-        return contexts;
+    /**
+     * Removes a Jetty handler to be added to the embedded web server that is used to expose BOSH (HTTP-bind)
+     * functionality.
+     *
+     * Removing a handler, even when null, or non-existing, might have side-effects as introduced by the Jetty
+     * implementation. At the time of writing, Jetty will re
+     *
+     * @param handler The handler (should not be null).
+     */
+    public void removeJettyHandler( Handler handler )
+    {
+        extensionHandlers.removeHandler( handler );
+        if ( handler.isStarted() )
+        {
+            try
+            {
+                handler.stop();
+            }
+            catch ( Exception e )
+            {
+                Log.warn( "Unable to stop the handler that was removed: {}", handler, e );
+            }
+        }
+
     }
 
     private void doEnableHttpBind(boolean shouldEnable) {
@@ -672,100 +809,68 @@ public final class HttpBindManager {
         }
     }
 
-    private void setUnsecureHttpBindPort(int value) {
-        if (value == bindPort) {
-            return;
-        }
-        restartServer();
-    }
-
-    private void setSecureHttpBindPort(int value) {
-        if (value == bindSecurePort) {
-            return;
-        }
-        restartServer();
-    }
-
     private synchronized void restartServer() {
         stop();
         start();
     }
 
-    /** Listens for changes to Jive properties that affect the HTTP server manager. */
-    private class HttpServerPropertyListener implements PropertyEventListener {
-
-        public void propertySet(String property, Map<String, Object> params) {
-            if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
-                doEnableHttpBind(Boolean.valueOf(params.get("value").toString()));
-            }
-            else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
-                int value;
-                try {
-                    value = Integer.valueOf(params.get("value").toString());
-                }
-                catch (NumberFormatException ne) {
-                    JiveGlobals.deleteProperty(HTTP_BIND_PORT);
-                    return;
-                }
-                setUnsecureHttpBindPort(value);
-            }
-            else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
-                int value;
-                try {
-                    value = Integer.valueOf(params.get("value").toString());
-                }
-                catch (NumberFormatException ne) {
-                    JiveGlobals.deleteProperty(HTTP_BIND_SECURE_PORT);
-                    return;
-                }
-                setSecureHttpBindPort(value);
-            }
-            else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
-                restartServer();
-            }
+    @Override
+    public void propertySet(String property, Map<String, Object> params) {
+        if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
+            doEnableHttpBind(Boolean.valueOf(params.get("value").toString()));
         }
-
-        public void propertyDeleted(String property, Map<String, Object> params) {
-            if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
-                doEnableHttpBind(HTTP_BIND_ENABLED_DEFAULT);
+        else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
+            try {
+                Integer.valueOf(params.get("value").toString());
             }
-            else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
-                setUnsecureHttpBindPort(HTTP_BIND_PORT_DEFAULT);
+            catch (NumberFormatException ne) {
+                JiveGlobals.deleteProperty(HTTP_BIND_PORT);
+                return;
             }
-            else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
-                setSecureHttpBindPort(HTTP_BIND_SECURE_PORT_DEFAULT);
-            }
-            else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
-                restartServer();
-            }
+            restartServer();
         }
-
-        public void xmlPropertySet(String property, Map<String, Object> params) {
+        else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
+            try {
+                Integer.valueOf(params.get("value").toString());
+            }
+            catch (NumberFormatException ne) {
+                JiveGlobals.deleteProperty(HTTP_BIND_SECURE_PORT);
+                return;
+            }
+            restartServer();
         }
-
-        public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+        else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
+            restartServer();
         }
     }
 
-    private class CertificateListener implements CertificateEventListener {
-
-        public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
-            // If new certificate is RSA then (re)start the HTTPS service
-            if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
-                restartServer();
-            }
+    @Override
+    public void propertyDeleted(String property, Map<String, Object> params) {
+        if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
+            doEnableHttpBind(HTTP_BIND_ENABLED_DEFAULT);
         }
-
-        public void certificateDeleted(KeyStore keyStore, String alias) {
+        else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
             restartServer();
         }
-
-        public void certificateSigned(KeyStore keyStore, String alias,
-                                      List<X509Certificate> certificates) {
-            // If new certificate is RSA then (re)start the HTTPS service
-            if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
-                restartServer();
-            }
+        else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
+            restartServer();
         }
+        else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
+            restartServer();
+        }
+    }
+
+    @Override
+    public void xmlPropertySet(String property, Map<String, Object> params) {
+    }
+
+    @Override
+    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+    }
+
+    @Override
+    public void storeContentChanged( CertificateStore store )
+    {
+        restartServer();
     }
 }

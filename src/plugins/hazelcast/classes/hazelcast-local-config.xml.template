@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+           http://www.hazelcast.com/schema/config/hazelcast-config-3.9.xsd">
+    <group>
+        <name>openfire</name>
+        <password>openfire</password>
+    </group>
+    <network>
+        <port auto-increment="true" port-count="100">5701</port>
+        <outbound-ports>
+            <ports>0</ports>
+        </outbound-ports>
+        <!-- The following enables multicast discovery of cluster members
+                See http://docs.hazelcast.org/docs/3.9.2/manual/html-single/index.html#discovering-members-by-multicast
+        -->
+        <join>
+            <multicast enabled="true">
+                <multicast-group>224.2.2.3</multicast-group>
+                <multicast-port>54327</multicast-port>
+            </multicast>
+            <tcp-ip enabled="false"/>
+        </join>
+        <!-- The following enables TCP/IP based discovery of cluster members
+                See http://docs.hazelcast.org/docs/3.9.2/manual/html-single/index.html#discovering-members-by-tcp
+        -->
+        <!--
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <member>10.10.1.1:5701</member>
+				<member>10.10.1.2:5701</member>
+            </tcp-ip>
+        </join>
+        -->
+        <interfaces enabled="false">
+            <interface>10.10.1.*</interface>
+        </interfaces>
+        <ssl enabled="false"/>
+        <socket-interceptor enabled="false"/>
+        <symmetric-encryption enabled="false">
+            <!--
+               encryption algorithm such as
+               DES/ECB/PKCS5Padding,
+               PBEWithMD5AndDES,
+               AES/CBC/PKCS5Padding,
+               Blowfish,
+               DESede
+            -->
+            <algorithm>PBEWithMD5AndDES</algorithm>
+            <!-- salt value to use when generating the secret key -->
+            <salt>thesalt</salt>
+            <!-- pass phrase to use when generating the secret key -->
+            <password>thepass</password>
+            <!-- iteration count to use when generating the secret key -->
+            <iteration-count>19</iteration-count>
+        </symmetric-encryption>
+    </network>
+</hazelcast>

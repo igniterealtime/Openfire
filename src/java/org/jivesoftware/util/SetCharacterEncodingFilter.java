@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +27,12 @@ import java.io.IOException;
  */
 public class SetCharacterEncodingFilter implements Filter {
 
+    @Override
     public void init(FilterConfig filterConfig) throws ServletException {
 
     }
 
+    @Override
     public void destroy() {
         
     }
@@ -42,6 +40,7 @@ public class SetCharacterEncodingFilter implements Filter {
     /**
      * Sets the character encoding to be used for any content passing out of this filter.
      */
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException
     {

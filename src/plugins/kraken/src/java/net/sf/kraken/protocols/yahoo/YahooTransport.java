@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -150,12 +147,12 @@ public class YahooTransport extends BaseTransport<YahooBuddy> {
      * @return XMPP presence type matching the Yahoo status.
      */
     public PresenceType convertYahooStatusToXMPP(Status yahooStatus, String customAvailable) {
-    	if ("0".equals(customAvailable)) {
+        if ("0".equals(customAvailable)) {
             return PresenceType.available;
-    	} else if ("1".equals(customAvailable)) {
-    		return PresenceType.dnd;
-    	} 
-    	else if (yahooStatus == Status.AVAILABLE) {
+        } else if ("1".equals(customAvailable)) {
+            return PresenceType.dnd;
+        } 
+        else if (yahooStatus == Status.AVAILABLE) {
             // We're good, leave the type as blank for available.
             return PresenceType.available;
         }

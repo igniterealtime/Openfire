@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,14 +57,13 @@ import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 
 /**
- *
  */
 public class GraphServlet extends HttpServlet {
     private GraphEngine graphEngine;
     private StatsViewer statsViewer;
 
     @Override
-	public void init() throws ServletException {
+    public void init() throws ServletException {
         // load dependencies
         MonitoringPlugin plugin =
                 (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(MonitoringConstants.NAME);
@@ -77,7 +72,7 @@ public class GraphServlet extends HttpServlet {
     }
 
     @Override
-	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // retrieve parameters
         String statisticKey = request.getParameter("stat");
         String timePeriod = request.getParameter("timeperiod");
@@ -228,7 +223,7 @@ public class GraphServlet extends HttpServlet {
             this.request = request;
         }
         @Override
-		public void onEndPage(PdfWriter writer, Document document) {
+        public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
 
             try {

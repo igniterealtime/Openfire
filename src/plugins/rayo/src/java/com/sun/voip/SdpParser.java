@@ -43,214 +43,214 @@ public class SdpParser {
     }
 
     public synchronized SdpInfo parseSdp(String sdpData) throws ParseException {
-	/*
-	 * parse sdpData
-	 */
-	String t = "c=IN IP4 ";
-	int start = sdpData.indexOf(t);
-	int finish = sdpData.indexOf("\r", start);
+    /*
+     * parse sdpData
+     */
+    String t = "c=IN IP4 ";
+    int start = sdpData.indexOf(t);
+    int finish = sdpData.indexOf("\r", start);
 
-	if (start < 0 || finish < 0) {
-	    throw new ParseException("Invalid remote SDP", 0);
-	}
+    if (start < 0 || finish < 0) {
+        throw new ParseException("Invalid remote SDP", 0);
+    }
 
-	String remoteHost = sdpData.substring(start + t.length(), finish).trim();
+    String remoteHost = sdpData.substring(start + t.length(), finish).trim();
 
-	t = "m=audio";
+    t = "m=audio";
     start = sdpData.indexOf(t);
     String s = sdpData.substring(start + t.length());
 
-	t = "RTP/AVP ";
+    t = "RTP/AVP ";
     finish = s.indexOf(t);
     String port = s.substring(0, finish).trim();
 
-	if (start < 0 || finish < 0) {
-	    throw new ParseException("Invalid remote SDP", 0);
-	}
+    if (start < 0 || finish < 0) {
+        throw new ParseException("Invalid remote SDP", 0);
+    }
 
-	int remotePort;
+    int remotePort;
 
-	try {
+    try {
             remotePort = Integer.parseInt(port);
-	} catch (NumberFormatException e) {
-	    Logger.println("Invalid remote port in sdp " + port
-		+ " sdpData " + sdpData);
+    } catch (NumberFormatException e) {
+        Logger.println("Invalid remote port in sdp " + port
+        + " sdpData " + sdpData);
 
-	    throw new ParseException("Invalid remote port in sdp " + port
+        throw new ParseException("Invalid remote port in sdp " + port
                 + " sdpData " + sdpData, 0);
-	}
+    }
 
-	start = finish + t.length();
-	finish = s.indexOf("\r\n");
+    start = finish + t.length();
+    finish = s.indexOf("\r\n");
 
-	s = s.substring(start, finish);  // point at payloads
+    s = s.substring(start, finish);  // point at payloads
 
-	/*
-	 * Get all supported RTP Payloads
-	 */
+    /*
+     * Get all supported RTP Payloads
+     */
         String[] payloads = s.split("[\" \"]");
 
-	String[] sdp = sdpData.split("[\r\n]");
+    String[] sdp = sdpData.split("[\r\n]");
 
-	MediaInfo mediaInfo = new MediaInfo(RtpPacket.PCMU_PAYLOAD,
-	    0, 8000, 1, false);
+    MediaInfo mediaInfo = new MediaInfo(RtpPacket.PCMU_PAYLOAD,
+        0, 8000, 1, false);
 
-	supportedMedia.add(mediaInfo);  // we always support payload 0
+    supportedMedia.add(mediaInfo);  // we always support payload 0
 
-	byte telephoneEventPayload = 0;
+    byte telephoneEventPayload = 0;
 
-	/*
-	 * Get all "a=rtpmap:" entries, stop when we hit a non-rtpmap entry
-	 */
-	for (int i = 0 ; i < sdp.length; i++) {
-	    s = sdp[i];
+    /*
+     * Get all "a=rtpmap:" entries, stop when we hit a non-rtpmap entry
+     */
+    for (int i = 0 ; i < sdp.length; i++) {
+        s = sdp[i];
 
-	    if (s.indexOf("a=rtpmap:") != 0) {
-		continue;
-	    }
+        if (s.indexOf("a=rtpmap:") != 0) {
+        continue;
+        }
 
-	    RtpmapParser rtpmapParser = new RtpmapParser(s);
+        RtpmapParser rtpmapParser = new RtpmapParser(s);
 
-	    mediaInfo = rtpmapParser.getMediaInfo();
+        mediaInfo = rtpmapParser.getMediaInfo();
 
-	    if (mediaInfo == null) {
-		//Logger.println("no media info for " + s);
-		continue;	// skip this entry
-	    }
+        if (mediaInfo == null) {
+        //Logger.println("no media info for " + s);
+        continue;	// skip this entry
+        }
 
-	    if (mediaInfo.isTelephoneEventPayload()) {
-		telephoneEventPayload = mediaInfo.getPayload();
-	    }
+        if (mediaInfo.isTelephoneEventPayload()) {
+        telephoneEventPayload = mediaInfo.getPayload();
+        }
 
-	    supportedMedia.add(mediaInfo);
-	}
+        supportedMedia.add(mediaInfo);
+    }
 
-	/*
-	 * At this point, payloads[] contains all of the supported payloads
-	 * and the Vector supportedMedia contains the MediaInfo's for
-	 * all supported payloads.
-	 *
-	 * For each payload, find the corresponding MediaInfo and
+    /*
+     * At this point, payloads[] contains all of the supported payloads
+     * and the Vector supportedMedia contains the MediaInfo's for
+     * all supported payloads.
+     *
+     * For each payload, find the corresponding MediaInfo and
          * select the appropriate one.
-	 */
-	mediaInfo = null;
+     */
+    mediaInfo = null;
 
-	boolean preferredMediaSpecified = false;
+    boolean preferredMediaSpecified = false;
 
-	t = "a=PreferredPayload:";
+    t = "a=PreferredPayload:";
 
-	if ((start = sdpData.indexOf(t)) >= 0) {
-	    s = sdpData.substring(start + t.length());
+    if ((start = sdpData.indexOf(t)) >= 0) {
+        s = sdpData.substring(start + t.length());
 
-	    finish = s.indexOf("\r\n");
+        finish = s.indexOf("\r\n");
 
-	    if (finish > 0) {
-	        int payload;
+        if (finish > 0) {
+            int payload;
 
-		s = s.substring(0, finish);
+        s = s.substring(0, finish);
 
-		payload = Integer.parseInt(s);
+        payload = Integer.parseInt(s);
 
-		try {
-		    mediaInfo = getMediaInfo(payload);
-		} catch (ParseException e) {
-		}
-	        preferredMediaSpecified = true;
-	    }
-	}
+        try {
+            mediaInfo = getMediaInfo(payload);
+        } catch (ParseException e) {
+        }
+            preferredMediaSpecified = true;
+        }
+    }
 
-	if (mediaInfo == null) {
-	    for (int i = 0; i < payloads.length; i++) {
-	        int payload = 0;
+    if (mediaInfo == null) {
+        for (int i = 0; i < payloads.length; i++) {
+            int payload = 0;
 
-	        try {
-	            payload = Integer.parseInt(payloads[i]);
-	        } catch (NumberFormatException e) {
-	            Logger.println("Invalid payload in rtpmap: " + payloads[i]);
+            try {
+                payload = Integer.parseInt(payloads[i]);
+            } catch (NumberFormatException e) {
+                Logger.println("Invalid payload in rtpmap: " + payloads[i]);
 
-	            throw new ParseException("Invalid payload int rtpmap: "
+                throw new ParseException("Invalid payload int rtpmap: "
                         + payloads[i], 0);
-	        }
+            }
 
-	        if (payload != 0 && (payload < 96 || payload > 127)) {
-		    /*
-		     * Not one we can deal with
-		     */
-		    continue;
-	        }
+            if (payload != 0 && (payload < 96 || payload > 127)) {
+            /*
+             * Not one we can deal with
+             */
+            continue;
+            }
 
-	        /*
-	         * See if it's a supported payload
-	         */
-		MediaInfo m = null;
+            /*
+             * See if it's a supported payload
+             */
+        MediaInfo m = null;
 
-		try {
-	            m = getMediaInfo(payload);
-		} catch (ParseException e) {
-		    Logger.println("ignoring undefined payload " + payload);
-		    continue;
-		}
+        try {
+                m = getMediaInfo(payload);
+        } catch (ParseException e) {
+            Logger.println("ignoring undefined payload " + payload);
+            continue;
+        }
 
-	        if (m.isTelephoneEventPayload()) {
-		    continue;
-	        }
+            if (m.isTelephoneEventPayload()) {
+            continue;
+            }
 
-	        if (mediaInfo == null ||
-		        mediaInfo.getSampleRate() < m.getSampleRate()) {
+            if (mediaInfo == null ||
+                mediaInfo.getSampleRate() < m.getSampleRate()) {
 
-		    mediaInfo = m;
-	        } else if (mediaInfo.getSampleRate() == m.getSampleRate()) {
-	            if (mediaInfo.getChannels() < m.getChannels()) {
-	 	        mediaInfo = m;
+            mediaInfo = m;
+            } else if (mediaInfo.getSampleRate() == m.getSampleRate()) {
+                if (mediaInfo.getChannels() < m.getChannels()) {
+                mediaInfo = m;
                     }
-	        }
-	    }
-	}
+            }
+        }
+    }
 
-	if (mediaInfo == null) {
-	    Logger.println("No suitable media payload in sdp data "
-		+ sdpData);
+    if (mediaInfo == null) {
+        Logger.println("No suitable media payload in sdp data "
+        + sdpData);
 
-	    throw new ParseException("No suitable media payload in sdp data "
-		+ sdpData, 0);
-	}
+        throw new ParseException("No suitable media payload in sdp data "
+        + sdpData, 0);
+    }
 
-	sdpInfo = new SdpInfo(
-	    remoteHost, remotePort, telephoneEventPayload, supportedMedia,
-		mediaInfo, preferredMediaSpecified);
+    sdpInfo = new SdpInfo(
+        remoteHost, remotePort, telephoneEventPayload, supportedMedia,
+        mediaInfo, preferredMediaSpecified);
 
-	t = "a=transmitPayload:";
+    t = "a=transmitPayload:";
 
-	if ((start = sdpData.indexOf(t)) >= 0) {
-	    s = sdpData.substring(start + t.length());
+    if ((start = sdpData.indexOf(t)) >= 0) {
+        s = sdpData.substring(start + t.length());
 
-	    finish = s.indexOf("\r\n");
+        finish = s.indexOf("\r\n");
 
-	    if (finish > 0) {
-	        int payload;
+        if (finish > 0) {
+            int payload;
 
-		s = s.substring(0, finish);
+        s = s.substring(0, finish);
 
-		payload = Integer.parseInt(s);
+        payload = Integer.parseInt(s);
 
-		try {
-		    sdpInfo.setTransmitMediaInfo(getMediaInfo(payload));
-		    Logger.println("Set xmit mediaInfo to "
-			+ sdpInfo.getTransmitMediaInfo());
-		} catch (ParseException e) {
-		}
-	    }
-	}
+        try {
+            sdpInfo.setTransmitMediaInfo(getMediaInfo(payload));
+            Logger.println("Set xmit mediaInfo to "
+            + sdpInfo.getTransmitMediaInfo());
+        } catch (ParseException e) {
+        }
+        }
+    }
 
-	int ix;
+    int ix;
 
-	t = "a=transmitMediaInfoOk";
+    t = "a=transmitMediaInfoOk";
 
         if ((ix = sdpData.indexOf(t)) >= 0) {
             sdpInfo.setTransmitMediaInfoOk(true);
         }
 
-	t = "a=userName:";
+    t = "a=userName:";
 
         if ((ix = sdpData.indexOf(t)) >= 0) {
             String userName = sdpData.substring(ix + t.length());
@@ -270,10 +270,10 @@ public class SdpParser {
             }
         }
 
-	t = "a=callId:";
+    t = "a=callId:";
 
         if ((ix = sdpData.indexOf(t)) >= 0) {
-	    String callId = sdpData.substring(ix + t.length());
+        String callId = sdpData.substring(ix + t.length());
 
             finish = callId.indexOf("\n");
 
@@ -281,77 +281,77 @@ public class SdpParser {
                 sdpInfo.setCallId(
                     callId.substring(0, finish).trim());
             }
-	}
+    }
 
-	t = "a=conferenceId:";
+    t = "a=conferenceId:";
 
-	if ((ix = sdpData.indexOf(t)) >= 0) {
-	    String conferenceId = sdpData.substring(ix + t.length());
+    if ((ix = sdpData.indexOf(t)) >= 0) {
+        String conferenceId = sdpData.substring(ix + t.length());
 
             finish = conferenceId.indexOf("\n");
 
             if (finish > 0) {
                 sdpInfo.setConferenceId(
-		    conferenceId.substring(0, finish).trim());
+            conferenceId.substring(0, finish).trim());
             } else {
-		/*
-		 * This is a workaround for a bug where "\r\n" are missing
-		 * from the SDP.
-		 * XXX This assumes "conferenceId:" is last in the sdp.
-		 */
-		sdpInfo.setConferenceId(conferenceId.substring(0).trim());
-	    }
-	}
+        /*
+         * This is a workaround for a bug where "\r\n" are missing
+         * from the SDP.
+         * XXX This assumes "conferenceId:" is last in the sdp.
+         */
+        sdpInfo.setConferenceId(conferenceId.substring(0).trim());
+        }
+    }
 
         if (sdpData.indexOf("a=distributedBridge") >= 0) {
             sdpInfo.setDistributedBridge();
-	}
+    }
 
-	t = "a=rtcpAddress:";
+    t = "a=rtcpAddress:";
 
-	if ((ix = sdpData.indexOf(t)) >= 0) {
-	    s = sdpData.substring(ix + t.length());
+    if ((ix = sdpData.indexOf(t)) >= 0) {
+        s = sdpData.substring(ix + t.length());
 
             finish = s.indexOf("\n");
 
             if (finish > 0) {
-		s = s.substring(0, finish).trim();
-	    } else {
-		s = s.substring(0).trim();
-	    }
+        s = s.substring(0, finish).trim();
+        } else {
+        s = s.substring(0).trim();
+        }
 
-	    String[] tokens = s.split(":");
+        String[] tokens = s.split(":");
 
-	    if (tokens.length != 2) {
-	        throw new ParseException("Invalid rtcp address in sdp "
+        if (tokens.length != 2) {
+            throw new ParseException("Invalid rtcp address in sdp "
                     + " sdpData " + sdpData, 0);
-	    }
+        }
 
-	    try {
-		sdpInfo.setRtcpAddress(new InetSocketAddress(
-		    InetAddress.getByName(tokens[0]), Integer.parseInt(tokens[1])));
-	    } catch (UnknownHostException e) {
-	        throw new ParseException("Invalid rtcp host address in sdp "
+        try {
+        sdpInfo.setRtcpAddress(new InetSocketAddress(
+            InetAddress.getByName(tokens[0]), Integer.parseInt(tokens[1])));
+        } catch (UnknownHostException e) {
+            throw new ParseException("Invalid rtcp host address in sdp "
                     + " sdpData " + sdpData, 0);
-	    } catch (NumberFormatException e) {
-	        throw new ParseException("Invalid rtcp port in sdp "
+        } catch (NumberFormatException e) {
+            throw new ParseException("Invalid rtcp port in sdp "
                     + " sdpData " + sdpData, 0);
-	    }
-	}
+        }
+    }
 
-	return sdpInfo;
+    return sdpInfo;
     }
 
     private MediaInfo getMediaInfo(int payload) throws ParseException {
-	for (int i = 0; i < supportedMedia.size(); i++) {
-	    MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
+    for (int i = 0; i < supportedMedia.size(); i++) {
+        MediaInfo mediaInfo = (MediaInfo) supportedMedia.elementAt(i);
 
-	    if (mediaInfo.getPayload() == payload) {
-		return mediaInfo;
-	    }
-	}
+        if (mediaInfo.getPayload() == payload) {
+        return mediaInfo;
+        }
+    }
 
-	throw new ParseException("Unsupported payload " + payload, 0);
+    throw new ParseException("Unsupported payload " + payload, 0);
     }
 
 }
@@ -368,119 +368,119 @@ class RtpmapParser {
      * a=rtpmap:<payload> telephone-event/8000/1
      */
     public RtpmapParser(String rtpmap) throws ParseException {
-    	byte payload;
-    	int encoding;
-    	int sampleRate;
-    	int channels;
+        byte payload;
+        int encoding;
+        int sampleRate;
+        int channels;
 
-	byte telephoneEventPayload;
+    byte telephoneEventPayload;
 
- 	int start;
-	int finish;
+    int start;
+    int finish;
 
-	finish = rtpmap.indexOf(" ");
+    finish = rtpmap.indexOf(" ");
 
-	if (finish < 0) {
-	    Logger.println("Invalid rtpmap:  " + rtpmap);
+    if (finish < 0) {
+        Logger.println("Invalid rtpmap:  " + rtpmap);
 
-	    throw new ParseException("Invalid rtpmap:  " + rtpmap, 0);
-	}
+        throw new ParseException("Invalid rtpmap:  " + rtpmap, 0);
+    }
 
-	try {
-	    payload = (byte)Integer.parseInt(rtpmap.substring(9, finish));
-	} catch (NumberFormatException e) {
-	    Logger.println("Invalid payload in rtpmap: " + rtpmap);
+    try {
+        payload = (byte)Integer.parseInt(rtpmap.substring(9, finish));
+    } catch (NumberFormatException e) {
+        Logger.println("Invalid payload in rtpmap: " + rtpmap);
 
-	    throw new ParseException("Invalid payload in rtpmap:  "
-		+ rtpmap, 0);
-	}
+        throw new ParseException("Invalid payload in rtpmap:  "
+        + rtpmap, 0);
+    }
 
-	String s = rtpmap.substring(finish + 1);
+    String s = rtpmap.substring(finish + 1);
 
-	finish = s.indexOf("telephone-event");
+    finish = s.indexOf("telephone-event");
 
-	if (finish >= 0) {
-	    mediaInfo = new MediaInfo(payload, 0, 8000, 1, true);
-	    telephoneEventPayload = payload;
-	    return;
-	}
+    if (finish >= 0) {
+        mediaInfo = new MediaInfo(payload, 0, 8000, 1, true);
+        telephoneEventPayload = payload;
+        return;
+    }
 
-	finish = s.indexOf("CN/");
+    finish = s.indexOf("CN/");
 
-	if (finish >= 0) {
-	    return;	// ignore this entry
-	}
+    if (finish >= 0) {
+        return;	// ignore this entry
+    }
 
-	start = s.indexOf("PCM/");
+    start = s.indexOf("PCM/");
 
-	if (start >= 0) {
-	    s = s.substring(start + 4);
-	    encoding = RtpPacket.PCM_ENCODING;
-	} else {
-	    start = s.indexOf("PCMU/");
+    if (start >= 0) {
+        s = s.substring(start + 4);
+        encoding = RtpPacket.PCM_ENCODING;
+    } else {
+        start = s.indexOf("PCMU/");
 
-	    if (start >= 0) {
-	        s = s.substring(start + 5);
-	        encoding = RtpPacket.PCMU_ENCODING;
-	    } else {
-		start = s.indexOf("SPEEX/");
+        if (start >= 0) {
+            s = s.substring(start + 5);
+            encoding = RtpPacket.PCMU_ENCODING;
+        } else {
+        start = s.indexOf("SPEEX/");
 
-		if (start < 0) {
-		    if (Logger.logLevel >= Logger.LOG_INFO) {
-		        Logger.println("Ignoring rtpmap entry: "
-			    + payload + " " + s);
-		    }
-		    return;		// ignore this entry
-		}
+        if (start < 0) {
+            if (Logger.logLevel >= Logger.LOG_INFO) {
+                Logger.println("Ignoring rtpmap entry: "
+                + payload + " " + s);
+            }
+            return;		// ignore this entry
+        }
 
-	        s = s.substring(start + 6);
-	        encoding = RtpPacket.SPEEX_ENCODING;
-	    }
-	}
+            s = s.substring(start + 6);
+            encoding = RtpPacket.SPEEX_ENCODING;
+        }
+    }
 
-	finish = s.indexOf("/");
-	boolean channelsPresent = true;
+    finish = s.indexOf("/");
+    boolean channelsPresent = true;
 
-	String rate;
+    String rate;
 
-	if (finish < 0) {
-	    channelsPresent = false;
+    if (finish < 0) {
+        channelsPresent = false;
 
-	    rate = s.substring(start);
-	} else {
-	    rate = s.substring(start, finish);  // point at sample rate
-	}
+        rate = s.substring(start);
+    } else {
+        rate = s.substring(start, finish);  // point at sample rate
+    }
 
-	try {
-	    sampleRate = Integer.parseInt(rate);
-	} catch (NumberFormatException e) {
-	    Logger.println("Invalid sample rate in rtpmap: " + rtpmap);
+    try {
+        sampleRate = Integer.parseInt(rate);
+    } catch (NumberFormatException e) {
+        Logger.println("Invalid sample rate in rtpmap: " + rtpmap);
 
-	    throw new ParseException("Invalid sample rate in rtpmap:  "
-		+ rtpmap, 0);
-	}
+        throw new ParseException("Invalid sample rate in rtpmap:  "
+        + rtpmap, 0);
+    }
 
-	if (channelsPresent) {
-	    s = s.substring(finish + 1);	// point at channels
+    if (channelsPresent) {
+        s = s.substring(finish + 1);	// point at channels
 
-	    try {
-	        channels = Integer.parseInt(s);
-	    } catch (NumberFormatException e) {
-	        Logger.println("Invalid channels in rtpmap: " + rtpmap);
+        try {
+            channels = Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            Logger.println("Invalid channels in rtpmap: " + rtpmap);
 
-	        throw new ParseException("Invalid channels in rtpmap:  "
-		    + rtpmap, 0);
-	    }
-	} else {
-	    channels = 1;
-	}
+            throw new ParseException("Invalid channels in rtpmap:  "
+            + rtpmap, 0);
+        }
+    } else {
+        channels = 1;
+    }
 
-	mediaInfo = new MediaInfo(payload, encoding, sampleRate,
+    mediaInfo = new MediaInfo(payload, encoding, sampleRate,
             channels, false);
     }
 
     public MediaInfo getMediaInfo() {
-	return mediaInfo;
+    return mediaInfo;
     }
 
 }

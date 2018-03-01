@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1710 $
- * $Date: 2005-07-26 15:56:14 -0300 (Tue, 26 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,8 +49,8 @@ import org.xmpp.packet.Presence;
  */
 public class PresenceStatusServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceStatusServlet.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(PresenceStatusServlet.class);
+    
     private PresencePlugin plugin;
     private XMLPresenceProvider xmlProvider;
     private ImagePresenceProvider imageProvider;
@@ -68,7 +64,7 @@ public class PresenceStatusServlet extends HttpServlet {
     byte xa[];
 
     @Override
-	public void init(ServletConfig servletConfig) throws ServletException {
+    public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         plugin =
                 (PresencePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("presence");
@@ -86,7 +82,7 @@ public class PresenceStatusServlet extends HttpServlet {
     }
 
     @Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String sender = request.getParameter("req_jid");
         String jid = request.getParameter("jid");
@@ -142,13 +138,13 @@ public class PresenceStatusServlet extends HttpServlet {
     }
 
     @Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doGet(request, response);
     }
 
     @Override
-	public void destroy() {
+    public void destroy() {
         super.destroy();
         available = null;
         away = null;

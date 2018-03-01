@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2006 Jive Software. All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +15,8 @@
  */
 
 package org.jivesoftware.openfire.fastpath.util;
+
+import org.jivesoftware.util.NamedThreadFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -55,22 +54,8 @@ public class TaskEngine {
      */
     private TaskEngine() {
         timer = new Timer("timer-fastpath", true);
-        executor = Executors.newCachedThreadPool(new ThreadFactory() {
-
-            final AtomicInteger threadNumber = new AtomicInteger(1);
-
-            public Thread newThread(Runnable runnable) {
-                // Use our own naming scheme for the threads.
-                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "pool-fastpath" + threadNumber.getAndIncrement(), 0);
-                // Make workers daemon threads.
-                thread.setDaemon(true);
-                if (thread.getPriority() != Thread.NORM_PRIORITY) {
-                    thread.setPriority(Thread.NORM_PRIORITY);
-                }
-                return thread;
-            }
-        });
+        final ThreadFactory threadFactory = new NamedThreadFactory( "pool-fastpath", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
+        executor = Executors.newCachedThreadPool( threadFactory );
     }
 
     /**
@@ -317,7 +302,7 @@ public class TaskEngine {
         }
 
         @Override
-		public void run() {
+        public void run() {
             executor.submit(task);
         }
     }

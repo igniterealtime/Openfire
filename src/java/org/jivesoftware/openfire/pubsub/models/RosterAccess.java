@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +26,6 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.roster.RosterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -43,13 +38,13 @@ import org.xmpp.packet.PacketError;
  */
 public class RosterAccess extends AccessModel {
 
-	private static final Logger Log = LoggerFactory.getLogger(RosterAccess.class);
+    private static final Logger Log = LoggerFactory.getLogger(RosterAccess.class);
 
     RosterAccess() {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always subscribe to the node
         if (node.isAdmin(owner)) {
             return true;
@@ -63,18 +58,18 @@ public class RosterAccess extends AccessModel {
         XMPPServer server = XMPPServer.getInstance();
         if (server.isLocal(owner)) {
             GroupManager gMgr = GroupManager.getInstance();
-        	Collection<String> nodeGroups = node.getRosterGroupsAllowed();
-        	for (String groupName : nodeGroups) {
-        		try {
-	        		Group group = gMgr.getGroup(groupName);
-	        		// access allowed if the node group is visible to the subscriber
-	        		if (server.getRosterManager().isGroupVisible(group, owner)) {
-	        			return true;
-	        		}
-        		} catch (GroupNotFoundException gnfe){ 
-        			// ignore
-        		}
-        	}
+            Collection<String> nodeGroups = node.getRosterGroupsAllowed();
+            for (String groupName : nodeGroups) {
+                try {
+                    Group group = gMgr.getGroup(groupName);
+                    // access allowed if the node group is visible to the subscriber
+                    if (server.getRosterManager().isGroupVisible(group, owner)) {
+                        return true;
+                    }
+                } catch (GroupNotFoundException gnfe){ 
+                    // ignore
+                }
+            }
         }
         else {
             // Subscriber is a remote user. This should never happen.
@@ -85,28 +80,28 @@ public class RosterAccess extends AccessModel {
     }
 
     @Override
-	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return canSubscribe(node, owner, subscriber);
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "roster";
     }
 
     @Override
-	public PacketError.Condition getSubsriptionError() {
+    public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
     @Override
-	public Element getSubsriptionErrorDetail() {
+    public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(
                 QName.get("not-in-roster-group", "http://jabber.org/protocol/pubsub#errors"));
     }
 
     @Override
-	public boolean isAuthorizationRequired() {
+    public boolean isAuthorizationRequired() {
         return false;
     }
 }

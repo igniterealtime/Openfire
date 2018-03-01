@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 223 $
- * $Date: 2004-11-07 22:52:36 -0300 (Sun, 07 Nov 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,16 +29,16 @@ import java.util.Iterator;
 @Deprecated
 public interface FormField {
 
-    public static final String TYPE_BOOLEAN = "boolean";
-    public static final String TYPE_FIXED = "fixed";
-    public static final String TYPE_HIDDEN = "hidden";
-    public static final String TYPE_JID_MULTI = "jid-multi";
-    public static final String TYPE_JID_SINGLE = "jid-single";
-    public static final String TYPE_LIST_MULTI = "list-multi";
-    public static final String TYPE_LIST_SINGLE = "list-single";
-    public static final String TYPE_TEXT_MULTI = "text-multi";
-    public static final String TYPE_TEXT_PRIVATE = "text-private";
-    public static final String TYPE_TEXT_SINGLE = "text-single";
+    String TYPE_BOOLEAN = "boolean";
+    String TYPE_FIXED = "fixed";
+    String TYPE_HIDDEN = "hidden";
+    String TYPE_JID_MULTI = "jid-multi";
+    String TYPE_JID_SINGLE = "jid-single";
+    String TYPE_LIST_MULTI = "list-multi";
+    String TYPE_LIST_SINGLE = "list-single";
+    String TYPE_TEXT_MULTI = "text-multi";
+    String TYPE_TEXT_PRIVATE = "text-private";
+    String TYPE_TEXT_SINGLE = "text-single";
 
     /**
      * Adds a default value to the question if the question is part of a form to fill out.
@@ -50,12 +46,12 @@ public interface FormField {
      *
      * @param value a default value or an answered value of the question.
      */
-    public void addValue(String value);
+    void addValue( String value );
 
     /**
      * Removes all the values of the field.
      */
-    public void clearValues();
+    void clearValues();
 
     /**
      * Adds an available option to the question that the user has in order to answer
@@ -64,7 +60,7 @@ public interface FormField {
      * @param label a label that represents the option.
      * @param value the value of the option.
      */
-    public void addOption(String label, String value);
+    void addOption( String label, String value );
 
     /**
      * Sets an indicative of the format for the data to answer. Valid formats are:
@@ -86,14 +82,14 @@ public interface FormField {
      *
      * @param type an indicative of the format for the data to answer.
      */
-    public abstract void setType(String type);
+    void setType( String type );
 
     /**
      * Sets if the question must be answered in order to complete the questionnaire.
      *
      * @param required if the question must be answered in order to complete the questionnaire.
      */
-    public abstract void setRequired(boolean required);
+    void setRequired( boolean required );
 
     /**
      * Sets the label of the question which should give enough information to the user to
@@ -101,7 +97,7 @@ public interface FormField {
      *
      * @param label the label of the question.
      */
-    public abstract void setLabel(String label);
+    void setLabel( String label );
 
     /**
      * Sets a description that provides extra clarification about the question. This information
@@ -113,21 +109,21 @@ public interface FormField {
      *
      * @param description provides extra clarification about the question.
      */
-    public abstract void setDescription(String description);
+    void setDescription( String description );
 
     /**
      * Returns true if the question must be answered in order to complete the questionnaire.
      *
      * @return true if the question must be answered in order to complete the questionnaire.
      */
-    public abstract boolean isRequired();
+    boolean isRequired();
 
     /**
      * Returns the variable name that the question is filling out.
      *
      * @return the variable name of the question.
      */
-    public abstract String getVariable();
+    String getVariable();
 
     /**
      * Returns an Iterator for the default values of the question if the question is part
@@ -136,7 +132,7 @@ public interface FormField {
      *
      * @return an Iterator for the default values or answered values of the question.
      */
-    public abstract Iterator<String> getValues();
+    Iterator<String> getValues();
 
     /**
      * Returns an indicative of the format for the data to answer. Valid formats are:
@@ -158,7 +154,7 @@ public interface FormField {
      *
      * @return format for the data to answer.
      */
-    public abstract String getType();
+    String getType();
 
     /**
      * Returns the label of the question which should give enough information to the user to
@@ -166,7 +162,7 @@ public interface FormField {
      *
      * @return label of the question.
      */
-    public abstract String getLabel();
+    String getLabel();
 
     /**
      * Returns a description that provides extra clarification about the question. This information
@@ -178,5 +174,5 @@ public interface FormField {
      *
      * @return description that provides extra clarification about the question.
      */
-    public abstract String getDescription();
+    String getDescription();
 }

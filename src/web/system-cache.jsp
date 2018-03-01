@@ -1,11 +1,11 @@
-<%@ page import="org.jivesoftware.util.cache.Cache"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="java.text.DecimalFormat"%>
+<%@ page import="java.text.NumberFormat" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: $
-  -	$Date: $
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -
@@ -22,8 +22,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -102,19 +102,32 @@
 
 <% // Get parameters
     boolean doClearCache = request.getParameter("clear") != null;
-    int refresh = ParamUtils.getIntParameter(request, "refresh", -1);
     int[] cacheIDs = ParamUtils.getIntParameters(request, "cacheID", -1);
 
     // Get the list of existing caches
     Cache[] caches = webManager.getCaches();
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (doClearCache) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            doClearCache = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Clear one or multiple caches if requested.
     if (doClearCache) {
         for (int cacheID : cacheIDs) {
-            caches[cacheID].clear();
+            final Cache cache = caches[cacheID];
+            cache.clear();
+            webManager.logEvent(String.format("Cleared cache '%s'", cache.getName()), null);
         }
     }
 
+    NumberFormat numberFormatter = NumberFormat.getNumberInstance(JiveGlobals.getLocale());
     // decimal formatter for cache values
     DecimalFormat mbFormat = new DecimalFormat("#0.00");
     DecimalFormat percentFormat = new DecimalFormat("#0.0");
@@ -152,6 +165,7 @@
 %>
 
 <form action="system-cache.jsp" method="post" name="cacheForm">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -159,9 +173,10 @@
     <tr>
         <th width="39%" nowrap><fmt:message key="system.cache.head.name" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.max" /></th>
-        <th width="10%" nowrap><fmt:message key="system.cache.head.current" /></th>
-        <th width="20%" nowrap><fmt:message key="system.cache.head.percent" /></th>
-        <th width="20%" nowrap><fmt:message key="system.cache.head.effectiveness" /></th>
+        <th width="10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
+        <th width="10%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.current" /></th>
+        <th width="10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
+        <th width="20%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
         <th width="1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
 </thead>
@@ -173,6 +188,7 @@
         if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) {
             overallTotal += (double)cache.getMaxCacheSize();
         }
+        int entries = cache.size();
         memUsed = (double)cache.getCacheSize()/(1024*1024);
         totalMem = (double)cache.getMaxCacheSize()/(1024*1024);
         freeMem = 100 - 100*memUsed/totalMem;
@@ -188,6 +204,8 @@
             hitPercent = percentFormat.format(hitValue) + "%";
             lowEffec = (hits > 500 && hitValue < 85.0 && freeMem < 20.0);
         }
+        // OF-1365: Don't allow caches that do not expire to be purged. Many of these caches store data that cannot be recovered again.
+        final boolean canPurge = cache.getMaxLifetime() > -1;
 %>
     <tr class="<%= (lowEffec ? "jive-error" : "") %>">
         <td class="c1">
@@ -205,8 +223,18 @@
                 <fmt:message key="global.unlimited" />
             <% } %>
         </td>
-        <td class="c3">
-            <%= mbFormat.format(memUsed)%> MB
+        <td class="c2">
+            <% if (cache.getMaxLifetime() != -1) { %>
+                <%= StringUtils.getFullElapsedTime(cache.getMaxLifetime()) %>
+            <% } else { %>
+                <fmt:message key="global.unlimited" />
+            <% } %>
+        </td>
+        <td class="c3" style="text-align: right; padding-right:0;">
+            <%=numberFormatter.format(entries)%>&nbsp;
+        </td>
+        <td class="c3" style="text-align: left; padding-left:0;">
+            / <%= mbFormat.format(memUsed)%> MB
         </td>
         <td class="c3">
             <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
@@ -215,11 +243,18 @@
                 N/A
             <% } %>
         </td>
-        <td class="c4">
-            <%= hitPercent%>
+        <td class="c4" style="text-align: right; padding-right:0;">
+            <%=numberFormatter.format(hits)%>/<%=numberFormatter.format(hits + misses)%>&nbsp;
+        </td>
+        <td class="c4" style="text-align: left; padding-left:0;">
+            (<%=hitPercent%>)
         </td>
 
-        <td width="1%" class="c5"><input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);"></td>
+        <td width="1%" class="c5">
+            <% if ( canPurge ) {%>
+            <input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);">
+            <% } %>
+        </td>
     </tr>
 
 <%  } %>
@@ -231,7 +266,7 @@
     <td class="c2">
         <%= mbFormat.format(overallTotal/(1024.0*1024.0)) %> MB
     </td>
-    <td align="right" colspan="4">
+    <td align="right" colspan="7">
         <input type="submit" name="clear" value="<fmt:message key="system.cache.clear-selected" />" disabled>
     </td>
 </tr>

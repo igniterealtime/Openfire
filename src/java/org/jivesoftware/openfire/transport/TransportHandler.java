@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1200 $
- * $Date: 2005-04-04 03:36:48 -0300 (Mon, 04 Apr 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +40,7 @@ import org.xmpp.packet.PacketError;
  */
 public class TransportHandler extends BasicModule implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(TransportHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(TransportHandler.class);
 
     private Map<String, Channel<Packet>> transports = new ConcurrentHashMap<>();
 
@@ -58,6 +54,7 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
         transports.put(transport.getName(), transport);
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         boolean handled = false;
         String host = packet.getTo().getDomain();
@@ -83,7 +80,7 @@ public class TransportHandler extends BasicModule implements ChannelHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         deliverer = server.getPacketDeliverer();
     }

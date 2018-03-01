@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -99,6 +95,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return null;
     }
 
+    @Override
     public boolean acceptIncomingFileTransferRequest(FileTransfer transfer)
             throws FileTransferRejectedException
     {
@@ -113,6 +110,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return false;
     }
 
+    @Override
     public void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException
     {
@@ -210,6 +208,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
      * Interceptor to grab and validate file transfer meta information.
      */
     private class MetaFileTransferInterceptor implements PacketInterceptor {
+        @Override
         public void interceptPacket(Packet packet, Session session, boolean incoming,
                                     boolean processed)
                 throws PacketRejectedException

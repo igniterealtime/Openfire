@@ -11,15 +11,15 @@
 
 <a name="top"></a>
 
-	<div id="pageHeader">
-		<div id="logo"></div>
-		<h1>LDAP Guide</h1>
-	</div>
-	<div class="navigation">
-		<a href="index.html">&laquo; Back to documentation index</a>
-	</div>
+    <div id="pageHeader">
+        <div id="logo"></div>
+        <h1>LDAP Guide</h1>
+    </div>
+    <div class="navigation">
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </div>
 
-	<div id="pageBody">
+    <div id="pageBody">
 
 <h2>Introduction</h2>
 
@@ -259,7 +259,9 @@ servers, some of which are detailed below:
             you
             enable SSL connections, the LDAP server port number most likely should be changed to
             636.</li>
-
+    <li>ldap.startTlsEnabled -- a value of "true" to enable StartTLS connections to your LDAP server. If
+            you enable StartTLS connections, the LDAP server port number most likely should be changed to
+            389.</li>
     <li>ldap.initialContextFactory -- the name of the class that should be used as an initial
         context
         factory. if this value is not specified, "com.sun.jndi.ldap.LdapCtxFactory" will be used
@@ -512,7 +514,7 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
     </ul>
 
 
-	</div>
+    </div>
 
 </div>
 

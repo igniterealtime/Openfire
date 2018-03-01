@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 32833 $
- * $Date: 2006-08-02 15:52:36 -0700 (Wed, 02 Aug 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,8 +60,8 @@ import org.xmpp.packet.Presence;
  */
 public class WorkgroupPresence {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
+    
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
             .getInstance(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 

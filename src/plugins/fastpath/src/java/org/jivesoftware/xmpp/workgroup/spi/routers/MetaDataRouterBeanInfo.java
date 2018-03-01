@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19264 $
- * $Date: 2005-07-08 15:30:34 -0700 (Fri, 08 Jul 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,17 +28,17 @@ public class MetaDataRouterBeanInfo extends WorkgroupBeanInfo {
     }
 
     @Override
-	public Class getBeanClass() {
+    public Class getBeanClass() {
         return org.jivesoftware.xmpp.workgroup.spi.routers.MetaDataRouter.class;
     }
 
     @Override
-	public String[] getPropertyNames() {
+    public String[] getPropertyNames() {
         return PROPERTY_NAMES;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "MetaDataRouter";
     }
 }

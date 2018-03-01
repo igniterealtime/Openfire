@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,27 +31,27 @@ import java.nio.channels.ReadableByteChannel;
  */
 public class TLSStreamReader {
 
-	/**
-	 * <code>TLSWrapper</code> is a TLS wrapper for connections requiring TLS protocol.
-	 */
-	private TLSWrapper wrapper;
+    /**
+     * <code>TLSWrapper</code> is a TLS wrapper for connections requiring TLS protocol.
+     */
+    private TLSWrapper wrapper;
 
-	private ReadableByteChannel rbc;
+    private ReadableByteChannel rbc;
 
-	/**
-	 * <code>inNetBB</code> buffer keeps data read from socket.
-	 */
-	private ByteBuffer inNetBB;
+    /**
+     * <code>inNetBB</code> buffer keeps data read from socket.
+     */
+    private ByteBuffer inNetBB;
 
-	/**
-	 * <code>inAppBB</code> buffer keeps decypted data.
-	 */
-	private ByteBuffer inAppBB;
+    /**
+     * <code>inAppBB</code> buffer keeps decypted data.
+     */
+    private ByteBuffer inAppBB;
 
     private TLSStatus lastStatus;
 
     public TLSStreamReader(TLSWrapper tlsWrapper, Socket socket) throws IOException {
-		wrapper = tlsWrapper;
+        wrapper = tlsWrapper;
         // DANIELE: Add code to use directly the socket channel
         if (socket.getChannel() != null) {
             rbc = ServerTrafficCounter.wrapReadableChannel(socket.getChannel());
@@ -65,18 +61,18 @@ public class TLSStreamReader {
                     ServerTrafficCounter.wrapInputStream(socket.getInputStream()));
         }
         inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
-		inAppBB = ByteBuffer.allocate(wrapper.getAppBuffSize());
-	}
+        inAppBB = ByteBuffer.allocate(wrapper.getAppBuffSize());
+    }
 
-	/*
-	 * Read TLS encrpyted data from SocketChannel, and use <code>decrypt</code> method to decypt.
-	 */
-	private void doRead() throws IOException {
+    /*
+     * Read TLS encrpyted data from SocketChannel, and use <code>decrypt</code> method to decypt.
+     */
+    private void doRead() throws IOException {
         //System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (before read)");
 
         // Read from the channel and fill inNetBB with the encrypted data
         final int cnt = rbc.read(inNetBB);
-		if (cnt > 0) {
+        if (cnt > 0) {
             //System.out.println("doRead inNet position: " + inNetBB.position() + " capacity: " + inNetBB.capacity() + " (after read)");
             //System.out.println("doRead inAppBB (before decrypt) position: " + inAppBB.position() + " limit: " + inAppBB.limit() + " capacity: " + inAppBB.capacity());
 
@@ -103,24 +99,24 @@ public class TLSStreamReader {
                 doRead();
             }
         } else {
-			if (cnt == -1) {
+            if (cnt == -1) {
                 inAppBB.flip();
                 rbc.close();
-			}
-		}
-	}
+            }
+        }
+    }
 
-	/*
-	 * This method uses <code>TLSWrapper</code> to decrypt TLS encrypted data.
-	 */
-	private ByteBuffer decrypt(ByteBuffer input, ByteBuffer output) throws IOException {
-		ByteBuffer out = output;
+    /*
+     * This method uses <code>TLSWrapper</code> to decrypt TLS encrypted data.
+     */
+    private ByteBuffer decrypt(ByteBuffer input, ByteBuffer output) throws IOException {
+        ByteBuffer out = output;
         input.flip();
         do {
             // Decode SSL/TLS network data and place it in the app buffer
-			out = wrapper.unwrap(input, out);
+            out = wrapper.unwrap(input, out);
 
-			lastStatus = wrapper.getStatus();
+            lastStatus = wrapper.getStatus();
         }
         while ((lastStatus == TLSStatus.NEED_READ || lastStatus == TLSStatus.OK) &&
                 input.hasRemaining());
@@ -132,36 +128,36 @@ public class TLSStreamReader {
             // be read again to obtain the missing data to complete the TLS packet. So in the next
             // round the TLS packet will be decrypted and written to the output buffer
             input.compact();
-		} else {
+        } else {
             // All the encrypted data in the inpu buffer was decrypted so we can clear
             // the input buffer.
             input.clear();
-		}
+        }
 
-		return out;
-	}
+        return out;
+    }
 
-	public InputStream getInputStream() {
-		return createInputStream();
-	}
+    public InputStream getInputStream() {
+        return createInputStream();
+    }
 
-	/*
-	 * Returns an input stream for a ByteBuffer. The read() methods use the relative ByteBuffer
-	 * get() methods.
-	 */
-	private InputStream createInputStream() {
-		return new InputStream() {
-			@Override
-			public synchronized int read() throws IOException {
-				doRead();
-				if (!inAppBB.hasRemaining()) {
-					return -1;
-				}
-				return inAppBB.get();
-			}
+    /*
+     * Returns an input stream for a ByteBuffer. The read() methods use the relative ByteBuffer
+     * get() methods.
+     */
+    private InputStream createInputStream() {
+        return new InputStream() {
+            @Override
+            public synchronized int read() throws IOException {
+                doRead();
+                if (!inAppBB.hasRemaining()) {
+                    return -1;
+                }
+                return inAppBB.get();
+            }
 
-			@Override
-			public synchronized int read(byte[] bytes, int off, int len) throws IOException {
+            @Override
+            public synchronized int read(byte[] bytes, int off, int len) throws IOException {
                 // Check if in the previous read the inAppBB ByteBuffer remained with unread data.
                 // If all the data was consumed then read from the socket channel. Otherwise,
                 // consume the data contained in the buffer.
@@ -177,7 +173,7 @@ public class TLSStreamReader {
                     // to consume it
                     inAppBB.flip();
                 }
-				len = Math.min(len, inAppBB.remaining());
+                len = Math.min(len, inAppBB.remaining());
                 if (len == 0) {
                     // Nothing was read so the end of stream should have been reached.
                     return -1;
@@ -198,8 +194,8 @@ public class TLSStreamReader {
                     // Everything was read so reset the buffer
                     inAppBB.clear();
                 }
-				return len;
-			}
-		};
-	}
+                return len;
+            }
+        };
+    }
 }

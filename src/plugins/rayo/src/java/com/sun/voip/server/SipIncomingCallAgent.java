@@ -70,7 +70,7 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
      * Constructor
      */
     public SipIncomingCallAgent(CallHandler callHandler, Object o) {
-	super(callHandler);
+    super(callHandler);
 
         sipServerCallback = SipServer.getSipServerCallback();
 
@@ -78,7 +78,7 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
 
         sipUtil = new SipUtil(mixerMediaPreference);
 
-		handleInvite((RequestEvent)o);
+        handleInvite((RequestEvent)o);
     }
 
     /**
@@ -88,17 +88,17 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
     public synchronized void processRequest(RequestEvent requestEvent) {
         Request request = requestEvent.getRequest();
 
-	if (request.getMethod().equals(Request.ACK)) {
-	    handleAck(request);
-	} else if (request.getMethod().equals(Request.BYE)) {
-	    handleBye(requestEvent);
-	} else if (request.getMethod().equals(Request.CANCEL)) {
-	    handleBye(requestEvent);
+    if (request.getMethod().equals(Request.ACK)) {
+        handleAck(request);
+    } else if (request.getMethod().equals(Request.BYE)) {
+        handleBye(requestEvent);
+    } else if (request.getMethod().equals(Request.CANCEL)) {
+        handleBye(requestEvent);
         } else {
             // no other requests should come in other than ACK or BYE or CANCEL
             Logger.error("SipIncomingCallAgent:  ignoring request "
-		+ request.getMethod());
-	    //terminateCall();		// just ignore for now : BAO
+        + request.getMethod());
+        //terminateCall();		// just ignore for now : BAO
         }
     }
 
@@ -116,64 +116,64 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
      */
     private void handleInvite(RequestEvent requestEvent) {
 
-		setState(CallState.INVITED);
+        setState(CallState.INVITED);
 
-		Request request = requestEvent.getRequest();
-		FromHeader fromHeader =	(FromHeader) request.getHeader(FromHeader.NAME);
-		ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
+        Request request = requestEvent.getRequest();
+        FromHeader fromHeader =	(FromHeader) request.getHeader(FromHeader.NAME);
+        ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
 
-		String from = fromHeader.getAddress().toString();
-		String to = toHeader.getAddress().toString();
+        String from = fromHeader.getAddress().toString();
+        String to = toHeader.getAddress().toString();
 
-		CallIdHeader callIdHeader = (CallIdHeader) request.getHeader(CallIdHeader.NAME);
+        CallIdHeader callIdHeader = (CallIdHeader) request.getHeader(CallIdHeader.NAME);
 
-		String sipCallId = callIdHeader.getCallId();
-		this.sipCallId = sipCallId;
+        String sipCallId = callIdHeader.getCallId();
+        this.sipCallId = sipCallId;
 
-		Logger.println("SipIncomingCallAgent:  Got an INVITE from " + from + " to " + to);
-		Logger.writeFile(request.toString());
+        Logger.println("SipIncomingCallAgent:  Got an INVITE from " + from + " to " + to);
+        Logger.writeFile(request.toString());
 
-		if (Logger.logLevel >= Logger.LOG_SIP) {
-			Logger.println("SipIncomingCallAgent:  Adding listener for call id " + sipCallId);
-		}
+        if (Logger.logLevel >= Logger.LOG_SIP) {
+            Logger.println("SipIncomingCallAgent:  Adding listener for call id " + sipCallId);
+        }
 
         try {
             sipServerCallback.addSipListener(sipCallId, this);
-			answerCall(requestEvent);
+            answerCall(requestEvent);
 
         } catch (Exception e) {
             Logger.println("SipIncomingCallAgent:  " + request);
-	    e.printStackTrace();
-	    terminateCall();
+        e.printStackTrace();
+        terminateCall();
         }
     }
 
     private void handleAck(Request request) {
-	Logger.writeFile("SipIncomingCallAgent:  Got ack...");
-	Logger.writeFile(request.toString());
+    Logger.writeFile("SipIncomingCallAgent:  Got ack...");
+    Logger.writeFile(request.toString());
 
-	if (getState() != CallState.ESTABLISHED) {
-	    try {
-	        processSdp(request);
-	    } catch (ParseException e) {
-		Logger.error("SipIncomingCallAgent:  " + e.getMessage());
-		terminateCall();
-	    }
+    if (getState() != CallState.ESTABLISHED) {
+        try {
+            processSdp(request);
+        } catch (ParseException e) {
+        Logger.error("SipIncomingCallAgent:  " + e.getMessage());
+        terminateCall();
+        }
 
-	    ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
-	    String s = "ToAddress='" + toHeader.getAddress().toString() + "'";
+        ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
+        String s = "ToAddress='" + toHeader.getAddress().toString() + "'";
 
-	    s += " IncomingCall='true'";
+        s += " IncomingCall='true'";
 
-	    setState(CallState.ESTABLISHED, s);
-	}
+        setState(CallState.ESTABLISHED, s);
+    }
     }
 
     private void handleBye(RequestEvent requestEvent) {
-	Request request = requestEvent.getRequest();
+    Request request = requestEvent.getRequest();
 
-	Logger.writeFile("SipIncomingCallAgent got BYE or CANCEL");
-	Logger.writeFile(request.toString());
+    Logger.writeFile("SipIncomingCallAgent got BYE or CANCEL");
+    Logger.writeFile(request.toString());
 
         try {
             CallIdHeader callIdHeader = (CallIdHeader)
@@ -184,13 +184,13 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
             if (sipCallId.equals(this.sipCallId)) {
                 receivedBye = true;
 
-		removeSipCallId(sipCallId);
+        removeSipCallId(sipCallId);
 
                 try {
                     Logger.println("Call " + cp + " has hung up.");
 
                     sipUtil.sendOK(request,
-			requestEvent.getServerTransaction());
+            requestEvent.getServerTransaction());
                 } catch (Exception e) {
                     /*
                      * We sometimes get a null ServerTransaction
@@ -220,36 +220,36 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
     }
 
     private SdpInfo processSdp(Request request) throws ParseException {
-	byte[] rawSdp = request.getRawContent();
+    byte[] rawSdp = request.getRawContent();
 
-	if (rawSdp == null) {
-	    return null;
-	}
+    if (rawSdp == null) {
+        return null;
+    }
 
-	String sdpBody = new String(rawSdp);
+    String sdpBody = new String(rawSdp);
 
-	SdpInfo sdpInfo = sipUtil.getSdpInfo(sdpBody);
+    SdpInfo sdpInfo = sipUtil.getSdpInfo(sdpBody);
 
-	String remoteHost = sdpInfo.getRemoteHost();
-	int remotePort = sdpInfo.getRemotePort();
+    String remoteHost = sdpInfo.getRemoteHost();
+    int remotePort = sdpInfo.getRemotePort();
 
-	Logger.println(
-	    "SipIncomingCallAgent:  remote socket " + remoteHost + " "
-	    + remotePort);
+    Logger.println(
+        "SipIncomingCallAgent:  remote socket " + remoteHost + " "
+        + remotePort);
 
-	try {
+    try {
             InetSocketAddress isa =
-		new InetSocketAddress(remoteHost, remotePort);
+        new InetSocketAddress(remoteHost, remotePort);
 
-	    setEndpointAddress(isa, sdpInfo.getMediaInfo().getPayload(),
-		sdpInfo.getTransmitMediaInfo().getPayload(),
-		sdpInfo.getTelephoneEventPayload());
-	} catch (Exception e) {
-	    Logger.println("SipIncomingCallAgent:  can't create isa");
-	    throw new ParseException("SipIncomingCallAgent:  can't create isa", 0);
-	}
+        setEndpointAddress(isa, sdpInfo.getMediaInfo().getPayload(),
+        sdpInfo.getTransmitMediaInfo().getPayload(),
+        sdpInfo.getTelephoneEventPayload());
+    } catch (Exception e) {
+        Logger.println("SipIncomingCallAgent:  can't create isa");
+        throw new ParseException("SipIncomingCallAgent:  can't create isa", 0);
+    }
 
-	return sdpInfo;
+    return sdpInfo;
     }
 
     /**
@@ -257,24 +257,24 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
      * @param responseEvent the event containing the SIP response
      */
     public synchronized void processResponse(
-	    ResponseEvent responseEvent) {
+        ResponseEvent responseEvent) {
 
         try {
             Response response = (Response)responseEvent.getResponse();
 
             int statusCode = response.getStatusCode();
 
-	    FromHeader fromHeader = (FromHeader)
-		response.getHeader(FromHeader.NAME);
+        FromHeader fromHeader = (FromHeader)
+        response.getHeader(FromHeader.NAME);
 
             String displayName = fromHeader.getAddress().getDisplayName();
 
-	    /*
-	     * We don't expect any responses from the other side.
-	     */
-	    Logger.println("SipIncomingCallAgent: Response ignored:  statusCode "
-	    	    + statusCode + " fromHeader " + displayName
-		    + " " + response);
+        /*
+         * We don't expect any responses from the other side.
+         */
+        Logger.println("SipIncomingCallAgent: Response ignored:  statusCode "
+                + statusCode + " fromHeader " + displayName
+            + " " + response);
         } catch (Exception e) {
             Logger.exception("SipIncomingCallAgent:  processResponse:  ", e);
         }
@@ -299,63 +299,63 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
 
     public void answerCall(RequestEvent requestEvent) {
 
-		setState(CallState.INVITED);
+        setState(CallState.INVITED);
 
-		Request request = requestEvent.getRequest();
+        Request request = requestEvent.getRequest();
 
-		FromHeader fromHeader = (FromHeader) request.getHeader(FromHeader.NAME);
-		ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
+        FromHeader fromHeader = (FromHeader) request.getHeader(FromHeader.NAME);
+        ToHeader toHeader = (ToHeader) request.getHeader(ToHeader.NAME);
 
-		String from = fromHeader.getAddress().toString();
-		String to = toHeader.getAddress().toString();
+        String from = fromHeader.getAddress().toString();
+        String to = toHeader.getAddress().toString();
 
-		Logger.println("SipIncomingCallAgent:  Accept call " + from + " to " + to);
-		Logger.writeFile(request.toString());
+        Logger.println("SipIncomingCallAgent:  Accept call " + from + " to " + to);
+        Logger.writeFile(request.toString());
 
         try {
-			SdpInfo sdpInfo = processSdp(request);
+            SdpInfo sdpInfo = processSdp(request);
 
-			st = requestEvent.getServerTransaction();
+            st = requestEvent.getServerTransaction();
 
-			if (st == null) {
-				st = SipServer.getSipProvider().getNewServerTransaction(request);
-			}
+            if (st == null) {
+                st = SipServer.getSipProvider().getNewServerTransaction(request);
+            }
 
-    	    InetSocketAddress isa = callHandler.getReceiveAddress();
+            InetSocketAddress isa = callHandler.getReceiveAddress();
 
-			if (isa == null) {
-				Logger.println("SipIncomingCallAgent:  can't get receiver socket!");
-				terminateCall();
-				return;
-			}
+            if (isa == null) {
+                Logger.println("SipIncomingCallAgent:  can't get receiver socket!");
+                terminateCall();
+                return;
+            }
 
-			setState(CallState.ANSWERED);
+            setState(CallState.ANSWERED);
 
-			if (Logger.logLevel >= Logger.LOG_SIP) {
-				Logger.println("SipIncomingCallAgent:  sending ok");
-			}
+            if (Logger.logLevel >= Logger.LOG_SIP) {
+                Logger.println("SipIncomingCallAgent:  sending ok");
+            }
 
-			sipUtil.sendOkWithSdp(request, st, isa, sdpInfo);
+            sipUtil.sendOkWithSdp(request, st, isa, sdpInfo);
 
         } catch (Exception e) {
             Logger.println("SipIncomingCallAgent:  " + request);
-	    	e.printStackTrace();
-	   		terminateCall();
+            e.printStackTrace();
+            terminateCall();
         }
     }
 
 
 
     public void terminateCall() {
-	if (receivedBye) {
-	    return;
-	}
+    if (receivedBye) {
+        return;
+    }
 
-	if (sipCallId != null) {
+    if (sipCallId != null) {
             sipServerCallback.removeSipListener(sipCallId);
 
-	    removeSipCallId(sipCallId);
-	}
+        removeSipCallId(sipCallId);
+    }
 
         if (getState() == CallState.INVITED) {
             try {
@@ -388,38 +388,38 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
 
             sipCallIds.add(sipCallId);  // add to list of all coming calls
         }
-	return true;
+    return true;
     }
 
 
     private void removeSipCallId(String sipCallId) {
-	synchronized(sipCallIds) {
-	    for (int i = 0; i < sipCallIds.size(); i++) {
-	        String id = (String)sipCallIds.elementAt(i);
+    synchronized(sipCallIds) {
+        for (int i = 0; i < sipCallIds.size(); i++) {
+            String id = (String)sipCallIds.elementAt(i);
 
-		if (sipCallId.equals(id)) {
-		    sipCallIds.remove(i);
-		}
-	    }
-	}
+        if (sipCallId.equals(id)) {
+            sipCallIds.remove(i);
+        }
+        }
+    }
     }
 
     public void processDialogTerminated(DialogTerminatedEvent dte) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
             Logger.println("processDialogTerminated called");
-	}
+    }
     }
 
     public void  processTransactionTerminated(TransactionTerminatedEvent tte) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
-	    Logger.println("processTransactionTerminated called");
-	}
+        Logger.println("processTransactionTerminated called");
+    }
     }
 
     public void  processIOException(IOExceptionEvent ioee) {
         if (Logger.logLevel >= Logger.LOG_SIP) {
-	    Logger.println("processTransactionTerminated called");
-	}
+        Logger.println("processTransactionTerminated called");
+    }
     }
 
 }

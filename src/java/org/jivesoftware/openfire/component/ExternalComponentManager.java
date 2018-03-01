@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ExternalComponentManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ExternalComponentManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ExternalComponentManager.class);
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofExtComponentConf (subdomain,wildcard,secret,permission) VALUES (?,?,?,?)";
@@ -67,8 +64,12 @@ public class ExternalComponentManager {
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
     private static List<ExternalComponentManagerListener> listeners =
-            new CopyOnWriteArrayList<ExternalComponentManagerListener>();
+            new CopyOnWriteArrayList<>();
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
@@ -78,11 +79,19 @@ public class ExternalComponentManager {
         connectionManager.enableComponentListener(enabled);
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static boolean isServiceEnabled() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.isComponentListenerEnabled();
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static void setServicePort(int port) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
@@ -92,6 +101,10 @@ public class ExternalComponentManager {
         connectionManager.setComponentListenerPort(port);
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static int getServicePort() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.getComponentListenerPort();
@@ -351,7 +364,7 @@ public class ExternalComponentManager {
     private static Collection<ExternalComponentConfiguration> getConfigurations(
             Permission permission) {
         Collection<ExternalComponentConfiguration> answer =
-                new ArrayList<ExternalComponentConfiguration>();
+                new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

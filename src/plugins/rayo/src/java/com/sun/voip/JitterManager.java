@@ -48,18 +48,18 @@ public class JitterManager {
      * Manage jitter and lost or out of order packets.
      */ 
     public JitterManager(String id) {
-	this.id = id;
+    this.id = id;
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println(id + ":  jitterManager "
-		+ " min size " + minJitterBufferSize 
-		+ " max size " + maxJitterBufferSize);
-	}
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println(id + ":  jitterManager "
+        + " min size " + minJitterBufferSize 
+        + " max size " + maxJitterBufferSize);
+    }
 
-	plcFactory = PlcFactory.getInstance();
+    plcFactory = PlcFactory.getInstance();
 
-	plc = plcFactory.createPlc(plcClassName);
- 	plc.setId(id);
+    plc = plcFactory.createPlc(plcClassName);
+    plc.setId(id);
     }
 
     /*
@@ -67,52 +67,52 @@ public class JitterManager {
      * When there's no jitter, elapsed is RtpPacket.PACKET_PERIOD
      */
     private void updateJitter(int elapsed) {
-	if (elapsed < 0) {
-	    if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
-	        Logger.println(id + ":  bad elapsed! " + elapsed);
-	    }
-	    elapsed = 0;
-	    return;
-	}
+    if (elapsed < 0) {
+        if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
+            Logger.println(id + ":  bad elapsed! " + elapsed);
+        }
+        elapsed = 0;
+        return;
+    }
 
         if (Logger.logLevel == -19) {
-	    if (elapsed > this.elapsed + (2 * RtpPacket.PACKET_PERIOD)) {
-		Logger.println(id + ":  long elapsed " + elapsed);
-	    }
-	}
+        if (elapsed > this.elapsed + (2 * RtpPacket.PACKET_PERIOD)) {
+        Logger.println(id + ":  long elapsed " + elapsed);
+        }
+    }
 
-	this.elapsed = elapsed;
+    this.elapsed = elapsed;
 
-	if (elapsed >= packetArrivalDistribution.length) {
-	    elapsed = packetArrivalDistribution.length - 1;
-	}
+    if (elapsed >= packetArrivalDistribution.length) {
+        elapsed = packetArrivalDistribution.length - 1;
+    }
 
-	packetArrivalDistribution[elapsed]++;
-	
-	int jitter = elapsed - RtpPacket.PACKET_PERIOD;
+    packetArrivalDistribution[elapsed]++;
+    
+    int jitter = elapsed - RtpPacket.PACKET_PERIOD;
 
-	if (jitter > maxJitter) {
-	    maxJitter = jitter;
-	}
+    if (jitter > maxJitter) {
+        maxJitter = jitter;
+    }
 
-	if (Logger.logLevel == -20) {
-	    Logger.println(id + ":  " + "old jitter "
-		+ this.jitter + " new jitter " + jitter);
-	}
+    if (Logger.logLevel == -20) {
+        Logger.println(id + ":  " + "old jitter "
+        + this.jitter + " new jitter " + jitter);
+    }
 
-	if (jitter > this.jitter) {
-	    this.jitter = jitter;
-	} else {
-	    /*
-	     * Reduce jitter value slowly
-	     */
-	    int change = this.jitter - jitter;
-	    this.jitter = this.jitter - (change / 4);
+    if (jitter > this.jitter) {
+        this.jitter = jitter;
+    } else {
+        /*
+         * Reduce jitter value slowly
+         */
+        int change = this.jitter - jitter;
+        this.jitter = this.jitter - (change / 4);
 
-	    if (this.jitter < 0) {
-		this.jitter = 0;
-	    }
-	}
+        if (this.jitter < 0) {
+        this.jitter = 0;
+        }
+    }
     }
 
     /*
@@ -122,122 +122,122 @@ public class JitterManager {
      * at its correct place in the buffer based on its sequence number.
      */
     private int getJitterIndex() {
-	if (maxJitterBufferSize == 0) {
-	    return 0;
-	}
+    if (maxJitterBufferSize == 0) {
+        return 0;
+    }
 
-	int jitter = this.jitter;
+    int jitter = this.jitter;
 
-	jitter = (jitter + RtpPacket.PACKET_PERIOD - 1) / 
-	    RtpPacket.PACKET_PERIOD * RtpPacket.PACKET_PERIOD;
+    jitter = (jitter + RtpPacket.PACKET_PERIOD - 1) / 
+        RtpPacket.PACKET_PERIOD * RtpPacket.PACKET_PERIOD;
 
-	int packetListIndex = jitter / RtpPacket.PACKET_PERIOD;
+    int packetListIndex = jitter / RtpPacket.PACKET_PERIOD;
 
-	if (maxJitterBufferSize > 0 && Logger.logLevel >= Logger.LOG_MOREDETAIL) {
-	    Logger.println(id + ":  jitter " + jitter + " index " + packetListIndex);
-	}
+    if (maxJitterBufferSize > 0 && Logger.logLevel >= Logger.LOG_MOREDETAIL) {
+        Logger.println(id + ":  jitter " + jitter + " index " + packetListIndex);
+    }
 
-	if (packetListIndex < minJitterBufferSize) {
-	    return minJitterBufferSize;
-	} 
+    if (packetListIndex < minJitterBufferSize) {
+        return minJitterBufferSize;
+    } 
 
-	/*
-	 * Don't fill the jitter buffer with silence packets.
-	 */
-	if (packetListIndex > maxJitterBufferSize / 2) {
-	    packetListIndex = maxJitterBufferSize / 2;
-	}
+    /*
+     * Don't fill the jitter buffer with silence packets.
+     */
+    if (packetListIndex > maxJitterBufferSize / 2) {
+        packetListIndex = maxJitterBufferSize / 2;
+    }
 
-	return packetListIndex;
+    return packetListIndex;
     }
 
     public void setMinJitterBufferSize(int minJitterBufferSize) {
-	if (minJitterBufferSize <= 0) {
-	    this.minJitterBufferSize = 0;
-	    return;
-	}
+    if (minJitterBufferSize <= 0) {
+        this.minJitterBufferSize = 0;
+        return;
+    }
 
-	if (minJitterBufferSize > maxJitterBufferSize) {
-	    this.minJitterBufferSize = maxJitterBufferSize;
-	    return;
-	}
+    if (minJitterBufferSize > maxJitterBufferSize) {
+        this.minJitterBufferSize = maxJitterBufferSize;
+        return;
+    }
 
-	this.minJitterBufferSize = minJitterBufferSize;
+    this.minJitterBufferSize = minJitterBufferSize;
     }
 
     public int getMinJitterBufferSize() {
-	return minJitterBufferSize;
+    return minJitterBufferSize;
     }
 
     public void setMaxJitterBufferSize(int maxJitterBufferSize) {
-	if (maxJitterBufferSize <= 0) {
-	    Logger.println(id + " invalid maxJitterBufferSize "
-		+ maxJitterBufferSize + ".  Using default value "
-		+ " of " + DEFAULT_MAX_JITTER_BUFFER_SIZE);
+    if (maxJitterBufferSize <= 0) {
+        Logger.println(id + " invalid maxJitterBufferSize "
+        + maxJitterBufferSize + ".  Using default value "
+        + " of " + DEFAULT_MAX_JITTER_BUFFER_SIZE);
 
-	    maxJitterBufferSize = DEFAULT_MAX_JITTER_BUFFER_SIZE;
-	}
+        maxJitterBufferSize = DEFAULT_MAX_JITTER_BUFFER_SIZE;
+    }
 
-	if (maxJitterBufferSize < minJitterBufferSize) {
-	    this.maxJitterBufferSize = minJitterBufferSize;
-	    return;
-	}
+    if (maxJitterBufferSize < minJitterBufferSize) {
+        this.maxJitterBufferSize = minJitterBufferSize;
+        return;
+    }
 
-	this.maxJitterBufferSize = maxJitterBufferSize;
+    this.maxJitterBufferSize = maxJitterBufferSize;
     }
 
     public int getMaxJitterBufferSize() {
-	return maxJitterBufferSize;
+    return maxJitterBufferSize;
     }
 
     public void setPlcClassName(String plcClassName) {
-	if (this.plcClassName.equals(plcClassName)) {
-	    return;
-	}
+    if (this.plcClassName.equals(plcClassName)) {
+        return;
+    }
 
-	this.plcClassName = plcClassName;
+    this.plcClassName = plcClassName;
 
-	synchronized (this) {
-	    plc = plcFactory.createPlc(plcClassName);
-	    plc.setId(id);
-	}
+    synchronized (this) {
+        plc = plcFactory.createPlc(plcClassName);
+        plc.setId(id);
+    }
     }
 
     public String getPlcClassName() {
-	return plc.getClass().getCanonicalName();
+    return plc.getClass().getCanonicalName();
     }
 
     public void printStatistics() {
-	Logger.writeFile(id + ":  " + maxJitter + " maxJitter milliseconds");
-	Logger.writeFile(id + ":  " + insertedSilence 
-	    + " times jitter manager inserted silence");
-	Logger.writeFile(id + ":  " + outOfOrderPackets + " missing packets");
-	Logger.writeFile(id + ":  " + (outOfOrderPackets - failedToRecover)
-	    + " recovered missing packets");
-	Logger.writeFile(id + ":  " + oldTossed + " old packets tossed");
-	Logger.writeFile(id + ":  " + packetList.size() 
-	    + " packets in jitter buffer");
+    Logger.writeFile(id + ":  " + maxJitter + " maxJitter milliseconds");
+    Logger.writeFile(id + ":  " + insertedSilence 
+        + " times jitter manager inserted silence");
+    Logger.writeFile(id + ":  " + outOfOrderPackets + " missing packets");
+    Logger.writeFile(id + ":  " + (outOfOrderPackets - failedToRecover)
+        + " recovered missing packets");
+    Logger.writeFile(id + ":  " + oldTossed + " old packets tossed");
+    Logger.writeFile(id + ":  " + packetList.size() 
+        + " packets in jitter buffer");
 
-	Logger.writeFile(id + "");
+    Logger.writeFile(id + "");
 
-	Logger.writeFile(id + ":  " + "Packet receive distribution");
-	
-	Logger.writeFile(id + ":  " + "ms\tPackets");
-	    
-	for (int i = 0; i < packetArrivalDistribution.length; i++) {
-	    if (packetArrivalDistribution[i] != 0) {
-	        Logger.writeFile(id + ":  " + i + "\t" 
-		    + packetArrivalDistribution[i]);
-	    }
-	}
+    Logger.writeFile(id + ":  " + "Packet receive distribution");
+    
+    Logger.writeFile(id + ":  " + "ms\tPackets");
+        
+    for (int i = 0; i < packetArrivalDistribution.length; i++) {
+        if (packetArrivalDistribution[i] != 0) {
+            Logger.writeFile(id + ":  " + i + "\t" 
+            + packetArrivalDistribution[i]);
+        }
+    }
     }
 
     public int getNumberMissingPackets() {
-	return failedToRecover;
+    return failedToRecover;
     }
 
     public int getPacketListSize() {
-	return packetList.size();
+    return packetList.size();
     }
 
     private LinkedList packetList = new LinkedList();  // list of 20ms rcv bufs
@@ -271,137 +271,137 @@ public class JitterManager {
      * The number of inserted silence packets is returned.
      */
     public int insertPacket(short sequence, int elapsed) {
-	updateJitter(elapsed);
+    updateJitter(elapsed);
 
-	return insertPacket(sequence, (byte[]) null);
+    return insertPacket(sequence, (byte[]) null);
     }
 
     public int insertPacket(short sequence, byte[] data) {
-	return insertPacket(sequence, (Object) data);
+    return insertPacket(sequence, (Object) data);
     }
 
     public int insertPacket(short sequence, int[] data) {
-	return insertPacket(sequence, (Object) data);
+    return insertPacket(sequence, (Object) data);
     }
 
     private int insertPacket(short sequence, Object data) {
-	JitterObject jitterObject = new JitterObject(
-	    sequence, false, data);
+    JitterObject jitterObject = new JitterObject(
+        sequence, false, data);
 
-	/*
-	 * Shouldn't need to do this.  If elapsed is bigger
-	 * than the maxJitterBufferSize, then the jitter buffer
-	 * should be empty.
-	 * XXX
-	 */
-	if (maxJitterBufferSize > 0 &&
-		elapsed > maxJitterBufferSize * RtpPacket.PACKET_PERIOD) {
+    /*
+     * Shouldn't need to do this.  If elapsed is bigger
+     * than the maxJitterBufferSize, then the jitter buffer
+     * should be empty.
+     * XXX
+     */
+    if (maxJitterBufferSize > 0 &&
+        elapsed > maxJitterBufferSize * RtpPacket.PACKET_PERIOD) {
 
-	    if (packetList.size() > 0) {
-	        if (Logger.logLevel >= Logger.LOG_DETAILINFO || 
-			Logger.logLevel == -19) {
+        if (packetList.size() > 0) {
+            if (Logger.logLevel >= Logger.LOG_DETAILINFO || 
+            Logger.logLevel == -19) {
 
-		    Logger.println(id 
-		        + ":  clearing jitter buffer, no data in a long time, "
-		        + "packetList size " + packetList.size());
-	        }
+            Logger.println(id 
+                + ":  clearing jitter buffer, no data in a long time, "
+                + "packetList size " + packetList.size());
+            }
 
-	        packetList.clear();
-	    }
+            packetList.clear();
+        }
 
-	    plc.reset();
-	}
+        plc.reset();
+    }
 
-	if (maxJitterBufferSize > 0 && 
-		packetList.size() >= maxJitterBufferSize) {
+    if (maxJitterBufferSize > 0 && 
+        packetList.size() >= maxJitterBufferSize) {
 
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO ||
-		    Logger.logLevel == -19) {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO ||
+            Logger.logLevel == -19) {
 
-	        Logger.println(id + ": JitterBuffer full, clearing "
-		    + packetList.size() + " packets");
-	    }
+            Logger.println(id + ": JitterBuffer full, clearing "
+            + packetList.size() + " packets");
+        }
 
-	    packetList.clear();
-	    plc.reset();
-	}
+        packetList.clear();
+        plc.reset();
+    }
 
-	int silenceCount = 0;
+    int silenceCount = 0;
 
-	int size = packetList.size();
+    int size = packetList.size();
 
-	if (size == 0) {
-	    /*
-	     * Insert JitterObjects for silence.
-	     * Set firstSequence appropriately.
-	     */
-	    silenceCount = insertSilence(jitterObject);
-	} else if (size >= minJitterBufferSize) {
-	    /*
-	     * If we get a burst of packets, try to remove
-	     * the silence packets we inserted
-	     */
-	    removeSilence();
-	}
-
-	/*
-	 * Get the index in packetList where to place this packet.
+    if (size == 0) {
+        /*
+         * Insert JitterObjects for silence.
+         * Set firstSequence appropriately.
          */
-	short index = (short) (sequence - firstSequence);
+        silenceCount = insertSilence(jitterObject);
+    } else if (size >= minJitterBufferSize) {
+        /*
+         * If we get a burst of packets, try to remove
+         * the silence packets we inserted
+         */
+        removeSilence();
+    }
 
-	if (index >= 0) {
-	    if (index < packetList.size()) {
-		handleOldPacket(jitterObject, index);
-	    } else {
-		handleNewPacket(jitterObject, index);
-	    } 
-	} else {
-	    /*
-	     * We've already delivered packets after this one so we
-	     * have no choice but to toss it.
-	     */
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO ||
+    /*
+     * Get the index in packetList where to place this packet.
+         */
+    short index = (short) (sequence - firstSequence);
+
+    if (index >= 0) {
+        if (index < packetList.size()) {
+        handleOldPacket(jitterObject, index);
+        } else {
+        handleNewPacket(jitterObject, index);
+        } 
+    } else {
+        /*
+         * We've already delivered packets after this one so we
+         * have no choice but to toss it.
+         */
+        if (Logger.logLevel >= Logger.LOG_MOREINFO ||
                     Logger.logLevel == -19) {
 
-	        Logger.println(id + ":  tossing old packet "
-		    + (sequence & 0xffff) + " index " 
-		    + index + " firstSequence " + (firstSequence & 0xffff)
-		    + " packetList size " + packetList.size() + " elapsed " 
-		    + elapsed);
-	    }
+            Logger.println(id + ":  tossing old packet "
+            + (sequence & 0xffff) + " index " 
+            + index + " firstSequence " + (firstSequence & 0xffff)
+            + " packetList size " + packetList.size() + " elapsed " 
+            + elapsed);
+        }
 
-	    oldTossed++;
-	}
+        oldTossed++;
+    }
 
-	return silenceCount;
+    return silenceCount;
     }
 
     private int insertSilence(JitterObject jo) {
-	int jitterIndex = getJitterIndex();
+    int jitterIndex = getJitterIndex();
 
-	insertedSilence++;
+    insertedSilence++;
 
-	firstSequence = (short) (jo.sequence - (short) jitterIndex);
+    firstSequence = (short) (jo.sequence - (short) jitterIndex);
 
-	if (jitterIndex > 0) {
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO ||
+    if (jitterIndex > 0) {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO ||
                     Logger.logLevel == -19) {
 
-	        Logger.println(id + ":  empty list, inserting " 
-		    + jitterIndex + " silence packets, sequence "
-		    + (jo.sequence & 0xffff) + " firstSequence " 
-		    + (firstSequence & 0xffff) + ", elapsed " + elapsed);
-	    }
+            Logger.println(id + ":  empty list, inserting " 
+            + jitterIndex + " silence packets, sequence "
+            + (jo.sequence & 0xffff) + " firstSequence " 
+            + (firstSequence & 0xffff) + ", elapsed " + elapsed);
+        }
 
-	    for (int i = 0; i < jitterIndex; i++) {
-	        JitterObject silence = new JitterObject(
-		    firstSequence + i, false, null);
+        for (int i = 0; i < jitterIndex; i++) {
+            JitterObject silence = new JitterObject(
+            firstSequence + i, false, null);
 
-	        packetList.add(silence);
-	    }
-	}
+            packetList.add(silence);
+        }
+    }
 
-	return jitterIndex;
+    return jitterIndex;
     }
 
     /*
@@ -409,230 +409,230 @@ public class JitterManager {
      * place holder.
      */
     private void handleOldPacket(JitterObject jitterObject, int index) {
-	JitterObject jo = (JitterObject) packetList.get(index);
+    JitterObject jo = (JitterObject) packetList.get(index);
 
-	if (jo.isMissing) {
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println(id + ":  got missing packet " 
-		    + (jo.sequence & 0xffff)
-		    + " firstSequence " + (firstSequence & 0xffff)
-		    + " index " + index
-		    + " packetList size " + packetList.size());
-	    }
-	    //dumpList();
-	}
+    if (jo.isMissing) {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println(id + ":  got missing packet " 
+            + (jo.sequence & 0xffff)
+            + " firstSequence " + (firstSequence & 0xffff)
+            + " index " + index
+            + " packetList size " + packetList.size());
+        }
+        //dumpList();
+    }
 
-	if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
-	    Logger.println(id + ":  inserting " 
-		+ (jitterObject.sequence & 0xffff)
-		+ " at " + index + " size " + packetList.size()
-		+ " jitterObject:  " + jitterObject);
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
+        Logger.println(id + ":  inserting " 
+        + (jitterObject.sequence & 0xffff)
+        + " at " + index + " size " + packetList.size()
+        + " jitterObject:  " + jitterObject);
+    }
 
-	checkIndex(jitterObject.sequence, index);
-	packetList.set(index, jitterObject);
+    checkIndex(jitterObject.sequence, index);
+    packetList.set(index, jitterObject);
     }
 
     private void handleNewPacket(JitterObject jitterObject, int index) {
-	if (index > packetList.size()) {
-	    handleOutOfOrderPackets(jitterObject, index);
-	}
+    if (index > packetList.size()) {
+        handleOutOfOrderPackets(jitterObject, index);
+    }
 
-	if (Logger.logLevel >= Logger.LOG_MOREDETAIL ||
-	        Logger.logLevel == -20) {
+    if (Logger.logLevel >= Logger.LOG_MOREDETAIL ||
+            Logger.logLevel == -20) {
 
-	    Logger.println(id + ":  appending " 
-		+ " " + (jitterObject.sequence & 0xffff)
-		+ " at " + packetList.size()
-		+ " jitterObject:  " + jitterObject);
-	}
+        Logger.println(id + ":  appending " 
+        + " " + (jitterObject.sequence & 0xffff)
+        + " at " + packetList.size()
+        + " jitterObject:  " + jitterObject);
+    }
 
-	packetList.add(jitterObject);
+    packetList.add(jitterObject);
     }
 
     private void handleOutOfOrderPackets(JitterObject jo, int index) {
-	/*
-	 * One or more packets is missing.
-	 * Insert JitterObjects with data set to null to reserve slots in
-	 * case the missing packets arrive later.
-	 */
-	short expected = (short) (firstSequence + packetList.size());
+    /*
+     * One or more packets is missing.
+     * Insert JitterObjects with data set to null to reserve slots in
+     * case the missing packets arrive later.
+     */
+    short expected = (short) (firstSequence + packetList.size());
 
-	int missingPackets = (int) (jo.sequence - expected);
+    int missingPackets = (int) (jo.sequence - expected);
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println(id + ":  expected " 
-	        + (expected & 0xffff) + " got " 
-		+ (jo.sequence & 0xffff) + ", " 
-		+ missingPackets + " missing packets"
-		+ " inserting at index " + index
-		+ " first sequence " + (firstSequence & 0xffff)
-		+ " list size " + packetList.size()
-		+ " elapsed " + elapsed);
-	}
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println(id + ":  expected " 
+            + (expected & 0xffff) + " got " 
+        + (jo.sequence & 0xffff) + ", " 
+        + missingPackets + " missing packets"
+        + " inserting at index " + index
+        + " first sequence " + (firstSequence & 0xffff)
+        + " list size " + packetList.size()
+        + " elapsed " + elapsed);
+    }
 
-	outOfOrderPackets += missingPackets;
+    outOfOrderPackets += missingPackets;
 
-	// XXX if there are too many missing packets, reset and start over
-	if (missingPackets >= maxJitterBufferSize) {
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO ||
-		    Logger.logLevel == -19) {
+    // XXX if there are too many missing packets, reset and start over
+    if (missingPackets >= maxJitterBufferSize) {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO ||
+            Logger.logLevel == -19) {
 
-	        Logger.println(id + ":  resetting jitter buffer.  " 
-		   + " too many missing packets " + missingPackets);
-	    }
-	   
-	    packetList.clear();
-	    plc.reset();
+            Logger.println(id + ":  resetting jitter buffer.  " 
+           + " too many missing packets " + missingPackets);
+        }
+       
+        packetList.clear();
+        plc.reset();
 
-	    insertSilence(jo);
-	    return;
-	}
+        insertSilence(jo);
+        return;
+    }
 
-	Object data = null;
+    Object data = null;
 
-	try {
-	    JitterObject lastPacket = (JitterObject) packetList.getLast();
-	    data = lastPacket.data;
-	} catch (NoSuchElementException e) {
-	}
+    try {
+        JitterObject lastPacket = (JitterObject) packetList.getLast();
+        data = lastPacket.data;
+    } catch (NoSuchElementException e) {
+    }
 
-	for (int i = 0; i < missingPackets; i++) {
-	    JitterObject missing = new JitterObject(expected + i, true, data);
+    for (int i = 0; i < missingPackets; i++) {
+        JitterObject missing = new JitterObject(expected + i, true, data);
 
-	    packetList.add(missing);
-	}
+        packetList.add(missing);
+    }
     }
 
     private void dumpList() {
-	for (int i = 0; i < packetList.size(); i++) {
-	    JitterObject jo = (JitterObject) packetList.get(i);
+    for (int i = 0; i < packetList.size(); i++) {
+        JitterObject jo = (JitterObject) packetList.get(i);
 
-	    Logger.println(id + ":  " + ((firstSequence + i) & 0xffff) 
-		+ " " + jo);
+        Logger.println(id + ":  " + ((firstSequence + i) & 0xffff) 
+        + " " + jo);
         }
     }
 
     private void checkIndex(int sequence, int index) {
-	if (index >= packetList.size()) {
-	    return;
-	}
+    if (index >= packetList.size()) {
+        return;
+    }
 
-	JitterObject jo = (JitterObject) packetList.get(index);
+    JitterObject jo = (JitterObject) packetList.get(index);
 
-	if (jo.sequence != sequence) {
-	    Logger.println(id
-		+ ":  jitterManager overwriting wrong sequence!  index " + index
-		+ ", jo.sequence " + jo.sequence + " != " 
-		+ "sequence " + sequence + ", firstSequence " 
-		+ firstSequence
-		+ " jitterObject:  " + jo);
-	}
+    if (jo.sequence != sequence) {
+        Logger.println(id
+        + ":  jitterManager overwriting wrong sequence!  index " + index
+        + ", jo.sequence " + jo.sequence + " != " 
+        + "sequence " + sequence + ", firstSequence " 
+        + firstSequence
+        + " jitterObject:  " + jo);
+    }
 
-	if (jo.isMissing == false && jo.data != null) {
-	    Logger.println(id 
-		+ ":  jitterManager overwriting valid packet!  index " 
-		+ index + " sequence " + jo.sequence + " firstSequence " 
-		+ firstSequence + " jitterObject:  " + jo);
-	}
+    if (jo.isMissing == false && jo.data != null) {
+        Logger.println(id 
+        + ":  jitterManager overwriting valid packet!  index " 
+        + index + " sequence " + jo.sequence + " firstSequence " 
+        + firstSequence + " jitterObject:  " + jo);
+    }
     }
 
     private void removeSilence() {
-	if (packetList.size() == 0) {
-	    return;
-	}
+    if (packetList.size() == 0) {
+        return;
+    }
 
-	JitterObject jo = (JitterObject) packetList.get(0);
+    JitterObject jo = (JitterObject) packetList.get(0);
 
-	if (jo.isMissing || jo.data != null) {
-	    return;
-	}
+    if (jo.isMissing || jo.data != null) {
+        return;
+    }
 
-	try {
-	    getFirstPacket();	// remove silence packet
+    try {
+        getFirstPacket();	// remove silence packet
 
-	    if (Logger.logLevel == -19) {
-		Logger.println(id + ":  removed silence packet "
-		    + "size " + packetList.size());
-	    }
-	} catch (NoSuchElementException e) {
-	}
+        if (Logger.logLevel == -19) {
+        Logger.println(id + ":  removed silence packet "
+            + "size " + packetList.size());
+        }
+    } catch (NoSuchElementException e) {
+    }
     }
 
     public JitterObject getFirstPacket() throws NoSuchElementException {
-	JitterObject jo;
+    JitterObject jo;
 
-	while (true) {
-	    jo = (JitterObject) packetList.removeFirst();
+    while (true) {
+        jo = (JitterObject) packetList.removeFirst();
 
-	    if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
-	        Logger.println(id + ":  getting " 
-		    + (firstSequence & 0xffff) + " jitterObject:  " + jo);
-	        Logger.println("");
-	    }
+        if (Logger.logLevel >= Logger.LOG_DETAILINFO) {
+            Logger.println(id + ":  getting " 
+            + (firstSequence & 0xffff) + " jitterObject:  " + jo);
+            Logger.println("");
+        }
 
-	    if (jo.sequence != firstSequence) {
-	        Logger.println(id + ":  jo seq " + jo.sequence + " != first seq " 
-		    + firstSequence);
+        if (jo.sequence != firstSequence) {
+            Logger.println(id + ":  jo seq " + jo.sequence + " != first seq " 
+            + firstSequence);
 
-	        dumpList();
-	    }
+            dumpList();
+        }
 
-	    firstSequence++;
+        firstSequence++;
 
-	    if (jo.isMissing) {
-	        /*
-	         * There are missing packets we didn't get.
-	         * Try to repair the damage.
-	         */
-	        failedToRecover++;
+        if (jo.isMissing) {
+            /*
+             * There are missing packets we didn't get.
+             * Try to repair the damage.
+             */
+            failedToRecover++;
 
-		if (Logger.logLevel >= Logger.LOG_INFO) {
-		    Logger.println(id + ":  Failed to recover packet "
-			+ (jo.sequence & 0xffff));
-		}
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println(id + ":  Failed to recover packet "
+            + (jo.sequence & 0xffff));
+        }
 
-	        jo = plc.repair(jo);
+            jo = plc.repair(jo);
 
-		if (jo != null) {
-		    /*
-		     * Update data field in missing packets after this one.
-		     */
-		    for (int i = 0; i < packetList.size(); i++) {
-			JitterObject jitterObject = (JitterObject)
-			    packetList.get(i);
+        if (jo != null) {
+            /*
+             * Update data field in missing packets after this one.
+             */
+            for (int i = 0; i < packetList.size(); i++) {
+            JitterObject jitterObject = (JitterObject)
+                packetList.get(i);
 
-			if (jitterObject.isMissing == false) {
-			    break;
-			}
+            if (jitterObject.isMissing == false) {
+                break;
+            }
 
-			jitterObject.data = jo.data;
-		    }
-		    break;
-		}
-	    } else {
-	        if (jo.data != null) {
-	            plc.addPacket(jo);
-	        }
-		break;
-	    }
-	}
+            jitterObject.data = jo.data;
+            }
+            break;
+        }
+        } else {
+            if (jo.data != null) {
+                plc.addPacket(jo);
+            }
+        break;
+        }
+    }
 
-	return jo;
+    return jo;
     }
 
     public int getJitterBufferSize() {
-	synchronized (this) {
-	    return packetList.size();
-	}
+    synchronized (this) {
+        return packetList.size();
+    }
     }
 
     public void flush() {
-	try {
-	    while (getFirstPacket() != null) {
-	    }
-	} catch (NoSuchElementException e) {
-	}
+    try {
+        while (getFirstPacket() != null) {
+        }
+    } catch (NoSuchElementException e) {
+    }
     }
 
 }

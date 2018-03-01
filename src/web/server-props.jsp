@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -19,6 +17,8 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.JMXManager,
@@ -26,9 +26,10 @@
                  java.util.HashMap"
 %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
@@ -76,8 +77,25 @@
     XMPPServer server = webManager.getXMPPServer();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         if (serverName == null) {
+            errors.put("serverName", "");
+        }
+        try {
+            JID.domainprep(serverName);
+        } catch (Exception e) {
             errors.put("serverName", "");
         }
         if (port < 1) {
@@ -119,7 +137,7 @@
         if (errors.size() == 0) {
             boolean needRestart = false;
             if (!serverName.equals(server.getServerInfo().getXMPPDomain())) {
-                server.getServerInfo().setXMPPDomain(serverName);
+                server.getServerInfo().setHostname(serverName);
                 needRestart = true;
             }
             connectionManager.setClientListenerPort(port);
@@ -149,7 +167,7 @@
             return;
         }
     } else {
-        serverName = server.getServerInfo().getXMPPDomain();
+        serverName = server.getServerInfo().getHostname();
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();
@@ -206,6 +224,7 @@
 <%  } %>
 
 <form action="server-props.jsp" name="editform" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -222,7 +241,7 @@
             <fmt:message key="server.props.name" />
         </td>
         <td class="c2">
-            <input type="text" name="serverName" value="<%= (serverName != null) ? serverName : "" %>"
+            <input type="text" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
              size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>

@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultStatsViewer implements StatsViewer {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultStatsViewer.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(DefaultStatsViewer.class);
+    
     private StatsEngine engine;
 
     /**

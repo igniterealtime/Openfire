@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +16,6 @@
 package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -34,12 +29,12 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -71,15 +66,15 @@ import org.xmpp.packet.Packet;
  * @author Gaston Dombiak
  */
 public class LocalIncomingServerSession extends LocalServerSession implements IncomingServerSession {
-	
-	private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
 
     /**
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
      */
-    private Set<String> validatedDomains = new HashSet<String>();
+    private Set<String> validatedDomains = new HashSet<>();
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -113,7 +108,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
+        String toDomain = xpp.getAttributeValue("", "to");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+
+        if (toDomain == null) {
+            toDomain = serverName;
+        }
         
         try {
             // Get the stream ID for the new session
@@ -128,7 +128,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(serverName).append("\"");
+            openingStream.append(" from=\"").append(toDomain).append("\"");
             if (fromDomain != null) {
                 openingStream.append(" to=\"").append(fromDomain).append("\"");
             }
@@ -147,58 +147,52 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (serverVersion[0] >= 1) {        	
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
 
-	            // Indicate the TLS policy to use for this connection
-	            Connection.TLSPolicy tlsPolicy =
-	                    ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
-	                            Connection.TLSPolicy.required;
-	            boolean hasCertificates = false;
-	            try {
-	                hasCertificates = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
-	            }
-	            catch (Exception e) {
-	                Log.error(e.getMessage(), e);
-	            }
-	            if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
-	                Log.error("Server session rejected. TLS is required but no certificates " +
-	                        "were created.");
-	                return null;
-	            }
-	            connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
+                // Indicate the TLS policy to use for this connection
+                Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
+                boolean hasCertificates = false;
+                try {
+                    hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }
+                if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
+                    Log.error("Server session rejected. TLS is required but no certificates " +
+                            "were created.");
+                    return null;
+                }
+                connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
             }
 
             // Indicate the compression policy to use for this connection
-            String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS,
-                    Connection.CompressionPolicy.disabled.toString());
-            Connection.CompressionPolicy compressionPolicy =
-                    Connection.CompressionPolicy.valueOf(policyName);
-            connection.setCompressionPolicy(compressionPolicy);
+            connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
 
             StringBuilder sb = new StringBuilder();
             
             if (serverVersion[0] >= 1) {        	
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
-            	// Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
+                // Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
                 sb.append("<stream:features>");
 
-	            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
-	                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-	                if (!ServerDialback.isEnabled()) {
-	                    // Server dialback is disabled so TLS is required
-	                    sb.append("<required/>");
-	                }
-	                sb.append("</starttls>");
-	            }
-	            
-	            // Include available SASL Mechanisms
-	            sb.append(SASLAuthentication.getSASLMechanisms(session));
-	            
-	            if (ServerDialback.isEnabled()) {
-	                // Also offer server dialback (when TLS is not required). Server dialback may be offered
-	                // after TLS has been negotiated and a self-signed certificate is being used
-	                sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
-	            }
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
+                    sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                    if (!ServerDialback.isEnabled()) {
+                        // Server dialback is disabled so TLS is required
+                        sb.append("<required/>");
+                    }
+                    sb.append("</starttls>");
+                }
+                
+                // Include available SASL Mechanisms
+                sb.append(SASLAuthentication.getSASLMechanisms(session));
+                
+                if (ServerDialback.isEnabled()) {
+                    // Also offer server dialback (when TLS is not required). Server dialback may be offered
+                    // after TLS has been negotiated and a self-signed certificate is being used
+                    sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+                }
 
-	            sb.append("</stream:features>");
+                sb.append("</stream:features>");
             }
             
             connection.deliverRawText(sb.toString());
@@ -225,13 +219,13 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     @Override
-	boolean canProcess(Packet packet) {
+    boolean canProcess(Packet packet) {
         return true;
     }
 
 
     @Override
-	void deliver(Packet packet) throws UnauthorizedException {
+    void deliver(Packet packet) throws UnauthorizedException {
         // Do nothing
     }
 
@@ -329,6 +323,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @return the domain or subdomain of the local server used by the remote server
      *         when validating the session.
      */
+    @Override
     public String getLocalDomain() {
         return localDomain;
     }
@@ -357,7 +352,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder();
         
         // Include Stream Compression Mechanism
@@ -370,15 +365,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         boolean usingSelfSigned;
         final Certificate[] chain = conn.getLocalCertificates();
         if (chain == null || chain.length == 0) {
-        	usingSelfSigned = true;
+            usingSelfSigned = true;
         } else {
-        	try {
-                final KeyStore keyStore = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-				usingSelfSigned = CertificateManager.isSelfSignedCertificate(keyStore, (X509Certificate) chain[0]);
-			} catch (KeyStoreException ex) {
-				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
-				usingSelfSigned = true;
-			}
+            usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
         }
         
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,5 +32,5 @@ public interface UserNameProvider {
      * @param entity JID of the entity to return its name.
      * @return the name of the entity specified by the following JID.
      */
-    abstract String getUserName(JID entity);
+    String getUserName( JID entity );
 }

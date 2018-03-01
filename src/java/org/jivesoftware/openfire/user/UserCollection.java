@@ -1,7 +1,4 @@
-/**
- * $Revision: 691 $
- * $Date: 2004-12-13 15:06:54 -0300 (Mon, 13 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,12 +39,12 @@ public class UserCollection extends AbstractCollection<User> {
     }
 
     @Override
-	public Iterator<User> iterator() {
+    public Iterator<User> iterator() {
         return new UserIterator();
     }
 
     @Override
-	public int size() {
+    public int size() {
         return elements.length;
     }
 
@@ -56,6 +53,7 @@ public class UserCollection extends AbstractCollection<User> {
         private int currentIndex = -1;
         private User nextElement = null;
 
+        @Override
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
             // to iterate through.
@@ -73,6 +71,7 @@ public class UserCollection extends AbstractCollection<User> {
             return true;
         }
 
+        @Override
         public User next() throws java.util.NoSuchElementException {
             User element;
             if (nextElement != null) {
@@ -88,6 +87,7 @@ public class UserCollection extends AbstractCollection<User> {
             return element;
         }
 
+        @Override
         public void remove() throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3054 $
- * $Date: 2005-11-10 21:08:33 -0300 (Thu, 10 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +21,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -37,6 +34,8 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedOutputStream;
@@ -48,6 +47,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 
 import javax.swing.BorderFactory;
@@ -61,6 +61,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -69,6 +70,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
 /**
  * Graphical launcher for Openfire.
  *
@@ -131,7 +133,7 @@ public class Launcher {
 
         frame = new DroppableFrame() {
             @Override
-			public void fileDropped(File file) {
+            public void fileDropped(File file) {
                 String fileName = file.getName();
                 if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                     installPlugin(file);
@@ -220,6 +222,7 @@ public class Launcher {
         stopMenuItem.setEnabled(false);
 
         ActionListener actionListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if ("Start".equals(e.getActionCommand())) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -239,7 +242,7 @@ public class Launcher {
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
                         @Override
-						public void run() {
+                        public void run() {
                             try {
                                 sleep(8000);
                             }
@@ -273,24 +276,12 @@ public class Launcher {
                 }
                 else if ("Launch Admin".equals(e.getActionCommand())) {
                     launchBrowser();
-                }
-                else if ("Quit".equals(e.getActionCommand())) {
+                } else if ("Quit".equals(e.getActionCommand())) {
                     stopApplication();
                     System.exit(0);
                 }
                 else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
-                    // Hide/Unhide the window if the user clicked in the system tray icon or
-                    // selected the menu option
-                    if (frame.isVisible()) {
-                        frame.setVisible(false);
-                        frame.setState(Frame.ICONIFIED);
-                        showMenuItem.setLabel("Show");
-                    }
-                    else {
-                        frame.setVisible(true);
-                        frame.setState(Frame.NORMAL);
-                        showMenuItem.setLabel("Hide");
-                    }
+                    toggleVisibility(showMenuItem);
                 }
             }
         };
@@ -312,20 +303,48 @@ public class Launcher {
         trayIcon = new TrayIcon(offIcon.getImage(), appName, menu);
         trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(actionListener);
+        trayIcon.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Left click
+                if (e.getButton() == 1) {
+                    toggleVisibility(showMenuItem);
+                }
+            }
 
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
         if (tray != null) {
             tray.add(trayIcon);
         }
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
-			public void windowClosing(WindowEvent e) {
+            public void windowClosing(WindowEvent e) {
                 stopApplication();
                 System.exit(0);
             }
 
             @Override
-			public void windowIconified(WindowEvent e) {
+            public void windowIconified(WindowEvent e) {
                 // Make the window disappear when minimized
                 frame.setVisible(false);
                 showMenuItem.setLabel("Show");
@@ -347,7 +366,7 @@ public class Launcher {
         final ImageIcon icon = new ImageIcon(getClass().getClassLoader().getResource("splash2.gif"));
         pane = new DroppableTextPane() {
             @Override
-			public void paintComponent(Graphics g) {
+            public void paintComponent(Graphics g) {
                 final Dimension size = pane.getSize();
 
                 int x = (size.width - icon.getIconWidth()) / 2;
@@ -363,7 +382,7 @@ public class Launcher {
             }
 
             @Override
-			public void fileDropped(File file) {
+            public void fileDropped(File file) {
                 String fileName = file.getName();
                 if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                     installPlugin(file);
@@ -389,6 +408,19 @@ public class Launcher {
      */
     public static void main(String[] args) throws AWTException {
         new Launcher();
+    }
+
+    private void toggleVisibility(MenuItem showMenuItem) {
+        // Hide/Unhide the window if the user clicked in the system tray icon or
+        // selected the menu option
+        if (frame.isVisible()) {
+            frame.setVisible(false);
+            showMenuItem.setLabel("Show");
+        } else {
+            frame.setVisible(true);
+            frame.setState(Frame.NORMAL);
+            showMenuItem.setLabel("Hide");
+        }
     }
 
     private synchronized void startApplication() {
@@ -423,9 +455,9 @@ public class Launcher {
             }
 
             final SimpleAttributeSet styles = new SimpleAttributeSet();
-            SwingWorker inputWorker = new SwingWorker() {
+            SwingWorker<String, Void> inputWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+                public String doInBackground() {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getInputStream()) {
@@ -448,12 +480,12 @@ public class Launcher {
                     return "ok";
                 }
             };
-            inputWorker.start();
+            inputWorker.execute();
 
 
-            SwingWorker errorWorker = new SwingWorker() {
+            SwingWorker<String, Void> errorWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+                public String doInBackground() {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getErrorStream()) {
@@ -475,7 +507,7 @@ public class Launcher {
                     return "ok";
                 }
             };
-            errorWorker.start();
+            errorWorker.execute();
 
             if (freshStart) {
                 try {
@@ -499,31 +531,32 @@ public class Launcher {
     private synchronized void stopApplication() {
         if (openfired != null) {
             try {
-            	// attempt to perform a graceful shutdown by sending
-            	// an "exit" command to the process (via stdin)
+                // attempt to perform a graceful shutdown by sending
+                // an "exit" command to the process (via stdin)
                 try (Writer out = new OutputStreamWriter(
                         new BufferedOutputStream(openfired.getOutputStream()))) {
                     out.write("exit\n");
                 }
                 final Thread waiting = Thread.currentThread();
-            	Thread waiter = new Thread() {
-            		public void run() {
+                Thread waiter = new Thread() {
+                    @Override
+                    public void run() {
                         try {
-                        	// wait for the openfire server to stop
-                        	openfired.waitFor();
-                        	waiting.interrupt();
+                            // wait for the openfire server to stop
+                            openfired.waitFor();
+                            waiting.interrupt();
                         }
                         catch (InterruptedException ie) { /* ignore */ }
-            		}
-            	};
-            	waiter.start();
-            	try {
-            		// wait for a maximum of ten seconds
-            		Thread.sleep(10000);
-            		waiter.interrupt();
-            		openfired.destroy();
-            	}
-            	catch (InterruptedException ie) { /* ignore */ }
+                    }
+                };
+                waiter.start();
+                try {
+                    // wait for a maximum of ten seconds
+                    Thread.sleep(10000);
+                    waiter.interrupt();
+                    openfired.destroy();
+                }
+                catch (InterruptedException ie) { /* ignore */ }
                 cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {
@@ -553,10 +586,9 @@ public class Launcher {
                 securePort = securePortElement.getTextContent();
             }
             if ("-1".equals(port)) {
-                BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
-            }
-            else {
-                BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+                Desktop.getDesktop().browse(URI.create("https://127.0.0.1:" + securePort + "/index.html"));
+            } else {
+                Desktop.getDesktop().browse(URI.create("http://127.0.0.1:" + port + "/index.html"));
             }
         }
         catch (Exception e) {
@@ -577,9 +609,9 @@ public class Launcher {
         dialog.pack();
         dialog.setSize(225, 55);
 
-        final SwingWorker installerThread = new SwingWorker() {
+        final SwingWorker<File, Void> installerThread = new SwingWorker<File, Void>() {
             @Override
-			public Object construct() {
+            public File doInBackground() {
                 File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
@@ -603,13 +635,13 @@ public class Launcher {
             }
 
             @Override
-			public void finished() {
+            public void done() {
                 dialog.setVisible(false);
             }
         };
 
         // Start installation
-        installerThread.start();
+        installerThread.execute();
 
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);

@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +20,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
@@ -45,8 +41,13 @@ import org.xmpp.packet.Presence;
  */
 public class ClientStanzaHandler extends StanzaHandler {
 
+    public ClientStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public ClientStanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        super(router, serverName, connection);
+        super(router, connection);
     }
 
     /**
@@ -57,27 +58,27 @@ public class ClientStanzaHandler extends StanzaHandler {
      * @return always false.
      */
     @Override
-	boolean processUnknowPacket(Element doc) {
+    boolean processUnknowPacket(Element doc) {
         return false;
     }
 
     @Override
-	String getNamespace() {
+    String getNamespace() {
         return "jabber:client";
     }
 
     @Override
-	boolean validateHost() {
+    boolean validateHost() {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
     }
 
     @Override
-	boolean validateJIDs() {
+    boolean validateJIDs() {
         return true;
     }
 
     @Override
-	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if ("jabber:client".equals(namespace)) {
             // The connected client is a regular client so create a ClientSession
@@ -88,34 +89,28 @@ public class ClientStanzaHandler extends StanzaHandler {
     }
 
     @Override
-	protected void processIQ(IQ packet) throws UnauthorizedException {
+    protected void processIQ(IQ packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processIQ(packet);
     }
 
     @Override
-	protected void processPresence(Presence packet) throws UnauthorizedException {
+    protected void processPresence(Presence packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processPresence(packet);
     }
 
     @Override
-	protected void processMessage(Message packet) throws UnauthorizedException {
+    protected void processMessage(Message packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processMessage(packet);
     }
 
     @Override
-	void startTLS() throws Exception {
-        Connection.ClientAuth policy;
-        try {
-            policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY, "disabled"));
-        } catch (IllegalArgumentException e) {
-            policy = Connection.ClientAuth.disabled;
-        }
-        connection.startTLS(false, null, policy);
+    void startTLS() throws Exception {
+        connection.startTLS(false);
     }
 }

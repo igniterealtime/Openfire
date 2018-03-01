@@ -1,7 +1,4 @@
-/**
- * $Revision: 691 $
- * $Date: 2004-12-13 15:06:54 -0300 (Mon, 13 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,12 +47,12 @@ public class GroupCollection extends AbstractCollection<Group> {
     }
 
     @Override
-	public Iterator<Group> iterator() {
+    public Iterator<Group> iterator() {
         return new GroupIterator();
     }
 
     @Override
-	public int size() {
+    public int size() {
         return elements.length;
     }
 
@@ -64,6 +61,7 @@ public class GroupCollection extends AbstractCollection<Group> {
         private int currentIndex = -1;
         private Group nextElement = null;
 
+        @Override
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
             // to iterate through.
@@ -81,6 +79,7 @@ public class GroupCollection extends AbstractCollection<Group> {
             return true;
         }
 
+        @Override
         public Group next() throws java.util.NoSuchElementException {
             Group element;
             if (nextElement != null) {
@@ -96,6 +95,7 @@ public class GroupCollection extends AbstractCollection<Group> {
             return element;
         }
 
+        @Override
         public void remove() throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }

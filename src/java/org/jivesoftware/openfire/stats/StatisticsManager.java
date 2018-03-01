@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +29,9 @@ public class StatisticsManager {
         return instance;
     }
 
-    private final Map<String, Statistic> statistics = new ConcurrentHashMap<String, Statistic>();
-    private final Map<String, List<String>> multiStatGroups = new ConcurrentHashMap<String, List<String>>();
-    private final Map<String, String> keyToGroupMap = new ConcurrentHashMap<String, String>();
+    private final Map<String, Statistic> statistics = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> multiStatGroups = new ConcurrentHashMap<>();
+    private final Map<String, String> keyToGroupMap = new ConcurrentHashMap<>();
 
     private StatisticsManager() {
         
@@ -65,7 +61,7 @@ public class StatisticsManager {
         addStatistic(statKey, statistic);
         List<String> group = multiStatGroups.get(groupName);
         if(group == null) {
-            group = new ArrayList<String>();
+            group = new ArrayList<>();
             multiStatGroups.put(groupName, group);
         }
         group.add(statKey);

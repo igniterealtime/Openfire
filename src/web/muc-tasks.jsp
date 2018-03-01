@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -24,8 +22,8 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -51,6 +49,19 @@
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (kickSettings || logSettings) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            kickSettings = false;
+            logSettings = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Handle an update of the kicking task settings
     if (kickSettings) {
         if (!kickEnabled) {
@@ -169,7 +180,7 @@
     <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
     <td width="99%" class="jive-error-text">
 
-		<% if (errors.get("idletime") != null) { %>
+        <% if (errors.get("idletime") != null) { %>
                 <fmt:message key="muc.tasks.valid_idel_minutes" />
         <% }
            else if (errors.get("logfreq") != null) { %>
@@ -187,40 +198,41 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.tasks.user_setting" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0">
-		<tbody>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="kickEnabled" value="false" id="rb01"
-					 <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-					<label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
-				</td>
-			</tr>
-			<tr valign="middle">
-				<td width="1%" nowrap>
-					<input type="radio" name="kickEnabled" value="true" id="rb02"
-					 <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
-				</td>
-				<td width="99%">
-						<label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
-						 <input type="text" name="idletime" size="5" maxlength="5"
-							 onclick="this.form.kickEnabled[1].checked=true;"
-							 value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
-						 <fmt:message key="global.minutes" />.
-				</td>
-			</tr>
-		</tbody>
-		</table>
+        <fmt:message key="muc.tasks.user_setting" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+        <tbody>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="kickEnabled" value="false" id="rb01"
+                     <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap>
+                    <input type="radio" name="kickEnabled" value="true" id="rb02"
+                     <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                        <label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
+                         <input type="text" name="idletime" size="5" maxlength="5"
+                             onclick="this.form.kickEnabled[1].checked=true;"
+                             value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
+                         <fmt:message key="global.minutes" />.
+                </td>
+            </tr>
+        </tbody>
+        </table>
         <br/>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-	</div>
+    </div>
 </form>
 <!-- END 'Idle User Settings' -->
 
@@ -228,34 +240,35 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
-		<fmt:message key="muc.tasks.conversation.logging" />
-	</div>
-	<div class="jive-contentBox">
-		<table cellpadding="3" cellspacing="0" border="0" >
-		<tr valign="middle">
-			<td width="1%" nowrap class="c1">
-				<fmt:message key="muc.tasks.flush" />
-			</td>
-			<td width="99%">
-				<input type="text" name="logfreq" size="15" maxlength="50"
-				 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
-			</td>
-		</tr>
-		<tr valign="middle">
-			<td width="1%" nowrap class="c1">
-				<fmt:message key="muc.tasks.batch" />
-			</td>
-			<td width="99%">
-				<input type="text" name="logbatchsize" size="15" maxlength="50"
-				 value="<%= mucService.getLogConversationBatchSize() %>">
-			</td>
-		</tr>
-		</table>
+        <fmt:message key="muc.tasks.conversation.logging" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0" >
+        <tr valign="middle">
+            <td width="1%" nowrap class="c1">
+                <fmt:message key="muc.tasks.flush" />
+            </td>
+            <td width="99%">
+                <input type="text" name="logfreq" size="15" maxlength="50"
+                 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap class="c1">
+                <fmt:message key="muc.tasks.batch" />
+            </td>
+            <td width="99%">
+                <input type="text" name="logbatchsize" size="15" maxlength="50"
+                 value="<%= mucService.getLogConversationBatchSize() %>">
+            </td>
+        </tr>
+        </table>
         <br/>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-	</div>
+    </div>
 </form>
 <!-- END 'Conversation Logging' -->
 

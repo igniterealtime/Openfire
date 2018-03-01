@@ -1,8 +1,4 @@
-/**
- * $RCSfile: DNSUtil.java,v $
- * $Revision: 2867 $
- * $Date: 2005-09-22 03:40:04 -0300 (Thu, 22 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.eclipse.jetty.util.MultiMap;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +27,10 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import java.io.Serializable;
 import java.util.*;
 
 /**
- * Utilty class to perform DNS lookups for XMPP services.
+ * Utility class to perform DNS lookups for XMPP services.
  *
  * @author Matt Tucker
  */
@@ -54,7 +48,7 @@ public class DNSUtil {
 
     static {
         try {
-            Hashtable<String,String> env = new Hashtable<String,String>();
+            Hashtable<String,String> env = new Hashtable<>();
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             context = new InitialDirContext(env);
 
@@ -66,30 +60,6 @@ public class DNSUtil {
         catch (Exception e) {
             logger.error("Can't initialize DNS context!", e);
         }
-    }
-
-    /**
-     * Returns the host name and port that the specified XMPP server can be
-     * reached at for server-to-server communication. A DNS lookup for a SRV
-     * record in the form "_xmpp-server._tcp.example.com" is attempted, according
-     * to section 14.4 of RFC 3920. If that lookup fails, a lookup in the older form
-     * of "_jabber._tcp.example.com" is attempted since servers that implement an
-     * older version of the protocol may be listed using that notation. If that
-     * lookup fails as well, it's assumed that the XMPP server lives at the
-     * host resolved by a DNS lookup at the specified domain on the specified default port.<p>
-     *
-     * As an example, a lookup for "example.com" may return "im.example.com:5269".
-     *
-     * @param domain the domain.
-     * @param defaultPort default port to return if the DNS look up fails.
-     * @return a HostAddress, which encompasses the hostname and port that the XMPP
-     *      server can be reached at for the specified domain.
-     * @deprecated replaced with support for multiple srv records, see 
-     *      {@link #resolveXMPPDomain(String, int)}
-     */
-    @Deprecated
-    public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
-        return resolveXMPPDomain(domain, defaultPort).get(0);
     }
 
     /**
@@ -111,9 +81,12 @@ public class DNSUtil {
      */
     public static List<HostAddress> resolveXMPPDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
-        List<HostAddress> results = new LinkedList<HostAddress>();
+        List<HostAddress> results = new LinkedList<>();
         if (dnsOverride != null) {
             HostAddress hostAddress = dnsOverride.get(domain);
+            if (hostAddress == null) {
+                hostAddress = dnsOverride.get("*");
+            }
             if (hostAddress != null) {
                 results.add(hostAddress);
                 return results;
@@ -121,9 +94,9 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        results.addAll(srvLookup("_xmpp-server._tcp." + domain));
+        results.addAll(srvLookup("xmpp-server", "tcp", domain ) );
         if (results.isEmpty()) {
-            results.addAll(srvLookup("_jabber._tcp." + domain));
+            results.addAll(srvLookup( "jabber", "tcp", domain ) );
         }
 
         // Use domain and default port as fallback.
@@ -175,7 +148,7 @@ public class DNSUtil {
     }
 
     private static Map<String, HostAddress> decode(String encodedValue) {
-        Map<String, HostAddress> answer = new HashMap<String, HostAddress>();
+        Map<String, HostAddress> answer = new HashMap<>();
         StringTokenizer st = new StringTokenizer(encodedValue, "{},:");
         while (st.hasMoreElements()) {
             String key = st.nextToken();
@@ -184,10 +157,47 @@ public class DNSUtil {
         return answer;
     }
 
-    private static List<? extends HostAddress> srvLookup(String lookup) {
-        if (lookup == null) {
+    /**
+     * Performs a DNS SRV lookup. Does not take into account any DNS overrides configured in this class.
+     *
+     * The results returned by this method are ordered by priority (ascending), and order of equal priority entries is
+     * randomized by weight, as defined in the DNS SRV specification.
+     *
+     * @param service the symbolic name of the desired service (cannot be null).
+     * @param proto the transport protocol of the desired service; this is usually either TCP or UDP (cannot be null).
+     * @param name the domain name for which this record is valid (cannot be null).
+     * @return An ordered of results (possibly empty, never null).
+     */
+    public static List<WeightedHostAddress> srvLookup(String service, String proto, String name) {
+        if (service == null || proto == null || name == null) {
             throw new NullPointerException("DNS lookup can't be null");
         }
+
+        if ( !service.startsWith( "_" ) )
+        {
+            service = "_" + service;
+        }
+        if ( !service.endsWith( "." ) )
+        {
+            service = service + ".";
+        }
+
+        if ( !proto.startsWith( "_" ) )
+        {
+            proto = "_" + proto;
+        }
+        if ( !proto.endsWith( "." ) )
+        {
+            proto = proto+ ".";
+        }
+
+        if ( !name.endsWith( "." ) ) {
+            name = name + ".";
+        }
+
+        // _service._proto.name.
+        final String lookup = (service + proto + name).toLowerCase();
+
         try {
             Attributes dnsLookup =
                     context.getAttributes(lookup, new String[]{"SRV"});
@@ -287,15 +297,15 @@ public class DNSUtil {
     }
 
     public static List<WeightedHostAddress> prioritize(WeightedHostAddress[] records) {
-        final List<WeightedHostAddress> result = new LinkedList<WeightedHostAddress>();
+        final List<WeightedHostAddress> result = new LinkedList<>();
 
         // sort by priority (ascending)
-        SortedMap<Integer, Set<WeightedHostAddress>> byPriority = new TreeMap<Integer, Set<WeightedHostAddress>>();
+        SortedMap<Integer, Set<WeightedHostAddress>> byPriority = new TreeMap<>();
         for(final WeightedHostAddress record : records) {
             if (byPriority.containsKey(record.getPriority())) {
                 byPriority.get(record.getPriority()).add(record);
             } else {
-                final Set<WeightedHostAddress> set = new HashSet<WeightedHostAddress>();
+                final Set<WeightedHostAddress> set = new HashSet<>();
                 set.add(record);
                 byPriority.put(record.getPriority(), set);
             }
@@ -304,7 +314,7 @@ public class DNSUtil {
         // now, randomize each priority set by weight.
         for(Map.Entry<Integer, Set<WeightedHostAddress>> weights : byPriority.entrySet()) {
 
-            List<WeightedHostAddress> zeroWeights = new LinkedList<WeightedHostAddress>();
+            List<WeightedHostAddress> zeroWeights = new LinkedList<>();
 
             int totalWeight = 0;
             final Iterator<WeightedHostAddress> i = weights.getValue().iterator();

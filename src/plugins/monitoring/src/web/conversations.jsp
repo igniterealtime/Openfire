@@ -10,8 +10,8 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Get handle on the Monitoring plugin
@@ -30,30 +30,22 @@
         <meta name="pageID" content="active-conversations"/>
         <script src="/js/prototype.js" type="text/javascript"></script>
         <script src="/js/scriptaculous.js" type="text/javascript"></script>
-        <script src="/plugins/monitoring/dwr/engine.js" type="text/javascript" ></script>
-        <script src="/plugins/monitoring/dwr/util.js" type="text/javascript" ></script>
-        <script src="/plugins/monitoring/dwr/interface/conversations.js" type="text/javascript"></script>
     </head>
     <body>
 
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 <script type="text/javascript">
-DWREngine.setErrorHandler(handleError);
-window.onerror = handleError;
-function handleError() {
-    // swallow errors: probably caused by the server being down
-}
-
 var peConversations = new PeriodicalExecuter(conversationUpdater, 10);
 
 function conversationUpdater() {
-    try {
-        conversations.getConversations(updateConversations, true);
-    } catch(err) {
-        // swallow errors
-    }
+    new Ajax.Request('/plugins/monitoring/api/conversations', {
+        method: 'get',
+        onSuccess: function(transport) {
+            updateConversations(transport.responseText.evalJSON());
+        }
+    });
 }
 
 function updateConversations(data) {
@@ -126,6 +118,7 @@ function updateConversations(data) {
     $('activeConversations').innerHTML = counter;
 }
 
+//# sourceURL=conversations.jsp
 </script>
 
 <!-- <a href="#" onclick="conversationUpdater(); return false;">click me</a> -->
@@ -174,10 +167,11 @@ function updateConversations(data) {
                         <%= StringUtils.escapeHTMLTags(jid.toBareJID()) %><br/>
                     <% } %>
                 <% } %>
-            <% } else { %>
+            <% } else {
+                pageContext.setAttribute( "roomBareJID", URLEncoder.encode(conversation.getRoom().toBareJID(), "UTF-8") ); %>
                 <fmt:message key="archive.group_conversation">
-                    <fmt:param value="<%= "<a href='../../muc-room-occupants.jsp?roomJID=" + URLEncoder.encode(conversation.getRoom().toBareJID(), "UTF-8") + "'>" %>" />
-                    <fmt:param value="<%= "</a>" %>" />
+                    <fmt:param value="<a href=\"../../muc-room-occupants.jsp?roomJID=${roomBareJID}\">" />
+                    <fmt:param value="</a>" />
                 </fmt:message>
             <% } %>
         </td>

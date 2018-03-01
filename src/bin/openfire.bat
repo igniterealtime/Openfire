@@ -1,14 +1,11 @@
 @echo off
 
 REM #
-REM # $RCSfile$
-REM # $Revision: 1102 $
-REM # $Date: 2005-03-07 22:36:48 -0300 (Mon, 07 Mar 2005) $
 REM #
 
 if "%JAVA_HOME%" == "" goto javaerror
 if not exist "%JAVA_HOME%\bin\java.exe" goto javaerror
-set OPENFIRE_HOME=%CD%\..
+set OPENFIRE_HOME=%~dp0..
 goto run
 
 :javaerror
@@ -19,11 +16,11 @@ goto end
 
 :run
 if "%1" == "-debug" goto debug
-start "Openfire" "%JAVA_HOME%\bin\java" -server -DopenfireHome="%OPENFIRE_HOME%" -jar ..\lib\startup.jar
+start "Openfire" "%JAVA_HOME%\bin\java" -server -DopenfireHome="%OPENFIRE_HOME%" -Dopenfire.lib.dir="%OPENFIRE_HOME%\lib" -jar "%OPENFIRE_HOME%\lib\startup.jar"
 goto end
 
 :debug
-start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -DopenfireHome="%OPENFIRE_HOME%" -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar ..\lib\startup.jar
+start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -DopenfireHome="%OPENFIRE_HOME%" -Dopenfire.lib.dir="%OPENFIRE_HOME%\lib" -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar "%OPENFIRE_HOME%\lib\startup.jar"
 goto end
 :end
 

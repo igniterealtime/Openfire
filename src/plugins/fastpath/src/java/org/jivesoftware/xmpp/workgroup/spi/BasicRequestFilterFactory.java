@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +22,7 @@ public class BasicRequestFilterFactory extends RequestFilterFactory {
     RequestFilter filter = new BasicRequestFilter();
 
     @Override
-	public RequestFilter getFilter() {
+    public RequestFilter getFilter() {
         return filter;
     }
 }

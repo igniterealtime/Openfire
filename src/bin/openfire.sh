@@ -1,9 +1,6 @@
 #!/bin/sh
 
 #
-# $RCSfile$
-# $Revision: 1194 $
-# $Date: 2005-03-30 13:39:54 -0300 (Wed, 30 Mar 2005) $
 #
 
 # tries to determine arguments to launch openfire
@@ -113,6 +110,19 @@ if [ ! -x "$JAVACMD" ] ; then
   	echo "  We cannot execute $JAVACMD"
   	exit 1
 fi
+
+for arguments in "$@"
+do
+case $arguments in
+    -debug)
+    JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    ;;
+    *)
+	# unknown option
+    ;;
+esac
+done
+
 
 if [ -z "$LOCALCLASSPATH" ] ; then
 	LOCALCLASSPATH=$OPENFIRE_LIB/startup.jar

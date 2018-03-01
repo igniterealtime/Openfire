@@ -1,7 +1,4 @@
-/**
- * $Revision $
- * $Date $
- *
+/*
  * Copyright (C) 2005-2010 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,88 +120,88 @@ public class OpenfireLoginService extends AbstractLifeCycle implements LoginServ
 
     public UserIdentity login(String userName, Object credential)
     {
-		UserIdentity identity = null;
+        UserIdentity identity = null;
 
-		if (identities.containsKey(userName))
-		{
-			identity = identities.get(userName);
+        if (identities.containsKey(userName))
+        {
+            identity = identities.get(userName);
 
-			if (authTokens.containsKey(userName) == false)
-			{
-				Log.debug("UserIdentity login " + userName + " ");
+            if (authTokens.containsKey(userName) == false)
+            {
+                Log.debug("UserIdentity login " + userName + " ");
 
-				try {
+                try {
 
-					if (AdminManager.getInstance().isUserAdmin(userName, true))
-					{
-						AuthToken authToken = AuthFactory.authenticate( userName, (String) credential);
-						authTokens.put(userName, authToken);
+                    if (AdminManager.getInstance().isUserAdmin(userName, true))
+                    {
+                        AuthToken authToken = AuthFactory.authenticate( userName, (String) credential);
+                        authTokens.put(userName, authToken);
 
-					} else {
-						Log.error( "access denied, not admin user " + userName );
-						return null;
-					}
+                    } else {
+                        Log.error( "access denied, not admin user " + userName );
+                        return null;
+                    }
 
-				} catch ( UnauthorizedException e ) {
-					Log.error( "access denied, bad password " + userName );
-					return null;
+                } catch ( UnauthorizedException e ) {
+                    Log.error( "access denied, bad password " + userName );
+                    return null;
 
-				} catch ( Exception e ) {
-					Log.error( "access denied " + userName );
-					return null;
-				}
-			}
+                } catch ( Exception e ) {
+                    Log.error( "access denied " + userName );
+                    return null;
+                }
+            }
 
-		} else {
+        } else {
 
-			Log.debug("UserIdentity login " + userName + " ");
+            Log.debug("UserIdentity login " + userName + " ");
 
-			try {
-				userManager.getUser(userName);
-			}
+            try {
+                userManager.getUser(userName);
+            }
 
-			catch (UserNotFoundException e) {
-				//Log.error( "user not found " + userName, e );
-				return null;
-			}
+            catch (UserNotFoundException e) {
+                //Log.error( "user not found " + userName, e );
+                return null;
+            }
 
-			try {
-				if (AdminManager.getInstance().isUserAdmin(userName, true))
-				{
-					AuthToken authToken = AuthFactory.authenticate( userName, (String) credential);
-					authTokens.put(userName, authToken);
+            try {
+                if (AdminManager.getInstance().isUserAdmin(userName, true))
+                {
+                    AuthToken authToken = AuthFactory.authenticate( userName, (String) credential);
+                    authTokens.put(userName, authToken);
 
-				} else {
-					Log.error( "access denied, not admin user " + userName );
-					return null;
-				}
+                } else {
+                    Log.error( "access denied, not admin user " + userName );
+                    return null;
+                }
 
-			} catch ( UnauthorizedException e ) {
-				Log.error( "access denied, bad password " + userName );
-				return null;
+            } catch ( UnauthorizedException e ) {
+                Log.error( "access denied, bad password " + userName );
+                return null;
 
-			} catch ( Exception e ) {
-				Log.error( "access denied " + userName );
-				return null;
-			}
+            } catch ( Exception e ) {
+                Log.error( "access denied " + userName );
+                return null;
+            }
 
-			Principal userPrincipal = new KnownUser(userName, credential);
-			Subject subject = new Subject();
-			subject.getPrincipals().add(userPrincipal);
-			subject.getPrivateCredentials().add(credential);
-			subject.getPrincipals().add(new RolePrincipal("jmxweb"));
-			subject.setReadOnly();
+            Principal userPrincipal = new KnownUser(userName, credential);
+            Subject subject = new Subject();
+            subject.getPrincipals().add(userPrincipal);
+            subject.getPrivateCredentials().add(credential);
+            subject.getPrincipals().add(new RolePrincipal("jmxweb"));
+            subject.setReadOnly();
 
-			identity = _identityService.newUserIdentity(subject, userPrincipal, new String[] {"jmxweb"});
-			identities.put(userName, identity);
-		}
+            identity = _identityService.newUserIdentity(subject, userPrincipal, new String[] {"jmxweb"});
+            identities.put(userName, identity);
+        }
 
-		return identity;
+        return identity;
     }
 
     public boolean validate(UserIdentity user)
     {
-		return true;
+        return true;
     }
 
     public static class KnownUser implements UserPrincipal, Serializable

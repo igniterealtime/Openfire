@@ -1,4 +1,3 @@
-/** $Id$ */
 // Title: Fadomatic
 // Version: 1.2
 // Homepage: http://chimpen.com/fadomatic

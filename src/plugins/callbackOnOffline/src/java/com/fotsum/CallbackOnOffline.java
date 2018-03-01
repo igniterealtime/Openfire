@@ -20,6 +20,7 @@ import org.xmpp.packet.Packet;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -30,7 +31,14 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
 
     private static final Logger Log = LoggerFactory.getLogger(CallbackOnOffline.class);
 
+    private static final String PROPERTY_DEBUG = "plugin.callback_on_offline.debug";
+    private static final String PROPERTY_URL = "plugin.callback_on_offline.url";
+    private static final String PROPERTY_TOKEN = "plugin.callback_on_offline.token";
+    private static final String PROPERTY_SEND_BODY = "plugin.callback_on_offline.send_body";
+
     private boolean debug;
+    private boolean sendBody;
+
     private String url;
     private String token;
     private InterceptorManager interceptorManager;
@@ -39,18 +47,21 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
     private Client client;
 
     public void initializePlugin(PluginManager pManager, File pluginDirectory) {
-        debug = JiveGlobals.getBooleanProperty("plugin.callback_on_offline.debug", false);
+        debug = JiveGlobals.getBooleanProperty(PROPERTY_DEBUG, false);
+        sendBody = JiveGlobals.getBooleanProperty(PROPERTY_SEND_BODY, true);
+
+        url = getProperty(PROPERTY_URL, "http://localhost:8080/user/offline/callback/url");
+        token = getProperty(PROPERTY_TOKEN, UUID.randomUUID().toString());
+
         if (debug) {
             Log.debug("initialize CallbackOnOffline plugin. Start.");
+            Log.debug("Loaded properties: \nurl={}, \ntoken={}, \nsendBody={}", new Object[]{url, token, sendBody});
         }
 
         interceptorManager = InterceptorManager.getInstance();
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         userManager = XMPPServer.getInstance().getUserManager();
         client = ClientBuilder.newClient();
-
-        url = getProperty("plugin.callback_on_offline.url", "http://localhost:8080/user/offline/callback/url");
-        token = getProperty("plugin.callback_on_offline.token", UUID.randomUUID().toString());
 
         // register with interceptor manager
         interceptorManager.addInterceptor(this);
@@ -87,33 +98,37 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
                 && packet.getTo() != null) {
 
             Message msg = (Message) packet;
+            JID to = packet.getTo();
 
             if (msg.getType() != Message.Type.chat) {
                 return;
             }
 
             try {
-                JID to = packet.getTo();
                 User userTo = userManager.getUser(to.getNode());
                 boolean available = presenceManager.isAvailable(userTo);
 
                 if (debug) {
-                    Log.debug("intercepted message from {} to {}, recipient is available {}", packet.getFrom().toBareJID(), to.toBareJID(), available);
+                    Log.debug("intercepted message from {} to {}, recipient is available {}", new Object[]{packet.getFrom().toBareJID(), to.toBareJID(), available});
                 }
 
                 if (!available) {
                     JID from = packet.getFrom();
+                    String body = sendBody ? msg.getBody() : null;
 
-                    WebTarget target = client.target(url)
-                            .queryParam("token", token)
-                            .queryParam("from", from.toBareJID())
-                            .queryParam("to", to.toBareJID());
+                    WebTarget target = client.target(url);
 
                     if (debug) {
                         Log.debug("sending request to url='{}'", target);
                     }
 
-                    Future<Response> responseFuture = target.request().async().get();
+                    MessageData data = new MessageData(token, from.toBareJID(), to.toBareJID(), body);
+
+                    Future<Response> responseFuture = target
+                            .request()
+                            .async()
+                            .post(Entity.json(data));
+
                     if (debug) {
                         try {
                             Response response = responseFuture.get();
@@ -124,6 +139,9 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
                     }
                 }
             } catch (UserNotFoundException e) {
+                if (debug) {
+                    Log.debug("can't find user with name: " + to.getNode());
+                }
             }
         }
     }

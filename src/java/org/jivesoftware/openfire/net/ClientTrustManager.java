@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,16 +69,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ClientTrustManager implements X509TrustManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);
 
     /**
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-    /**
-     * Holds the domain of the remote server we are trying to connect
-     */
-    private String server;
 
     /**
      * Holds the CRL's to validate certs
@@ -107,18 +103,16 @@ public class ClientTrustManager implements X509TrustManager {
 
         //Note: A reference of the Collection is used in the CertStore, so we can add CRL's 
         // after creating the CertStore.
-        crls = new ArrayList<X509CRL>();
+        crls = new ArrayList<>();
         CollectionCertStoreParameters params = new CollectionCertStoreParameters(crls);
         
         try {
             crlStore = CertStore.getInstance("Collection", params);
         }
-        catch (InvalidAlgorithmParameterException ex) {
-            Log.warn("ClientTrustManager: ",ex);
-        } catch (NoSuchAlgorithmException ex) {
+        catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
             Log.warn("ClientTrustManager: ",ex);
         }
-          
+
         loadCRL();
        
     }
@@ -174,12 +168,13 @@ public class ClientTrustManager implements X509TrustManager {
         }
     }
 
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         Log.debug("ClientTrustManager: checkClientTrusted(x509Certificates,"+string+") called");
 
         loadCRL();
-        ArrayList<X509Certificate> certs = new ArrayList<X509Certificate>();
+        ArrayList<X509Certificate> certs = new ArrayList<>();
         for(int i = 0; i < x509Certificates.length ; i++) {
             certs.add(x509Certificates[i]);
         }
@@ -310,15 +305,10 @@ public class ClientTrustManager implements X509TrustManager {
                     Log.debug("ClientTrustManager: Trusted CA: "+trustedCert.getSubjectDN());
                 }
             }
-            catch(CertPathBuilderException e) {
+            catch(CertPathBuilderException | CertPathValidatorException e) {
                 Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("certificate path failed: "+e.getMessage());
-            }
-            catch(CertPathValidatorException e) {
-                Log.debug("ClientTrustManager:",e);
-                throw new CertificateException("certificate path failed: "+e.getMessage());
-            }
-            catch(Exception e) {
+            } catch(Exception e) {
                 Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("unexpected error: "+e.getMessage());
             }
@@ -346,6 +336,7 @@ public class ClientTrustManager implements X509TrustManager {
      * @param string the key exchange algorithm used.
      * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
 
@@ -353,6 +344,7 @@ public class ClientTrustManager implements X509TrustManager {
 
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.accept-selfsigned", false)) {
             // Answer an empty list since we accept any issuer

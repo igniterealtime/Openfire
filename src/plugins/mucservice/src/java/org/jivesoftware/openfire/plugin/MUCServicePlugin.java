@@ -1,7 +1,4 @@
-/**
- * $Revision: 1722 $
- * $Date: 2005-07-28 15:19:16 -0700 (Thu, 28 Jul 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,28 +26,28 @@ import org.jivesoftware.openfire.container.PluginManager;
  */
 public class MUCServicePlugin implements Plugin {
 
-	/**
-	 * Instantiates a new mUC service plugin.
-	 */
-	public MUCServicePlugin() {
-	}
+    /**
+     * Instantiates a new mUC service plugin.
+     */
+    public MUCServicePlugin() {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.jivesoftware.openfire.container.Plugin#initializePlugin(org.jivesoftware
-	 * .openfire.container.PluginManager, java.io.File)
-	 */
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.jivesoftware.openfire.container.Plugin#initializePlugin(org.jivesoftware
+     * .openfire.container.PluginManager, java.io.File)
+     */
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.openfire.container.Plugin#destroyPlugin()
-	 */
-	public void destroyPlugin() {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.openfire.container.Plugin#destroyPlugin()
+     */
+    public void destroyPlugin() {
+    }
 
 }

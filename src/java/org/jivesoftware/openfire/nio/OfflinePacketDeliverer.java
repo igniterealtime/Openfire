@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2015 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,17 +37,17 @@ import org.xmpp.packet.Presence;
  */
 public class OfflinePacketDeliverer implements PacketDeliverer {
 
-	private static final Logger Log = LoggerFactory.getLogger(OfflinePacketDeliverer.class);
+    private static final Logger Log = LoggerFactory.getLogger(OfflinePacketDeliverer.class);
 
-	private OfflineMessageStrategy messageStrategy;
+    private OfflineMessageStrategy messageStrategy;
 
     public OfflinePacketDeliverer() {
         this.messageStrategy = XMPPServer.getInstance().getOfflineMessageStrategy();
     }
 
     @Override
-	public void deliver(Packet packet) throws UnauthorizedException, PacketException {
-    	
+    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
+        
         if (packet instanceof Message) {
             messageStrategy.storeOffline((Message) packet);
         }
@@ -58,6 +58,6 @@ public class OfflinePacketDeliverer implements PacketDeliverer {
             // IQ packets are logged before being dropped
             Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" + packet.toString());
         }
-	}
+    }
 
 }

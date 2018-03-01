@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -91,21 +88,21 @@ public class StringUtils {
             return "";
         }
         StringBuilder out = new StringBuilder();                // Used to hold the output.
-    	int codePoint;                                          // Used to reference the current character.
-		int i=0;
-    	while(i<s.length()) {
-    		codePoint = s.codePointAt(i);                       // This is the unicode code of the character.
-			if ((codePoint == 0x9) ||          				    // Consider testing larger ranges first to improve speed. 
-					(codePoint == 0xA) ||
-					(codePoint == 0xD) ||
-					((codePoint >= 0x20) && (codePoint <= 0xD7FF)) ||
-					((codePoint >= 0xE000) && (codePoint <= 0xFFFD)) ||
-					((codePoint >= 0x10000) && (codePoint <= 0x10FFFF))) {
-				out.append(Character.toChars(codePoint));
-			}				
-			i+= Character.charCount(codePoint);                 // Increment with the number of code units(java chars) needed to represent a Unicode char.  
-    	}
-    	return out.toString();
+        int codePoint;                                          // Used to reference the current character.
+        int i=0;
+        while(i<s.length()) {
+            codePoint = s.codePointAt(i);                       // This is the unicode code of the character.
+            if ((codePoint == 0x9) ||          				    // Consider testing larger ranges first to improve speed. 
+                    (codePoint == 0xA) ||
+                    (codePoint == 0xD) ||
+                    ((codePoint >= 0x20) && (codePoint <= 0xD7FF)) ||
+                    ((codePoint >= 0xE000) && (codePoint <= 0xFFFD)) ||
+                    ((codePoint >= 0x10000) && (codePoint <= 0x10FFFF))) {
+                out.append(Character.toChars(codePoint));
+            }				
+            i+= Character.charCount(codePoint);                 // Increment with the number of code units(java chars) needed to represent a Unicode char.  
+        }
+        return out.toString();
     } 
 
 }

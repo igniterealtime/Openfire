@@ -1,8 +1,4 @@
-/**
- * $RCSfile: SocketPacketWriteHandler.java,v $
- * $Revision: 3137 $
- * $Date: 2005-12-01 02:11:05 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,7 @@ import org.xmpp.packet.Presence;
  */
 public class SocketPacketWriteHandler implements ChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
 
     private XMPPServer server;
     private RoutingTable routingTable;
@@ -51,6 +47,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
         this.server = XMPPServer.getInstance();
     }
 
+     @Override
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();

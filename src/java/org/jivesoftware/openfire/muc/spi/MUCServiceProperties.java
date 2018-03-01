@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MUCServiceProperties implements Map<String, String> {
 
-	private static final Logger Log = LoggerFactory.getLogger(MUCServiceProperties.class);
+    private static final Logger Log = LoggerFactory.getLogger(MUCServiceProperties.class);
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM ofMucServiceProp WHERE serviceID=?";
     private static final String INSERT_PROPERTY = "INSERT INTO ofMucServiceProp(serviceID, name, propValue) VALUES(?,?,?)";
@@ -60,7 +56,7 @@ public class MUCServiceProperties implements Map<String, String> {
     public MUCServiceProperties(String subdomain) {
         this.subdomain = subdomain;
         if (properties == null) {
-            properties = new ConcurrentHashMap<String, String>();
+            properties = new ConcurrentHashMap<>();
         }
         else {
             properties.clear();
@@ -75,44 +71,54 @@ public class MUCServiceProperties implements Map<String, String> {
         }
     }
 
+    @Override
     public int size() {
         return properties.size();
     }
 
+    @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isEmpty() {
         return properties.isEmpty();
     }
 
+    @Override
     public boolean containsKey(Object key) {
         return properties.containsKey(key);
     }
 
+    @Override
     public boolean containsValue(Object value) {
         return properties.containsValue(value);
     }
 
+    @Override
     public Collection<String> values() {
         return Collections.unmodifiableCollection(properties.values());
     }
 
+    @Override
     public void putAll(Map<? extends String, ? extends String> t) {
         for (Map.Entry<? extends String, ? extends String> entry : t.entrySet() ) {
             put(entry.getKey(), entry.getValue());
         }
     }
 
+    @Override
     public Set<Map.Entry<String, String>> entrySet() {
         return Collections.unmodifiableSet(properties.entrySet());
     }
 
+    @Override
     public Set<String> keySet() {
         return Collections.unmodifiableSet(properties.keySet());
     }
 
+    @Override
     public String get(Object key) {
         return properties.get(key);
     }
@@ -128,7 +134,7 @@ public class MUCServiceProperties implements Map<String, String> {
      * @return all child property names for the given parent.
      */
     public Collection<String> getChildrenNames(String parentKey) {
-        Collection<String> results = new HashSet<String>();
+        Collection<String> results = new HashSet<>();
         for (String key : properties.keySet()) {
             if (key.startsWith(parentKey + ".")) {
                 if (key.equals(parentKey)) {
@@ -158,6 +164,7 @@ public class MUCServiceProperties implements Map<String, String> {
         return properties.keySet();
     }
 
+    @Override
     public String remove(Object key) {
         String value;
         synchronized (this) {
@@ -197,6 +204,7 @@ public class MUCServiceProperties implements Map<String, String> {
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_deleted, params);
     }
 
+    @Override
     public String put(String key, String value) {
         if (key == null || value == null) {
             throw new NullPointerException("Key or value cannot be null. Key=" +
@@ -221,7 +229,7 @@ public class MUCServiceProperties implements Map<String, String> {
         }
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_set, params);
 
@@ -235,7 +243,7 @@ public class MUCServiceProperties implements Map<String, String> {
         properties.put(key, value);
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_set, params);
     }

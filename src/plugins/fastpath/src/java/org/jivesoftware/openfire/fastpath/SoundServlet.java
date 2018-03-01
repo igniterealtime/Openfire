@@ -1,8 +1,4 @@
-/**
- * $RCSfile: ,v $
- * $Revision: 1.0 $
- * $Date: 2005/05/25 04:20:03 $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,22 +37,22 @@ import org.xmpp.packet.JID;
  */
 public class SoundServlet extends HttpServlet {
 
-	private static final Logger Log = LoggerFactory.getLogger(SoundServlet.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SoundServlet.class);
+    
     @Override
-	public void init(ServletConfig servletConfig) throws ServletException {
+    public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
     }
 
     @Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         doGet(request, response);
     }
 
     @Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String workgroupName = request.getParameter("workgroup");

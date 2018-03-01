@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,7 +87,7 @@ public class EmailListener {
         }
         Thread thread = new Thread("Email Listener Thread") {
             @Override
-			public void run() {
+            public void run() {
                 // Open the email folder and keep it
                 folder = openFolder(getHost(), getPort(), isSSLEnabled(), getUser(), getPassword(), getFolder());
                 if (folder != null) {
@@ -120,7 +116,7 @@ public class EmailListener {
             // Add messageCountListener to listen for new messages
             messageListener = new MessageCountAdapter() {
                 @Override
-				public void messagesAdded(MessageCountEvent ev) {
+                public void messagesAdded(MessageCountEvent ev) {
                     Message[] msgs = ev.getMessages();
 
                     // Send new messages to specified users

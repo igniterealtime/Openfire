@@ -1,8 +1,4 @@
-/**
- * $RCSfile: PresenceSubscribeHandler.java,v $
- * $Revision: 3136 $
- * $Date: 2005-12-01 02:06:16 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,7 +87,7 @@ import org.xmpp.packet.Presence;
  */
 public class PresenceSubscribeHandler extends BasicModule implements ChannelHandler<Presence> {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceSubscribeHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceSubscribeHandler.class);
 
     private RoutingTable routingTable;
     private XMPPServer localServer;
@@ -105,41 +101,42 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         super("Presence subscription handler");
     }
 
+    @Override
     public void process(Presence presence) throws PacketException {
-    	if (presence == null) {
-    		throw new IllegalArgumentException("Argument 'presence' cannot be null.");
-    	}
+        if (presence == null) {
+            throw new IllegalArgumentException("Argument 'presence' cannot be null.");
+        }
 
         final Presence.Type type = presence.getType();
 
-		if (type != Presence.Type.subscribe 
-				&& type != Presence.Type.unsubscribe
-				&& type != Presence.Type.subscribed 
-				&& type != Presence.Type.unsubscribed) {
-			throw new IllegalArgumentException("Packet processed by PresenceSubscribeHandler is "
-					+ "not of a subscription-related type, but: " + type);
-		}
+        if (type != Presence.Type.subscribe 
+                && type != Presence.Type.unsubscribe
+                && type != Presence.Type.subscribed 
+                && type != Presence.Type.unsubscribed) {
+            throw new IllegalArgumentException("Packet processed by PresenceSubscribeHandler is "
+                    + "not of a subscription-related type, but: " + type);
+        }
 
-		// RFC-6121 paragraph 3: "When a server processes or generates an outbound presence stanza
-		// of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp
-		// the outgoing presence stanza with the bare JID <localpart@domainpart> of the sending entity,
-		// not the full JID <localpart@domainpart/resourcepart>."
-		presence.setFrom(presence.getFrom().toBareJID());
-		
-		// RFC-6121 paragraph 3.1.3: "Before processing the inbound presence subscription request, the
-		// contact's server SHOULD check the syntax of the JID contained in the 'to' attribute. If the
-		// JID is of the form <contact@domainpart/resourcepart> instead of <contact@domainpart>, the
-		// contact's server SHOULD treat it as if the request had been directed to the contact's bare
-		// JID and modify the 'to' address accordingly.
-		if (presence.getTo() != null) {
-			presence.setTo(presence.getTo().toBareJID());
-		}
+        // RFC-6121 paragraph 3: "When a server processes or generates an outbound presence stanza
+        // of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp
+        // the outgoing presence stanza with the bare JID <localpart@domainpart> of the sending entity,
+        // not the full JID <localpart@domainpart/resourcepart>."
+        presence.setFrom(presence.getFrom().toBareJID());
+        
+        // RFC-6121 paragraph 3.1.3: "Before processing the inbound presence subscription request, the
+        // contact's server SHOULD check the syntax of the JID contained in the 'to' attribute. If the
+        // JID is of the form <contact@domainpart/resourcepart> instead of <contact@domainpart>, the
+        // contact's server SHOULD treat it as if the request had been directed to the contact's bare
+        // JID and modify the 'to' address accordingly.
+        if (presence.getTo() != null) {
+            presence.setTo(presence.getTo().toBareJID());
+        }
 
         final JID senderJID = presence.getFrom();
         final JID recipientJID = presence.getTo();
 
         try {            
-			// Reject presence subscription requests sent to the local server itself.
+            // Reject presence subscription requests sent to the local server itself.
             if (recipientJID == null || recipientJID.toString().equals(serverName)) {
                 if (type == Presence.Type.subscribe) {
                     Presence reply = new Presence();
@@ -169,8 +166,8 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // If the user is already subscribed to the *local* user's presence then do not 
                     // forward the subscription request. Also, do not send an auto-reply on behalf
                     // of the user. This presence stanza is the user's server know that it MUST no 
-                	// longer send notification of the subscription state change to the user. 
-                	// See http://tools.ietf.org/html/rfc3921#section-7 and/or OF-38 
+                    // longer send notification of the subscription state change to the user. 
+                    // See http://tools.ietf.org/html/rfc3921#section-7 and/or OF-38 
                     if (type == Presence.Type.subscribe && recipientRoster != null && !recipientSubChanged) {
                         try {
                             RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID)
@@ -181,9 +178,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                         }
                         catch (UserNotFoundException e) {
                             // Weird case: Roster item does not exist. Should never happen
-                        	Log.error("User does not exist while trying to update roster item. " +
-                        			"This should never happen (this indicates a programming " +
-                        			"logic error). Processing stanza: " + presence.toString(), e);
+                            Log.error("User does not exist while trying to update roster item. " +
+                                    "This should never happen (this indicates a programming " +
+                                    "logic error). Processing stanza: " + presence.toString(), e);
                         }
                     }
 
@@ -209,8 +206,17 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                         // Send the presence of the local user to the remote user. The remote user
                         // subscribed to the presence of the local user and the local user accepted
                         JID prober = localServer.isLocal(recipientJID) ? recipientJID.asBareJID() : recipientJID;
-                        presenceManager.probePresence(prober, senderJID);
-                        PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
+                        if (presenceManager.canProbePresence(prober, senderJID.getNode())){
+                            presenceManager.probePresence(prober, senderJID);
+                            PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
+                        }
+                        else {
+                            Presence nonProbablePresence = new Presence();
+                            nonProbablePresence.setStatus("unavailable");
+                            nonProbablePresence.setFrom(senderJID);
+                            nonProbablePresence.setTo(recipientJID);
+                            presenceManager.handleProbe(nonProbablePresence);
+                        }
                     }
                 }
 
@@ -327,16 +333,16 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * </ul>
      */
     private static Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>> stateTable =
-            new Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>>();
+            new Hashtable<>();
 
     static {
         Hashtable<Presence.Type, Change> subrTable;
         Hashtable<Presence.Type, Change> subsTable;
         Hashtable<String,Map<Presence.Type, Change>> sr;
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_NONE, sr);
@@ -365,9 +371,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if item requested subscription and we're denying request
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, null, null));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_FROM, sr);
@@ -400,9 +406,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if owner requested subscription and item is denying request
         subrTable.put(Presence.Type.unsubscribed, new Change(null, null, RosterItem.ASK_NONE));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_TO, sr);
@@ -432,9 +438,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Setting subscription to none
         subrTable.put(Presence.Type.unsubscribed, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_NONE));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_BOTH, sr);
@@ -471,20 +477,24 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * <p>Indicate a state change.</p>
      * <p>Use nulls to indicate fields that should not be changed.</p>
      */
-    private static class Change {
+    public static class Change {
         public Change(RosterItem.RecvType recv, RosterItem.SubType sub, RosterItem.AskType ask) {
             newRecv = recv;
             newSub = sub;
             newAsk = ask;
         }
 
-        public RosterItem.RecvType newRecv;
-        public RosterItem.SubType newSub;
-        public RosterItem.AskType newAsk;
+        public RosterItem.RecvType getNewRecv() { return newRecv; }
+        public RosterItem.SubType  getNewSub()  { return newSub; }
+        public RosterItem.AskType  getNewAsk()  { return newAsk; }
+        
+        private RosterItem.RecvType newRecv;
+        private RosterItem.SubType newSub;
+        private RosterItem.AskType newAsk;
     }
 
     /**
-     * Determine and call the update method based on the item's subscription state.
+     * Determine the changes to apply to the item, according to its subscription state.
      * The method also turns the action and sending status into an integer code
      * for easier processing (switch statements).
      * <p/>
@@ -494,27 +504,40 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * where X is subscribe, subscribed, etc.
      * </p>
      *
+     * @param  itemSubType The item to be updated
+     * @param  action      The new state change request
+     * @param  isSending   True if the roster owner of the item is sending the new state change request
+     * @return Change      changes to apply to the item 
+     */
+    public static Change getStateChange(RosterItem.SubType itemSubType, Presence.Type action, boolean isSending) {
+        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(itemSubType);
+        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
+        return changeTable.get(action);
+    }
+    
+    /**
+     * Determine and call the update method based on the item's subscription state.
+     * <p/>
+     *
      * @param item      The item to be updated
      * @param action    The new state change request
      * @param isSending True if the roster owner of the item is sending the new state change request
      */
     private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
-        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(item.getSubStatus());
-        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
-        Change change = changeTable.get(action);
-        if (change.newAsk != null && change.newAsk != item.getAskStatus()) {
-            item.setAskStatus(change.newAsk);
+        Change change = getStateChange(item.getSubStatus(), action, isSending);
+        if (change.getNewAsk() != null && change.getNewAsk() != item.getAskStatus()) {
+            item.setAskStatus(change.getNewAsk());
         }
-        if (change.newSub != null && change.newSub != item.getSubStatus()) {
-            item.setSubStatus(change.newSub);
+        if (change.getNewSub() != null && change.getNewSub() != item.getSubStatus()) {
+            item.setSubStatus(change.getNewSub());
         }
-        if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
-            item.setRecvStatus(change.newRecv);
+        if (change.getNewRecv() != null && change.getNewRecv() != item.getRecvStatus()) {
+            item.setRecvStatus(change.getNewRecv());
         }
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
         serverName = server.getServerInfo().getXMPPDomain();

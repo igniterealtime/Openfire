@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +20,7 @@ import org.apache.mina.core.session.IoSession;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ComponentStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
@@ -32,22 +30,23 @@ import org.jivesoftware.util.JiveGlobals;
  * @author Gaston Dombiak
  */
 public class ComponentConnectionHandler extends ConnectionHandler {
-    public ComponentConnectionHandler(String serverName) {
-        super(serverName);
+
+    public ComponentConnectionHandler(ConnectionConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
-	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer());
+    NIOConnection createNIOConnection(IoSession session) {
+        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer(), configuration );
     }
 
     @Override
-	StanzaHandler createStanzaHandler(NIOConnection connection) {
-        return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
+    StanzaHandler createStanzaHandler(NIOConnection connection) {
+        return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
-	int getMaxIdleTime() {
+    int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.component.idle", 6 * 60 * 1000) / 1000;
     }
 }

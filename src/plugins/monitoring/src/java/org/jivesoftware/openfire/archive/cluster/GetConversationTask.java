@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetConversationTask implements ClusterTask {
+public class GetConversationTask implements ClusterTask<Conversation> {
     private long conversationID;
     private Conversation conversation;
 
@@ -48,13 +45,13 @@ public class GetConversationTask implements ClusterTask {
         this.conversationID = conversationID;
     }
 
-    public Object getResult() {
+    public Conversation getResult() {
         return conversation;
     }
 
     public void run() {
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
-        		MonitoringConstants.NAME);
+                MonitoringConstants.NAME);
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         try {
             conversation = conversationManager.getConversation(conversationID);

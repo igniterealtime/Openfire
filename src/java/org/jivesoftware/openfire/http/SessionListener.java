@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +29,7 @@ public interface SessionListener {
      * @param session the session.
      * @param connection the connection.
      */
-    public void connectionOpened(HttpSession session, HttpConnection connection);
+    void connectionOpened( HttpSession session, HttpConnection connection );
 
     /**
      * A conneciton was closed.
@@ -41,12 +37,12 @@ public interface SessionListener {
      * @param session the session.
      * @param connection the connection.
      */
-    public void connectionClosed(HttpSession session, HttpConnection connection);
+    void connectionClosed( HttpSession session, HttpConnection connection );
 
     /**
      * A session ended.
      *
      * @param session the session.
      */
-    public void sessionClosed(HttpSession session);
+    void sessionClosed( HttpSession session );
 }

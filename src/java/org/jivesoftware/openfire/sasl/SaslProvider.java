@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,13 +29,14 @@ public class SaslProvider extends Provider {
     /**
      * Constructs a the JiveSoftware SASL provider.
      */
-    public SaslProvider() {
-        super("JiveSoftware", 1.0, "JiveSoftware SASL provider v1.0, implementing server mechanisms for: PLAIN, CLEARSPACE, SCRAM-SHA-1");
-        // Add SaslServer supporting the PLAIN SASL mechanism
-        put("SaslServerFactory.PLAIN", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
-        // Add SaslServer supporting the Clearspace SASL mechanism
-        put("SaslServerFactory.CLEARSPACE", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
-        // Add SaslServer supporting the SCRAM-SHA-1 SASL mechanism
-        put("SaslServerFactory.SCRAM-SHA-1", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
+    public SaslProvider()
+    {
+        super("JiveSoftware", 1.1, "JiveSoftware Openfire SASL provider v1.1" );
+
+        final SaslServerFactoryImpl serverFactory = new SaslServerFactoryImpl();
+        for ( final String name : serverFactory.getMechanismNames( null ) )
+        {
+            put( "SaslServerFactory." + name, serverFactory.getClass().getCanonicalName() );
+        }
     }
 }

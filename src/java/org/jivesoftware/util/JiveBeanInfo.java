@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class JiveBeanInfo implements BeanInfo {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveBeanInfo.class);
+    private static final Logger Log = LoggerFactory.getLogger(JiveBeanInfo.class);
 
     private ResourceBundle bundle;
 
@@ -84,6 +80,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
 
     // BeanInfo Interface
 
+    @Override
     public BeanDescriptor getBeanDescriptor() {
         BeanDescriptor descriptor = new BeanDescriptor(getBeanClass());
         try {
@@ -113,6 +110,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
         return descriptor;
     }
 
+    @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         Class beanClass = getBeanClass();
         String[] properties = getPropertyNames();
@@ -138,26 +136,32 @@ public abstract class JiveBeanInfo implements BeanInfo {
         }
     }
 
+    @Override
     public int getDefaultPropertyIndex() {
         return -1;
     }
 
+    @Override
     public EventSetDescriptor[] getEventSetDescriptors() {
         return null;
     }
 
+    @Override
     public int getDefaultEventIndex() {
         return -1;
     }
 
+    @Override
     public MethodDescriptor[] getMethodDescriptors() {
         return null;
     }
 
+    @Override
     public BeanInfo[] getAdditionalBeanInfo() {
         return null;
     }
 
+    @Override
     public java.awt.Image getIcon(int iconKind) {
         return null;
     }

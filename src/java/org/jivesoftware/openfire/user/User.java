@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1321 $
- * $Date: 2005-05-05 15:31:03 -0300 (Thu, 05 May 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,24 +16,6 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
@@ -53,30 +31,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.resultsetmanagement.Result;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
+
 /**
- * Encapsulates information about a user. New users are created using
- * {@link UserManager#createUser(String, String, String, String)}. All user
- * properties are loaded on demand and are read from the <tt>ofUserProp</tt>
- * database table. The currently-installed {@link UserProvider} is used for
- * setting all other user data and some operations may not be supported
- * depending on the capabilities of the {@link UserProvider}.
+ * Encapsulates information about a user.
+ *
+ * New users are created using {@link UserManager#createUser(String, String, String, String)}.
+ *
+ * The currently-installed {@link UserProvider} is used for setting all other user data and some operations may not be
+ * supported depending on the capabilities of the {@link UserProvider}.
+ *
+ * All user properties are loaded on demand from the currently-installed
+ * {@link org.jivesoftware.openfire.user.property.UserPropertyProvider}.
  *
  * @author Matt Tucker
  */
 public class User implements Cacheable, Externalizable, Result {
 
-	private static final Logger Log = LoggerFactory.getLogger(User.class);
-
-    private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM ofUserProp WHERE username=?";
-    private static final String LOAD_PROPERTY =
-        "SELECT propValue FROM ofUserProp WHERE username=? AND name=?";
-    private static final String DELETE_PROPERTY =
-        "DELETE FROM ofUserProp WHERE username=? AND name=?";
-    private static final String UPDATE_PROPERTY =
-        "UPDATE ofUserProp SET propValue=? WHERE name=? AND username=?";
-    private static final String INSERT_PROPERTY =
-        "INSERT INTO ofUserProp (username, name, propValue) VALUES (?, ?, ?)";
+    private static final Logger Log = LoggerFactory.getLogger(User.class);
 
     // The name of the name visible property
     private static final String NAME_VISIBLE_PROPERTY = "name.visible";
@@ -102,29 +78,10 @@ public class User implements Cacheable, Externalizable, Result {
      * @param username the username of the user to get a specific property value.
      * @param propertyName the name of the property to return its value.
      * @return the value of the specified property for the given username.
+     * @throws UserNotFoundException Depending on the installed user provider (some will return null instead).
      */
-    public static String getPropertyValue(String username, String propertyName) {
-        String propertyValue = null;
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propertyName);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                propertyValue = rs.getString(1);
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return propertyValue;
+    public static String getPropertyValue(String username, String propertyName) throws UserNotFoundException {
+        return UserManager.getUserPropertyProvider().loadProperty( username, propertyName );
     }
 
     /**
@@ -190,50 +147,46 @@ public class User implements Cacheable, Externalizable, Result {
             AuthFactory.setPassword(username, password);
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
         }
-        catch (UserNotFoundException e) {
+        catch (UserNotFoundException | ConnectionException | InternalUnauthenticatedException e) {
             Log.error(e.getMessage(), e);
-        } catch (ConnectionException e) {
-            Log.error(e.getMessage(), e);
-		} catch (InternalUnauthenticatedException e) {
-            Log.error(e.getMessage(), e);
-		}
+        }
     }
-    
+
     public String getStoredKey() {
-    	return storedKey;
+        return storedKey;
     }
-    
+
     public void setStoredKey(String storedKey) {
-    	this.storedKey = storedKey;
+        this.storedKey = storedKey;
     }
-    
+
     public String getServerKey() {
-    	return serverKey;
+        return serverKey;
     }
-    
+
     public void setServerKey(String serverKey) {
-    	this.serverKey = serverKey;
+        this.serverKey = serverKey;
     }
-    
+
     public String getSalt() {
-    	return salt;
+        return salt;
     }
-    
+
     public void setSalt(String salt) {
-    	this.salt = salt;
+        this.salt = salt;
     }
-    
+
     public int getIterations() {
-    	return iterations;
+        return iterations;
     }
-    
+
     public void setIterations(int iterations) {
-    	this.iterations = iterations;
+        this.iterations = iterations;
     }
 
     public String getName() {
@@ -246,7 +199,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         if (name != null && name.matches("\\s*")) {
-        	name = null;
+            name = null;
         }
 
         if (name == null && UserManager.getUserProvider().isNameRequired()) {
@@ -259,7 +212,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.name = name;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -303,7 +256,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         if (email != null && email.matches("\\s*")) {
-        	email = null;
+            email = null;
         }
 
         if (UserManager.getUserProvider().isEmailRequired() && !StringUtils.isValidEmailAddress(email)) {
@@ -315,7 +268,7 @@ public class User implements Cacheable, Externalizable, Result {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -359,7 +312,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.creationDate = creationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "creationDateModified");
             params.put("originalValue", originalCreationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -385,7 +338,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.modificationDate = modificationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "nameModified");
             params.put("originalValue", originalModificationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -406,8 +359,11 @@ public class User implements Cacheable, Externalizable, Result {
     public Map<String,String> getProperties() {
         synchronized (this) {
             if (properties == null) {
-                properties = new ConcurrentHashMap<String, String>();
-                loadProperties();
+                try {
+                    properties = UserManager.getUserPropertyProvider().loadProperties( username );
+                } catch (UserNotFoundException e ) {
+                    Log.error( "Unable to retrieve properties for user " + username, e );
+                }
             }
         }
         // Return a wrapper that will intercept add and remove commands.
@@ -430,6 +386,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
     }
 
+    @Override
     public int getCachedSize()
             throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
@@ -446,17 +403,17 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return username;
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return username.hashCode();
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -474,36 +431,43 @@ public class User implements Cacheable, Externalizable, Result {
     private class PropertiesMap extends AbstractMap<String, String> {
 
         @Override
-		public String put(String key, String value) {
+        public String put(String key, String value) {
             Map<String,Object> eventParams = new HashMap<>();
             String answer;
             String keyString = key;
-            synchronized (getName() + keyString.intern()) {
-                if (properties.containsKey(keyString)) {
-                    String originalValue = properties.get(keyString);
-                    answer = properties.put(keyString, value);
-                    updateProperty(keyString, value);
-                    // Configure event.
-                    eventParams.put("type", "propertyModified");
-                    eventParams.put("propertyKey", key);
-                    eventParams.put("originalValue", originalValue);
+
+            try {
+                synchronized ((getName() + keyString).intern()) {
+                    if (properties.containsKey(keyString)) {
+                        String originalValue = properties.get(keyString);
+                        answer = properties.put(keyString, value);
+                        UserManager.getUserPropertyProvider().updateProperty(username, keyString, value);
+                        // Configure event.
+                        eventParams.put("type", "propertyModified");
+                        eventParams.put("propertyKey", key);
+                        eventParams.put("originalValue", originalValue);
+                    }
+                    else {
+                        answer = properties.put(keyString, value);
+                        UserManager.getUserPropertyProvider().insertProperty(username, keyString, value);
+                        // Configure event.
+                        eventParams.put("type", "propertyAdded");
+                        eventParams.put("propertyKey", key);
+                    }
                 }
-                else {
-                    answer = properties.put(keyString, value);
-                    insertProperty(keyString, value);
-                    // Configure event.
-                    eventParams.put("type", "propertyAdded");
-                    eventParams.put("propertyKey", key);
-                }
+
+                // Fire event.
+                UserEventDispatcher.dispatchEvent(User.this,
+                                                  UserEventDispatcher.EventType.user_modified, eventParams);
+                return answer;
+            } catch (UserNotFoundException e ) {
+                Log.error( "Unable to put property for user " + username, e );
             }
-            // Fire event.
-            UserEventDispatcher.dispatchEvent(User.this,
-                    UserEventDispatcher.EventType.user_modified, eventParams);
-            return answer;
+            return null;
         }
 
         @Override
-		public Set<Entry<String, String>> entrySet() {
+        public Set<Entry<String, String>> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -519,116 +483,47 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         @Override
-		public Iterator<Map.Entry<String, String>> iterator() {
+        public Iterator<Map.Entry<String, String>> iterator() {
             return new Iterator<Map.Entry<String, String>>() {
 
                 Iterator<Map.Entry<String, String>> iter = properties.entrySet().iterator();
                 Map.Entry<String,String> current = null;
 
+                @Override
                 public boolean hasNext() {
                     return iter.hasNext();
                 }
 
+                @Override
                 public Map.Entry<String, String> next() {
                     current = iter.next();
                     return current;
                 }
 
+                @Override
                 public void remove() {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
                     String key = current.getKey();
-                    deleteProperty(key);
-                    iter.remove();
-                    // Fire event.
-                    Map<String,Object> params = new HashMap<>();
-                    params.put("type", "propertyDeleted");
-                    params.put("propertyKey", key);
-                    UserEventDispatcher.dispatchEvent(User.this,
-                        UserEventDispatcher.EventType.user_modified, params);
+                    try {
+                        UserManager.getUserPropertyProvider().deleteProperty(username, key);
+                        iter.remove();
+                        // Fire event.
+                        Map<String,Object> params = new HashMap<>();
+                        params.put("type", "propertyDeleted");
+                        params.put("propertyKey", key);
+                        UserEventDispatcher.dispatchEvent(User.this,
+                                                          UserEventDispatcher.EventType.user_modified, params);
+                    } catch (UserNotFoundException e ) {
+                        Log.error( "Unable to delete property for user " + username, e );
+                    }
                 }
             };
         }
     }
 
-    private void loadProperties() {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, username);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                properties.put(rs.getString(1), rs.getString(2));
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    private void insertProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, propValue);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void updateProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, propValue);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, username);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void deleteProperty(String propName) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeSafeUTF(out, getName());
@@ -640,6 +535,7 @@ public class User implements Cacheable, Externalizable, Result {
         ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         name = ExternalizableUtil.getInstance().readSafeUTF(in);
@@ -654,8 +550,9 @@ public class User implements Cacheable, Externalizable, Result {
      * (non-Javadoc)
      * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
      */
-	public String getUID()
-	{
-		return username;
-	}
+    @Override
+    public String getUID()
+    {
+        return username;
+    }
 }

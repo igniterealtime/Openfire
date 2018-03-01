@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,5 +49,5 @@ public interface UserItemsProvider {
      * @param senderJID the XMPPAddress of user that sent the disco items request.
      * @return an Iterator (of Element) with the target entity's items or null if none.
      */
-    public abstract Iterator<Element> getUserItems(String name, JID senderJID);
+    Iterator<Element> getUserItems( String name, JID senderJID );
 }

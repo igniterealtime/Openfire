@@ -4,8 +4,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -27,8 +27,8 @@
     if (save) {
         if (errors.size() == 0) {
             plugin.setEnabled(enabled);
-        	plugin.setSecret(secret);
-        	plugin.setHttpBasicAuth(httpBasicAuth);
+            plugin.setSecret(secret);
+            plugin.setHttpBasicAuth(httpBasicAuth);
             plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
             response.sendRedirect("user-service.jsp?success=true");
             return;

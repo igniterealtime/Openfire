@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1298 $
- * $Date: 2005-04-24 14:22:45 -0300 (Sun, 24 Apr 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,34 +45,44 @@ public abstract class DroppableTextPane extends JTextPane implements DropTargetL
         dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent DragSourceDropEvent) {
     }
 
+    @Override
     public void dragEnter(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dragExit(DragSourceEvent DragSourceEvent) {
     }
 
+    @Override
     public void dragOver(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dropActionChanged(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dropTargetDragEvent) {
         dropTargetDragEvent.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
     }
 
+    @Override
     public void dragExit(DropTargetEvent dropTargetEvent) {
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dropTargetDragEvent) {
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dropTargetDragEvent) {
     }
 
+    @Override
     public void drop(DropTargetDropEvent dropTargetDropEvent) {
         try {
             Transferable transferable = dropTargetDropEvent.getTransferable();
@@ -100,16 +106,13 @@ public abstract class DroppableTextPane extends JTextPane implements DropTargetL
                 dropTargetDropEvent.rejectDrop();
             }
         }
-        catch (IOException io) {
+        catch (IOException | UnsupportedFlavorException io) {
             io.printStackTrace();
-            dropTargetDropEvent.rejectDrop();
-        }
-        catch (UnsupportedFlavorException ufe) {
-            ufe.printStackTrace();
             dropTargetDropEvent.rejectDrop();
         }
     }
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dragGestureEvent) {
 
     }

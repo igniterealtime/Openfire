@@ -11,15 +11,15 @@
 
 <a name="top"></a>
 
-	<div id="pageHeader">
-		<div id="logo"></div>
-		<h1>Upgrade Guide</h1>
-	</div>
-	<div class="navigation">
-		<a href="index.html">&laquo; Back to documentation index</a>
-	</div>
+    <div id="pageHeader">
+        <div id="logo"></div>
+        <h1>Upgrade Guide</h1>
+    </div>
+    <div class="navigation">
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </div>
 
-	<div id="pageBody">
+    <div id="pageBody">
 
 <p>Upgrading Openfire is almost as easy as installing Openfire from scratch. As part of the upgrade process
     it is highly recommended to backup your current installation and database. Having backups will let you
@@ -32,13 +32,22 @@
 <ul>
 <h3>Windows EXE</h3>
     <ol>
-        <li>Stop Openfire.</li>
+        <li>Stop Openfire (when using a service, stop it manually).</li>
         <li>Backup the Openfire installation directory. The default is _C:\Program Files\Openfire_</li>
         <li>Backup the Openfire database. Note that the embedded database is backed up in step 2.</li>
         <li>Run the installer for the new version of Openfire (note that the installer MUST point to the base installation directory of the previous version).</li>
         <li>Complete the installer process.</li>
-        <li>Start Openfire.</li>
+        <li>Start Openfire (when using a service, start it manually).</li>
     </ol>
+    <p><b>Since 4.1.5 the installer will stop and reinstall the service and then start it again automatically.</b></p>
+    
+<h3>Windows EXE (upgrading from x86 to x64 version)</h3>
+    <ol>
+        <li>(fastest option) When running the x64 installer point it to the current installation folder of Openfire (by default C:\Program files (x86)\Openfire). If you have Openfire service installed (version prior 4.1.5), stop it first. During the installation it will install/reinstall the service and on the last step you will have to choose whether to run it.</li>
+        <li>(safest option) When running the x64 installer point it to a new installation folder (by default C:\Program Files\Openfire). If you have Openfire service installed (version prior 4.1.5), stop it first. During the installation it will install/reinstall the service. On the last step check not to start the service. Copy the /conf, /embedded-db (if using this database), /plugins, /resources/security from the old installation folder to the new one. Manually start the services via Services control page.</li>
+    </ol><br>
+            
+    <p>The upgrade guide has been tested against 4.1.4 and newer versions. It should work for older versions, but the results may be different for very old versions. You won't have to stop the service before the upgrade since the version 4.1.5. It will stop and reinstall it automatically.</p>
 
 <h3>RPM - RedHat based unix systems (RHEL, CentOS, Fedora, etc)</h3>
     <ol>

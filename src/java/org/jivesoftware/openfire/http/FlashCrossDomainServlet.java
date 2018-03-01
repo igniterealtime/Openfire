@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,8 +44,8 @@ import org.slf4j.LoggerFactory;
  */
 public class FlashCrossDomainServlet extends HttpServlet {
 
-	private static Logger Log = LoggerFactory.getLogger(FlashCrossDomainServlet.class);
-	
+    private static Logger Log = LoggerFactory.getLogger(FlashCrossDomainServlet.class);
+    
     public static String CROSS_DOMAIN_TEXT = "<?xml version=\"1.0\"?>\n" +
             "<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">\n" +
             "<cross-domain-policy>\n" +
@@ -71,50 +67,50 @@ public class FlashCrossDomainServlet extends HttpServlet {
     }
     
     /**
-	 * Returns the content for <tt>crossdomain.xml</tt>, either by generating
-	 * content, or by passing the provided file in
-	 * <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
-	 * 
-	 * @return content for the <tt>crossdomain.xml</tt> that should be served
-	 *         for this service.
-	 */
+     * Returns the content for <tt>crossdomain.xml</tt>, either by generating
+     * content, or by passing the provided file in
+     * <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
+     * 
+     * @return content for the <tt>crossdomain.xml</tt> that should be served
+     *         for this service.
+     */
     public static String getCrossDomainContent() {
-    	final String override = getContent(getOverride());
-    	if (override != null && override.trim().length() > 0) {
-    		return override;
-    	} else {
-    		return generateOutput();
-    	}
+        final String override = getContent(getOverride());
+        if (override != null && override.trim().length() > 0) {
+            return override;
+        } else {
+            return generateOutput();
+        }
     }
     
     /**
-	 * Returns <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt> as a File
-	 * object (even if the file does not exist on the file system).
-	 * 
-	 * @return <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
-	 */
+     * Returns <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt> as a File
+     * object (even if the file does not exist on the file system).
+     * 
+     * @return <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
+     */
     private static File getOverride() {
-    	final StringBuilder sb = new StringBuilder();
-    	sb.append(JiveGlobals.getHomeDirectory());
-    	if (!sb.substring(sb.length()-1).startsWith(File.separator)) {
-    		sb.append(File.separator);
-    	}
-    	sb.append("conf");
-    	sb.append(File.separator);
+        final StringBuilder sb = new StringBuilder();
+        sb.append(JiveGlobals.getHomeDirectory());
+        if (!sb.substring(sb.length()-1).startsWith(File.separator)) {
+            sb.append(File.separator);
+        }
+        sb.append("conf");
+        sb.append(File.separator);
 
-    	return new File(sb.toString(), "crossdomain.xml");
+        return new File(sb.toString(), "crossdomain.xml");
     }
     
     /**
-	 * Return content of the provided file as a String.
-	 * 
-	 * @param file
-	 *            The file from which to get the content.
-	 * @return String-based content of the provided file.
-	 */
+     * Return content of the provided file as a String.
+     * 
+     * @param file
+     *            The file from which to get the content.
+     * @return String-based content of the provided file.
+     */
     private static String getContent(File file) {
-		final StringBuilder content = new StringBuilder();
-		if (file.canRead()) {
+        final StringBuilder content = new StringBuilder();
+        if (file.canRead()) {
             try (BufferedReader in = new BufferedReader(new FileReader(file))) {
                 String str;
                 while ((str = in.readLine()) != null) {
@@ -127,8 +123,8 @@ public class FlashCrossDomainServlet extends HttpServlet {
             }
         }
 
-		return content.toString();
-	}
+        return content.toString();
+    }
     
     /**
      * Dynamically generates content for a non-restrictive <tt>crossdomain.xml</tt> file. 

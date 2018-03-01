@@ -1,7 +1,4 @@
-/**
- * $Revision: 1116 $
- * $Date: 2005-03-10 15:18:08 -0800 (Thu, 10 Mar 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +35,10 @@ import org.slf4j.LoggerFactory;
  *          If that fails:
  *      <li>If the tertiary provider is defined, attempt authentication.
  * </ol>
+ *
+ * This class related to, but is distinct from {@link MappedAuthProvider}. The Hybrid variant of the provider iterates
+ * over providers, operating on the first applicable instance. The Mapped variant, however, maps each user to exactly
+ * one provider.
  *
  * To enable this provider, set the <tt>provider.auth.className</tt> system property to
  * <tt>org.jivesoftware.openfire.auth.HybridAuthProvider</tt>.
@@ -77,15 +78,15 @@ import org.slf4j.LoggerFactory;
  */
 public class HybridAuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
 
     private AuthProvider primaryProvider;
     private AuthProvider secondaryProvider;
     private AuthProvider tertiaryProvider;
 
-    private Set<String> primaryOverrides = new HashSet<String>();
-    private Set<String> secondaryOverrides = new HashSet<String>();
-    private Set<String> tertiaryOverrides = new HashSet<String>();
+    private Set<String> primaryOverrides = new HashSet<>();
+    private Set<String> secondaryOverrides = new HashSet<>();
+    private Set<String> tertiaryOverrides = new HashSet<>();
 
     public HybridAuthProvider() {
         // Convert XML based provider setup to Database based
@@ -106,13 +107,6 @@ public class HybridAuthProvider implements AuthProvider {
         try {
             Class c = ClassUtils.forName(primaryClass);
             primaryProvider = (AuthProvider)c.newInstance();
-            // All providers must support plain auth.
-            if (!primaryProvider.isPlainSupported()) {
-                Log.error("Provider " + primaryClass + " must support plain authentication. " +
-                        "Authentication disabled.");
-                primaryProvider = null;
-                return;
-            }
             Log.debug("Primary auth provider: " + primaryClass);
         }
         catch (Exception e) {
@@ -127,14 +121,6 @@ public class HybridAuthProvider implements AuthProvider {
             try {
                 Class c = ClassUtils.forName(secondaryClass);
                 secondaryProvider = (AuthProvider)c.newInstance();
-                // All providers must support plain auth.
-                if (!secondaryProvider.isPlainSupported()) {
-                    Log.error("Provider " + secondaryClass + " must support plain authentication. " +
-                            "Authentication disabled.");
-                    primaryProvider = null;
-                    secondaryProvider = null;
-                    return;
-                }
                 Log.debug("Secondary auth provider: " + secondaryClass);
             }
             catch (Exception e) {
@@ -148,15 +134,6 @@ public class HybridAuthProvider implements AuthProvider {
             try {
                 Class c = ClassUtils.forName(tertiaryClass);
                 tertiaryProvider = (AuthProvider)c.newInstance();
-                // All providers must support plain auth.
-                if (!tertiaryProvider.isPlainSupported()) {
-                    Log.error("Provider " + tertiaryClass + " must support plain authentication. " +
-                            "Authentication disabled.");
-                    primaryProvider = null;
-                    secondaryProvider = null;
-                    tertiaryProvider = null;
-                    return;
-                }
                 Log.debug("Tertiary auth provider: " + tertiaryClass);
             }
             catch (Exception e) {
@@ -188,14 +165,7 @@ public class HybridAuthProvider implements AuthProvider {
         }
     }
 
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    public boolean isDigestSupported() {
-        return false;
-    }
-
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
         // Check overrides first.
         if (primaryOverrides.contains(username.toLowerCase())) {
@@ -235,24 +205,21 @@ public class HybridAuthProvider implements AuthProvider {
         }
     }
 
-    public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
-        throw new UnauthorizedException("Digest authentication not supported.");
-    }
-
+    @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
         return false;
     }
@@ -261,5 +228,31 @@ public class HybridAuthProvider implements AuthProvider {
     public boolean isScramSupported() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    boolean isProvider(final Class<? extends AuthProvider> clazz) {
+        return (primaryProvider != null && clazz.isAssignableFrom(primaryProvider.getClass()))
+            || (secondaryProvider != null && clazz.isAssignableFrom(secondaryProvider.getClass()))
+            ||(tertiaryProvider != null && clazz.isAssignableFrom(tertiaryProvider.getClass()));
     }
 }

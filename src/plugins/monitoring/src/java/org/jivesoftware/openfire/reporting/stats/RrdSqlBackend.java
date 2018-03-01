@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RrdSqlBackend extends RrdBackend {
-	
-	private static final Logger Log = LoggerFactory.getLogger(RrdSqlBackend.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(RrdSqlBackend.class);
+    
     // SQL prepared statements
     static final String JDBC_SELECT = "SELECT bytes from ofRRDs where id = ?";
     static final String JDBC_INSERT = "INSERT INTO ofRRDs (id, updatedDate, bytes) VALUES (?, ?, ?)";
@@ -139,7 +135,7 @@ public class RrdSqlBackend extends RrdBackend {
     // this method writes bytes supplied from the JRobin frontend
     // to our memory buffer
     @Override
-	protected void write(long offset, byte[] b) {
+    protected void write(long offset, byte[] b) {
         int pos = (int) offset;
         for(int i = 0; i < b.length; i++) {
             buffer[pos++] = b[i];
@@ -149,7 +145,7 @@ public class RrdSqlBackend extends RrdBackend {
     // this method reads bytes requested from the JRobin frontend
     // and stores them in the supplied byte[] array
     @Override
-	protected void read(long offset, byte[] b) {
+    protected void read(long offset, byte[] b) {
         int pos = (int) offset;
         for(int i = 0; i < b.length; i++) {
             b[i] = buffer[pos++];
@@ -159,19 +155,19 @@ public class RrdSqlBackend extends RrdBackend {
     // returns the RRD size (since all RRD bytes are
     // in the buffer, it is equal to the buffer length
     @Override
-	public long getLength() throws IOException {
+    public long getLength() throws IOException {
         return buffer.length;
     }
 
     // provides enough space in memory for the RRD
     @Override
-	protected void setLength(long length) {
+    protected void setLength(long length) {
         buffer = new byte[(int) length];
     }
 
 
     @Override
-	public void close() throws IOException {
+    public void close() throws IOException {
         super.close();
         // Save data to the SQL DB only if not read-only
         if (!readOnly) {
@@ -180,7 +176,7 @@ public class RrdSqlBackend extends RrdBackend {
     }
     // sends bytes in memory to the database
     protected void sync() throws IOException {
-    	// RRD id is here
+        // RRD id is here
         String id = super.getPath();
         Connection con = null;
         PreparedStatement pstmt = null;

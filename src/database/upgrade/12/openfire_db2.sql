@@ -1,5 +1,3 @@
--- $Revision:  $
--- $Date:  $
 
 CREATE TABLE mucConversationLog2 (
   roomID              INTEGER       NOT NULL,

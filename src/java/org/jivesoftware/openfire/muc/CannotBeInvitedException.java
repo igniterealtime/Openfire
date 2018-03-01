@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ public class CannotBeInvitedException extends Exception {
     }
 
     @Override
-	public void printStackTrace() {
+    public void printStackTrace() {
         super.printStackTrace();
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace();
@@ -56,7 +56,7 @@ public class CannotBeInvitedException extends Exception {
     }
 
     @Override
-	public void printStackTrace(PrintStream ps) {
+    public void printStackTrace(PrintStream ps) {
         super.printStackTrace(ps);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(ps);
@@ -64,7 +64,7 @@ public class CannotBeInvitedException extends Exception {
     }
 
     @Override
-	public void printStackTrace(PrintWriter pw) {
+    public void printStackTrace(PrintWriter pw) {
         super.printStackTrace(pw);
         if (nestedThrowable != null) {
             nestedThrowable.printStackTrace(pw);

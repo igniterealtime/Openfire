@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2011 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -29,139 +26,138 @@ import org.jivesoftware.smack.sasl.SASLMechanism;
 import org.jivesoftware.smack.util.Base64;
 
 /**
- *
  */
 public class FacebookConnectSASLMechanism extends SASLMechanism {
 
-	private String accessToken = "";
-	private String appSecret = "";
-	private String apiKey = "";
-	
-	public FacebookConnectSASLMechanism(SASLAuthentication saslAuthentication) {
-		super(saslAuthentication);
-	}
+    private String accessToken = "";
+    private String appSecret = "";
+    private String apiKey = "";
+    
+    public FacebookConnectSASLMechanism(SASLAuthentication saslAuthentication) {
+        super(saslAuthentication);
+    }
 
-	// protected void authenticate() throws IOException, XMPPException {
-	// String[] mechanisms = { getName() };
-	// Map<String, String> props = new HashMap<String, String>();
-	// sc = Sasl.createSaslClient(mechanisms, null, "xmpp", hostname, props,
-	// this);
-	//
-	// super.authenticate();
-	// }
+    // protected void authenticate() throws IOException, XMPPException {
+    // String[] mechanisms = { getName() };
+    // Map<String, String> props = new HashMap<String, String>();
+    // sc = Sasl.createSaslClient(mechanisms, null, "xmpp", hostname, props,
+    // this);
+    //
+    // super.authenticate();
+    // }
 
-	protected void authenticate() throws IOException, XMPPException {
-		StringBuilder stanza = new StringBuilder();
-		stanza.append("<auth mechanism=\"").append(getName());
-		stanza.append("\" xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-		stanza.append("</auth>");
+    protected void authenticate() throws IOException, XMPPException {
+        StringBuilder stanza = new StringBuilder();
+        stanza.append("<auth mechanism=\"").append(getName());
+        stanza.append("\" xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
+        stanza.append("</auth>");
 
-		// Send the authentication to the server
-		getSASLAuthentication().send(new AuthMechanism(getName(), null));
-	}
+        // Send the authentication to the server
+        getSASLAuthentication().send(new AuthMechanism(getName(), null));
+    }
 
-	public void authenticate(String apiKeyAndAppSecret, String host, String accessToken)
-			throws IOException, XMPPException {
+    public void authenticate(String apiKeyAndAppSecret, String host, String accessToken)
+            throws IOException, XMPPException {
 
-		if(apiKeyAndAppSecret==null || accessToken==null)
-			throw new IllegalStateException("Invalid parameters!");
-		
-		String[] keyArray = apiKeyAndAppSecret.split("\\|");
-		
-		if(keyArray==null || keyArray.length != 2)
-			throw new IllegalStateException("Api key or access token is not present!");
-		
-		this.apiKey = keyArray[0];
-		this.appSecret = keyArray[1];
-		this.accessToken = accessToken;
-		
-		this.authenticationId = accessToken;
-		this.password = accessToken;
-		this.hostname = host;
+        if(apiKeyAndAppSecret==null || accessToken==null)
+            throw new IllegalStateException("Invalid parameters!");
+        
+        String[] keyArray = apiKeyAndAppSecret.split("\\|");
+        
+        if(keyArray==null || keyArray.length != 2)
+            throw new IllegalStateException("Api key or access token is not present!");
+        
+        this.apiKey = keyArray[0];
+        this.appSecret = keyArray[1];
+        this.accessToken = accessToken;
+        
+        this.authenticationId = accessToken;
+        this.password = accessToken;
+        this.hostname = host;
 
-		String[] mechanisms = { "DIGEST-MD5" };
-		Map<String, String> props = new HashMap<String, String>();
-		sc = Sasl.createSaslClient(mechanisms, null, "xmpp", host, props, this);
-		authenticate();
-	}
+        String[] mechanisms = { "DIGEST-MD5" };
+        Map<String, String> props = new HashMap<String, String>();
+        sc = Sasl.createSaslClient(mechanisms, null, "xmpp", host, props, this);
+        authenticate();
+    }
 
-	public void authenticate(String username, String host, CallbackHandler cbh)
-			throws IOException, XMPPException {
-		String[] mechanisms = { "DIGEST-MD5" };
-		Map<String, String> props = new HashMap<String, String>();
-		sc = Sasl.createSaslClient(mechanisms, null, "xmpp", host, props, cbh);
-		authenticate();
-	}
+    public void authenticate(String username, String host, CallbackHandler cbh)
+            throws IOException, XMPPException {
+        String[] mechanisms = { "DIGEST-MD5" };
+        Map<String, String> props = new HashMap<String, String>();
+        sc = Sasl.createSaslClient(mechanisms, null, "xmpp", host, props, cbh);
+        authenticate();
+    }
 
-	protected String getName() {
-		return "X-FACEBOOK-PLATFORM";
-	}
+    protected String getName() {
+        return "X-FACEBOOK-PLATFORM";
+    }
 
-	public void challengeReceived(String challenge) throws IOException {
-		// Build the challenge response stanza encoding the response text
-		StringBuilder stanza = new StringBuilder();
+    public void challengeReceived(String challenge) throws IOException {
+        // Build the challenge response stanza encoding the response text
+        StringBuilder stanza = new StringBuilder();
 
-		byte response[] = null;
-		if (challenge != null) {
-			String decodedResponse = new String(Base64.decode(challenge));
-			Map<String, String> parameters = getQueryMap(decodedResponse);
+        byte response[] = null;
+        if (challenge != null) {
+            String decodedResponse = new String(Base64.decode(challenge));
+            Map<String, String> parameters = getQueryMap(decodedResponse);
 
-			String version = "1.0";
-			String nonce = parameters.get("nonce");
-			String method = parameters.get("method");
-			
-			Long callId = new GregorianCalendar().getTimeInMillis()/1000;
-			
-			String sig = "api_key="+apiKey
-							+"call_id="+callId
-							+"method="+method
-							+"nonce="+nonce
-							+"access_token="+accessToken
-							+"v="+version
-							+appSecret;
-			
-			try {
-				sig = MD5(sig);
-			} catch (NoSuchAlgorithmException e) {
-				throw new IllegalStateException(e);
-			}
-			
-			String composedResponse = "api_key="+apiKey+"&"
-										+"call_id="+callId+"&"
-										+"method="+method+"&"
-										+"nonce="+nonce+"&"
-										+"access_token="+accessToken+"&"
-										+"v="+version+"&"
-										+"sig="+sig;
+            String version = "1.0";
+            String nonce = parameters.get("nonce");
+            String method = parameters.get("method");
+            
+            Long callId = new GregorianCalendar().getTimeInMillis()/1000;
+            
+            String sig = "api_key="+apiKey
+                            +"call_id="+callId
+                            +"method="+method
+                            +"nonce="+nonce
+                            +"access_token="+accessToken
+                            +"v="+version
+                            +appSecret;
+            
+            try {
+                sig = MD5(sig);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+            
+            String composedResponse = "api_key="+apiKey+"&"
+                                        +"call_id="+callId+"&"
+                                        +"method="+method+"&"
+                                        +"nonce="+nonce+"&"
+                                        +"access_token="+accessToken+"&"
+                                        +"v="+version+"&"
+                                        +"sig="+sig;
 
-			response = composedResponse.getBytes();
-		}
+            response = composedResponse.getBytes();
+        }
 
-		String authenticationText="";
+        String authenticationText="";
 
-		if (response != null) {
-			authenticationText = Base64.encodeBytes(response, Base64.DONT_BREAK_LINES);
-		}
+        if (response != null) {
+            authenticationText = Base64.encodeBytes(response, Base64.DONT_BREAK_LINES);
+        }
 
-		stanza.append("<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-		stanza.append(authenticationText);
-		stanza.append("</response>");
+        stanza.append("<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
+        stanza.append(authenticationText);
+        stanza.append("</response>");
 
-		// Send the authentication to the server
-		getSASLAuthentication().send(new Response(authenticationText));
-	}
+        // Send the authentication to the server
+        getSASLAuthentication().send(new Response(authenticationText));
+    }
 
-	private Map<String, String> getQueryMap(String query) {
-		String[] params = query.split("&");
-		Map<String, String> map = new HashMap<String, String>();
-		for (String param : params) {
-			String name = param.split("=")[0];
-			String value = param.split("=")[1];
-			map.put(name, value);
-		}
-		return map;
-	}
-	
+    private Map<String, String> getQueryMap(String query) {
+        String[] params = query.split("&");
+        Map<String, String> map = new HashMap<String, String>();
+        for (String param : params) {
+            String name = param.split("=")[0];
+            String value = param.split("=")[1];
+            map.put(name, value);
+        }
+        return map;
+    }
+    
     private String convertToHex(byte[] data) {
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < data.length; i++) {

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +28,7 @@ import org.xmpp.packet.JID;
 public class OnlyPublishers extends PublisherModel {
 
     @Override
-	public boolean canPublish(Node node, JID entity) {
+    public boolean canPublish(Node node, JID entity) {
         NodeAffiliate nodeAffiliate = node.getAffiliate(entity);
         return nodeAffiliate != null && (
                 nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.publisher ||
@@ -40,7 +36,7 @@ public class OnlyPublishers extends PublisherModel {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "publishers";
     }
 }

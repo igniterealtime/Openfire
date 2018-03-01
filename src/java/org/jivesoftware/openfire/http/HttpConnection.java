@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,9 +70,7 @@ public class HttpConnection {
         try {
             deliverBody(null, true);
         }
-        catch (HttpConnectionClosedException e) {
-            Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
-        } catch (IOException e) {
+        catch (HttpConnectionClosedException | IOException e) {
             Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
         }
     }
@@ -113,11 +107,11 @@ public class HttpConnection {
      */
     public void deliverBody(String body, boolean async) throws HttpConnectionClosedException, IOException {
         // We only want to use this function once so we will close it when the body is delivered.
-    	synchronized (this) {
-	        if (isClosed) {
-	            throw new HttpConnectionClosedException("The http connection is no longer " +
-	                    "available to deliver content");
-	        }
+        synchronized (this) {
+            if (isClosed) {
+                throw new HttpConnectionClosedException("The http connection is no longer " +
+                        "available to deliver content");
+            }
             isClosed = true;
         }
 
@@ -163,9 +157,9 @@ public class HttpConnection {
         return sslCertificates;
     }
 
-	@Override
-	public String toString() {
-		return (session != null ? session.toString() : "[Anonymous]")
-				+ " rid: " + this.getRequestId();
-	}
+    @Override
+    public String toString() {
+        return (session != null ? session.toString() : "[Anonymous]")
+                + " rid: " + this.getRequestId();
+    }
 }

@@ -5,8 +5,6 @@ import org.bouncycastle.asn1.*;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Creates a table that represents an ASN.1 encoded DER value.

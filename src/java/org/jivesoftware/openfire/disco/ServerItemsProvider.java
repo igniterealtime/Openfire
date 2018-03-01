@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 128 $
- * $Date: 2004-10-25 20:42:00 -0300 (Mon, 25 Oct 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,5 +42,5 @@ public interface ServerItemsProvider {
      * @return an Iterator (of DiscoServerItem) with the items associated with the server or null
      *         if none.
      */
-    public abstract Iterator<DiscoServerItem> getItems();
+    Iterator<DiscoServerItem> getItems();
 }

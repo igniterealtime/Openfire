@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +42,7 @@ public class DynamicAddressChannel extends Channel implements Runnable, Datagram
     }
 
     @Override
-	boolean handle(DatagramPacket packet) {
+    boolean handle(DatagramPacket packet) {
         // Relay Destination
         if (c++ < 100) { // 100 packets are enough to discover relay address
             this.setHost(packet.getAddress());
@@ -64,6 +61,7 @@ public class DynamicAddressChannel extends Channel implements Runnable, Datagram
      *
      * @param datagramPacket the received packet
      */
+    @Override
     public boolean datagramReceived(DatagramPacket datagramPacket) {
         this.relayPacket(datagramPacket);
         return false;

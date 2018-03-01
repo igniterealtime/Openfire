@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +46,7 @@ import org.xmpp.packet.Presence;
  */
 public class MultiplexerPacketDeliverer implements PacketDeliverer {
 
-	private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
+    private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
 
     private OfflineMessageStrategy messageStrategy;
     private String connectionManagerDomain;
@@ -65,6 +61,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
         this.connectionManagerDomain = connectionManagerDomain;
     }
 
+    @Override
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         // Check if we can send the packet using another session
         if (connectionManagerDomain == null) {

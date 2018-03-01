@@ -1,5 +1,3 @@
--- $Revision$
--- $Date$
 
 ALTER TABLE ofMessageArchive ADD fromJIDResource VARCHAR(255) NULL;
 ALTER TABLE ofMessageArchive ADD toJIDResource VARCHAR(255) NULL;

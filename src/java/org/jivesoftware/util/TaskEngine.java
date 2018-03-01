@@ -1,7 +1,4 @@
-/**
- * $Revision: 4005 $
- * $Date: 2006-06-16 08:58:27 -0700 (Fri, 16 Jun 2006) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +20,15 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Performs tasks using worker threads. It also allows tasks to be scheduled to be
@@ -38,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TaskEngine {
 
+    private static final Logger Log = LoggerFactory.getLogger(TaskEngine.class);
     private static TaskEngine instance = new TaskEngine();
 
     /**
@@ -51,29 +56,15 @@ public class TaskEngine {
 
     private Timer timer;
     private ExecutorService executor;
-    private Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<TimerTask, TimerTaskWrapper>();
+    private Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<>();
 
     /**
      * Constructs a new task engine.
      */
     private TaskEngine() {
         timer = new Timer("TaskEngine-timer", true);
-        executor = Executors.newCachedThreadPool(new ThreadFactory() {
-
-            final AtomicInteger threadNumber = new AtomicInteger(1);
-
-            public Thread newThread(Runnable runnable) {
-                // Use our own naming scheme for the threads.
-                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "TaskEngine-pool-" + threadNumber.getAndIncrement(), 0);
-                // Make workers daemon threads.
-                thread.setDaemon(true);
-                if (thread.getPriority() != Thread.NORM_PRIORITY) {
-                    thread.setPriority(Thread.NORM_PRIORITY);
-                }
-                return thread;
-            }
-        });
+        final ThreadFactory threadFactory = new NamedThreadFactory( "TaskEngine-pool-", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
+        executor = Executors.newCachedThreadPool( threadFactory );
     }
 
     /**
@@ -84,12 +75,16 @@ public class TaskEngine {
      * @return a Future representing pending completion of the task,
      *      and whose <tt>get()</tt> method will return <tt>null</tt>
      *      upon completion.
-     * @throws java.util.concurrent.RejectedExecutionException if task cannot be scheduled
-     *      for execution.
-     * @throws NullPointerException if task null.
      */
     public Future<?> submit(Runnable task) {
-        return executor.submit(task);
+        try {
+            return executor.submit(task);
+        } catch (Throwable t) {
+            Log.warn("Failed to schedule task; will retry using caller's thread: {0}", t.getMessage());
+            FutureTask<?> result = new FutureTask<>(task, null);
+            result.run();
+            return result;
+        }
     }
 
     /**
@@ -304,8 +299,13 @@ public class TaskEngine {
         }
 
         @Override
-		public void run() {
-            executor.submit(task);
+        public void run() {
+            try {
+                submit(task);
+            } catch (Throwable t) {
+                // need to catch here to prevent Timer from canceling TimerThread
+                Log.error("Failed to execute TimerTask", t);
+            }
         }
     }
 }

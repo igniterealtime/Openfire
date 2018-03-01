@@ -1,7 +1,4 @@
-/**
- * $Revision: 1727 $
- * $Date: 2005-07-29 19:55:59 -0300 (Fri, 29 Jul 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +30,7 @@ public class XMPPContextListener implements ServletContextListener {
 
     protected String XMPP_KEY = "XMPP_SERVER";
 
+    @Override
     public void contextInitialized(ServletContextEvent event) {
         if (XMPPServer.getInstance() != null) {
             // Running in standalone mode so do nothing
@@ -42,6 +40,7 @@ public class XMPPContextListener implements ServletContextListener {
         event.getServletContext().setAttribute(XMPP_KEY, server);
     }
 
+    @Override
     public void contextDestroyed(ServletContextEvent event) {
         XMPPServer server = (XMPPServer) event.getServletContext().getAttribute(XMPP_KEY);
         if (null != server) {

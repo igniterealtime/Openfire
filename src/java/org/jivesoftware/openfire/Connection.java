@@ -1,8 +1,4 @@
-/**
- * $RCSfile: Connection.java,v $
- * $Revision: 3187 $
- * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,27 +16,30 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.xmpp.packet.Packet;
-
+import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.xmpp.packet.Packet;
 
 /**
  * Represents a connection on the server.
  *
  * @author Iain Shigeoka
  */
-public interface Connection {
-
+public interface Connection extends Closeable {
+    
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
      *
      * @return true if the socket remains valid, false otherwise.
      */
-    public boolean validate();
+    boolean validate();
 
     /**
      * Initializes the connection with it's owning session. Allows the
@@ -49,7 +48,15 @@ public interface Connection {
      *
      * @param session the session that owns this connection
      */
-    public void init(LocalSession session);
+    void init( LocalSession session );
+
+    /**
+     * Reinitializes the connection to switch to a different session. This allows for
+     * XEP-0198 resumption and transport-switching.
+     *
+     * @param session The new session now owning the connection.
+     */
+    void reinit( LocalSession session );
 
     /**
      * Returns the raw IP address of this <code>InetAddress</code>
@@ -59,7 +66,7 @@ public interface Connection {
      * @return  the raw IP address of this object.
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public byte[] getAddress() throws UnknownHostException;
+    byte[] getAddress() throws UnknownHostException;
 
     /**
      * Returns the IP address string in textual presentation.
@@ -67,7 +74,7 @@ public interface Connection {
      * @return  the raw IP address in a string format.
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
-    public String getHostAddress() throws UnknownHostException;
+    String getHostAddress() throws UnknownHostException;
 
     /**
      * Gets the host name for this IP address.
@@ -95,26 +102,26 @@ public interface Connection {
      * @see java.net.InetAddress#getCanonicalHostName
      * @see SecurityManager#checkConnect
      */
-    public String getHostName() throws UnknownHostException;
+    String getHostName() throws UnknownHostException;
 
-	/**
-	 * Returns the local underlying {@link javax.security.cert.X509Certificate}
-	 * chain for the connection.
-	 * 
-	 * @return an ordered array of certificates, with the local certificate
-	 *         first followed by any certificate authorities. If no certificates
-	 *         is present for the connection, then <tt>null</tt> is returned.
-	 */
-    public Certificate[] getLocalCertificates();
+    /**
+     * Returns the local underlying {@link javax.security.cert.X509Certificate}
+     * chain for the connection.
+     * 
+     * @return an ordered array of certificates, with the local certificate
+     *         first followed by any certificate authorities. If no certificates
+     *         is present for the connection, then <tt>null</tt> is returned.
+     */
+    Certificate[] getLocalCertificates();
 
-	/**
-	 * Returns the underlying {@link javax.security.cert.X509Certificate} for
-	 * the connection of the peer.
-	 * 
-	 * @return an ordered array of peer certificates, with the peer's own
-	 *         certificate first followed by any certificate authorities.
-	 */
-    public Certificate[] getPeerCertificates();
+    /**
+     * Returns the underlying {@link javax.security.cert.X509Certificate} for
+     * the connection of the peer.
+     * 
+     * @return an ordered array of peer certificates, with the peer's own
+     *         certificate first followed by any certificate authorities.
+     */
+    Certificate[] getPeerCertificates();
 
     /**
      * Keeps track if the other peer of this session presented a self-signed certificate. When
@@ -124,7 +131,7 @@ public interface Connection {
      *
      * @param isSelfSigned true if the other peer presented a self-signed certificate.
      */
-    public void setUsingSelfSignedCertificate(boolean isSelfSigned);
+    void setUsingSelfSignedCertificate( boolean isSelfSigned );
 
     /**
      * Returns true if the other peer of this session presented a self-signed certificate. When
@@ -134,7 +141,7 @@ public interface Connection {
      *
      * @return true if the other peer of this session presented a self-signed certificate.
      */
-    public boolean isUsingSelfSignedCertificate();
+    boolean isUsingSelfSignedCertificate();
     
     /**
      * Close this session including associated socket connection. The order of
@@ -144,49 +151,33 @@ public interface Connection {
      *      <li>Call notifyEvent all listeners that the channel is shutting down.
      *      <li>Close the socket.
      * </ul>
-     *
-     * An invocation of this method is equal to invoking {@link #close(boolean)} with a parameter
-     * that is false.
+     * Note this method overrides the base interface to suppress exceptions. However,
+     * it otherwise fulfills the requirements of the {@link Closeable#close()} contract
+     * (idempotent, try-with-resources, etc.)
      */
-    public void close();
-
-    /**
-     * Close this session including associated socket connection. The order of
-     * events for closing the session is:
-     * <ul>
-     *      <li>Set closing flag to prevent redundant shutdowns.
-     *      <li>Call notifyEvent all listeners that the channel is shutting down.
-     *      <li>Close the socket.
-     * </ul>
-     *
-     * This method takes into account the connection state of the peer. Specifically,
-     * when the peer is known to be in a disconnected state, no data will be sent
-     * (otherwise, this method can trigger the delivery of an end-of-stream signal).
-     *
-     * @param peerIsKnownToBeDisconnected should be set to true when the peer is known to no longer be available.
-     */
-    public void close( boolean peerIsKnownToBeDisconnected );
+    @Override
+    void close();
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors
      * should send a stream error whose condition is system-shutdown before closing
      * the connection.
      */
-    public void systemShutdown();
+    void systemShutdown();
 
     /**
      * Returns true if the connection/session is closed.
      *
      * @return true if the connection is closed.
      */
-    public boolean isClosed();
+    boolean isClosed();
 
     /**
      * Returns true if this connection is secure.
      *
      * @return true if the connection is secure (e.g. SSL/TLS)
      */
-    public boolean isSecure();
+    boolean isSecure();
 
     /**
      * Registers a listener for close event notification. Registrations after
@@ -199,7 +190,7 @@ public interface Connection {
      * @param listener the listener to register for events.
      * @param handbackMessage the object to send in the event notification.
      */
-    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage);
+    void registerCloseListener( ConnectionCloseListener listener, Object handbackMessage );
 
     /**
      * Removes a registered close event listener. Registered listeners must
@@ -209,7 +200,7 @@ public interface Connection {
      *
      * @param listener the listener to deregister for close events.
      */
-    public void removeCloseListener(ConnectionCloseListener listener);
+    void removeCloseListener( ConnectionCloseListener listener );
 
     /**
      * Delivers the packet to this connection without checking the recipient.
@@ -218,7 +209,7 @@ public interface Connection {
      * @param packet the packet to deliver.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException if a permission error was detected.
      */
-    public void deliver(Packet packet) throws UnauthorizedException;
+    void deliver( Packet packet ) throws UnauthorizedException;
 
     /**
      * Delivers raw text to this connection. This is a very low level way for sending
@@ -231,7 +222,7 @@ public interface Connection {
      *
      * @param text the XML stanzas represented kept in a String.
      */
-    public void deliverRawText(String text);
+    void deliverRawText( String text );
 
     /**
      * Returns true if the connected client is a flash client. Flash clients need
@@ -241,7 +232,7 @@ public interface Connection {
      *
      * @return true if the connected client is a flash client.
      */
-    public boolean isFlashClient();
+    boolean isFlashClient();
 
     /**
      * Sets whether the connected client is a flash client. Flash clients need to
@@ -251,7 +242,7 @@ public interface Connection {
      *
      * @param flashClient true if the if the connection is a flash client.
      */
-    public void setFlashClient(boolean flashClient);
+    void setFlashClient( boolean flashClient );
 
     /**
      * Returns the major version of XMPP being used by this connection
@@ -261,7 +252,7 @@ public interface Connection {
      *
      * @return the major XMPP version being used by this connection.
      */
-    public int getMajorXMPPVersion();
+    int getMajorXMPPVersion();
 
     /**
      * Returns the minor version of XMPP being used by this connection
@@ -271,7 +262,7 @@ public interface Connection {
      *
      * @return the minor XMPP version being used by this connection.
      */
-    public int getMinorXMPPVersion();
+    int getMinorXMPPVersion();
 
     /**
      * Sets the XMPP version information. In most cases, the version should be "1.0".
@@ -281,22 +272,7 @@ public interface Connection {
      * @param majorVersion the major version.
      * @param minorVersion the minor version.
      */
-    public void setXMPPVersion(int majorVersion, int minorVersion);
-
-    /**
-     * Returns the language code that should be used for this connection
-     * (e.g. "en").
-     *
-     * @return the language code for the connection.
-     */
-    public String getLanguage();
-
-    /**
-     * Sets the language code that should be used for this connection (e.g. "en").
-     *
-     * @param language the language code.
-     */
-    public void setLanaguage(String language);
+    void setXMPPVersion( int majorVersion, int minorVersion );
 
     /**
      * Returns true if the connection is using compression.
@@ -369,8 +345,25 @@ public interface Connection {
      *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
      * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
+     * @deprecated Use {@link #startTLS(boolean)} instead.
      */
+    @Deprecated
     void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
+
+    /**
+     * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
+     * connection the server requesting the TLS negotiation will be the client and the other server
+     * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
+     * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
+     * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.<p>
+     *
+     * In the case of client-2-server the XMPP server must pass <code>false</code> in the
+     * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation.
+     *
+     * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
+     * @throws Exception if an error occured while securing the connection.
+     */
+    void startTLS(boolean clientMode) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter
@@ -386,6 +379,15 @@ public interface Connection {
      * TLS. However, it is possible to use compression without TLS.
      */
     void startCompression();
+
+    /**
+     * Returns a representation of the desired state for this connection. Note that this is different from the current
+     * state of the connection. For example, TLS can be required by configuration, but while the connection has yet to
+     * be fully initialized, the current state might not be TLS-encrypted.
+     *
+     * @return The desired configuration for the connection (never null).
+     */
+    ConnectionConfiguration getConfiguration();
 
     /**
      * Enumeration of possible compression policies required to interact with the server.
@@ -425,7 +427,14 @@ public interface Connection {
          * TLS is not available. Entities that request a TLS negotiation will get a stream
          * error and their connections will be closed.
          */
-        disabled
+        disabled,
+
+        /**
+         * A policy that requires connections to be encrypted immediately (as opposed to the
+         * 'required' policy, that allows for an initially unencrypted connection to become
+         * encrypted through StartTLS.
+         */
+        legacyMode
     }
 
     /**
@@ -455,4 +464,10 @@ public interface Connection {
          */
         needed
     }
+
+    /**
+     * Used to specify operational status for the corresponding connection
+     */
+    enum State { OPEN, CLOSED }
+
 }

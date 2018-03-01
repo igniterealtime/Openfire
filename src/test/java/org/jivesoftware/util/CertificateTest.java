@@ -23,7 +23,7 @@ public class CertificateTest {
     public void testCN() {
         Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
         String text = "EMAILADDRESS=XXXXX@scifi.com, CN=scifi.com, CN=jabber.scifi.com, OU=Domain validated only, O=XX, L=Skx, C=SE";
-        List<String> found = new ArrayList<String>();
+        List<String> found = new ArrayList<>();
         Matcher matcher = cnPattern.matcher(text);
         while (matcher.find()) {
             found.add(matcher.group(2));

@@ -53,6 +53,11 @@
                   url="system-email.jsp"
                   description="${sidebar.server-email.descr}"/>
 
+            <!-- SMS -->
+            <item id="system-sms" name="${sidebar.server-sms}"
+                  url="system-sms.jsp"
+                  description="${sidebar.server-sms.descr}"/>
+
             <!-- Security Audit Viewer -->
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"
@@ -69,17 +74,17 @@
 
             <!-- Client connections settings-->
             <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
-                  url="client-connections-settings.jsp"
+                  url="connection-settings-socket-c2s.jsp"
                   description="${sidebar.client-connections-settings.descr}"/>
                   
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
-                  url="server2server-settings.jsp"
+                  url="connection-settings-socket-s2s.jsp"
                   description="${sidebar.server2server-settings.descr}"/>
 
             <!-- External components -->
             <item id="external-components-settings" name="${sidebar.external-components-settings}"
-                  url="external-components-settings.jsp"
+                  url="connection-settings-external-components.jsp"
                   description="${sidebar.external-components-settings.descr}"/>
 
             <!-- Connection Managers -->
@@ -122,11 +127,6 @@
                   url="private-data-settings.jsp"
                   description="${sidebar.server-data-settings.descr}"/>
 
-            <!-- SSL Settings -->
-            <item id="server-ssl" name="${sidebar.server-ssl}"
-                  url="ssl-settings.jsp"
-                  description="${sidebar.server-ssl.descr}"/>
-
             <!-- Compression Settings -->
             <item id="server-compression" name="${sidebar.server-compression}"
                   url="compression-settings.jsp"
@@ -142,32 +142,103 @@
         <!-- TLS / SSL-->
         <sidebar id="sidebar-certificates" name="${sidebar.sidebar-certificates}">
 
-            <item id="security-certificate-store-management" name="Certificate Stores"
+            <item id="security-certificate-store-management" name="${sidebar.certificate-stores}"
                   url="security-certificate-store-management.jsp"
-                  description="Manage Openfire Certificate stores">
+                  description="${sidebar.certificate-stores.descr}">
 
-            <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->
+                <sidebar id="sidebar-certificate-store-socket-c2s" name="${sidebar.client-connections-settings}">
+
+                    <item id="sidebar-certificate-store-socket_c2s-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=SOCKET_C2S"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-socket_c2s-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=SOCKET_C2S"
+                          description="${sidebar.trust-store.descr}"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-socket-s2s" name="${sidebar.server2server-settings}">
+
+                    <item id="sidebar-certificate-store-socket_s2s-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=SOCKET_S2S"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-socket_s2s-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=SOCKET_S2S"
+                          description="${sidebar.trust-store.descr"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-bosh-c2s" name="${sidebar.http-bind}">
+
+                    <item id="sidebar-certificate-store-bosh_c2s-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=BOSH_C2S"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-bosh_c2s-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=BOSH_C2S"
+                          description="${sidebar.trust-store.descr"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-component" name="${sidebar.external-components-settings}">
+
+                    <item id="sidebar-certificate-store-component-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=COMPONENT"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-component-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=COMPONENT"
+                          description="${sidebar.trust-store.descr"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-connection-manager" name="${sidebar.connection-managers-settings}">
+
+                    <item id="sidebar-certificate-store-connection_manager-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=CONNECTION_MANAGER"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-connection_manager-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=CONNECTION_MANAGER"
+                          description="${sidebar.trust-store.descr"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-webadmin" name="${admin.console}">
+
+                    <item id="sidebar-certificate-store-webadmin-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=WEBADMIN"
+                          description="${sidebar.identity-store.descr"/>
+
+                    <item id="sidebar-certificate-store-webadmin-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=WEBADMIN"
+                          description="${sidebar.trust-store.descr"/>
+
+                </sidebar>
+                <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->
             <!--<item id="sidebar-certificates-keys" name="${sidebar.sidebar-certificates-keys}"-->
                     <!--url="security-keystore.jsp">-->
 
-                <sidebar id="sidebar-certificates-keys-submenu" name="${sidebar.sidebar-certificates-keys-submenu}">
+                <!--<sidebar id="sidebar-certificates-keys-submenu" name="${sidebar.sidebar-certificates-keys-submenu}">-->
 
-                    <!-- Socket Server Certificates -->
-                    <item id="security-keystore-socket" name="${sidebar.security-keystore-socket}"
-                          url="security-keystore.jsp?connectivityType=socket"
-                          description="${sidebar.security-keystore-socket.descr}"/>
+                    <!--&lt;!&ndash; Socket Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-socket" name="${sidebar.security-keystore-socket}"-->
+                          <!--url="security-keystore.jsp?connectivityType=socket"-->
+                          <!--description="${sidebar.security-keystore-socket.descr}"/>-->
 
-                    <!-- BOSH Server Certificates -->
-                    <item id="security-keystore-bosh" name="${sidebar.security-keystore-bosh}"
-                          url="security-keystore.jsp?connectivityType=bosh"
-                          description="${sidebar.security-keystore-bosh.descr}"/>
+                    <!--&lt;!&ndash; BOSH Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-bosh" name="${sidebar.security-keystore-bosh}"-->
+                          <!--url="security-keystore.jsp?connectivityType=bosh"-->
+                          <!--description="${sidebar.security-keystore-bosh.descr}"/>-->
 
-                    <!-- Administrative Server Certificates -->
-                    <item id="security-keystore-administrative" name="${sidebar.security-keystore-administrative}"
-                          url="security-keystore.jsp?connectivityType=administrative"
-                          description="${sidebar.security-keystore-administrative.descr}"/>
+                    <!--&lt;!&ndash; Administrative Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-administrative" name="${sidebar.security-keystore-administrative}"-->
+                          <!--url="security-keystore.jsp?connectivityType=administrative"-->
+                          <!--description="${sidebar.security-keystore-administrative.descr}"/>-->
 
-                </sidebar>
+                <!--</sidebar>-->
 
             </item>
 
@@ -211,7 +282,51 @@
                   url="media-proxy.jsp"
                   description="${sidebar.media-proxy.descr}"/>
         </sidebar>
-                
+
+        <!-- PubSub Node Administration -->
+        <sidebar id="sidebar-pubsub" name="${sidebar.sidebar-pubsub}">
+
+            <!-- PubSub Service -->
+            <item id="pubsub-service-summary" name="${sidebar.pubsub-service-summary}"
+                  url="pubsub-service-summary.jsp"
+                  description="${sidebar.pubsub-service-summary.descr}"/>
+
+            <!-- PubSub Node Summary -->
+            <item id="pubsub-node-summary" name="${sidebar.pubsub-node-summary}"
+                  url="pubsub-node-summary.jsp"
+                  description="${sidebar.pubsub-node-summary.descr}">
+
+                <!-- Node Options -->
+                <sidebar id="sidebar-node-options" name="${sidebar.sidebar-node-options}">
+
+                    <!-- Published Items -->
+                    <item id="pubsub-node-items" name="${sidebar.pubsub-node-items}"
+                          url="pubsub-node-items.jsp"
+                          description="${sidebar.pubsub-node-items.descr}"/>
+
+                    <!-- Node Affiliates -->
+                    <item id="pubsub-node-affiliates" name="${sidebar.pubsub-node-affiliates}"
+                          url="pubsub-node-affiliates.jsp"
+                          description="${sidebar.pubsub-node-affiliates.descr}"/>
+
+                    <!-- Node Subscribers -->
+                    <item id="pubsub-node-subscribers" name="${sidebar.pubsub-node-subscribers}"
+                          url="pubsub-node-subscribers.jsp"
+                          description="${sidebar.pubsub-node-subscribers.descr}"/>
+
+                    <!-- Edit Node -->
+                    <item id="pubsub-node-edit" name="${sidebar.pubsub-node-edit}"
+                          url="pubsub-node-edit.jsp"
+                          description="${sidebar.pubsub-node-edit.descr}"/>
+
+                    <!-- Delete Node -->
+                    <item id="pubsub-node-delete" name="${sidebar.pubsub-node-delete}"
+                          url="pubsub-node-delete.jsp"
+                          description="${sidebar.pubsub-node-delete.descr}"/>
+                </sidebar>
+            </item>
+        </sidebar>
+
     </tab>
 
     <!-- Users/Groups -->
@@ -241,7 +356,12 @@
                     <!-- User Groups -->
                     <item id="user-groups" name="${sidebar.user-groups}"
                           url="user-groups.jsp"
-                          description="${sidebar.user-groups.descr}"/>      
+                          description="${sidebar.user-groups.descr}"/>
+
+                    <!-- PEP Node Administration -->
+                    <item id="user-pep-node-summary" name="${sidebar.user-pep-node-summary}"
+                          url="pubsub-node-summary.jsp"
+                          description="${sidebar.user-pep-node-summary.descr}"/>
 
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"
@@ -326,6 +446,10 @@
             <item id="user-message" name="${sidebar.user-message}"
                   url="user-message.jsp"
                   description="${sidebar.user-message.descr}"/>
+
+            <item id="server-connectiontest" name="${sidebar.server-connectiontest}"
+                  url="server-connectiontest.jsp"
+                  description="${sidebar.server-connectiontest.descr}"/>
 
         </sidebar>
     </tab>
@@ -429,8 +553,8 @@
     <!-- Plugins -->
     <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}">
 
-        <!-- Group Chat Settings -->
-        <sidebar id="sidebar-plugin-adamin" name="${sidebar.sidebar-plugin-admin}">
+        <!-- Plugin Admin -->
+        <sidebar id="sidebar-plugin-admin" name="${sidebar.sidebar-plugin-admin}">
 
             <!-- Plugins -->
             <item id="plugin-settings" name="${sidebar.plugin-settings}"

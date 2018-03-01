@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 691 $
- * $Date: 2004-12-13 15:06:54 -0300 (Mon, 13 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,30 +36,8 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 public interface AuthProvider {
 
     /**
-     * Returns true if this AuthProvider supports authentication using plain-text
-     * passwords according to JEP--0078. Plain text authentication is not secure
-     * and should generally only be used for a TLS/SSL connection.
-     *
-     * @return true if plain text password authentication is supported by
-     *      this AuthProvider.
-     */
-    boolean isPlainSupported();
-
-    /**
-     * Returns true if this AuthProvider supports digest authentication
-     * according to JEP-0078.
-     *
-     * @return true if digest authentication is supported by this
-     *      AuthProvider.
-     */
-    boolean isDigestSupported();
-
-    /**
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
-     *
-     * If {@link #isPlainSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
      *
      * @param username the username or full JID.
      * @param password the password
@@ -76,25 +50,6 @@ public interface AuthProvider {
             ConnectionException, InternalUnauthenticatedException;
 
     /**
-     * Returns if the username, token, and digest are valid; otherwise this
-     * method throws an UnauthorizedException.<p>
-     *
-     * If {@link #isDigestSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
-     *
-     * @param username the username or full JID.
-     * @param token the token that was used with plain-text password to
-     *      generate the digest.
-     * @param digest the digest generated from plain-text password and unique token.
-     * @throws UnauthorizedException if the username and password
-     *      do not match any existing user.
-     * @throws ConnectionException it there is a problem connecting to user and group sytem
-     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire iteself into the user and group system
-     */
-    void authenticate(String username, String token, String digest)
-            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException;
-
-    /**
      * Returns the user's password. This method should throw an UnsupportedOperationException
      * if this operation is not supported by the backend user store.
      *
@@ -104,7 +59,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public String getPassword(String username) throws UserNotFoundException,
+    String getPassword( String username ) throws UserNotFoundException,
             UnsupportedOperationException;
 
     /**
@@ -117,7 +72,7 @@ public interface AuthProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public void setPassword(String username, String password)
+    void setPassword( String username, String password )
             throws UserNotFoundException, UnsupportedOperationException;
 
     /**
@@ -128,7 +83,11 @@ public interface AuthProvider {
      * @return true if this UserProvider is able to retrieve user passwords from the
      *         backend user store.
      */
-    public boolean supportsPasswordRetrieval();
+    boolean supportsPasswordRetrieval();
 
     boolean isScramSupported();
+    String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException;
+    int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException;
 }

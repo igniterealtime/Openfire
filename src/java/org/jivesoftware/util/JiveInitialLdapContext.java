@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2698 $
- * $Date: 2005-08-19 15:28:16 -0300 (Fri, 19 Aug 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,32 +31,32 @@ import javax.net.ssl.SSLSession;
  */
 public class JiveInitialLdapContext extends InitialLdapContext {
 
-	private StartTlsResponse tlsResp;
-	private SSLSession sslSess;
-	
-	public JiveInitialLdapContext(Hashtable<?, ?> arg0, Control[] arg1)
-			throws NamingException {
-		super(arg0, arg1);
-	}
-	
-	public JiveInitialLdapContext() throws NamingException {
-		super();
-	}
+    private StartTlsResponse tlsResp;
+    private SSLSession sslSess;
+    
+    public JiveInitialLdapContext(Hashtable<?, ?> arg0, Control[] arg1)
+            throws NamingException {
+        super(arg0, arg1);
+    }
+    
+    public JiveInitialLdapContext() throws NamingException {
+        super();
+    }
 
-	public StartTlsResponse getTlsResponse() {
-		return tlsResp;
-	}
+    public StartTlsResponse getTlsResponse() {
+        return tlsResp;
+    }
 
-	public void setTlsResponse(StartTlsResponse tlsResp) {
-		this.tlsResp = tlsResp;
-	}
+    public void setTlsResponse(StartTlsResponse tlsResp) {
+        this.tlsResp = tlsResp;
+    }
 
-	public SSLSession getSslSession() {
-		return sslSess;
-	}
+    public SSLSession getSslSession() {
+        return sslSess;
+    }
 
-	public void setSslSession(SSLSession sslSess) {
-		this.sslSess = sslSess;
-	}
+    public void setSslSession(SSLSession sslSess) {
+        this.sslSess = sslSess;
+    }
 
 }

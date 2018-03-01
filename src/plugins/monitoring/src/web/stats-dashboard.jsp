@@ -15,8 +15,8 @@
 <%@ page import="java.util.*"%>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.plugin.MonitoringPlugin" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     String sessionKey = StatisticsModule.SESSIONS_KEY;
@@ -38,9 +38,6 @@
     <meta name="pageID" content="statistics"/>
     <script src="/js/prototype.js" type="text/javascript"></script>
     <script src="/js/scriptaculous.js" type="text/javascript"></script>
-    <script src="dwr/engine.js" type="text/javascript" ></script>
-	<script src="dwr/util.js" type="text/javascript" ></script>
-    <script src="dwr/interface/Stats.js" type="text/javascript"></script>
 
     <style type="text/css">
     .stats-description {
@@ -127,14 +124,14 @@
     }
 
     conv-users, conv-messages {
-	    float: left;
+        float: left;
         display: block;
-	    text-decoration: none;
+        text-decoration: none;
     }
 </style>
 
 <style type="text/css">
-	@import "style/style.css";
+    @import "style/style.css";
 </style>
 </head>
 
@@ -148,24 +145,19 @@ PeriodicalExecuter.prototype.registerCallback = function() {
 PeriodicalExecuter.prototype.stop = function() {
     clearInterval(this.intervalID);
 }
-DWREngine.setErrorHandler(handleError);
-window.onerror = handleError;
-function handleError() {
-    // swallow errors: probably caused by the server being down
-}
 
 var peStats = new PeriodicalExecuter(statsUpdater, 30);
 
 var currentTimePeriod = '<%= timePeriod %>';
 
 function statsUpdater() {
-    try {
-        Stats.getUpdatedStats(currentTimePeriod, updateStats);
-    } catch(err) {
-        // swallow errors
-    }
+    new Ajax.Request('/plugins/monitoring/api/stats/updated?timePeriod=' +currentTimePeriod, {
+        method: 'get',
+        onSuccess: function(transport) {
+            updateStats(transport.responseText.evalJSON());
+        }
+    });
 }
-
 
 function changeTimePeriod(period) {
     if (currentTimePeriod != period) {
@@ -173,12 +165,12 @@ function changeTimePeriod(period) {
         $(period).className = 'timeControl';
         currentTimePeriod = period;
         createCookie("<%= COOKIE_TIMEPERIOD %>",currentTimePeriod,1000);
-        Stats.getUpdatedStats(currentTimePeriod, updateStats);
+        
+        statsUpdater();
     }
 }
 
 function updateStats(stats) {
-
     for (var stat in stats) {
         updateTable(stat, stats[stat]);
 
@@ -224,7 +216,12 @@ function startupConversations() {
 }
 
 function conversationUpdater() {
-    Stats.getNLatestConversations(6, lastConversationID, updateConversations);
+    new Ajax.Request('/plugins/monitoring/api/stats/latest?count=6&mostRecentConversationID=' +lastConversationID, {
+        method: 'get',
+        onSuccess: function() {
+            updateConversations(transport.responseText.evalJSON());
+        }
+    });
 }
 
 function updateConversations(data) {
@@ -378,7 +375,7 @@ function createCookie(name,value,days) {
     document.cookie = name+"="+value+expires+"; path=/";
 }
 
-
+//# sourceURL=stats-dashboard.jsp
 </script>
 
 <div id="instructions">

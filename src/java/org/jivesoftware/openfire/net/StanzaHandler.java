@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +20,16 @@ import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -49,7 +47,12 @@ import java.io.StringReader;
  */
 public abstract class StanzaHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
+
+    /**
+     * A factory that generates random stream IDs
+     */
+    private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -78,10 +81,6 @@ public abstract class StanzaHandler {
      * Session associated with the socket reader.
      */
     protected LocalSession session;
-    /**
-     * Server name for which we are attending clients.
-     */
-    protected String serverName;
 
     /**
      * Router used to route incoming packets to the correct channels.
@@ -92,13 +91,21 @@ public abstract class StanzaHandler {
      * Creates a dedicated reader for a socket.
      *
      * @param router     the router for sending packets that were read.
-     * @param serverName the name of the server this socket is working for.
      * @param connection the connection being read.
      */
-    public StanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        this.serverName = serverName;
+    public StanzaHandler(PacketRouter router, Connection connection) {
         this.router = router;
         this.connection = connection;
+    }
+
+    @Deprecated
+    public StanzaHandler(PacketRouter router, String serverName, Connection connection) {
+        this.router = router;
+        this.connection = connection;
+    }
+
+    public void setSession(LocalSession session) {
+        this.session = session;
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
@@ -143,7 +150,10 @@ public abstract class StanzaHandler {
 
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
-            session.close();
+            if (session != null) {
+                session.getStreamManager().formalClose();
+                session.close();
+            }
             return;
         }
         // Ignore <?xml version="1.0"?> stanzas sent by clients
@@ -183,28 +193,15 @@ public abstract class StanzaHandler {
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
-        } else if(isStreamManagementStanza(doc)) {
-        	switch(tag) {
-        		case "enable":
-        			session.enableStreamMangement(doc);
-        			break;
-        		case "r":
-        			session.getStreamManager().sendServerAcknowledgement();
-        			break;
-        		case "a":
-        			session.getStreamManager().processClientAcknowledgement(doc);
-        			break;
-        		default:
-        			process(doc);
-        			break;
-        	}
+        } else if (isStreamManagementStanza(doc)) {
+            session.getStreamManager().process( doc );
         }
         else {
             process(doc);
         }
     }
 
-	private void process(Element doc) throws UnauthorizedException {
+    private void process(Element doc) throws UnauthorizedException {
         if (doc == null) {
             return;
         }
@@ -266,7 +263,7 @@ public abstract class StanzaHandler {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence show for -" + packet.toXML(), e);
+                Log.debug("Invalid presence show for -" + packet.toXML(), e);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);
@@ -438,7 +435,7 @@ public abstract class StanzaHandler {
     private void tlsNegotiated() {
         // Offer stream features including SASL Mechanisms
         StringBuilder sb = new StringBuilder(620);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));
@@ -459,7 +456,7 @@ public abstract class StanzaHandler {
      */
     private void saslSuccessful() {
         StringBuilder sb = new StringBuilder(420);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
 
         // Include specific features such as resource binding and session establishment
@@ -535,7 +532,7 @@ public abstract class StanzaHandler {
      */
     private void compressionSuccessful() {
         StringBuilder sb = new StringBuilder(340);
-        sb.append(geStreamHeader());
+        sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
         if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
@@ -552,17 +549,17 @@ public abstract class StanzaHandler {
         connection.deliverRawText(sb.toString());
     }
 
-	/**
-	 * Determines whether stanza's namespace matches XEP-0198 namespace
-	 * @param stanza Stanza to be checked
-	 * @return whether stanza's namespace matches XEP-0198 namespace
-	 */
-	private boolean isStreamManagementStanza(Element stanza) {
-		return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
-				StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
-	}
+    /**
+     * Determines whether stanza's namespace matches XEP-0198 namespace
+     * @param stanza Stanza to be checked
+     * @return whether stanza's namespace matches XEP-0198 namespace
+     */
+    private boolean isStreamManagementStanza(Element stanza) {
+        return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
+                StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
+    }
 
-    private String geStreamHeader() {
+    private String getStreamHeader() {
         StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
@@ -576,11 +573,11 @@ public abstract class StanzaHandler {
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
         sb.append("\" from=\"");
-        sb.append(serverName);
+        sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
         sb.append("\" xml:lang=\"");
-        sb.append(connection.getLanguage());
+        sb.append(session.getLanguage().toLanguageTag());
         sb.append("\" version=\"");
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
@@ -617,6 +614,8 @@ public abstract class StanzaHandler {
             eventType = xpp.next();
         }
 
+        final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+
         // Check that the TO attribute of the stream header matches the server name or a valid
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
@@ -651,13 +650,14 @@ public abstract class StanzaHandler {
 
         if (streamError != null) {
             StringBuilder sb = new StringBuilder(250);
+            if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
+            sb.append("id=\"").append(STREAM_ID_FACTORY.createStreamID()).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
             sb.append("version=\"1.0\">");
@@ -676,7 +676,7 @@ public abstract class StanzaHandler {
             // have a TO attribute
             return false;
         }
-        if (serverName.equals(host)) {
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
             // requested host matched the server name
             return false;
         }
@@ -684,23 +684,23 @@ public abstract class StanzaHandler {
     }
 
     /**
-	 * Obtain the address of the XMPP entity for which this StanzaHandler
-	 * handles stanzas.
-	 *
-	 * Note that the value that is returned for this method can
-	 * change over time. For example, if no session has been established yet,
-	 * this method will return <tt>null</tt>, or, if resource binding occurs,
-	 * the returned value might change. Values obtained from this method are
-	 * therefore best <em>not</em> cached.
-	 *
-	 * @return The address of the XMPP entity for.
-	 */
+     * Obtain the address of the XMPP entity for which this StanzaHandler
+     * handles stanzas.
+     *
+     * Note that the value that is returned for this method can
+     * change over time. For example, if no session has been established yet,
+     * this method will return <tt>null</tt>, or, if resource binding occurs,
+     * the returned value might change. Values obtained from this method are
+     * therefore best <em>not</em> cached.
+     *
+     * @return The address of the XMPP entity for.
+     */
     public JID getAddress() {
-    	if (session == null) {
-    		return null;
-    	}
+        if (session == null) {
+            return null;
+        }
 
-    	return session.getAddress();
+        return session.getAddress();
     }
 
     /**

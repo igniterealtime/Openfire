@@ -1,7 +1,4 @@
-/**
- * $Revision: 4005 $
- * $Date: 2006-06-16 08:58:27 -0700 (Fri, 16 Jun 2006) $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +16,14 @@
 
 package org.jivesoftware.openfire.plugin.spark;
 
+import org.jivesoftware.util.NamedThreadFactory;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -58,22 +58,8 @@ public class TaskEngine {
      */
     private TaskEngine() {
         timer = new Timer("timer-openfire", true);
-        executor = Executors.newCachedThreadPool(new ThreadFactory() {
-
-            final AtomicInteger threadNumber = new AtomicInteger(1);
-
-            public Thread newThread(Runnable runnable) {
-                // Use our own naming scheme for the threads.
-                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "pool-openfire" + threadNumber.getAndIncrement(), 0);
-                // Make workers daemon threads.
-                thread.setDaemon(true);
-                if (thread.getPriority() != Thread.NORM_PRIORITY) {
-                    thread.setPriority(Thread.NORM_PRIORITY);
-                }
-                return thread;
-            }
-        });
+        final ThreadFactory threadFactory = new NamedThreadFactory( "pool-openfire", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
+        executor = Executors.newCachedThreadPool( threadFactory );
     }
 
     /**
@@ -304,7 +290,7 @@ public class TaskEngine {
         }
 
         @Override
-		public void run() {
+        public void run() {
             executor.submit(task);
         }
     }

@@ -5,7 +5,6 @@ import org.jivesoftware.database.JiveID;
 import java.util.Date;
 
 /**
- *
  */
 @JiveID(603)
 public class Participant

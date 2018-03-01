@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -50,26 +47,26 @@ public class QQSession extends TransportSession<QQBuddy> {
     private void setupDefaultServerList() {
         // set up default tcp server list
         Collections.addAll(tcpServerList,
-    		"tcpconn.tencent.com",
-    		"tcpconn2.tencent.com",
-    		"tcpconn3.tencent.com",
-    		"tcpconn4.tencent.com",
-    		"tcpconn5.tencent.com",
-    		"tcpconn6.tencent.com"
-		);
+            "tcpconn.tencent.com",
+            "tcpconn2.tencent.com",
+            "tcpconn3.tencent.com",
+            "tcpconn4.tencent.com",
+            "tcpconn5.tencent.com",
+            "tcpconn6.tencent.com"
+        );
         Collections.shuffle(tcpServerList);
         // set up default udp server list
         Collections.addAll(udpServerList,
-    		"sz.tencent.com",
-    		"sz2.tencent.com",
-    		"sz3.tencent.com",
-    		"sz4.tencent.com",
-    		"sz5.tencent.com",
-    		"sz6.tencent.com",
-    		"sz7.tencent.com",
-    		"sz8.tencent.com",
-    		"sz9.tencent.com"
-		);
+            "sz.tencent.com",
+            "sz2.tencent.com",
+            "sz3.tencent.com",
+            "sz4.tencent.com",
+            "sz5.tencent.com",
+            "sz6.tencent.com",
+            "sz7.tencent.com",
+            "sz8.tencent.com",
+            "sz9.tencent.com"
+        );
         Collections.shuffle(udpServerList);
         // TODO: Add preferred server to top of list, and add checkbox for udp vs tcp
     }
@@ -91,13 +88,13 @@ public class QQSession extends TransportSession<QQBuddy> {
             if (presenceType.equals(PresenceType.dnd)) {
                 qqclient.status_Busy();
             }
-        	else if (presenceType.equals(PresenceType.away) ||
-        			presenceType.equals(PresenceType.xa)) {
-        		qqclient.status_Away();
-        	}
-        	else {
-        		qqclient.status_Online();
-        	}
+            else if (presenceType.equals(PresenceType.away) ||
+                    presenceType.equals(PresenceType.xa)) {
+                qqclient.status_Away();
+            }
+            else {
+                qqclient.status_Online();
+            }
 //            try { 
 //                qquser.setStatus(((QQTransport) getTransport()).
 //                                 convertJabStatusToQQ(presenceType));
@@ -111,19 +108,19 @@ public class QQSession extends TransportSession<QQBuddy> {
 
     @Override
     public void addContact(JID jid, String nickname, ArrayList<String> groups) {
-    	//qqclient.addFriend(Integer.valueOf(getTransport().convertJIDToID(jid)));
-    	qqclient.user_SendAuth(Integer.valueOf(getTransport().convertJIDToID(jid)), "Please accept my friend request!");
-    	qqclient.user_Add(Integer.valueOf(getTransport().convertJIDToID(jid)));
+        //qqclient.addFriend(Integer.valueOf(getTransport().convertJIDToID(jid)));
+        qqclient.user_SendAuth(Integer.valueOf(getTransport().convertJIDToID(jid)), "Please accept my friend request!");
+        qqclient.user_Add(Integer.valueOf(getTransport().convertJIDToID(jid)));
     }
 
     @Override
     public void removeContact(QQBuddy transportBuddy) {
-    	qqclient.user_Delete(Integer.valueOf(getTransport().convertJIDToID(transportBuddy.getJID())));
+        qqclient.user_Delete(Integer.valueOf(getTransport().convertJIDToID(transportBuddy.getJID())));
     }
 
     @Override
     public void updateContact(QQBuddy transportBuddy) {
-    	// There's nothing to change here currently.
+        // There's nothing to change here currently.
     }
     
     /**
@@ -154,23 +151,23 @@ public class QQSession extends TransportSession<QQBuddy> {
 
     @Override
     public void sendChatState(JID jID, ChatStateType chatStateType) {
-    	// either not supported by QQ, or not supported by the lumaqq library
+        // either not supported by QQ, or not supported by the lumaqq library
     }
 
     @Override
     public void sendBuzzNotification(JID jID, String string) {
-    	// either not supported by QQ, or not supported by the lumaqq library
+        // either not supported by QQ, or not supported by the lumaqq library
     }
 
     @Override
     public void logIn(PresenceType presenceType, String string) {
         setPendingPresenceAndStatus(presenceType, verboseStatus);
-    	if (udpServerList.isEmpty()) {
-    		// Ran out of servers to try to log in to.  Dooh.
-    		sessionDisconnectedNoReconnect("Unable to log into any QQ servers.");
-    		return;
-    	}
-    	String qqserver = udpServerList.remove(0); // pull a server to connect to from the end of the list
+        if (udpServerList.isEmpty()) {
+            // Ran out of servers to try to log in to.  Dooh.
+            sessionDisconnectedNoReconnect("Unable to log into any QQ servers.");
+            return;
+        }
+        String qqserver = udpServerList.remove(0); // pull a server to connect to from the end of the list
         setLoginStatus(TransportLoginStatus.LOGGING_IN);
         qqclient = new QQClient();
         qqclient.setUser(qquser);
@@ -181,12 +178,12 @@ public class QQSession extends TransportSession<QQBuddy> {
         //qquser.setServerPort(8000);
         qqclient.setLoginServer("sz.tencent.com");
         try {
-			qqclient.sendTouch();
-		}
+            qqclient.sendTouch();
+        }
         catch (Exception e) {
-			Log.debug("Login attempt at server "+qqserver+" failed, trying next.");
+            Log.debug("Login attempt at server "+qqserver+" failed, trying next.");
             setFailureStatus(ConnectionFailureReason.CAN_NOT_CONNECT);
-		}
+        }
     }
 
     @Override
@@ -197,10 +194,10 @@ public class QQSession extends TransportSession<QQBuddy> {
 
     @Override
     public void cleanUp() {
-    	if (qqclient != null) {
-    		qqclient.logout();
-    		qqclient.release();
-    	}
+        if (qqclient != null) {
+            qqclient.logout();
+            qqclient.release();
+        }
         qqclient = null;
     }
 

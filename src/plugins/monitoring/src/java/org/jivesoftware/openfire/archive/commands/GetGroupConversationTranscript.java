@@ -1,8 +1,5 @@
 /**
 
- * $RCSfile$
- * $Revision$
- * $Date: $
  *
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
@@ -56,10 +53,10 @@ import org.xmpp.packet.JID;
  */
 public class GetGroupConversationTranscript extends AdHocCommand {
 
-	private static final Logger Log = LoggerFactory.getLogger(GetGroupConversationTranscript.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(GetGroupConversationTranscript.class);
+    
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting PDF of conversation transcript");
         form.addInstruction("Fill out this form to request the conversation transcript in PDF format.");
@@ -98,7 +95,7 @@ public class GetGroupConversationTranscript extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Get handle on the Monitoring plugin
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager()
@@ -179,27 +176,27 @@ public class GetGroupConversationTranscript extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jivesoftware.com/protocol/workgroup#get-group-conv-transcript";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Get Group Conversation Transcript";
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         return Arrays.asList(Action.complete);
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         return Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 
@@ -211,7 +208,7 @@ public class GetGroupConversationTranscript extends AdHocCommand {
      * @return true if the requester can access this command.
      */
     @Override
-	public boolean hasPermission(JID requester) {
+    public boolean hasPermission(JID requester) {
         InternalComponentManager componentManager =
                 (InternalComponentManager) ComponentManagerFactory.getComponentManager();
         return super.hasPermission(requester) || componentManager.hasComponent(requester);

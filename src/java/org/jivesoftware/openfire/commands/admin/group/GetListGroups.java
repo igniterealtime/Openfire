@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +40,7 @@ import java.util.Map;
 public class GetListGroups extends AdHocCommand {
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting List of Existing Groups");
         form.addInstruction("Fill out this form to request list of groups.");
@@ -86,7 +83,7 @@ public class GetListGroups extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         String start = data.getData().get("start").get(0);
         String max_items = data.getData().get("max_items").get(0);
         int nStart = 0;
@@ -99,7 +96,7 @@ public class GetListGroups extends AdHocCommand {
             }
         }
         int maxItems = 100000;
-        if (max_items != null && "none".equals(max_items)) {
+        if (max_items != null && !"none".equals(max_items)) {
             try {
                 maxItems = Integer.parseInt(max_items);
             }
@@ -122,7 +119,7 @@ public class GetListGroups extends AdHocCommand {
         for (Group group : GroupManager.getInstance().getGroups(nStart, maxItems)) {
             boolean isSharedGroup = RosterManager.isSharedGroup(group);
             Map<String, String> properties = group.getProperties();
-            Map<String,Object> fields = new HashMap<String,Object>();
+            Map<String,Object> fields = new HashMap<>();
             fields.put("name", group.getName());
             fields.put("desc", group.getDescription());
             fields.put("count", group.getMembers().size() + group.getAdmins().size());
@@ -144,27 +141,27 @@ public class GetListGroups extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#get-groups";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Get List of Existing Groups";
     }
 
     @Override
-	protected List<AdHocCommand.Action> getActions(SessionData data) {
+    protected List<AdHocCommand.Action> getActions(SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 1;
     }
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3055 $
- * $Date: 2005-11-10 21:57:51 -0300 (Thu, 10 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CachedPreparedStatement  {
 
-	private static final Logger Log = LoggerFactory.getLogger(CachedPreparedStatement.class);
+    private static final Logger Log = LoggerFactory.getLogger(CachedPreparedStatement.class);
 
     private String sql;
     private List<Object> params;
@@ -51,8 +47,8 @@ public class CachedPreparedStatement  {
      * Constructs a new CachedPreparedStatement.
      */
     public CachedPreparedStatement() {
-        params = new ArrayList<Object>();
-        types = new ArrayList<Integer>();
+        params = new ArrayList<>();
+        types = new ArrayList<>();
     }
 
     /**
@@ -157,7 +153,7 @@ public class CachedPreparedStatement  {
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (object == null) {
             return false;
         }
@@ -173,7 +169,7 @@ public class CachedPreparedStatement  {
     }
 
     @Override
-	public int hashCode() {
+    public int hashCode() {
         int hashCode = 1;
         if (sql != null) {
             hashCode += sql.hashCode();
@@ -184,7 +180,7 @@ public class CachedPreparedStatement  {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         String toStringSql = sql;
         try {
             int index = toStringSql.indexOf('?');

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19370 $
- * $Date: 2005-07-21 16:52:58 -0700 (Thu, 21 Jul 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +39,7 @@ import org.xmpp.packet.PacketError;
  */
 public class AgentHistory implements WorkgroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(AgentHistory.class);
+    private static final Logger Log = LoggerFactory.getLogger(AgentHistory.class);
 
     private static final String GET_AGENT_SESSIONS =
             "SELECT sessionID, joinTime, leftTime FROM fpAgentSession WHERE agentJID=?";

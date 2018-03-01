@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1765 $
- * $Date: 2005-08-10 22:37:59 -0700 (Wed, 10 Aug 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +41,7 @@ package org.jivesoftware.openfire.user;
 public class POP3UserProvider extends DefaultUserProvider {
 
     @Override
-	public void setEmail(String username, String email) throws UserNotFoundException {
+    public void setEmail(String username, String email) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 }

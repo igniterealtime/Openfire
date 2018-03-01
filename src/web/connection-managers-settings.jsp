@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: $
-  -	$Date: $
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -
@@ -18,8 +15,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.SessionManager,
@@ -27,6 +24,7 @@
                  org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager,
                  org.jivesoftware.openfire.session.ConnectionMultiplexerSession,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.StringUtils"
     errorPage="error.jsp"
 %>
@@ -58,6 +56,18 @@
 
     // Update the session kick policy if requested
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         // Validate params
         if (managerEnabled) {
@@ -125,8 +135,8 @@
 
 <p>
 <fmt:message key="connection-manager.settings.info">
-    <fmt:param value="<%= "<a href='connection-manager-session-summary.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href='connection-manager-session-summary.jsp'>"/>
+    <fmt:param value="</a>"/>
 </fmt:message>
 </p>
 
@@ -167,6 +177,7 @@
 <%  } %>
 
 <form action="connection-managers-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <fieldset>
     <div>
@@ -237,25 +248,25 @@
 
 <style type="text/css">
 .connectionManagers {
-	margin-top: 8px;
-	border: 1px solid #DCDCDC;
-	border-bottom: none;
-	}
+    margin-top: 8px;
+    border: 1px solid #DCDCDC;
+    border-bottom: none;
+    }
 .connectionManagers tr.head {
-	background-color: #F3F7FA;
-	border-bottom: 1px solid red;
-	}
+    background-color: #F3F7FA;
+    border-bottom: 1px solid red;
+    }
 .connectionManagers tr.head td {
-	padding: 3px 6px 3px 6px;
-	border-bottom: 1px solid #DCDCDC;
-	}
+    padding: 3px 6px 3px 6px;
+    border-bottom: 1px solid #DCDCDC;
+    }
 .connectionManagers tr td {
-	padding: 3px;
-	border-bottom: 1px solid #DCDCDC;
-	}
+    padding: 3px;
+    border-bottom: 1px solid #DCDCDC;
+    }
 .connectionManagers tr td img {
-	margin: 3px;
-	}
+    margin: 3px;
+    }
 </style>
 <b><fmt:message key="connection-manager.details.title" >
         <fmt:param value="<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>" />

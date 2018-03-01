@@ -22,26 +22,25 @@ import org.jivesoftware.openfire.group.GroupManager;
  */
 public class SearchGroupServlet extends HttpServlet {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     */
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String param = req.getParameter("search");
-		Element root = new DefaultElement("result");
-		if (param != null && param.length() > 0) {
-			GroupManager manager = GroupManager.getInstance();
-			Collection<Group> groups = manager.getGroups();
-			for (Group gr : groups) {
-				if (gr.getName().startsWith(param)) {
-					root.addElement("item").addText(gr.getName());
-				}
-			}
-		}
-		resp.getOutputStream().write(root.asXML().getBytes());
-		resp.getOutputStream().close();
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String param = req.getParameter("search");
+        Element root = new DefaultElement("result");
+        if (param != null && param.length() > 0) {
+            GroupManager manager = GroupManager.getInstance();
+            Collection<Group> groups = manager.getGroups();
+            for (Group gr : groups) {
+                if (gr.getName().startsWith(param)) {
+                    root.addElement("item").addText(gr.getName());
+                }
+            }
+        }
+        resp.getOutputStream().write(root.asXML().getBytes());
+        resp.getOutputStream().close();
+    }
 
 }

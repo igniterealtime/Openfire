@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +16,12 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.core.write.WriteRequest;
@@ -39,6 +35,9 @@ import org.jivesoftware.util.JiveGlobals;
  * @author Gaston Dombiak
  */
 public class RawPrintFilter extends IoFilterAdapter {
+
+    public static final String FILTER_NAME = "rawDebugger";
+
     private boolean enabled = true;
     private String prefix;
     private Collection<IoSession> sessions = new ConcurrentLinkedQueue<IoSession>();
@@ -49,31 +48,35 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+    public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
-    	if (enabled && message instanceof ByteBuffer) {
-            ByteBuffer byteBuffer = (ByteBuffer) message;
-            // Keep current position in the buffer
-            int currentPos = byteBuffer.position();
-            // Decode buffer
-            Charset encoder = Charset.forName("UTF-8");
-            CharBuffer charBuffer = encoder.decode(byteBuffer.asReadOnlyBuffer());
-            // Print buffer content
-            System.out.println(prefix + " - RECV (" + session.hashCode() + "): " + charBuffer);
-            // Reset to old position in the buffer
-            byteBuffer.position(currentPos);
+        if (enabled && message instanceof IoBuffer) {
+            logBuffer(session, (IoBuffer) message, "RECV");
         }
         // Pass the message to the next filter
         super.messageReceived(nextFilter, session, message);
     }
 
-    @Override
-	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
-        if (enabled && writeRequest.getMessage() instanceof ByteBuffer) {
-            System.out.println(prefix + " - SENT (" + session.hashCode() + "): " +
-                    Charset.forName("UTF-8").decode(((ByteBuffer) writeRequest.getMessage()).asReadOnlyBuffer()));
-        }
+    private void logBuffer(final IoSession session, final IoBuffer ioBuffer, final String receiveOrSend) {
+        // Keep current position in the buffer
+        int currentPos = ioBuffer.position();
+        // Decode buffer
+        CharBuffer charBuffer = Charset.forName("UTF-8").decode(ioBuffer.buf());
+        // Print buffer content
+        System.out.println(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
+        // Reset to old position in the buffer
+        ioBuffer.position(currentPos);
+    }
 
+    private String messagePrefix(final IoSession session, final String messageType) {
+        return String.format("%1$s %2$15s - %3$s - (%4$11s)", prefix, session.getRemoteAddress(), messageType, session.hashCode());
+    }
+
+    @Override
+    public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
+        if (enabled && writeRequest.getMessage() instanceof IoBuffer) {
+            logBuffer(session, (IoBuffer) writeRequest.getMessage(), "SENT");
+        }
         // Pass the message to the next filter
         super.messageSent(nextFilter, session, writeRequest);
     }
@@ -96,22 +99,24 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
         // Keep track of sessions using this filter
         sessions.add(session);
-
+        if (enabled) {
+            // Print that a session was closed
+            System.out.println(messagePrefix(session, "OPEN"));
+        }
         super.sessionCreated(nextFilter, session);
     }
 
     @Override
-	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
         // Update list of sessions using this filter
         sessions.remove(session);
         if (enabled) {
             // Print that a session was closed
-            System.out.println("CLOSED (" + session.hashCode() + ") ");
+            System.out.println(messagePrefix(session, "CLSD"));
         }
-
         super.sessionClosed(nextFilter, session);
     }
 }

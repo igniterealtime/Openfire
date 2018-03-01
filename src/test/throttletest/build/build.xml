@@ -3,12 +3,6 @@
 <!-- Smack Build Script ========================================== -->
 <!-- Jive Software      ============================================== -->
 
-<!--
-    $RCSfile$
-    $Revision: 7435 $
-    $Date: 2007-03-09 11:44:36 -0800 (Fri, 09 Mar 2007) $
--->
-
 <project name="Smack" default="jar" basedir="..">
 
    <property name="compile.dir" value="${basedir}/target/classes" />

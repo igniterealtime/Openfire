@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +16,7 @@
 
 package org.jivesoftware.openfire.reporting.util;
 
+import org.jivesoftware.util.NamedThreadFactory;
 import org.picocontainer.Disposable;
 
 import java.util.*;
@@ -57,22 +55,8 @@ public class TaskEngine implements Disposable {
      */
     private TaskEngine() {
         timer = new Timer("timer-monitoring", true);
-        executor = Executors.newCachedThreadPool(new ThreadFactory() {
-
-            final AtomicInteger threadNumber = new AtomicInteger(1);
-
-            public Thread newThread(Runnable runnable) {
-                // Use our own naming scheme for the threads.
-                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "pool-monitoring" + threadNumber.getAndIncrement(), 0);
-                // Make workers daemon threads.
-                thread.setDaemon(true);
-                if (thread.getPriority() != Thread.NORM_PRIORITY) {
-                    thread.setPriority(Thread.NORM_PRIORITY);
-                }
-                return thread;
-            }
-        });
+        final ThreadFactory threadFactory = new NamedThreadFactory( "pool-monitoring", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
+        executor = Executors.newCachedThreadPool( threadFactory );
     }
 
     /**
@@ -319,7 +303,7 @@ public class TaskEngine implements Disposable {
         }
 
         @Override
-		public void run() {
+        public void run() {
             executor.submit(task);
         }
     }

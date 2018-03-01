@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +69,7 @@ public class FaviconServlet extends HttpServlet {
     private Cache<String, byte[]> hitsCache;
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
         // Create a pool of HTTP connections to use to get the favicons
         client = new HttpClient(new MultiThreadedHttpConnectionManager());
@@ -102,7 +98,7 @@ public class FaviconServlet extends HttpServlet {
      * @throws java.io.IOException
      */
     @Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response)
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String host = request.getParameter("host");

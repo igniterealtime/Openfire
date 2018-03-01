@@ -1,8 +1,4 @@
-/**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,18 +39,22 @@ public abstract class i18nStatistic implements Statistic {
         this.statisticType = statisticType;
     }
 
+    @Override
     public final String getName() {
         return retrieveValue("name");
     }
 
+    @Override
     public final Type getStatType() {
         return statisticType;
     }
 
+    @Override
     public final String getDescription() {
         return retrieveValue("desc");
     }
 
+    @Override
     public final String getUnits() {
         return retrieveValue("units");
     }

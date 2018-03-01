@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +40,8 @@ import org.xmpp.component.ComponentManagerFactory;
  */
 public class SipManager implements Plugin, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(SipManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(SipManager.class);
+    
     private String serviceName;
 
     private ComponentManager componentManager;

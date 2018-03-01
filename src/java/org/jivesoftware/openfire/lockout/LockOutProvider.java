@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,21 +33,21 @@ public interface LockOutProvider {
      * @return The LockOutFlag instance describing the accounts disabled status or null if user
      *         account specified is not currently locked out (disabled).
      */
-    public LockOutFlag getDisabledStatus(String username);
+    LockOutFlag getDisabledStatus( String username );
 
     /**
      * Sets the locked out (disabled) status of an account according to a LockOutFlag.
      *
      * @param flag A LockOutFlag instance to describe the disabled status of a user.
      */
-    public void setDisabledStatus(LockOutFlag flag);
+    void setDisabledStatus( LockOutFlag flag );
 
     /**
      * Unsets the locked out (disabled) status of an account, thereby enabling it/cancelling the disable.
      *
      * @param username User to enable.
      */
-    public void unsetDisabledStatus(String username);
+    void unsetDisabledStatus( String username );
 
     /**
      * Returns true if this LockOutProvider is read-only. When read-only,
@@ -58,7 +55,7 @@ public interface LockOutProvider {
      *
      * @return true if the lock out provider is read-only.
      */
-    public boolean isReadOnly();
+    boolean isReadOnly();
 
     /**
      * Returns true if the LockOutProvider allows for a delayed start to the lockout.
@@ -68,7 +65,7 @@ public interface LockOutProvider {
      *
      * @return true if the lock out provider provides this feature.
      */
-    public boolean isDelayedStartSupported();
+    boolean isDelayedStartSupported();
 
     /**
      * Returns true if the LockOutProvider allows for a timeout after which the lock out will expire.
@@ -78,7 +75,7 @@ public interface LockOutProvider {
      *
      * @return true if the lcok out provider provides this feature.
      */
-    public boolean isTimeoutSupported();
+    boolean isTimeoutSupported();
 
     /**
      * Returns true if the lock out flags should not be cached, meaning every status lookup will
@@ -87,6 +84,6 @@ public interface LockOutProvider {
      *
      * @return true if disabled status should not be cached.
      */
-    public boolean shouldNotBeCached();
+    boolean shouldNotBeCached();
 
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: PacketDelivererImpl.java,v $
- * $Revision: 2715 $
- * $Date: 2005-08-23 22:16:45 -0300 (Tue, 23 Aug 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +40,7 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
         super("Packet Delivery");
     }
 
+    @Override
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (packet == null) {
             throw new PacketException("Packet was null");
@@ -57,13 +54,13 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         deliverHandler = new SocketPacketWriteHandler(XMPPServer.getInstance().getRoutingTable());
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         deliverHandler = null;
     }

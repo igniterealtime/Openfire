@@ -154,88 +154,88 @@ public class RtpPacket {
     protected int channels;
 
     public RtpPacket(byte[] buffer) {
-	this.buffer = buffer;
-	bufferSize = buffer.length;
+    this.buffer = buffer;
+    bufferSize = buffer.length;
     }
 
     public RtpPacket(int encoding, int sampleRate, int channels) {
-	this(encoding, sampleRate, channels,
-	    HEADER_SIZE + getDataSize(encoding, sampleRate, channels));
+    this(encoding, sampleRate, channels,
+        HEADER_SIZE + getDataSize(encoding, sampleRate, channels));
     }
 
     public RtpPacket(int encoding, int sampleRate, int channels,
-	    int bufferSize) {
+        int bufferSize) {
 
-	this.encoding = encoding;
-	this.sampleRate = sampleRate;
-	this.channels = channels;
-	this.bufferSize = bufferSize;
+    this.encoding = encoding;
+    this.sampleRate = sampleRate;
+    this.channels = channels;
+    this.bufferSize = bufferSize;
 
-	//System.out.println("RtpPacket:  " 
-	//    + (encoding == RtpPacket.PCMU_ENCODING ? "PCMU/" : "PCM/")
-	//    + sampleRate + "/" + channels + "/" + encoding 
-	//    + " bufferSize " + bufferSize);
+    //System.out.println("RtpPacket:  " 
+    //    + (encoding == RtpPacket.PCMU_ENCODING ? "PCMU/" : "PCM/")
+    //    + sampleRate + "/" + channels + "/" + encoding 
+    //    + " bufferSize " + bufferSize);
 
-	buffer = new byte[bufferSize];
+    buffer = new byte[bufferSize];
 
         packet = new DatagramPacket(buffer, bufferSize);
 
-	dataSize = getDataSize(encoding, sampleRate, channels);
+    dataSize = getDataSize(encoding, sampleRate, channels);
     }
 
     public int getDataSize() {
-	return getDataSize(encoding, sampleRate, channels);
+    return getDataSize(encoding, sampleRate, channels);
     }
   
     public static int getMaxDataSize() {
-	return getDataSize(PCM_ENCODING, MAX_SAMPLE_RATE, 2);
+    return getDataSize(PCM_ENCODING, MAX_SAMPLE_RATE, 2);
     }
 
     public static int getDataSize(int encoding, int sampleRate, int channels) {
-	int dataSize;
-	String e;
+    int dataSize;
+    String e;
 
-	int samplesPerPacket = (sampleRate * channels) / PACKETS_PER_SECOND;
+    int samplesPerPacket = (sampleRate * channels) / PACKETS_PER_SECOND;
 
-	if (encoding == PCMU_ENCODING) {
-	    dataSize = samplesPerPacket * PCMU_SAMPLE_SIZE;
-	    e = "ULAW";
-	} else if (encoding == PCM_ENCODING) {
-	    dataSize = samplesPerPacket * PCM_SAMPLE_SIZE;
-	    e = "PCM";
-	} else {
-	    dataSize = samplesPerPacket * PCM_SAMPLE_SIZE;
-	    e = "SPEEX";
-	}
+    if (encoding == PCMU_ENCODING) {
+        dataSize = samplesPerPacket * PCMU_SAMPLE_SIZE;
+        e = "ULAW";
+    } else if (encoding == PCM_ENCODING) {
+        dataSize = samplesPerPacket * PCM_SAMPLE_SIZE;
+        e = "PCM";
+    } else {
+        dataSize = samplesPerPacket * PCM_SAMPLE_SIZE;
+        e = "SPEEX";
+    }
 
-	if (Logger.logLevel >= Logger.LOG_DEBUG) {
-	    Logger.writeFile("Packet data size is " + dataSize
-	        + " for " + e + "/" + sampleRate + "/" + channels);
-	}
+    if (Logger.logLevel >= Logger.LOG_DEBUG) {
+        Logger.writeFile("Packet data size is " + dataSize
+            + " for " + e + "/" + sampleRate + "/" + channels);
+    }
 
-	return dataSize;
+    return dataSize;
     }
 
     /**
      * Get number of samples in each packet
      */
     public int getSamplesPerPacket(int sampleRate, int channels) {
-	return (sampleRate * channels) / PACKETS_PER_SECOND;
+    return (sampleRate * channels) / PACKETS_PER_SECOND;
     }
 
     /*
      * Set X bit.
      */
     public void setX(boolean x) {
-	if (x == true) {
-	    buffer[0] |= X_BIT;
-	} else {
-	    buffer[0] &= ~X_BIT;
-	}
+    if (x == true) {
+        buffer[0] |= X_BIT;
+    } else {
+        buffer[0] &= ~X_BIT;
+    }
     }
 
     public boolean getX() {
-	return (buffer[0] & X_BIT) != 0;
+    return (buffer[0] & X_BIT) != 0;
     }
 
     /**
@@ -243,7 +243,7 @@ public class RtpPacket {
      * @return payload byte paylod
      */
     public byte getRtpPayload() {
-	return (byte)(buffer[1] & ~MARK_BIT);
+    return (byte)(buffer[1] & ~MARK_BIT);
     }
 
     /**
@@ -251,20 +251,20 @@ public class RtpPacket {
      * @param payload byte payload
      */
     public void setRtpPayload(byte payload) {
-	byte mark = (byte)(buffer[1] & MARK_BIT);
+    byte mark = (byte)(buffer[1] & MARK_BIT);
 
-	buffer[1] = (byte)(payload | mark);
+    buffer[1] = (byte)(payload | mark);
     }
 
     /**
      * Set the MARK bit.
      */
     public void setMark() {
-	buffer[1] |= MARK_BIT;
+    buffer[1] |= MARK_BIT;
     }
 
     public void clearMark() {
-	buffer[1] &= ~MARK_BIT;
+    buffer[1] &= ~MARK_BIT;
     }
 
     /**
@@ -272,7 +272,7 @@ public class RtpPacket {
      * @return isMarkSet boolean true if set
      */
     public boolean isMarkSet() {
-	return (buffer[1] & MARK_BIT) != 0;
+    return (buffer[1] & MARK_BIT) != 0;
     }
 
     /**
@@ -280,7 +280,7 @@ public class RtpPacket {
      * @return isDtmfSet boolean true if set
      */
     public boolean isDtmfEndSet() {
-	return (buffer[DATA + 1] & DTMF_END_BIT) != 0;
+    return (buffer[DATA + 1] & DTMF_END_BIT) != 0;
     }
 
     /**
@@ -288,14 +288,14 @@ public class RtpPacket {
      * @return sequence number 
      */
     public short getRtpSequenceNumber() {
-	return (short)
-	    (((buffer[2] << 8) & 0xff00) | 
-	    (buffer[3]) & 0xff);
+    return (short)
+        (((buffer[2] << 8) & 0xff00) | 
+        (buffer[3]) & 0xff);
     }
-	
+    
     public void setRtpSequenceNumber(short rtpSequenceNumber) {
-	buffer[2] = (byte) ((rtpSequenceNumber >> 8) & 0xff);
-	buffer[3] = (byte) (rtpSequenceNumber & 0xff);
+    buffer[2] = (byte) ((rtpSequenceNumber >> 8) & 0xff);
+    buffer[3] = (byte) (rtpSequenceNumber & 0xff);
     }
 
     /**
@@ -303,42 +303,42 @@ public class RtpPacket {
      * @return RTP timestamp
      */
     public long getRtpTimestamp() {
-	long ts = (long)(((((long)(buffer[4] & 0xff)) << 24) & 0xff000000)
+    long ts = (long)(((((long)(buffer[4] & 0xff)) << 24) & 0xff000000)
             | ((((long)(buffer[5] & 0xff)) << 16) & 0x00ff0000)
             | ((((long)(buffer[6] & 0xff)) << 8)  & 0x0000ff00)
             | ((long)(buffer[7] & 0xff))) & 0xffffffff;
 
-	return ts;
+    return ts;
     }
 
     public void setRtpTimestamp(int rtpTimestamp) {
-	buffer[4] = (byte) ((rtpTimestamp >> 24) & 0xff);
-	buffer[5] = (byte) ((rtpTimestamp >> 16) & 0xff);
-	buffer[6] = (byte) ((rtpTimestamp >> 8) & 0xff);
-	buffer[7] = (byte) (rtpTimestamp & 0xff);
+    buffer[4] = (byte) ((rtpTimestamp >> 24) & 0xff);
+    buffer[5] = (byte) ((rtpTimestamp >> 16) & 0xff);
+    buffer[6] = (byte) ((rtpTimestamp >> 8) & 0xff);
+    buffer[7] = (byte) (rtpTimestamp & 0xff);
     }
 
     public int getSynchronizationSource() {
         int ss = (int)(((((int)(buffer[8] & 0xff)) << 24) & 0xff000000)
-	   | ((((int)(buffer[9] & 0xff)) << 16) & 0x00ff0000)
-	   | ((((int)(buffer[10] & 0xff)) << 8)  & 0x0000ff00)
-	   | ((int)(buffer[11] & 0xff))) & 0xffffffff;
+       | ((((int)(buffer[9] & 0xff)) << 16) & 0x00ff0000)
+       | ((((int)(buffer[10] & 0xff)) << 8)  & 0x0000ff00)
+       | ((int)(buffer[11] & 0xff))) & 0xffffffff;
  
         return ss;
     }
 
     public void setSynchronizationSource(int synchronizationSource) {
-	buffer[8] = (byte) ((synchronizationSource >> 24) & 0xff); 
-	buffer[9] = (byte) ((synchronizationSource >> 16) & 0xff); 
-	buffer[10] = (byte) ((synchronizationSource >> 8) & 0xff); 
-	buffer[11] = (byte) (synchronizationSource & 0xff); 
+    buffer[8] = (byte) ((synchronizationSource >> 24) & 0xff); 
+    buffer[9] = (byte) ((synchronizationSource >> 16) & 0xff); 
+    buffer[10] = (byte) ((synchronizationSource >> 8) & 0xff); 
+    buffer[11] = (byte) (synchronizationSource & 0xff); 
     }
 
     /**
      * Get the comfort noise level
      */
     public byte getComfortNoiseLevel() {
-	return buffer[DATA];
+    return buffer[DATA];
     }
 
     /**
@@ -346,15 +346,15 @@ public class RtpPacket {
      * @return data buffer byte array data buffer
      */
     public byte[] getData() {
-	return packet.getData();
+    return packet.getData();
     }
 
     /**
      * Set the packet data buffer
      */
     public void setBuffer(byte[] buffer) {
-	this.buffer = buffer;
-	packet.setData(buffer);
+    this.buffer = buffer;
+    packet.setData(buffer);
     }
 
     /**
@@ -362,7 +362,7 @@ public class RtpPacket {
      * @return datagramPacket DatagramPacket
      */
     public DatagramPacket getDatagramPacket() {
-	return packet;
+    return packet;
     }
 
     /**
@@ -370,15 +370,15 @@ public class RtpPacket {
      * @ return length int length
      */
     public int getLength() {
-	return packet.getLength();
+    return packet.getLength();
     }
 
     public int getLinearLength() {
-	if (encoding == PCMU_ENCODING) {
-	    return ((packet.getLength() - HEADER_SIZE) * 2) + HEADER_SIZE;
-	}
+    if (encoding == PCMU_ENCODING) {
+        return ((packet.getLength() - HEADER_SIZE) * 2) + HEADER_SIZE;
+    }
 
-	return packet.getLength();
+    return packet.getLength();
     }
 
     /**
@@ -386,7 +386,7 @@ public class RtpPacket {
      * @return socketAddress SocketAddress
      */
     public SocketAddress getSocketAddress() {
-	return packet.getSocketAddress();
+    return packet.getSocketAddress();
     }
 
     /**
@@ -394,15 +394,15 @@ public class RtpPacket {
      * @param size int size
      */
     public void setLength(int size) {
-	this.size = size;
-	packet.setLength(size);
+    this.size = size;
+    packet.setLength(size);
     }
 
     /**
      * Set the SocketAddress of where to send this packet.
      */
     public void setSocketAddress(SocketAddress socketAddress) {
-	packet.setSocketAddress(socketAddress);
+    packet.setSocketAddress(socketAddress);
     }
 
     /**
@@ -425,37 +425,37 @@ public class RtpPacket {
      * Feel free to adjust these values!
      */
     public static double getVolumeLevel(byte comfortNoiseLevel) {
-	if (comfortNoiseLevel < 0 || 
-		comfortNoiseLevel == defaultNoiseLevel) {
+    if (comfortNoiseLevel < 0 || 
+        comfortNoiseLevel == defaultNoiseLevel) {
 
-	    return 1.0F;
-	}
-	
-	double volumeLevel;
+        return 1.0F;
+    }
+    
+    double volumeLevel;
 
-	if (comfortNoiseLevel > defaultNoiseLevel) {
-	    volumeLevel = ((double)defaultNoiseLevel - comfortNoiseLevel - 1) / 
-	        defaultNoiseLevel / 4;
-	} else {
-	    volumeLevel = ((double)defaultNoiseLevel - comfortNoiseLevel) / 
-	        defaultNoiseLevel * 4;
-	}
+    if (comfortNoiseLevel > defaultNoiseLevel) {
+        volumeLevel = ((double)defaultNoiseLevel - comfortNoiseLevel - 1) / 
+            defaultNoiseLevel / 4;
+    } else {
+        volumeLevel = ((double)defaultNoiseLevel - comfortNoiseLevel) / 
+            defaultNoiseLevel * 4;
+    }
 
-	return volumeLevel;
+    return volumeLevel;
     }
 
     /**
      * Set the default comfort noise value.
      */
     public static void setDefaultComfortNoiseLevel(byte comfortNoiseLevel) {
-	RtpPacket.comfortNoiseLevel = comfortNoiseLevel;
+    RtpPacket.comfortNoiseLevel = comfortNoiseLevel;
     }
 
     /**
      * Get the default comfort noise volume level.
      */
     public static byte getDefaultComfortNoiseLevel() {
-	return comfortNoiseLevel;
+    return comfortNoiseLevel;
     }
     
 }

@@ -8,15 +8,15 @@ import org.xmpp.packet.Packet;
 
 public class Drop extends AbstractRule implements Rule {
 
-	private static final Logger Log = LoggerFactory.getLogger(Drop.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(Drop.class);
+    
     @Override
-	public String getDisplayName() {
+    public String getDisplayName() {
         return "Drop";
     }
 
     @Override
-	public Packet doAction(Packet packet) throws PacketRejectedException {
+    public Packet doAction(Packet packet) throws PacketRejectedException {
         if (doLog()) {
             Log.info("Dropping from "+packet.getFrom()+" to "+packet.getTo());
         }

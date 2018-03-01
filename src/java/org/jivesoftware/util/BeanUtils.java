@@ -1,7 +1,4 @@
-/**
- * $Revision: 243 $
- * $Date: 2004-11-09 10:37:52 -0800 (Tue, 09 Nov 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BeanUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
+    private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
 
     /**
      * The date format recognized for parsing/formattig dates.
@@ -158,7 +155,7 @@ public class BeanUtils {
      * @return a Map of all properties as String name/value pairs.
      */
     public static Map<String, String> getProperties(Object bean) {
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass());
             // Loop through all properties of the bean.

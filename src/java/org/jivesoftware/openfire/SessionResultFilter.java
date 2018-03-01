@@ -1,7 +1,4 @@
-/**
- * $Revision: 580 $
- * $Date: 2004-12-01 18:46:33 -0300 (Wed, 01 Dec 2004) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -216,6 +213,7 @@ public class SessionResultFilter {
      */
     private class SessionComparator implements Comparator<ClientSession> {
 
+        @Override
         public int compare(ClientSession lhs, ClientSession rhs) {
             int comparison;
             switch (sortField) {
@@ -313,7 +311,7 @@ public class SessionResultFilter {
     }
 
     @Override
-	public boolean equals(Object object) {
+    public boolean equals(Object object) {
         if (this == object) {
             return true;
         }

@@ -94,59 +94,59 @@ public abstract class CallHandler extends Thread {
     }
 
     public void suppressStatus(boolean suppressStatus) {
-	this.suppressStatus = suppressStatus;
+    this.suppressStatus = suppressStatus;
     }
 
     /*
      * Mostly for debugging
      */
     public String getCallState() {
-	String s = "\n" + cp.toString();
+    String s = "\n" + cp.toString();
 
-	if (member != null) {
-	    s += "  ConferenceId: "
-		+ member.getConferenceManager().getId() + "\n";
+    if (member != null) {
+        s += "  ConferenceId: "
+        + member.getConferenceManager().getId() + "\n";
 
-	    s += "\tStarted " + member.getTimeStarted() + "\n";
-	} else {
-	    s += "\n";
-	}
+        s += "\tStarted " + member.getTimeStarted() + "\n";
+    } else {
+        s += "\n";
+    }
 
-	if (csa != null) {
-	    s += "\tState = " + csa.getCallState() + "\n";
-	} else {
-	    s += "\tNo Call Setup Agent" + "\n";
-	}
+    if (csa != null) {
+        s += "\tState = " + csa.getCallState() + "\n";
+    } else {
+        s += "\tNo Call Setup Agent" + "\n";
+    }
 
-	s += "\tIsDistributedBridge " + cp.isDistributedBridge() + "\n";
+    s += "\tIsDistributedBridge " + cp.isDistributedBridge() + "\n";
 
 
-	if (cp.getCallTimeout() == 0) {
-	    s += "\tNo timeout\n";
-	} else {
-	    s += "\tCall timeout in " + (cp.getCallTimeout() / 1000)
-	    + " seconds\n";
-	}
+    if (cp.getCallTimeout() == 0) {
+        s += "\tNo timeout\n";
+    } else {
+        s += "\tCall timeout in " + (cp.getCallTimeout() / 1000)
+        + " seconds\n";
+    }
 
-	if (member != null) {
-	    s += " " + member.getMemberState();
-	}
+    if (member != null) {
+        s += " " + member.getMemberState();
+    }
 
-	return s;
+    return s;
     }
 
     public static String getCallStateForAllCalls() {
-	String s = "";
+    String s = "";
 
-	synchronized(activeCalls) {
+    synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		s += call.getCallState() + "\n";
-	    }
-	}
+        s += call.getCallState() + "\n";
+        }
+    }
 
-	return s;
+    return s;
     }
 
     public static String getAllMixDescriptors() {
@@ -156,7 +156,7 @@ public abstract class CallHandler extends Thread {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		s += "MixDescriptors for " + call + "\n";
+        s += "MixDescriptors for " + call + "\n";
                 s += call.getMember().getMixDescriptors() + "\n";
             }
         }
@@ -186,30 +186,30 @@ public abstract class CallHandler extends Thread {
     public abstract CallEventListener getRequestHandler();
 
     public CallParticipant getCallParticipant() {
-	return cp;
+    return cp;
     }
 
     /*
      * Used to switch a call from one conference to another.
      */
     public void setConferenceManager(ConferenceManager conferenceManager) {
-	this.conferenceManager = conferenceManager;
+    this.conferenceManager = conferenceManager;
     }
 
     public ConferenceManager getConferenceManager() {
-	return conferenceManager;
+    return conferenceManager;
     }
 
     public ConferenceMember getMember() {
-	return member;
+    return member;
     }
 
     public MemberSender getMemberSender() {
-	return memberSender;
+    return memberSender;
     }
 
     public MemberReceiver getMemberReceiver() {
-	return memberReceiver;
+    return memberReceiver;
     }
 
     /*
@@ -218,16 +218,16 @@ public abstract class CallHandler extends Thread {
      * we expect to receive RTP packets and to which we will send RTP packets.
      */
     public void setEndpointAddress(InetSocketAddress isa, byte mediaPayload,
-    	    byte receivePayload, byte telephoneEventPayload) {
+            byte receivePayload, byte telephoneEventPayload) {
 
-	setEndpointAddress(isa, mediaPayload, receivePayload, telephoneEventPayload, null);
+    setEndpointAddress(isa, mediaPayload, receivePayload, telephoneEventPayload, null);
     }
 
     public void setEndpointAddress(InetSocketAddress isa, byte mediaPayload,
-    	    byte receivePayload, byte telephoneEventPayload, InetSocketAddress rtcpAddress) {
+            byte receivePayload, byte telephoneEventPayload, InetSocketAddress rtcpAddress) {
 
-    	member.initialize(this, isa, mediaPayload, receivePayload,
-    	    telephoneEventPayload, rtcpAddress);
+        member.initialize(this, isa, mediaPayload, receivePayload,
+            telephoneEventPayload, rtcpAddress);
     }
 
     /*
@@ -263,21 +263,21 @@ public abstract class CallHandler extends Thread {
     }
 
     public void sendCallEventNotification(CallEvent callEvent) {
-	if (cp.getCallId() != null) {
-	    callEvent.setCallId(cp.getCallId());
-	} else {
-	    callEvent.setCallId("CallIdNotInitialized");
-	}
+    if (cp.getCallId() != null) {
+        callEvent.setCallId(cp.getCallId());
+    } else {
+        callEvent.setCallId("CallIdNotInitialized");
+    }
 
-	callEvent.setConferenceId(cp.getConferenceId());
+    callEvent.setConferenceId(cp.getConferenceId());
 
-	callEvent.setCallInfo(cp.getCallOwner());
+    callEvent.setCallInfo(cp.getCallOwner());
 
-	if (csa != null) {
-	    callEvent.setCallState(csa.getCallState());
-	} else {
-	    callEvent.setCallState(new CallState(CallState.UNINITIALIZED));
-	}
+    if (csa != null) {
+        callEvent.setCallState(csa.getCallState());
+    } else {
+        callEvent.setCallState(new CallState(CallState.UNINITIALIZED));
+    }
 
         synchronized (callEventListeners)
         {
@@ -300,65 +300,65 @@ public abstract class CallHandler extends Thread {
     public static int totalSpeaking;
 
     public void speakingChanged(boolean isSpeaking) {
-	if (isSpeaking) {
-	    totalSpeaking++;
+    if (isSpeaking) {
+        totalSpeaking++;
 
-	    CallEvent callEvent =
-		new CallEvent(CallEvent.STARTED_SPEAKING);
+        CallEvent callEvent =
+        new CallEvent(CallEvent.STARTED_SPEAKING);
 
-	    callEvent.setStartedSpeaking();
-	    sendCallEventNotification(callEvent);
-	} else {
-	    totalSpeaking--;
+        callEvent.setStartedSpeaking();
+        sendCallEventNotification(callEvent);
+    } else {
+        totalSpeaking--;
 
-	    CallEvent callEvent =
-		new CallEvent(CallEvent.STOPPED_SPEAKING);
+        CallEvent callEvent =
+        new CallEvent(CallEvent.STOPPED_SPEAKING);
 
-	    callEvent.setStoppedSpeaking();
-	    sendCallEventNotification(callEvent);
-	}
+        callEvent.setStoppedSpeaking();
+        sendCallEventNotification(callEvent);
+    }
     }
 
     public static int getTotalSpeaking() {
-	return totalSpeaking;
+    return totalSpeaking;
     }
 
     /**
      * Send indication when a dtmf key is pressed
      */
     public void dtmfKeys(String dtmfKeys) {
-	//if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println(cp + " got dtmf keys " + dtmfKeys + " " 	+ cp.dtmfDetection());
-	//}
+    //if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println(cp + " got dtmf keys " + dtmfKeys + " " 	+ cp.dtmfDetection());
+    //}
 
-	if (isCallEstablished()) {
-	    if (cp.dtmfDetection()) {
-	        member.stopTreatment(null);
+    if (isCallEstablished()) {
+        if (cp.dtmfDetection()) {
+            member.stopTreatment(null);
 
-		CallEvent callEvent = new CallEvent(CallEvent.DTMF_KEY);
-		callEvent.setDtmfKey(dtmfKeys);
-	        sendCallEventNotification(callEvent);
-	    }
+        CallEvent callEvent = new CallEvent(CallEvent.DTMF_KEY);
+        callEvent.setDtmfKey(dtmfKeys);
+            sendCallEventNotification(callEvent);
+        }
 
-	    if (otherCall != null) {
-			Logger.println("Call " + cp + " forwarding dtmf key "  + dtmfKeys + " to " + otherCall);
-			otherCall.getMemberSender().setDtmfKeyToSend(dtmfKeys);
-	    } else {
-			getMemberSender().setDtmfKeyToSend(dtmfKeys);
-		}
-	} else {
-	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	        Logger.println(cp + " Call not established, ignoring dtmf");
-	    }
-	    stopCallAnsweredTreatment();
-	}
+        if (otherCall != null) {
+            Logger.println("Call " + cp + " forwarding dtmf key "  + dtmfKeys + " to " + otherCall);
+            otherCall.getMemberSender().setDtmfKeyToSend(dtmfKeys);
+        } else {
+            getMemberSender().setDtmfKeyToSend(dtmfKeys);
+        }
+    } else {
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println(cp + " Call not established, ignoring dtmf");
+        }
+        stopCallAnsweredTreatment();
+    }
     }
 
     public void stopCallAnsweredTreatment() {
-	if (done || csa == null) {
-	    return;
-	}
-	csa.stopCallAnsweredTreatment();
+    if (done || csa == null) {
+        return;
+    }
+    csa.stopCallAnsweredTreatment();
     }
 
     public void stopCallEstablishedTreatment() {
@@ -372,13 +372,13 @@ public abstract class CallHandler extends Thread {
      * terminate a call.
      */
     public void cancelRequest(String reason) {
-	if (done) {
-	    return;
-	}
+    if (done) {
+        return;
+    }
 
-	done = true;
+    done = true;
 
-	Logger.println(cp + " Cancel request " + reason);
+    Logger.println(cp + " Cancel request " + reason);
 
         if (csa != null) {
             csa.cancelRequest(reason);
@@ -389,7 +389,7 @@ public abstract class CallHandler extends Thread {
      * Add a treatment for the caller
      */
     public void addTreatment(TreatmentManager treatmentManager) {
-	member.addTreatment(treatmentManager);
+    member.addTreatment(treatmentManager);
     }
 
     /*
@@ -398,18 +398,18 @@ public abstract class CallHandler extends Thread {
     private static int callNumber = 0;
 
     public static synchronized String getNewCallId() {
-	String s;
+    String s;
 
-	do {
-	    callNumber++;
+    do {
+        callNumber++;
             s = String.valueOf(callNumber);
 
-	    String location = Bridge.getBridgeLocation();
+        String location = Bridge.getBridgeLocation();
 
-	    if (location.equalsIgnoreCase("Unknown") == false) {
-	        s += "_" + Bridge.getBridgeLocation();
-	    }
-	} while (CallHandler.findCall(s) != null);
+        if (location.equalsIgnoreCase("Unknown") == false) {
+            s += "_" + Bridge.getBridgeLocation();
+        }
+    } while (CallHandler.findCall(s) != null);
 
         return s;
     }
@@ -418,7 +418,7 @@ public abstract class CallHandler extends Thread {
      * Find the new call of a call migration.
      */
     public static CallHandler findMigratingCall(String callId) {
-	synchronized(activeCalls) {
+    synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
@@ -446,80 +446,80 @@ public abstract class CallHandler extends Thread {
      * This method searches for a call with the callId.
      */
     public static CallHandler findCall(String callId) {
-	if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    Logger.println("findCall:  looking for " + callId
-		+ ", " + activeCalls.size() + " active calls");
-	}
+    if (Logger.logLevel >= Logger.LOG_DETAIL) {
+        Logger.println("findCall:  looking for " + callId
+        + ", " + activeCalls.size() + " active calls");
+    }
 
-	synchronized(activeCalls) {
+    synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		CallParticipant cp = call.getCallParticipant();
+        CallParticipant cp = call.getCallParticipant();
 
-		if (Logger.logLevel >= Logger.LOG_DETAIL) {
-		    Logger.println("findCall:  looking for "
-			+ callId + " got " + cp.getCallId());
-		}
+        if (Logger.logLevel >= Logger.LOG_DETAIL) {
+            Logger.println("findCall:  looking for "
+            + callId + " got " + cp.getCallId());
+        }
 
-		if (match(cp, callId)) {
-		    if (Logger.logLevel >= Logger.LOG_DETAIL) {
-		    	Logger.println("findCall:  found " + callId);
-		    }
+        if (match(cp, callId)) {
+            if (Logger.logLevel >= Logger.LOG_DETAIL) {
+                Logger.println("findCall:  found " + callId);
+            }
 
-		    return call;
-		}
-	    }
-	}
-	return null;
+            return call;
+        }
+        }
+    }
+    return null;
     }
 
     private static boolean match(CallParticipant cp, String callId) {
-	if (cp.getCallId().equals(callId)) {
-	    return true;
-	}
+    if (cp.getCallId().equals(callId)) {
+        return true;
+    }
 
-	if (ConferenceManager.allowShortNames() == false) {
-	    return false;
-	}
+    if (ConferenceManager.allowShortNames() == false) {
+        return false;
+    }
 
-	String name = cp.getName();
+    String name = cp.getName();
 
-	if (name != null) {
-	    if (name.equals(callId)) {
-	        return true;
-	    }
+    if (name != null) {
+        if (name.equals(callId)) {
+            return true;
+        }
 
-	    name = name.replaceAll(" ", "_");
+        name = name.replaceAll(" ", "_");
 
-	    if (name.equals(callId)) {
-	        return true;
- 	    }
-	}
+        if (name.equals(callId)) {
+            return true;
+        }
+    }
 
-	String number = cp.getPhoneNumber();
+    String number = cp.getPhoneNumber();
 
-	if (number == null) {
-	    return false;
-	}
+    if (number == null) {
+        return false;
+    }
 
-	if (number.equals(callId)) {
-	    return true;
-	}
+    if (number.equals(callId)) {
+        return true;
+    }
 
-	if (number.indexOf("sip:") == 0) {
-	    int ix = number.indexOf("@");
+    if (number.indexOf("sip:") == 0) {
+        int ix = number.indexOf("@");
 
-	    if (ix >= 0) {
-	        number = number.substring(4, ix);
+        if (ix >= 0) {
+            number = number.substring(4, ix);
 
-	        if (number.equals(callId)) {
-		    return true;
-	        }
-	    }
-	}
+            if (number.equals(callId)) {
+            return true;
+            }
+        }
+    }
 
-	return false;
+    return false;
     }
 
     /*
@@ -538,9 +538,9 @@ public abstract class CallHandler extends Thread {
         synchronized(activeCalls) {
             activeCalls.remove(callHandler); // remove call from list
 
-	    Logger.println("");
+        Logger.println("");
             Logger.println("calls still in progress:  " + activeCalls.size());
-	    Logger.println("");
+        Logger.println("");
         }
     }
 
@@ -548,143 +548,143 @@ public abstract class CallHandler extends Thread {
      * End all calls.
      */
     public static void shutdown() {
-	shutdown(0);
+    shutdown(0);
     }
 
     public static void shutdown(int delaySeconds) {
-	if (delaySeconds == 0) {
-	    /*
-	     * Quick shutdown right now!
-	     */
-	    hangup("0", "System shutdown");
-	    return;
-	}
+    if (delaySeconds == 0) {
+        /*
+         * Quick shutdown right now!
+         */
+        hangup("0", "System shutdown");
+        return;
+    }
 
-	/*
-	 * Notify the active calls that the MC bridge is shutting down
-	 */
-	long start = System.currentTimeMillis();
+    /*
+     * Notify the active calls that the MC bridge is shutting down
+     */
+    long start = System.currentTimeMillis();
 
-	Logger.println("Shutting down in " + delaySeconds + " seconds");
+    Logger.println("Shutting down in " + delaySeconds + " seconds");
 
-	synchronized(activeCalls) {
-	    for (int i = 0; i < activeCalls.size(); i++) {
+    synchronized(activeCalls) {
+        for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		String id = call.getCallParticipant().getCallId();
+        String id = call.getCallParticipant().getCallId();
 
-		try {
-    	 	    playTreatmentToCall(id, "joinBELL.au;shutdown.au;tts:" +
-			delaySeconds + ";seconds.au");
-		} catch (IOException e) {
-		    Logger.println("Can't play shutdown treatment to call "
-			+ id + " " + e.getMessage());
-		}
-	    }
+        try {
+                playTreatmentToCall(id, "joinBELL.au;shutdown.au;tts:" +
+            delaySeconds + ";seconds.au");
+        } catch (IOException e) {
+            Logger.println("Can't play shutdown treatment to call "
+            + id + " " + e.getMessage());
+        }
+        }
 
-	    /*
-	     * Wait at most a minute in case something is severly broken.
-	     */
-	    while (System.currentTimeMillis() - start < 60000) {
-		boolean hasTreatments = false;
+        /*
+         * Wait at most a minute in case something is severly broken.
+         */
+        while (System.currentTimeMillis() - start < 60000) {
+        boolean hasTreatments = false;
 
-	        for (int i = 0; i < activeCalls.size(); i++) {
+            for (int i = 0; i < activeCalls.size(); i++) {
                     CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		    hasTreatments = call.getMember().hasTreatments();
+            hasTreatments = call.getMember().hasTreatments();
 
-		    if (hasTreatments) {
-			break;
-		    }
-		}
+            if (hasTreatments) {
+            break;
+            }
+        }
 
-		if (hasTreatments == false) {
-		    break;  // no treatments left to play
-		}
-	    }
-	}
+        if (hasTreatments == false) {
+            break;  // no treatments left to play
+        }
+        }
+    }
 
-	if (delaySeconds != 0) {
-	    int sleepTime = (int)((delaySeconds * 1000) -
-		(System.currentTimeMillis() - start));
+    if (delaySeconds != 0) {
+        int sleepTime = (int)((delaySeconds * 1000) -
+        (System.currentTimeMillis() - start));
 
-	    if (sleepTime > 0) {
-	        try {
-		    Thread.sleep(sleepTime);
-	        } catch (InterruptedException e) {
-	        }
-	    }
-	}
+        if (sleepTime > 0) {
+            try {
+            Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
 
-	hangup("0", "System shutdown");
+    hangup("0", "System shutdown");
     }
 
     /*
      * Cancel a specified call.  If callid is 0, all calls are cancelled.
      */
     public static void hangup(String callId, String reason) {
-	Vector callsToCancel = new Vector();
+    Vector callsToCancel = new Vector();
 
-	synchronized(activeCalls) {
-	    /*
-	     * Make a list of all the calls we want to cancel, then cancel them.
-	     * We have to cancel them while not synchronized or
-	     * we could deadlock.
-	     */
-	    for (int i = 0; i < activeCalls.size(); i++) {
+    synchronized(activeCalls) {
+        /*
+         * Make a list of all the calls we want to cancel, then cancel them.
+         * We have to cancel them while not synchronized or
+         * we could deadlock.
+         */
+        for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		CallParticipant cp = call.getCallParticipant();
+        CallParticipant cp = call.getCallParticipant();
 
-	        if (callId.equals("0") || match(cp, callId)) {
-		    callsToCancel.add(call);
-		}
-	    }
-	}
+            if (callId.equals("0") || match(cp, callId)) {
+            callsToCancel.add(call);
+        }
+        }
+    }
 
-	cancel(callsToCancel, reason, false);
+    cancel(callsToCancel, reason, false);
     }
 
     public static void hangupOwner(String ownerId, String reason) {
-		Vector callsToCancel = new Vector();
+        Vector callsToCancel = new Vector();
 
-		synchronized(activeCalls) {
-			/*
-			 * Make a list of all the calls we want to cancel, then cancel them.
-			 * We have to cancel them while not synchronized or
-			 * we could deadlock.
-			 */
-	    	for (int i = 0; i < activeCalls.size(); i++) {
+        synchronized(activeCalls) {
+            /*
+             * Make a list of all the calls we want to cancel, then cancel them.
+             * We have to cancel them while not synchronized or
+             * we could deadlock.
+             */
+            for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-				CallParticipant cp = call.getCallParticipant();
+                CallParticipant cp = call.getCallParticipant();
 
-	        	if (cp.getCallOwner().equals(ownerId)) {
-		    		callsToCancel.add(call);
-				}
-	    	}
-		}
+                if (cp.getCallOwner().equals(ownerId)) {
+                    callsToCancel.add(call);
+                }
+            }
+        }
 
-		cancel(callsToCancel, reason, false);
+        cancel(callsToCancel, reason, false);
     }
 
 
     public static void suspendBridge() {
-	cancel(activeCalls, "bridge suspended", true);
+    cancel(activeCalls, "bridge suspended", true);
     }
 
     private static void cancel(Vector callsToCancel, String reason,
-	    boolean suppressStatus) {
+        boolean suppressStatus) {
 
-	while (callsToCancel.size() > 0) {
+    while (callsToCancel.size() > 0) {
             CallHandler call = (CallHandler)callsToCancel.remove(0);
-	    call.suppressStatus(suppressStatus);
-	    call.cancelRequest(reason);
-	}
+        call.suppressStatus(suppressStatus);
+        call.cancelRequest(reason);
+    }
     }
 
     public String getReasonCallEnded() {
-	return reasonCallEnded;
+    return reasonCallEnded;
     }
 
     /*
@@ -712,22 +712,22 @@ public abstract class CallHandler extends Thread {
      * force packets to be dropped for debugging.
      */
     public static void setDropPackets(String callId, int dropPackets) {
-	if (callId == null) {
-	    return;
-	}
+    if (callId == null) {
+        return;
+    }
 
-	synchronized(activeCalls) {
+    synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		CallParticipant cp = call.getCallParticipant();
+        CallParticipant cp = call.getCallParticipant();
 
-		if (match(cp, callId)) {
-		    MemberReceiver memberReceiver = call.getMemberReceiver();
+        if (match(cp, callId)) {
+            MemberReceiver memberReceiver = call.getMemberReceiver();
 
-		    if (memberReceiver != null) {
-			memberReceiver.setDropPackets(dropPackets);
-		    }
+            if (memberReceiver != null) {
+            memberReceiver.setDropPackets(dropPackets);
+            }
                 }
             }
         }
@@ -737,50 +737,50 @@ public abstract class CallHandler extends Thread {
      * Mute or unmute a conference member.
      */
     public void setMuted(boolean isMuted) {
-	MemberReceiver memberReceiver = getMemberReceiver();
+    MemberReceiver memberReceiver = getMemberReceiver();
 
-	if (memberReceiver != null) {
-	    memberReceiver.setMuted(isMuted);
-	}
+    if (memberReceiver != null) {
+        memberReceiver.setMuted(isMuted);
+    }
     }
 
     public static void setMuted(String callId, boolean isMuted) {
-	if (callId == null) {
-	    return;
-	}
+    if (callId == null) {
+        return;
+    }
 
-	synchronized(activeCalls) {
+    synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		CallParticipant cp = call.getCallParticipant();
+        CallParticipant cp = call.getCallParticipant();
 
-		if (match(cp, callId)) {
+        if (match(cp, callId)) {
                     if (Logger.logLevel >= Logger.LOG_DETAIL) {
-			String s = "";
+            String s = "";
 
-		        if (isMuted == false) {
-			    s = "un";
-		        }
-                        Logger.println(cp.getCallId() + ":  " + s + "muted");
-		    }
-
-		    MemberReceiver memberReceiver = call.getMemberReceiver();
-
-		    if (memberReceiver != null) {
-			memberReceiver.setMuted(isMuted);
-		    }
+                if (isMuted == false) {
+                s = "un";
                 }
-	    }
+                        Logger.println(cp.getCallId() + ":  " + s + "muted");
+            }
+
+            MemberReceiver memberReceiver = call.getMemberReceiver();
+
+            if (memberReceiver != null) {
+            memberReceiver.setMuted(isMuted);
+            }
+                }
+        }
         }
     }
 
     public void setRemoteMediaInfo(String sdp) throws ParseException {
-	csa.setRemoteMediaInfo(sdp);
+    csa.setRemoteMediaInfo(sdp);
     }
 
     public static void setRemoteMediaInfo(String callId, String sdp)
-	    throws ParseException {
+        throws ParseException {
 
         synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
@@ -789,20 +789,20 @@ public abstract class CallHandler extends Thread {
                 CallParticipant cp = call.getCallParticipant();
 
                 if (match(cp, callId)) {
-		    call.setRemoteMediaInfo(sdp);
-		    return;
+            call.setRemoteMediaInfo(sdp);
+            return;
                 }
             }
         }
 
-	throw new ParseException("Invalid callId: " + callId, 0);
+    throw new ParseException("Invalid callId: " + callId, 0);
     }
 
     /*
      * Say the number of calls in the conference
      */
     public int getNumberOfCalls() {
-	return conferenceManager.getNumberOfMembers();
+    return conferenceManager.getNumberOfMembers();
     }
 
     /**
@@ -861,7 +861,7 @@ public abstract class CallHandler extends Thread {
                             s = "un";
                         }
                         Logger.println(cp.getCallId() + ":  conference " + s
-			    + "muted");
+                + "muted");
                     }
 
                     ConferenceMember member = call.getMember();
@@ -893,7 +893,7 @@ public abstract class CallHandler extends Thread {
                         }
 
                         Logger.println(cp.getCallId()
-			    + ":  silenceMainonference " + s + "muted");
+                + ":  silenceMainonference " + s + "muted");
                     }
 
                     ConferenceMember member = call.getMember();
@@ -910,7 +910,7 @@ public abstract class CallHandler extends Thread {
      * Set powerThresholdLimit for the speech detector for a member.
      */
     public static void setPowerThresholdLimit(String callId,
-	    double powerThresholdLimit) {
+        double powerThresholdLimit) {
 
         synchronized(activeCalls) {
             for (int i = 0; i < activeCalls.size(); i++) {
@@ -923,7 +923,7 @@ public abstract class CallHandler extends Thread {
 
                     if (memberReceiver != null) {
                         memberReceiver.setPowerThresholdLimit(
-			    powerThresholdLimit);
+                powerThresholdLimit);
                     }
                 }
             }
@@ -943,21 +943,21 @@ public abstract class CallHandler extends Thread {
             return;
         }
 
-	CallHandler callHandler = findCall(callId);
+    CallHandler callHandler = findCall(callId);
 
-	if (callHandler == null) {
-	    throw new NoSuchElementException("Invalid callId specified:  "
-		+ callId);
-	}
+    if (callHandler == null) {
+        throw new NoSuchElementException("Invalid callId specified:  "
+        + callId);
+    }
 
-	callHandler.getCallParticipant().setDtmfSuppression(dtmfSuppression);
+    callHandler.getCallParticipant().setDtmfSuppression(dtmfSuppression);
     }
 
     /**
      * Set flag to do voice detection while muted
      */
     public static void setVoiceDetectionWhileMuted(String callId,
-	    boolean voiceDetectionWhileMuted) {
+        boolean voiceDetectionWhileMuted) {
 
         if (callId == null) {
             return;
@@ -967,142 +967,142 @@ public abstract class CallHandler extends Thread {
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
-		CallParticipant cp = call.getCallParticipant();
+        CallParticipant cp = call.getCallParticipant();
 
                 if (match(cp, callId)) {
-		    cp.setVoiceDetectionWhileMuted(voiceDetectionWhileMuted);
+            cp.setVoiceDetectionWhileMuted(voiceDetectionWhileMuted);
 
                     if (Logger.logLevel >= Logger.LOG_DETAIL) {
-			Logger.println(cp.getCallId()
-			    + " voice detection while muted is "
-			    + voiceDetectionWhileMuted);
+            Logger.println(cp.getCallId()
+                + " voice detection while muted is "
+                + voiceDetectionWhileMuted);
                     }
                 }
             }
-	}
+    }
     }
 
     /**
      * Get global dtmfSuppression flag
      */
     public static boolean dtmfSuppression() {
-	return dtmfSuppression;
+    return dtmfSuppression;
     }
 
     public static void setDoNotRecord(String callId, boolean doNotRecord)
-	    throws NoSuchElementException {
+        throws NoSuchElementException {
 
         CallHandler callHandler = findCall(callId);
 
         if (callHandler == null) {
-	    throw new NoSuchElementException("Invalid callId specified:  "
-		+ callId);
-	}
+        throw new NoSuchElementException("Invalid callId specified:  "
+        + callId);
+    }
 
         if (Logger.logLevel >= Logger.LOG_DETAIL) {
-	    String s = "";
+        String s = "";
 
-	    if (doNotRecord == true) {
-		s = "NOT";
-	    }
+        if (doNotRecord == true) {
+        s = "NOT";
+        }
             Logger.println(callHandler + ":  " + s + " okay to record");
-	}
+    }
 
-	callHandler.getMemberReceiver().setDoNotRecord(doNotRecord);
+    callHandler.getMemberReceiver().setDoNotRecord(doNotRecord);
     }
 
     /**
      * Record data sent to or from a member
      */
     public static void recordMember(String callId, boolean enabled,
-	    String recordingFile, String recordingType, boolean fromMember)
-		throws NoSuchElementException, IOException {
+        String recordingFile, String recordingType, boolean fromMember)
+        throws NoSuchElementException, IOException {
 
         CallHandler callHandler = findCall(callId);
 
         if (callHandler == null) {
-	    throw new NoSuchElementException("Invalid callId specified:  "
-		+ callId);
-	}
+        throw new NoSuchElementException("Invalid callId specified:  "
+        + callId);
+    }
 
-	if (fromMember) {
-	    callHandler.getMemberReceiver().setRecordFromMember(enabled,
-	        recordingFile, recordingType);
-	} else {
-	    callHandler.getMemberSender().setRecordToMember(enabled,
-	        recordingFile, recordingType);
-	}
+    if (fromMember) {
+        callHandler.getMemberReceiver().setRecordFromMember(enabled,
+            recordingFile, recordingType);
+    } else {
+        callHandler.getMemberSender().setRecordToMember(enabled,
+            recordingFile, recordingType);
+    }
     }
 
     /**
      * Play a treament to a member
      */
     public static void playTreatmentToCall(String callId, String treatment)
-	    throws NoSuchElementException, IOException {
+        throws NoSuchElementException, IOException {
 
-	playTreatmentToCall(callId, treatment, (TreatmentDoneListener) null);
+    playTreatmentToCall(callId, treatment, (TreatmentDoneListener) null);
    }
 
     public static void playTreatmentToCall(String callId, String treatment,
-	    double[] volume) throws NoSuchElementException, IOException {
+        double[] volume) throws NoSuchElementException, IOException {
     }
 
     public static void playTreatmentToCall(String callId, String treatment,
-	    TreatmentDoneListener treatmentDoneListener)
-	    throws NoSuchElementException, IOException {
+        TreatmentDoneListener treatmentDoneListener)
+        throws NoSuchElementException, IOException {
 
         CallHandler callHandler = findCall(callId);
 
         if (callHandler == null) {
             throw new NoSuchElementException("Invalid callId specified:  "
-		+ callId);
+        + callId);
         }
 
         if (callHandler.isCallEstablished() == false) {
             throw new IOException("Call is not ESTABLISHED:  " + callId);
         }
 
-	callHandler.playTreatmentToCall(treatment, treatmentDoneListener);
+    callHandler.playTreatmentToCall(treatment, treatmentDoneListener);
     }
 
     public TreatmentManager playTreatmentToCall(String treatment)
-	    throws IOException {
+        throws IOException {
 
-	return playTreatmentToCall(treatment, (TreatmentDoneListener) null);
+    return playTreatmentToCall(treatment, (TreatmentDoneListener) null);
     }
 
     public TreatmentManager playTreatmentToCall(String treatment,  TreatmentDoneListener treatmentDoneListener)
-	    throws IOException {
+        throws IOException {
 
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("Playing treatment " + treatment + " to "
-		+ cp.getCallId());
-	}
+        Logger.println("Playing treatment " + treatment + " to "
+        + cp.getCallId());
+    }
 
         TreatmentManager treatmentManager = new TreatmentManager(treatment, 0,
-	    conferenceManager.getMediaInfo().getSampleRate(),
-	    conferenceManager.getMediaInfo().getChannels());
+        conferenceManager.getMediaInfo().getSampleRate(),
+        conferenceManager.getMediaInfo().getChannels());
 
-	if (treatmentDoneListener != null) {
-	    treatmentManager.addTreatmentDoneListener(treatmentDoneListener);
-	}
+    if (treatmentDoneListener != null) {
+        treatmentManager.addTreatmentDoneListener(treatmentDoneListener);
+    }
 
-	addTreatment(treatmentManager);
-	return treatmentManager;
+    addTreatment(treatmentManager);
+    return treatmentManager;
     }
 
     /**
      * get the IP address and port used to receive packets for this call.
      */
     public InetSocketAddress getReceiveAddress() {
-	return memberReceiver.getReceiveAddress();
+    return memberReceiver.getReceiveAddress();
     }
 
     /**
      * get the IP address and port used to send packets to this call.
      */
     public InetSocketAddress getSendAddress() {
-	return memberSender.getSendAddress();
+    return memberSender.getSendAddress();
     }
 
     /**
@@ -1118,41 +1118,41 @@ public abstract class CallHandler extends Thread {
      * For debugging...
      */
     public static boolean tooManyDuplicateCalls(String phoneNumber) {
-	synchronized(activeCalls) {
-	    int n = 0;
+    synchronized(activeCalls) {
+        int n = 0;
 
             for (int i = 0; i < activeCalls.size(); i++) {
                 CallHandler call = (CallHandler)activeCalls.elementAt(i);
 
                 CallParticipant cp = call.getCallParticipant();
 
-		if (cp.getPhoneNumber().equals(phoneNumber)) {
-		    n++;
-		}
-	    }
+        if (cp.getPhoneNumber().equals(phoneNumber)) {
+            n++;
+        }
+        }
 
-	    if (n > duplicateCallLimit) {
-		return true;
-	    }
+        if (n > duplicateCallLimit) {
+        return true;
+        }
 
-	    return false;
-	}
+        return false;
+    }
     }
 
     public static void setDuplicateCallLimit(int duplicateCallLimit) {
-	CallHandler.duplicateCallLimit = duplicateCallLimit;
+    CallHandler.duplicateCallLimit = duplicateCallLimit;
     }
 
     public static int getDuplicateCallLimit() {
-	return duplicateCallLimit;
+    return duplicateCallLimit;
     }
 
     public static void enablePSTNCalls(boolean enablePSTNCalls) {
-	CallHandler.enablePSTNCalls = enablePSTNCalls;
+    CallHandler.enablePSTNCalls = enablePSTNCalls;
     }
 
     public static boolean enablePSTNCalls() {
-	return enablePSTNCalls;
+    return enablePSTNCalls;
     }
 
     /**

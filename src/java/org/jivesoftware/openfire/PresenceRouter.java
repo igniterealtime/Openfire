@@ -1,8 +1,4 @@
-/**
- * $RCSfile: PresenceRouter.java,v $
- * $Revision: 3138 $
- * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,11 +27,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -48,7 +40,7 @@ import org.xmpp.packet.Presence;
  */
 public class PresenceRouter extends BasicModule {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresenceRouter.class);
+    private static final Logger Log = LoggerFactory.getLogger(PresenceRouter.class);
 
     private RoutingTable routingTable;
     private PresenceUpdateHandler updateHandler;
@@ -206,7 +198,7 @@ public class PresenceRouter extends BasicModule {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();
@@ -219,12 +211,14 @@ public class PresenceRouter extends BasicModule {
     }
 
     /**
-     * Notification message indicating that a packet has failed to be routed to the receipient.
+     * Notification message indicating that a packet has failed to be routed to the recipient.
      *
-     * @param receipient address of the entity that failed to receive the packet.
-     * @param packet Presence packet that failed to be sent to the receipient.
+     * @param recipient address of the entity that failed to receive the packet.
+     * @param packet    Presence packet that failed to be sent to the recipient.
      */
-    public void routingFailed(JID receipient, Packet packet) {
+    public void routingFailed( JID recipient, Packet packet )
+    {
+        Log.debug( "Presence sent to unreachable address: " + packet.toXML() );
         // presence packets are dropped silently
     }
 }

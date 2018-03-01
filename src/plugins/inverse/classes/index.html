@@ -1,0 +1,29 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>inVerse</title>
+    <link rel="shortcut icon" type="image/ico" href="inverse/css/images/favicon.ico"/>
+    <link type="text/css" rel="stylesheet" media="screen" href="inverse/css/inverse.min.css" />
+    <script src="inverse/dist/inverse.min.js"></script>
+</head>
+<body>
+<div class="content">
+    <div class="inner-content">
+        <h1 class="brand-heading"><i class="icon-conversejs"></i> inVerse</h1>
+    </div>
+</div>
+<script src="jquery/dist/jquery.min.js"></script>
+<script>
+    $( document ).ready( function()
+    {
+        var config = {};
+        $.getJSON( 'config.json', function ( config )
+        {
+            converse.initialize( config );
+        });
+    });
+</script>
+</body>
+</html>

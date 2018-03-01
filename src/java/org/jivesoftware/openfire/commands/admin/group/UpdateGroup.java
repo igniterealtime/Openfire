@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +41,7 @@ import java.util.StringTokenizer;
  */
 public class UpdateGroup extends AdHocCommand {
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         if (data.getStage() == 0) {
             form.setTitle("Update group configuration");
@@ -127,7 +124,7 @@ public class UpdateGroup extends AdHocCommand {
             }
             String groupList = group.getProperties().get("sharedRoster.groupList");
             if (groupList != null) {
-                Collection<String> groups = new ArrayList<String>();
+                Collection<String> groups = new ArrayList<>();
                 StringTokenizer tokenizer = new StringTokenizer(groupList,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken().trim();
@@ -153,7 +150,7 @@ public class UpdateGroup extends AdHocCommand {
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         Element note = command.addElement("note");
         // Get requested group
         Group group;
@@ -206,17 +203,17 @@ public class UpdateGroup extends AdHocCommand {
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#update-group";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         return "Update group configuration";
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         if (data.getStage() == 0) {
             return Collections.singletonList(Action.next);
         }
@@ -227,7 +224,7 @@ public class UpdateGroup extends AdHocCommand {
     }
 
     @Override
-	protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(SessionData data) {
         if (data.getStage() == 0) {
             return AdHocCommand.Action.next;
         }
@@ -235,7 +232,7 @@ public class UpdateGroup extends AdHocCommand {
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 2;
     }
 }

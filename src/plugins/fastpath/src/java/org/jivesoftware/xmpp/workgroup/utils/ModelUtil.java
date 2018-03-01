@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 29111 $
- * $Date: 2006-04-04 21:08:19 -0700 (Tue, 04 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +23,7 @@ import java.util.*;
  * classes.
  */
 public final class ModelUtil {
-	
+    
     private ModelUtil() {
         //  Prevents instantiation.
     }

@@ -46,72 +46,72 @@ public class ModuleLoader extends URLClassLoader {
      * Each path element in the list is separated by path.separator
      */
     public ModuleLoader(String modPath) throws IOException {
-	super(new URL[0]);
+    super(new URL[0]);
 
         
-	loadModules(modPath);
-	initializeModules();
+    loadModules(modPath);
+    initializeModules();
     }
 
     public void loadModules(String modPath) throws IOException {
-	String[] path = modPath.split(
-	    System.getProperty("path.separator"));
+    String[] path = modPath.split(
+        System.getProperty("path.separator"));
 
-	for (int i = 0; i < path.length; i++) {
-	    Logger.writeFile("Searching for modules in " + path[i]);
+    for (int i = 0; i < path.length; i++) {
+        Logger.writeFile("Searching for modules in " + path[i]);
 
-	    File f = new File(path[i]);
+        File f = new File(path[i]);
 
-	    String[] fileList = f.list();
+        String[] fileList = f.list();
 
-	    if (fileList == null) {
-	        Logger.writeFile("module path '" + path[i] + "' "
-		    + "is not a directory.  Ignoring.");   
-		continue;
-	    }
+        if (fileList == null) {
+            Logger.writeFile("module path '" + path[i] + "' "
+            + "is not a directory.  Ignoring.");   
+        continue;
+        }
 
-	    for (int j = 0; j < fileList.length; j++) {
+        for (int j = 0; j < fileList.length; j++) {
                 String dirEntry = fileList[j];   // next directory entry
 
-		if (dirEntry.equals(".") || dirEntry.equals("..")) {
-		    continue;	// skip these
-		}
+        if (dirEntry.equals(".") || dirEntry.equals("..")) {
+            continue;	// skip these
+        }
 
-		String dir = path[i] + dirEntry 
-		    + System.getProperty("file.separator");
+        String dir = path[i] + dirEntry 
+            + System.getProperty("file.separator");
 
-		if (new File(dir).isDirectory()) {
-		    /*
-		     * Recurively load jar files in subdirectories
-		     */
-		    loadModules(dir);
-		    continue;
-		}
+        if (new File(dir).isDirectory()) {
+            /*
+             * Recurively load jar files in subdirectories
+             */
+            loadModules(dir);
+            continue;
+        }
 
-	        if (dirEntry.indexOf(".jar") < 0) {
-		    if (Logger.logLevel >= Logger.LOG_INFO) {
-		        Logger.println("Skipping non-jar file " + dirEntry);
-		    }
-		    continue;
-	        }
+            if (dirEntry.indexOf(".jar") < 0) {
+            if (Logger.logLevel >= Logger.LOG_INFO) {
+                Logger.println("Skipping non-jar file " + dirEntry);
+            }
+            continue;
+            }
 
-	        dirEntry = path[i] + dirEntry;
+            dirEntry = path[i] + dirEntry;
 
-	        Logger.println("Processing jar file " + dirEntry);
+            Logger.println("Processing jar file " + dirEntry);
 
-		try {
-	            addURL(new File(dirEntry).toURI().toURL());
-	            
+        try {
+                addURL(new File(dirEntry).toURI().toURL());
+                
                     loadBridgeModule(dirEntry);
                     //if (loadBridgeModule(dirEntry) == false) {
-		    //	loadNonBridgeModule(dirEntry);
-		    //}
-		} catch (IOException e) {
-		    Logger.println("Can't read jar file:  " + dirEntry);
-		    continue;
-		}
-	    }
-	}
+            //	loadNonBridgeModule(dirEntry);
+            //}
+        } catch (IOException e) {
+            Logger.println("Can't read jar file:  " + dirEntry);
+            continue;
+        }
+        }
+    }
     }
 
     private void initializeModules() throws IOException {
@@ -119,7 +119,7 @@ public class ModuleLoader extends URLClassLoader {
             
             if (Logger.logLevel >= Logger.LOG_INFO) {
                 Logger.println("initializeModule " + c.getName());
-	    }
+        }
 
             try {
                 c.newInstance();
@@ -139,110 +139,110 @@ public class ModuleLoader extends URLClassLoader {
      * where classname is the class to instiate.
      */
     private boolean loadBridgeModule(String dirEntry) throws IOException {
-	JarFile jarFile = new JarFile(dirEntry);
+    JarFile jarFile = new JarFile(dirEntry);
 
-	Manifest manifest = null;
+    Manifest manifest = null;
 
-	try {
-	    manifest = jarFile.getManifest();
-	} catch (IOException e) {
-	    Logger.println("can't read manifest in " + jarFile);
-	    return false;
-	}
+    try {
+        manifest = jarFile.getManifest();
+    } catch (IOException e) {
+        Logger.println("can't read manifest in " + jarFile);
+        return false;
+    }
 
         if (manifest == null) {
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("no manifest in " + jarFile);
-	    }
-	    return false;
-	}
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("no manifest in " + jarFile);
+        }
+        return false;
+    }
 
-	String[] classList = null;
+    String[] classList = null;
 
-	Attributes attributes = manifest.getMainAttributes();
+    Attributes attributes = manifest.getMainAttributes();
 
-	if (attributes == null) {
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("No attributes in " + dirEntry);
-	    }
-	    return false;
-	}
+    if (attributes == null) {
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("No attributes in " + dirEntry);
+        }
+        return false;
+    }
 
-	String attributeValues = attributes.getValue("Bridge-Module-Info");
+    String attributeValues = attributes.getValue("Bridge-Module-Info");
 
-	if (attributeValues == null) {
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-		Logger.println("No attribute values in:  " + dirEntry);
-	    }
+    if (attributeValues == null) {
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println("No attribute values in:  " + dirEntry);
+        }
 
-	    return false;
-	}
+        return false;
+    }
 
-	String[] moduleValues = attributeValues.split(",");
+    String[] moduleValues = attributeValues.split(",");
 
-	for (int i = 0; i < moduleValues.length; i++) {
-	    addModule(moduleValues[i].trim());
-	}
+    for (int i = 0; i < moduleValues.length; i++) {
+        addModule(moduleValues[i].trim());
+    }
 
-	return true;
+    return true;
     }
 
     private void addModule(String className) {
-	Class c;
+    Class c;
 
         try {
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("Looking for class " + className);
-	    }
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Looking for class " + className);
+        }
 
             c = loadClass(className);
         } catch (ClassNotFoundException e) {
             Logger.println("ClassNotFoundException:  '" + className + "'");
-	    return;
-	}
-		
-	moduleClasses.add(c);
-	return;
+        return;
+    }
+        
+    moduleClasses.add(c);
+    return;
     }
 
     private void loadNonBridgeModule(String dirEntry) throws IOException {
-	JarFile jarFile = new JarFile(dirEntry);
+    JarFile jarFile = new JarFile(dirEntry);
 
-	Enumeration entries = jarFile.entries();
+    Enumeration entries = jarFile.entries();
 
-	if (entries == null) {
-	    Logger.println("No entries in jarFile:  " + dirEntry);
-	    return;
+    if (entries == null) {
+        Logger.println("No entries in jarFile:  " + dirEntry);
+        return;
 
-	}
+    }
 
-	while (entries.hasMoreElements()) {
-	    JarEntry jarEntry = (JarEntry) entries.nextElement();
+    while (entries.hasMoreElements()) {
+        JarEntry jarEntry = (JarEntry) entries.nextElement();
 
-	    String className = jarEntry.getName();
+        String className = jarEntry.getName();
 
-	    int ix;
+        int ix;
 
-	    if ((ix = className.indexOf(".class")) < 0) {
-		if (Logger.logLevel >= Logger.LOG_INFO) {
-		    Logger.println("Skipping non-class entry in jarFile:  " 
-			+ className);
-		}
-		continue;
-	    }
+        if ((ix = className.indexOf(".class")) < 0) {
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Skipping non-class entry in jarFile:  " 
+            + className);
+        }
+        continue;
+        }
 
-	    className = className.replaceAll(".class", "");
-	    className = className.replaceAll("/", ".");
+        className = className.replaceAll(".class", "");
+        className = className.replaceAll("/", ".");
 
             try {
-		if (Logger.logLevel >= Logger.LOG_INFO) {
-		    Logger.println("Looking for class '" + className + "'");
-		}
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Looking for class '" + className + "'");
+        }
 
                 loadClass(className);   	// load the class
             } catch (ClassNotFoundException e) {
                 Logger.println("ClassNotFoundException:  '" + className + "'");
-	    }
+        }
         }
     }
 }

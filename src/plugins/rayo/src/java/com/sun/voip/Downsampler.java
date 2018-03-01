@@ -41,194 +41,194 @@ public class Downsampler extends Resampler {
      * XXX We only support big endian 16 bit samples!
      */
     public Downsampler(String id, int inSampleRate, int inChannels,
-	    int outSampleRate, int outChannels) throws IOException {
+        int outSampleRate, int outChannels) throws IOException {
 
-	super(id, inSampleRate, inChannels, outSampleRate, outChannels);
+    super(id, inSampleRate, inChannels, outSampleRate, outChannels);
 
-	if (inSampleRate < outSampleRate) {
+    if (inSampleRate < outSampleRate) {
             throw new IOException("Downsampler inSampleRate "
                 + inSampleRate + " < outSampleRate " + outSampleRate);
-	}
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("New DownSampler:  from " 
-	        + inSampleRate + "/" + inChannels + " to " 
-	        + outSampleRate + "/" + outChannels);
-	}
+    }
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("New DownSampler:  from " 
+            + inSampleRate + "/" + inChannels + " to " 
+            + outSampleRate + "/" + outChannels);
+    }
     }
 
     public void reset() {
     }
 
     public byte[] resample(byte[] inSamples, int offset, int length) 
-	    throws IOException {
+        throws IOException {
 
-	length = length & ~1;	// round down
+    length = length & ~1;	// round down
 
-	int[] ints = new int[length / 2];
+    int[] ints = new int[length / 2];
 
-	AudioConversion.bytesToInts(inSamples, offset, length, ints);
+    AudioConversion.bytesToInts(inSamples, offset, length, ints);
 
-	ints = resample(ints);
+    ints = resample(ints);
 
-	byte[] bytes = new byte[ints.length * 2];
+    byte[] bytes = new byte[ints.length * 2];
 
-	AudioConversion.intsToBytes(ints, bytes, offset);
+    AudioConversion.intsToBytes(ints, bytes, offset);
 
-	return bytes;
+    return bytes;
     }
 
     public int[] resample(int[] inSamples) throws
-	    IOException {
+        IOException {
 
-	if (inSampleRate == outSampleRate && inChannels == outChannels) {
-	    return inSamples;
-	}
+    if (inSampleRate == outSampleRate && inChannels == outChannels) {
+        return inSamples;
+    }
 
-	resampleCount++;
+    resampleCount++;
 
-	long start = CurrentTime.getTime();
+    long start = CurrentTime.getTime();
 
-	int[] outSamples = reChannel(inSamples);
+    int[] outSamples = reChannel(inSamples);
 
-	if (inSampleRate == outSampleRate) {
-	    return outSamples;				// no need to resample
-	}
+    if (inSampleRate == outSampleRate) {
+        return outSamples;				// no need to resample
+    }
 
-	outSamples = lowPassFilter.lpf(outSamples);
+    outSamples = lowPassFilter.lpf(outSamples);
 
-	outSamples = downsample(outSamples);
+    outSamples = downsample(outSamples);
 
-	totalTime += (CurrentTime.getTime() - start);
+    totalTime += (CurrentTime.getTime() - start);
 
-	return outSamples;
+    return outSamples;
     }
 
     public int[] downsample(int[] inSamples) {
-	int nFrames = inSamples.length / outChannels;
+    int nFrames = inSamples.length / outChannels;
 
-	int sampleTime = nFrames * 1000 / inSampleRate;
+    int sampleTime = nFrames * 1000 / inSampleRate;
 
-	if (sampleTime == 0) {
-	    sampleTime = 1;
-	}
+    if (sampleTime == 0) {
+        sampleTime = 1;
+    }
 
-	int outLength = 
-	    (sampleTime * outSampleRate * outChannels / 1000);
+    int outLength = 
+        (sampleTime * outSampleRate * outChannels / 1000);
 
-	if ((outLength & 1) != 0) {
-	    outLength++;
-	}
+    if ((outLength & 1) != 0) {
+        outLength++;
+    }
 
-	if (outLength == 0 || Logger.logLevel == -9) {
-	    Logger.println("downsample:  inLength " + inSamples.length
-		+ " nFrames " + nFrames
-		+ " sampleTime " + sampleTime + " outLength " + outLength);
-	}
+    if (outLength == 0 || Logger.logLevel == -9) {
+        Logger.println("downsample:  inLength " + inSamples.length
+        + " nFrames " + nFrames
+        + " sampleTime " + sampleTime + " outLength " + outLength);
+    }
 
-	int[] outSamples = new int[outLength];
+    int[] outSamples = new int[outLength];
 
-	double frameIncr = (double)inSampleRate / (double)outSampleRate;
+    double frameIncr = (double)inSampleRate / (double)outSampleRate;
 
-	int ix;
+    int ix;
 
-	double i = 0;
+    double i = 0;
 
-	int outIx = 0;
+    int outIx = 0;
 
-	if (Logger.logLevel == -9) {
-	    Logger.println("downsample frameIncr " + frameIncr
-		+ " nFrames " + nFrames + " inLength " + inSamples.length
-		+ " outLength " + outLength);
+    if (Logger.logLevel == -9) {
+        Logger.println("downsample frameIncr " + frameIncr
+        + " nFrames " + nFrames + " inLength " + inSamples.length
+        + " outLength " + outLength);
 
-	    Logger.println("inSamples");
-	}
+        Logger.println("inSamples");
+    }
 
-	/*
-	 * Linear interpolation between the two closest samples.
-	 */
-	while (true) {
-	    ix = (int)i * outChannels;
+    /*
+     * Linear interpolation between the two closest samples.
+     */
+    while (true) {
+        ix = (int)i * outChannels;
 
-	    if (ix >= inSamples.length - outChannels) {
-		// Don't we need to continue until outIx >= outLength?
-		if (Logger.logLevel == -9) {
-		    Logger.println("Out of here!  ix " + ix + " outIx " + outIx);
-		}
-		break;
-	    }
+        if (ix >= inSamples.length - outChannels) {
+        // Don't we need to continue until outIx >= outLength?
+        if (Logger.logLevel == -9) {
+            Logger.println("Out of here!  ix " + ix + " outIx " + outIx);
+        }
+        break;
+        }
 
-	    int s1 = inSamples[ix];
-	    int s2 = inSamples[ix + outChannels];
+        int s1 = inSamples[ix];
+        int s2 = inSamples[ix + outChannels];
 
-	    if (Logger.logLevel == -9) {
-		Logger.println("s1 " + s1 + " s2 " + s2 + " int i " + (int)i
-		    + " ix " + ix  + " outIx " + outIx);
-	    }
+        if (Logger.logLevel == -9) {
+        Logger.println("s1 " + s1 + " s2 " + s2 + " int i " + (int)i
+            + " ix " + ix  + " outIx " + outIx);
+        }
 
-	    outSamples[outIx] = (int) ((s1 + ((s2 - s1) * (i - (int)i))));
+        outSamples[outIx] = (int) ((s1 + ((s2 - s1) * (i - (int)i))));
 
-	    outIx++;
+        outIx++;
 
-	    if (outChannels == 2) {
-		ix++;
+        if (outChannels == 2) {
+        ix++;
 
-	        s1 = inSamples[ix];
-		s2 = inSamples[ix + outChannels];
+            s1 = inSamples[ix];
+        s2 = inSamples[ix + outChannels];
 
-	        outSamples[outIx] = (int) ((s1 + ((s2 - s1) * (i - (int)i))));
+            outSamples[outIx] = (int) ((s1 + ((s2 - s1) * (i - (int)i))));
 
-	        if (Logger.logLevel == -9) {
-		    Logger.println("+s1 " + s1 + " s2 " + s2 + " int i " + (int)i
-		        + " ix " + ix  + " outIx " + outIx);
-	        }
+            if (Logger.logLevel == -9) {
+            Logger.println("+s1 " + s1 + " s2 " + s2 + " int i " + (int)i
+                + " ix " + ix  + " outIx " + outIx);
+            }
 
-		outIx++;
-	    }
+        outIx++;
+        }
 
-	    if (outIx >= outLength) {
-		if (Logger.logLevel == -9) {
-		    Logger.println("Out of here!  outIX " + outIx 
-			+ " ix " + ix);
-		}
-		break;
-	    }
+        if (outIx >= outLength) {
+        if (Logger.logLevel == -9) {
+            Logger.println("Out of here!  outIX " + outIx 
+            + " ix " + ix);
+        }
+        break;
+        }
 
-	    i += frameIncr;
-	}
+        i += frameIncr;
+    }
 
-	if (Logger.logLevel == -9) {
-	    Logger.logLevel = 3;
+    if (Logger.logLevel == -9) {
+        Logger.logLevel = 3;
 
-	    Logger.println("downsample in len " + inSamples.length);
-	    Logger.println("downsample out len " + outSamples.length);
-	}
+        Logger.println("downsample in len " + inSamples.length);
+        Logger.println("downsample out len " + outSamples.length);
+    }
 
-	return outSamples;
+    return outSamples;
     }
 
     public void printStatistics() {
-	if (resampleCount == 0) {
-	    return;
-	}
+    if (resampleCount == 0) {
+        return;
+    }
 
-	double avg = (double)totalTime / resampleCount;
+    double avg = (double)totalTime / resampleCount;
 
-	long timeUnitsPerSecond = CurrentTime.getTimeUnitsPerSecond();
+    long timeUnitsPerSecond = CurrentTime.getTimeUnitsPerSecond();
 
-	avg = (avg / timeUnitsPerSecond) * 1000;
+    avg = (avg / timeUnitsPerSecond) * 1000;
 
-	String s = "";
+    String s = "";
 
-	if (id != null) {
+    if (id != null) {
             s += "Call " + id + ":  ";
-	}
+    }
 
-	Logger.writeFile(s
-	    + avg + "ms avg downsample time from "
-	    + inSampleRate + "/" + inChannels + " to " + outSampleRate + "/"
-	    + outChannels);
+    Logger.writeFile(s
+        + avg + "ms avg downsample time from "
+        + inSampleRate + "/" + inChannels + " to " + outSampleRate + "/"
+        + outChannels);
 
-	lowPassFilter.printStatistics();
+    lowPassFilter.printStatistics();
     }
 
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,7 +107,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private EntityCapabilitiesManager() {
         entityCapabilitiesMap = CacheFactory.createLocalCache("Entity Capabilities");
         entityCapabilitiesUserMap = CacheFactory.createLocalCache("Entity Capabilities Users");
-        verAttributes = new HashMap<String, EntityCapabilities>();
+        verAttributes = new HashMap<>();
     }
 
     /**
@@ -138,9 +134,9 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
         // Examine the packet and check if it's in legacy format (pre version 1.4
         // of XEP-0115). If so, do nothing by returning.
-		// TODO: if this packet is in legacy format, we SHOULD check the 'node',
-		// 'ver', and 'ext' combinations as specified in the archived version
-		// 1.3 of the specification, and cache the results. See JM-1447
+        // TODO: if this packet is in legacy format, we SHOULD check the 'node',
+        // 'ver', and 'ext' combinations as specified in the archived version
+        // 1.3 of the specification, and cache the results. See JM-1447
         final String hashAttribute = capsElement.attributeValue("hash");
         if (hashAttribute == null || hashAttribute.trim().length() == 0) {
             return;
@@ -211,7 +207,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
         final EntityCapabilities original = verAttributes.get(packet.getID());
         if (original == null) {
-        	return false;
+            return false;
         }
         final String newVerHash = generateVerHash(packet, original.getHashAttribute());
 
@@ -265,8 +261,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         Collections.sort(extendedDataForms);
         
         for (String extendedDataForm : extendedDataForms) {
-        	s.append(extendedDataForm);
-        	// no need to add '<', this is done in #getExtendedDataForms()
+            s.append(extendedDataForm);
+            // no need to add '<', this is done in #getExtendedDataForms()
         }
         
         // Compute ver by hashing S using the SHA-1 algorithm as specified in
@@ -277,12 +273,14 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         return StringUtils.encodeBase64(StringUtils.decodeHex(hashed));
     }
 
+    @Override
     public void answerTimeout(String packetId) {
         // If we never received an answer, we can discard the cached
         // 'ver' attribute.
         verAttributes.remove(packetId);
     }
 
+    @Override
     public void receivedAnswer(IQ packet) {
         String packetId = packet.getID();
 
@@ -291,20 +289,20 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             // Capabilities cache map.
 
             // Add the resolved identities and features to the entity 
-        	// EntityCapabilitiesManager.capabilities object and add it 
-        	// to the cache map...
+            // EntityCapabilitiesManager.capabilities object and add it 
+            // to the cache map...
             EntityCapabilities caps = verAttributes.get(packetId);
 
             // Store identities.
             List<String> identities = getIdentitiesFrom(packet);
             for (String identity : identities) {
-            	caps.addIdentity(identity);
+                caps.addIdentity(identity);
             }
 
             // Store features.
             List<String> features = getFeaturesFrom(packet);
             for (String feature : features) {
-            	caps.addFeature(feature);
+                caps.addFeature(feature);
             }
 
             entityCapabilitiesMap.put(caps.getVerAttribute(), caps);
@@ -334,7 +332,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      * @return a list of identities
      */
     private static List<String> getIdentitiesFrom(IQ packet) {
-        List<String> discoIdentities = new ArrayList<String>();
+        List<String> discoIdentities = new ArrayList<>();
         Element query = packet.getChildElement();
         Iterator<Element> identitiesIterator = query.elementIterator("identity");
         if (identitiesIterator != null) {
@@ -349,22 +347,22 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
                 String name = identityElement.attributeValue("name");
                 
                 if (cat != null) {
-                	discoIdentity.append(cat);
+                    discoIdentity.append(cat);
                 }
                 discoIdentity.append('/');
 
                 if (type != null) {
-                	discoIdentity.append(type);
+                    discoIdentity.append(type);
                 }
                 discoIdentity.append('/');
 
                 if (lang != null) {
-                	discoIdentity.append(lang);
+                    discoIdentity.append(lang);
                 }
                 discoIdentity.append('/');
 
                 if (name != null) {
-                	discoIdentity.append(name);
+                    discoIdentity.append(name);
                 }
 
                 discoIdentities.add(discoIdentity.toString());
@@ -380,7 +378,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      * @return a list of features
      */
     private static List<String> getFeaturesFrom(IQ packet) {
-        List<String> discoFeatures = new ArrayList<String>();
+        List<String> discoFeatures = new ArrayList<>();
         Element query = packet.getChildElement();
         Iterator<Element> featuresIterator = query.elementIterator("feature");
         if (featuresIterator != null) {
@@ -395,62 +393,63 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     }
 
     /**
-	 * Extracts a list of extended service discovery information from an IQ
-	 * packet.
-	 * 
-	 * @param packet
-	 *            the packet
-	 * @return a list of extended service discoverin information features.
-	 */
-	private static List<String> getExtendedDataForms(IQ packet) {
-		List<String> results = new ArrayList<String>();
-		Element query = packet.getChildElement();
-		Iterator<Element> extensionIterator = query.elementIterator(QName.get(
-				"x", "jabber:x:data"));
-		if (extensionIterator != null) {
-			while (extensionIterator.hasNext()) {
-				Element extensionElement = extensionIterator.next();
-				final StringBuilder formType = new StringBuilder();
+     * Extracts a list of extended service discovery information from an IQ
+     * packet.
+     * 
+     * @param packet
+     *            the packet
+     * @return a list of extended service discoverin information features.
+     */
+    private static List<String> getExtendedDataForms(IQ packet) {
+        List<String> results = new ArrayList<>();
+        Element query = packet.getChildElement();
+        Iterator<Element> extensionIterator = query.elementIterator(QName.get(
+                "x", "jabber:x:data"));
+        if (extensionIterator != null) {
+            while (extensionIterator.hasNext()) {
+                Element extensionElement = extensionIterator.next();
+                final StringBuilder formType = new StringBuilder();
 
-				Iterator<Element> fieldIterator = extensionElement
-						.elementIterator("field");
-				List<String> vars = new ArrayList<String>();
-				while (fieldIterator != null && fieldIterator.hasNext()) {
-					final Element fieldElement = fieldIterator.next();
-					if (fieldElement.attributeValue("var").equals("FORM_TYPE")) {
-						formType
-								.append(fieldElement.element("value").getText());
-						formType.append('<');
-					} else {
-						final StringBuilder var = new StringBuilder();
-						var.append(fieldElement.attributeValue("var"));
-						var.append('<');
-						Iterator<Element> valIter = fieldElement
-								.elementIterator("value");
-						List<String> values = new ArrayList<String>();
-						while (valIter != null && valIter.hasNext()) {
-							Element value = valIter.next();
-							values.add(value.getText());
-						}
-						Collections.sort(values);
-						for (String v : values) {
-							var.append(v);
-							var.append('<');
-						}
-						vars.add(var.toString());
-					}
-				}
-				Collections.sort(vars);
-				for (String v : vars) {
-					formType.append(v);
-				}
+                Iterator<Element> fieldIterator = extensionElement
+                        .elementIterator("field");
+                List<String> vars = new ArrayList<>();
+                while (fieldIterator != null && fieldIterator.hasNext()) {
+                    final Element fieldElement = fieldIterator.next();
+                    if (fieldElement.attributeValue("var").equals("FORM_TYPE")) {
+                        formType
+                                .append(fieldElement.element("value").getText());
+                        formType.append('<');
+                    } else {
+                        final StringBuilder var = new StringBuilder();
+                        var.append(fieldElement.attributeValue("var"));
+                        var.append('<');
+                        Iterator<Element> valIter = fieldElement
+                                .elementIterator("value");
+                        List<String> values = new ArrayList<>();
+                        while (valIter != null && valIter.hasNext()) {
+                            Element value = valIter.next();
+                            values.add(value.getText());
+                        }
+                        Collections.sort(values);
+                        for (String v : values) {
+                            var.append(v);
+                            var.append('<');
+                        }
+                        vars.add(var.toString());
+                    }
+                }
+                Collections.sort(vars);
+                for (String v : vars) {
+                    formType.append(v);
+                }
 
-				results.add(formType.toString());
-			}
-		}
-		return results;
-	}
+                results.add(formType.toString());
+            }
+        }
+        return results;
+    }
     
+    @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
         JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
@@ -470,10 +469,12 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         entityCapabilitiesMap.remove(verHashOfUser);
     }
 
+    @Override
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing.
     }
 
+    @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing.
     }

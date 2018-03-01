@@ -2,14 +2,14 @@ Source: openfire
 Section: net
 Priority: optional
 Maintainer: Ignite Realtime Community <admin@igniterealtime.org>
-Build-Depends: debhelper (>= 5), cdbs, patchutils, openjdk-7-jdk | oracle-j2sdk1.7 , ant
+Build-Depends: debhelper (>= 5), cdbs, patchutils, default-jdk (>= 1.7), ant
 Standards-Version: 3.7.2
 Homepage: http://www.igniterealtime.org
 
 Package: openfire
 Section: net
 Priority: optional
-Pre-Depends: openjdk-7-jre-headless | openjdk-7-jre | oracle-java7-jre
+Pre-Depends: default-jre-headless (>= 1.7) | java7-runtime-headless | java7-runtime | java8-runtime-headless | java8-runtime | java9-runtime-headless | java9-runtime
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

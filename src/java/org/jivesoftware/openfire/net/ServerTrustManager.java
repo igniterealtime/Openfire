@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,15 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.Principal;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
 
 import javax.net.ssl.X509TrustManager;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,28 +41,27 @@ import org.slf4j.LoggerFactory;
  */
 public class ServerTrustManager implements X509TrustManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(ServerTrustManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(ServerTrustManager.class);
 
     /**
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-    /**
-     * Holds the domain of the remote server we are trying to connect
-     */
-    private String server;
-    /**
-     * Holds the LocalIncomingServerSession that is part of the TLS negotiation.
-     */
-    private Connection connection;
 
-    public ServerTrustManager(String server, KeyStore trustTrust, Connection connection) {
-        super();
-        this.server = server;
-        this.trustStore = trustTrust;
-        this.connection = connection;
+    /**
+     * @deprecated Use ServerTrustManager(KeyStore trustStore) instead (there's no functional difference).
+     */
+    @Deprecated
+    public ServerTrustManager(String server, KeyStore trustStore, Connection connection) {
+        this(trustStore);
     }
 
+    public ServerTrustManager(KeyStore trustTrust) {
+        super();
+        this.trustStore = trustTrust;
+    }
+
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates,
             String string) {
         // Do not validate the certificate at this point. The certificate is going to be used
@@ -96,11 +88,13 @@ public class ServerTrustManager implements X509TrustManager {
      * @param string the key exchange algorithm used.
      * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         // Do nothing here. As before, the certificate will be validated when the remote server authenticates.
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
             // Answer an empty list since we accept any issuer

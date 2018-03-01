@@ -1,15 +1,11 @@
-/**
- * $RCSfile$
- * $Revision: 3001 $
- * $Date: 2005-10-31 05:39:25 -0300 (Mon, 31 Oct 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,35 +16,6 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipFile;
-
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -56,102 +23,146 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JavaSpecVersion;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
+
 /**
- * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
- * new plugins, and they are dynamically loaded.
+ * Manages plugins.
  *
- * <p>An instance of this class can be obtained using:</p>
+ * The <tt>plugins</tt> directory is monitored for any new plugins, and they are dynamically loaded.
  *
- * <tt>XMPPServer.getInstance().getPluginManager()</tt>
+ * An instance of this class can be obtained using: <tt>XMPPServer.getInstance().getPluginManager()</tt>
+ *
+ * These states are defined for plugin management:
+ * <ul>
+ *     <li><em>installed</em> - the plugin archive file is present in the <tt>plugins</tt> directory.</li>
+ *     <li><em>extracted</em> - the plugin archive file has been extracted.</li>
+ *     <li><em>loaded</em> - the plugin has (successfully) been initialized.</li>
+ * </ul>
+ *
+ * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+ * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+ * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
  *
  * @author Matt Tucker
  * @see Plugin
  * @see org.jivesoftware.openfire.XMPPServer#getPluginManager()
  */
-public class PluginManager {
+public class PluginManager
+{
+    private static final Logger Log = LoggerFactory.getLogger( PluginManager.class );
 
-	private static final Logger Log = LoggerFactory.getLogger(PluginManager.class);
+    private final Path pluginDirectory;
 
-    private File pluginDirectory;
-    private Map<String, Plugin> plugins;
-    private Map<Plugin, PluginClassLoader> classloaders;
-    private Map<Plugin, File> pluginDirs;
     /**
-     * Keep track of plugin names and their unzipped files. This list is updated when plugin
-     * is exploded and not when is loaded.
+     * Plugins that are loaded, mapped by their canonical name.
      */
-    private Map<String, File> pluginFiles;
-    private ScheduledExecutorService executor = null;
-    private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
-    private Map<Plugin, List<String>> parentPluginMap;
-    private Map<Plugin, String> childPluginMap;
-    private Set<String> devPlugins;
-    private PluginMonitor pluginMonitor;
-    private Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<PluginListener>();
-    private Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<PluginManagerListener>();
+    private final Map<String, Plugin> pluginsLoaded = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
+    /**
+     * The plugin classloader for each loaded plugin.
+     */
+    private final Map<Plugin, PluginClassLoader> classloaders = new HashMap<>();
+
+    /**
+     * The directory in which a plugin is extracted, mapped by canonical name. This collection contains loaded plugins,
+     * as well as extracted (but not loaded) plugins.
+     *
+     * Note that typically these directories are subdirectories of <tt>plugins</tt>, but a 'dev-plugin' could live
+     * elsewhere.
+     */
+    private final Map<String, Path> pluginDirs = new HashMap<>();
+
+    /**
+     * Plugin metadata for all extracted plugins, mapped by canonical name.
+     */
+    private final Map<String, PluginMetadata> pluginMetadata = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+
+    private final Map<Plugin, PluginDevEnvironment> pluginDevelopment = new HashMap<>();
+    private final Map<Plugin, List<String>> parentPluginMap = new HashMap<>();
+    private final Map<Plugin, String> childPluginMap = new HashMap<>();
+    private final Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<>();
+    private final Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<>();
+    private final Map<String, Integer> failureToLoadCount = new HashMap<>();
+
+    private final PluginMonitor pluginMonitor;
+    private boolean executed = false;
 
     /**
      * Constructs a new plugin manager.
      *
-     * @param pluginDir the plugin directory.
+     * @param pluginDir the directory containing all Openfire plugins, typically OPENFIRE_HOME/plugins/
      */
-    public PluginManager(File pluginDir) {
-        this.pluginDirectory = pluginDir;
-        plugins = new ConcurrentHashMap<String, Plugin>();
-        pluginDirs = new HashMap<Plugin, File>();
-        pluginFiles = new HashMap<String, File>();
-        classloaders = new HashMap<Plugin, PluginClassLoader>();
-        pluginDevelopment = new HashMap<Plugin, PluginDevEnvironment>();
-        parentPluginMap = new HashMap<Plugin, List<String>>();
-        childPluginMap = new HashMap<Plugin, String>();
-        devPlugins = new HashSet<String>();
-        pluginMonitor = new PluginMonitor();
+    public PluginManager( File pluginDir )
+    {
+        this.pluginDirectory = pluginDir.toPath();
+        pluginMonitor = new PluginMonitor( this );
     }
 
     /**
      * Starts plugins and the plugin monitoring service.
      */
-    public void start() {
-        executor = new ScheduledThreadPoolExecutor(1);
-        // See if we're in development mode. If so, check for new plugins once every 5 seconds.
-        // Otherwise, default to every 20 seconds.
-        if (Boolean.getBoolean("developmentMode")) {
-            executor.scheduleWithFixedDelay(pluginMonitor, 0, 5, TimeUnit.SECONDS);
-        }
-        else {
-            executor.scheduleWithFixedDelay(pluginMonitor, 0, 20, TimeUnit.SECONDS);
-        }
+    public synchronized void start()
+    {
+        pluginMonitor.start();
     }
 
     /**
      * Shuts down all running plugins.
      */
-    public void shutdown() {
+    public synchronized void shutdown()
+    {
+        Log.info( "Shutting down. Unloading all loaded plugins..." );
+
         // Stop the plugin monitoring service.
-        if (executor != null) {
-            executor.shutdown();
-        }
-        // Shutdown all installed plugins.
-        for (Plugin plugin : plugins.values()) {
-            try {
-                plugin.destroyPlugin();
+        pluginMonitor.stop();
+
+        // Shutdown all loaded plugins.
+        for ( Map.Entry<String, Plugin> plugin : pluginsLoaded.entrySet() )
+        {
+            try
+            {
+                plugin.getValue().destroyPlugin();
+                Log.info( "Unloaded plugin '{}'.", plugin.getKey() );
             }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
+            catch ( Exception e )
+            {
+                Log.error( "An exception occurred while trying to unload plugin '{}':", plugin.getKey(), e );
             }
         }
-        plugins.clear();
+        pluginsLoaded.clear();
         pluginDirs.clear();
-        pluginFiles.clear();
+        pluginMetadata.clear();
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
-        pluginMonitor = null;
+        failureToLoadCount.clear();
+    }
+
+    /**
+     * Returns the directory that contains all plugins. This typically is OPENFIRE_HOME/plugins.
+     *
+     * @return The directory that contains all plugins.
+     */
+    public Path getPluginsDirectory()
+    {
+        return pluginDirectory;
     }
 
     /**
@@ -161,71 +172,197 @@ public class PluginManager {
      * @param pluginFilename the filename of the plugin to create or update.
      * @return true if the plugin was successfully installed or updated.
      */
-    public boolean installPlugin(InputStream in, String pluginFilename) {
-        if (in == null || pluginFilename == null || pluginFilename.length() < 1) {
-            Log.error("Error installing plugin: Input stream was null or pluginFilename was null or had no length.");
+    public boolean installPlugin( InputStream in, String pluginFilename )
+    {
+        if ( pluginFilename == null || pluginFilename.isEmpty() )
+        {
+            Log.error( "Error installing plugin: pluginFilename was null or empty." );
             return false;
         }
-        try {
-            byte[] b = new byte[1024];
-            int len;
-            // If pluginFilename is a path instead of a simple file name, we only want the file name
-            int index = pluginFilename.lastIndexOf(File.separator);
-            if (index != -1) {
-                pluginFilename = pluginFilename.substring(index+1);
-            }
-            // Absolute path to the plugin file
-            String absolutePath = pluginDirectory + File.separator + pluginFilename;
-            // Save input stream contents to a temp file
-            try (OutputStream out = new FileOutputStream(absolutePath + ".part")) {
-                while ((len = in.read(b)) != -1) {
-                    //write byte to file
-                    out.write(b, 0, len);
-                }
-            }
-            // Delete old .jar (if it exists)
-            new File(absolutePath).delete();
-            // Rename temp file to .jar
-            new File(absolutePath + ".part").renameTo(new File(absolutePath));
-            // Ask the plugin monitor to update the plugin immediately.
-            pluginMonitor.run();
+        if ( in == null )
+        {
+            Log.error( "Error installing plugin '{}': Input stream was null.", pluginFilename );
+            return false;
         }
-        catch (IOException e) {
-            Log.error("Error installing new version of plugin: " + pluginFilename, e);
+        try
+        {
+            // If pluginFilename is a path instead of a simple file name, we only want the file name
+            pluginFilename = Paths.get(pluginFilename).getFileName().toString();
+            // Absolute path to the plugin file
+            Path absolutePath = pluginDirectory.resolve( pluginFilename );
+            Path partFile = pluginDirectory.resolve( pluginFilename + ".part" );
+            // Save input stream contents to a temp file
+            Files.copy( in, partFile, StandardCopyOption.REPLACE_EXISTING );
+
+            // Check if zip file, else ZipException caught below.
+            try (JarFile file = new JarFile(partFile.toFile())) {
+            } catch (ZipException e) {
+                Files.deleteIfExists(partFile);
+                throw e;
+            };
+
+            // Rename temp file to .jar
+            Files.move( partFile, absolutePath, StandardCopyOption.REPLACE_EXISTING );
+            // Ask the plugin monitor to update the plugin immediately.
+            pluginMonitor.runNow( true );
+        }
+        catch ( IOException e )
+        {
+            Log.error( "An exception occurred while installing new version of plugin '{}':", pluginFilename, e );
             return false;
         }
         return true;
     }
 
     /**
-     * Returns true if the specified filename, that belongs to a plugin, exists.
+     * Returns true if the plugin by the specified name is installed. Specifically, this checks if the plugin
+     * archive file is present in the <tt>plugins</tt> directory.
      *
-     * @param pluginFilename the filename of the plugin to create or update.
-     * @return true if the specified filename, that belongs to a plugin, exists.
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is installed, otherwise false.
      */
-    public boolean isPluginDownloaded(String pluginFilename) {
-        return new File(pluginDirectory + File.separator + pluginFilename).exists();
+    public boolean isInstalled( final String canonicalName )
+    {
+        final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>()
+        {
+            @Override
+            public boolean accept( Path entry ) throws IOException
+            {
+                final String name = entry.getFileName().toString();
+                return Files.exists( entry ) && !Files.isDirectory( entry ) &&
+                        ( name.equalsIgnoreCase( canonicalName + ".jar" ) || name.equalsIgnoreCase( canonicalName + ".war" ) );
+            }
+        };
+
+        try ( final DirectoryStream<Path> paths = Files.newDirectoryStream( pluginDirectory, filter ) )
+        {
+            return paths.iterator().hasNext();
+        }
+        catch ( IOException e )
+        {
+            Log.error( "Unable to determine if plugin '{}' is installed.", canonicalName, e );
+
+            // return the next best guess
+            return pluginsLoaded.containsKey( canonicalName );
+        }
     }
 
     /**
-     * Returns a Collection of all installed plugins.
+     * Returns true if the plugin by the specified name is extracted. Specifically, this checks if the <tt>plugins</tt>
+     * directory contains a subdirectory that matches the canonical name of the plugin.
      *
-     * @return a Collection of all installed plugins.
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is extracted, otherwise false.
      */
-    public Collection<Plugin> getPlugins() {
-        return Collections.unmodifiableCollection(plugins.values());
+    public boolean isExtracted( final String canonicalName )
+    {
+        return pluginMetadata.containsKey( canonicalName );
     }
 
     /**
-     * Returns a plugin by name or <tt>null</tt> if a plugin with that name does not
-     * exist. The name is the name of the directory that the plugin is in such as
-     * "broadcast".
+     * Returns true if the plugin by the specified name is loaded. Specifically, this checks if an instance was created
+     * for the plugin class file.
      *
-     * @param name the name of the plugin.
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @param canonicalName the canonical filename of the plugin (cannot be null).
+     * @return true if the plugin is extracted, otherwise false.
+     */
+    public boolean isLoaded( final String canonicalName )
+    {
+        return pluginsLoaded.containsKey( canonicalName );
+    }
+
+    /**
+     * Returns metadata for all extracted plugins, mapped by their canonical name.
+     *
+     * The collection is alphabetically sorted, by plugin name.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @return A collection of metadata (possibly empty, never null).
+     */
+    public Map<String, PluginMetadata> getMetadataExtractedPlugins()
+    {
+        return Collections.unmodifiableMap( this.pluginMetadata );
+    }
+
+    /**
+     * Returns metadata for an extracted plugin, or null when the plugin is extracted nor loaded.
+     *
+     * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
+     * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
+     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     *
+     * @return A collection of metadata (possibly empty, never null).
+     */
+    public PluginMetadata getMetadata( String canonicalName )
+    {
+        return this.pluginMetadata.get( canonicalName );
+    }
+
+    /**
+     * Returns a Collection of all loaded plugins.
+     *
+     * The returned collection will not include plugins that have been downloaded, but not loaded.
+     *
+     * @return a Collection of all loaded plugins.
+     */
+    public Collection<Plugin> getPlugins()
+    {
+        return Collections.unmodifiableCollection( Arrays.asList( pluginsLoaded.values().toArray( new Plugin[ pluginsLoaded.size() ] ) ) );
+    }
+
+    /**
+     * Returns the canonical name for a loaded plugin.
+     *
+     * @param plugin A plugin (cannot be null).
+     * @return The canonical name for the plugin (never null).
+     */
+    public String getCanonicalName( Plugin plugin )
+    {
+        // TODO consider using a bimap for a more efficient lookup.
+        for ( Map.Entry<String, Plugin> entry : pluginsLoaded.entrySet() )
+        {
+            if ( entry.getValue().equals( plugin ) )
+            {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns an loaded plugin by its canonical name or <tt>null</tt> if a plugin with that name does not exist. The
+     * canonical name is the lowercase-name of the plugin archive, without the file extension. For example: "broadcast".
+     *
+     * @param canonicalName the name of the plugin.
      * @return the plugin.
      */
-    public Plugin getPlugin(String name) {
-        return plugins.get(name);
+    public Plugin getPlugin( String canonicalName )
+    {
+        return pluginsLoaded.get( canonicalName.toLowerCase() );
+    }
+
+    /**
+     * @deprecated Use #getPluginPath() instead.
+     */
+    @Deprecated
+    public File getPluginDirectory( Plugin plugin )
+    {
+        return getPluginPath( plugin ).toFile();
     }
 
     /**
@@ -234,18 +371,14 @@ public class PluginManager {
      * @param plugin the plugin.
      * @return the plugin's directory.
      */
-    public File getPluginDirectory(Plugin plugin) {
-        return pluginDirs.get(plugin);
-    }
-
-    /**
-     * Returns the JAR or WAR file that created the plugin.
-     *
-     * @param name the name of the plugin.
-     * @return the plugin JAR or WAR file.
-     */
-    public File getPluginFile(String name) {
-        return pluginFiles.get(name);
+    public Path getPluginPath( Plugin plugin )
+    {
+        final String canonicalName = getCanonicalName( plugin );
+        if ( canonicalName != null )
+        {
+            return pluginDirs.get( canonicalName );
+        }
+        return null;
     }
 
     /**
@@ -253,359 +386,459 @@ public class PluginManager {
      * that available plugins have been loaded nor that plugins to be added in the future are already
      * loaded. :)<p>
      *
-     * TODO Current version does not consider child plugins that may be loaded in a second attempt. It either
-     * TODO consider plugins that were found but failed to be loaded due to some error.
-     *
      * @return true if at least one attempt to load plugins has been done.
      */
-    public boolean isExecuted() {
-        return pluginMonitor.executed;
+    public boolean isExecuted()
+    {
+        return executed;
     }
 
     /**
-     * Loads a plug-in module into the container. Loading consists of the
-     * following steps:<ul>
-     * <p/>
-     * <li>Add all jars in the <tt>lib</tt> dir (if it exists) to the class loader</li>
-     * <li>Add all files in <tt>classes</tt> dir (if it exists) to the class loader</li>
-     * <li>Locate and load <tt>module.xml</tt> into the context</li>
-     * <li>For each jive.module entry, load the given class as a module and start it</li>
-     * <p/>
-     * </ul>
+     * Loads a plugin.
      *
      * @param pluginDir the plugin directory.
      */
-    private void loadPlugin(File pluginDir) {
+    boolean loadPlugin( String canonicalName, Path pluginDir )
+    {
+        final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
+        pluginMetadata.put( canonicalName, metadata );
+
         // Only load the admin plugin during setup mode.
-        if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getName().equals("admin"))) {
-            return;
+        if ( XMPPServer.getInstance().isSetupMode() && !( canonicalName.equals( "admin" ) ) )
+        {
+            return false;
         }
-        Log.debug("PluginManager: Loading plugin " + pluginDir.getName());
-        Plugin plugin;
-        try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
-            if (pluginConfig.exists()) {
-                SAXReader saxReader = new SAXReader();
-                saxReader.setEncoding("UTF-8");
-                Document pluginXML = saxReader.read(pluginConfig);
 
-                // See if the plugin specifies a version of Openfire
-                // required to run.
-                Element minServerVersion = (Element)pluginXML.selectSingleNode("/plugin/minServerVersion");
-                if (minServerVersion != null) {
-                    Version requiredVersion = new Version(minServerVersion.getTextTrim());
-                    Version currentVersion = XMPPServer.getInstance().getServerInfo().getVersion();
-                    if (requiredVersion.isNewerThan(currentVersion)) {
-                        String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
-                            "server version " + requiredVersion;
-                        Log.warn(msg);
-                        System.out.println(msg);
-                        return;
+        if ( failureToLoadCount.containsKey( canonicalName ) && failureToLoadCount.get( canonicalName ) > JiveGlobals.getIntProperty( "plugins.loading.retries", 5 ) )
+        {
+            Log.debug( "The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName );
+            return false;
+        }
+
+        Log.debug( "Loading plugin '{}'...", canonicalName );
+        try
+        {
+            final Path pluginConfig = pluginDir.resolve( "plugin.xml" );
+            if ( !Files.exists( pluginConfig ) )
+            {
+                Log.warn( "Plugin '{}' could not be loaded: no plugin.xml file found.", canonicalName );
+                failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                return false;
+            }
+
+            final Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
+
+            // See if the plugin specifies a minimum version of Openfire required to run.
+            if ( metadata.getMinServerVersion() != null )
+            {
+                // OF-1338: Ignore release status when comparing minimum server version requirement.
+                final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
+                if ( metadata.getMinServerVersion().isNewerThan( compareVersion ) )
+                {
+                    Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", canonicalName, metadata.getMinServerVersion(), currentServerVersion );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
+                }
+            }
+
+            // See if the plugin specifies a maximum version of Openfire required to run.
+            if ( metadata.getPriorToServerVersion() != null )
+            {
+                // OF-1338: Ignore release status when comparing maximum server version requirement.
+                final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
+                if ( !metadata.getPriorToServerVersion().isNewerThan( compareVersion ) )
+                {
+                    Log.warn( "Ignoring plugin '{}': compatible with server versions up to but excluding {}. Current server version is {}.", canonicalName, metadata.getPriorToServerVersion(), currentServerVersion );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
+                }
+            }
+
+            // See if the plugin specifies a minimum version of Java required to run.
+            if ( metadata.getMinJavaVersion() != null )
+            {
+                final JavaSpecVersion runtimeVersion = new JavaSpecVersion( System.getProperty( "java.specification.version" ) );
+                if ( metadata.getMinJavaVersion().isNewerThan( runtimeVersion ) )
+                {
+                    Log.warn( "Ignoring plugin '{}': requires Java specification version {}. Openfire is currently running in Java {}.", canonicalName, metadata.getMinJavaVersion(), System.getProperty( "java.specification.version" ) );
+                    failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
+                }
+            }
+
+            // Properties to be used to load external resources. When set, plugin is considered to run in DEV mode.
+            final String devModeClassesDir = System.getProperty( canonicalName + ".classes" );
+            final String devModewebRoot = System.getProperty( canonicalName + ".webRoot" );
+            final boolean devMode = devModewebRoot != null || devModeClassesDir != null;
+            final PluginDevEnvironment dev = ( devMode ? configurePluginDevEnvironment( pluginDir, devModeClassesDir, devModewebRoot ) : null );
+
+            // Initialize the plugin class loader, which is either a new instance, or a the loader from a parent plugin.
+            final PluginClassLoader pluginLoader;
+
+            // Check to see if this is a child plugin of another plugin. If it is, we re-use the parent plugin's class
+            // loader so that the plugins can interact.
+            String parentPluginName = null;
+            Plugin parentPlugin = null;
+
+            final String parentCanonicalName = PluginMetadataHelper.getParentPlugin( pluginDir );
+            if ( parentCanonicalName != null )
+            {
+                // The name of the parent plugin as specified in plugin.xml might have incorrect casing. Lookup the correct name.
+                for ( final Map.Entry<String, Plugin> entry : pluginsLoaded.entrySet() )
+                {
+                    if ( entry.getKey().equalsIgnoreCase( parentCanonicalName ) )
+                    {
+                        parentPluginName = entry.getKey();
+                        parentPlugin = entry.getValue();
+                        break;
                     }
                 }
 
-                PluginClassLoader pluginLoader;
-
-                // Check to see if this is a child plugin of another plugin. If it is, we
-                // re-use the parent plugin's class loader so that the plugins can interact.
-                Element parentPluginNode = (Element)pluginXML.selectSingleNode("/plugin/parentPlugin");
-
-                String pluginName = pluginDir.getName();
-                String webRootKey = pluginName + ".webRoot";
-                String classesDirKey = pluginName + ".classes";
-                String webRoot = System.getProperty(webRootKey);
-                String classesDir = System.getProperty(classesDirKey);
-
-                if (webRoot != null) {
-                    final File compilationClassesDir = new File(pluginDir, "classes");
-                    if (!compilationClassesDir.exists()) {
-                        compilationClassesDir.mkdir();
+                // See if the parent is loaded.
+                if ( parentPlugin == null )
+                {
+                    Log.info( "Unable to load plugin '{}': parent plugin '{}' has not been loaded.", canonicalName, parentCanonicalName );
+                    Integer count = failureToLoadCount.get( canonicalName );
+                    if ( count == null ) {
+                        count = 0;
                     }
-                    compilationClassesDir.deleteOnExit();
+                    failureToLoadCount.put( canonicalName, ++count );
+                    return false;
                 }
-
-                if (parentPluginNode != null) {
-                    String parentPlugin = parentPluginNode.getTextTrim();
-                    // See if the parent is already loaded.
-                    if (plugins.containsKey(parentPlugin)) {
-                        pluginLoader = classloaders.get(getPlugin(parentPlugin));
-                        pluginLoader.addDirectory(pluginDir, classesDir != null);
-
-                    }
-                    else {
-                        // See if the parent plugin exists but just hasn't been loaded yet.
-                        // This can only be the case if this plugin name is alphabetically before
-                        // the parent.
-                        if (pluginName.compareTo(parentPlugin) < 0) {
-                            // See if the parent exists.
-                            File file = new File(pluginDir.getParentFile(), parentPlugin + ".jar");
-                            if (file.exists()) {
-                                // Silently return. The child plugin will get loaded up on the next
-                                // plugin load run after the parent.
-                                return;
-                            }
-                            else {
-                                file = new File(pluginDir.getParentFile(), parentPlugin + ".war");
-                                if (file.exists()) {
-                                    // Silently return. The child plugin will get loaded up on the next
-                                    // plugin load run after the parent.
-                                    return;
-                                }
-                                else {
-                                    String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
-                                        parentPlugin + " not present.";
-                                    Log.warn(msg);
-                                    System.out.println(msg);
-                                    return;
-                                }
-                            }
-                        }
-                        else {
-                            String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
-                                parentPlugin + " not present.";
-                            Log.warn(msg);
-                            System.out.println(msg);
-                            return;
-                        }
-                    }
-                }
+                pluginLoader = classloaders.get( parentPlugin );
+            }
+            else
+            {
                 // This is not a child plugin, so create a new class loader.
-                else {
-                    pluginLoader = new PluginClassLoader();
-                    pluginLoader.addDirectory(pluginDir, classesDir != null);
-                }
-
-                // Check to see if development mode is turned on for the plugin. If it is,
-                // configure dev mode.
-
-                PluginDevEnvironment dev = null;
-                if (webRoot != null || classesDir != null) {
-                    dev = new PluginDevEnvironment();
-
-                    System.out.println("Plugin " + pluginName + " is running in development mode.");
-                    Log.info("Plugin " + pluginName + " is running in development mode.");
-                    if (webRoot != null) {
-                        File webRootDir = new File(webRoot);
-                        if (!webRootDir.exists()) {
-                            // Ok, let's try it relative from this plugin dir?
-                            webRootDir = new File(pluginDir, webRoot);
-                        }
-
-                        if (webRootDir.exists()) {
-                            dev.setWebRoot(webRootDir);
-                        }
-                    }
-
-                    if (classesDir != null) {
-                        File classes = new File(classesDir);
-                        if (!classes.exists()) {
-                            // ok, let's try it relative from this plugin dir?
-                            classes = new File(pluginDir, classesDir);
-                        }
-
-                        if (classes.exists()) {
-                            dev.setClassesDir(classes);
-                            pluginLoader.addURLFile(classes.getAbsoluteFile().toURI().toURL());
-                        }
-                    }
-                }
-
-                String className = pluginXML.selectSingleNode("/plugin/class").getText().trim();
-                plugin = (Plugin)pluginLoader.loadClass(className).newInstance();
-                if (parentPluginNode != null) {
-                    String parentPlugin = parentPluginNode.getTextTrim();
-                    // See if the parent is already loaded.
-                    if (plugins.containsKey(parentPlugin)) {
-                        pluginLoader = classloaders.get(getPlugin(parentPlugin));
-                        classloaders.put(plugin, pluginLoader);
-                    }
-                }
-
-                plugins.put(pluginName, plugin);
-                pluginDirs.put(plugin, pluginDir);
-
-                // If this is a child plugin, register it as such.
-                if (parentPluginNode != null) {
-                    String parentPlugin = parentPluginNode.getTextTrim();
-                    List<String> childrenPlugins = parentPluginMap.get(plugins.get(parentPlugin));
-                    if (childrenPlugins == null) {
-                        childrenPlugins = new ArrayList<String>();
-                        parentPluginMap.put(plugins.get(parentPlugin), childrenPlugins);
-                    }
-                    childrenPlugins.add(pluginName);
-                    // Also register child to parent relationship.
-                    childPluginMap.put(plugin, parentPlugin);
-                }
-                else {
-                    // Only register the class loader in the case of this not being
-                    // a child plugin.
-                    classloaders.put(plugin, pluginLoader);
-                }
-
-                // Check the plugin's database schema (if it requires one).
-                if (!DbConnectionManager.getSchemaManager().checkPluginSchema(plugin)) {
-                    // The schema was not there and auto-upgrade failed.
-                    Log.error(pluginName + " - " +
-                            LocaleUtils.getLocalizedString("upgrade.database.failure"));
-                    System.out.println(pluginName + " - " +
-                            LocaleUtils.getLocalizedString("upgrade.database.failure"));
-                }
-
-                // Load any JSP's defined by the plugin.
-                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                    File.separator + "web.xml");
-                if (webXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, webXML);
-                }
-                // Load any custom-defined servlets.
-                File customWebXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                    File.separator + "web-custom.xml");
-                if (customWebXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, customWebXML);
-                }
-
-                if (dev != null) {
-                    pluginDevelopment.put(plugin, dev);
-                }
-
-                // Configure caches of the plugin
-                configureCaches(pluginDir, pluginName);
-
-                // Init the plugin.
-                ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
-                Thread.currentThread().setContextClassLoader(pluginLoader);
-                plugin.initializePlugin(this, pluginDir);
-                Thread.currentThread().setContextClassLoader(oldLoader);
-
-                // If there a <adminconsole> section defined, register it.
-                Element adminElement = (Element)pluginXML.selectSingleNode("/plugin/adminconsole");
-                if (adminElement != null) {
-                    Element appName = (Element)adminElement.selectSingleNode(
-                        "/plugin/adminconsole/global/appname");
-                    if (appName != null) {
-                        // Set the plugin name so that the proper i18n String can be loaded.
-                        appName.addAttribute("plugin", pluginName);
-                    }
-                    // If global images are specified, override their URL.
-                    Element imageEl = (Element)adminElement.selectSingleNode(
-                        "/plugin/adminconsole/global/logo-image");
-                    if (imageEl != null) {
-                        imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
-                        // Set the plugin name so that the proper i18n String can be loaded.
-                        imageEl.addAttribute("plugin", pluginName);
-                    }
-                    imageEl = (Element)adminElement.selectSingleNode("/plugin/adminconsole/global/login-image");
-                    if (imageEl != null) {
-                        imageEl.setText("plugins/" + pluginName + "/" + imageEl.getText());
-                        // Set the plugin name so that the proper i18n String can be loaded.
-                        imageEl.addAttribute("plugin", pluginName);
-                    }
-                    // Modify all the URL's in the XML so that they are passed through
-                    // the plugin servlet correctly.
-                    List urls = adminElement.selectNodes("//@url");
-                    for (Object url : urls) {
-                        Attribute attr = (Attribute)url;
-                        attr.setValue("plugins/" + pluginName + "/" + attr.getValue());
-                    }
-                    // In order to internationalize the names and descriptions in the model,
-                    // we add a "plugin" attribute to each tab, sidebar, and item so that
-                    // the the renderer knows where to load the i18n Strings from.
-                    String[] elementNames = new String [] { "tab", "sidebar", "item" };
-                    for (String elementName : elementNames) {
-                        List values = adminElement.selectNodes("//" + elementName);
-                        for (Object value : values) {
-                            Element element = (Element) value;
-                            // Make sure there's a name or description. Otherwise, no need to
-                            // override i18n settings.
-                            if (element.attribute("name") != null ||
-                                    element.attribute("value") != null) {
-                                element.addAttribute("plugin", pluginName);
-                            }
-                        }
-                    }
-
-                    AdminConsole.addModel(pluginName, adminElement);
-                }
-                firePluginCreatedEvent(pluginName, plugin);
+                pluginLoader = new PluginClassLoader();
             }
-            else {
-                Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
+
+            // Add the plugin sources to the classloaded.
+            pluginLoader.addDirectory( pluginDir.toFile(), devMode );
+
+            // When running in DEV mode, add optional other sources too.
+            if ( dev != null && dev.getClassesDir() != null )
+            {
+                pluginLoader.addURLFile( dev.getClassesDir().toURI().toURL() );
             }
+
+            // Instantiate the plugin!
+            final SAXReader saxReader = new SAXReader();
+            saxReader.setEncoding( "UTF-8" );
+            final Document pluginXML = saxReader.read( pluginConfig.toFile() );
+
+            final String className = pluginXML.selectSingleNode( "/plugin/class" ).getText().trim();
+            final Plugin plugin = (Plugin) pluginLoader.loadClass( className ).newInstance();
+
+            // Bookkeeping!
+            classloaders.put( plugin, pluginLoader );
+            pluginsLoaded.put( canonicalName, plugin );
+            pluginDirs.put( canonicalName, pluginDir );
+            if ( dev != null )
+            {
+                pluginDevelopment.put( plugin, dev );
+            }
+
+            // If this is a child plugin, register it as such.
+            if ( parentPlugin != null )
+            {
+                List<String> childrenPlugins = parentPluginMap.get( parentPlugin );
+                if ( childrenPlugins == null )
+                {
+                    childrenPlugins = new ArrayList<>();
+                    parentPluginMap.put( parentPlugin, childrenPlugins );
+                }
+                childrenPlugins.add( canonicalName );
+
+                // Also register child to parent relationship.
+                childPluginMap.put( plugin, parentPluginName );
+            }
+
+            // Check the plugin's database schema (if it requires one).
+            if ( !DbConnectionManager.getSchemaManager().checkPluginSchema( plugin ) )
+            {
+                // The schema was not there and auto-upgrade failed.
+                Log.error( "Error while loading plugin '{}': {}", canonicalName, LocaleUtils.getLocalizedString( "upgrade.database.failure" ) );
+            }
+
+            // Load any JSP's defined by the plugin.
+            final Path webXML = pluginDir.resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );
+            if ( Files.exists( webXML ) )
+            {
+                PluginServlet.registerServlets( this, plugin, webXML.toFile() );
+            }
+
+            // Load any custom-defined servlets.
+            final Path customWebXML = pluginDir.resolve( "web" ).resolve( "WEB-INF" ).resolve( "web-custom.xml" );
+            if ( Files.exists( customWebXML ) )
+            {
+                PluginServlet.registerServlets( this, plugin, customWebXML.toFile() );
+            }
+
+            // Configure caches of the plugin
+            configureCaches( pluginDir, canonicalName );
+
+            // Initialze the plugin.
+            final ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader( pluginLoader );
+            plugin.initializePlugin( this, pluginDir.toFile() );
+            Log.debug( "Initialized plugin '{}'.", canonicalName );
+            Thread.currentThread().setContextClassLoader( oldLoader );
+
+            // If there a <adminconsole> section defined, register it.
+            final Element adminElement = (Element) pluginXML.selectSingleNode( "/plugin/adminconsole" );
+            if ( adminElement != null )
+            {
+                final Element appName = (Element) adminElement.selectSingleNode( "/plugin/adminconsole/global/appname" );
+                if ( appName != null )
+                {
+                    // Set the plugin name so that the proper i18n String can be loaded.
+                    appName.addAttribute( "plugin", canonicalName );
+                }
+
+                // If global images are specified, override their URL.
+                Element imageEl = (Element) adminElement.selectSingleNode( "/plugin/adminconsole/global/logo-image" );
+                if ( imageEl != null )
+                {
+                    imageEl.setText( "plugins/" + canonicalName + "/" + imageEl.getText() );
+                    imageEl.addAttribute( "plugin", canonicalName ); // Set the plugin name so that the proper i18n String can be loaded.
+                }
+                imageEl = (Element) adminElement.selectSingleNode( "/plugin/adminconsole/global/login-image" );
+                if ( imageEl != null )
+                {
+                    imageEl.setText( "plugins/" + canonicalName + "/" + imageEl.getText() );
+                    imageEl.addAttribute( "plugin", canonicalName ); // Set the plugin name so that the proper i18n String can be loaded.
+                }
+
+                // Modify all the URL's in the XML so that they are passed through the plugin servlet correctly.
+                final List urls = adminElement.selectNodes( "//@url" );
+                for ( final Object url : urls )
+                {
+                    final Attribute attr = (Attribute) url;
+                    attr.setValue( "plugins/" + canonicalName + "/" + attr.getValue() );
+                }
+
+                // In order to internationalize the names and descriptions in the model, we add a "plugin" attribute to
+                // each tab, sidebar, and item so that the the renderer knows where to load the i18n Strings from.
+                final String[] elementNames = new String[]{ "tab", "sidebar", "item" };
+                for ( final String elementName : elementNames )
+                {
+                    final List values = adminElement.selectNodes( "//" + elementName );
+                    for ( final Object value : values )
+                    {
+                        final Element element = (Element) value;
+                        // Make sure there's a name or description. Otherwise, no need to i18n settings.
+                        if ( element.attribute( "name" ) != null || element.attribute( "value" ) != null )
+                        {
+                            element.addAttribute( "plugin", canonicalName );
+                        }
+                    }
+                }
+
+                AdminConsole.addModel( canonicalName, adminElement );
+            }
+            firePluginCreatedEvent( canonicalName, plugin );
+            Log.info( "Successfully loaded plugin '{}'.", canonicalName );
+            return true;
         }
-        catch (Throwable e) {
-            Log.error("Error loading plugin: " + pluginDir, e);
+        catch ( Throwable e )
+        {
+            Log.error( "An exception occurred while loading plugin '{}':", canonicalName, e );
+            Integer count = failureToLoadCount.get( canonicalName );
+            if ( count == null ) {
+                count = 0;
+            }
+            failureToLoadCount.put( canonicalName, ++count );
+            return false;
         }
     }
 
-    private void configureCaches(File pluginDir, String pluginName) {
-        File cacheConfig = new File(pluginDir, "cache-config.xml");
-        if (cacheConfig.exists()) {
+    private PluginDevEnvironment configurePluginDevEnvironment( final Path pluginDir, String classesDir, String webRoot ) throws IOException
+    {
+        final String pluginName = pluginDir.getFileName().toString();
+
+        final Path compilationClassesDir = pluginDir.resolve( "classes" );
+        if ( Files.notExists( compilationClassesDir ) )
+        {
+            Files.createDirectory( compilationClassesDir );
+        }
+        compilationClassesDir.toFile().deleteOnExit();
+
+        final PluginDevEnvironment dev = new PluginDevEnvironment();
+        Log.info( "Plugin '{}' is running in development mode.", pluginName );
+        if ( webRoot != null )
+        {
+            Path webRootDir = Paths.get( webRoot );
+            if ( Files.notExists( webRootDir ) )
+            {
+                // Ok, let's try it relative from this plugin dir?
+                webRootDir = pluginDir.resolve( webRoot );
+            }
+
+            if ( Files.exists( webRootDir ) )
+            {
+                dev.setWebRoot( webRootDir.toFile() );
+            }
+        }
+
+        if ( classesDir != null )
+        {
+            Path classes = Paths.get( classesDir );
+            if ( Files.notExists( classes ) )
+            {
+                // ok, let's try it relative from this plugin dir?
+                classes = pluginDir.resolve( classesDir );
+            }
+
+            if ( Files.exists( classes ) )
+            {
+                dev.setClassesDir( classes.toFile() );
+            }
+        }
+
+        return dev;
+    }
+
+    private void configureCaches( Path pluginDir, String pluginName )
+    {
+        Path cacheConfig = pluginDir.resolve( "cache-config.xml" );
+        if ( Files.exists( cacheConfig ) )
+        {
             PluginCacheConfigurator configurator = new PluginCacheConfigurator();
-            try {
-                configurator.setInputStream(new BufferedInputStream(new FileInputStream(cacheConfig)));
-                configurator.configure(pluginName);
+            try
+            {
+                configurator.setInputStream( new BufferedInputStream( Files.newInputStream( cacheConfig ) ) );
+                configurator.configure( pluginName );
             }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
+            catch ( Exception e )
+            {
+                Log.error( "An exception occurred while trying to configure caches for plugin '{}':", pluginName, e );
             }
-        }
-    }
-
-    private void firePluginCreatedEvent(String name, Plugin plugin) {
-        for(PluginListener listener : pluginListeners) {
-            listener.pluginCreated(name, plugin);
-        }
-    }
-
-    private void firePluginsMonitored() {
-        for(PluginManagerListener listener : pluginManagerListeners) {
-            listener.pluginsMonitored();
         }
     }
 
     /**
-     * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then
-     * any resources will be released. The name should be the name of the plugin directory
-     * and not the name as given by the plugin meta-data. This method only removes
-     * the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR
-     * still exists after this method is called, the plugin will be started again the next
-     * time the plugin monitor process runs. This is useful for "restarting" plugins.
-     * <p>
-     * This method is called automatically when a plugin's JAR file is deleted.
-     * </p>
-     *
-     * @param pluginName the name of the plugin to unload.
+     * Delete a plugin, which removes the plugin.jar/war file after which the plugin is unloaded.
      */
-    public void unloadPlugin(String pluginName) {
-        Log.debug("PluginManager: Unloading plugin " + pluginName);
+    public void deletePlugin( final String pluginName )
+    {
+        Log.debug( "Deleting plugin '{}'...", pluginName );
 
-        Plugin plugin = plugins.get(pluginName);
-        if (plugin != null) {
-            // Remove from dev mode if it exists.
-            pluginDevelopment.remove(plugin);
+        try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), new DirectoryStream.Filter<Path>()
+        {
+            @Override
+            public boolean accept( final Path path ) throws IOException
+            {
+                if ( Files.isDirectory( path ) )
+                {
+                    return false;
+                }
 
-            // See if any child plugins are defined.
-            if (parentPluginMap.containsKey(plugin)) {
-                String[] childPlugins =
-                        parentPluginMap.get(plugin).toArray(new String[parentPluginMap.get(plugin).size()]);
-                parentPluginMap.remove(plugin);
-                for (String childPlugin : childPlugins) {
-                    Log.debug("Unloading child plugin: " + childPlugin);
-                    childPluginMap.remove(plugins.get(childPlugin));
-                    unloadPlugin(childPlugin);
+                final String fileName = path.getFileName().toString().toLowerCase();
+                return ( fileName.equals( pluginName + ".jar" ) || fileName.equals( pluginName + ".war" ) );
+            }
+        } ) )
+        {
+            for ( final Path pluginFile : ds )
+            {
+                try
+                {
+                    Files.delete( pluginFile );
+                    pluginMonitor.runNow( true ); // trigger unload by running the monitor (which is more thread-safe than calling unloadPlugin directly).
+                }
+                catch ( IOException ex )
+                {
+                    Log.warn( "Unable to delete plugin '{}', as the plugin jar/war file cannot be deleted. File path: {}", pluginName, pluginFile, ex );
                 }
             }
+        }
+        catch ( Throwable e )
+        {
+            Log.error( "An unexpected exception occurred while deleting plugin '{}'.", pluginName, e );
+        }
+    }
 
-            File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web.xml");
-            if (webXML.exists()) {
-                AdminConsole.removeModel(pluginName);
-                PluginServlet.unregisterServlets(webXML);
+    public boolean reloadPlugin( String pluginName )
+    {
+        Log.debug( "Reloading plugin '{}'..." );
+
+        final Plugin plugin = getPlugin( pluginName );
+        if ( plugin == null )
+        {
+            Log.warn( "Unable to reload plugin '{}'. No such plugin loaded.", pluginName );
+            return false;
+        }
+
+        final Path path = getPluginPath( plugin );
+        if ( path == null )
+        {
+            // When there's a plugin, there should be a path. If there isn't, our code is buggy.
+            throw new IllegalStateException( "Unable to determine installation path of plugin: " + pluginName );
+        }
+
+        try
+        {
+            Files.setLastModifiedTime( path, FileTime.fromMillis( 0 ) );
+        }
+        catch ( IOException e )
+        {
+            Log.warn( "Unable to reload plugin '{}'. Unable to reset the 'last modified time' of the plugin path. Try removing and restoring the plugin jar file manually." );
+            return false;
+        }
+
+        pluginMonitor.runNow( false );
+        return true;
+    }
+
+    /**
+     * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then any resources will be
+     * released. The name should be the canonical name of the plugin (based on the plugin directory name) and not the
+     * human readable name as given by the plugin meta-data.
+     *
+     * This method only removes the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR still
+     * exists after this method is called, the plugin will be started again the next  time the plugin monitor process
+     * runs. This is useful for "restarting" plugins. To completely remove the plugin, use {@link #deletePlugin(String)}
+     * instead.
+     *
+     * This method is called automatically when a plugin's JAR file is deleted.
+     *
+     * @param canonicalName the canonical name of the plugin to unload.
+     */
+    void unloadPlugin( String canonicalName )
+    {
+        Log.debug( "Unloading plugin '{}'...", canonicalName );
+
+        failureToLoadCount.remove( canonicalName );
+
+        Plugin plugin = pluginsLoaded.get( canonicalName );
+        if ( plugin != null )
+        {
+            // Remove from dev mode if it exists.
+            pluginDevelopment.remove( plugin );
+
+            // See if any child plugins are defined.
+            if ( parentPluginMap.containsKey( plugin ) )
+            {
+                String[] childPlugins = parentPluginMap.get( plugin ).toArray( new String[ parentPluginMap.get( plugin ).size() ] );
+                for ( String childPlugin : childPlugins )
+                {
+                    Log.debug( "Unloading child plugin: '{}'.", childPlugin );
+                    childPluginMap.remove( pluginsLoaded.get( childPlugin ) );
+                    unloadPlugin( childPlugin );
+                }
+                parentPluginMap.remove( plugin );
             }
-            File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web-custom.xml");
-            if (customWebXML.exists()) {
-                PluginServlet.unregisterServlets(customWebXML);
+
+            Path webXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );
+            if ( Files.exists( webXML ) )
+            {
+                AdminConsole.removeModel( canonicalName );
+                PluginServlet.unregisterServlets( webXML.toFile() );
+            }
+            Path customWebXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web-custom.xml" );
+            if ( Files.exists( customWebXML ) )
+            {
+                PluginServlet.unregisterServlets( customWebXML.toFile() );
             }
 
             // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
@@ -613,11 +846,14 @@ public class PluginManager {
             // possible that classloader destruction won't work in the case that destroying the plugin
             // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
             // resources.
-            try {
+            try
+            {
                 plugin.destroyPlugin();
+                Log.debug( "Destroyed plugin '{}'.", canonicalName );
             }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
+            catch ( Exception e )
+            {
+                Log.error( "An exception occurred while unloading plugin '{}':", canonicalName, e );
             }
         }
 
@@ -625,75 +861,83 @@ public class PluginManager {
         // If plugin still fails to be removed then we will add references back
         // Anyway, for a few seconds admins may not see the plugin in the admin console
         // and in a subsequent refresh it will appear if failed to be removed
-        plugins.remove(pluginName);
-        File pluginFile = pluginDirs.remove(plugin);
-        PluginClassLoader pluginLoader = classloaders.remove(plugin);
+        pluginsLoaded.remove( canonicalName );
+        Path pluginFile = pluginDirs.remove( canonicalName );
+        PluginClassLoader pluginLoader = classloaders.remove( plugin );
+        PluginMetadata metadata = pluginMetadata.remove( canonicalName );
 
         // try to close the cached jar files from the plugin class loader
-        if (pluginLoader != null) {
-        	pluginLoader.unloadJarFiles();
-        } else {
-        	Log.warn("No plugin loader found for " + pluginName);
+        if ( pluginLoader != null )
+        {
+            pluginLoader.unloadJarFiles();
+        }
+        else
+        {
+            Log.warn( "No plugin loader found for '{}'.", canonicalName );
         }
 
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
-        File dir = new File(pluginDirectory, pluginName);
+        Path dir = pluginDirectory.resolve( canonicalName );
         // Give the plugin 2 seconds to unload.
-        try {
-            Thread.sleep(2000);
+        try
+        {
+            Thread.sleep( 2000 );
             // Ask the system to clean up references.
             System.gc();
             int count = 0;
-            while (!deleteDir(dir) && count++ < 5) {
-                Log.warn("Error unloading plugin " + pluginName + ". " + "Will attempt again momentarily.");
-                Thread.sleep(8000);
+            while ( !deleteDir( dir ) && count++ < 5 )
+            {
+                Log.warn( "Error unloading plugin '{}'. Will attempt again momentarily.", canonicalName );
+                Thread.sleep( 8000 );
                 // Ask the system to clean up references.
                 System.gc();
             }
-        } catch (InterruptedException e) {
-            Log.error(e.getMessage(), e);
+        }
+        catch ( InterruptedException e )
+        {
+            Log.debug( "Stopped waiting for plugin '{}' to be fully unloaded.", canonicalName, e );
         }
 
-        if (plugin != null && !dir.exists()) {
+        if ( plugin != null && Files.notExists( dir ) )
+        {
             // Unregister plugin caches
-            PluginCacheRegistry.getInstance().unregisterCaches(pluginName);
+            PluginCacheRegistry.getInstance().unregisterCaches( canonicalName );
 
             // See if this is a child plugin. If it is, we should unload
             // the parent plugin as well.
-            if (childPluginMap.containsKey(plugin)) {
-                String parentPluginName = childPluginMap.get(plugin);
-                Plugin parentPlugin = plugins.get(parentPluginName);
-                List<String> childrenPlugins = parentPluginMap.get(parentPlugin);
+            if ( childPluginMap.containsKey( plugin ) )
+            {
+                String parentPluginName = childPluginMap.get( plugin );
+                Plugin parentPlugin = pluginsLoaded.get( parentPluginName );
+                List<String> childrenPlugins = parentPluginMap.get( parentPlugin );
 
-                childrenPlugins.remove(pluginName);
-                childPluginMap.remove(plugin);
+                childrenPlugins.remove( canonicalName );
+                childPluginMap.remove( plugin );
 
                 // When the parent plugin implements PluginListener, its pluginDestroyed() method
                 // isn't called if it dies first before its child. Athough the parent will die anyway,
                 // it's proper if the parent "gets informed first" about the dying child when the
                 // child is the one being killed first.
-                if (parentPlugin instanceof PluginListener) {
+                if ( parentPlugin instanceof PluginListener )
+                {
                     PluginListener listener;
                     listener = (PluginListener) parentPlugin;
-                    listener.pluginDestroyed(pluginName, plugin);
+                    listener.pluginDestroyed( canonicalName, plugin );
                 }
-                unloadPlugin(parentPluginName);
+                unloadPlugin( parentPluginName );
             }
-            firePluginDestroyedEvent(pluginName, plugin);
+            firePluginDestroyedEvent( canonicalName, plugin );
+            Log.info( "Successfully unloaded plugin '{}'.", canonicalName );
         }
-        else if (plugin != null) {
-            // Restore references since we failed to remove the plugin
-            plugins.put(pluginName, plugin);
-            pluginDirs.put(plugin, pluginFile);
-            classloaders.put(plugin, pluginLoader);
-        }
-    }
-
-    private void firePluginDestroyedEvent(String name, Plugin plugin) {
-        for (PluginListener listener : pluginListeners) {
-            listener.pluginDestroyed(name, plugin);
+        else if ( plugin != null )
+        {
+            Log.info( "Restore references since we failed to remove the plugin '{}'.", canonicalName );
+            pluginsLoaded.put( canonicalName, plugin );
+            pluginDirs.put( canonicalName, pluginFile );
+            classloaders.put( plugin, pluginLoader );
+            pluginMetadata.put( canonicalName, metadata );
         }
     }
 
@@ -707,10 +951,11 @@ public class PluginManager {
      * @throws IllegalAccessException if not allowed to access the class.
      * @throws InstantiationException if the class could not be created.
      */
-    public Class loadClass(Plugin plugin, String className) throws ClassNotFoundException,
-        IllegalAccessException, InstantiationException {
-        PluginClassLoader loader = classloaders.get(plugin);
-        return loader.loadClass(className);
+    public Class loadClass( Plugin plugin, String className ) throws ClassNotFoundException,
+            IllegalAccessException, InstantiationException
+    {
+        PluginClassLoader loader = classloaders.get( plugin );
+        return loader.loadClass( className );
     }
 
     /**
@@ -721,130 +966,81 @@ public class PluginManager {
      * @return the plugin dev environment, or <tt>null</tt> if development
      *         mode is not enabled for the plugin.
      */
-    public PluginDevEnvironment getDevEnvironment(Plugin plugin) {
-        return pluginDevelopment.get(plugin);
+    public PluginDevEnvironment getDevEnvironment( Plugin plugin )
+    {
+        return pluginDevelopment.get( plugin );
     }
 
     /**
-     * Returns the name of a plugin. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
-     * Note that this value is distinct from the name of the plugin directory.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's name.
+     * @deprecated Moved to {@link PluginMetadataHelper#getName(Plugin)}.
      */
-    public String getName(Plugin plugin) {
-        String name = getElementValue(plugin, "/plugin/name");
-        String pluginName = pluginDirs.get(plugin).getName();
-        if (name != null) {
-            return AdminConsole.getAdminText(name, pluginName);
-        }
-        else {
-            return pluginName;
-        }
+    @Deprecated
+    public String getName( Plugin plugin )
+    {
+        return PluginMetadataHelper.getName( plugin );
     }
 
     /**
-     * Returns the description of a plugin. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's description.
+     * @deprecated Moved to {@link PluginMetadataHelper#getDescription(Plugin)}.
      */
-    public String getDescription(Plugin plugin) {
-        String pluginName = pluginDirs.get(plugin).getName();
-        return AdminConsole.getAdminText(getElementValue(plugin, "/plugin/description"), pluginName);
+    @Deprecated
+    public String getDescription( Plugin plugin )
+    {
+        return PluginMetadataHelper.getDescription( plugin );
     }
 
     /**
-     * Returns the author of a plugin. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's author.
+     * @deprecated Moved to {@link PluginMetadataHelper#getAuthor(Plugin)}.
      */
-    public String getAuthor(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/author");
+    @Deprecated
+    public String getAuthor( Plugin plugin )
+    {
+        return PluginMetadataHelper.getAuthor( plugin );
     }
 
     /**
-     * Returns the version of a plugin. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's version.
+     * @deprecated Moved to {@link PluginMetadataHelper#getVersion(Plugin)}.
      */
-    public String getVersion(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/version");
-    }
-
-     /**
-     * Returns the minimum server version this plugin can run within. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's version.
-     */
-    public String getMinServerVersion(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/minServerVersion");
+    @Deprecated
+    public String getVersion( Plugin plugin )
+    {
+        return PluginMetadataHelper.getVersion( plugin ).getVersionString();
     }
 
     /**
-     * Returns the database schema key of a plugin, if it exists. The value is retrieved
-     * from the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt>
-     * will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's database schema key or <tt>null</tt> if it doesn't exist.
+     * @deprecated Moved to {@link PluginMetadataHelper#getMinServerVersion(Plugin)}.
      */
-    public String getDatabaseKey(Plugin plugin) {
-        return getElementValue(plugin, "/plugin/databaseKey");
+    @Deprecated
+    public String getMinServerVersion( Plugin plugin )
+    {
+        return PluginMetadataHelper.getMinServerVersion( plugin ).getVersionString();
     }
 
     /**
-     * Returns the database schema version of a plugin, if it exists. The value is retrieved
-     * from the plugin.xml file of the plugin. If the value could not be found, <tt>-1</tt>
-     * will be returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's database schema version or <tt>-1</tt> if it doesn't exist.
+     * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseKey(Plugin)}.
      */
-    public int getDatabaseVersion(Plugin plugin) {
-        String versionString = getElementValue(plugin, "/plugin/databaseVersion");
-        if (versionString != null) {
-            try {
-                return Integer.parseInt(versionString.trim());
-            }
-            catch (NumberFormatException nfe) {
-                Log.error(nfe.getMessage(), nfe);
-            }
-        }
-        return -1;
+    @Deprecated
+    public String getDatabaseKey( Plugin plugin )
+    {
+        return PluginMetadataHelper.getDatabaseKey( plugin );
     }
 
     /**
-     * Returns the license agreement type that the plugin is governed by. The value
-     * is retrieved from the plugin.xml file of the plugin. If the value could not be
-     * found, {@link License#other} is returned.
-     *
-     * @param plugin the plugin.
-     * @return the plugin's license agreement.
+     * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseVersion(Plugin)}.
      */
-    public License getLicense(Plugin plugin) {
-        String licenseString = getElementValue(plugin, "/plugin/licenseType");
-        if (licenseString != null) {
-            try {
-                // Attempt to load the get the license type. We lower-case and
-                // trim the license type to give plugin author's a break. If the
-                // license type is not recognized, we'll log the error and default
-                // to "other".
-                return License.valueOf(licenseString.toLowerCase().trim());
-            }
-            catch (IllegalArgumentException iae) {
-                Log.error(iae.getMessage(), iae);
-            }
-        }
-        return License.other;
+    @Deprecated
+    public int getDatabaseVersion( Plugin plugin )
+    {
+        return PluginMetadataHelper.getDatabaseVersion( plugin );
+    }
+
+    /**
+     * @deprecated Moved to {@link PluginMetadataHelper#getLicense(Plugin)}.
+     */
+    @Deprecated
+    public String getLicense( Plugin plugin )
+    {
+        return PluginMetadataHelper.getLicense( plugin );
     }
 
     /**
@@ -853,286 +1049,11 @@ public class PluginManager {
      * @param plugin the plugin.
      * @return the classloader of the plugin.
      */
-    public PluginClassLoader getPluginClassloader(Plugin plugin) {
-        return classloaders.get(plugin);
+    public PluginClassLoader getPluginClassloader( Plugin plugin )
+    {
+        return classloaders.get( plugin );
     }
 
-    /**
-     * Returns the value of an element selected via an xpath expression from
-     * a Plugin's plugin.xml file.
-     *
-     * @param plugin the plugin.
-     * @param xpath  the xpath expression.
-     * @return the value of the element selected by the xpath expression.
-     */
-    private String getElementValue(Plugin plugin, String xpath) {
-        File pluginDir = pluginDirs.get(plugin);
-        if (pluginDir == null) {
-            return null;
-        }
-        try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
-            if (pluginConfig.exists()) {
-                SAXReader saxReader = new SAXReader();
-                saxReader.setEncoding("UTF-8");
-                Document pluginXML = saxReader.read(pluginConfig);
-                Element element = (Element)pluginXML.selectSingleNode(xpath);
-                if (element != null) {
-                    return element.getTextTrim();
-                }
-            }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
-    /**
-     * An enumberation for plugin license agreement types.
-     */
-    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
-    public enum License {
-
-        /**
-         * The plugin is distributed using a commercial license.
-         */
-        commercial,
-
-        /**
-         * The plugin is distributed using the GNU Public License (GPL).
-         */
-        gpl,
-
-        /**
-         * The plugin is distributed using the Apache license.
-         */
-        apache,
-
-        /**
-         * The plugin is for internal use at an organization only and is not re-distributed.
-         */
-        internal,
-
-        /**
-         * The plugin is distributed under another license agreement not covered by
-         * one of the other choices. The license agreement should be detailed in the
-         * plugin Readme.
-         */
-        other;
-    }
-
-    /**
-     * A service that monitors the plugin directory for plugins. It periodically
-     * checks for new plugin JAR files and extracts them if they haven't already
-     * been extracted. Then, any new plugin directories are loaded.
-     */
-    private class PluginMonitor implements Runnable {
-
-        /**
-         * Tracks if the monitor is currently running.
-         */
-        private boolean running = false;
-
-        /**
-         * True if the monitor has been executed at least once. After the first iteration in {@link #run}
-         * this variable will always be true.
-         * */
-        private boolean executed = false;
-
-        /**
-         * True when it's the first time the plugin monitor process runs. This is helpful for
-         * bootstrapping purposes.
-         */
-        private boolean firstRun = true;
-
-        public void run() {
-            // If the task is already running, return.
-            synchronized (this) {
-                if (running) {
-                    return;
-                }
-                running = true;
-            }
-            try {
-                running = true;
-                // Look for extra plugin directories specified as a system property.
-                String pluginDirs = System.getProperty("pluginDirs");
-                if (pluginDirs != null) {
-                    StringTokenizer st = new StringTokenizer(pluginDirs, ", ");
-                    while (st.hasMoreTokens()) {
-                        String dir = st.nextToken();
-                        if (!devPlugins.contains(dir)) {
-                            loadPlugin(new File(dir));
-                            devPlugins.add(dir);
-                        }
-                    }
-                }
-
-                File[] jars = pluginDirectory.listFiles(new FileFilter() {
-                    public boolean accept(File pathname) {
-                        String fileName = pathname.getName().toLowerCase();
-                        return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
-                    }
-                });
-
-                if (jars == null) {
-                    return;
-                }
-
-                for (File jarFile : jars) {
-                    String pluginName = jarFile.getName().substring(0,
-                        jarFile.getName().length() - 4).toLowerCase();
-                    // See if the JAR has already been exploded.
-                    File dir = new File(pluginDirectory, pluginName);
-                    // Store the JAR/WAR file that created the plugin folder
-                    pluginFiles.put(pluginName, jarFile);
-                    // If the JAR hasn't been exploded, do so.
-                    if (!dir.exists()) {
-                        unzipPlugin(pluginName, jarFile, dir);
-                    }
-                    // See if the JAR is newer than the directory. If so, the plugin
-                    // needs to be unloaded and then reloaded.
-                    else if (jarFile.lastModified() > dir.lastModified()) {
-                        // If this is the first time that the monitor process is running, then
-                        // plugins won't be loaded yet. Therefore, just delete the directory.
-                        if (firstRun) {
-                            int count = 0;
-                            // Attempt to delete the folder for up to 5 seconds.
-                            while (!deleteDir(dir) && count < 5) {
-                                Thread.sleep(1000);
-                            }
-                        }
-                        else {
-                            unloadPlugin(pluginName);
-                        }
-                        // If the delete operation was a success, unzip the plugin.
-                        if (!dir.exists()) {
-                            unzipPlugin(pluginName, jarFile, dir);
-                        }
-                    }
-                }
-
-                File[] dirs = pluginDirectory.listFiles(new FileFilter() {
-                    public boolean accept(File pathname) {
-                        return pathname.isDirectory();
-                    }
-                });
-
-                // Sort the list of directories so that the "admin" plugin is always
-                // first in the list.
-                Arrays.sort(dirs, new Comparator<File>() {
-                    public int compare(File file1, File file2) {
-                        if (file1.getName().equals("admin")) {
-                            return -1;
-                        }
-                        else if (file2.getName().equals("admin")) {
-                            return 1;
-                        }
-                        else {
-                            return file1.compareTo(file2);
-                        }
-                    }
-                });
-
-                // Turn the list of JAR/WAR files into a set so that we can do lookups.
-                Set<String> jarSet = new HashSet<String>();
-                for (File file : jars) {
-                    jarSet.add(file.getName().toLowerCase());
-                }
-
-                // See if any currently running plugins need to be unloaded
-                // due to the JAR file being deleted (ignore admin plugin).
-                // Build a list of plugins to delete first so that the plugins
-                // keyset isn't modified as we're iterating through it.
-                List<String> toDelete = new ArrayList<String>();
-                for (File pluginDir : dirs) {
-                    String pluginName = pluginDir.getName();
-                    if (pluginName.equals("admin")) {
-                        continue;
-                    }
-                    if (!jarSet.contains(pluginName + ".jar")) {
-                        if (!jarSet.contains(pluginName + ".war")) {
-                            toDelete.add(pluginName);
-                        }
-                    }
-                }
-                for (String pluginName : toDelete) {
-                    unloadPlugin(pluginName);
-                }
-
-                // Load all plugins that need to be loaded.
-                for (File dirFile : dirs) {
-                    // If the plugin hasn't already been started, start it.
-                    if (dirFile.exists() && !plugins.containsKey(dirFile.getName())) {
-                        loadPlugin(dirFile);
-                    }
-                }
-                // Set that at least one iteration was done. That means that "all available" plugins
-                // have been loaded by now.
-                if (!XMPPServer.getInstance().isSetupMode()) {
-                    executed = true;
-                }
-
-                // Trigger event that plugins have been monitored
-                firePluginsMonitored();
-            }
-            catch (Throwable e) {
-                Log.error(e.getMessage(), e);
-            }
-            // Finished running task.
-            synchronized (this) {
-                running = false;
-            }
-            // Process finished, so set firstRun to false (setting it multiple times doesn't hurt).
-            firstRun = false;
-        }
-
-        /**
-         * Unzips a plugin from a JAR file into a directory. If the JAR file
-         * isn't a plugin, this method will do nothing.
-         *
-         * @param pluginName the name of the plugin.
-         * @param file the JAR file
-         * @param dir the directory to extract the plugin to.
-         */
-        private void unzipPlugin(String pluginName, File file, File dir) {
-            try (ZipFile zipFile = new JarFile(file)) {
-                // Ensure that this JAR is a plugin.
-                if (zipFile.getEntry("plugin.xml") == null) {
-                    return;
-                }
-                dir.mkdir();
-                // Set the date of the JAR file to the newly created folder
-                dir.setLastModified(file.lastModified());
-                Log.debug("PluginManager: Extracting plugin: " + pluginName);
-                for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
-                    JarEntry entry = (JarEntry)e.nextElement();
-                    File entryFile = new File(dir, entry.getName());
-                    // Ignore any manifest.mf entries.
-                    if (entry.getName().toLowerCase().endsWith("manifest.mf")) {
-                        continue;
-                    }
-                    if (!entry.isDirectory()) {
-                        entryFile.getParentFile().mkdirs();
-                        try (FileOutputStream out = new FileOutputStream(entryFile)) {
-                            try (InputStream zin = zipFile.getInputStream(entry)) {
-                                byte[] b = new byte[512];
-                                int len;
-                                while ((len = zin.read(b)) != -1) {
-                                    out.write(b, 0, len);
-                                }
-                                out.flush();
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
-        }
-    }
 
     /**
      * Deletes a directory.
@@ -1140,58 +1061,174 @@ public class PluginManager {
      * @param dir the directory to delete.
      * @return true if the directory was deleted.
      */
-    private boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] childDirs = dir.list();
-            // Always try to delete JAR files first since that's what will
-            // be under contention. We do this by always sorting the lib directory
-            // first.
-            List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
-            Collections.sort(children, new Comparator<String>() {
-                public int compare(String o1, String o2) {
-                    if (o1.equals("lib")) {
-                        return -1;
+    static boolean deleteDir( Path dir )
+    {
+        try
+        {
+            if ( Files.isDirectory( dir ) )
+            {
+                Files.walkFileTree( dir, new SimpleFileVisitor<Path>()
+                {
+                    @Override
+                    public FileVisitResult visitFile( Path file, BasicFileAttributes attrs ) throws IOException
+                    {
+                        try
+                        {
+                            Files.deleteIfExists( file );
+                        }
+                        catch ( IOException e )
+                        {
+                            Log.debug( "Plugin removal: could not delete: {}", file );
+                            throw e;
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
-                    if (o2.equals("lib")) {
-                        return 1;
+
+                    @Override
+                    public FileVisitResult postVisitDirectory( Path dir, IOException exc ) throws IOException
+                    {
+                        try
+                        {
+                            Files.deleteIfExists( dir );
+                        }
+                        catch ( IOException e )
+                        {
+                            Log.debug( "Plugin removal: could not delete: {}", dir );
+                            throw e;
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
-                    else {
-                        return o1.compareTo(o2);
-                    }
-                }
-            });
-            for (String file : children) {
-                boolean success = deleteDir(new File(dir, file));
-                if (!success) {
-                    Log.debug("PluginManager: Plugin removal: could not delete: " + new File(dir, file));
-                    return false;
-                }
+                } );
             }
+            return Files.notExists( dir ) || Files.deleteIfExists( dir );
         }
-        boolean deleted = !dir.exists() || dir.delete();
-        if (deleted) {
-            // Remove the JAR/WAR file that created the plugin folder
-            pluginFiles.remove(dir.getName());
+        catch ( IOException e )
+        {
+            return Files.notExists( dir );
         }
-        return deleted;
     }
 
-    public void addPluginListener(PluginListener listener) {
-        pluginListeners.add(listener);
+    /**
+     * Registers a PluginListener, which will now start receiving events regarding plugin creation and destruction.
+     *
+     * When the listener was already registered, this method will have no effect.
+     *
+     * @param listener the listener to be notified (cannot be null).
+     */
+    public void addPluginListener( PluginListener listener )
+    {
+        pluginListeners.add( listener );
     }
 
-    public void removePluginListener(PluginListener listener) {
-        pluginListeners.remove(listener);
+    /**
+     * Deregisters a PluginListener, which will no longer receive events.
+     *
+     * When the listener was never added, this method will have no effect.
+     *
+     * @param listener the listener to be removed (cannot be null).
+     */
+    public void removePluginListener( PluginListener listener )
+    {
+        pluginListeners.remove( listener );
     }
 
-    public void addPluginManagerListener(PluginManagerListener listener) {
-        pluginManagerListeners.add(listener);
-        if (isExecuted()) {
+    /**
+     * Registers a PluginManagerListener, which will now start receiving events regarding plugin management.
+     *
+     * @param listener the listener to be notified (cannot be null).
+     */
+    public void addPluginManagerListener( PluginManagerListener listener )
+    {
+        pluginManagerListeners.add( listener );
+        if ( isExecuted() )
+        {
             firePluginsMonitored();
         }
     }
 
-    public void removePluginManagerListener(PluginManagerListener listener) {
-        pluginManagerListeners.remove(listener);
+    /**
+     * Deregisters a PluginManagerListener, which will no longer receive events.
+     *
+     * When the listener was never added, this method will have no effect.
+     *
+     * @param listener the listener to be notified (cannot be null).
+     */
+    public void removePluginManagerListener( PluginManagerListener listener )
+    {
+        pluginManagerListeners.remove( listener );
+    }
+
+    /**
+     * Notifies all registered PluginListener instances that a new plugin was created.
+     *
+     * @param name The name of the plugin
+     * @param plugin the plugin.
+     */
+    void firePluginCreatedEvent( String name, Plugin plugin )
+    {
+        for ( final PluginListener listener : pluginListeners )
+        {
+            try
+            {
+                listener.pluginCreated( name, plugin );
+            }
+            catch ( Exception ex )
+            {
+                Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'created' event for plugin '{}'!", name, ex );
+            }
+        }
+    }
+
+    /**
+     * Notifies all registered PluginListener instances that a plugin was destroyed.
+     *
+     * @param name The name of the plugin
+     * @param plugin the plugin.
+     */
+    void firePluginDestroyedEvent( String name, Plugin plugin )
+    {
+        for ( final PluginListener listener : pluginListeners )
+        {
+            try
+            {
+                listener.pluginDestroyed( name, plugin );
+            }
+            catch ( Exception ex )
+            {
+                Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'destroyed' event for plugin '{}'!", name, ex );
+            }
+
+        }
+    }
+
+    /**
+     * Notifies all registered PluginManagerListener instances that the service monitoring for plugin changes completed a
+     * periodic check.
+     */
+    void firePluginsMonitored()
+    {
+        // Set that at least one iteration was done. That means that "all available" plugins
+        // have been loaded by now.
+        if ( !XMPPServer.getInstance().isSetupMode() )
+        {
+            executed = true;
+        }
+
+        for ( final PluginManagerListener listener : pluginManagerListeners )
+        {
+            try
+            {
+                listener.pluginsMonitored();
+            }
+            catch ( Exception ex )
+            {
+                Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'monitored' event!", ex );
+            }
+        }
+    }
+
+    public boolean isMonitorTaskRunning()
+    {
+        return pluginMonitor.isTaskRunning();
     }
 }

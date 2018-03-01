@@ -1,8 +1,4 @@
-/**
- * $RCSfile: RosterItem.java,v $
- * $Revision: 3080 $
- * $Date: 2005-11-15 01:28:23 -0300 (Tue, 15 Nov 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -227,8 +223,8 @@ public class RosterItem implements Cacheable, Externalizable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<String> sharedGroups = new HashSet<String>();
-    protected Set<String> invisibleSharedGroups = new HashSet<String>();
+    protected Set<String> sharedGroups = new HashSet<>();
+    protected Set<String> invisibleSharedGroups = new HashSet<>();
     protected SubType subStatus;
     protected AskType askStatus;
     /**
@@ -265,7 +261,7 @@ public class RosterItem implements Cacheable, Externalizable {
         this.askStatus = askStatus;
         this.recvStatus = recvStatus;
         this.nickname = nickname;
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         if (groups != null) {
             for (String group : groups) {
                 this.groups.add(group);
@@ -284,10 +280,10 @@ public class RosterItem implements Cacheable, Externalizable {
                 getAskStatus(item),
                 RosterItem.RECV_NONE,
                 item.getName(),
-                new LinkedList<String>(item.getGroups()));
+                new LinkedList<>(item.getGroups()));
     }
 
-    private static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
+    public static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
         if (item.getAsk() == org.xmpp.packet.Roster.Ask.subscribe) {
             return RosterItem.ASK_SUBSCRIBE;
         }
@@ -299,7 +295,7 @@ public class RosterItem implements Cacheable, Externalizable {
         }
     }
 
-    private static RosterItem.SubType getSubType(org.xmpp.packet.Roster.Item item) {
+    public static RosterItem.SubType getSubType(org.xmpp.packet.Roster.Item item) {
         if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.to) {
             return RosterItem.SUB_TO;
         }
@@ -430,7 +426,7 @@ public class RosterItem implements Cacheable, Externalizable {
      */
     public void setGroups(List<String> groups) throws SharedGroupException {
         if (groups == null) {
-            this.groups = new LinkedList<String>();
+            this.groups = new LinkedList<>();
         }
         else {
             // Raise an error if the user is trying to remove the item from a shared group
@@ -448,21 +444,21 @@ public class RosterItem implements Cacheable, Externalizable {
                 String groupName = it.next();
                 try {
                     Group group = GroupManager.getInstance().getGroup(groupName);
-                	if (RosterManager.isSharedGroup(group)) {
-                		it.remove();
-                	}
+                    if (RosterManager.isSharedGroup(group)) {
+                        it.remove();
+                    }
                 } catch (GroupNotFoundException e) {
                     // Check now if there is a group whose display name matches the requested group
-                	Collection<Group> groupsWithProp = GroupManager
-    						.getInstance()
-    						.search("sharedRoster.displayName", groupName);
-                	Iterator<Group> itr = groupsWithProp.iterator();
-                	while(itr.hasNext()) {
-                		Group group = itr.next();
-                    	if (RosterManager.isSharedGroup(group)) {
-                    		it.remove();
-                    	}
-                	}
+                    Collection<Group> groupsWithProp = GroupManager
+                            .getInstance()
+                            .search("sharedRoster.displayName", groupName);
+                    Iterator<Group> itr = groupsWithProp.iterator();
+                    while(itr.hasNext()) {
+                        Group group = itr.next();
+                        if (RosterManager.isSharedGroup(group)) {
+                            it.remove();
+                        }
+                    }
                 }
             }
             this.groups = groups;
@@ -475,7 +471,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(sharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(sharedGroups.size());
         for (String groupName : sharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -495,7 +491,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getInvisibleSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(invisibleSharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(invisibleSharedGroups.size());
         for (String groupName : invisibleSharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -599,15 +595,16 @@ public class RosterItem implements Cacheable, Externalizable {
      * @throws org.jivesoftware.openfire.SharedGroupException if trying to remove shared group.
      */
     public void setAsCopyOf(org.xmpp.packet.Roster.Item item) throws SharedGroupException {
-        setGroups(new LinkedList<String>(item.getGroups()));
+        setGroups(new LinkedList<>(item.getGroups()));
         setNickname(item.getName());
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
+     */
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
@@ -621,6 +618,7 @@ public class RosterItem implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, jid);
         ExternalizableUtil.getInstance().writeBoolean(out, nickname != null);
@@ -636,12 +634,13 @@ public class RosterItem implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeLong(out, rosterID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         ExternalizableUtil.getInstance().readStrings(in, groups);
         ExternalizableUtil.getInstance().readStrings(in, sharedGroups);
         ExternalizableUtil.getInstance().readStrings(in, invisibleSharedGroups);

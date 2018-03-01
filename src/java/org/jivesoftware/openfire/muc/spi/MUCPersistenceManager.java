@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,10 +48,10 @@ import org.xmpp.packet.JID;
  */
 public class MUCPersistenceManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
-	
-	// property name for optional number of days to limit persistent MUC history during reload (OF-764)
-	private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
+    private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
+    
+    // property name for optional number of days to limit persistent MUC history during reload (OF-764)
+    private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -63,19 +59,19 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
-        "canChangeNick, canRegister FROM ofMucRoom WHERE serviceID=? AND name=?";
+        "canChangeNick, canRegister, allowpm FROM ofMucRoom WHERE serviceID=? AND name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM ofMucMember WHERE roomID=?";
     private static final String LOAD_HISTORY =
-        "SELECT sender, nickname, logTime, subject, body FROM ofMucConversationLog " +
+        "SELECT sender, nickname, logTime, subject, body, stanza FROM ofMucConversationLog " +
         "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "useReservedNick, canChangeNick, canRegister " +
+        "useReservedNick, canChangeNick, canRegister, allowpm " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
@@ -85,7 +81,7 @@ public class MUCPersistenceManager {
         "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_HISTORY =
         "SELECT ofMucConversationLog.roomID, ofMucConversationLog.sender, ofMucConversationLog.nickname, " +
-        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body FROM " +
+        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body, ofMucConversationLog.stanza FROM " +
         "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
         "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
         "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
@@ -93,13 +89,13 @@ public class MUCPersistenceManager {
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
-        "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
+        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
         "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
-        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?,?," +
-            "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm) VALUES (?,?,?,?,?,?,?,?,?," +
+            "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -129,11 +125,11 @@ public class MUCPersistenceManager {
     private static final String DELETE_USER_MUCAFFILIATION =
         "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body) " +
-        "VALUES (?,?,?,?,?,?)";
+        "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) " +
+        "SELECT ?,COUNT(*),?,?,?,?,?,? FROM ofMucConversationLog";
 
     /* Map of subdomains to their associated properties */
-    private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<String,MUCServiceProperties>();
+    private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
 
     /**
      * Returns the reserved room nickname for the bare JID in a given room or null if none.
@@ -207,7 +203,7 @@ public class MUCPersistenceManager {
             room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1);
             room.setLogEnabled(rs.getInt(16) == 1);
             room.setSubject(rs.getString(17));
-            List<String> rolesToBroadcast = new ArrayList<String>();
+            List<String> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt(18)), 3);
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
@@ -222,6 +218,14 @@ public class MUCPersistenceManager {
             room.setLoginRestrictedToNickname(rs.getInt(19) == 1);
             room.setChangeNickname(rs.getInt(20) == 1);
             room.setRegistrationEnabled(rs.getInt(21) == 1);
+            switch (rs.getInt(22)) // null returns 0.
+            {
+                default:
+                case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
+                case 1: room.setCanSendPrivateMessage( "participants" ); break;
+                case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
+                case 3: room.setCanSendPrivateMessage( "none"         ); break;
+            }
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -241,8 +245,9 @@ public class MUCPersistenceManager {
                     Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
                     String subject = rs.getString(4);
                     String body = rs.getString(5);
+                    String stanza = rs.getString(6);
                     room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
-                            body);
+                            body, stanza);
                 }
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
@@ -252,14 +257,14 @@ public class MUCPersistenceManager {
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                     room.getSubject().length() > 0) {
                 room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
-                        null, room.getModificationDate(), room.getSubject(), null);
+                        null, room.getModificationDate(), room.getSubject(), null, null);
             }
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
-            	// might be a group JID
+                // might be a group JID
                 JID affiliationJID = GroupJID.fromString(rs.getString(1));
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
                 try {
@@ -289,7 +294,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                	room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
+                    room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);
@@ -342,7 +347,15 @@ public class MUCPersistenceManager {
                 pstmt.setInt(14, (room.isLoginRestrictedToNickname() ? 1 : 0));
                 pstmt.setInt(15, (room.canChangeNickname() ? 1 : 0));
                 pstmt.setInt(16, (room.isRegistrationEnabled() ? 1 : 0));
-                pstmt.setLong(17, room.getID());
+                switch (room.canSendPrivateMessage())
+                {
+                    default:
+                    case "anyone":       pstmt.setInt(17, 0); break;
+                    case "participants": pstmt.setInt(17, 1); break;
+                    case "moderators":   pstmt.setInt(17, 2); break;
+                    case "none":         pstmt.setInt(17, 3); break;
+                }
+                pstmt.setLong(18, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -376,6 +389,14 @@ public class MUCPersistenceManager {
                 pstmt.setInt(21, (room.isLoginRestrictedToNickname() ? 1 : 0));
                 pstmt.setInt(22, (room.canChangeNickname() ? 1 : 0));
                 pstmt.setInt(23, (room.isRegistrationEnabled() ? 1 : 0));
+                switch (room.canSendPrivateMessage())
+                {
+                    default:
+                    case "anyone":       pstmt.setInt(24, 0); break;
+                    case "participants": pstmt.setInt(24, 1); break;
+                    case "moderators":   pstmt.setInt(24, 2); break;
+                    case "none":         pstmt.setInt(24, 3); break;
+                }
                 pstmt.executeUpdate();
             }
         }
@@ -469,7 +490,7 @@ public class MUCPersistenceManager {
     }
 
     private static Map<Long, LocalMUCRoom> loadRooms(Long serviceID, Date emptyDate, MultiUserChatService chatserver, PacketRouter packetRouter) throws SQLException {
-        final Map<Long, LocalMUCRoom> rooms = new HashMap<Long, LocalMUCRoom>();
+        final Map<Long, LocalMUCRoom> rooms = new HashMap<>();
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -506,7 +527,7 @@ public class MUCPersistenceManager {
                     room.setCanAnyoneDiscoverJID(resultSet.getInt(16) == 1);
                     room.setLogEnabled(resultSet.getInt(17) == 1);
                     room.setSubject(resultSet.getString(18));
-                    List<String> rolesToBroadcast = new ArrayList<String>();
+                    List<String> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt(19)), 3);
                     if (roles.charAt(0) == '1') {
                         rolesToBroadcast.add("moderator");
@@ -521,6 +542,14 @@ public class MUCPersistenceManager {
                     room.setLoginRestrictedToNickname(resultSet.getInt(20) == 1);
                     room.setChangeNickname(resultSet.getInt(21) == 1);
                     room.setRegistrationEnabled(resultSet.getInt(22) == 1);
+                    switch (resultSet.getInt(23)) // null returns 0.
+                    {
+                        default:
+                        case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
+                        case 1: room.setCanSendPrivateMessage( "participants" ); break;
+                        case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
+                        case 3: room.setCanSendPrivateMessage( "none"         ); break;
+                    }
                     room.setPersistent(true);
                     rooms.put(room.getID(), room);
                 } catch (SQLException e) {
@@ -567,7 +596,8 @@ public class MUCPersistenceManager {
                     Date sentDate    = new Date(Long.parseLong(resultSet.getString(4).trim()));
                     String subject   = resultSet.getString(5);
                     String body      = resultSet.getString(6);
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body);
+                    String stanza = resultSet.getString(7);
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }
@@ -588,6 +618,7 @@ public class MUCPersistenceManager {
                                                             null,
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
+                                                            null,
                                                             null);
             }
         }
@@ -617,7 +648,7 @@ public class MUCPersistenceManager {
                     final String jidValue = resultSet.getString(2);
                     final JID affiliationJID;
                     try {
-                    	// might be a group JID
+                        // might be a group JID
                         affiliationJID = GroupJID.fromString(jidValue);
                     } catch (IllegalArgumentException ex) {
                         Log.warn("An illegal JID ({}) was found in the database, "
@@ -641,11 +672,7 @@ public class MUCPersistenceManager {
                             default:
                                 Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
                         }
-                    } catch (ForbiddenException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    } catch (ConflictException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    } catch (NotAllowedException e) {
+                    } catch (ForbiddenException | ConflictException | NotAllowedException e) {
                         Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
                     }
                 } catch (SQLException e) {
@@ -677,12 +704,10 @@ public class MUCPersistenceManager {
                         continue;
                     }
                     try {
-                    	// might be a group JID
-                    	affiliationJID = GroupJID.fromString(resultSet.getString(2));
-                    	room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
-                    } catch (ForbiddenException e) {
-                        Log.warn("Unable to add member to room.", e);
-                    } catch (ConflictException e) {
+                        // might be a group JID
+                        affiliationJID = GroupJID.fromString(resultSet.getString(2));
+                        room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
+                    } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }
                 } catch (SQLException e) {
@@ -794,7 +819,7 @@ public class MUCPersistenceManager {
     public static void saveAffiliationToDB(MUCRoom room, JID jid, String nickname,
             MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
     {
-    	final String affiliationJid = jid.toBareJID();
+        final String affiliationJid = jid.toBareJID();
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -948,7 +973,7 @@ public class MUCPersistenceManager {
     public static void removeAffiliationFromDB(MUCRoom room, JID jid,
             MUCRole.Affiliation oldAffiliation)
     {
-    	final String affiliationJID = jid.toBareJID();
+        final String affiliationJID = jid.toBareJID();
         if (room.isPersistent() && room.wasSavedToDB()) {
             if (MUCRole.Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
@@ -1037,6 +1062,7 @@ public class MUCPersistenceManager {
             pstmt.setString(4, StringUtils.dateToMillis(entry.getDate()));
             pstmt.setString(5, entry.getSubject());
             pstmt.setString(6, entry.getBody());
+            pstmt.setString(7, entry.getStanza());
             pstmt.executeUpdate();
             return true;
         }
@@ -1071,13 +1097,13 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name) {    	
-    	final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
-    	if (oldProps != null) {
-    		return oldProps.get(name);
-    	} else {
-    		return newProps.get(name);
-    	}
+        final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
+        if (oldProps != null) {
+            return oldProps.get(name);
+        } else {
+            return newProps.get(name);
+        }
     }
 
     /**
@@ -1090,12 +1116,12 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name, String defaultValue) {
-    	final String value = getProperty(subdomain, name);
-    	if (value != null) {
-    		return value;
-    	} else {
-    		return defaultValue;
-    	}
+        final String value = getProperty(subdomain, name);
+        if (value != null) {
+            return value;
+        } else {
+            return defaultValue;
+        }
     }
 
     /**
@@ -1191,12 +1217,12 @@ public class MUCPersistenceManager {
      * @return a List of all immediate children property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain, String parent) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
-        return new ArrayList<String>(properties.getChildrenNames(parent));
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
+        return new ArrayList<>(properties.getChildrenNames(parent));
     }
 
     /**
@@ -1211,14 +1237,14 @@ public class MUCPersistenceManager {
      * @return all child property values for the given parent.
      */
     public static List<String> getProperties(String subdomain, String parent) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (String propertyName : propertyNames) {
             String value = getProperty(subdomain, propertyName);
             if (value != null) {
@@ -1236,12 +1262,12 @@ public class MUCPersistenceManager {
      * @return a List of all property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain) {
-    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-    	if (oldProps != null) {
-    		properties = oldProps;
-    	} 
-        return new ArrayList<String>(properties.getPropertyNames());
+        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+        if (oldProps != null) {
+            properties = oldProps;
+        } 
+        return new ArrayList<>(properties.getPropertyNames());
     }
 
     /**

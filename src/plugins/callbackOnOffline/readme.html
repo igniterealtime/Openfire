@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title> Callback on offline Plugin Readme</title>
+    <title> Callback on offline Plugin Readme</title>
     <style type="text/css">
         BODY {
             font-size : 100%;
@@ -46,6 +46,8 @@
         #datatable .name {
             background-color : #DCE2F5;
         }
+
+
     </style>
 </head>
 <body>
@@ -57,13 +59,35 @@
 <h2>Overview</h2>
 
 <p>
-The plugin loads url from 'plugin.callback_on_offline.url' property, adds 'to' & 'from' parameters and executes GET request. The request is async.
-Sample link: http://localhost:8080/user/offline/callback/url?from=1%40fotsum.com&to=2%40fotsum.com
+    Plugin intercepts messages and checks if recipient is available. If not, plugin sends async POST request with JSON
+    body to defined url.
 </p>
 
 <p>
-    If something don't work, set "plugin.callback_on_offline.debug" property to true and check the debug log.
+    Example JSON body:
+<pre>
+        <code>
+            {
+                "token":"21uh9d1h91d",
+                "from":"user@mychatapp.com",
+                "to":"user123@mychatapp.com",
+                "body":"Message body, so what user's typed"
+            }
+        </code>
+    </pre>
 </p>
+
+<h2>
+    Callback properties
+</h2>
+
+    There are few properties that can be defined to change plugin behaviour:
+    <ul>
+        <li><code>plugin.callback_on_offline.debug</code> - enable debug logs. If something doesn't work set property to true</li>
+        <li><code>plugin.callback_on_offline.url</code> - url that will be called</li>
+        <li><code>plugin.callback_on_offline.token</code> - token to be send with request</li>
+        <li><code>plugin.callback_on_offline.send_body</code> - boolean value to determine if message's body will be send. True by default.</li>
+    </ul>
 
 </body>
 </html>

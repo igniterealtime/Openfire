@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3157 $
- * $Date: 2005-12-04 22:54:55 -0300 (Sun, 04 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +43,7 @@ import org.xmpp.packet.Message;
  */
 public class HistoryStrategy {
 
-	private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
+    private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
 
     /**
      * The type of strategy being used.
@@ -56,7 +53,7 @@ public class HistoryStrategy {
     /**
      * List containing the history of messages.
      */
-    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<Message>();
+    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
     /**
      * Default max number.
      */
@@ -181,20 +178,14 @@ public class HistoryStrategy {
         }
 
         // Room subject change messages are special
-        boolean subjectChange = false;
-        if (packet.getSubject() != null && packet.getSubject().length() > 0){
-            subjectChange = true;
+        boolean subjectChange = isSubjectChangeRequest(packet);
+        if (subjectChange) {
             roomSubject = packet;
+            return;
         }
 
         // store message according to active strategy
-        if (strategyType == Type.none){
-            if (subjectChange) {
-                history.clear();
-                history.add(packet);
-            }
-        }
-        else if (strategyType == Type.all) {
+        if (strategyType == Type.all) {
             history.add(packet);
         }
         else if (strategyType == Type.number) {
@@ -206,7 +197,7 @@ public class HistoryStrategy {
                 // message because we want to preserve the room subject if
                 // possible.
                 Iterator<Message> historyIter = history.iterator();
-                while (historyIter.hasNext() && history.size() > strategyMaxNumber) {
+                while (historyIter.hasNext() && history.size() >= strategyMaxNumber) {
                     if (historyIter.next() != roomSubject) {
                         historyIter.remove();
                     }
@@ -230,7 +221,7 @@ public class HistoryStrategy {
      * @return An iterator of Message objects to be sent to the new room member.
      */
     public Iterator<Message> getMessageHistory(){
-        LinkedList<Message> list = new LinkedList<Message>(history);
+        LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
         Collections.sort(list, new MessageComparator());
         return list.iterator();
@@ -244,7 +235,7 @@ public class HistoryStrategy {
      * @return A list iterator of Message objects positioned at the end of the list.
      */
     public ListIterator<Message> getReverseMessageHistory(){
-        LinkedList<Message> list = new LinkedList<Message>(history);
+        LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
         Collections.sort(list, new MessageComparator());
         return list.listIterator(list.size());
@@ -322,10 +313,42 @@ public class HistoryStrategy {
         return roomSubject;
     }
 
+    /**
+     * Returns true if the given message qualifies as a subject change request for
+     * the target MUC room, per XEP-0045. Note that this does not validate whether 
+     * the sender has permission to make the change, because subject change requests
+     * may be loaded from history or processed "live" during a user's session.
+     * 
+     * Refer to http://xmpp.org/extensions/xep-0045.html#subject-mod for details.
+     * 
+     * @return true if the given packet is a subject change request
+     */
+    public boolean isSubjectChangeRequest(Message message) {
+        
+        // The subject is changed by sending a message of type "groupchat" to the <room@service>, 
+        // where the <message/> MUST contain a <subject/> element that specifies the new subject 
+        // but MUST NOT contain a <body/> element (or a <thread/> element).
+        // Unfortunately, many clients do not follow these strict guidelines from the specs, so we
+        // allow a lenient policy for detecting non-conforming subject change requests. This can be
+        // configured by setting the "xmpp.muc.subject.change.strict" property to false (true by default).
+        // An empty <subject/> value means that the room subject should be removed.
+
+        return Message.Type.groupchat == message.getType() && 
+                message.getSubject() != null && 
+                (!isSubjectChangeStrict() || 
+                    (message.getBody() == null && 
+                     message.getThread() == null));
+    }
+
+    private boolean isSubjectChangeStrict() {
+        return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
+    }
+
     private static class MessageComparator implements Comparator<Message> {
+        @Override
         public int compare(Message o1, Message o2) {
-            String stamp1 = o1.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
-            String stamp2 = o2.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
+            String stamp1 = o1.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");
+            String stamp2 = o2.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");
             return stamp1.compareTo(stamp2);
         }
     }

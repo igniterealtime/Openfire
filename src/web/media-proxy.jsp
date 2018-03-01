@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: $
-  -	$Date: $
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -
@@ -20,6 +18,7 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
@@ -28,7 +27,7 @@
 <%@ page import="java.util.Collection" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -37,10 +36,6 @@
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
     boolean stop = request.getParameter("stop") != null;
-    if (stop) {
-        mediaProxyService.stopAgents();
-    }
-
     boolean save = request.getParameter("update") != null;
     boolean success = false;
 
@@ -50,6 +45,22 @@
     int maxPort = mediaProxyService.getMaxPort();
     int echoPort = mediaProxyService.getEchoPort();
     boolean enabled = mediaProxyService.isEnabled();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save || stop) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            stop = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (stop) {
+        mediaProxyService.stopAgents();
+    }
 
     if (save) {
         keepAliveDelay = ParamUtils.getLongParameter(request, "idleTimeout", keepAliveDelay);
@@ -128,6 +139,7 @@
 <% } %>
 
 <form action="media-proxy.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <div class="jive-contentBoxHeader">
         <fmt:message key="mediaproxy.form.label"/>
     </div>
@@ -322,6 +334,7 @@
         </tbody>
     </table>
     <form action="">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="submit" name="stop" value="<fmt:message key="mediaproxy.summary.stopbutton" />"/>
     </form>
 </div>

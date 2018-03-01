@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -23,7 +21,7 @@
                  org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -72,6 +70,21 @@
         return;
     }
 
+    Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (encrypt || save || delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            encrypt = false;
+            save = false;
+            delete = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (delete) {
         if (propName != null) {
             JiveGlobals.deleteProperty(propName);
@@ -82,7 +95,6 @@
         }
     }
 
-    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (propName == null || "".equals(propName.trim()) || propName.startsWith("\"")) {
             errors.put("propName","");
@@ -94,10 +106,9 @@
             errors.put("propValueLength","");
         }
         if (errors.size() == 0) {
-        	JiveGlobals.setPropertyEncrypted(propName, encrypt);
-            JiveGlobals.setProperty(propName, propValue);
+            JiveGlobals.setProperty(propName, propValue, encrypt);
             // Log the event
-            webManager.logEvent("set server property "+propName, propName+" = "+propValue);
+            webManager.logEvent("set server property "+propName, propName+" = " + (encrypt ? "********" : propValue));
             response.sendRedirect("server-properties.jsp?success=true");
             return;
         }
@@ -233,11 +244,11 @@ function doedit(propName) {
 function doencrypt(propName) {
     var doencrypt = confirm('<fmt:message key="server.properties.encrypt_confirm" />');
     if (doencrypt) {
-	    document.propform.propName.value = propName;
-	    document.propform.encrypt.value = 'true';
-	    document.propform.action = document.propform.action + '#encrypt';
-	    document.propform.submit();
-	}
+        document.propform.propName.value = propName;
+        document.propform.encrypt.value = 'true';
+        document.propform.action = document.propform.action + '#encrypt';
+        document.propform.submit();
+    }
 }
 function dodelete(propName) {
     var dodelete = confirm('<fmt:message key="server.properties.delete_confirm" />');
@@ -254,16 +265,24 @@ function dodelete(propName) {
 </script>
 
 <form action="server-properties.jsp" method="post" name="propform">
+<input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="edit" value="">
 <input type="hidden" name="encrypt" value="">
 <input type="hidden" name="del" value="">
 <input type="hidden" name="propName" value="">
 
 <style type="text/css">
-.hidebox {
+.nameColumn {
     text-overflow : ellipsis;
     overflow : hidden;
     white-space : nowrap;
+    max-width : 200px;
+}
+.valueColumn {
+    text-overflow : ellipsis;
+    overflow : hidden;
+    white-space : nowrap;
+    max-width : 300px;
 }
 </style>
 
@@ -296,22 +315,14 @@ function dodelete(propName) {
     %>
     <tr class="<%= (n.equals(propName) ? "hilite" : "") %>">
 
-        <td>
-            <div class="hidebox" style="width:200px;">
-                <span title="<%= StringUtils.escapeForXML(n) %>">
-                <%= StringUtils.escapeHTMLTags(n) %>
-                </span>
-            </div>
-        </td>
-        <td>
-            <div class="hidebox" style="width:300px;">
-                <% if (JiveGlobals.isPropertyEncrypted(n) || 
+        <td class="nameColumn"><%= StringUtils.escapeHTMLTags(n) %></td>
+        <td class="valueColumn">
+                <% if (JiveGlobals.isPropertyEncrypted(n) ||
                        JiveGlobals.isPropertySensitive(n)) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
-                <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
+                <%= ("".equals(v) ? "&nbsp;" : v) %>
                 <% } %>
-            </div>
         </td>
         <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/edit-16x16.gif" width="16" height="16"
@@ -320,12 +331,12 @@ function dodelete(propName) {
         </td>
         <td align="center"><%
           if (!JiveGlobals.isPropertyEncrypted(n)) { %>
-        	<a href="#"  onclick="doencrypt('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');" >
-        	<img src="images/add-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypt" />" border="0"></a><% 
+            <a href="#"  onclick="doencrypt('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');" >
+            <img src="images/add-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypt" />" border="0"></a><% 
           } else { %>
-        	<img src="images/lock.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypted" />" border="0"><%
+            <img src="images/lock.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypted" />" border="0"><%
           } %> 
-        	
+            
         </td>
         <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/delete-16x16.gif" width="16" height="16"
@@ -346,6 +357,7 @@ function dodelete(propName) {
 
 <a name="edit"></a>
 <form action="server-properties.jsp" method="post" name="editform">
+<input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

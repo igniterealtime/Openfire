@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: 2006-04-07 09:28:54 -0500 (Fri, 07 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,10 +52,10 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthorizationManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
 
-    private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<AuthorizationPolicy>();
-    private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<AuthorizationMapping>();
+    private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<>();
+    private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<>();
 
     static {
         // Convert XML based provider setup to Database based
@@ -165,7 +161,7 @@ public class AuthorizationManager {
                             return false;
                         }
                         try {
-                            UserManager.getUserProvider().createUser(username, StringUtils.randomString(8), null, null);
+                            UserManager.getInstance().createUser(username, StringUtils.randomString(8), null, null);
                             if (Log.isDebugEnabled()) {
                                 Log.info("AuthorizationManager: User "+username+" created.");
                             }

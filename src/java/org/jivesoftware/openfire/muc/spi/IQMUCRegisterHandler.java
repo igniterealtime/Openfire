@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1623 $
- * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +17,6 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.dom4j.DocumentHelper;
@@ -29,6 +24,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.ElementUtil;
@@ -50,7 +46,7 @@ import org.xmpp.packet.Presence;
  */
 class IQMUCRegisterHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
 
     private static final Element probeResult;
     
@@ -126,8 +122,11 @@ class IQMUCRegisterHandler {
             reply.setError(PacketError.Condition.item_not_found);
             return reply;
         }
-        else if (!room.isRegistrationEnabled()) {
-            // The room does not accept users to register
+        else if (!room.isRegistrationEnabled() ||
+                 (packet.getFrom() != null && 
+                  MUCRole.Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
+            // The room does not accept users to register or
+            // the user is an outcast and is not allowed to register
             reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.not_allowed);
@@ -165,7 +164,7 @@ class IQMUCRegisterHandler {
         else if (IQ.Type.set ==  packet.getType()) {
             try {
                 // Keep a registry of the updated presences
-                List<Presence> presences = new ArrayList<Presence>();
+                List<Presence> presences = new ArrayList<>();
 
                 reply = IQ.createResultIQ(packet);
                 Element iq = packet.getChildElement();

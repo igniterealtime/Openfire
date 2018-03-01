@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -20,6 +18,8 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils"
 %>
 <%@ page import="java.util.HashMap"%>
@@ -27,8 +27,8 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.TimeZone"%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -40,6 +40,18 @@
 
     // TODO: We're not displaying this error ever.
     Map<String,String> errors = new HashMap<String,String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         // Set the timezeone
         try {
@@ -90,11 +102,12 @@
 
 <!-- BEGIN locale settings -->
 <form action="server-locale.jsp" method="post" name="sform">
-	<div class="jive-contentBoxHeader">
-		<fmt:message key="locale.system.set" />
-	</div>
-	<div class="jive-contentBox">
-		<p>
+    <input type="hidden" name="csrf" value="${csrf}">
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="locale.system.set" />
+    </div>
+    <div class="jive-contentBox">
+        <p>
         <b><fmt:message key="locale.current" />:</b> <%= locale.getDisplayName(locale) %> /
             <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
@@ -241,7 +254,7 @@
             <option value="<%= timeZone1[0] %>"<%= selected %>><%= timeZone1[1] %>
                 <%  } %>
         </select>
-	</div>
+    </div>
 <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
 </form>
 <!-- END locale settings -->

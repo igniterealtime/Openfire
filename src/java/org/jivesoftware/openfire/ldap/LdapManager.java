@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2698 $
- * $Date: 2005-08-19 15:28:16 -0300 (Fri, 19 Aug 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,19 +16,17 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.sun.jndi.ldap.LdapCtxFactory;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -48,14 +42,20 @@ import javax.naming.ldap.SortControl;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
-
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveInitialLdapContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -97,6 +97,11 @@ import org.xmpp.packet.JID;
 public class LdapManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
+    // Determine the name of the default LDAP context factory.
+    // NOTE: Extracting the name from the class rather than hard coding it allows the compiler to detect the use of this
+    // internal class and emit an appropriate warning ("warning: LdapCtxFactory is internal proprietary API and may be removed in a future release")
+    // This is deliberate, to highlight use of classes that may be removed in the future.
+    private static final String DEFAULT_LDAP_CONTEXT_FACTORY = LdapCtxFactory.class.getName();
 
     private static LdapManager instance;
     static {
@@ -105,16 +110,19 @@ public class LdapManager {
         // makes it easier to perform LdapManager testing.
         Map<String, String> properties = new Map<String, String>() {
 
+            @Override
             public String get(Object key) {
                 return JiveGlobals.getProperty((String)key);
             }
 
+            @Override
             public String put(String key, String value) {
                 JiveGlobals.setProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
+            @Override
             public String remove(Object key) {
                 JiveGlobals.deleteProperty((String)key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
@@ -122,36 +130,45 @@ public class LdapManager {
             }
 
 
+            @Override
             public int size() {
                 return 0;
             }
 
+            @Override
             public boolean isEmpty() {
                 return false;
             }
 
+            @Override
             public boolean containsKey(Object key) {
                 return false;
             }
 
+            @Override
             public boolean containsValue(Object value) {
                 return false;
             }
 
+            @Override
             public void putAll(Map<? extends String, ? extends String> t) {
             }
 
+            @Override
             public void clear() {
             }
 
+            @Override
             public Set<String> keySet() {
                 return null;
             }
 
+            @Override
             public Collection<String> values() {
                 return null;
             }
 
+            @Override
             public Set<Entry<String, String>> entrySet() {
                 return null;
             }
@@ -160,7 +177,7 @@ public class LdapManager {
     }
 
 
-    private Collection<String> hosts = new ArrayList<String>();
+    private Collection<String> hosts = new ArrayList<>();
     private int port;
     private int connTimeout = -1;
     private int readTimeout = -1;
@@ -192,6 +209,8 @@ public class LdapManager {
     private String groupSearchFilter = null;
 
     private final Map<String, String> properties;
+
+    private Cache<String, DNCacheEntry> userDNCache = null;
 
     /**
      * Provides singleton access to an instance of the LdapManager class.
@@ -245,6 +264,12 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.pagedResultsSize");
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
+        JiveGlobals.migrateProperty("ldap.encodeMultibyteCharacters");
+
+        if (JiveGlobals.getBooleanProperty("ldap.userDNCache.enabled", true)) {
+            String cacheName = "LDAP UserDN";
+            userDNCache = CacheFactory.createCache( cacheName );
+        }
 
         String host = properties.get("ldap.host");
         if (host != null) {
@@ -404,12 +429,12 @@ public class LdapManager {
             catch (ClassNotFoundException cnfe) {
                 Log.error("Initial context factory class failed to load: " + initialContextFactory +
                         ".  Using default initial context factory class instead.");
-                initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
+                initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
             }
         }
         // Use default value if none was set.
         else {
-            initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
+            initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
         }
 
         StringBuilder buf = new StringBuilder();
@@ -488,12 +513,13 @@ public class LdapManager {
         }
 
         // Set up the environment for creating the initial context
-        Hashtable<String, Object> env = new Hashtable<String, Object>();
+        Hashtable<String, Object> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
         env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
 
         // SSL
         if (sslEnabled) {
+            env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
@@ -532,7 +558,15 @@ public class LdapManager {
         } else {
             env.put("com.sun.jndi.ldap.connect.pool", "false");
         }
+        if (connTimeout > 0) {
+            env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+        } else {
+            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+        }
 
+        if (readTimeout > 0) {
+            env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
+        }
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
         }
@@ -564,7 +598,7 @@ public class LdapManager {
                get details of the negotiated TLS session: cipher suite,
                peer certificate, etc. */
             try {
-                SSLSession session = tls.negotiate();
+                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
@@ -624,10 +658,11 @@ public class LdapManager {
         JiveInitialLdapContext ctx = null;
         try {
             // See if the user authenticates.
-            Hashtable<String, Object> env = new Hashtable<String, Object>();
+            Hashtable<String, Object> env = new Hashtable<>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
+                env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -643,14 +678,14 @@ public class LdapManager {
                 }
             }
 
-            // Set only on non SSL since SSL connections break with a timeout.
-            if (!sslEnabled) {
-                if (connTimeout > 0) {
+
+
+            if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
                     env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                 }
-            }
+
             if (readTimeout > 0) {
                 env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
@@ -683,7 +718,7 @@ public class LdapManager {
                    get details of the negotiated TLS session: cipher suite,
                    peer certificate, etc. */
                 try {
-                    SSLSession session = tls.negotiate();
+                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
@@ -727,11 +762,12 @@ public class LdapManager {
                 }
                 try {
                     // See if the user authenticates.
-                    Hashtable<String, Object> env = new Hashtable<String, Object>();
+                    Hashtable<String, Object> env = new Hashtable<>();
                     // Use a custom initial context factory if specified. Otherwise, use the default.
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
+                        env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 
@@ -742,11 +778,9 @@ public class LdapManager {
                         env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
-                    // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a timemout.
-                    if (!sslEnabled) {
+
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
-                    }
+
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }
@@ -775,7 +809,7 @@ public class LdapManager {
                            get details of the negotiated TLS session: cipher suite,
                            peer certificate, etc. */
                         try {
-                            SSLSession session = tls.negotiate();
+                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);
@@ -902,15 +936,41 @@ public class LdapManager {
      * @return the dn associated with <tt>username</tt>.
      * @throws Exception if the search for the dn fails.
      */
-    public String findUserDN(String username) throws Exception {
-        try {
-            return findUserDN(username, baseDN);
-        }
-        catch (Exception e) {
-            if (alternateBaseDN != null) {
-                return findUserDN(username, alternateBaseDN);
+    public String findUserDN( String username ) throws Exception
+    {
+        if ( userDNCache != null )
+        {
+            // Return a cache entry if one exists.
+            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            if ( dnCacheEntry != null )
+            {
+                return dnCacheEntry.getUserDN();
             }
-            else {
+        }
+
+        // No cache entry. Query for the value, and add that to the cache.
+        try
+        {
+            final String userDN = findUserDN( username, baseDN );
+            if ( userDNCache != null )
+            {
+                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+            }
+            return userDN;
+        }
+        catch ( Exception e )
+        {
+            if ( alternateBaseDN != null )
+            {
+                final String userDN = findUserDN( username, alternateBaseDN );
+                if ( userDNCache != null )
+                {
+                    userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                }
+                return userDN;
+            }
+            else
+            {
                 throw e;
             }
         }
@@ -969,7 +1029,7 @@ public class LdapManager {
 
             // NOTE: this assumes that the username has already been JID-unescaped
             NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), 
-            		new String[] {sanitizeSearchFilter(username)},
+                    new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
             if (debug) {
@@ -1010,11 +1070,11 @@ public class LdapManager {
                 userDN = getEnclosedDN(userDN);
             }
             return userDN;
-        }
-        catch (Exception e) {
-            if (debug) {
-                Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
-            }
+        } catch (final UserNotFoundException e) {
+            Log.trace("LdapManager: UserNotFoundException thrown", e);
+            throw e;
+        } catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
             throw e;
         }
         finally {
@@ -1154,11 +1214,11 @@ public class LdapManager {
                 groupDN = getEnclosedDN(groupDN);
             }
             return groupDN;
-        }
-        catch (Exception e) {
-            if (debug) {
-                Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
-            }
+        } catch (final GroupNotFoundException e) {
+            Log.trace("LdapManager: GroupNotFoundException thrown", e);
+            throw e;
+        } catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
             throw e;
         }
         finally {
@@ -1484,22 +1544,48 @@ public class LdapManager {
      * @return the BaseDN for the given username. If no baseDN is found,
      *         this method will return <tt>null</tt>.
      */
-    public String getUsersBaseDN(String username) {
-        try {
-            findUserDN(username, baseDN);
+    public String getUsersBaseDN( String username )
+    {
+        if ( userDNCache != null )
+        {
+            // Return a cache entry if one exists.
+            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            if ( dnCacheEntry != null )
+            {
+                return dnCacheEntry.getBaseDN();
+            }
+        }
+
+        // No cache entry. Query for the value, and add that to the cache.
+        try
+        {
+            final String userDN = findUserDN( username, baseDN );
+            if ( userDNCache != null )
+            {
+                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+            }
             return baseDN;
         }
-        catch (Exception e) {
-            try {
-                if (alternateBaseDN != null) {
-                    findUserDN(username, alternateBaseDN);
+        catch ( Exception e )
+        {
+            try
+            {
+                if ( alternateBaseDN != null )
+                {
+                    final String userDN = findUserDN( username, alternateBaseDN );
+                    if ( userDNCache != null )
+                    {
+                        userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                    }
                     return alternateBaseDN;
                 }
             }
-            catch (Exception ex) {
-                Log.debug(ex.getMessage(), ex);
+            catch ( Exception ex )
+            {
+                Log.debug( ex.getMessage(), ex );
             }
         }
+
         return null;
     }
 
@@ -1837,7 +1923,7 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim) {
-    	return retrieveList(attribute, searchFilter, startIndex, numResults, suffixToTrim, false);
+        return retrieveList(attribute, searchFilter, startIndex, numResults, suffixToTrim, false);
     }
 
     /**
@@ -1859,7 +1945,7 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
         if (pageSizeStr != null)
@@ -1882,7 +1968,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (!clientSideSort) {
                 // Server side sort on username field.
                 baseTmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -1956,7 +2042,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (!clientSideSort) {
                     // Server side sort on username field.
                     tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2013,7 +2099,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (!clientSideSort) {
                         // Server side sort on username field.
                         tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2094,7 +2180,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (pageSize > 0) {
                 // Server side paging.
                 baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
@@ -2135,7 +2221,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (pageSize > 0) {
                     // Server side paging.
                     tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
@@ -2172,7 +2258,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (pageSize > 0) {
                         // Server side paging.
                         tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
@@ -2213,6 +2299,21 @@ public class LdapManager {
      *         search filter string.
      */
     public static String sanitizeSearchFilter(final String value) {
+      return sanitizeSearchFilter(value, false);
+      
+    }
+      
+    /**
+     * Escapes any special chars (RFC 4515) from a string representing
+     * a search filter assertion value, with the exception of the '*' wildcard sign
+     *
+     * @param value The input string.
+     *
+     * @return A assertion value string ready for insertion into a 
+     *         search filter string.
+     */
+    public static String sanitizeSearchFilter(final String value, boolean acceptWildcard ) {
+
 
             StringBuilder result = new StringBuilder();
 
@@ -2221,26 +2322,34 @@ public class LdapManager {
                 char c = value.charAt(i);
 
                 switch(c) {
-	            	case '!':		result.append("\\21");	break;
-	            	case '&':		result.append("\\26");	break;
-	            	case '(':		result.append("\\28");	break;
-	            	case ')':		result.append("\\29");	break;
-	            	case '*':		result.append("\\2a");	break;
-	            	case ':':		result.append("\\3a");	break;
-	            	case '\\':		result.append("\\5c");	break;
-	            	case '|':		result.append("\\7c");	break;
-	            	case '~':		result.append("\\7e");	break;
-	            	case '\u0000':	result.append("\\00");	break;
-            	default:
-            		if (c <= 0x7f) {
+                    case '!':		result.append("\\21");	break;
+                    case '&':		result.append("\\26");	break;
+                    case '(':		result.append("\\28");	break;
+                    case ')':		result.append("\\29");	break;
+                    case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;
+                    case ':':		result.append("\\3a");	break;
+                    case '\\':		result.append("\\5c");	break;
+                    case '|':		result.append("\\7c");	break;
+                    case '~':		result.append("\\7e");	break;
+                    case '\u0000':	result.append("\\00");	break;
+                default:
+                    if (c <= 0x7f) {
                         // regular 1-byte UTF-8 char
-            			result.append(String.valueOf(c));
+                        result.append(String.valueOf(c));
                     }
-                    else if (c >= 0x080) { 
+                    else if (c >= 0x080) {
                         // higher-order 2, 3 and 4-byte UTF-8 chars
-                        byte[] utf8bytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
-                        for (byte b : utf8bytes) {
-                            result.append(String.format("\\%02x", b));
+                        if ( JiveGlobals.getBooleanProperty( "ldap.encodeMultibyteCharacters", false ) )
+                        {
+                            byte[] utf8bytes = String.valueOf( c ).getBytes( StandardCharsets.UTF_8 );
+                            for ( byte b : utf8bytes )
+                            {
+                                result.append( String.format( "\\%02x", b ) );
+                            }
+                        }
+                        else
+                        {
+                            result.append(String.valueOf(c));
                         }
                     }
                 }
@@ -2274,4 +2383,54 @@ public class LdapManager {
     // Set the pattern to use to wrap DN values with "
     private static Pattern dnPattern;
 
+    private static class DNCacheEntry implements Serializable
+    {
+        private final String userDN;
+        private final String baseDN;
+
+        public DNCacheEntry( String userDN, String baseDN )
+        {
+            this.userDN = userDN;
+            this.baseDN = baseDN;
+        }
+
+        public String getUserDN()
+        {
+            return userDN;
+        }
+
+        public String getBaseDN()
+        {
+            return baseDN;
+        }
+
+        @Override
+        public boolean equals( Object o )
+        {
+            if ( this == o )
+            {
+                return true;
+            }
+            if ( o == null || getClass() != o.getClass() )
+            {
+                return false;
+            }
+
+            DNCacheEntry that = (DNCacheEntry) o;
+
+            if ( userDN != null ? !userDN.equals( that.userDN ) : that.userDN != null )
+            {
+                return false;
+            }
+            return baseDN != null ? baseDN.equals( that.baseDN ) : that.baseDN == null;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            int result = userDN != null ? userDN.hashCode() : 0;
+            result = 31 * result + ( baseDN != null ? baseDN.hashCode() : 0 );
+            return result;
+        }
+    }
 }

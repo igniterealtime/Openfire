@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +69,7 @@ public class ClientSessionInfo implements Externalizable {
         return offlineFloodStopped;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
         ExternalizableUtil.getInstance().writeBoolean(out, defaultList != null);
@@ -86,6 +83,7 @@ public class ClientSessionInfo implements Externalizable {
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         presence = new Presence(packetElement, true);

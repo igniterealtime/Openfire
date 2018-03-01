@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date: 2006-08-07 21:12:21 -0700 (Mon, 07 Aug 2006) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +54,8 @@ import org.xmpp.packet.JID;
  */
 public class WorkgroupUtils {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupUtils.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupUtils.class);
+    
     public static String updateWorkgroup(String workgroupName, String displayName,
             String description, int maxSize, int minSize, long requestTimeout, long offerTimeout) 
     {

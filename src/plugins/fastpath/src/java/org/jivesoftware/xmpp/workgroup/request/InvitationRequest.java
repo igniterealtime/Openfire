@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +43,9 @@ import org.xmpp.packet.PacketError;
  * @author Gaston Dombiak
  */
 public class InvitationRequest extends Request {
-	
-	private static final Logger Log = LoggerFactory.getLogger(InvitationRequest.class);
-	
+    
+    private static final Logger Log = LoggerFactory.getLogger(InvitationRequest.class);
+    
     /**
      * Time limit to wait for the invitee to join the support room. The limit is verified once the agent
      * accepted the offer or a MUC invitation was sent to the user.
@@ -175,19 +171,19 @@ public class InvitationRequest extends Request {
     }
 
     @Override
-	public void updateSession(int state, long offerTime) {
+    public void updateSession(int state, long offerTime) {
         // Ignore
     }
 
     @Override
-	public void offerAccepted(AgentSession agentSession) {
+    public void offerAccepted(AgentSession agentSession) {
         super.offerAccepted(agentSession);
         // Keep track when the offer was accepted by the agent
         offerAccpeted = System.currentTimeMillis();
     }
 
     @Override
-	void addOfferContent(Element offerElement) {
+    void addOfferContent(Element offerElement) {
         Element inviteElement = offerElement.addElement("invite", "http://jabber.org/protocol/workgroup");
 
         inviteElement.addAttribute("type", type.toString());
@@ -203,11 +199,11 @@ public class InvitationRequest extends Request {
     }
 
     @Override
-	void addRevokeContent(Element revoke) {
+    void addRevokeContent(Element revoke) {
     }
 
     @Override
-	public Element getSessionElement() {
+    public Element getSessionElement() {
         // Add the workgroup of the original user request
         QName qName = DocumentHelper.createQName("session", DocumentHelper.createNamespace("", "http://jivesoftware.com/protocol/workgroup"));
         Element sessionElement = DocumentHelper.createElement(qName);
@@ -217,12 +213,12 @@ public class InvitationRequest extends Request {
     }
 
     @Override
-	JID getUserJID() {
+    JID getUserJID() {
         return userRequest.getUserJID();
     }
 
     @Override
-	public void userJoinedRoom(JID roomJID, JID user) {
+    public void userJoinedRoom(JID roomJID, JID user) {
         if (invitee.toBareJID().equals(user.toBareJID())) {
             joinedRoom = System.currentTimeMillis();
             // This request has been completed so remove it from the list of related
@@ -232,7 +228,7 @@ public class InvitationRequest extends Request {
     }
 
     @Override
-	public void checkRequest(String roomID) {
+    public void checkRequest(String roomID) {
         // Monitor that the agent/user joined the room and if not send back an error to the inviter
         if (offerAccpeted > 0 && !hasJoinedRoom() && System.currentTimeMillis() - offerAccpeted > JOIN_TIMEOUT) {
             // Send error message to inviter

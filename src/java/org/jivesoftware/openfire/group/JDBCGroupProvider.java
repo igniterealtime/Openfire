@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,7 +67,7 @@ import org.xmpp.packet.JID;
  */
 public class JDBCGroupProvider extends AbstractGroupProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
     private String connectionString;
 
@@ -128,6 +125,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return DriverManager.getConnection(connectionString);
     }
 
+    @Override
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
 
@@ -157,7 +155,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
     }
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
-        List<JID> members = new ArrayList<JID>();
+        List<JID> members = new ArrayList<>();
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -199,6 +197,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return members;
     }
 
+    @Override
     public int getGroupCount() {
         int count = 0;
         Connection con = null;
@@ -221,8 +220,9 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return count;
     }
 
+    @Override
     public Collection<String> getGroupNames() {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -243,8 +243,9 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(int start, int num) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -268,8 +269,9 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(JID user) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

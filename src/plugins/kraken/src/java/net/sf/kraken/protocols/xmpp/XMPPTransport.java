@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -41,7 +38,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
     /*
      * @see net.sf.kraken.BaseTransport#getTerminologyUsername()
      */
-	@Override
+    @Override
     public String getTerminologyUsername() {
         return LocaleUtils.getLocalizedString("gateway."+getType().toString()+".username", "kraken");
     }
@@ -49,7 +46,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
     /*
      * @see net.sf.kraken.BaseTransport#getTerminologyPassword()
      */
-	@Override
+    @Override
     public String getTerminologyPassword() {
         return LocaleUtils.getLocalizedString("gateway.xmpp.password", "kraken");
     }
@@ -57,7 +54,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
     /*
      * @see net.sf.kraken.BaseTransport#getTerminologyNickname()
      */
-	@Override
+    @Override
     public String getTerminologyNickname() {
         return null;
     }
@@ -65,7 +62,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
     /*
      * @see net.sf.kraken.BaseTransport#getTerminologyRegistration()
      */
-	@Override
+    @Override
     public String getTerminologyRegistration() {
         return LocaleUtils.getLocalizedString("gateway."+getType().toString()+".registration", "kraken");
     }
@@ -73,19 +70,19 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
     /*
      * @see net.sf.kraken.BaseTransport#isPasswordRequired()
      */
-	@Override
+    @Override
     public Boolean isPasswordRequired() { return true; }
 
     /*
      * @see net.sf.kraken.BaseTransport#isNicknameRequired()
      */
-	@Override
+    @Override
     public Boolean isNicknameRequired() { return false; }
 
     /*
      * @see net.sf.kraken.BaseTransport#isUsernameValid(String)
      */
-	@Override
+    @Override
     public Boolean isUsernameValid(String username) {
         return true;
     }
@@ -98,7 +95,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
      * @param presenceType Type of presence.
      * @param verboseStatus Longer status description.
      */
-	@Override
+    @Override
     public TransportSession<XMPPBuddy> registrationLoggedIn(Registration registration, JID jid, PresenceType presenceType, String verboseStatus, Integer priority) {
         TransportSession<XMPPBuddy> session = new XMPPSession(registration, jid, this, priority);
         session.setLoginStatus(TransportLoginStatus.LOGGING_IN);
@@ -111,7 +108,7 @@ public class XMPPTransport extends BaseTransport<XMPPBuddy> {
      *
      * @param session The session to be disconnected.
      */
-	@Override
+    @Override
     public void registrationLoggedOut(TransportSession<XMPPBuddy> session) {
         session.setLoginStatus(TransportLoginStatus.LOGGING_OUT);
         session.logOut();

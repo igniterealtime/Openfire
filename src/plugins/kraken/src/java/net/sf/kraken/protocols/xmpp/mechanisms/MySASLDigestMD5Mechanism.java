@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -28,17 +25,17 @@ import org.jivesoftware.smack.util.Base64;
  */
 public class MySASLDigestMD5Mechanism extends SASLMechanism {
 
-	public MySASLDigestMD5Mechanism(SASLAuthentication saslAuthentication) {
-		super(saslAuthentication);
-	}
+    public MySASLDigestMD5Mechanism(SASLAuthentication saslAuthentication) {
+        super(saslAuthentication);
+    }
 
-	protected void authenticate() throws IOException, XMPPException {
-		String[] mechanisms = { getName() };
-		Map<String, String> props = new HashMap<String, String>();
-		sc = Sasl.createSaslClient(mechanisms, null, "xmpp", hostname, props, this);
+    protected void authenticate() throws IOException, XMPPException {
+        String[] mechanisms = { getName() };
+        Map<String, String> props = new HashMap<String, String>();
+        sc = Sasl.createSaslClient(mechanisms, null, "xmpp", hostname, props, this);
 
-		super.authenticate();
-	}
+        super.authenticate();
+    }
 
     public void authenticate(String username, String host, String password) throws IOException, XMPPException {
         this.authenticationId = username;
@@ -58,36 +55,36 @@ public class MySASLDigestMD5Mechanism extends SASLMechanism {
         super.authenticate();
     }
 
-	protected String getName() {
-		return "DIGEST-MD5";
-	}
+    protected String getName() {
+        return "DIGEST-MD5";
+    }
 
-	public void challengeReceived(String challenge) throws IOException {
-		// Build the challenge response stanza encoding the response text
-		StringBuilder stanza = new StringBuilder();
+    public void challengeReceived(String challenge) throws IOException {
+        // Build the challenge response stanza encoding the response text
+        StringBuilder stanza = new StringBuilder();
 
-		byte response[];
-		if (challenge != null) {
-			response = sc.evaluateChallenge(Base64.decode(challenge));
-		} else {
-			response = sc.evaluateChallenge(null);
-		}
+        byte response[];
+        if (challenge != null) {
+            response = sc.evaluateChallenge(Base64.decode(challenge));
+        } else {
+            response = sc.evaluateChallenge(null);
+        }
 
-		String authenticationText="";
+        String authenticationText="";
 
-		if (response != null) { // fix from 3.1.1
-			authenticationText = Base64.encodeBytes(response, Base64.DONT_BREAK_LINES);
-			if (authenticationText.equals("")) {
-				authenticationText = "=";
-			}
-		}
+        if (response != null) { // fix from 3.1.1
+            authenticationText = Base64.encodeBytes(response, Base64.DONT_BREAK_LINES);
+            if (authenticationText.equals("")) {
+                authenticationText = "=";
+            }
+        }
 
-		stanza.append("<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-		stanza.append(authenticationText);
-		stanza.append("</response>");
+        stanza.append("<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
+        stanza.append(authenticationText);
+        stanza.append("</response>");
         
 
-		// Send the authentication to the server
-		getSASLAuthentication().send(new Response(authenticationText));
-	}
+        // Send the authentication to the server
+        getSASLAuthentication().send(new Response(authenticationText));
+    }
 }

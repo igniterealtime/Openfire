@@ -2,7 +2,6 @@ package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;

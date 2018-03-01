@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1722 $
- * $Date: 2005-07-28 19:19:16 -0300 (Thu, 28 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,8 +57,8 @@ import org.xmpp.packet.Presence;
  */
 public class PresencePlugin implements Plugin, Component {
 
-	private static final Logger Log = LoggerFactory.getLogger(PresencePlugin.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(PresencePlugin.class);
+    
     private static final String subdomain = "presence";
 
     private UserManager userManager;

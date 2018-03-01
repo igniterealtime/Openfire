@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +30,7 @@ import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 public class XMPPDecoder extends CumulativeProtocolDecoder {
 
     @Override
-	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out)
+    protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out)
             throws Exception {
         // Get the XML light parser from the IoSession
         XMLLightweightParser parser = (XMLLightweightParser) session.getAttribute(ConnectionHandler.XML_PARSER);

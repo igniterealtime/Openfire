@@ -5,8 +5,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     PresencePlugin plugin = (PresencePlugin)XMPPServer.getInstance().getPluginManager().getPlugin("presence");
@@ -14,7 +14,7 @@
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
-	boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
+    boolean presencePublic = ParamUtils.getBooleanParameter(request, "presencePublic");
     String unavailableStatus = ParamUtils.getParameter(request, "presenceUnavailableStatus", false);
     if (unavailableStatus == null) {
         unavailableStatus = plugin.getUnavailableStatus();

@@ -1,7 +1,4 @@
-/**
- * $Revision $
- * $Date $
- *
+/*
  * Copyright (C) 2005-2010 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +62,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
     public static final String JN_PUB_IP_PROPERTY = "rayo.publicip";
     private ComponentManager componentManager;
 
-   	private final ConcurrentHashMap<String, RelayChannel> channels = new ConcurrentHashMap<String, RelayChannel>();
+    private final ConcurrentHashMap<String, RelayChannel> channels = new ConcurrentHashMap<String, RelayChannel>();
     private final long timeout = 60000;
     private final AtomicInteger ids = new AtomicInteger(0);
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
@@ -96,10 +93,10 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
         component = new RayoComponent(this);
         try {
             componentManager.addComponent(serviceName, component);
-        	bridge.appStart(pluginDirectory);
-        	checkNatives(pluginDirectory);
-        	checkRecordingFolder(pluginDirectory);
-        	SessionEventDispatcher.addListener(this);
+            bridge.appStart(pluginDirectory);
+            checkNatives(pluginDirectory);
+            checkRecordingFolder(pluginDirectory);
+            SessionEventDispatcher.addListener(this);
         } catch (ComponentException e) {
             Log.error("Could NOT load " + component.getName());
         }
@@ -142,17 +139,17 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 
     public RelayChannel getRelayChannel(String id)
     {
-		if (channels.containsKey(id))
-			return channels.get(id);
-		else
-			return null;
-	}
+        if (channels.containsKey(id))
+            return channels.get(id);
+        else
+            return null;
+    }
 
     public void handleVoiceBridge(String id, String operation, String parameter)
     {
-			Log.info("handleVoiceBridge " + id);
-			bridge.manageCallParticipant(id, operation, parameter);
-	}
+            Log.info("handleVoiceBridge " + id);
+            bridge.manageCallParticipant(id, operation, parameter);
+    }
 
 
     public RelayChannel createRelayChannel(JID jid, Handset handset) {
@@ -216,8 +213,8 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
         // Find the root path of the class that will be our plugin lib folder.
         try
         {
-			String nativeLibsJarPath = pluginDirectory.getAbsolutePath() + File.separator + "lib";
- 			Log.info("checkNatives." + nativeLibsJarPath);
+            String nativeLibsJarPath = pluginDirectory.getAbsolutePath() + File.separator + "lib";
+            Log.info("checkNatives." + nativeLibsJarPath);
 
             File nativeLibFolder = new File(nativeLibsJarPath, "native");
 
@@ -297,66 +294,66 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 
     private void checkRecordingFolder(File pluginDirectory)
     {
-		String rayoHome = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo";
+        String rayoHome = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo";
 
         try
         {
-			File rayoFolderPath = new File(rayoHome);
+            File rayoFolderPath = new File(rayoHome);
 
             if(!rayoFolderPath.exists())
             {
                 rayoFolderPath.mkdirs();
 
-			}
+            }
 
-			File recordingFolderPath = new File(rayoHome + File.separator + "recordings");
+            File recordingFolderPath = new File(rayoHome + File.separator + "recordings");
 
             if(!recordingFolderPath.exists())
             {
                 recordingFolderPath.mkdirs();
 
-			}
+            }
 
-			File soundsFolderPath = new File(rayoHome + File.separator + "sounds");
+            File soundsFolderPath = new File(rayoHome + File.separator + "sounds");
 
             if(!soundsFolderPath.exists())
             {
                 soundsFolderPath.mkdirs();
 
-			}
+            }
         }
         catch (Exception e)
         {
             Log.error(e.getMessage(), e);
         }
-	}
+    }
 
-	public void anonymousSessionCreated(Session session)
-	{
-		Log.debug("RayoPlugin anonymousSessionCreated "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
-	}
+    public void anonymousSessionCreated(Session session)
+    {
+        Log.debug("RayoPlugin anonymousSessionCreated "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+    }
 
-	public void anonymousSessionDestroyed(Session session)
-	{
-		Log.debug("RayoPlugin anonymousSessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+    public void anonymousSessionDestroyed(Session session)
+    {
+        Log.debug("RayoPlugin anonymousSessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
 
-		CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
-	}
+        CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
+    }
 
-	public void resourceBound(Session session)
-	{
-		Log.debug("RayoPlugin resourceBound "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
-	}
+    public void resourceBound(Session session)
+    {
+        Log.debug("RayoPlugin resourceBound "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+    }
 
-	public void sessionCreated(Session session)
-	{
-		Log.debug("RayoPlugin sessionCreated "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
-	}
+    public void sessionCreated(Session session)
+    {
+        Log.debug("RayoPlugin sessionCreated "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+    }
 
-	public void sessionDestroyed(Session session)
-	{
-		Log.debug("RayoPlugin sessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+    public void sessionDestroyed(Session session)
+    {
+        Log.debug("RayoPlugin sessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
 
-		CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
-	}
+        CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
+    }
 }

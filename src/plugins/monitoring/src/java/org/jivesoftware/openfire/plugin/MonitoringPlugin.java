@@ -1,7 +1,4 @@
-/**
- * $Revision: 3034 $
- * $Date: 2005-11-04 21:02:33 -0300 (Fri, 04 Nov 2005) $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +19,8 @@ package org.jivesoftware.openfire.plugin;
 import java.io.File;
 import java.io.FileFilter;
 
+import com.reucon.openfire.plugin.archive.impl.MucMamPersistenceManager;
+import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support1;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.archive.ArchiveIndexer;
 import org.jivesoftware.openfire.archive.ArchiveInterceptor;
@@ -51,6 +50,9 @@ import com.reucon.openfire.plugin.archive.impl.ArchiveManagerImpl;
 import com.reucon.openfire.plugin.archive.impl.JdbcPersistenceManager;
 import com.reucon.openfire.plugin.archive.xep0136.Xep0136Support;
 import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Openfire Monitoring plugin.
@@ -59,152 +61,163 @@ import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support;
  */
 public class MonitoringPlugin implements Plugin {
 
-	private static final int DEFAULT_CONVERSATION_TIMEOUT = 30; // minutes
+    private static final int DEFAULT_CONVERSATION_TIMEOUT = 30; // minutes
 
-	private MutablePicoContainer picoContainer;
+    private MutablePicoContainer picoContainer;
 
-	private boolean shuttingDown = false;
+    private boolean shuttingDown = false;
 
-	private int conversationTimeout;
-	private static MonitoringPlugin instance;
-	private boolean enabled = true;
-	private PersistenceManager persistenceManager;
-	private ArchiveManager archiveManager;
-	private IndexManager indexManager;
-	private Xep0136Support xep0136Support;
-	private Xep0313Support xep0313Support;
+    private int conversationTimeout;
+    private static MonitoringPlugin instance;
+    private boolean enabled = true;
+    private PersistenceManager persistenceManager;
+    private PersistenceManager mucPersistenceManager;
+    private ArchiveManager archiveManager;
+    private IndexManager indexManager;
+    private Xep0136Support xep0136Support;
+    private Xep0313Support xep0313Support;
+    private Xep0313Support1 xep0313Support1;
+    private Logger Log;
 
-	public MonitoringPlugin() {
-		instance = this;
+    public MonitoringPlugin() {
+        instance = this;
 
-		// Enable AWT headless mode so that stats will work in headless
-		// environments.
-		System.setProperty("java.awt.headless", "true");
+        // Enable AWT headless mode so that stats will work in headless
+        // environments.
+        System.setProperty("java.awt.headless", "true");
 
-		picoContainer = new DefaultPicoContainer();
-		picoContainer.registerComponentInstance(TaskEngine.getInstance());
-		picoContainer.registerComponentInstance(JiveProperties.getInstance());
+        picoContainer = new DefaultPicoContainer();
+        picoContainer.registerComponentInstance(TaskEngine.getInstance());
+        picoContainer.registerComponentInstance(JiveProperties.getInstance());
 
-		// Stats and Graphing classes
-		picoContainer.registerComponentImplementation(StatsEngine.class);
-		picoContainer.registerComponentImplementation(GraphEngine.class);
-		picoContainer.registerComponentImplementation(StatisticsModule.class);
-		picoContainer.registerComponentImplementation(StatsViewer.class,
-				getStatsViewerImplementation());
+        // Stats and Graphing classes
+        picoContainer.registerComponentImplementation(StatsEngine.class);
+        picoContainer.registerComponentImplementation(GraphEngine.class);
+        picoContainer.registerComponentImplementation(StatisticsModule.class);
+        picoContainer.registerComponentImplementation(StatsViewer.class,
+                getStatsViewerImplementation());
 
-		// Archive classes
-		picoContainer
-				.registerComponentImplementation(ConversationManager.class);
-		picoContainer.registerComponentImplementation(ArchiveInterceptor.class);
-		picoContainer
-				.registerComponentImplementation(GroupConversationInterceptor.class);
-		picoContainer.registerComponentImplementation(ArchiveSearcher.class);
-		picoContainer.registerComponentImplementation(ArchiveIndexer.class);
-	}
+        // Archive classes
+        picoContainer
+                .registerComponentImplementation(ConversationManager.class);
+        picoContainer.registerComponentImplementation(ArchiveInterceptor.class);
+        picoContainer
+                .registerComponentImplementation(GroupConversationInterceptor.class);
+        picoContainer.registerComponentImplementation(ArchiveSearcher.class);
+        picoContainer.registerComponentImplementation(ArchiveIndexer.class);
+    }
 
-	private Class<? extends StatsViewer> getStatsViewerImplementation() {
-		if (JiveGlobals.getBooleanProperty("stats.mock.viewer", false)) {
-			return MockStatsViewer.class;
-		} else {
-			return DefaultStatsViewer.class;
-		}
-	}
+    private Class<? extends StatsViewer> getStatsViewerImplementation() {
+        if (JiveGlobals.getBooleanProperty("stats.mock.viewer", false)) {
+            return MockStatsViewer.class;
+        } else {
+            return DefaultStatsViewer.class;
+        }
+    }
 
-	public static MonitoringPlugin getInstance() {
-		return instance;
-	}
+    public static MonitoringPlugin getInstance() {
+        return instance;
+    }
 
-	/* enabled property */
-	public boolean isEnabled() {
-		return this.enabled;
-	}
+    /* enabled property */
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 
-	public ArchiveManager getArchiveManager() {
-		return archiveManager;
-	}
+    public ArchiveManager getArchiveManager() {
+        return archiveManager;
+    }
 
-	public IndexManager getIndexManager() {
-		return indexManager;
-	}
+    public IndexManager getIndexManager() {
+        return indexManager;
+    }
 
-	public PersistenceManager getPersistenceManager() {
-		return persistenceManager;
-	}
+    public PersistenceManager getPersistenceManager(JID jid) {
+        Log.debug("Getting PersistenceManager for {}", jid);
+        if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(jid) != null) {
+            Log.debug("Using MucPersistenceManager");
+            return mucPersistenceManager;
+        }
+        return persistenceManager;
+    }
 
-	/**
-	 * Returns the instance of a module registered with the Monitoring plugin.
-	 *
-	 * @param clazz
-	 *            the module class.
-	 * @return the instance of the module.
-	 */
-	public Object getModule(Class<?> clazz) {
-		return picoContainer.getComponentInstanceOfType(clazz);
-	}
+    /**
+     * Returns the instance of a module registered with the Monitoring plugin.
+     *
+     * @param clazz
+     *            the module class.
+     * @return the instance of the module.
+     */
+    public Object getModule(Class<?> clazz) {
+        return picoContainer.getComponentInstanceOfType(clazz);
+    }
 
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        Log = LoggerFactory.getLogger(MonitoringPlugin.class);
 
-		/* Configuration */
-		conversationTimeout = JiveGlobals.getIntProperty(
-				ArchiveProperties.CONVERSATION_TIMEOUT,
-				DEFAULT_CONVERSATION_TIMEOUT);
-		enabled = JiveGlobals.getBooleanProperty(ArchiveProperties.ENABLED,
-				false);
+        /* Configuration */
+        conversationTimeout = JiveGlobals.getIntProperty(
+                ArchiveProperties.CONVERSATION_TIMEOUT,
+                DEFAULT_CONVERSATION_TIMEOUT);
+        enabled = JiveGlobals.getBooleanProperty(ArchiveProperties.ENABLED,
+                false);
 
-		persistenceManager = new JdbcPersistenceManager();
+        persistenceManager = new JdbcPersistenceManager();
+        mucPersistenceManager = new MucMamPersistenceManager();
 
-		archiveManager = new ArchiveManagerImpl(persistenceManager,
-				indexManager, conversationTimeout);
+        archiveManager = new ArchiveManagerImpl(persistenceManager,
+                indexManager, conversationTimeout);
 
-		xep0136Support = new Xep0136Support(XMPPServer.getInstance());
-		xep0136Support.start();
+        xep0136Support = new Xep0136Support(XMPPServer.getInstance());
+        xep0136Support.start();
 
-		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
-		xep0313Support.start();
+        xep0313Support = new Xep0313Support(XMPPServer.getInstance());
+        xep0313Support.start();
 
-		System.out.println("Starting Monitoring Plugin");
+        xep0313Support1 = new Xep0313Support1(XMPPServer.getInstance());
+        xep0313Support1.start();
 
-		// Check if we Enterprise is installed and stop loading this plugin if
-		// found
-		File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
-		File[] jars = pluginDir.listFiles(new FileFilter() {
-			public boolean accept(File pathname) {
-				String fileName = pathname.getName().toLowerCase();
-				return (fileName.equalsIgnoreCase("enterprise.jar"));
-			}
-		});
-		if (jars.length > 0) {
-			// Do not load this plugin since Enterprise is still installed
-			System.out
-					.println("Enterprise plugin found. Stopping Monitoring Plugin");
-			throw new IllegalStateException(
-					"This plugin cannot run next to the Enterprise plugin");
-		}
+        // Check if we Enterprise is installed and stop loading this plugin if
+        // found
+        File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
+        File[] jars = pluginDir.listFiles(new FileFilter() {
+            public boolean accept(File pathname) {
+                String fileName = pathname.getName().toLowerCase();
+                return (fileName.equalsIgnoreCase("enterprise.jar"));
+            }
+        });
+        if (jars.length > 0) {
+            // Do not load this plugin since Enterprise is still installed
+            System.out
+                    .println("Enterprise plugin found. Stopping Monitoring Plugin");
+            throw new IllegalStateException(
+                    "This plugin cannot run next to the Enterprise plugin");
+        }
 
-		shuttingDown = false;
+        shuttingDown = false;
 
-		// Make sure that the monitoring folder exists under the home directory
-		File dir = new File(JiveGlobals.getHomeDirectory() + File.separator
-				+ MonitoringConstants.NAME);
-		if (!dir.exists()) {
-			dir.mkdirs();
-		}
+        // Make sure that the monitoring folder exists under the home directory
+        File dir = new File(JiveGlobals.getHomeDirectory() + File.separator
+                + MonitoringConstants.NAME);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
 
-		picoContainer.start();
-	}
+        picoContainer.start();
+    }
 
-	public void destroyPlugin() {
-		shuttingDown = true;
+    public void destroyPlugin() {
+        shuttingDown = true;
 
-		if (picoContainer != null) {
-			picoContainer.stop();
-			picoContainer.dispose();
-			picoContainer = null;
-		}
-		instance = null;
-	}
+        if (picoContainer != null) {
+            picoContainer.stop();
+            picoContainer.dispose();
+            picoContainer = null;
+        }
+        instance = null;
+    }
 
-	public boolean isShuttingDown() {
-		return shuttingDown;
-	}
+    public boolean isShuttingDown() {
+        return shuttingDown;
+    }
 }

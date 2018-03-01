@@ -1,9 +1,6 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: 1410 $
-  -	$Date: 2005-05-26 23:00:40 -0700 (Thu, 26 May 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
@@ -25,8 +22,8 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -46,26 +43,26 @@
                     + "file, then go back to fix the problem.");
             }
             else {
-            	// See if the Jive db schema is installed.
-            	try {
-            		Statement stmt = con.createStatement();
-            		// Pick an arbitrary table to see if it's there.
-            		stmt.executeQuery("SELECT * FROM ofID");
-            		stmt.close();
-            	}
-            	catch (SQLException sqle) {
+                // See if the Jive db schema is installed.
+                try {
+                    Statement stmt = con.createStatement();
+                    // Pick an arbitrary table to see if it's there.
+                    stmt.executeQuery("SELECT * FROM ofID");
+                    stmt.close();
+                }
+                catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
                     errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
-            	}
+                }
             }
         }
         catch (Exception ignored) {}
         finally {
             try {
-        	    con.close();
+                con.close();
             } catch (Exception ignored) {}
         }
         return success;
@@ -125,6 +122,7 @@
             }
         }
     }
+    pageContext.setAttribute("localizedShortTitle", LocaleUtils.getLocalizedString("short.title") );
 %>
 
 <html>
@@ -140,7 +138,7 @@
 
 <p>
 <fmt:message key="setup.datasource.jndi.setting_info">
-    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
+    <fmt:param value="${localizedShortTitle}" />
     <fmt:param value="<tt>java:comp/env/jdbc/[DataSourceName]</tt>" />
 </fmt:message>
 </p>

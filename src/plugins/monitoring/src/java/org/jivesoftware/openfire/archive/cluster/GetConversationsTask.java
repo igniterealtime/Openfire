@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,16 +34,16 @@ import java.util.Collection;
  *
  * @author Gaston Dombiak
  */
-public class GetConversationsTask implements ClusterTask {
+public class GetConversationsTask implements ClusterTask<Collection<Conversation>> {
     private Collection<Conversation> conversations;
 
-    public Object getResult() {
+    public Collection<Conversation> getResult() {
         return conversations;
     }
 
     public void run() {
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
-        		MonitoringConstants.NAME);
+                MonitoringConstants.NAME);
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         conversations = conversationManager.getConversations();
     }

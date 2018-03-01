@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +19,7 @@ package org.jivesoftware.openfire.plugin.session;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
+import java.util.Locale;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -78,8 +76,7 @@ public abstract class RemoteSession implements Session {
         // Get it once and cache it since it never changes
         if (streamID == null) {
             ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getStreamID);
-            String id = (String) doSynchronousClusterTask(task);
-            streamID = new BasicStreamID(id);
+            streamID = (StreamID) doSynchronousClusterTask(task);
         }
         return streamID;
     }
@@ -108,12 +105,14 @@ public abstract class RemoteSession implements Session {
 
     public long getNumClientPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumClientPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public long getNumServerPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumServerPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public String getCipherSuiteName() {
@@ -136,12 +135,14 @@ public abstract class RemoteSession implements Session {
 
     public boolean isClosed() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isClosed);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public boolean isSecure() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isSecure);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public String getHostAddress() throws UnknownHostException {
@@ -166,7 +167,8 @@ public abstract class RemoteSession implements Session {
 
     public boolean validate() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.validate);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     abstract RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation);
@@ -181,17 +183,17 @@ public abstract class RemoteSession implements Session {
      * @return result of remote operation.
      */
     protected Object doSynchronousClusterTask(ClusterTask task) {
-    	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
-    	Object result = null;
-    	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-    		Session remoteSession = ((RemoteSessionTask)task).getSession();
-    		if (remoteSession instanceof ClientSession) {
-            	SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
-    		}
-    	} else {
-        	result = (info == null) ? null : CacheFactory.doSynchronousClusterTask(task, nodeID);
+        ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
+        Object result = null;
+        if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
+            Session remoteSession = ((RemoteSessionTask)task).getSession();
+            if (remoteSession instanceof ClientSession) {
+                SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
+            }
+        } else {
+            result = (info == null) ? null : CacheFactory.doSynchronousClusterTask(task, nodeID);
         }
-    	return result;
+        return result;
     }
 
     /**
@@ -200,38 +202,19 @@ public abstract class RemoteSession implements Session {
      * @param task the task to be invoked on the specified cluster member.
      */
     protected void doClusterTask(ClusterTask task) {
-    	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
-    	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-    		Session remoteSession = ((RemoteSessionTask)task).getSession();
-    		if (remoteSession instanceof ClientSession) {
-            	SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
-    		}
-		} else {
-			CacheFactory.doClusterTask(task, nodeID);
-	    }
+        ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
+        if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
+            Session remoteSession = ((RemoteSessionTask)task).getSession();
+            if (remoteSession instanceof ClientSession) {
+                SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
+            }
+        } else {
+            CacheFactory.doClusterTask(task, nodeID);
+        }
     }
 
-    /**
-     * Simple implementation of the StreamID interface to hold the stream ID of
-     * the surrogated session.
-     */
-    protected static class BasicStreamID implements StreamID {
-        String id;
-
-        public BasicStreamID(String id) {
-            this.id = id;
-        }
-
-        public String getID() {
-            return id;
-        }
-
-        public String toString() {
-            return id;
-        }
-
-        public int hashCode() {
-            return id.hashCode();
-        }
+    @Override
+    public final Locale getLanguage() {
+        return Locale.getDefault();
     }
 }

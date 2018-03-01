@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,6 +66,6 @@ class CredentialsCache {
      */
     CredentialsCacheEntry remove(String realm) {
         return (CredentialsCacheEntry)this.authenticatedRealms.remove(realm);
-	}
+    }
 
 }

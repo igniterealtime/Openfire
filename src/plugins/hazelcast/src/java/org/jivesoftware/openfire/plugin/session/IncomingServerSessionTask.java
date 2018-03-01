@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +17,10 @@
 package org.jivesoftware.openfire.plugin.session;
 
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.IOException;
@@ -35,13 +34,13 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class IncomingServerSessionTask extends RemoteSessionTask {
-    private String streamID;
+    private StreamID streamID;
 
     public IncomingServerSessionTask() {
         super();
     }
 
-    protected IncomingServerSessionTask(Operation operation, String streamID) {
+    protected IncomingServerSessionTask(Operation operation, StreamID streamID) {
         super(operation);
         this.streamID = streamID;
     }
@@ -66,12 +65,12 @@ public class IncomingServerSessionTask extends RemoteSessionTask {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, streamID);
+        ExternalizableUtil.getInstance().writeSafeUTF(out, streamID.getID());
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        streamID = ExternalizableUtil.getInstance().readSafeUTF(in);
+        streamID = BasicStreamIDFactory.createStreamID( ExternalizableUtil.getInstance().readSafeUTF(in) );
     }
 
     public String toString() {

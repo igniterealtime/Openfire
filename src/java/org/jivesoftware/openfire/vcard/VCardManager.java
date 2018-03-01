@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1651 $
- * $Date: 2005-07-20 00:20:39 -0300 (Wed, 20 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public class VCardManager extends BasicModule implements ServerFeaturesProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(VCardManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(VCardManager.class);
 
     private VCardProvider provider;
     private static VCardManager instance;
@@ -82,16 +78,19 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
         // Keeps the cache updated in case the vCard action was not performed by VCardManager
         VCardEventDispatcher.addListener(new VCardListener() {
+            @Override
             public void vCardCreated(String username, Element vCard) {
                 // Since the vCard could be created by the provider, add it to the cache.
                 vcardCache.put(username, vCard);
             }
 
+            @Override
             public void vCardUpdated(String username, Element vCard) {
                 // Since the vCard could be updated by the provider, update it to the cache.
                 vcardCache.put(username, vCard);
             }
 
+            @Override
             public void vCardDeleted(String username, Element vCard) {
                 // Since the vCard could be delated by the provider, remove it to the cache.
                 vcardCache.remove(username);
@@ -246,7 +245,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         instance = this;
 
         // Convert XML based provider setup to Database based
@@ -266,7 +265,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     @Override
-	public void start() {
+    public void start() {
         // Add this module as a user event listener so we can delete
         // all user properties when a user is deleted
         if (!provider.isReadOnly()) {
@@ -275,20 +274,24 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
         // Detect when a new vcard provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.vcard.className".equals(property)) {
                     initialize(XMPPServer.getInstance());
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -297,7 +300,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(eventHandler);
     }
@@ -309,13 +312,14 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         vcardCache.clear();
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("vcard-temp").iterator();
     }
 
     private class EventHandler extends UserEventAdapter {
         @Override
-		public void userDeleting(User user, Map params) {
+        public void userDeleting(User user, Map params) {
             try {
                 deleteVCard(user.getUsername());
             } catch (UnsupportedOperationException ue) { /* Do Nothing */ }

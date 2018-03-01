@@ -1,0 +1,11 @@
+<plugin>
+    <class>org.tiki.tikitoken.TikiTokenPlugin</class>
+    <name>TikiToken</name>
+    <description>Allows users to authenticate with a Tiki token.</description>
+    <author>Tiki Wiki CMS Groupware</author>
+    <version>0.2</version>
+    <date>04/24/2017</date>
+    <url>https://dev.tiki.org/OpenFire</url>
+    <minServerVersion>4.1.3</minServerVersion>
+    <licenseType>gpl</licenseType>
+</plugin>

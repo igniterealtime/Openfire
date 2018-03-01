@@ -1,7 +1,4 @@
 /**
- * $Revision $
- * $Date $
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,22 +25,22 @@ public class CreateSpeakerCommand extends BaseVerb
     public String mixer = null;
     public String sipuri = null;
 
-	public CreateSpeakerCommand(String sipuri, String mixer, String codec)
-	{
-		this.sipuri = sipuri;
-		this.mixer = mixer;
-		this.codec = codec;
-	}
+    public CreateSpeakerCommand(String sipuri, String mixer, String codec)
+    {
+        this.sipuri = sipuri;
+        this.mixer = mixer;
+        this.codec = codec;
+    }
 
-	@Override
+    @Override
     public String toString() {
 
-    	return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-    		.append("callId", getCallId())
-    		.append("verbId", getVerbId())
-    		.append("codec",codec)
-    		.append("mixer",mixer)
-    		.append("sipuri",sipuri)
-    		.toString();
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+            .append("callId", getCallId())
+            .append("verbId", getVerbId())
+            .append("codec",codec)
+            .append("mixer",mixer)
+            .append("sipuri",sipuri)
+            .toString();
     }
 }

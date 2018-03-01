@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +54,7 @@ public class ConversationEventsQueue {
         // Schedule a task to do conversation archiving.
         TimerTask sendTask = new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 // Move queued events to a temp place
                 List<ConversationEvent> eventsToSend = new ArrayList<ConversationEvent>();
                 synchronized (chatEvents) {

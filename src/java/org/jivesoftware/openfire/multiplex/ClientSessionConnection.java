@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +17,13 @@
 package org.jivesoftware.openfire.multiplex;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
@@ -67,8 +67,9 @@ public class ClientSessionConnection extends VirtualConnection {
      *
      * @param packet the packet to send to the user.
      */
+    @Override
     public void deliver(Packet packet) {
-        String streamID = session.getStreamID().getID();
+        StreamID streamID = session.getStreamID();
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
         if (multiplexerSession != null) {
@@ -94,8 +95,9 @@ public class ClientSessionConnection extends VirtualConnection {
      *
      * @param text the stanza to send to the user.
      */
+    @Override
     public void deliverRawText(String text) {
-        String streamID = session.getStreamID().getID();
+        StreamID streamID = session.getStreamID();
         ConnectionMultiplexerSession multiplexerSession =
                 multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
         if (multiplexerSession != null) {
@@ -103,12 +105,21 @@ public class ClientSessionConnection extends VirtualConnection {
             StringBuilder sb = new StringBuilder(200 + text.length());
             sb.append("<route from=\"").append(serverName);
             sb.append("\" to=\"").append(connectionManagerName);
-            sb.append("\" streamid=\"").append(streamID).append("\">");
+            sb.append("\" streamid=\"").append(streamID.getID()).append("\">");
             sb.append(text);
             sb.append("</route>");
             // Deliver the wrapped stanza
             multiplexerSession.deliverRawText(sb.toString());
         }
+    }
+
+    @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // Here, a client-to-server configuration is mocked. It is likely not used, as actual connection handling takes
+        // place at the connection manager.
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        return connectionManager.getListener( ConnectionType.SOCKET_C2S, true ).generateConnectionConfiguration();
     }
 
     public byte[] getAddress() throws UnknownHostException {
@@ -118,6 +129,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         if (hostAddress != null) {
             return hostAddress;
@@ -131,6 +143,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         if (hostName != null) {
             return hostName;
@@ -144,6 +157,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public void systemShutdown() {
         // Do nothing since a system-shutdown error will be sent to the Connection Manager
         // that in turn will send a system-shutdown to connected clients. This is an
@@ -157,9 +171,9 @@ public class ClientSessionConnection extends VirtualConnection {
      * to be terminated.
      */
     @Override
-	public void closeVirtualConnection() {
+    public void closeVirtualConnection() {
         // Figure out who requested the connection to be closed
-        String streamID = session.getStreamID().getID();
+        StreamID streamID = session.getStreamID();
         if (multiplexerManager.getClientSession(connectionManagerName, streamID) == null) {
             // Client or Connection manager requested to close the session
             // Do nothing since it has already been removed and closed
@@ -175,7 +189,7 @@ public class ClientSessionConnection extends VirtualConnection {
                 closeRequest.setTo(connectionManagerName);
                 Element child = closeRequest.setChildElement("session",
                         "http://jabber.org/protocol/connectionmanager");
-                child.addAttribute("id", streamID);
+                child.addAttribute("id", streamID.getID());
                 child.addElement("close");
                 multiplexerSession.process(closeRequest);
             }

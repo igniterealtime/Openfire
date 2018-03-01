@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,28 +16,19 @@
 
 package org.jivesoftware.util;
 
+import org.apache.commons.lang.StringUtils;
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.TimerTask;
-
-import org.apache.commons.lang.StringUtils;
-import org.jivesoftware.database.DbConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -59,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JiveGlobals {
 
-	private static final Logger Log = LoggerFactory.getLogger(JiveGlobals.class);
+    private static final Logger Log = LoggerFactory.getLogger(JiveGlobals.class);
 
     private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "openfire.xml";
     
@@ -490,7 +477,7 @@ public class JiveGlobals {
         }
 
         String[] propNames = openfireProperties.getChildrenProperties(parent);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (String propName : propNames) {
             String value = getXMLProperty(parent + "." + propName);
             if (value != null) {
@@ -563,6 +550,33 @@ public class JiveGlobals {
         else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Returns an enum constant Jive property. If the specified property doesn't exist, or if it's value cannot be parsed
+     * as an enum constant, the <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param enumType the {@code Class} object of the enum type from which to return a constant.
+     * @param defaultValue value returned if the property doesn't exist or it's value could not be parsed.
+     * @param <E> The enum type whose constant is to be returned.
+     * @return the property value (as an enum constant) or <tt>defaultValue</tt>.
+     */
+    public static <E extends Enum<E>> E getEnumProperty( String name, Class<E> enumType, E defaultValue )
+    {
+        String value = getProperty( name );
+        if ( value != null )
+        {
+            try
+            {
+                return E.valueOf( enumType, value );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                // Ignore
+            }
+        }
+        return defaultValue;
     }
 
     /**
@@ -655,11 +669,11 @@ public class JiveGlobals {
     public static List<String> getPropertyNames(String parent) {
         if (properties == null) {
             if (isSetupMode()) {
-                return new ArrayList<String>();
+                return new ArrayList<>();
             }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList<String>(properties.getChildrenNames(parent));
+        return new ArrayList<>(properties.getChildrenNames(parent));
     }
 
     /**
@@ -672,20 +686,68 @@ public class JiveGlobals {
      * @param parent the name of the parent property to return the children for.
      * @return all child property values for the given parent.
      */
-    public static List<String> getProperties(String parent) {
-        if (properties == null) {
-            if (isSetupMode()) {
-                return new ArrayList<String>();
+    public static List<String> getProperties( String parent )
+    {
+        return getListProperty( parent, new ArrayList<String>() );
+    }
+
+    /**
+     * Return all immediate children property values of a parent Jive property as a list of strings, or an default list
+     * if the property does not exist.
+     *
+     * This implementation ignores child property values that are empty (these are excluded from the result). When all
+     * child properties are empty, an empty collection (and explicitly not the default values) is returned. This allows
+     * a property to override a default non-empty collection with an empty one.
+     *
+     * The child properties that are evaluated in this method are the same child properties as those used by
+     * {@link #getProperties(String)}.
+     *
+     * @param parent        the name of the parent property to return the children for.
+     * @param defaultValues values returned if the property doesn't exist.
+     * @return all child property values for the given parent.
+     */
+    public static List<String> getListProperty( String parent, List<String> defaultValues )
+    {
+        if ( properties == null )
+        {
+            if ( isSetupMode() )
+            {
+                return defaultValues;
             }
             properties = JiveProperties.getInstance();
         }
 
-        Collection<String> propertyNames = properties.getChildrenNames(parent);
-        List<String> values = new ArrayList<String>();
-        for (String propertyName : propertyNames) {
-            String value = getProperty(propertyName);
-            if (value != null) {
-                values.add(value);
+        // Check for a legacy, comma separated value.
+        final String legacyValue = JiveGlobals.getProperty( parent );
+
+        // Ensure that properties are ordered.
+        final SortedSet<String> propertyNames = new TreeSet<>( properties.getChildrenNames( parent ) );
+
+        if ( propertyNames.isEmpty() )
+        {
+            if ( legacyValue != null )
+            {
+                Log.info( "Retrieving a list from property '{}' which is stored in a comma-separated format. Consider using child properties instead, via JiveGlobals.setProperty( String value, List<String> values )", parent );
+                return Arrays.asList( legacyValue.split( "\\s*,\\s*" ) );
+            }
+
+            // When there are no child properties, return the default values.
+            return defaultValues;
+        }
+        else if ( legacyValue != null )
+        {
+            // Raise a warning if two competing sets of data are detected.
+            Log.warn( "Retrieving a list from property '{}' which is stored using child properties, but also in a legacy format! The data that is in the legacy format (the text value of property '{}') is not returned by this call! Its child property values are used instead. Consider removing the text value of the parent property.", parent, parent );
+        }
+
+        // When there are child properties, return its non-null, non-empty values (which might be an empty collection).
+        final List<String> values = new ArrayList<>();
+        for ( String propertyName : propertyNames )
+        {
+            final String value = getProperty( propertyName );
+            if ( value != null && !value.isEmpty())
+            {
+                values.add( value );
             }
         }
 
@@ -700,11 +762,11 @@ public class JiveGlobals {
     public static List<String> getPropertyNames() {
         if (properties == null) {
             if (isSetupMode()) {
-                return new ArrayList<String>();
+                return new ArrayList<>();
             }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList<String>(properties.getPropertyNames());
+        return new ArrayList<>(properties.getPropertyNames());
     }
 
     /**
@@ -715,18 +777,96 @@ public class JiveGlobals {
      * @param value the value of the property being set.
      */
     public static void setProperty(String name, String value) {
+        setProperty(name, value, false);
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
+     * @param encrypt {@code true} to encrypt the property in the database, other {@code false}
+     */
+    public static void setProperty(String name, String value, boolean encrypt) {
         if (properties == null) {
             if (isSetupMode()) {
                 return;
             }
             properties = JiveProperties.getInstance();
         }
-        properties.put(name, value);
+        properties.put(name, value, encrypt);
     }
 
-   /**
-     * Sets multiple Jive properties at once. If a property doesn't already exists, a new
-     * one will be created.
+    /**
+     * Sets a Jive property with a list of values. If the property doesn't already exists, a new one will be created.
+     * Empty or null values in the collection are ignored.
+     *
+     * Each value is stored as a direct child property of the property name provided as an argument to this method. When
+     * this method is used, all previous children of the property will be deleted.
+     *
+     * When the provided value is null, any previously stored collection will be removed. If it is an empty collection
+     * (or a collection that consists of null and empty values onlu), it is stored as an empty collection
+     * (represented by a child property that has an empty value).
+     *
+     * The naming convention used by this method to define child properties is subject to change, and should not be
+     * depended on.
+     *
+     * This method differs from {@link #setProperties(Map)}, which is used to set multiple properties. This method sets
+     * one property with multiple values.
+     *
+     * @param name   the name of the property being set.
+     * @param values the values of the property.
+     */
+    public static void setProperty( String name, List<String> values )
+    {
+        if ( properties == null )
+        {
+            if ( isSetupMode() )
+            {
+                return;
+            }
+            properties = JiveProperties.getInstance();
+        }
+
+        final List<String> existing = getProperties( name );
+        if ( existing != null && existing.equals( values ) )
+        {
+            // no change.
+            return;
+        }
+
+        properties.remove( name );
+        if ( values != null )
+        {
+            int i = 1;
+            for ( final String value : values )
+            {
+                if ( value != null && !value.isEmpty() )
+                {
+                    final String childName = name + "." + String.format("%05d", i++ );
+                    properties.put( childName, value );
+                }
+            }
+
+            // When no non-null, non-empty values are stored, store one to denote an empty collection.
+            if ( i == 1 )
+            {
+                properties.put( name + ".00001", "" );
+            }
+
+            // The put's above will have generated events for each child property. Now, generate an event for the parent.
+            final Map<String, Object> params = new HashMap<>();
+            params.put("value", values);
+            PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.property_set, params);
+        }
+    }
+
+    /**
+     * Sets multiple Jive properties at once. If a property doesn't already exists, a new one will be created.
+     *
+     * This method differs from {@link #setProperty(String, List)}, which is used to one property with multiple
+     * values. This method sets multiple properties, each with one value.
      *
      * @param propertyMap a map of properties, keyed on property name.
      */
@@ -755,7 +895,23 @@ public class JiveGlobals {
             properties = JiveProperties.getInstance();
         }
         properties.remove(name);
-        setPropertyEncrypted(name, false);
+        clearXMLPropertyEncryptionEntry(name);
+    }
+
+    static void clearXMLPropertyEncryptionEntry(String name) {
+        if (isSetupMode()) {
+            return;
+        }
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+        // Note; only remove the encryption indicator from XML file if the (encrypted) property is not also defined in the XML file
+        if (JiveGlobals.isXMLPropertyEncrypted(name) && openfireProperties.getProperty(name) == null) {
+            securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
+        }
     }
 
     /**
@@ -774,6 +930,31 @@ public class JiveGlobals {
         }
         openfireProperties.migrateProperty(name);
     }
+
+    /**
+     * Convenience routine to migrate a tree of XML propertis into the database
+     * storage method.
+     *
+     * @param name the name of the base property to migrate.
+     */
+    public static void migratePropertyTree(String name) {
+        if (isSetupMode()) {
+            return;
+        }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+
+        final String[] children = openfireProperties.getChildrenProperties( name );
+        if ( children != null )
+        {
+            for ( final String child : children )
+            {
+                migratePropertyTree( name + "." + child );
+            }
+        }
+        openfireProperties.migrateProperty(name);
+    }
     
     /**
      * Flags certain properties as being sensitive, based on
@@ -784,27 +965,46 @@ public class JiveGlobals {
      * @return True if the property is considered sensitive, otherwise false
      */
     public static boolean isPropertySensitive(String name) {
-    	
-    	return name != null && (
-    			name.toLowerCase().indexOf("passwd") > -1 || 
+        
+        return name != null && (
+                name.toLowerCase().indexOf("passwd") > -1 || 
                 name.toLowerCase().indexOf("password") > -1 ||
                 name.toLowerCase().indexOf("cookiekey") > -1);
     }
 
 
     /**
+     * Determines whether an XML property is configured for encryption.
+     *
+     * @param name
+     *            The name of the property
+     * @return {@code true} if the property is stored using encryption, otherwise {@code false}
+     */
+    static boolean isXMLPropertyEncrypted(final String name) {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        return name != null &&
+                !name.startsWith(JiveGlobals.ENCRYPTED_PROPERTY_NAME_PREFIX) &&
+                securityProperties.getProperties(JiveGlobals.ENCRYPTED_PROPERTY_NAMES, true).contains(name);
+
+    }
+
+    /**
      * Determines whether a property is configured for encryption.
      * 
-     * @param name The name of the property
-     * @return True if the property is stored using encryption, otherwise false
+     * @param name
+     *            The name of the property
+     * @return {@code true} if the property is stored using encryption, otherwise {@code false}
      */
     public static boolean isPropertyEncrypted(String name) {
-    	if (securityProperties == null) {
-    		loadSecurityProperties();
-    	}
-    	return	name != null && 
-    			!name.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX) &&
-    			securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true).contains(name);
+        if (properties == null) {
+            if (isSetupMode()) {
+                return false;
+            }
+            properties = JiveProperties.getInstance();
+        }
+        return properties.isEncrypted(name);
     }
 
     /**
@@ -815,19 +1015,13 @@ public class JiveGlobals {
      * @return True if the property's encryption status changed, otherwise false
      */
     public static boolean setPropertyEncrypted(String name, boolean encrypt) {
-    	if (securityProperties == null) {
-    		loadSecurityProperties();
-    	}
-    	boolean propertyWasChanged;
-    	if (encrypt) {
-    		propertyWasChanged = securityProperties.addToList(ENCRYPTED_PROPERTY_NAMES, name);
-    	} else {
-    		propertyWasChanged = securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
-    	}
-    	if (propertyWasChanged) {
-    		resetProperty(name);
-    	}
-    	return propertyWasChanged;
+        if (properties == null) {
+            if (isSetupMode()) {
+                return false;
+            }
+            properties = JiveProperties.getInstance();
+        }
+        return properties.setPropertyEncrypted(name, encrypt);
     }
 
     /**
@@ -836,18 +1030,18 @@ public class JiveGlobals {
      * @return The property encryption key
      */
     public static Encryptor getPropertyEncryptor() {
-    	if (securityProperties == null) {
-    		loadSecurityProperties();
-    	}
-    	if (propertyEncryptor == null) {
-    		String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(algorithm)) {
-        		propertyEncryptor = new AesEncryptor(currentKey);
-        	} else {
-        		propertyEncryptor = new Blowfish(currentKey);
-        	}
-    	}
-    	return propertyEncryptor;
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        if (propertyEncryptor == null) {
+            String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+            if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(algorithm)) {
+                propertyEncryptor = new AesEncryptor(currentKey);
+            } else {
+                propertyEncryptor = new Blowfish(currentKey);
+            }
+        }
+        return propertyEncryptor;
     }
     
     /**
@@ -855,18 +1049,18 @@ public class JiveGlobals {
      * set the algorithm for encrypting property values 
      */
     public static void setupPropertyEncryptionAlgorithm(String alg) {
-    	// Get the old secret key and encryption type
-    	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-    	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-    	if(StringUtils.isNotEmpty(oldAlg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
-    		// update encrypted properties
-    		updateEncryptionProperties(oldAlg, oldKey, alg, oldAlg);
-    	}
-    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
-    		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
-    	} else {
-    		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
-    	}
+        // Get the old secret key and encryption type
+        String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+        String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+        if(StringUtils.isNotEmpty(oldAlg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
+            // update encrypted properties
+            updateEncryptionProperties(oldAlg, oldKey, alg, oldAlg);
+        }
+        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
+            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
+        } else {
+            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
+        }
     }
     
     /**
@@ -874,14 +1068,14 @@ public class JiveGlobals {
      * set a custom key for encrypting property values 
      */
     public static void setupPropertyEncryptionKey(String key) {
-    	// Get the old secret key and encryption type
-    	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-    	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-    	if(StringUtils.isNotEmpty(oldKey) && !oldKey.equals(key) && StringUtils.isNotEmpty(oldAlg)) {
-    		// update encrypted properties
-    		updateEncryptionProperties(oldAlg, oldKey, oldAlg, key);
-    	}
-		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
+        // Get the old secret key and encryption type
+        String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+        String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+        if(StringUtils.isNotEmpty(oldKey) && !oldKey.equals(key) && StringUtils.isNotEmpty(oldAlg)) {
+            // update encrypted properties
+            updateEncryptionProperties(oldAlg, oldKey, oldAlg, key);
+        }
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
     }
 
     /**
@@ -893,49 +1087,49 @@ public class JiveGlobals {
      * @param newKey new encryptor key
      */
     private static void updateEncryptionProperties(String oldAlg,String oldKey,String newAlg,String newKey) {
-    	Encryptor oldEncryptor = null;
-    	Encryptor newEncryptor = null;
-    	// create the encryptor
-    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlg)) {
-    		oldEncryptor = new AesEncryptor(oldKey);
-    	} else {
-    		oldEncryptor = new Blowfish(oldKey);
-    	}
-    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlg)) {
-    		newEncryptor = new AesEncryptor(newKey);
-    	} else {
-    		newEncryptor = new Blowfish(newKey);
-    	}
-    	
-		// Set the current encryption 
-    	currentKey = oldKey;
-    	propertyEncryptor = oldEncryptor;
-    	
-    	// load properties to decrypt
-    	if(properties == null) {
-    		properties = JiveProperties.getInstance();
-    	}
-    	
-    	currentKey = newKey;
-    	propertyEncryptor = newEncryptor;
-    	
-    	// Update configuration properties
-    	Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
-    	Entry<String, String> entry = null;
-    	String name = null;
-    	while(iterator.hasNext()){
-    		entry = iterator.next();
-    		name = entry.getKey();
-    		if(isPropertyEncrypted(name)){
-    				// update xml prop
-    				String xmlProperty = getXMLProperty(name);
-    				if(StringUtils.isNotEmpty(xmlProperty)){
-    					setXMLProperty(name, entry.getValue());
-    				}
-    		}
-    		properties.put(name, entry.getValue());
-    	}
-    	
+        Encryptor oldEncryptor = null;
+        Encryptor newEncryptor = null;
+        // create the encryptor
+        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlg)) {
+            oldEncryptor = new AesEncryptor(oldKey);
+        } else {
+            oldEncryptor = new Blowfish(oldKey);
+        }
+        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlg)) {
+            newEncryptor = new AesEncryptor(newKey);
+        } else {
+            newEncryptor = new Blowfish(newKey);
+        }
+        
+        // Set the current encryption 
+        currentKey = oldKey;
+        propertyEncryptor = oldEncryptor;
+        
+        // load properties to decrypt
+        if(properties == null) {
+            properties = JiveProperties.getInstance();
+        }
+        
+        currentKey = newKey;
+        propertyEncryptor = newEncryptor;
+        
+        // Update configuration properties
+        Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
+        Entry<String, String> entry = null;
+        String name = null;
+        while(iterator.hasNext()){
+            entry = iterator.next();
+            name = entry.getKey();
+            if(isPropertyEncrypted(name)){
+                    // update xml prop
+                    String xmlProperty = getXMLProperty(name);
+                    if(StringUtils.isNotEmpty(xmlProperty)){
+                        setXMLProperty(name, entry.getValue());
+                    }
+            }
+            properties.put(name, entry.getValue());
+        }
+        
     }
     
    /**
@@ -1018,9 +1212,9 @@ public class JiveGlobals {
             // create a default/empty XML properties set (helpful for unit testing)
             if (openfireProperties == null) {
                 try { 
-                	openfireProperties = new XMLProperties();
+                    openfireProperties = new XMLProperties();
                 } catch (IOException e) {
-                	Log.error("Failed to setup default openfire properties", e);
+                    Log.error("Failed to setup default openfire properties", e);
                 }            	
             }
         }
@@ -1030,7 +1224,7 @@ public class JiveGlobals {
      * Lazy-loads the security configuration properties.
      */
     private synchronized static void loadSecurityProperties() {
-    	
+        
         if (securityProperties == null) {
             // If home is null then log that the application will not work correctly
             if (home == null && !failedLoading) {
@@ -1043,18 +1237,19 @@ public class JiveGlobals {
             // Create a manager with the full path to the security XML file.
             else {
                 try {
-                	securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
+                    securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
                     setupPropertyEncryption();
                     TaskEngine.getInstance().schedule(new TimerTask() {
-                    	public void run() {
+                        @Override
+                        public void run() {
                             // Migrate all secure XML properties into the database automatically
                             for (String propertyName : securityProperties.getAllPropertyNames()) {
-                            	if (!propertyName.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX)) {
-                            		setPropertyEncrypted(propertyName, true);
-                            		securityProperties.migrateProperty(propertyName);
-                            	}
+                                if (!propertyName.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX)) {
+                                    setPropertyEncrypted(propertyName, true);
+                                    securityProperties.migrateProperty(propertyName);
+                                }
                             }
-                    	}
+                        }
                     }, 1000);
                 }
                 catch (IOException ioe) {
@@ -1065,9 +1260,9 @@ public class JiveGlobals {
             // create a default/empty XML properties set (helpful for unit testing)
             if (securityProperties == null) {
                 try { 
-                	securityProperties = new XMLProperties();
+                    securityProperties = new XMLProperties();
                 } catch (IOException e) {
-                	Log.error("Failed to setup default security properties", e);
+                    Log.error("Failed to setup default security properties", e);
                 }            	
             }
         }
@@ -1077,67 +1272,67 @@ public class JiveGlobals {
      * Setup the property encryption key, rewriting encrypted values as appropriate
      */
     private static void setupPropertyEncryption() {
-    	
-    	// get/set the current encryption key
-    	Encryptor keyEncryptor = new AesEncryptor();
-    	String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-    	if (encryptedKey ==  null || encryptedKey.isEmpty()) {
-    		currentKey = null;
-    	} else {
-    		currentKey = keyEncryptor.decrypt(encryptedKey);
-    	}
-    	
-    	// check to see if a new key has been defined
-    	String newKey = securityProperties.getProperty(ENCRYPTION_KEY_NEW, false);
-    	if (newKey != null) {
-    		
-    		Log.info("Detected new encryption key; updating encrypted properties");
+        
+        // get/set the current encryption key
+        Encryptor keyEncryptor = new AesEncryptor();
+        String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+        if (encryptedKey ==  null || encryptedKey.isEmpty()) {
+            currentKey = null;
+        } else {
+            currentKey = keyEncryptor.decrypt(encryptedKey);
+        }
+        
+        // check to see if a new key has been defined
+        String newKey = securityProperties.getProperty(ENCRYPTION_KEY_NEW, false);
+        if (newKey != null) {
+            
+            Log.info("Detected new encryption key; updating encrypted properties");
 
-    		// if a new key has been provided, check to see if the old key matches 
-    		// the current key, otherwise log an error and ignore the new key
-    		String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_OLD);
-    		if (oldKey == null) {
-    			if (currentKey != null) {
-    				Log.warn("Old encryption key was not provided; ignoring new encryption key");
-    				return;
-    			}
-    		} else {
-    			if (!oldKey.equals(currentKey)) {
-    				Log.warn("Old encryption key does not match current encryption key; ignoring new encryption key");
-    				return;
-    			}
-    		}
+            // if a new key has been provided, check to see if the old key matches 
+            // the current key, otherwise log an error and ignore the new key
+            String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_OLD);
+            if (oldKey == null) {
+                if (currentKey != null) {
+                    Log.warn("Old encryption key was not provided; ignoring new encryption key");
+                    return;
+                }
+            } else {
+                if (!oldKey.equals(currentKey)) {
+                    Log.warn("Old encryption key does not match current encryption key; ignoring new encryption key");
+                    return;
+                }
+            }
 
-    		// load DB properties using the current key
-    		if (properties == null) {
-    			properties = JiveProperties.getInstance();
-    		}
-    		
-    		// load XML properties using the current key
-    		Map<String, String> openfireProps = new HashMap<String, String>();
-    		for (String xmlProp : openfireProperties.getAllPropertyNames()) {
-    			if (isPropertyEncrypted(xmlProp)) {
-    				openfireProps.put(xmlProp, openfireProperties.getProperty(xmlProp));
-    			}
-    		}
-    		
-    		// rewrite existing encrypted properties using new encryption key
-    		currentKey = newKey == null || newKey.isEmpty() ? null : newKey;
-    		propertyEncryptor = null;
-    		for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
-    			Log.info("Updating encrypted value for " + propertyName);
-    			if (openfireProps.containsKey(propertyName)) {
-    				openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
-    			} else if (!resetProperty(propertyName)) {
-    				Log.warn("Failed to reset encrypted property value for " + propertyName);
-    			}
-    		}
-    		securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
-    		securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);
-    	}
-	
-		// (re)write the encryption key to the security XML file
-		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, keyEncryptor.encrypt(currentKey));
+            // load DB properties using the current key
+            if (properties == null) {
+                properties = JiveProperties.getInstance();
+            }
+            
+            // load XML properties using the current key
+            Map<String, String> openfireProps = new HashMap<>();
+            for (String xmlProp : openfireProperties.getAllPropertyNames()) {
+                if (isPropertyEncrypted(xmlProp)) {
+                    openfireProps.put(xmlProp, openfireProperties.getProperty(xmlProp));
+                }
+            }
+            
+            // rewrite existing encrypted properties using new encryption key
+            currentKey = newKey == null || newKey.isEmpty() ? null : newKey;
+            propertyEncryptor = null;
+            for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
+                Log.info("Updating encrypted value for " + propertyName);
+                if (openfireProps.containsKey(propertyName)) {
+                    openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
+                } else if (!resetProperty(propertyName)) {
+                    Log.warn("Failed to reset encrypted property value for " + propertyName);
+                }
+            }
+            securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
+            securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);
+        }
+    
+        // (re)write the encryption key to the security XML file
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, keyEncryptor.encrypt(currentKey));
     }
     
     /**
@@ -1145,14 +1340,14 @@ public class JiveGlobals {
      * @param propertyName
      */
     private static boolean resetProperty(String propertyName) {
-    	if (properties != null) {
-			String propertyValue = properties.get(propertyName);
-			if (propertyValue != null) {
-				properties.remove(propertyName);
-				properties.put(propertyName, propertyValue);
-				return true;
-			}
-    	}
-		return false;
+        if (properties != null) {
+            String propertyValue = properties.get(propertyName);
+            if (propertyValue != null) {
+                properties.remove(propertyName);
+                properties.put(propertyName, propertyValue);
+                return true;
+            }
+        }
+        return false;
     }
 }

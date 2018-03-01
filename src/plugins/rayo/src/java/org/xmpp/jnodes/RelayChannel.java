@@ -1,7 +1,4 @@
 /**
- * $Revision $
- * $Date $
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -71,10 +68,10 @@ public class RelayChannel implements IChannel {
     private Byte localCryptoSalt[];
     private Byte remoteCryptoKey[];
     private Byte remoteCryptoSalt[];
-	private Encryptor encryptor = null;
-	private Encryptor encryptor2 = null;
-	private OutgoingCallHandler callHandler = null;
-	private MemberReceiver memberReceiver = null;
+    private Encryptor encryptor = null;
+    private Encryptor encryptor2 = null;
+    private OutgoingCallHandler callHandler = null;
+    private MemberReceiver memberReceiver = null;
     private int kt = 0;
     private int kt2 = 0;
     private int kt3 = 0;
@@ -139,18 +136,18 @@ public class RelayChannel implements IChannel {
                     try {
                         buffer.flip();
 
-						if (callHandler != null)
-						{
-							ByteBuffer bb = buffer.asReadOnlyBuffer();
-							byte[] b = new byte[bb.remaining()];
-							bb.get(b, 0, b.length);
+                        if (callHandler != null)
+                        {
+                            ByteBuffer bb = buffer.asReadOnlyBuffer();
+                            byte[] b = new byte[bb.remaining()];
+                            bb.get(b, 0, b.length);
 
-							if (decryptMedia(b) == false) channelB.send(buffer, lastReceivedB);
+                            if (decryptMedia(b) == false) channelB.send(buffer, lastReceivedB);
 
-						} else {
+                        } else {
 
-							channelB.send(buffer, lastReceivedB);
-						}
+                            channelB.send(buffer, lastReceivedB);
+                        }
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -277,51 +274,51 @@ public class RelayChannel implements IChannel {
 
     public void setCrypto(Handset handset)
     {
-		this.handset = handset;
+        this.handset = handset;
 
-		Byte localCryptoByte[] = Convert.fromBase64String(handset.localCrypto);
-		Byte remoteCryptoByte[] = Convert.fromBase64String(handset.remoteCrypto);
+        Byte localCryptoByte[] = Convert.fromBase64String(handset.localCrypto);
+        Byte remoteCryptoByte[] = Convert.fromBase64String(handset.remoteCrypto);
 
         if(ArrayExtensions.getLength(localCryptoByte).intValue() != 30 || ArrayExtensions.getLength(remoteCryptoByte).intValue() != 30)
             Log.error("Unexpected key/salt length.");
         else {
             localCryptoKey = BitAssistant.subArray(localCryptoByte, Integer.valueOf(0), Integer.valueOf(16));
-			localCryptoSalt = BitAssistant.subArray(localCryptoByte, Integer.valueOf(16), Integer.valueOf(14));
+            localCryptoSalt = BitAssistant.subArray(localCryptoByte, Integer.valueOf(16), Integer.valueOf(14));
 
             remoteCryptoKey = BitAssistant.subArray(remoteCryptoByte, Integer.valueOf(0), Integer.valueOf(16));
-			remoteCryptoSalt = BitAssistant.subArray(remoteCryptoByte, Integer.valueOf(16), Integer.valueOf(14));
+            remoteCryptoSalt = BitAssistant.subArray(remoteCryptoByte, Integer.valueOf(16), Integer.valueOf(14));
 
-			Log.info("Crypto Suite " + handset.cryptoSuite + " " + handset.localCrypto + " "  + handset.remoteCrypto + " " + " " + handset.codec + " " + handset.stereo);
+            Log.info("Crypto Suite " + handset.cryptoSuite + " " + handset.localCrypto + " "  + handset.remoteCrypto + " " + " " + handset.codec + " " + handset.stereo);
 
-			try {
-				encryptor = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), localCryptoKey, localCryptoSalt, remoteCryptoKey, remoteCryptoSalt);
-				encryptor2 = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), remoteCryptoKey, remoteCryptoSalt, localCryptoKey, localCryptoSalt);
+            try {
+                encryptor = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), localCryptoKey, localCryptoSalt, remoteCryptoKey, remoteCryptoSalt);
+                encryptor2 = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), remoteCryptoKey, remoteCryptoSalt, localCryptoKey, localCryptoSalt);
 
-            	decoder = Opus.decoder_create(sampleRate, channels);
+                decoder = Opus.decoder_create(sampleRate, channels);
 
-            	if (decoder == 0) Log.error( "Opus decoder creation error ");
+                if (decoder == 0) Log.error( "Opus decoder creation error ");
 
-				if (decoder == 0)
-				{
-					handset.codec = "PCMU";
-					Log.warn( "Opus decoder creation failure, PCMU will be used in default");
-				}
+                if (decoder == 0)
+                {
+                    handset.codec = "PCMU";
+                    Log.warn( "Opus decoder creation failure, PCMU will be used in default");
+                }
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public String getMediaPreference()
     {
-		String mediaPreference = "PCMU/8000/1";
+        String mediaPreference = "PCMU/8000/1";
 
-		if (handset.codec == null || "OPUS".equals(handset.codec))
-			mediaPreference = "PCM/48000/2";
+        if (handset.codec == null || "OPUS".equals(handset.codec))
+            mediaPreference = "PCM/48000/2";
 
-		return mediaPreference;
-	}
+        return mediaPreference;
+    }
 
     public void close() {
         try {
@@ -356,11 +353,11 @@ public class RelayChannel implements IChannel {
         SayCompleteEvent complete = new SayCompleteEvent();
         complete.setReason(SayCompleteEvent.Reason.valueOf("SUCCESS"));
 
-		Presence presence = new Presence();
-		presence.setFrom(getAttachment() + "@rayo." + component.getDomain() + "/" + this.from.getNode());
-		presence.setTo(this.from);
-		presence.getElement().add(component.getHandsetProvider().toXML(complete));
-		component.sendPacket(presence);
+        Presence presence = new Presence();
+        presence.setFrom(getAttachment() + "@rayo." + component.getDomain() + "/" + this.from.getNode());
+        presence.setTo(this.from);
+        presence.getElement().add(component.getHandsetProvider().toXML(complete));
+        component.sendPacket(presence);
 
     }
 
@@ -408,7 +405,7 @@ public class RelayChannel implements IChannel {
             i = Integer.valueOf(i.intValue() + 1);
         }
 
-		return true;
+        return true;
     }
 
     private Short getLength(Byte bytes[])
@@ -428,237 +425,237 @@ public class RelayChannel implements IChannel {
 
 
 
-	public void sendComfortNoisePayload()
-	{
+    public void sendComfortNoisePayload()
+    {
 
-	}
+    }
 
-	public boolean encode()
-	{
-		return true;
-	}
+    public boolean encode()
+    {
+        return true;
+    }
 
-	public boolean isActive()
-	{
-		return active;
-	}
+    public boolean isActive()
+    {
+        return active;
+    }
 
-	public void setActive(boolean active)
-	{
-		this.active = active;
-	}
+    public void setActive(boolean active)
+    {
+        this.active = active;
+    }
 
-	public void pushAudio(int[] dataToSend)
-	{
+    public void pushAudio(int[] dataToSend)
+    {
 
-	}
+    }
 
-	public synchronized void pushAudio(byte[] rtpData, byte[] opus)
-	{
-		try {
+    public synchronized void pushAudio(byte[] rtpData, byte[] opus)
+    {
+        try {
 
-			if (lastAudioPacket != null)
-			{
-				RTPPacket newPacket = RTPPacket.parseBytes(BitAssistant.bytesToArray(rtpData));
-				RTPPacket packet = RTPPacket.parseBytes(lastAudioPacket.getBytes());
+            if (lastAudioPacket != null)
+            {
+                RTPPacket newPacket = RTPPacket.parseBytes(BitAssistant.bytesToArray(rtpData));
+                RTPPacket packet = RTPPacket.parseBytes(lastAudioPacket.getBytes());
 
-				if (opus != null)
-				{
-					packet.setPayload(BitAssistant.bytesToArray(opus));
-					packet.setTimestamp(getNextAudioTimestamp(Long.valueOf(48000)));
+                if (opus != null)
+                {
+                    packet.setPayload(BitAssistant.bytesToArray(opus));
+                    packet.setTimestamp(getNextAudioTimestamp(Long.valueOf(48000)));
 
-				} else { // ULAW
-					packet.setPayload(newPacket.getPayload());
-					packet.setTimestamp(getNextAudioTimestamp(Long.valueOf(8000)));
-				}
+                } else { // ULAW
+                    packet.setPayload(newPacket.getPayload());
+                    packet.setTimestamp(getNextAudioTimestamp(Long.valueOf(8000)));
+                }
 
-				packet.setSequenceNumber(newPacket.getSequenceNumber());
+                packet.setSequenceNumber(newPacket.getSequenceNumber());
 
-				Byte pcms[] = encryptor2.encryptRTP(packet);
+                Byte pcms[] = encryptor2.encryptRTP(packet);
 
-				wBuffer.clear();
-				wBuffer.put( BitAssistant.bytesFromArray(pcms) );
-				wBuffer.flip();
+                wBuffer.clear();
+                wBuffer.put( BitAssistant.bytesFromArray(pcms) );
+                wBuffer.flip();
 
-				if (getChannelB() != null && lastReceivedB != null)
-				{
-					getChannelB().send(wBuffer, lastReceivedB);
+                if (getChannelB() != null && lastReceivedB != null)
+                {
+                    getChannelB().send(wBuffer, lastReceivedB);
 
-					kt++;
+                    kt++;
 
-					if ( kt < 20 ) {
-						Log.info( "+++ " + packet.getPayload().length );
-					}
-				}
+                    if ( kt < 20 ) {
+                        Log.info( "+++ " + packet.getPayload().length );
+                    }
+                }
 
-			}
+            }
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			Log.error( "RelayChannel pushAudio exception " + e );
-			e.printStackTrace();
-		}
+            Log.error( "RelayChannel pushAudio exception " + e );
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	public synchronized void pushVideo(RTPPacket videoPacket)
-	{
+    public synchronized void pushVideo(RTPPacket videoPacket)
+    {
 
-	}
+    }
 
-	public void pushReceiverAudio(int[] dataToSend)
-	{
+    public void pushReceiverAudio(int[] dataToSend)
+    {
 
-	}
+    }
 
     private boolean decryptMedia(byte[] b)
     {
-		Byte data[] = BitAssistant.bytesToArray(b);
-		boolean decoded = false;
+        Byte data[] = BitAssistant.bytesToArray(b);
+        boolean decoded = false;
 
-		if (isStunPacket(data) == false && encryptor != null)
-		{
-			RTPPacket packet = null;
-			RTPPacket packet2 = null;
-			RTCPPacket packets[] = null;
-			try
-			{
-				packet2 = RTPPacket.parseBytes(BitAssistant.bytesToArray(b));
+        if (isStunPacket(data) == false && encryptor != null)
+        {
+            RTPPacket packet = null;
+            RTPPacket packet2 = null;
+            RTCPPacket packets[] = null;
+            try
+            {
+                packet2 = RTPPacket.parseBytes(BitAssistant.bytesToArray(b));
 
-				if(packet2 != null)
-				{
-					decoded = true;
-					//Log.info("Decoded media " + " " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
+                if(packet2 != null)
+                {
+                    decoded = true;
+                    //Log.info("Decoded media " + " " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
 
-					if (packet2.getPayloadType() == 0)		// PCMU (uLaw), mix audio
-					{
-						packet = encryptor.decryptRTP(data);
+                    if (packet2.getPayloadType() == 0)		// PCMU (uLaw), mix audio
+                    {
+                        packet = encryptor.decryptRTP(data);
 
-						if(packet != null)
-						{
-							lastAudioPacket = packet;
+                        if(packet != null)
+                        {
+                            lastAudioPacket = packet;
 
-							byte[] byteBuffer = BitAssistant.bytesFromArray(packet.getPayload());
-							int[] l16Buffer = new int[160];
+                            byte[] byteBuffer = BitAssistant.bytesFromArray(packet.getPayload());
+                            int[] l16Buffer = new int[160];
 
-							AudioConversion.ulawToLinear(byteBuffer, 0, byteBuffer.length, l16Buffer);
+                            AudioConversion.ulawToLinear(byteBuffer, 0, byteBuffer.length, l16Buffer);
 
-							memberReceiver = callHandler.getMemberReceiver();
+                            memberReceiver = callHandler.getMemberReceiver();
 
-							if (memberReceiver != null )
-							{
-								memberReceiver.handleWebRtcMedia(l16Buffer, packet.getSequenceNumber().shortValue());
+                            if (memberReceiver != null )
+                            {
+                                memberReceiver.handleWebRtcMedia(l16Buffer, packet.getSequenceNumber().shortValue());
 
-								if ( kt2 < 10 ) {
-									Log.info( "ULAW *** " + l16Buffer );
-								}
+                                if ( kt2 < 10 ) {
+                                    Log.info( "ULAW *** " + l16Buffer );
+                                }
 
-								kt2++;
-							}
-						} else Log.warn("cannot decode packet " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
+                                kt2++;
+                            }
+                        } else Log.warn("cannot decode packet " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
 
-					} else if (packet2.getPayloadType() == 111)	{	// OPUS, decode and mix audio
+                    } else if (packet2.getPayloadType() == 111)	{	// OPUS, decode and mix audio
 
-						packet = encryptor.decryptRTP(data);
+                        packet = encryptor.decryptRTP(data);
 
-						if(packet != null)
-						{
-							lastAudioPacket = packet;
+                        if(packet != null)
+                        {
+                            lastAudioPacket = packet;
 
-							byte[] in = BitAssistant.bytesFromArray(packet.getPayload());
-							int inputOffset = 0;
-							int inputLength = in.length;
+                            byte[] in = BitAssistant.bytesFromArray(packet.getPayload());
+                            int inputOffset = 0;
+                            int inputLength = in.length;
 
-							int frameSizeInSamplesPerChannel = Opus.decoder_get_nb_samples(decoder, in, inputOffset, inputLength);
+                            int frameSizeInSamplesPerChannel = Opus.decoder_get_nb_samples(decoder, in, inputOffset, inputLength);
 
-							if (frameSizeInSamplesPerChannel > 1)
-							{
-								int frameSizeInBytes = outputFrameSize * channels * frameSizeInSamplesPerChannel;
+                            if (frameSizeInSamplesPerChannel > 1)
+                            {
+                                int frameSizeInBytes = outputFrameSize * channels * frameSizeInSamplesPerChannel;
 
-								byte[] output = new byte[frameSizeInBytes];
-								frameSizeInSamplesPerChannel = Opus.decode(decoder, in, inputOffset, inputLength, output, 0, frameSizeInSamplesPerChannel, 0);
+                                byte[] output = new byte[frameSizeInBytes];
+                                frameSizeInSamplesPerChannel = Opus.decode(decoder, in, inputOffset, inputLength, output, 0, frameSizeInSamplesPerChannel, 0);
 
-								memberReceiver = callHandler.getMemberReceiver();
+                                memberReceiver = callHandler.getMemberReceiver();
 
-								if (memberReceiver != null )
-								{
-									int[] l16Buffer = AudioConversion.bytesToLittleEndianInts(output);
-									placeInStereo(l16Buffer);
-									memberReceiver.handleWebRtcMedia(l16Buffer, packet.getSequenceNumber().shortValue());
+                                if (memberReceiver != null )
+                                {
+                                    int[] l16Buffer = AudioConversion.bytesToLittleEndianInts(output);
+                                    placeInStereo(l16Buffer);
+                                    memberReceiver.handleWebRtcMedia(l16Buffer, packet.getSequenceNumber().shortValue());
 
-									if ( kt2 < 10 ) {
-										Log.info( "OPUS *** " + l16Buffer );
-									}
+                                    if ( kt2 < 10 ) {
+                                        Log.info( "OPUS *** " + l16Buffer );
+                                    }
 
-									kt2++;
-								}
+                                    kt2++;
+                                }
 
-							} else Log.info( "OPUS.decode fail..." +  frameSizeInSamplesPerChannel);
+                            } else Log.info( "OPUS.decode fail..." +  frameSizeInSamplesPerChannel);
 
-						} else Log.warn("cannot decode packet " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
+                        } else Log.warn("cannot decode packet " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
 
 
-					} else if (packet2.getPayloadType() == 100)	{	// video (vp8) pass-thru
-						decoded = false;
+                    } else if (packet2.getPayloadType() == 100)	{	// video (vp8) pass-thru
+                        decoded = false;
 
-					} else {
+                    } else {
 
-						if (packet2.getPayloadType() != 13)
-						{
-							byte[] byteBuffer = BitAssistant.bytesFromArray(packet2.getPayload());
+                        if (packet2.getPayloadType() != 13)
+                        {
+                            byte[] byteBuffer = BitAssistant.bytesFromArray(packet2.getPayload());
 
-							//Log.info("Unexpected Payload " + packet2.getPayloadType() + " size " + byteBuffer.length);
-							decoded = false;
-						}
-					}
-				}
-			}
-			catch(Exception exception)
-			{
-				Log.error("RelayChannel - Could not decrypt data " + exception);
-				exception.printStackTrace();
-			}
+                            //Log.info("Unexpected Payload " + packet2.getPayloadType() + " size " + byteBuffer.length);
+                            decoded = false;
+                        }
+                    }
+                }
+            }
+            catch(Exception exception)
+            {
+                Log.error("RelayChannel - Could not decrypt data " + exception);
+                exception.printStackTrace();
+            }
 
-		}
-		//Log.info("Payload " + decoded + " " + b);
-		return decoded;
-	}
+        }
+        //Log.info("Payload " + decoded + " " + b);
+        return decoded;
+    }
 
-	private void placeInStereo(int[] buffer)
-	{
-		int stereo = 0;
+    private void placeInStereo(int[] buffer)
+    {
+        int stereo = 0;
 
-		try {
+        try {
 
-			stereo = Integer.parseInt(handset.stereo);
+            stereo = Integer.parseInt(handset.stereo);
 
-		} catch(Exception exception) {
+        } catch(Exception exception) {
 
-		}
+        }
 
-		if (stereo > 0)
-		{
-			if (stereo > 90) stereo = 90;
+        if (stereo > 0)
+        {
+            if (stereo > 90) stereo = 90;
 
-			int pan = stereo - 90;
-			pan = (pan < 0) ? -pan : pan;
+            int pan = stereo - 90;
+            pan = (pan < 0) ? -pan : pan;
 
-			for (int j = 0; j < buffer.length; j+=2)
-			{
-				buffer[j] = (int) (buffer[j] * pan / 90);
-			}
+            for (int j = 0; j < buffer.length; j+=2)
+            {
+                buffer[j] = (int) (buffer[j] * pan / 90);
+            }
 
-		} else {
+        } else {
 
-			if (stereo < -90) stereo = -90;
+            if (stereo < -90) stereo = -90;
 
-			int pan = stereo + 90;
-			pan = (pan < 0) ? -pan : pan;
+            int pan = stereo + 90;
+            pan = (pan < 0) ? -pan : pan;
 
-			for (int j = 1; j < buffer.length; j+=2)
-			{
-				buffer[j] = (int) (buffer[j] * pan / 90);
-			}
-		}
-	}
+            for (int j = 1; j < buffer.length; j+=2)
+            {
+                buffer[j] = (int) (buffer[j] * pan / 90);
+            }
+        }
+    }
 }

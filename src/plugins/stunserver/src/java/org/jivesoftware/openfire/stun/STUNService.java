@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,8 +52,11 @@ import de.javawi.jstun.test.demo.StunServer;
  */
 public class STUNService implements Plugin {
 
-	private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
-
+    private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
+    public static final String STUN_ADDRESS_PRIMARY = "stun.address.primary";
+    public static final String STUN_ADDRESS_SECONDARY = "stun.address.secondary";
+    public static final String STUN_PORT_PRIMARY = "stun.port.primary";
+    public static final String STUN_PORT_SECONDARY = "stun.port.secondary";
     private static final String ELEMENT_NAME = "stun";
     private static final String NAMESPACE = "google:jingleinfo";
     private static final String DEFAULT_EXTERNAL_ADDRESSES =
@@ -74,11 +77,11 @@ public class STUNService implements Plugin {
 
     private List<StunServerAddress> externalServers = null;
 
-	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
         this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
 
-        primaryAddress = JiveGlobals.getProperty("stun.address.primary");
-        secondaryAddress = JiveGlobals.getProperty("stun.address.secondary");
+        primaryAddress = JiveGlobals.getProperty(STUN_ADDRESS_PRIMARY);
+        secondaryAddress = JiveGlobals.getProperty(STUN_ADDRESS_SECONDARY);
 
         String addresses = JiveGlobals.getProperty("stun.external.addresses");
         // If no custom external addresses are defined, use the defaults.
@@ -87,8 +90,8 @@ public class STUNService implements Plugin {
         }
         externalServers = getStunServerAddresses(addresses);
 
-        primaryPort = JiveGlobals.getIntProperty("stun.port.primary", 3478);
-        secondaryPort = JiveGlobals.getIntProperty("stun.port.secondary", 3479);
+        primaryPort = JiveGlobals.getIntProperty(STUN_PORT_PRIMARY, 3478);
+        secondaryPort = JiveGlobals.getIntProperty(STUN_PORT_SECONDARY, 3479);
 
         this.localEnabled = JiveGlobals.getBooleanProperty("stun.local.enabled", false);
         // If the local server is supposed to be enabled, ensure that primary and secondary
@@ -117,6 +120,14 @@ public class STUNService implements Plugin {
                     }
                 } else if (property.equals("stun.local.enabled")) {
                     localEnabled = JiveGlobals.getBooleanProperty("stun.local.enabled", false);
+                } else if (property.equals(STUN_ADDRESS_PRIMARY)) {
+                    primaryAddress = JiveGlobals.getProperty(STUN_ADDRESS_PRIMARY);
+                } else if (property.equals(STUN_ADDRESS_SECONDARY)) {
+                    secondaryAddress = JiveGlobals.getProperty(STUN_ADDRESS_SECONDARY);
+                } else if (property.equals(STUN_PORT_PRIMARY)) {
+                    primaryPort = JiveGlobals.getIntProperty(STUN_PORT_PRIMARY, 3478);
+                } else if (property.equals(STUN_PORT_SECONDARY)) {
+                    secondaryPort = JiveGlobals.getIntProperty(STUN_PORT_SECONDARY, 3479);
                 }
             }
 
@@ -138,11 +149,11 @@ public class STUNService implements Plugin {
         });
     }
 
-	public void destroyPlugin() {
-		stop();
-	}
+    public void destroyPlugin() {
+        stop();
+    }
 
-	public void start() {
+    public void start() {
         if (isEnabled()) {
             startSTUNService();
             if (isLocalEnabled()) {
@@ -191,7 +202,7 @@ public class STUNService implements Plugin {
         }
     }
 
-	public void stop() {
+    public void stop() {
         this.enabled = false;
         stopSTUNService();
         stopLocal();
@@ -378,7 +389,7 @@ public class STUNService implements Plugin {
         }
 
         @Override
-		public IQ handleIQ(IQ iq) throws UnauthorizedException {
+        public IQ handleIQ(IQ iq) throws UnauthorizedException {
             IQ reply = IQ.createResultIQ(iq);
             Element childElement = iq.getChildElement();
             String namespace = childElement.getNamespaceURI();
@@ -431,7 +442,7 @@ public class STUNService implements Plugin {
         }
 
         @Override
-		public IQHandlerInfo getInfo() {
+        public IQHandlerInfo getInfo() {
             return new IQHandlerInfo(ELEMENT_NAME, NAMESPACE);
         }
     }

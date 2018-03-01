@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3036 $
- * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +16,7 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -273,7 +270,7 @@ public interface MultiUserChatService extends Component {
      *
      * @param room the removed room in another cluster node.
      */
-    public void chatRoomRemoved(LocalMUCRoom room);
+    void chatRoomRemoved( LocalMUCRoom room );
 
     /**
      * Notification message indicating that a chat room has been created
@@ -281,7 +278,7 @@ public interface MultiUserChatService extends Component {
      *
      * @param room the created room in another cluster node.
      */
-    public void chatRoomAdded(LocalMUCRoom room);
+    void chatRoomAdded( LocalMUCRoom room );
 
     /**
      * Removes the room associated with the given name.
@@ -306,7 +303,7 @@ public interface MultiUserChatService extends Component {
      * 
      * @return total chat time in milliseconds.
      */
-    public long getTotalChatTime();
+    long getTotalChatTime();
 
     /**
      * Retuns the number of existing rooms in the server (i.e. persistent or not,
@@ -314,7 +311,7 @@ public interface MultiUserChatService extends Component {
      *
      * @return the number of existing rooms in the server.
      */
-    public int getNumberChatRooms();
+    int getNumberChatRooms();
 
     /**
      * Retuns the total number of occupants in all rooms in the server.
@@ -322,14 +319,14 @@ public interface MultiUserChatService extends Component {
      * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
      * @return the number of existing rooms in the server.
      */
-    public int getNumberConnectedUsers(boolean onlyLocal);
+    int getNumberConnectedUsers( boolean onlyLocal );
 
     /**
      * Retuns the total number of users that have joined in all rooms in the server.
      *
      * @return the number of existing rooms in the server.
      */
-    public int getNumberRoomOccupants();
+    int getNumberRoomOccupants();
 
     /**
      * Returns the total number of incoming messages since last reset.
@@ -337,7 +334,7 @@ public interface MultiUserChatService extends Component {
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of incoming messages through the service.
      */
-    public long getIncomingMessageCount(boolean resetAfter);
+    long getIncomingMessageCount( boolean resetAfter );
 
     /**
      * Returns the total number of outgoing messages since last reset.
@@ -345,7 +342,7 @@ public interface MultiUserChatService extends Component {
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of outgoing messages through the service.
      */
-    public long getOutgoingMessageCount(boolean resetAfter);
+    long getOutgoingMessageCount( boolean resetAfter );
 
     /**
      * Logs that a given message was sent to a room as part of a conversation. Every message sent
@@ -398,4 +395,37 @@ public interface MultiUserChatService extends Component {
      * @return true if the MUC service is hidden and externally managed.
      */
     boolean isHidden();
+
+    /**
+     * Add a IQHandler to MUC rooms and services. If the IQHandler only supports one or
+     * other, it should quietly ignore it.
+     */
+    void addIQHandler(IQHandler handler);
+    void removeIQHandler(IQHandler handler);
+
+    /**
+     * Adds an extra Disco feature to the list of features returned for the conference service.
+     * @param feature Feature to add.
+     */
+    void addExtraFeature(String feature);
+
+    /**
+     * Removes an extra Disco feature from the list of features returned for the conference service.
+     * @param feature Feature to remove.
+     */
+    void removeExtraFeature(String feature);
+
+    /**
+     * Adds an extra Disco identity to the list of identities returned for the conference service.
+     * @param category Category for identity.  e.g. conference
+     * @param name Descriptive name for identity.  e.g. Public Chatrooms
+     * @param type Type for identity.  e.g. text
+     */
+    void addExtraIdentity(String category, String name, String type);
+
+    /**
+     * Removes an extra Disco identity from the list of identities returned for the conference service.
+     * @param name Name of identity to remove.
+     */
+    void removeExtraIdentity(String name);
 }

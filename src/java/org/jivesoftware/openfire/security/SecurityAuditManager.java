@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SecurityAuditManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(SecurityAuditManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(SecurityAuditManager.class);
 
     // Wrap this guy up so we can mock out the SecurityAuditManager class.
     private static class SecurityAuditManagerContainer {
@@ -83,20 +80,24 @@ public class SecurityAuditManager {
 
         // Detect when a new security audit provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.securityAudit.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }

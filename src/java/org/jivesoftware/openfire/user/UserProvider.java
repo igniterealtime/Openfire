@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 2771 $
- * $Date: 2005-09-05 01:49:45 -0300 (Mon, 05 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +34,7 @@ public interface UserProvider {
      * @return the User.
      * @throws UserNotFoundException if the User could not be loaded.
      */
-    public User loadUser(String username) throws UserNotFoundException;
+    User loadUser( String username ) throws UserNotFoundException;
 
     /**
      * Creates a new user. This method should throw an
@@ -52,7 +48,7 @@ public interface UserProvider {
      * @return a new User.
      * @throws UserAlreadyExistsException if the username is already in use.
      */
-    public User createUser(String username, String password, String name, String email)
+    User createUser( String username, String password, String name, String email )
             throws UserAlreadyExistsException;
 
     /**
@@ -62,14 +58,14 @@ public interface UserProvider {
      *
      * @param username the username to delete.
      */
-    public void deleteUser(String username);
+    void deleteUser( String username );
 
     /**
      * Returns the number of users in the system.
      *
      * @return the total number of users.
      */
-    public int getUserCount();
+    int getUserCount();
 
     /**
      * Returns an unmodifiable Collections of all users in the system. The
@@ -80,14 +76,14 @@ public interface UserProvider {
      *
      * @return an unmodifiable Collection of all users.
      */
-    public Collection<User> getUsers();
+    Collection<User> getUsers();
 
     /**
      * Returns an unmodifiable Collection of usernames of all users in the system.
      *
      * @return an unmodifiable Collection of all usernames in the system.
      */
-    public Collection<String> getUsernames();
+    Collection<String> getUsernames();
 
     /**
      * Returns an unmodifiable Collections of users in the system within the
@@ -104,7 +100,7 @@ public interface UserProvider {
      * @param numResults the total number of results to return.
      * @return an unmodifiable Collection of users within the specified range.
      */
-    public Collection<User> getUsers(int startIndex, int numResults);
+    Collection<User> getUsers( int startIndex, int numResults );
 
     /**
      * Sets the user's name. This method should throw an UnsupportedOperationException
@@ -114,7 +110,7 @@ public interface UserProvider {
      * @param name the name.
      * @throws UserNotFoundException if the user could not be found.
      */
-    public void setName(String username, String name) throws UserNotFoundException;
+    void setName( String username, String name ) throws UserNotFoundException;
 
     /**
      * Sets the user's email address. This method should throw an
@@ -125,7 +121,7 @@ public interface UserProvider {
      * @param email the email address.
      * @throws UserNotFoundException if the user could not be found.
      */
-    public void setEmail(String username, String email) throws UserNotFoundException;
+    void setEmail( String username, String email ) throws UserNotFoundException;
 
     /**
      * Sets the date the user was created. This method should throw an
@@ -136,7 +132,7 @@ public interface UserProvider {
      * @param creationDate the date the user was created.
      * @throws UserNotFoundException if the user could not be found.
      */
-    public void setCreationDate(String username, Date creationDate) throws UserNotFoundException;
+    void setCreationDate( String username, Date creationDate ) throws UserNotFoundException;
 
     /**
      * Sets the date the user was last modified. This method should throw an
@@ -147,7 +143,7 @@ public interface UserProvider {
      * @param modificationDate the date the user was last modified.
      * @throws UserNotFoundException if the user could not be found.
      */
-    public void setModificationDate(String username, Date modificationDate)
+    void setModificationDate( String username, Date modificationDate )
             throws UserNotFoundException;
 
     /**
@@ -164,7 +160,7 @@ public interface UserProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Set<String> getSearchFields() throws UnsupportedOperationException;
+    Set<String> getSearchFields() throws UnsupportedOperationException;
 
     /**
      * Searches for users based on a set of fields and a query string. The fields must
@@ -181,7 +177,7 @@ public interface UserProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(Set<String> fields, String query)
+    Collection<User> findUsers( Set<String> fields, String query )
             throws UnsupportedOperationException;
 
     /**
@@ -207,8 +203,8 @@ public interface UserProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
-            int numResults) throws UnsupportedOperationException;
+    Collection<User> findUsers( Set<String> fields, String query, int startIndex,
+                                int numResults ) throws UnsupportedOperationException;
 
     /**
      * Returns true if this UserProvider is read-only. When read-only,
@@ -216,20 +212,20 @@ public interface UserProvider {
      *
      * @return true if the user provider is read-only.
      */
-    public boolean isReadOnly();
+    boolean isReadOnly();
 
     /**
      * Returns true if this UserProvider requires a name to be set on User objects.
      *
      * @return true if an name is required with this provider.
      */
-    public boolean isNameRequired();
+    boolean isNameRequired();
 
     /**
      * Returns true if this UserProvider requires an email address to be set on User objects.
      *
      * @return true if an email address is required with this provider.
      */
-    public boolean isEmailRequired();
+    boolean isEmailRequired();
 
 }

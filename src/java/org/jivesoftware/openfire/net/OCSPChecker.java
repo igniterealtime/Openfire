@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.NoSuchProviderException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
@@ -66,7 +65,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OCSPChecker extends PKIXCertPathChecker {
 
-	private static final Logger Log = LoggerFactory.getLogger(OCSPChecker.class);
+    private static final Logger Log = LoggerFactory.getLogger(OCSPChecker.class);
 
     private static String ocspServerUrl = JiveGlobals.getProperty("ocsp.responderURL");
     private static String ocspServerSubject = JiveGlobals.getProperty("ocsp.responderCertSubjectName");
@@ -88,7 +87,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
     }
 
     @Override
-	public void init(boolean forward) throws CertPathValidatorException {
+    public void init(boolean forward) throws CertPathValidatorException {
         if (!forward) {
             certIndex = certs.length - 1;
         } else {
@@ -98,17 +97,17 @@ public class OCSPChecker extends PKIXCertPathChecker {
     }
 
     @Override
-	public boolean isForwardCheckingSupported() {
+    public boolean isForwardCheckingSupported() {
         return false;
     }
 
     @Override
-	public Set<String> getSupportedExtensions() {
+    public Set<String> getSupportedExtensions() {
         return Collections.<String>emptySet();
     }
 
     @Override
-	public void check(Certificate cert, Collection<String> unresolvedCritExts)
+    public void check(Certificate cert, Collection<String> unresolvedCritExts)
             throws CertPathValidatorException {
         Log.debug("OCSPChecker: check called");
         InputStream in = null;

@@ -81,45 +81,45 @@ public class Logger {
             logFileName = s + logFileName;
         }
 
-	init(logFileName, false);
+    init(logFileName, false);
     }
 
     public static void init(String logFileName, boolean suppressSystemOut) {
-	Logger.logFileName = logFileName;
+    Logger.logFileName = logFileName;
 
         String s = System.getProperty(LOG_LEVEL, "3");
 
-	try {
-	    logLevel = Integer.parseInt(s);
-	} catch (Exception e) {
-	}
+    try {
+        logLevel = Integer.parseInt(s);
+    } catch (Exception e) {
+    }
 
-	if (logLevel <= LOG_PRODUCTION) {
-	    Logger.suppressSystemOut = suppressSystemOut;
-	}
+    if (logLevel <= LOG_PRODUCTION) {
+        Logger.suppressSystemOut = suppressSystemOut;
+    }
 
         try {
             File logFile = new File(logFileName);
 
             if (!logFile.exists()) {
                 logFile.createNewFile();
-	    }
+        }
 
             fw = new FileWriter(logFileName, false);
-	    bw = new BufferedWriter(fw, BUFFER_SIZE);
+        bw = new BufferedWriter(fw, BUFFER_SIZE);
 
-	    forcePrintln("Log file is " + logFileName);
+        forcePrintln("Log file is " + logFileName);
         } catch (IOException e) {
-	    fw = null;
-	    bw = null;
+        fw = null;
+        bw = null;
 
             println(getDate() + "could not open log file: "
-		+ logFileName);
+        + logFileName);
         }
     }
 
     public static String getLogFileName() {
-	return logFileName;
+    return logFileName;
     }
 
     /**
@@ -127,7 +127,7 @@ public class Logger {
      * @param error the message to log
      */
     public static synchronized void error(String msg) {
-	println("ERROR:  " + msg);
+    println("ERROR:  " + msg);
     }
 
     /**
@@ -135,9 +135,9 @@ public class Logger {
      * @param e the exception to log
      */
     public static synchronized void exception(String s, Exception e) {
-	error(s);
-	e.printStackTrace();
-	System.out.flush();
+    error(s);
+    e.printStackTrace();
+    System.out.flush();
     }
 
     /**
@@ -145,13 +145,13 @@ public class Logger {
      * @param msg the message to log.
      */
     public static synchronized void println(String msg) {
-	if (bw != null) {
-	    writeFile(msg);
+    if (bw != null) {
+        writeFile(msg);
 
-	    if (suppressSystemOut == true) {
-	    	return;
-	    }
-	}
+        if (suppressSystemOut == true) {
+            return;
+        }
+    }
 
         System.out.println(getDate() + msg);
         System.out.flush();
@@ -176,104 +176,104 @@ public class Logger {
      * @param msg the message to log.
      */
     public static synchronized void writeFile(String msg) {
-	if (bw != null) {
-	    try {
-		synchronized(bw) {
+    if (bw != null) {
+        try {
+        synchronized(bw) {
                     bw.write(getDate() + msg + "\n");
-		}
-	    } catch (IOException e) {
-		System.out.println(getDate() + "Unable to writeFile! "
-		    + e.getMessage());
-		close();
-	    }
+        }
+        } catch (IOException e) {
+        System.out.println(getDate() + "Unable to writeFile! "
+            + e.getMessage());
+        close();
+        }
 
-	    if (writeThru) {
-		flush();
-	    }
-	} else {
+        if (writeThru) {
+        flush();
+        }
+    } else {
             System.out.println(getDate() + msg);
             System.out.flush();
-	}
+    }
     }
 
     /**
      * flushes the buffered writer.
      */
     public static void flush() {
-	try {
-	    if (bw != null) {
-		bw.flush();
-	    }
-	    if (fw != null) {
-		fw.flush();
-	    }
-	} catch (IOException e) {
+    try {
+        if (bw != null) {
+        bw.flush();
+        }
+        if (fw != null) {
+        fw.flush();
+        }
+    } catch (IOException e) {
             System.out.println(getDate() + "could not flush log file. "
-		+ e.getMessage());
-	}
+        + e.getMessage());
+    }
     }
 
     /**
      * Closes the log file.
      */
     public static synchronized void close() {
-	try {
-	    if (bw != null) {
-		bw.flush();
+    try {
+        if (bw != null) {
+        bw.flush();
                 bw.close();
-	    }
+        }
         } catch (IOException e) {
             //System.out.println(getDate() + "could not close buffered writer");
         }
 
-	bw = null;
+    bw = null;
 
         try {
-	    if (fw != null) {
-		fw.flush();
+        if (fw != null) {
+        fw.flush();
                 fw.close();
-	    }
-	} catch (IOException e) {
+        }
+    } catch (IOException e) {
             //System.out.println(getDate() + "could not close log file");
-	}
+    }
 
-	fw = null;
+    fw = null;
     }
 
     private static String[] month = {
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"May",
-	"Jun",
-	"Jul",
-	"Aug",
-	"Sep",
-	"Oct",
-	"Nov",
-	"Dec"
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
     };
 
     public static String getDate() {
         Calendar now = Calendar.getInstance();
 
-	String m = month[now.get(Calendar.MONTH)];
-	String ms = String.valueOf(now.get(Calendar.MILLISECOND));
+    String m = month[now.get(Calendar.MONTH)];
+    String ms = String.valueOf(now.get(Calendar.MILLISECOND));
 
-	if (ms.length() == 1) {
-	    ms += "  ";
-	} else if (ms.length() == 2) {
-	    ms += " ";
-	}
+    if (ms.length() == 1) {
+        ms += "  ";
+    } else if (ms.length() == 2) {
+        ms += " ";
+    }
 
-	String s = m + " " + now.get(Calendar.DAY_OF_MONTH) + " "
-	    + now.get(Calendar.HOUR_OF_DAY) + ":" + now.get(Calendar.MINUTE)
-	    + ":" + now.get(Calendar.SECOND) + "." + ms + " ";
+    String s = m + " " + now.get(Calendar.DAY_OF_MONTH) + " "
+        + now.get(Calendar.HOUR_OF_DAY) + ":" + now.get(Calendar.MINUTE)
+        + ":" + now.get(Calendar.SECOND) + "." + ms + " ";
 
-	s += "            ";
-	s = s.substring(0, 21);
-	return (s);
+    s += "            ";
+    s = s.substring(0, 21);
+    return (s);
     }
 
 }

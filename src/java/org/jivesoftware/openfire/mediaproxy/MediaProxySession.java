@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class MediaProxySession extends Thread implements ProxyCandidate, DatagramListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(MediaProxySession.class);
+    private static final Logger Log = LoggerFactory.getLogger(MediaProxySession.class);
 
-    private List<SessionListener> sessionListeners = new ArrayList<SessionListener>();
+    private List<SessionListener> sessionListeners = new ArrayList<>();
 
     private String id;
     private String pass;
@@ -167,6 +167,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the ID of the session
      */
+    @Override
     public String getSID() {
         return id;
     }
@@ -175,6 +176,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      * Get the pass of this Session
      * A pass can be used to authorize an Session modification
      */
+    @Override
     public String getPass() {
         return pass;
     }
@@ -202,7 +204,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      * Thread override method
      */
     @Override
-	public void run() {
+    public void run() {
         // Create channels for parties
         createChannels();
 
@@ -240,6 +242,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Stop the Session
      */
+    @Override
     public void stopAgent() {
 
         try {
@@ -291,6 +294,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the localhost of the session
      */
+    @Override
     public InetAddress getLocalhost() {
         return localAddress;
     }
@@ -300,6 +304,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the host A ip
      */
+    @Override
     public InetAddress getHostA() {
         return hostA;
     }
@@ -309,6 +314,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the host B ip
      */
+    @Override
     public InetAddress getHostB() {
         return hostB;
     }
@@ -318,6 +324,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @param portA the port number for A
      */
+    @Override
     public void setPortA(int portA) {
         if (Log.isDebugEnabled()) {
             Log.debug("MediaProxySession: PORT CHANGED(A):" + portA);
@@ -330,6 +337,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @param portB the port number for B
      */
+    @Override
     public void setPortB(int portB) {
         if (Log.isDebugEnabled()) {
             Log.debug("MediaProxySession: PORT CHANGED(B):" + portB);
@@ -342,6 +350,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @param hostA the host for A
      */
+    @Override
     public void setHostA(InetAddress hostA) {
         this.hostA = hostA;
     }
@@ -351,6 +360,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @param hostB the host for B
      */
+    @Override
     public void setHostB(InetAddress hostB) {
         this.hostB = hostB;
     }
@@ -360,6 +370,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the port for A
      */
+    @Override
     public int getPortA() {
         return portA;
     }
@@ -369,6 +380,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the port for B
      */
+    @Override
     public int getPortB() {
         return portB;
     }
@@ -378,6 +390,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the local port for A
      */
+    @Override
     public int getLocalPortA() {
         return localPortA;
     }
@@ -387,10 +400,12 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @return the local port for B
      */
+    @Override
     public int getLocalPortB() {
         return localPortB;
     }
 
+    @Override
     public void sendFromPortA(String host, int port) {
         try {
             InetAddress address = InetAddress.getByName(host);
@@ -404,6 +419,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
         }
     }
 
+    @Override
     public void sendFromPortB(String host, int port) {
         try {
             InetAddress address = InetAddress.getByName(host);
@@ -422,6 +438,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
      *
      * @param datagramPacket
      */
+    @Override
     public boolean datagramReceived(DatagramPacket datagramPacket) {
         timestamp = System.currentTimeMillis();
         return true;
@@ -441,7 +458,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
             long lastTimeStamp = getTimestamp();
 
             @Override
-			public void run() {
+            public void run() {
                 if (lastTimeStamp == getTimestamp()) {
                     stopAgent();
                     return;
@@ -464,7 +481,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
         lifeTimer = new Timer();
         lifeTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
-			public void run() {
+            public void run() {
                 stopAgent();
             }
         }, lifetime, lifetime);

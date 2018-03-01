@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -19,6 +17,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder"
     errorPage="error.jsp"
@@ -29,8 +28,8 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -42,6 +41,17 @@
     String email = ParamUtils.getParameter(request,"email");
     boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
@@ -113,6 +123,8 @@
                 <fmt:message key="user.create.invalid_name" />
             <% } else if (errors.get("email") != null) { %>
                 <fmt:message key="user.create.invalid_email" />
+            <% } else if (errors.get("csrf") != null) { %>
+                CSRF Failure!
             <% } %>
             </td>
         </tr>
@@ -142,6 +154,7 @@
 
 <form action="user-edit-form.jsp">
 
+<input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="hidden" name="save" value="true">
 

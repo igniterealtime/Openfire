@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3187 $
- * $Date: 2005-12-11 13:34:34 -0300 (Sun, 11 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,17 +31,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionCloseListener;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -61,13 +58,14 @@ import com.jcraft.jzlib.ZOutputStream;
  * client and server.
  *
  * @author Iain Shigeoka
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance. Currently only in use for s2s.
  */
 public class SocketConnection implements Connection {
 
-	private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
+    private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
     private static Map<SocketConnection, String> instances =
-            new ConcurrentHashMap<SocketConnection, String>();
+            new ConcurrentHashMap<>();
 
     /**
      * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
@@ -81,13 +79,14 @@ public class SocketConnection implements Connection {
     private long idleTimeout = -1;
 
     final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<ConnectionCloseListener, Object>();
+            new HashMap<>();
 
     private Socket socket;
     private SocketReader socketReader;
 
     private Writer writer;
     private AtomicBoolean writing = new AtomicBoolean(false);
+    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
@@ -151,6 +150,9 @@ public class SocketConnection implements Connection {
         xmlSerializer = new XMLSocketWriter(writer, this);
 
         instances.put(this, "");
+
+        // Default this sensibly.
+        this.tlsPolicy = this.getConfiguration().getTlsPolicy();
     }
 
     /**
@@ -164,12 +166,26 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws IOException {
+    @Deprecated
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
+        startTLS( clientMode );
+    }
+
+    public void startTLS(boolean clientMode) throws IOException {
         if (!secure) {
             secure = true;
+
             // Prepare for TLS
-            tlsStreamHandler = new TLSStreamHandler(this, socket, clientMode, remoteServer,
-                    session instanceof IncomingServerSession);
+            final ClientAuth clientAuth;
+            if (session instanceof IncomingServerSession)
+            {
+                clientAuth = ClientAuth.needed;
+            }
+            else
+            {
+                clientAuth = ClientAuth.wanted;
+            }
+            tlsStreamHandler = new TLSStreamHandler(socket, getConfiguration(), clientMode);
             if (!clientMode) {
                 // Indicate the client that the server is ready to negotiate TLS
                 deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -182,10 +198,12 @@ public class SocketConnection implements Connection {
         }
     }
 
+    @Override
     public void addCompression() {
         // WARNING: We do not support adding compression for incoming traffic but not for outgoing traffic.
     }
 
+    @Override
     public void startCompression() {
         compressed = true;
 
@@ -209,6 +227,16 @@ public class SocketConnection implements Connection {
             Log.error("Error while starting compression", e);
             compressed = false;
         }
+    }
+
+    @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // This is an ugly hack to get backwards compatibility with the pre-MINA era. As this implementation is being
+        // removed (it is marked as deprecated - at the time of writing, it is only used for S2S). The ugly hack: assume
+        // S2S:
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        return connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
     }
 
     public boolean validate() {
@@ -238,10 +266,17 @@ public class SocketConnection implements Connection {
         return !isClosed();
     }
 
+    @Override
     public void init(LocalSession owner) {
         session = owner;
     }
 
+    @Override
+    public void reinit(LocalSession owner) {
+        session = owner;
+    }
+
+    @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);
@@ -251,18 +286,22 @@ public class SocketConnection implements Connection {
         }
     }
 
+    @Override
     public void removeCloseListener(ConnectionCloseListener listener) {
         listeners.remove(listener);
     }
 
+    @Override
     public byte[] getAddress() throws UnknownHostException {
         return socket.getInetAddress().getAddress();
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         return socket.getInetAddress().getHostAddress();
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         return socket.getInetAddress().getHostName();
     }
@@ -295,21 +334,22 @@ public class SocketConnection implements Connection {
         return writer;
     }
 
+    @Override
     public boolean isClosed() {
-        if (session == null) {
-            return socket.isClosed();
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+        return state.get() == State.CLOSED;
     }
 
+    @Override
     public boolean isSecure() {
         return secure;
     }
 
+    @Override
     public boolean isCompressed() {
         return compressed;
     }
 
+    @Override
     public TLSPolicy getTlsPolicy() {
         return tlsPolicy;
     }
@@ -323,10 +363,12 @@ public class SocketConnection implements Connection {
      *
      * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
      */
+    @Override
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         this.tlsPolicy = tlsPolicy;
     }
 
+    @Override
     public CompressionPolicy getCompressionPolicy() {
         return compressionPolicy;
     }
@@ -336,6 +378,7 @@ public class SocketConnection implements Connection {
      *
      * @param compressionPolicy whether Compression is enabled or is disabled.
      */
+    @Override
     public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
         this.compressionPolicy = compressionPolicy;
     }
@@ -356,10 +399,12 @@ public class SocketConnection implements Connection {
         this.idleTimeout = timeout;
     }
 
+    @Override
     public int getMajorXMPPVersion() {
         return majorVersion;
     }
 
+    @Override
     public int getMinorXMPPVersion() {
         return minorVersion;
     }
@@ -372,24 +417,13 @@ public class SocketConnection implements Connection {
      * @param majorVersion the major version.
      * @param minorVersion the minor version.
      */
+    @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
     }
 
-    public String getLanguage() {
-        return language;
-    }
-
-    /**
-     * Sets the language code that should be used for this connection (e.g. "en").
-     *
-     * @param language the language code.
-     */
-    public void setLanaguage(String language) {
-        this.language = language;
-    }
-
+    @Override
     public boolean isFlashClient() {
         return flashClient;
     }
@@ -402,10 +436,12 @@ public class SocketConnection implements Connection {
      *
      * @param flashClient true if the if the connection is a flash client.
      */
+    @Override
     public void setFlashClient(boolean flashClient) {
         this.flashClient = flashClient;
     }
 
+    @Override
     public Certificate[] getLocalCertificates() {
         if (tlsStreamHandler != null) {
             return tlsStreamHandler.getSSLSession().getLocalCertificates();
@@ -413,81 +449,93 @@ public class SocketConnection implements Connection {
         return new Certificate[0];
     }
 
+    @Override
     public Certificate[] getPeerCertificates() {
         if (tlsStreamHandler != null) {
             try {
                 return tlsStreamHandler.getSSLSession().getPeerCertificates();
             } catch (SSLPeerUnverifiedException e ) {
-                Log.warn("Error retrieving client certificates of: " + tlsStreamHandler.getSSLSession(), e);
-                //pretend tlsStreamHandler is null
+                // Perfectly valid when client-auth is 'want', a problem when it is 'need'.
+                Log.debug( "Peer certificates have not been verified - there are no certificates to return for: {}", tlsStreamHandler.getSSLSession().getPeerHost(), e );
             }
         }
         return new Certificate[0];
     }
 
+    @Override
     public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
         this.usingSelfSignedCertificate = isSelfSigned;
     }
 
+    @Override
     public boolean isUsingSelfSignedCertificate() {
         return usingSelfSignedCertificate;
     }
 
+    @Override
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
 
+    /**
+     * Closes the connection without sending any data (not even a stream end-tag).
+     */
+    public void forceClose() {
+        close( true );
+    }
+
+    /**
+     * Closes the connection after trying to send a stream end tag.
+     */
+    @Override
     public void close() {
         close( false );
     }
 
-    public void close( boolean peerIsKnownToBeDisconnected ) {
-        boolean wasClosed = false;
-        synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    if (session != null) {
-                        session.setStatus(Session.STATUS_CLOSED);
-                    }
+    /**
+     * Normal connection close will attempt to write the stream end tag. Otherwise this method
+     * forces the connection closed immediately. This method will be called from {@link SocketSendingTracker} 
+     * when sending data over the socket has taken a long time and we need to close the socket, discard
+     * the connection and its session.
+     */
+    private void close(boolean force) {
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
+            }
 
-                    if ( !peerIsKnownToBeDisconnected ) {
-                        boolean allowedToWrite = false;
-                        try {
-                            requestWriting();
-                            allowedToWrite = true;
-                            // Register that we started sending data on the connection
-                            writeStarted();
-                            writer.write("</stream:stream>");
-                            if (flashClient) {
-                                writer.write('\0');
-                            }
-                            writer.flush();
-                        }
-                        catch (IOException e) {
-                            // Do nothing
-                        }
-                        finally {
-                            // Register that we finished sending data on the connection
-                            writeFinished();
-                            if (allowedToWrite) {
-                                releaseWriting();
-                            }
-                        }
+            if (!force) {
+                boolean allowedToWrite = false;
+                try {
+                    requestWriting();
+                    allowedToWrite = true;
+                    // Register that we started sending data on the connection
+                    writeStarted();
+                    writer.write("</stream:stream>");
+                    if (flashClient) {
+                        writer.write('\0');
                     }
+                    writer.flush();
                 }
                 catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
+                    Log.debug("Failed to deliver stream close tag: " + e.getMessage());
                 }
-                closeConnection();
-                wasClosed = true;
+                
+                // Register that we finished sending data on the connection
+                writeFinished();
+                if (allowedToWrite) {
+                    releaseWriting();
+                }
             }
-        }
-        if (wasClosed) {
+                
+            closeConnection();
             notifyCloseListeners();
+            
         }
     }
 
+    @Override
     public void systemShutdown() {
         deliverRawText("<stream:error><system-shutdown " +
                 "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
@@ -545,24 +593,6 @@ public class SocketConnection implements Connection {
         instances.remove(this);
     }
 
-    /**
-     * Forces the connection to be closed immediately no matter if closing the socket takes
-     * a long time. This method should only be called from {@link SocketSendingTracker} when
-     * sending data over the socket has taken a long time and we need to close the socket, discard
-     * the connection and its session.
-     */
-    private void forceClose() {
-        if (session != null) {
-            // Set that the session is closed. This will prevent threads from trying to
-            // deliver packets to this session thus preventing future locks.
-            session.setStatus(Session.STATUS_CLOSED);
-        }
-        closeConnection();
-        // Notify the close listeners so that the SessionManager can send unavailable
-        // presences if required.
-        notifyCloseListeners();
-    }
-
     private void closeConnection() {
         release();
         try {
@@ -582,6 +612,7 @@ public class SocketConnection implements Connection {
         }
     }
 
+    @Override
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (isClosed()) {
             backupDeliverer.deliver(packet);
@@ -619,6 +650,7 @@ public class SocketConnection implements Connection {
         }
     }
 
+    @Override
     public void deliverRawText(String text) {
         if (!isClosed()) {
             boolean errorDelivering = false;
@@ -692,7 +724,7 @@ public class SocketConnection implements Connection {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " socket: " + socket + " session: " + session;
     }
 

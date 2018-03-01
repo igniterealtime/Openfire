@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,15 +34,15 @@ import org.slf4j.LoggerFactory;
  * @author Thiago Camargo
  */
 abstract class Channel implements Runnable {
-	
-	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(Channel.class);
 
     protected byte[] buf = new byte[5000];
     protected DatagramSocket dataSocket;
     protected DatagramPacket packet;
     protected boolean enabled = true;
 
-    List<DatagramListener> listeners = new ArrayList<DatagramListener>();
+    List<DatagramListener> listeners = new ArrayList<>();
 
     protected InetAddress host;
     protected int port;
@@ -132,6 +129,7 @@ abstract class Channel implements Runnable {
     /**
      * Thread override method
      */
+    @Override
     public void run() {
         try {
             while (enabled) {

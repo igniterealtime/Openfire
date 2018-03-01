@@ -1,8 +1,5 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: 1772 $
-  -	$Date: 2005-08-11 12:56:15 -0700 (Thu, 11 Aug 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.database.DbConnectionManager,
@@ -27,11 +24,11 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
-	// Redirect if we've already run setup:
-	if (!XMPPServer.getInstance().isSetupMode()) {
+    // Redirect if we've already run setup:
+    if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
     }
@@ -46,20 +43,20 @@
             if (con == null) {
             }
             else {
-            	// See if the Jive db schema is installed.
-            	try {
-            		Statement stmt = con.createStatement();
-            		// Pick an arbitrary table to see if it's there.
-            		stmt.executeQuery("SELECT * FROM ofID");
-            		stmt.close();
-            	}
-            	catch (SQLException sqle) {
+                // See if the Jive db schema is installed.
+                try {
+                    Statement stmt = con.createStatement();
+                    // Pick an arbitrary table to see if it's there.
+                    stmt.executeQuery("SELECT * FROM ofID");
+                    stmt.close();
+                }
+                catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
                     errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
-            	}
+                }
             }
         }
         catch (SQLException ex) {
@@ -72,7 +69,7 @@
         }
         finally {
             try {
-        	    con.close();
+                con.close();
             } catch (Exception ignored) {}
         }
         return success;
@@ -207,17 +204,17 @@
 </head>
 <body>
 
-	<h1>
-	<fmt:message key="setup.datasource.standard.title" />
-	</h1>
+    <h1>
+    <fmt:message key="setup.datasource.standard.title" />
+    </h1>
 
-	<p>
-	<fmt:message key="setup.datasource.standard.info" /> <fmt:message key="title" />.
-	</p>
+    <p>
+    <fmt:message key="setup.datasource.standard.info" /> <fmt:message key="title" />.
+    </p>
 
-	<p>
-	<b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /> <tt>[Openfire_HOME]/resources/database</tt>.
-	</p>
+    <p>
+    <b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /> <tt>[Openfire_HOME]/resources/database</tt>.
+    </p>
 
 <%  if (errors.size() > 0) { %>
     <div class="error">
@@ -235,17 +232,18 @@
 
 
 
-	<!-- BEGIN jive-contentBox -->
-	<div class="jive-contentBox">
+    <!-- BEGIN jive-contentBox -->
+    <div class="jive-contentBox">
 
 
 <%  // DB preset data
     List<String[]> presets = new ArrayList<String []>();
-    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://[host-name]:3306/[database-name]?rewriteBatchedStatements=true"});
-    presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@[host-name]:1521:[SID]"});
-    presets.add(new String[]{"Microsoft SQLServer","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://[host-name]/[database-name];appName=jive"});
-    presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://[host-name]:5432/[database-name]"});
-    presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://[host]:50000/[database-name]"});
+    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://HOSTNAME:3306/DATABASENAME?rewriteBatchedStatements=true"});
+    presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID"});
+    presets.add(new String[]{"Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire"});
+    presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME"});
+    presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"});
+    presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"});
 %>
 <script language="JavaScript" type="text/javascript">
 var data = new Array();
@@ -272,14 +270,20 @@ function checkSubmit() {
 
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
-	<td nowrap align="right"><fmt:message key="setup.datasource.standard.label" />:</td>
+    <td nowrap align="right"><fmt:message key="setup.datasource.standard.label" />:</td>
     <td>
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
             <%  for (int i=0; i<presets.size(); i++) {
                     String[] data = presets.get(i);
+                    final String selected;
+                    if(data[1].equals(driver) ) {
+                        selected = "SELECTED";
+                    } else {
+                        selected = "";
+                    }
             %>
-                <option value="<%= i %>"> &#149; <%= data[0] %>
+                <option value="<%= i %>" <%=selected%>> &#149; <%= data[0] %>
             <%  } %>
         </select>
     </td>
@@ -306,7 +310,7 @@ function checkSubmit() {
     <td>
         <input type="text" name="serverURL" size="50" maxlength="250"
          value="<%= ((serverURL != null) ? serverURL : "") %>">
-	    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.valid_url" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.valid_url" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("serverURL") != null) { %>
             <span class="jive-error-text">
             <%= errors.get("serverURL") %>
@@ -352,7 +356,7 @@ function checkSubmit() {
         Minimum Connections:
     </td>
     <td>
-	    <input type="text" name="minConnections" size="5" maxlength="5" value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
+        <input type="text" name="minConnections" size="5" maxlength="5" value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("minConnections") != null) { %>
             <span class="jive-error-text">
@@ -367,7 +371,7 @@ function checkSubmit() {
         Maximum Connections:
     </td>
     <td>
-	    <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
+        <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
         <%  if (errors.get("maxConnections") != null) { %>
             <span class="jive-error-text">
@@ -395,14 +399,14 @@ function checkSubmit() {
 
 <br>
 
-		<div align="right"><div class="jive-description" style="padding-bottom:10px;">
-			<fmt:message key="setup.datasource.standard.note" /></div>
-			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-		</div>
-	</form>
+        <div align="right"><div class="jive-description" style="padding-bottom:10px;">
+            <fmt:message key="setup.datasource.standard.note" /></div>
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+        </div>
+    </form>
 
-	</div>
-	<!-- END jive-contentBox -->
+    </div>
+    <!-- END jive-contentBox -->
 
 
 </body>

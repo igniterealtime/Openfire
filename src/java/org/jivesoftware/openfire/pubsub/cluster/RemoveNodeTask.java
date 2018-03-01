@@ -23,9 +23,10 @@ public class RemoveNodeTask extends NodeTask
         super(node);
     }
 
+    @Override
     public void run()
     {
-		log.debug("[TASK] Removing node - nodeID: {}", getNodeId());
+        log.debug("[TASK] Removing node - nodeID: {}", getNodeId());
         getService().removeNode(getNodeId());
     }
 

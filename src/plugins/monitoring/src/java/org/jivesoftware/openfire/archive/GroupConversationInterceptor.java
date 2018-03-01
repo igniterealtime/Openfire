@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,7 +109,7 @@ public class GroupConversationInterceptor implements MUCEventListener, Startable
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
         // Process this event in the senior cluster member or local JVM when not in a cluster
         if (ClusterManager.isSeniorClusterMember()) {
-            conversationManager.processRoomMessage(roomJID, user, nickname, message.getBody(), new Date());
+            conversationManager.processRoomMessage(roomJID, user, nickname, message.getBody(), message.toXML(), new Date());
         }
         else {
             boolean withBody = conversationManager.isRoomArchivingEnabled() && (
@@ -121,7 +118,7 @@ public class GroupConversationInterceptor implements MUCEventListener, Startable
 
             ConversationEventsQueue eventsQueue = conversationManager.getConversationEventsQueue();
             eventsQueue.addGroupChatEvent(conversationManager.getRoomConversationKey(roomJID),
-                    ConversationEvent.roomMessageReceived(roomJID, user, nickname, withBody ? message.getBody() : null, new Date()));
+                    ConversationEvent.roomMessageReceived(roomJID, user, nickname, withBody ? message.getBody() : null, message.toXML(), new Date()));
         }
     }
 

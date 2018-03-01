@@ -1,7 +1,4 @@
 /**
- * $Revision $
- * $Date $
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,63 +23,63 @@ import com.sun.voip.server.*;
 public class SpeakerChannel implements IChannel
 {
     private static final Logger Log = LoggerFactory.getLogger(SpeakerChannel.class);
-	private MemberReceiver memberReceiver;
-	private short sequenceNumber = 1;
-	private CallParticipant cp;
-	private int kt = 0;
+    private MemberReceiver memberReceiver;
+    private short sequenceNumber = 1;
+    private CallParticipant cp;
+    private int kt = 0;
     private boolean active = true;
 
 
-	public SpeakerChannel(MemberReceiver memberReceiver)
-	{
-		this.memberReceiver = memberReceiver;
+    public SpeakerChannel(MemberReceiver memberReceiver)
+    {
+        this.memberReceiver = memberReceiver;
 
-		Log.info("SpeakerChannel init " + memberReceiver);
-	}
+        Log.info("SpeakerChannel init " + memberReceiver);
+    }
 
-	public void sendComfortNoisePayload()
-	{
+    public void sendComfortNoisePayload()
+    {
 
-	}
+    }
 
-	public boolean encode()
-	{
-		return false;
-	}
+    public boolean encode()
+    {
+        return false;
+    }
 
-	public boolean isActive()
-	{
-		return active;
-	}
+    public boolean isActive()
+    {
+        return active;
+    }
 
-	public void setActive(boolean active)
-	{
-		this.active = active;
-		Log.info("SpeakerChannel setActive " + active + " " + memberReceiver);
-	}
+    public void setActive(boolean active)
+    {
+        this.active = active;
+        Log.info("SpeakerChannel setActive " + active + " " + memberReceiver);
+    }
 
-	public void pushAudio(int[] dataToSend)
-	{
-		if (memberReceiver != null && active)
-		{
-			if (sequenceNumber < 10) Log.info("SpeakerChannel pushAudio " + memberReceiver);
-			memberReceiver.handleWebRtcMedia(dataToSend, sequenceNumber++);
-		}
-	}
+    public void pushAudio(int[] dataToSend)
+    {
+        if (memberReceiver != null && active)
+        {
+            if (sequenceNumber < 10) Log.info("SpeakerChannel pushAudio " + memberReceiver);
+            memberReceiver.handleWebRtcMedia(dataToSend, sequenceNumber++);
+        }
+    }
 
-	public synchronized void pushAudio(byte[] rtpData, byte[] opus)
-	{
+    public synchronized void pushAudio(byte[] rtpData, byte[] opus)
+    {
 
-	}
+    }
 
-	public void pushReceiverAudio(int[] dataToSend)
-	{
-		if (memberReceiver != null && active)
-		{
-			kt++;
-			if (kt < 10) Log.info("SpeakerChannel pushReceiverAudio " + memberReceiver);
-			memberReceiver.handleWebRtcMedia(dataToSend, sequenceNumber++);
-		}
-	}
+    public void pushReceiverAudio(int[] dataToSend)
+    {
+        if (memberReceiver != null && active)
+        {
+            kt++;
+            if (kt < 10) Log.info("SpeakerChannel pushReceiverAudio " + memberReceiver);
+            memberReceiver.handleWebRtcMedia(dataToSend, sequenceNumber++);
+        }
+    }
 
 }

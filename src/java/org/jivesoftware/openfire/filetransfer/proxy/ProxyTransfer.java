@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,21 +32,21 @@ public interface ProxyTransfer extends Cacheable, FileTransferProgress {
      *
      * @param digest the digest which uniquely identifies this transfer.
      */
-    public void setTransferDigest(String digest);
+    void setTransferDigest( String digest );
 
     /**
      * Returns the transfer digest uniquely identifies a file transfer in the system.
      *  
      * @return the transfer digest uniquely identifies a file transfer in the system.
      */
-    public String getTransferDigest();
+    String getTransferDigest();
 
     /**
      * Returns true if the Bytestream is ready to be activated and the proxy transfer can begin.
      *
      * @return true if the Bytestream is ready to be activated.
      */
-    public boolean isActivatable();
+    boolean isActivatable();
 
     /**
      * Transfers the file from the initiator to the target.
@@ -57,5 +54,5 @@ public interface ProxyTransfer extends Cacheable, FileTransferProgress {
      * @throws java.io.IOException when an error occurs either reading from the input stream or
      * writing to the output stream.
      */
-    public void doTransfer() throws IOException;
+    void doTransfer() throws IOException;
 }

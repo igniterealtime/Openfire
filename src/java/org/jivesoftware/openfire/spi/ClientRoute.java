@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,6 +56,7 @@ public class ClientRoute implements Cacheable, Externalizable {
         this.available = available;
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -70,11 +67,13 @@ public class ClientRoute implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID.toByteArray());
         ExternalizableUtil.getInstance().writeBoolean(out, available);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         byte[] bytes = ExternalizableUtil.getInstance().readByteArray(in);
         // Retrieve the NodeID but try to use the singleton instance

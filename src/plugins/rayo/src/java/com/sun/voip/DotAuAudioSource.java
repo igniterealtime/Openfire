@@ -46,74 +46,74 @@ public class DotAuAudioSource extends FileAudioSource {
      * Read an audio file.  Pad with linear silence.
      */
     public DotAuAudioSource(String path) throws IOException {
-	this.path = path;
-	initialize();
+    this.path = path;
+    initialize();
     }
 
     private void initialize() throws IOException {
-	done();
+    done();
 
-	in = getInputStream(path);
+    in = getInputStream(path);
 
-	/*
-	 * Audio file header
-  	 *
+    /*
+     * Audio file header
+     *
          * int magic = 0x2e 0x73 0x6e 0x64 which is ".snd"
          * int hdr_size;
          * int data_size;
          * int encoding = 1 for ulaw, 3 for linear;
          * int sample_rate;
          * int channels;
-	 */
-	int bytesAvailable = 0;
+     */
+    int bytesAvailable = 0;
 
-	try {
-	    bytesAvailable = in.available();
-	} catch (IOException ioe) {
-	    throw new IOException("available() failed " + path);
-	}
+    try {
+        bytesAvailable = in.available();
+    } catch (IOException ioe) {
+        throw new IOException("available() failed " + path);
+    }
 
-	if (bytesAvailable < AUDIO_FILE_HEADER_SIZE) {
-	    throw new IOException ("audiofile " + path + " is too small " + 
-		bytesAvailable);
-	}
+    if (bytesAvailable < AUDIO_FILE_HEADER_SIZE) {
+        throw new IOException ("audiofile " + path + " is too small " + 
+        bytesAvailable);
+    }
 
-	byte[] audioFileHeader = new byte[AUDIO_FILE_HEADER_SIZE];
+    byte[] audioFileHeader = new byte[AUDIO_FILE_HEADER_SIZE];
 
-	try {
-	    in.read(audioFileHeader, 0, AUDIO_FILE_HEADER_SIZE);
-	} catch (Exception e) {
-	    throw new IOException("error reading " + path + " "
-		+ e.getMessage());
-	}
-	    
-	encoding = audioFileHeader[15];
+    try {
+        in.read(audioFileHeader, 0, AUDIO_FILE_HEADER_SIZE);
+    } catch (Exception e) {
+        throw new IOException("error reading " + path + " "
+        + e.getMessage());
+    }
+        
+    encoding = audioFileHeader[15];
 
-	channels = audioFileHeader[23];
+    channels = audioFileHeader[23];
 
-	if (audioFileHeader[0] != 0x2e || audioFileHeader[1] != 0x73 ||
-	    audioFileHeader[2] != 0x6e || audioFileHeader[3] != 0x64 ||
-	    (encoding != ULAW && encoding != LINEAR) ||
-	    channels > 16) {
-	
-	    throw new IOException("bad audio file header " + path);
-	}
+    if (audioFileHeader[0] != 0x2e || audioFileHeader[1] != 0x73 ||
+        audioFileHeader[2] != 0x6e || audioFileHeader[3] != 0x64 ||
+        (encoding != ULAW && encoding != LINEAR) ||
+        channels > 16) {
+    
+        throw new IOException("bad audio file header " + path);
+    }
 
-	sampleRate = 
-	    ((((int)audioFileHeader[16]) << 24) & 0xff000000) +
-	    ((((int)audioFileHeader[17]) << 16) & 0x00ff0000) +
-	    ((((int)audioFileHeader[18]) << 8) & 0x0000ff00) +
-	    (((int)audioFileHeader[19]) & 0xff);
+    sampleRate = 
+        ((((int)audioFileHeader[16]) << 24) & 0xff000000) +
+        ((((int)audioFileHeader[17]) << 16) & 0x00ff0000) +
+        ((((int)audioFileHeader[18]) << 8) & 0x0000ff00) +
+        (((int)audioFileHeader[19]) & 0xff);
 
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("AudioFile is " + path + ".  Resource is " + 
+    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+        Logger.println("AudioFile is " + path + ".  Resource is " + 
                 DotAuAudioSource.class.getResource(path) + ".  size " 
                 + in.available() + " encoding " + encoding 
-		+ " channels " + channels + " sampleRate " 
-		+ sampleRate);
-	}
+        + " channels " + channels + " sampleRate " 
+        + sampleRate);
+    }
 
-	try {
+    try {
             bytesAvailable = in.available();
             
             int hdr_size =
@@ -133,112 +133,112 @@ public class DotAuAudioSource extends FileAudioSource {
                 
                 in.read(data, 0, excess_hdr_size);
 
-		if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-		    Logger.println("Reading excess header " 
-		        + " hdr size " + hdr_size 
-			+ " excess " + excess_hdr_size);
-		}
+        if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+            Logger.println("Reading excess header " 
+                + " hdr size " + hdr_size 
+            + " excess " + excess_hdr_size);
+        }
             }  
-	} catch (Exception e) {
+    } catch (Exception e) {
             throw new IOException("Can't read data!  " + path + " "
-		+ e.getMessage());
+        + e.getMessage());
         }
     }
 
     public int[] getLinearData(int sampleTime) throws IOException {
-	byte[] fileData = readAudioFile(sampleTime);
+    byte[] fileData = readAudioFile(sampleTime);
 
-	if (fileData == null) {
-	    return null;
-	}
+    if (fileData == null) {
+        return null;
+    }
 
-	int[] linearData;
-	if (encoding == ULAW) {
+    int[] linearData;
+    if (encoding == ULAW) {
             // 1 ulaw byte for each int
             linearData = new int[fileData.length];
-	    AudioConversion.ulawToLinear(fileData, 0, fileData.length, 
-		linearData);
-	} else {
+        AudioConversion.ulawToLinear(fileData, 0, fileData.length, 
+        linearData);
+    } else {
             // 2 linear bytes for each int
             linearData = new int[fileData.length / 2];
 
-	    for (int i = 0; i < linearData.length; i++) {
-	        linearData[i] = (int) 
-		    ((short)(((fileData[2 * i] << 8) & 0xff00) |
-	            (fileData[(2 * i) + 1] & 0xff)));
-	    }
-	}
+        for (int i = 0; i < linearData.length; i++) {
+            linearData[i] = (int) 
+            ((short)(((fileData[2 * i] << 8) & 0xff00) |
+                (fileData[(2 * i) + 1] & 0xff)));
+        }
+    }
 
-	return linearData;
+    return linearData;
     }
 
     private byte[] readAudioFile(int sampleTime) throws IOException {
-	int bytesAvailable;
+    int bytesAvailable;
 
-	if (in == null || (bytesAvailable = in.available()) == 0) {
-	    done();
-	    return null;
-	}
+    if (in == null || (bytesAvailable = in.available()) == 0) {
+        done();
+        return null;
+    }
 
-	int sampleSize = 2;
+    int sampleSize = 2;
 
-	if (encoding == AudioSource.ULAW) {
-	    sampleSize = 1;
-	}
+    if (encoding == AudioSource.ULAW) {
+        sampleSize = 1;
+    }
 
-	int len = 
-	    sampleRate * sampleTime * channels * sampleSize / 1000;
+    int len = 
+        sampleRate * sampleTime * channels * sampleSize / 1000;
 
-	byte[] data = new byte[len];
+    byte[] data = new byte[len];
 
-	try {
-	    int readSize;
+    try {
+        int readSize;
 
-	    readSize = Math.min(len, bytesAvailable);
-	
-	    /*
-	     * Read the file
-	     */ 
-    	    in.read(data, 0, readSize);
+        readSize = Math.min(len, bytesAvailable);
+    
+        /*
+         * Read the file
+         */ 
+            in.read(data, 0, readSize);
 
-	    byte b;
+        byte b;
 
-	    if (encoding == ULAW) {
-		b = AudioConversion.PCMU_SILENCE;
-	    } else {
-		b = AudioConversion.PCM_SILENCE;
-	    }
+        if (encoding == ULAW) {
+        b = AudioConversion.PCMU_SILENCE;
+        } else {
+        b = AudioConversion.PCM_SILENCE;
+        }
 
-	    for (int i = readSize; i < len; i++) {
-		data[i] = b;
-	    }
-	} catch (IOException e) {
-	    throw new IOException("Can't read data!  " + path + " "
-		+ e.getMessage());
-	}
+        for (int i = readSize; i < len; i++) {
+        data[i] = b;
+        }
+    } catch (IOException e) {
+        throw new IOException("Can't read data!  " + path + " "
+        + e.getMessage());
+    }
 
-	return data;
+    return data;
     }
 
     public int getSampleRate() {
-	return sampleRate;
+    return sampleRate;
     }
 
     public int getChannels() {
-	return channels;
+    return channels;
     }
 
     public void rewind() throws IOException {
-	initialize();
+    initialize();
     }
 
     public void done() {
-	if (in != null) {
-	    try {
-	        in.close();
-	    } catch (IOException e) {
-	    }
-	}
+    if (in != null) {
+        try {
+            in.close();
+        } catch (IOException e) {
+        }
+    }
     }
 
 }

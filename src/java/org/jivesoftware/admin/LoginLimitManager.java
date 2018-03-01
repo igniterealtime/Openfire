@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LoginLimitManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
 
     // Wrap this guy up so we can mock out the LoginLimitManager class.
     private static class LoginLimitManagerContainer {
@@ -68,8 +68,8 @@ public class LoginLimitManager {
      */
     private LoginLimitManager() {
         // Set up initial maps
-        attemptsPerIP = new ConcurrentHashMap<String,Long>();
-        attemptsPerUsername = new ConcurrentHashMap<String,Long>();
+        attemptsPerIP = new ConcurrentHashMap<>();
+        attemptsPerUsername = new ConcurrentHashMap<>();
 
         // Max number of attempts per ip address that can be performed in given time frame (10 attempts default)
         maxAttemptsPerIP = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerIP", 10);
@@ -146,7 +146,7 @@ public class LoginLimitManager {
 
     /**
      * Runs at configured interval to clear out attempts per username, thereby wiping lockouts.
-	 */
+     */
     private class PerUsernameTask extends TimerTask {
 
         /**
@@ -156,11 +156,11 @@ public class LoginLimitManager {
         public void run() {
             attemptsPerUsername.clear();
         }
-	}
+    }
 
     /**
      * Runs at configured interval to clear out attempts per ip address, thereby wiping lockouts.
-	 */
+     */
     private class PerIPAddressTask extends TimerTask {
 
         /**
@@ -170,6 +170,6 @@ public class LoginLimitManager {
         public void run() {
             attemptsPerIP.clear();
         }
-	}
+    }
 
 }

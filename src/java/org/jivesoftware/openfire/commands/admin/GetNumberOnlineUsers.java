@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,12 +39,12 @@ import java.util.Set;
 public class GetNumberOnlineUsers extends AdHocCommand {
 
     @Override
-	protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
     @Override
-	public void execute(SessionData data, Element command) {
+    public void execute(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -60,7 +57,7 @@ public class GetNumberOnlineUsers extends AdHocCommand {
         field.setVariable("onlineusersnum");
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<String>(sessions.size());
+        Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
             users.add(session.getAddress().toBareJID());
         }
@@ -70,30 +67,30 @@ public class GetNumberOnlineUsers extends AdHocCommand {
     }
 
     @Override
-	protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
     @Override
-	public String getCode() {
+    public String getCode() {
         return "http://jabber.org/protocol/admin#get-online-users-num";
     }
 
     @Override
-	public String getDefaultLabel() {
+    public String getDefaultLabel() {
         // TODO Use i18n
         return "Number of Online Users";
     }
 
     @Override
-	protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
     @Override
-	public int getMaxStages(SessionData data) {
+    public int getMaxStages(SessionData data) {
         return 0;
     }
 }

@@ -55,39 +55,39 @@ public class SunSpatialAudio implements SpatialAudio {
 
     public void initialize(String conferenceId, String callId, int sampleRate, int channels, int samplesPerPacket) {
 
-	this.conferenceId = conferenceId;
-	this.callId = callId;
-	this.sampleRate = sampleRate;
-	this.channels = channels;
-	this.samplesPerPacket = samplesPerPacket;
+    this.conferenceId = conferenceId;
+    this.callId = callId;
+    this.sampleRate = sampleRate;
+    this.channels = channels;
+    this.samplesPerPacket = samplesPerPacket;
 
-	packetLength = samplesPerPacket * channels;
+    packetLength = samplesPerPacket * channels;
 
-	msPerSample = 1000. / sampleRate;
+    msPerSample = 1000. / sampleRate;
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println(toString() + ":" + conferenceId
-	        + " " + callId + "::"
-	        + " sample rate " + sampleRate + ", channels " + channels
-	        + ", milliseconds per sample " + msPerSample);
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println(toString() + ":" + conferenceId
+            + " " + callId + "::"
+            + " sample rate " + sampleRate + ", channels " + channels
+            + ", milliseconds per sample " + msPerSample);
+    }
 
-	setMaxExp();
+    setMaxExp();
     }
 
     public static void setSpatialBehindVolume(double behindVolume) {
-	Logger.println("Spatial behind volume set to "
-	    + behindVolume);
+    Logger.println("Spatial behind volume set to "
+        + behindVolume);
 
         SunSpatialAudio.behindVolume = behindVolume;
     }
 
     public static double getSpatialBehindVolume() {
-	return behindVolume;
+    return behindVolume;
     }
 
     public static void setSpatialEchoDelay(double echoDelay) {
-	Logger.println("Echo delay set to " + echoDelay);
+    Logger.println("Echo delay set to " + echoDelay);
         SunSpatialAudio.newEchoDelay = echoDelay;
     }
 
@@ -96,61 +96,61 @@ public class SunSpatialAudio implements SpatialAudio {
     }
 
     public static void setSpatialEchoVolume(double echoVolume) {
-	Logger.println("Echo volume set to " + echoVolume);
+    Logger.println("Echo volume set to " + echoVolume);
         SunSpatialAudio.echoVolume = echoVolume;
     }
 
     public static double getSpatialEchoVolume() {
-	return echoVolume;
+    return echoVolume;
     }
 
     public static void setSpatialFalloff(double falloff) {
-	SunSpatialAudio.falloff = falloff;
+    SunSpatialAudio.falloff = falloff;
 
-	setMaxExp();
+    setMaxExp();
     }
 
     public static double getSpatialFalloff() {
-	return falloff;
+    return falloff;
     }
 
     public static void setSpatialMinVolume(double minVolume) {
-	SunSpatialAudio.minVolume = minVolume;
+    SunSpatialAudio.minVolume = minVolume;
 
-	if (minVolume < 0) {
-	    SunSpatialAudio.minVolume = 0;
-	} else if (minVolume > 1) {
-	    SunSpatialAudio.minVolume = 1;
-	}
+    if (minVolume < 0) {
+        SunSpatialAudio.minVolume = 0;
+    } else if (minVolume > 1) {
+        SunSpatialAudio.minVolume = 1;
+    }
 
-	setMaxExp();
+    setMaxExp();
     }
 
     public static double getSpatialMinVolume() {
-	return minVolume;
+    return minVolume;
     }
 
     private static void setMaxExp() {
-	/*
-	 * Calculate the exponent by which falloff must be raised to
-	 * in order to get a value near minVolume.
-	 *
-	 * falloff**maxExp = minVolume which is equivalent to
-	 *
-	 * maxExp * log(falloff) = log(minVolume) which means
-	 *
-	 * maxExp = log(minVolume) / log(falloff);
-	 */
-	if (minVolume >= falloff) {
-	    maxExp = 0;
-	} else {
-	    maxExp = (int) ((Math.log(minVolume) / Math.log(falloff)));
-	}
+    /*
+     * Calculate the exponent by which falloff must be raised to
+     * in order to get a value near minVolume.
+     *
+     * falloff**maxExp = minVolume which is equivalent to
+     *
+     * maxExp * log(falloff) = log(minVolume) which means
+     *
+     * maxExp = log(minVolume) / log(falloff);
+     */
+    if (minVolume >= falloff) {
+        maxExp = 0;
+    } else {
+        maxExp = (int) ((Math.log(minVolume) / Math.log(falloff)));
+    }
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println("minVolume " + minVolume + " falloff " + falloff
-	        + " maxExp set to " + maxExp);
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        Logger.println("minVolume " + minVolume + " falloff " + falloff
+            + " maxExp set to " + maxExp);
+    }
     }
 
     int count = 0;
@@ -159,363 +159,363 @@ public class SunSpatialAudio implements SpatialAudio {
      * Generate spatial audio.
      */
     public int[] generateSpatialAudio(String sourceId,
-	    int[] previousContribution, int[] currentContribution,
-	    double[] spatialValues) {
+        int[] previousContribution, int[] currentContribution,
+        double[] spatialValues) {
 
-	if (channels == 1) {
-	    return currentContribution;  // no support for 1 channel conference
-	}
+    if (channels == 1) {
+        return currentContribution;  // no support for 1 channel conference
+    }
 
-	if (previousContribution == null && currentContribution == null) {
-	    return null;	// nothing here to do
-	}
+    if (previousContribution == null && currentContribution == null) {
+        return null;	// nothing here to do
+    }
 
-	echoDelay = newEchoDelay;	// set echo delay in case it changed
+    echoDelay = newEchoDelay;	// set echo delay in case it changed
 
-	double frontBack = spatialValues[0];
+    double frontBack = spatialValues[0];
 
-	if (echoVolume == 0 || echoDelay == 0) {
-	    frontBack = 0;
-	}
+    if (echoVolume == 0 || echoDelay == 0) {
+        frontBack = 0;
+    }
 
-	double leftRight = spatialValues[1];
-	double volume = spatialValues[3];
+    double leftRight = spatialValues[1];
+    double volume = spatialValues[3];
 
-	double delay = MAX_DELAY * leftRight;
+    double delay = MAX_DELAY * leftRight;
 
-	/*
-	 * Calculate the number of ints for the delay.
-	 * There are always 2 channels so we have to multiply by 2.
-	 */
-	int delayLength = (int) Math.round(delay / msPerSample) * 2;
+    /*
+     * Calculate the number of ints for the delay.
+     * There are always 2 channels so we have to multiply by 2.
+     */
+    int delayLength = (int) Math.round(delay / msPerSample) * 2;
 
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    if ((count++ % 200) == 0) {
-	        Logger.println("Delay "
-	 	    + (Math.round(delay * 1000) / 1000.)
-		    + " delay length " + delayLength);
-	    }
-	}
+    if (Logger.logLevel >= Logger.LOG_INFO) {
+        if ((count++ % 200) == 0) {
+            Logger.println("Delay "
+            + (Math.round(delay * 1000) / 1000.)
+            + " delay length " + delayLength);
+        }
+    }
 
-	int[] newContribution;
+    int[] newContribution;
 
-	double nonDominantChannelVolume =
-	    getAttenuatedVolume(leftRight, volume);
+    double nonDominantChannelVolume =
+        getAttenuatedVolume(leftRight, volume);
 
-	if (nonDominantChannelVolume < minVolume) {
-	    nonDominantChannelVolume = minVolume;
-	}
+    if (nonDominantChannelVolume < minVolume) {
+        nonDominantChannelVolume = minVolume;
+    }
 
-	if (delayLength == 0) {
-	    /*
-	     * Sound is in the center.
-	     */
-	    if (volume == 1 && frontBack >= 0) {
-		/*
-		 * There are no adjustments to be made.  Just return
-		 * the current contribution.
-		 */
-		if (Logger.logLevel == -88) {
-		    Util.dump("Current contribution", currentContribution, 0,
-			16);
-		}
-		return currentContribution;
-	    }
+    if (delayLength == 0) {
+        /*
+         * Sound is in the center.
+         */
+        if (volume == 1 && frontBack >= 0) {
+        /*
+         * There are no adjustments to be made.  Just return
+         * the current contribution.
+         */
+        if (Logger.logLevel == -88) {
+            Util.dump("Current contribution", currentContribution, 0,
+            16);
+        }
+        return currentContribution;
+        }
 
-	    newContribution = new int[packetLength];
+        newContribution = new int[packetLength];
 
-	    if (Logger.logLevel == -88) {
-		Logger.println("need to make new contribution");
-	    }
+        if (Logger.logLevel == -88) {
+        Logger.println("need to make new contribution");
+        }
 
-	    if (currentContribution != null) {
+        if (currentContribution != null) {
                 int copyLength = Math.min(packetLength,
                                           currentContribution.length);
                 System.arraycopy(currentContribution, 0, newContribution, 0,
-		    copyLength);
-	    }
-	} else {
-	    if (Logger.logLevel == -88) {
-		Logger.println("do leftRight " + delayLength);
-	    }
+            copyLength);
+        }
+    } else {
+        if (Logger.logLevel == -88) {
+        Logger.println("do leftRight " + delayLength);
+        }
 
-	    newContribution = doLeftRight(previousContribution,
-		currentContribution, delayLength, nonDominantChannelVolume);
-	}
+        newContribution = doLeftRight(previousContribution,
+        currentContribution, delayLength, nonDominantChannelVolume);
+    }
 
         if (frontBack < 0) {
             if (Logger.logLevel == -88) {
-		Logger.println("do frontBack " + echoDelay);
-	    }
+        Logger.println("do frontBack " + echoDelay);
+        }
 
             doFrontBack(previousContribution, newContribution, frontBack,
-	        delayLength, nonDominantChannelVolume);
+            delayLength, nonDominantChannelVolume);
 
-	    volume *= getAttenuatedVolume(frontBack, behindVolume);
-	}
+        volume *= getAttenuatedVolume(frontBack, behindVolume);
+    }
 
-	if (volume == 1) {
-	    return newContribution;
-	}
+    if (volume == 1) {
+        return newContribution;
+    }
 
         if (Logger.logLevel == -78) {
-	    Logger.println("Adjust volumes to "
-		+ (Math.round(volume * 1000) / 1000.));
-	}
+        Logger.println("Adjust volumes to "
+        + (Math.round(volume * 1000) / 1000.));
+    }
 
-	return adjustVolumes(newContribution, volume);
+    return adjustVolumes(newContribution, volume);
     }
 
     private int[] doLeftRight(int[] previousContribution,
-	    int[] currentContribution, int delayLength,
-	    double nonDominantChannelVolume) {
+        int[] currentContribution, int delayLength,
+        double nonDominantChannelVolume) {
 
-	int channelOffset;
+    int channelOffset;
 
-	if (delayLength < 0) {
-	    channelOffset = 1;   // delay right channel
-	    delayLength = -delayLength;
-	} else {
-	    channelOffset = 0;   // delay left channel
-	}
+    if (delayLength < 0) {
+        channelOffset = 1;   // delay right channel
+        delayLength = -delayLength;
+    } else {
+        channelOffset = 0;   // delay left channel
+    }
 
         int[] newContribution = new int[packetLength];
 
-	if (currentContribution == null) {
-	    /*
-	     * There is no current contribution but there is a
-	     * previous contribution.  Just copy the previous
-    	     * contribution to our zero filled new contribution.
-	     */
+    if (currentContribution == null) {
+        /*
+         * There is no current contribution but there is a
+         * previous contribution.  Just copy the previous
+             * contribution to our zero filled new contribution.
+         */
             int inIx = previousContribution.length - delayLength
-	        + channelOffset;
+            + channelOffset;
 
-	    int outIx = channelOffset;
+        int outIx = channelOffset;
 
-	    for (int i = 0; i < delayLength; i += 2) {
-	        newContribution[outIx] = previousContribution[inIx];
-	        inIx += 2;
-	        outIx += 2;
-	    }
-
-	    return newContribution;
+        for (int i = 0; i < delayLength; i += 2) {
+            newContribution[outIx] = previousContribution[inIx];
+            inIx += 2;
+            outIx += 2;
         }
 
-	/*
-	 * There is a current contribution.  There may or may not
-	 * be a previous contribution.  We must not modify the
-	 * current contribution so we make a copy.
-	 */
-	System.arraycopy(currentContribution, 0, newContribution, 0,
-	    packetLength);
+        return newContribution;
+        }
 
-	//Util.dump("new contrib", newContribution, 0, newContribution.length);
+    /*
+     * There is a current contribution.  There may or may not
+     * be a previous contribution.  We must not modify the
+     * current contribution so we make a copy.
+     */
+    System.arraycopy(currentContribution, 0, newContribution, 0,
+        packetLength);
 
-	/*
-	 * Now shift the newContribution up by delayLength, then
-	 * copy the previousContribution samples to the beginning
-	 * of our newContribution.
-	 *
-	 * First copy to an intermediate buffer so we don't overwrite
-	 * good data.  Otherwise, we'd have to start the copy at the
-	 * end of the buffer and move downward.
-	 */
-	int[] c = new int[newContribution.length - delayLength];
+    //Util.dump("new contrib", newContribution, 0, newContribution.length);
 
-	for (int i = channelOffset; i < c.length; i += 2) {
-	    c[i] = newContribution[i];
-	}
+    /*
+     * Now shift the newContribution up by delayLength, then
+     * copy the previousContribution samples to the beginning
+     * of our newContribution.
+     *
+     * First copy to an intermediate buffer so we don't overwrite
+     * good data.  Otherwise, we'd have to start the copy at the
+     * end of the buffer and move downward.
+     */
+    int[] c = new int[newContribution.length - delayLength];
 
-	for (int i = channelOffset; i < c.length; i += 2) {
-	    newContribution[i + delayLength] = (int) (c[i] * nonDominantChannelVolume);
-	}
+    for (int i = channelOffset; i < c.length; i += 2) {
+        c[i] = newContribution[i];
+    }
 
-	if (previousContribution != null) {
+    for (int i = channelOffset; i < c.length; i += 2) {
+        newContribution[i + delayLength] = (int) (c[i] * nonDominantChannelVolume);
+    }
+
+    if (previousContribution != null) {
             int inIx = packetLength - delayLength + channelOffset;
 
-	    int outIx = channelOffset;
+        int outIx = channelOffset;
 
-	    for (int i = 0; i < delayLength; i += 2) {
-	        newContribution[outIx] = (int)
-		    (previousContribution[inIx] * nonDominantChannelVolume);
+        for (int i = 0; i < delayLength; i += 2) {
+            newContribution[outIx] = (int)
+            (previousContribution[inIx] * nonDominantChannelVolume);
 
-		inIx += 2;
-		outIx += 2;
-	    }
-	} else {
-	    //Logger.println("current but no prev");
+        inIx += 2;
+        outIx += 2;
+        }
+    } else {
+        //Logger.println("current but no prev");
 
-	    for (int i = channelOffset; i < delayLength; i += 2) {
-	        newContribution[i] = 0;
-	    }
-	}
+        for (int i = channelOffset; i < delayLength; i += 2) {
+            newContribution[i] = 0;
+        }
+    }
 
-	return newContribution;
+    return newContribution;
     }
 
     private int count1 = 0;
 
     private void doFrontBack(int[] previousContribution, int[] newContribution,
-	    double frontBack, int delayLength, double nonDominantChannelVolume) {
+        double frontBack, int delayLength, double nonDominantChannelVolume) {
 
         //Util.dump("result before, p 1, c 3", newContribution, 0,
-	//    newContribution.length);
+    //    newContribution.length);
 
         //dump(newContribution);
 
-	int echoDelayLength = (int) Math.round(echoDelay / msPerSample);
+    int echoDelayLength = (int) Math.round(echoDelay / msPerSample);
 
-	echoDelayLength *= Math.abs(frontBack);
+    echoDelayLength *= Math.abs(frontBack);
 
-	echoDelayLength *= 2;   // 2 samples for stereo
+    echoDelayLength *= 2;   // 2 samples for stereo
 
-	if (echoDelayLength <= 0) {
-	    return;
-	}
+    if (echoDelayLength <= 0) {
+        return;
+    }
 
-	int channelOffset;
+    int channelOffset;
 
-	if (delayLength < 0) {
-	    channelOffset = 1;   // delay right channel
-	    delayLength = -delayLength;
-	} else {
-	    channelOffset = 0;   // delay left channel
-	}
+    if (delayLength < 0) {
+        channelOffset = 1;   // delay right channel
+        delayLength = -delayLength;
+    } else {
+        channelOffset = 0;   // delay left channel
+    }
 
         if (Logger.logLevel >= Logger.LOG_INFO) {
-	    if ((count1 % 200) == 0) {
-	        Logger.println("adding echo"
-		    + " delayLength " + delayLength + " c off " + channelOffset
-    		    + " edl " + echoDelayLength + " echoDelay " + echoDelay
-		    + " msps " + (Math.round(msPerSample * 1000) / 1000.));
-	   }
-	}
+        if ((count1 % 200) == 0) {
+            Logger.println("adding echo"
+            + " delayLength " + delayLength + " c off " + channelOffset
+                + " edl " + echoDelayLength + " echoDelay " + echoDelay
+            + " msps " + (Math.round(msPerSample * 1000) / 1000.));
+       }
+    }
 
-	/*
-	 * Copy newContribution
-	 */
-	int[] c = new int[packetLength];
+    /*
+     * Copy newContribution
+     */
+    int[] c = new int[packetLength];
 
-	System.arraycopy(newContribution, 0, c, 0, c.length);
+    System.arraycopy(newContribution, 0, c, 0, c.length);
 
-	int inIx = 0;
-	int outIx = echoDelayLength;
-	int length = c.length - echoDelayLength;
+    int inIx = 0;
+    int outIx = echoDelayLength;
+    int length = c.length - echoDelayLength;
 
         if (Logger.logLevel >= Logger.LOG_INFO) {
             if ((count1 % 200) == 0) {
-	        Logger.println("inIx " + inIx + " outIx " + outIx + " length "
-	            + length);
-	    }
-	}
+            Logger.println("inIx " + inIx + " outIx " + outIx + " length "
+                + length);
+        }
+    }
 
-	for (int i = 0; i < length; i++) {
-	    newContribution[outIx] = clip((int)
-		(c[outIx] + (c[inIx] * echoVolume)));
+    for (int i = 0; i < length; i++) {
+        newContribution[outIx] = clip((int)
+        (c[outIx] + (c[inIx] * echoVolume)));
 
-	    inIx++;
-	    outIx++;
-	}
+        inIx++;
+        outIx++;
+    }
 
-	if (previousContribution == null) {
-	    count1++;
-	    return;
-	}
+    if (previousContribution == null) {
+        count1++;
+        return;
+    }
 
-	/*
-	 * Add echo from previousContribution
-	 */
-	if (delayLength == 0) {
-	    inIx = packetLength - echoDelayLength;
-	    outIx = 0;
-	    length = echoDelayLength;
+    /*
+     * Add echo from previousContribution
+     */
+    if (delayLength == 0) {
+        inIx = packetLength - echoDelayLength;
+        outIx = 0;
+        length = echoDelayLength;
 
-	    for (int i = 0; i < length; i++) {
-	        newContribution[outIx] = clip((int)
-		    (c[outIx] + (previousContribution[inIx] * echoVolume)));
+        for (int i = 0; i < length; i++) {
+            newContribution[outIx] = clip((int)
+            (c[outIx] + (previousContribution[inIx] * echoVolume)));
 
-	        inIx++;
-    	        outIx++;
-	    }
-	    count1++;
-	    return;
-	}
+            inIx++;
+                outIx++;
+        }
+        count1++;
+        return;
+    }
 
-	inIx = packetLength - delayLength - echoDelayLength
-	    + channelOffset;
+    inIx = packetLength - delayLength - echoDelayLength
+        + channelOffset;
 
-	outIx = channelOffset;
-	length = echoDelayLength;
+    outIx = channelOffset;
+    length = echoDelayLength;
 
         if ((count1 % 200) == 0) {
-	    Logger.println("inIx " + inIx + " outIx " + outIx + " length "
-	        + length);
-	}
+        Logger.println("inIx " + inIx + " outIx " + outIx + " length "
+            + length);
+    }
 
-	for (int i = 0; i < length; i += 2) {
-	    newContribution[outIx] = clip((int)
-		(c[outIx] +
-		(previousContribution[inIx] * echoVolume * nonDominantChannelVolume)));
+    for (int i = 0; i < length; i += 2) {
+        newContribution[outIx] = clip((int)
+        (c[outIx] +
+        (previousContribution[inIx] * echoVolume * nonDominantChannelVolume)));
 
-	    inIx += 2;
-	    outIx += 2;
-	}
+        inIx += 2;
+        outIx += 2;
+    }
 
-	/*
-	 * Add echo from the other channel
-	 */
-	if (channelOffset == 0) {
-	    outIx = 1;
-	} else {
-	    outIx = 0;
-	}
+    /*
+     * Add echo from the other channel
+     */
+    if (channelOffset == 0) {
+        outIx = 1;
+    } else {
+        outIx = 0;
+    }
 
-	inIx = outIx + packetLength - echoDelayLength;
+    inIx = outIx + packetLength - echoDelayLength;
         length = echoDelayLength - outIx;
 
         if ((count1 % 200) == 0) {
-	    Logger.println("inIx " + inIx + " outIx " + outIx + " length "
-	        + length);
-	}
+        Logger.println("inIx " + inIx + " outIx " + outIx + " length "
+            + length);
+    }
 
-	int i = 0;
+    int i = 0;
 
-	for (i = 0; i < length; i += 2) {
-	    newContribution[outIx] = clip((int)
-		(c[outIx] + (previousContribution[inIx] * echoVolume)));
+    for (i = 0; i < length; i += 2) {
+        newContribution[outIx] = clip((int)
+        (c[outIx] + (previousContribution[inIx] * echoVolume)));
 
-	    inIx += 2;
-	    outIx += 2;
-	}
+        inIx += 2;
+        outIx += 2;
+    }
 
-	count1++;
+    count1++;
     }
 
     private int[] adjustVolumes(int[] contribution, double volume) {
-	/*
-	 * Adjust the volume
-	 */
-	int[] c = new int[contribution.length];
+    /*
+     * Adjust the volume
+     */
+    int[] c = new int[contribution.length];
 
-	for (int i = 0; i < contribution.length; i++) {
-	    c[i] = clip((int) (contribution[i] * volume));
-	}
+    for (int i = 0; i < contribution.length; i++) {
+        c[i] = clip((int) (contribution[i] * volume));
+    }
 
-	return c;
+    return c;
     }
 
     private int clip(int sample) {
         if (sample > 32767) {
-	    if (Logger.logLevel == -79) {
-	        Logger.println("clipping " + sample + " to 32767");
-	    }
+        if (Logger.logLevel == -79) {
+            Logger.println("clipping " + sample + " to 32767");
+        }
             return 32767;
         }
 
         if (sample < -32768) {
-	    if (Logger.logLevel == -79) {
-	        Logger.println("clipping " + sample + " to -32768");
-	    }
+        if (Logger.logLevel == -79) {
+            Logger.println("clipping " + sample + " to -32768");
+        }
             return -32768;
         }
 
@@ -524,27 +524,27 @@ public class SunSpatialAudio implements SpatialAudio {
 
     private double getAttenuatedVolume(double offset, double volume) {
 
-	if (offset == 0) {
-	    return 1;
-	}
+    if (offset == 0) {
+        return 1;
+    }
 
-	int exp = (int) (Math.abs(offset) * maxExp);
+    int exp = (int) (Math.abs(offset) * maxExp);
 
-	return volume * Math.pow(falloff, exp);
+    return volume * Math.pow(falloff, exp);
     }
 
     public String toString() {
-	return "SunSpatialAudio";
+    return "SunSpatialAudio";
     }
 
     public static void main(String[] args) {
-	new SunSpatialAudio().test();
+    new SunSpatialAudio().test();
     }
 
     private void test() {
-	initialize("Test", "Test", 44100, 2, 44100 / 50);
+    initialize("Test", "Test", 44100, 2, 44100 / 50);
 
-	echoDelay = .1;
+    echoDelay = .1;
 
         double[] spatialValues = new double[4];
 
@@ -553,11 +553,11 @@ public class SunSpatialAudio implements SpatialAudio {
         spatialValues[2] = 0;
         spatialValues[3] = 1;
 
-	int[] p = new int[64];
+    int[] p = new int[64];
         int[] c = new int[64];
         int[] result;
 
-	fill(p, 1);
+    fill(p, 1);
         fill(c, 3);
 
         //Util.dump("c before", c, 0, c.length);
@@ -570,7 +570,7 @@ public class SunSpatialAudio implements SpatialAudio {
 
 if (false) {
 
-	p = c;
+    p = c;
         c = new int[64];
 
         fill(c);

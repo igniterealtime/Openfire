@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 32902 $
- * $Date: 2006-08-04 11:11:39 -0700 (Fri, 04 Aug 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +42,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class RoutingManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(RoutingManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(RoutingManager.class);
+    
     private static final String ADD_ROUTING_RULE =
             "INSERT INTO fpRouteRule (workgroupID, queueID, rulePosition, query) VALUES (?,?,?,?)";
     private static final String DELETE_ROUTING_RULE =

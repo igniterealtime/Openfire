@@ -1,7 +1,4 @@
-/**
- * $Revision: 3023 $
- * $Date: 2005-11-02 18:00:15 -0300 (Wed, 02 Nov 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +28,6 @@ import org.jivesoftware.openfire.commands.admin.user.DeleteUser;
 import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
 import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
-import org.jivesoftware.openfire.commands.clearspace.ChangeSharedSecret;
-import org.jivesoftware.openfire.commands.clearspace.GenerateNonce;
-import org.jivesoftware.openfire.commands.clearspace.SystemAdminAdded;
-import org.jivesoftware.openfire.commands.clearspace.SystemAdminRemoved;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -86,19 +79,21 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException {
         return manager.process(packet);
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
@@ -106,14 +101,17 @@ public class AdHocCommandHandler extends IQHandler
         return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE, "jabber:x:data").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         if (NAMESPACE.equals(node)) {
             return true;
@@ -125,8 +123,9 @@ public class AdHocCommandHandler extends IQHandler
         }
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         if (!NAMESPACE.equals(node)) {
             answer = Collections.emptyList();
         }
@@ -134,17 +133,17 @@ public class AdHocCommandHandler extends IQHandler
             for (AdHocCommand command : manager.getCommands()) {
                 // Only include commands that the sender can invoke (i.e. has enough permissions)
                 if (command.hasPermission(senderJID)) {
-					final DiscoItem item = new DiscoItem(new JID(serverName),
-							command.getLabel(), command.getCode(), null);
-					answer.add(item);
-				}
+                    final DiscoItem item = new DiscoItem(new JID(serverName),
+                            command.getLabel(), command.getCode(), null);
+                    answer.add(item);
+                }
             }
         }
         return answer.iterator();
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         infoHandler = server.getIQDiscoInfoHandler();
@@ -152,7 +151,7 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public void start() throws IllegalStateException {
+    public void start() throws IllegalStateException {
         super.start();
         infoHandler.setServerNodeInfoProvider(NAMESPACE, this);
         itemsHandler.setServerNodeInfoProvider(NAMESPACE, this);
@@ -161,7 +160,7 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         infoHandler.removeServerNodeInfoProvider(NAMESPACE);
         itemsHandler.removeServerNodeInfoProvider(NAMESPACE);
@@ -217,7 +216,6 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new PacketsNotification());
         addCommand(new GetServerStats());
         addCommand(new HttpBindStatus());
-        addCommand(new ChangeSharedSecret());
         addCommand(new UserCreated());
         addCommand(new UserModified());
         addCommand(new UserDeleting());
@@ -232,9 +230,6 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new VCardDeleting());
         addCommand(new VCardModified());
         addCommand(new GetAdminConsoleInfo());
-        addCommand(new GenerateNonce());
-        addCommand(new SystemAdminAdded());
-        addCommand(new SystemAdminRemoved());
     }
 
     private void startCommand(AdHocCommand command) {

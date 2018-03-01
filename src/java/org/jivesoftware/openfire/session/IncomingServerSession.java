@@ -1,8 +1,4 @@
-/**
- * $RCSfile: IncomingServerSession.java,v $
- * $Revision: 3174 $
- * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +48,7 @@ public interface IncomingServerSession extends ServerSession {
      *
      * @return domains, subdomains and virtual hosts that where validated.
      */
-    public Collection<String> getValidatedDomains();
+    Collection<String> getValidatedDomains();
 
     /**
      * Returns the domain or subdomain of the local server used by the remote server
@@ -63,5 +59,5 @@ public interface IncomingServerSession extends ServerSession {
      * @return the domain or subdomain of the local server used by the remote server
      *         when validating the session.
      */
-    public String getLocalDomain();
+    String getLocalDomain();
 }

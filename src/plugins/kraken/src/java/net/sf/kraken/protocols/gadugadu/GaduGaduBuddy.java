@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -108,11 +105,11 @@ public class GaduGaduBuddy extends TransportBuddy {
     }
     
     public void setBuddyGroups(List<String> groups) {
-    	this.groups = groups;
+        this.groups = groups;
     }
     
     public void setBuddyNickname(String nickname) {
-    	this.nickname = nickname;
+        this.nickname = nickname;
     }
     
 }

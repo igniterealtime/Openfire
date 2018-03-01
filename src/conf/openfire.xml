@@ -35,24 +35,24 @@
     -->
 
     <!-- SPDY  Protocol is npn.
-    	(note: npn does not work with Java 8)
-    	add -Xbootclasspath/p:/OPENFIRE_HOME/lib/npn-boot.jar to .vmoptions file    -->
+        (note: npn does not work with Java 8)
+        add -Xbootclasspath/p:/OPENFIRE_HOME/lib/npn-boot.jar to .vmoptions file    -->
 
     <!--
     <spdy>
-    	<protocol>npn</protocol>
+        <protocol>npn</protocol>
     </spdy>
     -->
 
-	<!-- XEP-0198 properties -->
+    <!-- XEP-0198 properties -->
     <stream>
-    	<management>
-    		<!-- Whether stream management is offered to clients by server. -->
-    		<active>true</active>
-    		<!-- Number of stanzas sent to client before a stream management
-    			 acknowledgement request is made. -->
-    		<requestFrequency>5</requestFrequency>
-    	</management>
+        <management>
+            <!-- Whether stream management is offered to clients by server. -->
+            <active>true</active>
+            <!-- Number of stanzas sent to client before a stream management
+                 acknowledgement request is made. -->
+            <requestFrequency>5</requestFrequency>
+        </management>
     </stream>
 
 </jive>

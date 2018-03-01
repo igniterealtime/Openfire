@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3126 $
- * $Date: 2005-11-30 15:20:53 -0300 (Wed, 30 Nov 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,15 +62,15 @@ import org.xmpp.packet.Presence;
  */
 public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
 
-    final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<String, RoutableComponents>();
-    private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
-    private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
+    final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<>();
+    private Map<String, IQ> componentInfo = new ConcurrentHashMap<>();
+    private Map<JID, JID> presenceMap = new ConcurrentHashMap<>();
     /**
      * Holds the list of listeners that will be notified of component events.
      */
-    private List<ComponentEventListener> listeners = new CopyOnWriteArrayList<ComponentEventListener>();
+    private List<ComponentEventListener> listeners = new CopyOnWriteArrayList<>();
 
     private static InternalComponentManager instance;
     /**
@@ -98,13 +94,13 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
     }
 
     @Override
-	public void start() {
+    public void start() {
         // Set this ComponentManager as the current component manager
         ComponentManagerFactory.setComponentManager(instance);
 
@@ -119,7 +115,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         super.stop();
         if (getAddress() != null) {
             // Remove the route to this service
@@ -127,6 +123,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    @Override
     public void addComponent(String subdomain, Component component) throws ComponentException {
         synchronized (routables) {
             RoutableComponents routable = routables.get(subdomain);
@@ -205,12 +202,13 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      *
      * @param subdomain the subdomain of the component's address.
      */
+    @Override
     public void removeComponent(String subdomain) {
-    	RoutableComponents components = null;
-    	if (routables == null || (components = routables.get(subdomain)) == null) {
-    		return;
-    	}
-        List<Component> componentsToRemove = new ArrayList<Component>(components.getComponents());
+        RoutableComponents components = null;
+        if (routables == null || (components = routables.get(subdomain)) == null) {
+            return;
+        }
+        List<Component> componentsToRemove = new ArrayList<>(components.getComponents());
         for (Component component : componentsToRemove) {
             removeComponent(subdomain, component);
         }
@@ -275,6 +273,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         componentInfo.remove(componentJID.getDomain());
     }
 
+    @Override
     public void sendPacket(Component component, Packet packet) {
         if (packet != null && packet.getFrom() == null) {
             throw new IllegalArgumentException("Packet with no FROM address was received from component.");
@@ -286,13 +285,16 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    @Override
     public IQ query(Component component, IQ packet, long timeout) throws ComponentException {
-        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<>(8);
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
+            @Override
             public void receivedAnswer(IQ packet) {
                 answer.offer(packet);
             }
 
+            @Override
             public void answerTimeout(String packetId) {
                 Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
             }
@@ -307,6 +309,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return reply;
     }
 
+    @Override
     public void query(Component component, IQ packet, IQResultListener listener) throws ComponentException {
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), listener);
         sendPacket(component, packet);
@@ -343,14 +346,17 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         listeners.remove(listener);
     }
 
+    @Override
     public String getProperty(String name) {
         return JiveGlobals.getProperty(name);
     }
 
+    @Override
     public void setProperty(String name, String value) {
         //Ignore
     }
 
+    @Override
     public String getServerName() {
         return serverDomain;
     }
@@ -359,6 +365,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return JiveGlobals.getHomeDirectory();
     }
 
+    @Override
     public boolean isExternalMode() {
         return false;
     }
@@ -462,6 +469,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         component.processPacket(iq);
     }
 
+    @Override
     public JID getAddress() {
         return serviceAddress;
     }
@@ -474,6 +482,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      *
      * @param packet the packet to process.
      */
+    @Override
     public void process(Packet packet) throws PacketException {
         List<Component> components = getComponents(packet.getFrom());
         // Only process packets that were sent by registered components
@@ -536,7 +545,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     private static class RoutableComponents implements RoutableChannelHandler {
 
         private JID jid;
-        final private List<Component> components = new ArrayList<Component>();
+        final private List<Component> components = new ArrayList<>();
 
         public RoutableComponents(JID jid, Component component) {
             this.jid = jid;
@@ -582,10 +591,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             return component;
         }
 
+        @Override
         public JID getAddress() {
             return jid;
         }
 
+        @Override
         public void process(Packet packet) throws PacketException {
             Component component = getNextComponent();
             component.processPacket(packet);

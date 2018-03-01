@@ -13,13 +13,13 @@ import com.reucon.openfire.plugin.archive.xep.AbstractXepSupport;
  */
 public class Xep0313Support extends AbstractXepSupport {
 
-	private static final String NAMESPACE = "urn:xmpp:mam:0";
+    private static final String NAMESPACE = "urn:xmpp:mam:0";
 
-	public Xep0313Support(XMPPServer server) {
-		super(server, NAMESPACE, "XEP-0313 IQ Dispatcher");
+    public Xep0313Support(XMPPServer server) {
+        super(server, NAMESPACE,NAMESPACE, "XEP-0313 IQ Dispatcher", true);
 
-		this.iqHandlers = new ArrayList<IQHandler>();
-		iqHandlers.add(new IQQueryHandler());
-	}
+        this.iqHandlers = new ArrayList<>();
+        iqHandlers.add(new IQQueryHandler0());
+    }
 
 }

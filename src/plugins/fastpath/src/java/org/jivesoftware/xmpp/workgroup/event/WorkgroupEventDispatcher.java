@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 22043 $
- * $Date: 2005-09-22 19:44:05 -0700 (Thu, 22 Sep 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public class WorkgroupEventDispatcher {
 
-	private static final Logger Log = LoggerFactory.getLogger(WorkgroupEventDispatcher.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(WorkgroupEventDispatcher.class);
+    
     private static List<WorkgroupEventListener> listeners =
             new CopyOnWriteArrayList<WorkgroupEventListener>();
 

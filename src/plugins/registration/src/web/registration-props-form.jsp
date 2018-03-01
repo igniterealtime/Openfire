@@ -16,7 +16,6 @@
 
 <%@ page
    import="java.util.*,
-           org.jivesoftware.admin.*,
            org.jivesoftware.openfire.XMPPServer,
            org.jivesoftware.openfire.user.*,
            org.jivesoftware.openfire.plugin.RegistrationPlugin,
@@ -24,15 +23,17 @@
            org.jivesoftware.util.*"
    errorPage="error.jsp"%>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 
 <%
     boolean save = request.getParameter("save") != null;
     boolean saveWelcome = request.getParameter("savemessage") != null;
     boolean saveGroup = request.getParameter("savegroup") != null;
     boolean saveHeader = request.getParameter("saveheader") != null;
+    boolean savePrivacyList = request.getParameter("saveprivacylist") != null;
 
     boolean imEnabled = ParamUtils.getBooleanParameter(request, "imenabled", false);
     boolean emailEnabled = ParamUtils.getBooleanParameter(request, "emailenabled", false);
@@ -44,6 +45,9 @@
     boolean reCaptchaNoScript = ParamUtils.getBooleanParameter(request, "recaptchanoscript", false);
     String reCaptchaPublicKey = ParamUtils.getParameter(request, "recaptchapublickey");
     String reCaptchaPrivateKey = ParamUtils.getParameter(request, "recaptchaprivatekey");
+
+    long autoExpiry = ParamUtils.getLongParameter( request, "autoexpiry", -1 );
+    String autoExpiryCustom = ParamUtils.getParameter( request, "autoexpiry_custom" );
 
     String contactIM = ParamUtils.getParameter(request, "contactIM");
     boolean addIM = ParamUtils.getBooleanParameter(request, "addIM");
@@ -57,7 +61,11 @@
     String group = ParamUtils.getParameter(request, "groupname");
 
     String header = ParamUtils.getParameter(request, "header");
-
+    
+    boolean privacyListEnabled = ParamUtils.getBooleanParameter(request, "privacylistenabled", false);
+    String privacyList = ParamUtils.getParameter(request, "privacylist");
+    String privacyListName = ParamUtils.getParameter(request, "privacylistname");
+    
     RegistrationPlugin plugin = (RegistrationPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("registration");
 
     Map<String, String> errors = new HashMap<String, String>();
@@ -125,6 +133,20 @@
         plugin.setReCaptchaNoScript(reCaptchaNoScript);
         plugin.setReCaptchaPublicKey(reCaptchaPublicKey);
         plugin.setReCaptchaPrivateKey(reCaptchaPrivateKey);
+        plugin.setPrivacyListEnabled(privacyListEnabled);
+
+        if (autoExpiry == -2 )
+        {
+            try
+            {
+                autoExpiry = Long.parseLong( autoExpiryCustom ) * 60;
+            }
+            catch ( NumberFormatException e )
+            {
+                errors.put("autoexpirycustom", "autoexpirycustom");
+            }
+        }
+        plugin.setAutomaticAccountLockoutAfter( autoExpiry );
         
         if (groupEnabled) {
             group = plugin.getGroup();
@@ -192,19 +214,36 @@
         }
     }
     
+    if (savePrivacyList) {
+        if (privacyList == null || privacyList.trim().length() < 1) {
+            errors.put("invalidPrivacyList", "invalidPrivacyList");
+        } else if (privacyListName == null || privacyListName.trim().length() < 1) {
+            errors.put("invalidPrivacyListName", "invalidPrivacyListName");
+        } else {
+            plugin.setPrivacyListName(privacyListName);
+            plugin.setPrivacyList(privacyList);
+            response.sendRedirect("registration-props-form.jsp?privacyListSaved=true");
+            return;
+        }
+    }
+    
     imEnabled = plugin.imNotificationEnabled();
     emailEnabled = plugin.emailNotificationEnabled();
     welcomeEnabled = plugin.welcomeEnabled();
     groupEnabled = plugin.groupEnabled();
     webEnabled = plugin.webEnabled();
+    privacyListEnabled = plugin.privacyListEnabled();
     
     welcomeMessage = plugin.getWelcomeMessage();
     group = plugin.getGroup();
     header = plugin.getHeader();
+    privacyListName = plugin.getPrivacyListName();
+    privacyList = plugin.getPrivacyList();
     reCaptchaEnabled = plugin.reCaptchaEnabled();
     reCaptchaNoScript = plugin.reCaptchaNoScript();
     reCaptchaPublicKey = plugin.getReCaptchaPublicKey();
     reCaptchaPrivateKey = plugin.getReCaptchaPrivateKey();
+    autoExpiry = plugin.getAutomaticAccountLockoutAfter();
 %>
 
 <html>
@@ -265,7 +304,22 @@ function addEmailContact() {
     </div>
    
     <% } %>
-   
+
+    <% if (errors.containsKey("autoexpirycustom")) { %>
+
+    <div class="jive-error">
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+            <tr>
+                <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0"></td>
+                <td class="jive-icon-label"><fmt:message key="registration.props.form.invalid_autoexpirycustom" /></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <% } %>
+
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
     <tbody>
         <tr>
@@ -283,6 +337,10 @@ function addEmailContact() {
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="groupenabled" <%=(groupEnabled) ? "checked" : "" %>></td>
             <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="checkbox" name="privacylistenabled" <%=(privacyListEnabled) ? "checked" : "" %>></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_default_privacy_list" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="webenabled" <%=(webEnabled) ? "checked" : "" %>></td>
@@ -306,6 +364,40 @@ function addEmailContact() {
             <td width="24%" align="left"><fmt:message key="registration.props.form.recaptcha_private_key" /></td>
             <td width="75%" align="left"><input type="text" name="recaptchaprivatekey" size="40" maxlength="100" value="<%= (reCaptchaPrivateKey != null ? reCaptchaPrivateKey : "") %>"/></td>
         </tr>
+
+        <% if ( LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
+        <tr>
+            <td width="100%" colspan="3">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="100%" align="left" colspan="3"><fmt:message key="registration.props.form.auto_expiry_caption" /></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpirydisabled" value="-1" <%= autoExpiry == -1 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpirydisabled"><fmt:message key="registration.props.form.auto_expiry_disabled" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1minute" value="60" <%= autoExpiry == 60 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1minute"><fmt:message key="registration.props.form.auto_expiry_1minute" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1hour" value="3600" <%= autoExpiry == 3600 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1hour"><fmt:message key="registration.props.form.auto_expiry_1hour" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1day" value="86400" <%= autoExpiry == 86400 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1day"><fmt:message key="registration.props.form.auto_expiry_1day" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry1week" value="604800" <%= autoExpiry == 604800 ? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry1week"><fmt:message key="registration.props.form.auto_expiry_1week" /></label></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="radio" name="autoexpiry" id="autoexpiry_custom" value="-2" <%= autoExpiry != -1 && autoExpiry != 60 && autoExpiry != 3600 && autoExpiry != 86400 && autoExpiry != 604800? "checked" : "" %>/></td>
+            <td width="99%" align="left" colspan="2"><label for="autoexpiry_custom"><fmt:message key="registration.props.form.auto_expiry_custom" /> </label><input type="text" size="5" maxlength="10" name="autoexpiry_custom" value="<%= autoExpiry != -1 && autoExpiry != -2 && autoExpiry != 60 && autoExpiry != 3600 && autoExpiry != 86400 && autoExpiry != 604800 ? autoExpiry / 60 : "" %>"/><label for="autoexpiry_custom"> <fmt:message key="registration.props.form.auto_expiry_minutes" /></label></td>
+        </tr>
+        <% } %>
+
     </tbody>
     </table>
     <br>
@@ -554,12 +646,60 @@ function addEmailContact() {
             <% if (errors.containsKey("groupNotFound")) { %> 
             <span class="jive-error-text"><br><fmt:message key="registration.props.form.default_group_invalid" /></span>
             <% } %>
+            </td>
         </tr>
     </tbody>
     </table>
     
    <br>
     <input type="submit" value="<fmt:message key="registration.props.form.default_group_save" />"/>
+    </div>
+</form>
+<br>
+
+<form action="registration-props-form.jsp?saveprivacylist=true" method="post">
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.privacy_list" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.privacy_list_details" /></p>
+   
+    <% if (ParamUtils.getBooleanParameter(request, "privacyListSaved")) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.privacy_list_saved" /></td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+   
+    <% } %>
+
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>            
+            <td width="15%" valign="top">Default Privacy List Name:</td>
+            <td width="85%"><input type="text" name="privacylistname" size="30" maxlength="100" value="<%= (privacyListName != null ? privacyListName : "") %>"/>
+            <% if (errors.containsKey("invalidPrivacyListName")) { %> 
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.privacy_list_name_invalid" /></span>
+            <% } %>  
+            </td>
+        </tr>  
+        <tr>              
+            <td width="15%" valign="top">Default Privacy List:</td>
+            <td width="85%"><textarea cols="45" rows="5" wrap="virtual" name="privacylist"><%= (privacyList != null ? privacyList : "") %></textarea>
+            <% if (errors.containsKey("invalidPrivacyList")) { %> 
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.privacy_list_invalid" /></span>
+            <% } %>
+            </td>
+        </tr>  
+    </tbody>
+    </table>
+    
+   <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.default_privacy_list_save" />"/>
     </div>
 </form>
 

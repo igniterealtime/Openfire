@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 16:48:22 -0700 (Fri, 19 Aug 2005) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -19,12 +17,13 @@
 
 <%@ page import="org.jivesoftware.util.StringUtils,
                  org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.util.LocaleUtils"
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.openfire.cluster.ClusterManager"
     errorPage="../error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="admin" prefix="admin" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/decorator" prefix="decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 
@@ -46,6 +45,8 @@
 
     // Message HTML can be passed in:
     String message = decoratedPage.getProperty("page.message");
+
+    pageContext.setAttribute( "usernameHtmlEscaped", StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) );
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -94,7 +95,21 @@
         </div>
         <div id="jive-userstatus">
             <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
-            <fmt:message key="admin.logged_in_as"><fmt:param value="<%= "<strong>"+StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername()))+"</strong>" %>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a>
+            <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a><br/>
+            <fmt:message key="admin.clustering.status"/> -
+                <% if (ClusterManager.isClusteringEnabled()) { %>
+                    <% if (ClusterManager.isClusteringStarted()) { %>
+                        <% if (ClusterManager.isSeniorClusterMember()) { %>
+                                <fmt:message key="admin.clustering.senior"/>
+                        <% } else { %>
+                                <fmt:message key="admin.clustering.junior"/>
+                        <% }  %>
+                    <% } else { %>
+                        <fmt:message key="admin.clustering.starting"/>
+                    <% } %>
+                <% } else { %>
+                    <fmt:message key="admin.clustering.disabled"/>
+                <% } %>
         </div>
         <div id="jive-nav">
             <div id="jive-nav-left"></div>
@@ -162,7 +177,7 @@
 <!-- END main -->
 
 <!-- BEGIN footer -->
-	<div id="jive-footer">
+    <div id="jive-footer">
         <div class="jive-footer-nav">
             <admin:tabs css="" currentcss="currentlink" justlinks="true">
             <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>

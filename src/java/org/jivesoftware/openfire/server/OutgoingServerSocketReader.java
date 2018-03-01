@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1530 $
- * $Date: 2005-06-17 18:38:27 -0300 (Fri, 17 Jun 2005) $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OutgoingServerSocketReader {
 
-	private static final Logger Log = LoggerFactory.getLogger(OutgoingServerSocketReader.class);
+    private static final Logger Log = LoggerFactory.getLogger(OutgoingServerSocketReader.class);
 
     private OutgoingServerSession session;
     private boolean open = true;
@@ -52,7 +48,7 @@ public class OutgoingServerSocketReader {
     /**
      * Queue that holds the elements read by the XMPPPacketReader.
      */
-    private BlockingQueue<Element> elements = new LinkedBlockingQueue<Element>(10000);
+    private BlockingQueue<Element> elements = new LinkedBlockingQueue<>(10000);
 
     public OutgoingServerSocketReader(XMPPPacketReader reader) {
         this.reader = reader;
@@ -98,7 +94,7 @@ public class OutgoingServerSocketReader {
         // Create a thread that will read and store DOM Elements.
         Thread thread = new Thread("Outgoing Server Reader") {
             @Override
-			public void run() {
+            public void run() {
                 while (open) {
                     Element doc;
                     try {

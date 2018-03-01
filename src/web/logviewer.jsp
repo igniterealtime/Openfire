@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -27,8 +25,8 @@
                  java.util.*"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -37,11 +35,12 @@
 <%!
     static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
+    static final String ALL = "all";
     static final String ERROR = "error";
     static final String INFO = "info";
     static final String WARN = "warn";
     static final String DEBUG = "debug";
-    static final String DEFAULT = ERROR;
+    static final String DEFAULT = ALL;
 
     static final String ASCENDING = "asc";
     static final String DESCENDING = "desc";
@@ -89,7 +88,7 @@
     {
         // Get the cookie associated with the log files
         HashMap cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
-        String[] logs = {"error", "info", "warn", "debug"};
+        String[] logs = {"all", "error", "info", "warn", "debug"};
         HashMap<String,String> newCookie = new HashMap<String,String>();
         HashMap<String,String> updates = new HashMap<String,String>();
         for (String log : logs) {
@@ -129,14 +128,19 @@
     boolean saveLog = ParamUtils.getBooleanParameter(request,"saveLog");
     boolean emailLog = ParamUtils.getBooleanParameter(request,"emailLog");
     boolean debugEnabled = ParamUtils.getBooleanParameter(request,"debugEnabled");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
 
     // Enable/disable debugging
     if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
-    	JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
-        // Log the event
-        admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
-        response.sendRedirect("logviewer.jsp?log=debug");
-        return;
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
+            // Log the event
+            admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
+            response.sendRedirect("logviewer.jsp?log=debug");
+            return;
+        }
     }
 
     // Santize variables to prevent vulnerabilities
@@ -147,36 +151,43 @@
     User pageUser = admin.getUser();
 
     if (clearLog && log != null) {
-        if ("error".equals(log)) {
-            Log.rotateErrorLogFile();
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            if ("all".equals(log)) {
+                Log.rotateAllLogFile();
+            }
+            else if ("error".equals(log)) {
+                Log.rotateErrorLogFile();
+            }
+            else if ("warn".equals(log)) {
+                Log.rotateWarnLogFile();
+            }
+            else if ("info".equals(log)) {
+                Log.rotateInfoLogFile();
+            }
+            else if ("debug".equals(log)) {
+                Log.rotateDebugLogFile();
+            }
+            response.sendRedirect("logviewer.jsp?log=" + log);
+            return;
         }
-        else if ("warn".equals(log)) {
-            Log.rotateWarnLogFile();
-        }
-        else if ("info".equals(log)) {
-            Log.rotateInfoLogFile();
-        }
-        else if ("debug".equals(log)) {
-            Log.rotateDebugLogFile();
-        }
-        response.sendRedirect("logviewer.jsp?log=" + log);
-        return;
     }
     else if (markLog && log != null) {
-        if ("error".equals(log)) {
-            Log.markErrorLogFile(pageUser.getUsername());
+        if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
+            if ("error".equals(log)) {
+                Log.markErrorLogFile(pageUser.getUsername());
+            }
+            else if ("warn".equals(log)) {
+                Log.markWarnLogFile(pageUser.getUsername());
+            }
+            else if ("info".equals(log)) {
+                Log.markInfoLogFile(pageUser.getUsername());
+            }
+            else if ("debug".equals(log)) {
+                Log.markDebugLogFile(pageUser.getUsername());
+            }
+            response.sendRedirect("logviewer.jsp?log=" + log);
+            return;
         }
-        else if ("warn".equals(log)) {
-            Log.markWarnLogFile(pageUser.getUsername());
-        }
-        else if ("info".equals(log)) {
-            Log.markInfoLogFile(pageUser.getUsername());
-        }
-        else if ("debug".equals(log)) {
-            Log.markDebugLogFile(pageUser.getUsername());
-        }
-        response.sendRedirect("logviewer.jsp?log=" + log);
-        return;
     }
     else if (saveLog && log != null) {
         saveLog = false;
@@ -206,6 +217,10 @@
 
     // Determine if any of the log files contents have been updated:
     HashMap newlogs = getLogUpdate(request, response, logDir);
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
 %>
 
 <html>
@@ -256,6 +271,14 @@ IFRAME {
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tbody>
     <tr>
+        <td class="jive-spacer" width="1%">&nbsp;</td>
+        <td class="jive-tab<%= (("all".equals(log))?"-active":"") %>" width="1%">
+            <a href="logviewer.jsp?log=all"
+            ><fmt:message key="logviewer.all" /></a>
+            <span class="new">
+            <%= ((newlogs.containsKey("all"))?"*":"") %>
+            </span>
+        </td>
         <td class="jive-spacer" width="1%">&nbsp;</td>
         <td class="jive-tab<%= (("error".equals(log))?"-active":"") %>" width="1%">
             <a href="logviewer.jsp?log=error"
@@ -360,6 +383,7 @@ IFRAME {
                     <input type="hidden" name="markLog" value="false">
                     <input type="hidden" name="saveLog" value="false">
                     <input type="hidden" name="emailLog" value="false">
+                    <input type="hidden" name="csrf" value="${csrf}">
                     <div class="buttons">
                     <table cellpadding="0" cellspacing="0" border="0">
                     <tbody>
@@ -371,6 +395,7 @@ IFRAME {
                                 <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
                                  ><fmt:message key="logviewer.clear" /></a>
                             </td>
+                            <%  if (! "all".equals(log)) { %>
                             <td class="icon">
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_mark" />"></a>
                             </td>
@@ -378,6 +403,7 @@ IFRAME {
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"
                                  ><fmt:message key="logviewer.mark" /></a>
                             </td>
+                            <% } %>
                         </tr>
                     </tbody>
                     </table>
@@ -417,7 +443,7 @@ IFRAME {
                                 <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
                             </td>
                             <td width="1%" nowrap>
-                                <label for="de02">Disabled</label> &nbsp;
+                                <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;
                             </td>
                             <td width="1%">
                                 <input type="submit" name="" value="<fmt:message key="global.save_changes" />">

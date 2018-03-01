@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Gaston Dombiak
  */
-public abstract class RemoteSessionTask implements ClusterTask {
+public abstract class RemoteSessionTask implements ClusterTask<Object> {
     protected Object result;
     protected Operation operation;
 
@@ -56,7 +53,7 @@ public abstract class RemoteSessionTask implements ClusterTask {
 
     public void run() {
         if (operation == Operation.getStreamID) {
-            result = getSession().getStreamID().getID();
+            result = getSession().getStreamID();
         }
         else if (operation == Operation.getServerName) {
             result = getSession().getServerName();
@@ -163,8 +160,7 @@ public abstract class RemoteSessionTask implements ClusterTask {
         /**
          * Operations of outgoing server sessions
          */
-        getAuthenticatedDomains,
-        getHostnames,
+        getOutgoingDomainPairs,
         isUsingServerDialback,
 
         /**

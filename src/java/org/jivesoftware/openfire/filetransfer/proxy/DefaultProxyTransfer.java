@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3762 $
- * $Date: 2006-04-12 18:07:15 -0500 (Mon, 12 Apr 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultProxyTransfer implements ProxyTransfer {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultProxyTransfer.class);
+    private static final Logger Log = LoggerFactory.getLogger(DefaultProxyTransfer.class);
 
     private String initiator;
 
@@ -57,59 +53,73 @@ public class DefaultProxyTransfer implements ProxyTransfer {
     public DefaultProxyTransfer() { }
 
 
+    @Override
     public String getInitiator() {
         return initiator;
     }
 
+    @Override
     public void setInitiator(String initiator) {
         this.initiator = initiator;
     }
 
+    @Override
     public InputStream getInputStream() {
         return inputStream;
     }
 
+    @Override
     public void setInputStream(InputStream initiatorInputStream) {
         this.inputStream = initiatorInputStream;
     }
 
+    @Override
     public OutputStream getOutputStream() {
         return outputStream;
     }
 
+    @Override
     public void setOutputStream(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
+    @Override
     public String getTarget() {
         return target;
     }
 
+    @Override
     public void setTarget(String target) {
         this.target = target;
     }
 
+    @Override
     public String getTransferDigest() {
         return transferDigest;
     }
 
+    @Override
     public void setTransferDigest(String transferDigest) {
         this.transferDigest = transferDigest;
     }
 
+    @Override
     public String getSessionID() {
         return streamID;
     }
 
+    @Override
     public void setSessionID(String streamID) {
         this.streamID = streamID;
     }
 
 
+    @Override
     public boolean isActivatable() {
         return ((inputStream != null) && (outputStream != null));
     }
 
+    @Override
     public synchronized void setTransferFuture(Future<?> future) {
         if(this.future != null) {
             throw new IllegalStateException("Transfer is already in progress, or has completed.");
@@ -117,10 +127,12 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         this.future = future;
     }
 
+    @Override
     public long getAmountTransferred() {
         return amountWritten;
     }
 
+    @Override
     public void doTransfer() throws IOException {
         if (!isActivatable()) {
             throw new IOException("Transfer missing party");
@@ -146,6 +158,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         }
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.

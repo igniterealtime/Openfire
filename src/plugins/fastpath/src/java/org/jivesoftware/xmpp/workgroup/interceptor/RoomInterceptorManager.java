@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19282 $
- * $Date: 2005-07-11 20:03:44 -0700 (Mon, 11 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,8 +32,8 @@ import org.xmpp.packet.Packet;
  */
 public class RoomInterceptorManager extends InterceptorManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(RoomInterceptorManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(RoomInterceptorManager.class);
+    
     private static RoomInterceptorManager instance = new RoomInterceptorManager();
 
     /**
@@ -50,12 +46,12 @@ public class RoomInterceptorManager extends InterceptorManager {
     }
 
     @Override
-	protected String getPropertySuffix() {
+    protected String getPropertySuffix() {
         return "room";
     }
 
     @Override
-	public void invokeInterceptors(String workgroup, Packet packet, boolean read, boolean processed) {
+    public void invokeInterceptors(String workgroup, Packet packet, boolean read, boolean processed) {
         try {
             super.invokeInterceptors(workgroup, packet, read, processed);
         }
@@ -66,7 +62,7 @@ public class RoomInterceptorManager extends InterceptorManager {
     }
 
     @Override
-	protected Collection<Class> getBuiltInInterceptorClasses() {
+    protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class) TrafficMonitor.class);
     }
 }

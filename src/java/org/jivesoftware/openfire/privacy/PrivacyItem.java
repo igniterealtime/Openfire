@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,6 +110,7 @@ class PrivacyItem implements Cacheable, Comparable {
         return type == Type.group || type == Type.subscription;
     }
 
+    @Override
     public int compareTo(Object object) {
         if (object instanceof PrivacyItem) {
             return this.order - ((PrivacyItem) object).order;
@@ -243,6 +240,7 @@ class PrivacyItem implements Cacheable, Comparable {
         return false;
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.

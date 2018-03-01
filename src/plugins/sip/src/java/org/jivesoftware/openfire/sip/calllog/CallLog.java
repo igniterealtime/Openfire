@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +17,6 @@
 package org.jivesoftware.openfire.sip.calllog;
 
 /**
- *
  * CallLog instance. This class handle all Log information for a call
  *
  * @author Thiago Rocha Camargo
@@ -29,69 +24,69 @@ package org.jivesoftware.openfire.sip.calllog;
  */
 public class CallLog {
 
-	private String username;
+    private String username;
 
-	private String numA;
+    private String numA;
 
-	private String numB;
+    private String numB;
 
-	private long dateTime;
+    private long dateTime;
 
-	private int duration;
+    private int duration;
 
-	private Type type = Type.dialed;
+    private Type type = Type.dialed;
 
-	public CallLog(String username) {
-		this.username = username;
-	}
+    public CallLog(String username) {
+        this.username = username;
+    }
 
     @SuppressWarnings({"UnnecessarySemicolon"}) // Fix for QDox Source inspector
     public enum Type {
-		dialed, received, missed;
+        dialed, received, missed;
     }
 
-	public long getDateTime() {
-		return dateTime;
-	}
+    public long getDateTime() {
+        return dateTime;
+    }
 
-	public void setDateTime(long dateTime) {
-		this.dateTime = dateTime;
-	}
+    public void setDateTime(long dateTime) {
+        this.dateTime = dateTime;
+    }
 
-	public String getNumA() {
-		return numA;
-	}
+    public String getNumA() {
+        return numA;
+    }
 
-	public void setNumA(String numA) {
-		this.numA = numA;
-	}
+    public void setNumA(String numA) {
+        this.numA = numA;
+    }
 
-	public String getNumB() {
-		return numB;
-	}
+    public String getNumB() {
+        return numB;
+    }
 
-	public void setNumB(String numB) {
-		this.numB = numB;
-	}
+    public void setNumB(String numB) {
+        this.numB = numB;
+    }
 
-	public Type getType() {
-		return type;
-	}
+    public Type getType() {
+        return type;
+    }
 
-	public void setType(Type type) {
-		this.type = type;
-	}
+    public void setType(Type type) {
+        this.type = type;
+    }
 
-	public int getDuration() {
-		return duration;
-	}
+    public int getDuration() {
+        return duration;
+    }
 
-	public void setDuration(int duration) {
-		this.duration = duration;
-	}
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
 }

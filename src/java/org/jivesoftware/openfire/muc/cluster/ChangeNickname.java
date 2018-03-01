@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class ChangeNickname extends MUCRoomTask {
+public class ChangeNickname extends MUCRoomTask<Void> {
     private String oldNick;
     private String newNick;
     private Presence presence;
@@ -65,13 +61,16 @@ public class ChangeNickname extends MUCRoomTask {
         return presence;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().nicknameChanged(ChangeNickname.this);
             }
@@ -79,7 +78,7 @@ public class ChangeNickname extends MUCRoomTask {
     }
 
     @Override
-	public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
         ExternalizableUtil.getInstance().writeSafeUTF(out, oldNick);
@@ -87,7 +86,7 @@ public class ChangeNickname extends MUCRoomTask {
     }
 
     @Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         presence = new Presence(packetElement, true);

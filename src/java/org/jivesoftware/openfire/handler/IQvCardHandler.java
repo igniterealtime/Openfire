@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1653 $
- * $Date: 2005-07-20 00:21:40 -0300 (Wed, 20 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +67,7 @@ import org.xmpp.packet.PacketError;
  */
 public class IQvCardHandler extends IQHandler {
 
-	private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
+    private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
 
     private IQHandlerInfo info;
     private XMPPServer server;
@@ -83,7 +79,7 @@ public class IQvCardHandler extends IQHandler {
     }
 
     @Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
         if (type.equals(IQ.Type.set)) {
@@ -156,14 +152,14 @@ public class IQvCardHandler extends IQHandler {
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         userManager = server.getUserManager();
     }
 
     @Override
-	public IQHandlerInfo getInfo() {
+    public IQHandlerInfo getInfo() {
         return info;
     }
 }

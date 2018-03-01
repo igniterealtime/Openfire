@@ -22,7 +22,7 @@
 <%@ page import="java.util.List" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <script type="text/javascript">
 
@@ -57,7 +57,7 @@
 </script>
 
 <%
-	STUNService stunService = (STUNService) XMPPServer.getInstance().getPluginManager().getPlugin("stunserver");
+    STUNService stunService = (STUNService) XMPPServer.getInstance().getPluginManager().getPlugin("stunserver");
 
     boolean save = request.getParameter("save") != null;
     boolean add = request.getParameter("add") != null;

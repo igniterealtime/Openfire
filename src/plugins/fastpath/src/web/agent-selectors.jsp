@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 10204 $
-  -	$Date: 2008-04-11 18:44:25 -0400 (Fri, 11 Apr 2008) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -157,7 +155,7 @@ receive an offer. Use the form below to install new algorithms.
 </table><br>
 
 <ul>
-	<table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="1%">
+    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="1%">
     <tr><td>
         <table cellpadding="4" cellspacing="1" border="0" width="100%">
         <tr bgcolor="#eeeeee">
@@ -229,9 +227,9 @@ receive an offer. Use the form below to install new algorithms.
 <ul>
     <table cellpadding="2" cellspacing="0" border="0">
     <tr>
-    	<td>Class Name:</td>
-    	<td><input type="text" name="newClassname" value="" size="30" maxlength="100"></td>
-    	<td><input type="submit" value="Add Algorithm"></td>
+        <td>Class Name:</td>
+        <td><input type="text" name="newClassname" value="" size="30" maxlength="100"></td>
+        <td><input type="submit" value="Add Algorithm"></td>
     </tr>
     </table>
 </ul>

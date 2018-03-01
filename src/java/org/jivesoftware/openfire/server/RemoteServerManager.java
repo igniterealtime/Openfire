@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +27,7 @@ import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -46,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteServerManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(RemoteServerManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(RemoteServerManager.class);
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofRemoteServerConf (xmppDomain,remotePort,permission) VALUES (?,?,?)";
@@ -93,9 +91,12 @@ public class RemoteServerManager {
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             session.close();
         }
-        Session session = SessionManager.getInstance().getOutgoingServerSession(domain);
-        if (session != null) {
-            session.close();
+        // Can't just lookup a single remote server anymore, so check them all.
+        for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
+            if (domainPair.getRemote().equals(domain)) {
+                Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
+                session.close();
+            }
         }
     }
 
@@ -156,7 +157,7 @@ public class RemoteServerManager {
 
     /**
      * Returns the number of milliseconds to wait to connect to a remote server or read
-     * data from a remote server. Default timeout value is 20 seconds. Configure the
+     * data from a remote server. Default timeout value is 120 seconds. Configure the
      * <tt>xmpp.server.read.timeout</tt> global property to override the default value.
      *
      * @return the number of milliseconds to wait to connect to a remote server or read
@@ -265,7 +266,7 @@ public class RemoteServerManager {
     private static Collection<RemoteServerConfiguration> getConfigurations(
             Permission permission) {
         Collection<RemoteServerConfiguration> answer =
-                new ArrayList<RemoteServerConfiguration>();
+                new ArrayList<>();
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -351,9 +352,9 @@ public class RemoteServerManager {
                 }
             }
         }
-        for (String hostname : SessionManager.getInstance().getOutgoingServers()) {
-            if (!canAccess(hostname)) {
-                Session session = SessionManager.getInstance().getOutgoingServerSession(hostname);
+        for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
+            if (!canAccess(domainPair.getRemote())) {
+                Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 session.close();
             }
         }

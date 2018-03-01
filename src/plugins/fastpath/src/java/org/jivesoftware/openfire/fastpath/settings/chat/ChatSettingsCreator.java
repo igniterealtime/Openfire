@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 26622 $
- * $Date: 2006-01-31 20:52:54 -0800 (Tue, 31 Jan 2006) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +45,7 @@ import com.thoughtworks.xstream.XStream;
  */
 public class ChatSettingsCreator {
 
-	private static final Logger Log = LoggerFactory.getLogger(ChatSettingsCreator.class);
+    private static final Logger Log = LoggerFactory.getLogger(ChatSettingsCreator.class);
 
     private static final ChatSettingsCreator instance = new ChatSettingsCreator();
 

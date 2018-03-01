@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +16,7 @@
 
 package org.jivesoftware.openfire.plugin.session;
 
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -38,31 +36,26 @@ import java.util.Collection;
 public class RemoteOutgoingServerSession extends RemoteSession implements OutgoingServerSession {
 
     private long usingServerDialback = -1;
+    private final DomainPair pair;
 
-    public RemoteOutgoingServerSession(byte[] nodeID, JID address) {
-        super(nodeID, address);
+    public RemoteOutgoingServerSession(byte[] nodeID, DomainPair address) {
+        super(nodeID, new JID(null, address.getRemote(), null, true));
+        this.pair = address;
     }
 
-    public Collection<String> getAuthenticatedDomains() {
-        ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getAuthenticatedDomains);
-        return (Collection<String>) doSynchronousClusterTask(task);
+    public Collection<DomainPair> getOutgoingDomainPairs()
+    {
+        ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getOutgoingDomainPairs);
+        return (Collection<DomainPair>) doSynchronousClusterTask(task);
     }
 
-    public void addAuthenticatedDomain(String domain) {
-        doClusterTask(new AddAuthenticatedDomainTask(address, domain));
-    }
-
-    public Collection<String> getHostnames() {
-        ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getHostnames);
-        return (Collection<String>) doSynchronousClusterTask(task);
-    }
-
-    public void addHostname(String hostname) {
-        doClusterTask(new AddHostnameTask(address, hostname));
+    public void addOutgoingDomainPair( String local, String remote )
+    {
+        doClusterTask(new AddOutgoingDomainPair(pair, local, remote ));
     }
 
     public boolean authenticateSubdomain(String domain, String hostname) {
-        ClusterTask task = new AuthenticateSubdomainTask(address, domain, hostname);
+        ClusterTask task = new AuthenticateSubdomainTask(pair, domain, hostname);
         return (Boolean) doSynchronousClusterTask(task);
     }
 
@@ -74,69 +67,78 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         return usingServerDialback == 1;
     }
 
+    public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
+        ClusterTask task = new CheckOutgoingDomainPairTask(pair, localDomain, remoteDomain);
+        return (Boolean)doSynchronousClusterTask(task);
+    }
+
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
-        return new OutgoingServerSessionTask(address, operation);
+        return new OutgoingServerSessionTask(pair, operation);
     }
 
     ClusterTask getDeliverRawTextTask(String text) {
-        return new DeliverRawTextTask(this, address, text);
+        return new DeliverRawTextServerTask(pair, text);
     }
 
     ClusterTask getProcessPacketTask(Packet packet) {
         return new ProcessPacketTask(this, address, packet);
     }
 
-    private static class AddAuthenticatedDomainTask extends OutgoingServerSessionTask {
-        private String domain;
+    private static class DeliverRawTextServerTask extends OutgoingServerSessionTask {
+        private String text;
 
-        public AddAuthenticatedDomainTask() {
+        public DeliverRawTextServerTask() {
             super();
         }
 
-        protected AddAuthenticatedDomainTask(JID address, String domain) {
+        protected DeliverRawTextServerTask(DomainPair address, String text) {
             super(address, null);
-            this.domain = domain;
+            this.text = text;
         }
 
         public void run() {
-            ((OutgoingServerSession) getSession()).addAuthenticatedDomain(domain);
+            getSession().deliverRawText(text);
         }
 
         public void writeExternal(ObjectOutput out) throws IOException {
             super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, domain);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, text);
         }
 
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             super.readExternal(in);
-            domain = ExternalizableUtil.getInstance().readSafeUTF(in);
+            text = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
     }
 
-    private static class AddHostnameTask extends OutgoingServerSessionTask {
-        private String hostname;
+    private static class AddOutgoingDomainPair extends OutgoingServerSessionTask {
+        private String local;
+        private String remote;
 
-        public AddHostnameTask() {
+        public AddOutgoingDomainPair() {
             super();
         }
 
-        protected AddHostnameTask(JID address, String hostname) {
+        protected AddOutgoingDomainPair(DomainPair address, String local, String remote) {
             super(address, null);
-            this.hostname = hostname;
+            this.local = local;
+            this.remote = remote;
         }
 
         public void run() {
-            ((OutgoingServerSession) getSession()).addHostname(hostname);
+            ((OutgoingServerSession) getSession()).addOutgoingDomainPair(local, remote);
         }
 
         public void writeExternal(ObjectOutput out) throws IOException {
             super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, hostname);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, local);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, remote);
         }
 
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             super.readExternal(in);
-            hostname = ExternalizableUtil.getInstance().readSafeUTF(in);
+            local = ExternalizableUtil.getInstance().readSafeUTF(in);
+            remote = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
     }
 
@@ -148,7 +150,7 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super();
         }
 
-        protected AuthenticateSubdomainTask(JID address, String domain, String hostname) {
+        protected AuthenticateSubdomainTask(DomainPair address, String domain, String hostname) {
             super(address, null);
             this.domain = domain;
             this.hostname = hostname;
@@ -168,6 +170,37 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             super.readExternal(in);
             domain = ExternalizableUtil.getInstance().readSafeUTF(in);
             hostname = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
+    }
+
+    private static class CheckOutgoingDomainPairTask extends OutgoingServerSessionTask {
+        private String local;
+        private String remote;
+
+        public CheckOutgoingDomainPairTask() {
+            super();
+        }
+
+        protected CheckOutgoingDomainPairTask(DomainPair address, String local, String remote) {
+            super(address, null);
+            this.local = local;
+            this.remote = remote;
+        }
+
+        public void run() {
+            result = ((OutgoingServerSession) getSession()).checkOutgoingDomainPair(local, remote);
+        }
+
+        public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, local);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, remote);
+        }
+
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
+            local = ExternalizableUtil.getInstance().readSafeUTF(in);
+            remote = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
     }
 }

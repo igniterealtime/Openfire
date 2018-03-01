@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +46,7 @@ public class ResourceServlet extends HttpServlet {
     private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
 
     @Override
-	public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         debug = Boolean.valueOf(config.getInitParameter("debug"));
@@ -58,7 +54,7 @@ public class ResourceServlet extends HttpServlet {
     }
 
     @Override
-	public void service(HttpServletRequest request, HttpServletResponse response) {
+    public void service(HttpServletRequest request, HttpServletResponse response) {
         boolean compress = false;
 
         boolean javascript = request.getRequestURI().endsWith("scripts/");

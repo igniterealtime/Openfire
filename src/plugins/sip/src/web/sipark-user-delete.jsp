@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 5374 $
-  -	$Date: 2006-09-14 19:04:51 -0300 (qui, 14 set 2006) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -
@@ -24,8 +22,8 @@
                  java.net.URLEncoder"
         %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <% // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
@@ -52,6 +50,9 @@
         response.sendRedirect("sipark-user-summary.jsp?deletesuccess=false");
         return;
     }
+
+    pageContext.setAttribute( "usernameUrlEncoded",URLEncoder.encode(account.getUsername(), "UTF-8") );
+    pageContext.setAttribute( "usernameUnescaped", JID.unescapeNode(account.getUsername() ) );
 %>
 
 <html>
@@ -65,7 +66,8 @@
 
 <p>
     <b><fmt:message key="sipark.user.delete.confirm">
-            <fmt:param value="<%= "<a href='./../../user-properties.jsp?username=" + URLEncoder.encode(account.getUsername(), "UTF-8") + "'>" + JID.unescapeNode(account.getUsername()) + "</a>"%>" />
+            <fmt:param value="${usernameUrlEncoded}"/>
+            <fmt:param value="${usernameUnescaped}"/>
     </fmt:message></b>
 </p>
 

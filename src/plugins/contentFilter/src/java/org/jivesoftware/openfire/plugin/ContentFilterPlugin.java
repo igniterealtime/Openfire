@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 1594 $
- * $Date: 2005-07-04 18:08:42 +0100 (Mon, 04 Jul 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +45,7 @@ import org.xmpp.packet.Presence;
  */
 public class ContentFilterPlugin implements Plugin, PacketInterceptor {
 
-	private static final Logger Log = LoggerFactory.getLogger(ContentFilterPlugin.class);
+    private static final Logger Log = LoggerFactory.getLogger(ContentFilterPlugin.class);
 
     /**
      * The expected value is a boolean, if true the user identified by the value

@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -18,12 +15,14 @@ import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.component.ComponentManager;
 
 import java.util.Map;
+import java.util.List;
 
 /**
  * Transport Instance
@@ -160,10 +159,12 @@ public class TransportInstance<B extends TransportBuddy> implements PropertyEven
         }
 
         try {
-            Session sess = sessionManager.getOutgoingServerSession(fullJID);
-            if (sess != null) {
-                sess.close();
-                pause = true;
+            List<OutgoingServerSession> sessions = sessionManager.getOutgoingServerSessions(fullJID);
+            for (OutgoingServerSession sess : sessions) {
+                if (sess != null) {
+                    sess.close();
+                    pause = true;
+                }
             }
         }
         catch (Exception ignored) {

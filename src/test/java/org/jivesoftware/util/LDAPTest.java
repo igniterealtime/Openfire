@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright (C) 2008 Daniel Henninger. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -72,6 +69,21 @@ public class LDAPTest {
         before = "Wildcard *";
         after = "Wildcard \\2a";
         converted = LdapManager.sanitizeSearchFilter(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+
+        before = "Wildcard *";
+        after = "Wildcard *";
+        converted = LdapManager.sanitizeSearchFilter(before, true);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "Wild*card *";
+        after = "Wild\\2acard \\2a";
+        converted = LdapManager.sanitizeSearchFilter(before, false);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "Wild*card *";
+        after = "Wild*card *";
+        converted = LdapManager.sanitizeSearchFilter(before, true);
         assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
         
         before = "~ Group|Section & Teams!";

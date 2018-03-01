@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -157,19 +154,19 @@ public abstract class TransportBuddy {
      * @return Timestamp in milliseconds since the epoch.
      */
     public Long getLastActivityTimestamp() {
-		return lastActivityTimestamp;
-	}
+        return lastActivityTimestamp;
+    }
 
     /**
      * Retrieves text event of last activity or null if no event text.
      * 
      * @return Text of last event.
      */
-	public String getLastActivityEvent() {
-		return lastActivityEvent;
-	}
+    public String getLastActivityEvent() {
+        return lastActivityEvent;
+    }
 
-	/**
+    /**
      * Text of last activity
      */
     public String lastActivityEvent = null;

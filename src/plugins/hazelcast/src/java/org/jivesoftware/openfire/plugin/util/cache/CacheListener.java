@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2007-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,23 +75,23 @@ class CacheListener implements EntryListener {
         }
     }
 
-	private void handleMapEvent(MapEvent event) {
+    private void handleMapEvent(MapEvent event) {
         NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
         // ignore events which were triggered by this node
         if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-			Set<String> sessionJIDs = clusterListener.lookupJIDList(nodeID, cacheName);
-			sessionJIDs.clear();
+            Set<String> sessionJIDs = clusterListener.lookupJIDList(nodeID, cacheName);
+            sessionJIDs.clear();
         }
-	}
+    }
 
-	@Override
-	public void mapCleared(MapEvent event) {
-		handleMapEvent(event);
-	}
+    @Override
+    public void mapCleared(MapEvent event) {
+        handleMapEvent(event);
+    }
 
-	@Override
-	public void mapEvicted(MapEvent event) {
-		handleMapEvent(event);
-	}
+    @Override
+    public void mapEvicted(MapEvent event) {
+        handleMapEvent(event);
+    }
 
 }

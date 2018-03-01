@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +56,7 @@ public class LdapGroupTester {
      * @return fist N groups found in the LDAP.
      */
     public Collection<Group> getGroups(int maxGroups) {
-        Collection<Group> groups = new ArrayList<Group>();
+        Collection<Group> groups = new ArrayList<>();
         LdapContext ctx = null;
         try {
             ctx = manager.getContext();

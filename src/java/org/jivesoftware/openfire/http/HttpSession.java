@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +29,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -45,6 +43,10 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -70,8 +72,8 @@ import javax.servlet.AsyncListener;
  * @author Alexander Wenckus
  */
 public class HttpSession extends LocalClientSession {
-	
-	private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
+    
+    private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
 
     private static XmlPullParserFactory factory = null;
     private static ThreadLocal<XMPPPacketReader> localParser = null;
@@ -86,7 +88,7 @@ public class HttpSession extends LocalClientSession {
         // Create xmpp parser to keep in each thread
         localParser = new ThreadLocal<XMPPPacketReader>() {
             @Override
-			protected XMPPPacketReader initialValue() {
+            protected XMPPPacketReader initialValue() {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);
@@ -104,7 +106,7 @@ public class HttpSession extends LocalClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
+    private Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
@@ -118,20 +120,21 @@ public class HttpSession extends LocalClientSession {
     private int minorVersion = -1;
     private X509Certificate[] sslCertificates;
 
-    private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
+    private final Queue<Collection<Element>> packetsToSend = new LinkedList<>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
     private SessionPacketRouter router;
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
+        @Override
         public int compare(HttpConnection o1, HttpConnection o2) {
             return (int) (o1.getRequestId() - o2.getRequestId());
         }
     };
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
-                       StreamID streamID, long rid, HttpConnection connection) {
-        super(serverName, new HttpVirtualConnection(address), streamID);
+                       StreamID streamID, long rid, HttpConnection connection, Locale language) {
+        super(serverName, new HttpVirtualConnection(address, ConnectionType.SOCKET_C2S), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
@@ -145,13 +148,13 @@ public class HttpSession extends LocalClientSession {
      * @return the stream features which are available for this session.
      */
     public Collection<Element> getAvailableStreamFeaturesElements() {
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
 
         if (getAuthToken() == null) {
-	        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
-	        if (sasl != null) {
-	            elements.add(sasl);
-	        }
+            Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
+            if (sasl != null) {
+                elements.add(sasl);
+            }
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
@@ -170,7 +173,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     @Override
-	public String getAvailableStreamFeatures() {
+    public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder(200);
         for (Element element : getAvailableStreamFeaturesElements()) {
             sb.append(element.asXML());
@@ -183,7 +186,7 @@ public class HttpSession extends LocalClientSession {
      * on the session ID.
      */
     @Override
-	public void close() {
+    public void close() {
         if (isClosed) {
             return;
         }
@@ -196,7 +199,7 @@ public class HttpSession extends LocalClientSession {
      * @return true if this session has been closed and no longer actively accepting connections.
      */
     @Override
-	public boolean isClosed() {
+    public boolean isClosed() {
         return isClosed;
     }
 
@@ -246,24 +249,6 @@ public class HttpSession extends LocalClientSession {
      */
     public int getHold() {
         return hold;
-    }
-
-    /**
-     * Sets the language this session is using.
-     *
-     * @param language the language this session is using.
-     */
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    /**
-     * Returns the language this session is using.
-     *
-     * @return the language this session is using.
-     */
-    public String getLanguage() {
-        return language;
     }
 
     /**
@@ -339,7 +324,7 @@ public class HttpSession extends LocalClientSession {
      *         not.
      */
     @Override
-	public boolean isSecure() {
+    public boolean isSecure() {
         return isSecure;
     }
 
@@ -431,16 +416,16 @@ public class HttpSession extends LocalClientSession {
      *        and terminated.
      */
     public void pause(int duration) {
-    	// Respond immediately to all pending requests
-    	synchronized (connectionQueue) {
-	        for (HttpConnection toClose : connectionQueue) {
-	            if (!toClose.isClosed()) {
-	                toClose.close();
-	                lastRequestID = toClose.getRequestId();
-	            }
-	        }
-    	}
-    	setInactivityTimeout(duration);
+        // Respond immediately to all pending requests
+        synchronized (connectionQueue) {
+            for (HttpConnection toClose : connectionQueue) {
+                if (!toClose.isClosed()) {
+                    toClose.close();
+                    lastRequestID = toClose.getRequestId();
+                }
+            }
+        }
+        setInactivityTimeout(duration);
     }
 
     /**
@@ -452,15 +437,15 @@ public class HttpSession extends LocalClientSession {
      */
     public long getLastActivity() {
         if (!connectionQueue.isEmpty()) {
-        	synchronized (connectionQueue) {
-	            for (HttpConnection connection : connectionQueue) {
-	                // The session is currently active, set the last activity to the current time.
-	                if (!(connection.isClosed())) {
-	                    lastActivity = System.currentTimeMillis();
-	                    break;
-	                }
-	            }
-        	}
+            synchronized (connectionQueue) {
+                for (HttpConnection connection : connectionQueue) {
+                    // The session is currently active, set the last activity to the current time.
+                    if (!(connection.isClosed())) {
+                        lastActivity = System.currentTimeMillis();
+                        break;
+                    }
+                }
+            }
         }
         return lastActivity;
     }
@@ -476,15 +461,15 @@ public class HttpSession extends LocalClientSession {
      * all requests with lower 'rid' values.
      */
     public long getLastAcknowledged() {
-    	long ack = lastRequestID;
-    	Collections.sort(connectionQueue, connectionComparator);
-    	synchronized (connectionQueue) {
-	        for (HttpConnection connection : connectionQueue) {
-	            if (connection.getRequestId() == ack + 1) {
-	            	ack++;
-	            }
-	        }
-    	}
+        long ack = lastRequestID;
+        Collections.sort(connectionQueue, connectionComparator);
+        synchronized (connectionQueue) {
+            for (HttpConnection connection : connectionQueue) {
+                if (connection.getRequestId() == ack + 1) {
+                    ack++;
+                }
+            }
+        }
         return ack;
     }
 
@@ -527,11 +512,11 @@ public class HttpSession extends LocalClientSession {
      * @param minorVersion the minor version of BOSH which the client implements.
      */
     public void setMinorVersion(int minorVersion) {
-    	if(minorVersion <= 5) {
-        	this.minorVersion = 5;
+        if(minorVersion <= 5) {
+            this.minorVersion = 5;
         }
-    	else if(minorVersion >= 6) {
-        	this.minorVersion = 6;
+        else if(minorVersion >= 6) {
+            this.minorVersion = 6;
         }
     }
 
@@ -559,9 +544,9 @@ public class HttpSession extends LocalClientSession {
      *
      * @param lastResponseEmpty true if last response of this session is an empty body element.
      */
-	public void setLastResponseEmpty(boolean lastResponseEmpty) {
-		this.lastResponseEmpty = lastResponseEmpty;
-	}
+    public void setLastResponseEmpty(boolean lastResponseEmpty) {
+        this.lastResponseEmpty = lastResponseEmpty;
+    }
 
     /**
      * Sets whether the initial request on the session was secure.
@@ -665,6 +650,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the X509Certificate associated with this session.
      */
+    @Override
     public X509Certificate[] getPeerCertificates() {
         return sslCertificates;
     }
@@ -753,15 +739,15 @@ public class HttpSession extends LocalClientSession {
     }
 
     private Delivered retrieveDeliverable(long rid) {
-    	Delivered result = null;
-    	synchronized (sentElements) {
-	        for (Delivered delivered : sentElements) {
-	            if (delivered.getRequestID() == rid) {
-	                result = delivered;
-	                break;
-	            }
-	        }
-    	}
+        Delivered result = null;
+        synchronized (sentElements) {
+            for (Delivered delivered : sentElements) {
+                if (delivered.getRequestID() == rid) {
+                    result = delivered;
+                    break;
+                }
+            }
+        }
         return result;
     }
 
@@ -785,37 +771,37 @@ public class HttpSession extends LocalClientSession {
          * and re-requested before jetty has realised.
          */
         synchronized (connectionQueue) {
-			for (HttpConnection queuedConnection : connectionQueue) {
-				if (queuedConnection.getRequestId() == rid) {
-					if(Log.isDebugEnabled()) {
-						Log.debug("Found previous connection in queue with rid " + rid);
-					}
-					if(queuedConnection.isClosed()) {
-						if(Log.isDebugEnabled()) {
-							Log.debug("It's closed - copying deliverables");
-						}
-						
-			            Delivered deliverable = retrieveDeliverable(rid);
-			            if (deliverable == null) {
-			                Log.warn("Deliverable unavailable for " + rid);
-			                throw new HttpBindException("Unexpected RID error.",
-			                        BoshBindingError.itemNotFound);
-			            }
-			            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
-					} else {
-						if(Log.isDebugEnabled()) {
-							Log.debug("It's still open - calling close()");
-						}
-						deliver(queuedConnection, Collections.singleton(new Deliverable("")));
-						connection.close();
-						
-						if(rid == (lastRequestID + 1)) {
-							lastRequestID = rid;
-						}
-					}
-					break;
-				}
-			}
+            for (HttpConnection queuedConnection : connectionQueue) {
+                if (queuedConnection.getRequestId() == rid) {
+                    if(Log.isDebugEnabled()) {
+                        Log.debug("Found previous connection in queue with rid " + rid);
+                    }
+                    if(queuedConnection.isClosed()) {
+                        if(Log.isDebugEnabled()) {
+                            Log.debug("It's closed - copying deliverables");
+                        }
+                        
+                        Delivered deliverable = retrieveDeliverable(rid);
+                        if (deliverable == null) {
+                            Log.warn("Deliverable unavailable for " + rid);
+                            throw new HttpBindException("Unexpected RID error.",
+                                    BoshBindingError.itemNotFound);
+                        }
+                        connection.deliverBody(createDeliverable(deliverable.deliverables), true);
+                    } else {
+                        if(Log.isDebugEnabled()) {
+                            Log.debug("It's still open - calling close()");
+                        }
+                        deliver(queuedConnection, Collections.singleton(new Deliverable("")));
+                        connection.close();
+                        
+                        if(rid == (lastRequestID + 1)) {
+                            lastRequestID = rid;
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
         checkOveractivity(isPoll);
@@ -840,32 +826,32 @@ public class HttpSession extends LocalClientSession {
             Collections.sort(connectionQueue, connectionComparator);
 
             synchronized (connectionQueue) {
-	            int connectionsToClose;
-	            if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
-	            	// Current connection does not have the greatest rid. That means
-	            	// requests were received out of order, respond to all.
-	            	connectionsToClose = connectionQueue.size();
-	            }
-	            else {
-	                // Everything's fine, number of current connections open tells us
-	            	// how many that we need to close.
-	            	connectionsToClose = getOpenConnectionCount() - hold;
-	            }
-	            int closed = 0;
-	            for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
-	                HttpConnection toClose = connectionQueue.get(i);
-	                if (!toClose.isClosed() && toClose.getRequestId() == lastRequestID + 1) {
-	                    if(toClose == connection) {
-	                    	// Current connection has no continuation yet, just deliver.
-	                    	deliver("");
-	                    }
-	                    else {
-	                        toClose.close();
-	                    }
-	                    lastRequestID = toClose.getRequestId();
-	                    closed++;
-	                }
-	            }
+                int connectionsToClose;
+                if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
+                    // Current connection does not have the greatest rid. That means
+                    // requests were received out of order, respond to all.
+                    connectionsToClose = connectionQueue.size();
+                }
+                else {
+                    // Everything's fine, number of current connections open tells us
+                    // how many that we need to close.
+                    connectionsToClose = getOpenConnectionCount() - hold;
+                }
+                int closed = 0;
+                for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
+                    HttpConnection toClose = connectionQueue.get(i);
+                    if (!toClose.isClosed() && toClose.getRequestId() == lastRequestID + 1) {
+                        if(toClose == connection) {
+                            // Current connection has no continuation yet, just deliver.
+                            deliver("");
+                        }
+                        else {
+                            toClose.close();
+                        }
+                        lastRequestID = toClose.getRequestId();
+                        closed++;
+                    }
+                }
             }
         }
     }
@@ -912,40 +898,40 @@ public class HttpSession extends LocalClientSession {
      *         protocol.
      */
     private void checkOveractivity(boolean isPoll) throws HttpBindException {
-    	int pendingConnections = 0;
-    	boolean overactivity = false;
-    	String errorMessage = "Overactivity detected";
+        int pendingConnections = 0;
+        boolean overactivity = false;
+        String errorMessage = "Overactivity detected";
 
-    	synchronized (connectionQueue) {
-    		for (HttpConnection conn : connectionQueue) {
-    			if (!conn.isClosed()) {
-    				pendingConnections++;
-    			}
-    		}
+        synchronized (connectionQueue) {
+            for (HttpConnection conn : connectionQueue) {
+                if (!conn.isClosed()) {
+                    pendingConnections++;
+                }
+            }
         }
 
         if(pendingConnections >= maxRequests) {
-        	overactivity = true;
-        	errorMessage += ", too many simultaneous requests.";
+            overactivity = true;
+            errorMessage += ", too many simultaneous requests.";
         }
         else if(isPoll) {
-	    	long time = System.currentTimeMillis();
-	        if (time - lastPoll < maxPollingInterval * JiveConstants.SECOND) {
-	        	if(isPollingSession()) {
-	        		overactivity = lastResponseEmpty;
-	        	}
-	        	else {
-	        		overactivity = (pendingConnections >= maxRequests - 1);
-	        	}
-	        }
-	        errorMessage += ", minimum polling interval is "
-	        	+ maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
-	        lastPoll = time;
+            long time = System.currentTimeMillis();
+            if (time - lastPoll < maxPollingInterval * JiveConstants.SECOND) {
+                if(isPollingSession()) {
+                    overactivity = lastResponseEmpty;
+                }
+                else {
+                    overactivity = (pendingConnections >= maxRequests - 1);
+                }
+            }
+            errorMessage += ", minimum polling interval is "
+                + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
+            lastPoll = time;
         }
         setLastResponseEmpty(false);
 
         if(overactivity) {
-        	Log.debug(errorMessage);
+            Log.debug(errorMessage);
             if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignoreOveractivity", false)) {
                 throw new HttpBindException(errorMessage, BoshBindingError.policyViolation);
             }
@@ -960,6 +946,7 @@ public class HttpSession extends LocalClientSession {
         deliver(new Deliverable(text));
     }
 
+    @Override
     public void deliver(Packet stanza) {
         deliver(new Deliverable(Arrays.asList(stanza)));
     }
@@ -969,22 +956,22 @@ public class HttpSession extends LocalClientSession {
         boolean delivered = false;
         int pendingConnections = 0;
         synchronized (connectionQueue) {
-	        for (HttpConnection connection : connectionQueue) {
+            for (HttpConnection connection : connectionQueue) {
                 if (connection.isClosed()) {
                     continue;
                 }
                 pendingConnections++;
-	            try {
-	                if (connection.getRequestId() == lastRequestID + 1) {
-	                    lastRequestID = connection.getRequestId();
-	                    deliver(connection, deliverable);
-	                    delivered = true;
-	                    break;
-	                }
-	            }
-	            catch (HttpConnectionClosedException e) {
-	                /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
-	                Log.warn("Iterating over a connection that was closed. Openfire will recover from this problem, but it should not occur in the first place.");
+                try {
+                    if (connection.getRequestId() == lastRequestID + 1) {
+                        lastRequestID = connection.getRequestId();
+                        deliver(connection, deliverable);
+                        delivered = true;
+                        break;
+                    }
+                }
+                catch (HttpConnectionClosedException e) {
+                    /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
+                    Log.warn("Iterating over a connection that was closed. Openfire will recover from this problem, but it should not occur in the first place.");
                 } catch (IOException e) {
                     Log.warn("An unexpected exception occurred while iterating over connections. Openfire will attempt to recover by ignoring this connection.", e);
                 }
@@ -1009,13 +996,13 @@ public class HttpSession extends LocalClientSession {
     private String createDeliverable(Collection<Deliverable> elements) {
         StringBuilder builder = new StringBuilder();
         builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
-        		.append(getLastAcknowledged()).append("'>");
+                .append(getLastAcknowledged()).append("'>");
 
         setLastResponseEmpty(elements.size() == 0);
         synchronized (elements) {
-	        for (Deliverable child : elements) {
-	            builder.append(child.getDeliverable());
-	        }
+            for (Deliverable child : elements) {
+                builder.append(child.getDeliverable());
+            }
         }
         builder.append("</body>");
         return builder.toString();
@@ -1026,41 +1013,41 @@ public class HttpSession extends LocalClientSession {
         isClosed = true;
 
         try {
-	        // close connection(s) and deliver pending elements (if any)
-	        synchronized (connectionQueue) {
-		        for (HttpConnection toClose : connectionQueue) {
-		            try {
-		            	if (!toClose.isClosed()) {
-		            		if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
-		            			synchronized(pendingElements) {
-			            			deliver(toClose, pendingElements);
-					                lastRequestID = toClose.getRequestId();
-					                pendingElements.clear();
-		            			}
-	            			} else {
-	            				toClose.deliverBody(null, true);
-	            			}
-		            	}
-		            } catch (HttpConnectionClosedException e) {
-		            	/* ignore ... already closed */
+            // close connection(s) and deliver pending elements (if any)
+            synchronized (connectionQueue) {
+                for (HttpConnection toClose : connectionQueue) {
+                    try {
+                        if (!toClose.isClosed()) {
+                            if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
+                                synchronized(pendingElements) {
+                                    deliver(toClose, pendingElements);
+                                    lastRequestID = toClose.getRequestId();
+                                    pendingElements.clear();
+                                }
+                            } else {
+                                toClose.deliverBody(null, true);
+                            }
+                        }
+                    } catch (HttpConnectionClosedException e) {
+                        /* ignore ... already closed */
                     } catch (IOException e) {
                         // Likely caused by closing a stale session / connection.
                         Log.debug("An unexpected exception occurred while closing a session.", e);
-		            }
-		        }
-	        }
-	
-	    	synchronized (pendingElements) {
-		        for (Deliverable deliverable : pendingElements) {
-		            failDelivery(deliverable.getPackets());
-		        }
-		        pendingElements.clear();
-	        }
+                    }
+                }
+            }
+    
+            synchronized (pendingElements) {
+                for (Deliverable deliverable : pendingElements) {
+                    failDelivery(deliverable.getPackets());
+                }
+                pendingElements.clear();
+            }
         } finally { // ensure the session is removed from the session map
-	        for (SessionListener listener : listeners) {
-	            listener.sessionClosed(this);
-	        }
-	        this.listeners.clear();
+            for (SessionListener listener : listeners) {
+                listener.sessionClosed(this);
+            }
+            this.listeners.clear();
         }
     }
 
@@ -1070,33 +1057,32 @@ public class HttpSession extends LocalClientSession {
             return;
         }
         // use a separate thread to schedule backup delivery
-   		TaskEngine.getInstance().submit(new Runnable() {
-			public void run() {
-		        for (Packet packet : packets) {
-    	            try {
-        				backupDeliverer.deliver(packet);
-    	            }
-    	            catch (UnauthorizedException e) {
-    	                Log.error("Unable to deliver message to backup deliverer", e);
-    	            }
-		        }
-			}
-   		});
+        TaskEngine.getInstance().submit(new Runnable() {
+            @Override
+            public void run() {
+                for (Packet packet : packets) {
+                    try {
+                        backupDeliverer.deliver(packet);
+                    }
+                    catch (UnauthorizedException e) {
+                        Log.error("Unable to deliver message to backup deliverer", e);
+                    }
+                }
+            }
+        });
     }
 
     protected String createEmptyBody(boolean terminate)
     {
-        final Element body = DocumentHelper.createElement("body");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
         return body.asXML();
     }
 
     private String createSessionRestartResponse()
     {
-        final Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
 
         final Element features = response.addElement("stream:features");
@@ -1114,47 +1100,70 @@ public class HttpSession extends LocalClientSession {
     public static class HttpVirtualConnection extends VirtualConnection {
 
         private InetAddress address;
+        private ConnectionConfiguration configuration;
+        private ConnectionType connectionType;
 
         public HttpVirtualConnection(InetAddress address) {
             this.address = address;
+            this.connectionType = ConnectionType.SOCKET_C2S;
+        }
+
+        public HttpVirtualConnection(InetAddress address, ConnectionType connectionType) {
+            this.address = address;
+            this.connectionType = connectionType;
         }
 
         @Override
-		public void closeVirtualConnection() {
+        public void closeVirtualConnection() {
             ((HttpSession) session).closeSession();
         }
 
+        @Override
         public byte[] getAddress() throws UnknownHostException {
             return address.getAddress();
         }
 
+        @Override
         public String getHostAddress() throws UnknownHostException {
             return address.getHostAddress();
         }
 
+        @Override
         public String getHostName() throws UnknownHostException {
             return address.getHostName();
         }
 
+        @Override
         public void systemShutdown() {
             close();
         }
 
+        @Override
         public void deliver(Packet packet) throws UnauthorizedException {
             ((HttpSession) session).deliver(packet);
         }
 
+        @Override
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
         }
 
         @Override
-		public Certificate[] getPeerCertificates() {
+        public ConnectionConfiguration getConfiguration() {
+            if (configuration == null) {
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                configuration = connectionManager.getListener( connectionType, true ).generateConnectionConfiguration();
+            }
+            return configuration;
+        }
+
+        @Override
+        public Certificate[] getPeerCertificates() {
             return ((HttpSession) session).getPeerCertificates();
         }
     }
 
-    private class Deliverable {
+    static class Deliverable {
         private final String text;
         private final Collection<String> packets;
 
@@ -1165,17 +1174,20 @@ public class HttpSession extends LocalClientSession {
 
         public Deliverable(Collection<Packet> elements) {
             this.text = null;
-            this.packets = new ArrayList<String>();
+            this.packets = new ArrayList<>();
             for (Packet packet : elements) {
                 // Append packet namespace according XEP-0206 if needed
-            	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
-            		// use string-based operation here to avoid cascading xmlns wonkery
-            		StringBuilder packetXml = new StringBuilder(packet.toXML());
-            		packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
-            		this.packets.add(packetXml.toString());
-            	} else {
-            		this.packets.add(packet.toXML());
-            	}
+                if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
+                    // use string-based operation here to avoid cascading xmlns wonkery
+                    StringBuilder packetXml = new StringBuilder(packet.toXML());
+                    final int noslash = packetXml.indexOf( ">" );
+                    final int slash = packetXml.indexOf( "/>" );
+                    final int insertAt = ( noslash - 1 == slash ? slash : noslash );
+                    packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
+                    this.packets.add(packetXml.toString());
+                } else {
+                    this.packets.add(packet.toXML());
+                }
             }
         }
 
@@ -1198,7 +1210,7 @@ public class HttpSession extends LocalClientSession {
                 // No packets here (should be just raw XML like <stream> so return nothing
                 return null;
             }
-            List<Packet> answer = new ArrayList<Packet>();
+            List<Packet> answer = new ArrayList<>();
             for (String packetXML : packets) {
                 try {
                     Packet packet = null;
@@ -1242,13 +1254,13 @@ public class HttpSession extends LocalClientSession {
         }
 
         public Collection<Packet> getPackets() {
-            List<Packet> packets = new ArrayList<Packet>();
+            List<Packet> packets = new ArrayList<>();
             synchronized (deliverables) {
-	            for (Deliverable deliverable : deliverables) {
-	                if (deliverable.packets != null) {
-	                    packets.addAll(deliverable.getPackets());
-	                }
-	            }
+                for (Deliverable deliverable : deliverables) {
+                    if (deliverable.packets != null) {
+                        packets.addAll(deliverable.getPackets());
+                    }
+                }
             }
             return packets;
         }
@@ -1265,6 +1277,7 @@ public class HttpSession extends LocalClientSession {
             this.session = session;
         }
 
+        @Override
         public void run() {
             session.sendPendingPackets();
         }

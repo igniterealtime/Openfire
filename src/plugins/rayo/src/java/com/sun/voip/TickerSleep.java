@@ -45,166 +45,166 @@ public class TickerSleep implements Ticker {
     private boolean armed;
 
     public TickerSleep(String id) {
-	this.id = id;
+    this.id = id;
     }
 
     public void arm(long delay, long timePeriod) {
-	this.timePeriod = (int) timePeriod;
+    this.timePeriod = (int) timePeriod;
 
         String s = System.getProperty("os.name");
 
         if (s.startsWith("Mac OS X") == true) {
-	    /*
-	     * Mac OS has millisecond sleep granuarity
-	     * and we can take advantage of that.
-	     */
-	    sleepTime = (int) timePeriod;
-	} else {
-	    sleepTime = (int) timePeriod / 2;
-	}
+        /*
+         * Mac OS has millisecond sleep granuarity
+         * and we can take advantage of that.
+         */
+        sleepTime = (int) timePeriod;
+    } else {
+        sleepTime = (int) timePeriod / 2;
+    }
 
-	if (sleepTime == 0) {
-	    sleepTime = 1;
-	}
+    if (sleepTime == 0) {
+        sleepTime = 1;
+    }
 
-	startTime = System.currentTimeMillis();
-	lastTime = startTime;
+    startTime = System.currentTimeMillis();
+    lastTime = startTime;
 
         minDrift = 0;
         maxDrift = 0;
         totalDrift = 0;
         count = 0;
 
-	armed = true;
+    armed = true;
     }
 
     public void disarm() {
-	armed = false;
+    armed = false;
     }
 
     public void tick() throws TickerException {
-	if (!armed) {
-	    throw new TickerException(id + ":  ticker not armed");
-	}
+    if (!armed) {
+        throw new TickerException(id + ":  ticker not armed");
+    }
 
-	long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
 
-	int drift = getDrift();
+    int drift = getDrift();
 
-	totalDrift += drift;
+    totalDrift += drift;
 
-	if (drift > maxDrift) {
-	    maxDrift = drift;
-	}
+    if (drift > maxDrift) {
+        maxDrift = drift;
+    }
 
-	if (drift < minDrift) {
-	    minDrift = drift;
-	}
+    if (drift < minDrift) {
+        minDrift = drift;
+    }
 
-	count++;
+    count++;
 
-	if (Logger.logLevel == -99) {
-	    Logger.println("drift " + drift);
-	    Logger.logLevel = 3;
-	}
+    if (Logger.logLevel == -99) {
+        Logger.println("drift " + drift);
+        Logger.logLevel = 3;
+    }
 
-	if (drift > sleepTime) { 
-	    overSlept++;
-	    return;
-	} else if (drift < -sleepTime) {
-	    underSlept++;
-	}
+    if (drift > sleepTime) { 
+        overSlept++;
+        return;
+    } else if (drift < -sleepTime) {
+        underSlept++;
+    }
 
-	do {
+    do {
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
-	    }
-	    drift = getDrift();
-	} while (drift < -sleepTime);
+        }
+        drift = getDrift();
+    } while (drift < -sleepTime);
 
-	updateSleepDistribution(start);
+    updateSleepDistribution(start);
     }
 
     private int getDrift() {
-	int actualElapsed = (int) (System.currentTimeMillis() - startTime);
+    int actualElapsed = (int) (System.currentTimeMillis() - startTime);
 
-	int expectedElapsed = count * timePeriod;
+    int expectedElapsed = count * timePeriod;
 
-	return actualElapsed - expectedElapsed;
+    return actualElapsed - expectedElapsed;
     }
 
     public int getMinDrift() {
-	return minDrift;
+    return minDrift;
     }
 
     public int getMaxDrift() {
-	return maxDrift;
+    return maxDrift;
     }
 
     private void updateSleepDistribution(long start) {
-	int elapsed = (int) (System.currentTimeMillis() - start);	
+    int elapsed = (int) (System.currentTimeMillis() - start);	
 
-	if (elapsed < 0) {
-	    elapsed = 0;
-	} else if (elapsed >= sleepDistribution.length) {
-	    elapsed = sleepDistribution.length - 1;
-	}
+    if (elapsed < 0) {
+        elapsed = 0;
+    } else if (elapsed >= sleepDistribution.length) {
+        elapsed = sleepDistribution.length - 1;
+    }
 
-	sleepDistribution[elapsed]++;
+    sleepDistribution[elapsed]++;
     }
 
     public double getAvg() {
-	return ((double)(System.currentTimeMillis() - startTime)) / count;
+    return ((double)(System.currentTimeMillis() - startTime)) / count;
     }
-	
+    
     public void printStatistics() {
-	if (count > 0) {
-	    Logger.println(id
-	        + " average time between ticks " 
-	        + ((float)(System.currentTimeMillis() - startTime) / 
-		(float)count) + " ms");
+    if (count > 0) {
+        Logger.println(id
+            + " average time between ticks " 
+            + ((float)(System.currentTimeMillis() - startTime) / 
+        (float)count) + " ms");
 
-	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("Total calls TickerSleep " + count);
-	        Logger.println("OverSlept count " + overSlept);
-	        Logger.println("UnderSlept count " + underSlept);
-    	        Logger.println("Minimum drift " + getMinDrift());
-	        Logger.println("Maximum drift " + getMaxDrift());
-	        Logger.println("Average drift " + (totalDrift / count));
+        if (Logger.logLevel >= Logger.LOG_INFO) {
+            Logger.println("Total calls TickerSleep " + count);
+            Logger.println("OverSlept count " + overSlept);
+            Logger.println("UnderSlept count " + underSlept);
+                Logger.println("Minimum drift " + getMinDrift());
+            Logger.println("Maximum drift " + getMaxDrift());
+            Logger.println("Average drift " + (totalDrift / count));
 
-	        Logger.println("");
+            Logger.println("");
 
-	        Logger.println(id + " Sleep time distribution");
+            Logger.println(id + " Sleep time distribution");
 
-	        Logger.println(id + " ms\tCount");
+            Logger.println(id + " ms\tCount");
            
-	        for (int i = 0; i < sleepDistribution.length; i++) {
+            for (int i = 0; i < sleepDistribution.length; i++) {
                     if (sleepDistribution[i] != 0) {
-		        Logger.println(id + " " + i + "\t\t" 
-			    + sleepDistribution[i]);
+                Logger.println(id + " " + i + "\t\t" 
+                + sleepDistribution[i]);
                     }
                 }
 
                 Logger.println("");
-	    }
-	}
+        }
+    }
     }
 
     public static void main(String args[]) {
-	TickerSleep tickerSleep = new TickerSleep("Test");
+    TickerSleep tickerSleep = new TickerSleep("Test");
 
-	tickerSleep.arm(RtpPacket.PACKET_PERIOD, RtpPacket.PACKET_PERIOD);
+    tickerSleep.arm(RtpPacket.PACKET_PERIOD, RtpPacket.PACKET_PERIOD);
 
-	while (true) {
-	    try {
-	        tickerSleep.tick();
-	    } catch (TickerException e) {
-		Logger.println("tick() failed! " + e.getMessage());
-	    }
+    while (true) {
+        try {
+            tickerSleep.tick();
+        } catch (TickerException e) {
+        Logger.println("tick() failed! " + e.getMessage());
+        }
 
-	    Logger.println(" avg " + tickerSleep.getAvg());
-	}
+        Logger.println(" avg " + tickerSleep.getAvg());
+    }
     }
 
 }

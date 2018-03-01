@@ -1,7 +1,4 @@
-/**
- * $Revision$
- * $Date$
- *
+/*
  * Copyright 2006-2010 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -50,13 +47,13 @@ import org.xmpp.packet.Message;
  */
 public class YahooSession extends TransportSession<YahooBuddy> {
 
-	/**
-	 * Yahoo requires every contact to be in at least one group. If no groups
-	 * are supplied by XMPP, we'll add the user to a group with this name.
-	 */
-	public static final String DEFAULT_GROUPNAME = "Friends";
+    /**
+     * Yahoo requires every contact to be in at least one group. If no groups
+     * are supplied by XMPP, we'll add the user to a group with this name.
+     */
+    public static final String DEFAULT_GROUPNAME = "Friends";
 
-	static Logger Log = Logger.getLogger(YahooSession.class);
+    static Logger Log = Logger.getLogger(YahooSession.class);
 
     /**
      * Create a Yahoo Session instance.
@@ -276,15 +273,15 @@ public class YahooSession extends TransportSession<YahooBuddy> {
      */
     @Override
     public void addContact(JID jid, String nickname, ArrayList<String> groups) {
-    	// OpenYMSG requires a user to be in at least one group.
-    	if (groups == null ) {
-    		groups = new ArrayList<String>();
-    	}
-    	if (groups.isEmpty()) {
-    		// add the default Yahoo group
-    		groups.add(DEFAULT_GROUPNAME);
-    	}
-    	
+        // OpenYMSG requires a user to be in at least one group.
+        if (groups == null ) {
+            groups = new ArrayList<String>();
+        }
+        if (groups.isEmpty()) {
+            // add the default Yahoo group
+            groups.add(DEFAULT_GROUPNAME);
+        }
+        
         // Syncing will take care of add.
         String contact = getTransport().convertJIDToID(jid);
         PseudoRosterItem rosterItem;
@@ -319,13 +316,13 @@ public class YahooSession extends TransportSession<YahooBuddy> {
      */
     @Override
     public void updateContact(YahooBuddy contact) {
-    	// Yahoo requires each user to be in at least one group.
-    	if (contact.getGroups() == null || contact.getGroups().isEmpty()) {
-    		List<String> defaultGroup = new ArrayList<String>();
-    		defaultGroup.add(DEFAULT_GROUPNAME);
-    		contact.setGroups(defaultGroup);
-    	}
-    	
+        // Yahoo requires each user to be in at least one group.
+        if (contact.getGroups() == null || contact.getGroups().isEmpty()) {
+            List<String> defaultGroup = new ArrayList<String>();
+            defaultGroup.add(DEFAULT_GROUPNAME);
+            contact.setGroups(defaultGroup);
+        }
+        
         String yahooContact = getTransport().convertJIDToID(contact.getJID());
         PseudoRosterItem rosterItem;
         if (pseudoRoster.hasItem(yahooContact)) {

@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,10 +37,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  */
-public class SendConversationEventsTask implements ClusterTask {
-	
-	private static final Logger Log = LoggerFactory.getLogger(SendConversationEventsTask.class);
-			
+public class SendConversationEventsTask implements ClusterTask<Void> {
+    
+    private static final Logger Log = LoggerFactory.getLogger(SendConversationEventsTask.class);
+            
     private List<ConversationEvent> events;
 
     /**
@@ -56,13 +53,13 @@ public class SendConversationEventsTask implements ClusterTask {
         this.events = events;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 
     public void run() {
         MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
-        		MonitoringConstants.NAME);
+                MonitoringConstants.NAME);
         ConversationManager conversationManager = (ConversationManager)plugin.getModule(ConversationManager.class);
         for (ConversationEvent event : events) {
             try {

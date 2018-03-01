@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: 2006-04-07 09:28:54 -0500 (Fri, 07 Apr 2006) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,6 +64,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      * @param username  The username requested.import org.jivesoftware.openfire.ldap.*;
      * @param principal The principal requesting the username.
      */
+    @Override
     public boolean authorize(String username, String principal) {
         return getAuthorized(username).contains(principal);
     }
@@ -83,7 +80,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
         // Un-escape Node
         username = JID.unescapeNode(username);
 
-        Collection<String> authorized = new ArrayList<String>();
+        Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);
@@ -94,7 +91,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
             };
             ctx = manager.getContext();
             Attributes attrs = ctx.getAttributes(userDN, attributes);
-            Attribute authorizeField_a = attrs.get(manager.getNameField());
+            Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
                 for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {
                     authorized.add((String)e.nextElement());
@@ -124,6 +121,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "LDAP Authorization Policy";
     }
@@ -133,6 +131,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Provider for authorization using LDAP. Checks if the authenticated principal is in the user's LDAP object using the authorizeField property.";
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2004-2009 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,7 @@ public class SocketSendingTracker {
         shutdown = false;
         checkingThread = new Thread("SocketSendingTracker") {
             @Override
-			public void run() {
+            public void run() {
                 while (!shutdown) {
                     checkHealth();
                     synchronized (this) {

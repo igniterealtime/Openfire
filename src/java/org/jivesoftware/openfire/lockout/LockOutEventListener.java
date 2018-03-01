@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,20 +30,20 @@ public interface LockOutEventListener {
      *
      * @param flag The LockOutFlag that was set, which includes the username of the account and start/end times.
      */
-    public void accountLocked(LockOutFlag flag);
+    void accountLocked( LockOutFlag flag );
 
     /**
      * Notifies the listeners that an account was just enabled (lockout removed).
      *
      * @param username The username of the account that was enabled.
      */
-    public void accountUnlocked(String username);
+    void accountUnlocked( String username );
 
     /**
      * Notifies the listeners that a locked out account attempted to log in.
      *
      * @param username The username of the account that tried to log in.
      */
-    public void lockedAccountDenied(String username);
+    void lockedAccountDenied( String username );
 
 }

@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,17 +32,17 @@ import java.nio.channels.WritableByteChannel;
  */
 public class TLSStreamWriter {
 
-	/**
-	 * <code>TLSWrapper</code> is a TLS wrapper for connections requiring TLS protocol.
-	 */
-	private TLSWrapper wrapper;
+    /**
+     * <code>TLSWrapper</code> is a TLS wrapper for connections requiring TLS protocol.
+     */
+    private TLSWrapper wrapper;
 
-	private WritableByteChannel wbc;
+    private WritableByteChannel wbc;
 
-	private ByteBuffer outAppData;
+    private ByteBuffer outAppData;
 
-	public TLSStreamWriter(TLSWrapper tlsWrapper, Socket socket) throws IOException {
-		wrapper = tlsWrapper;
+    public TLSStreamWriter(TLSWrapper tlsWrapper, Socket socket) throws IOException {
+        wrapper = tlsWrapper;
         // DANIELE: Add code to use directly the socket channel
         if (socket.getChannel() != null) {
             wbc = ServerTrafficCounter.wrapWritableChannel(socket.getChannel());
@@ -56,81 +52,81 @@ public class TLSStreamWriter {
                     ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()));
         }
         outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
-	}
+    }
 
-	private void doWrite(ByteBuffer buff) throws IOException {
+    private void doWrite(ByteBuffer buff) throws IOException {
 
-		if (buff == null) {
-			// Possibly handshaking process
-			buff = ByteBuffer.allocate(0);
-		}
+        if (buff == null) {
+            // Possibly handshaking process
+            buff = ByteBuffer.allocate(0);
+        }
 
-		if (wrapper == null) {
-			writeToSocket(buff);
-		} else {
-			tlsWrite(buff);
-		}
-	}
+        if (wrapper == null) {
+            writeToSocket(buff);
+        } else {
+            tlsWrite(buff);
+        }
+    }
 
-	private void tlsWrite(ByteBuffer buf) throws IOException {
-		ByteBuffer tlsBuffer;
-		ByteBuffer tlsOutput;
-		do {
+    private void tlsWrite(ByteBuffer buf) throws IOException {
+        ByteBuffer tlsBuffer;
+        ByteBuffer tlsOutput;
+        do {
             // TODO Consider optimizing by not creating new instances each time
             tlsBuffer = ByteBuffer.allocate(Math.min(buf.remaining(), wrapper.getAppBuffSize()));
-			tlsOutput = ByteBuffer.allocate(wrapper.getNetBuffSize());
+            tlsOutput = ByteBuffer.allocate(wrapper.getNetBuffSize());
 
-			while (tlsBuffer.hasRemaining() && buf.hasRemaining()) {
-				tlsBuffer.put(buf.get());
-			}
+            while (tlsBuffer.hasRemaining() && buf.hasRemaining()) {
+                tlsBuffer.put(buf.get());
+            }
 
-			tlsBuffer.flip();
-			wrapper.wrap(tlsBuffer, tlsOutput);
+            tlsBuffer.flip();
+            wrapper.wrap(tlsBuffer, tlsOutput);
 
-			tlsOutput.flip();
-			writeToSocket(tlsOutput);
+            tlsOutput.flip();
+            writeToSocket(tlsOutput);
 
-			tlsOutput.clear();
-		} while (buf.hasRemaining());
-	}
+            tlsOutput.clear();
+        } while (buf.hasRemaining());
+    }
 
-	/*
-	 * Writes outNetData to the SocketChannel. <P> Returns true when the ByteBuffer has no remaining
-	 * data.
-	 */
-	private boolean writeToSocket(ByteBuffer outNetData) throws IOException {
-		wbc.write(outNetData);
-		return !outNetData.hasRemaining();
-	}
+    /*
+     * Writes outNetData to the SocketChannel. <P> Returns true when the ByteBuffer has no remaining
+     * data.
+     */
+    private boolean writeToSocket(ByteBuffer outNetData) throws IOException {
+        wbc.write(outNetData);
+        return !outNetData.hasRemaining();
+    }
 
-	public OutputStream getOutputStream() {
-		return createOutputStream();
-	}
+    public OutputStream getOutputStream() {
+        return createOutputStream();
+    }
 
-	/*
-	 * Returns an output stream for a ByteBuffer. The write() methods use the relative ByteBuffer
-	 * put() methods.
-	 */
-	private OutputStream createOutputStream() {
-		return new OutputStream() {
-			@Override
-			public synchronized void write(int b) throws IOException {
-				outAppData.put((byte) b);
-				outAppData.flip();
-				doWrite(outAppData);
-				outAppData.clear();
-			}
+    /*
+     * Returns an output stream for a ByteBuffer. The write() methods use the relative ByteBuffer
+     * put() methods.
+     */
+    private OutputStream createOutputStream() {
+        return new OutputStream() {
+            @Override
+            public synchronized void write(int b) throws IOException {
+                outAppData.put((byte) b);
+                outAppData.flip();
+                doWrite(outAppData);
+                outAppData.clear();
+            }
 
-			@Override
-			public synchronized void write(byte[] bytes, int off, int len) throws IOException {
+            @Override
+            public synchronized void write(byte[] bytes, int off, int len) throws IOException {
                 outAppData = resizeApplicationBuffer(bytes.length);
                 outAppData.put(bytes, off, len);
-				outAppData.flip();
-				doWrite(outAppData);
-				outAppData.clear();
-			}
-		};
-	}
+                outAppData.flip();
+                doWrite(outAppData);
+                outAppData.clear();
+            }
+        };
+    }
 
     private ByteBuffer resizeApplicationBuffer(int increment) {
         // TODO Creating new buffers and copying over old one may not scale. Consider using views. Thanks to Noah for the tip.

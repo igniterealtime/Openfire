@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,8 +41,8 @@ import org.slf4j.LoggerFactory;
  */
 public class DbDispatcherInfoProvider implements DispatcherInfoProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(DbDispatcherInfoProvider.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(DbDispatcherInfoProvider.class);
+    
     private static final String INSERT_DISPATCHER =
             "INSERT INTO fpDispatcher (name, description, offerTimeout, requestTimeout, queueID) VALUES (?,?,?,?,?)";
     private static final String LOAD_DISPATCHER_BY_ID =

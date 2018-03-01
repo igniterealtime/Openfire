@@ -7,103 +7,103 @@ import javax.ws.rs.core.Response.Status;
  */
 public class ServiceException extends Exception {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 4351720088030656859L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 4351720088030656859L;
 
-	/** The ressource. */
-	private String ressource;
+    /** The resource. */
+    private String resource;
 
-	/** The exception. */
-	private String exception;
+    /** The exception. */
+    private String exception;
 
-	/** The status. */
-	private Status status;
+    /** The status. */
+    private Status status;
 
-	/**
-	 * Instantiates a new service exception.
-	 *
-	 * @param msg the msg
-	 * @param ressource the ressource
-	 * @param exception the exception
-	 * @param status the status
-	 */
-	public ServiceException(String msg, String ressource, String exception, Status status) {
-		super(msg);
-		this.ressource = ressource;
-		this.exception = exception;
-		this.status = status;
-	}
+    /**
+     * Instantiates a new service exception.
+     *
+     * @param msg the msg
+     * @param resource the resource
+     * @param exception the exception
+     * @param status the status
+     */
+    public ServiceException(String msg, String resource, String exception, Status status) {
+        super(msg);
+        this.resource = resource;
+        this.exception = exception;
+        this.status = status;
+    }
 
-	/**
-	 * Instantiates a new service exception.
-	 *
-	 * @param msg the msg
-	 * @param ressource the ressource
-	 * @param exception the exception
-	 * @param status the status
-	 * @param cause the cause
-	 */
-	public ServiceException(String msg, String ressource, String exception, Status status, Throwable cause) {
-		super(msg, cause);
-		this.ressource = ressource;
-		this.exception = exception;
-		this.status = status;
-	}
+    /**
+     * Instantiates a new service exception.
+     *
+     * @param msg the msg
+     * @param resource the resource
+     * @param exception the exception
+     * @param status the status
+     * @param cause the cause
+     */
+    public ServiceException(String msg, String resource, String exception, Status status, Throwable cause) {
+        super(msg, cause);
+        this.resource = resource;
+        this.exception = exception;
+        this.status = status;
+    }
 
-	/**
-	 * Gets the ressource.
-	 * 
-	 * @return the ressource
-	 */
-	public String getRessource() {
-		return ressource;
-	}
+    /**
+     * Gets the resource.
+     * 
+     * @return the resource
+     */
+    public String getResource() {
+        return resource;
+    }
 
-	/**
-	 * Sets the ressource.
-	 * 
-	 * @param ressource
-	 *            the new ressource
-	 */
-	public void setRessource(String ressource) {
-		this.ressource = ressource;
-	}
+    /**
+     * Sets the resource.
+     * 
+     * @param resource
+     *            the new resource
+     */
+    public void setResource(String resource) {
+        this.resource = resource;
+    }
 
-	/**
-	 * Gets the exception.
-	 * 
-	 * @return the exception
-	 */
-	public String getException() {
-		return exception;
-	}
+    /**
+     * Gets the exception.
+     * 
+     * @return the exception
+     */
+    public String getException() {
+        return exception;
+    }
 
-	/**
-	 * Sets the exception.
-	 * 
-	 * @param exception
-	 *            the new exception
-	 */
-	public void setException(String exception) {
-		this.exception = exception;
-	}
+    /**
+     * Sets the exception.
+     * 
+     * @param exception
+     *            the new exception
+     */
+    public void setException(String exception) {
+        this.exception = exception;
+    }
 
-	/**
-	 * Gets the status.
-	 *
-	 * @return the status
-	 */
-	public Status getStatus() {
-		return status;
-	}
+    /**
+     * Gets the status.
+     *
+     * @return the status
+     */
+    public Status getStatus() {
+        return status;
+    }
 
-	/**
-	 * Sets the status.
-	 *
-	 * @param status
-	 *            the new status
-	 */
-	public void setStatus(Status status) {
-		this.status = status;
-	}
+    /**
+     * Sets the status.
+     *
+     * @param status
+     *            the new status
+     */
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 }

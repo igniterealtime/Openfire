@@ -1,7 +1,4 @@
-/**
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +30,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class IsPluginInstalledTask implements ClusterTask {
+public class IsPluginInstalledTask implements ClusterTask<Boolean> {
     private String pluginName;
     private boolean installed;
 
@@ -47,18 +44,22 @@ public class IsPluginInstalledTask implements ClusterTask {
         this.pluginName = pluginName;
     }
 
-    public Object getResult() {
+    @Override
+    public Boolean getResult() {
         return installed;
     }
 
+    @Override
     public void run() {
         installed = XMPPServer.getInstance().getPluginManager().getPlugin(pluginName) != null;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, pluginName);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         pluginName = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

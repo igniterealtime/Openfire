@@ -1,5 +1,3 @@
-# $Revision:  $
-# $Date:  $
 
 ALTER TABLE mucConversationLog CHANGE time logTime CHAR(15) NOT NULL;
 

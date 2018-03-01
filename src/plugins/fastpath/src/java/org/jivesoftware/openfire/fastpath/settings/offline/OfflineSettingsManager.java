@@ -1,8 +1,4 @@
-/**
- * $RCSfile$
- * $Revision: 19545 $
- * $Date: 2005-08-18 16:07:35 -0700 (Thu, 18 Aug 2005) $
- *
+/*
  * Copyright (C) 1999-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,8 +32,8 @@ import org.slf4j.LoggerFactory;
  */
 public class OfflineSettingsManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(OfflineSettingsManager.class);
-	
+    private static final Logger Log = LoggerFactory.getLogger(OfflineSettingsManager.class);
+    
     private static final String GET_OFFLINE_SETTTINGS =
             "SELECT redirectPage, emailAddress, subject, offlineText FROM " +
             "fpOfflineSetting WHERE workgroupID=?";

@@ -1,8 +1,4 @@
-/**
- * $RCSfile: $
- * $Revision: $
- * $Date: $
- *
+/*
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +29,7 @@ import org.xmpp.packet.JID;
 public class OnlySubscribers extends PublisherModel {
 
     @Override
-	public boolean canPublish(Node node, JID entity) {
+    public boolean canPublish(Node node, JID entity) {
         NodeAffiliate nodeAffiliate = node.getAffiliate(entity);
         // Deny access if user does not have any relation with the node or is an outcast
         if (nodeAffiliate == null ||
@@ -55,7 +51,7 @@ public class OnlySubscribers extends PublisherModel {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return "subscribers";
     }
 }

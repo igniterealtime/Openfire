@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.cluster;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
@@ -177,6 +178,7 @@ public class ClusterManager {
      */
     public static void fireJoinedCluster(boolean asynchronous) {
         try {
+            Log.info("Firing joined cluster event for this node");
             Event event = new Event(EventType.joined_cluster, null);
             events.put(event);
             if (!asynchronous) {
@@ -201,6 +203,7 @@ public class ClusterManager {
      */
     public static void fireJoinedCluster(byte[] nodeID, boolean asynchronous) {
         try {
+            Log.info("Firing joined cluster event for another node:" + new String(nodeID, StandardCharsets.UTF_8));
             Event event = new Event(EventType.joined_cluster, nodeID);
             events.put(event);
             if (!asynchronous) {
@@ -228,6 +231,7 @@ public class ClusterManager {
      */
     public static void fireLeftCluster() {
         try {
+            Log.info("Firing left cluster event for this node");
             Event event = new Event(EventType.left_cluster, null);
             events.put(event);
         } catch (InterruptedException e) {
@@ -245,6 +249,7 @@ public class ClusterManager {
      */
     public static void fireLeftCluster(byte[] nodeID) {
         try {
+            Log.info("Firing left cluster event for another node:" + new String(nodeID, StandardCharsets.UTF_8));
             Event event = new Event(EventType.left_cluster, nodeID);
             events.put(event);
         } catch (InterruptedException e) {
@@ -269,6 +274,7 @@ public class ClusterManager {
      */
     public static void fireMarkedAsSeniorClusterMember() {
         try {
+            Log.info("Firing marked as senior event");
             events.put(new Event(EventType.marked_senior_cluster_member, null));
         } catch (InterruptedException e) {
             // Should never happen

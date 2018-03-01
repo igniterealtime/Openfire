@@ -26,6 +26,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.plugin.session.RemoteSessionLocator;
@@ -57,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
@@ -177,25 +180,49 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         cacheStats = null;
         // Update the running state of the cluster
         state = State.stopped;
+
+        // Fire the leftClusterEvent before we leave the cluster - we need to access the clustered data before the
+        // cluster is shutdown so it can be copied in to the non-clustered, DefaultCache
+        final Semaphore leftClusterSemaphore = new Semaphore(0);
+        final ClusterEventListener clusterEventListener = new ClusterEventListener() {
+            @Override
+            public void joinedCluster() {
+            }
+
+            @Override
+            public void joinedCluster(byte[] bytes) {
+            }
+
+            @Override
+            public void leftCluster() {
+                leftClusterSemaphore.release();
+            }
+
+            @Override
+            public void leftCluster(byte[] bytes) {
+            }
+
+            @Override
+            public void markedAsSeniorClusterMember() {
+            }
+        };
+        try {
+            ClusterManager.addListener(clusterEventListener);
+            ClusterManager.fireLeftCluster();
+            leftClusterSemaphore.tryAcquire(30, TimeUnit.SECONDS);
+        } catch( final Exception e) {
+            logger.error("Unexpected exception waiting for clustering to shut down", e);
+        } finally {
+            ClusterManager.removeListener(clusterEventListener);
+        }
         // Stop the cluster
+        hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListener);
+        cluster.removeMembershipListener(membershipListener);
         Hazelcast.shutdownAll();
         cluster = null;
-        if (clusterListener != null) {
-            // Wait until the server has updated its internal state
-            while (!clusterListener.isDone() && !Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(100);
-                } catch (final InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListener);
-            cluster.removeMembershipListener(membershipListener);
-            lifecycleListener = null;
-            membershipListener = null;
-            clusterListener = null;
-        }
-        // Reset the node ID
+        lifecycleListener = null;
+        membershipListener = null;
+        clusterListener = null;
         XMPPServer.getInstance().setNodeID(null);
 
         // Reset packet router to use to deliver packets to remote cluster nodes

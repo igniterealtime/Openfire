@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.bcpg.ElGamalSecretBCPGKey;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.spi.ConnectionListener;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -349,7 +351,17 @@ public class CertificateStoreManager extends BasicModule
     static String getTrustStoreLocation( ConnectionType type )
     {
         final String propertyName = type.getPrefix()  + "truststore";
-        final String defaultValue = "resources" + File.separator + "security" + File.separator + "truststore";
+        final String defaultValue;
+
+        // OF-1191: For client-oriented connection types, Openfire traditionally uses a different truststore.
+        if ( Arrays.asList( ConnectionType.SOCKET_C2S, ConnectionType.BOSH_C2S, ConnectionType.WEBADMIN ).contains( type ) )
+        {
+            defaultValue = "resources" + File.separator + "security" + File.separator + "client.truststore";
+        }
+        else
+        {
+            defaultValue = "resources" + File.separator + "security" + File.separator + "truststore";
+        }
 
         if ( type.getFallback() == null )
         {

@@ -16,22 +16,17 @@
 
 package org.jivesoftware.admin;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import org.dom4j.Document;
-import org.dom4j.DocumentFactory;
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.net.URL;
+import java.util.*;
 
 /**
  * A model for admin tab and sidebar info. This class loads in XML definitions of the
@@ -348,6 +343,30 @@ public class AdminConsole {
                 }
             }
         }
+
+        // OF-1484: Order everything explicitly.
+        orderModel();
+    }
+
+    /**
+     * Sorts all tabs, their containing sidebars, and their containing entries based on the value of their 'order'
+     * attributes.
+     */
+    private static void orderModel()
+    {
+        final Visitor visitor = new VisitorSupport()
+        {
+            @Override
+            public void visit( Element node )
+            {
+                // This orders only the elements from the content, which can get messy if mixed content is of importance.
+                // At the time of writing, the content other than elements was whitespace text (for indentation), which
+                // is safe to ignore.
+                Collections.sort( node.content(), new ElementByOrderAttributeComparator() );
+                super.visit( node );
+            }
+        };
+        generatedModel.accept( visitor );
     }
 
     private static void overrideTab(Element tab, Element overrideTab) {
@@ -363,6 +382,9 @@ public class AdminConsole {
         }
         if (overrideTab.attributeValue("plugin") != null) {
             tab.addAttribute("plugin", overrideTab.attributeValue("plugin"));
+        }
+        if (overrideTab.attributeValue("order") != null) {
+            tab.addAttribute("order", overrideTab.attributeValue("order"));
         }
         // Override sidebar items.
         for (Iterator i=overrideTab.elementIterator(); i.hasNext(); ) {
@@ -389,6 +411,9 @@ public class AdminConsole {
         }
         if (overrideSidebar.attributeValue("plugin") != null) {
             sidebar.addAttribute("plugin", overrideSidebar.attributeValue("plugin"));
+        }
+        if (overrideSidebar.attributeValue("order") != null) {
+            sidebar.addAttribute("order", overrideSidebar.attributeValue("order"));
         }
         // Override entries.
         for (Iterator i=overrideSidebar.elementIterator(); i.hasNext(); ) {
@@ -422,6 +447,9 @@ public class AdminConsole {
         if (overrideEntry.attributeValue("plugin") != null) {
             entry.addAttribute("plugin", overrideEntry.attributeValue("plugin"));
         }
+        if (overrideEntry.attributeValue("order") != null) {
+            entry.addAttribute("order", overrideEntry.attributeValue("order"));
+        }
         // Override any sidebars contained in the entry.
         for (Iterator i=overrideEntry.elementIterator(); i.hasNext(); ) {
             Element sidebar = (Element)i.next();
@@ -451,5 +479,30 @@ public class AdminConsole {
         classLoaders[1] = Thread.currentThread().getContextClassLoader();
         classLoaders[2] = ClassLoader.getSystemClassLoader();
         return classLoaders;
+    }
+
+    /**
+     * A comparator that compares Nodes by the value of their 'order' attribute, if the node is an Element. When it is
+     * not, or when the 'order' attribute is absent, or cannot be parsed as an integer, the value '0' is used.
+     *
+     * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+     */
+    private static class ElementByOrderAttributeComparator implements Comparator<Node>
+    {
+        @Override
+        public int compare( Node o1, Node o2 )
+        {
+            try
+            {
+                final int p1 = o1 instanceof Element ? Integer.valueOf( ((Element)o1).attributeValue( "order", "0" ) ) : 0;
+                final int p2 = o2 instanceof Element ? Integer.valueOf( ((Element)o2).attributeValue( "order", "0" ) ) : 0;
+                return Integer.compare( p1, p2 );
+            }
+            catch ( NumberFormatException e )
+            {
+                Log.warn( "Unable to sort admin console tabs, as a non-numeric 'order' attribute value was found.", e );
+                return 0;
+            }
+        }
     }
 }

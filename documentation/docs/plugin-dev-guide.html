@@ -245,7 +245,12 @@ tabs, sections and entries in the Admin Console framework. A sample
             &lt;sidebar id="mysidebar" name="My Plugin"&gt;
                &lt;item id="my-plugin" name="My Plugin Admin"
                    url="my-plugin-admin.jsp"
-                   description="Click to administer settings for my plugin" /&gt;
+                   description="Click to administer settings for my plugin"
+                   order="4" /&gt;
+               &lt;item id="my-plugin" name="My Plugin Overview"
+                   url="my-plugin-overview.jsp"
+                   description="Click to have an Overview of Plugin usage"
+                   order="2" /&gt;
             &lt;/sidebar&gt;
         &lt;/tab&gt;
 
@@ -255,10 +260,21 @@ tabs, sections and entries in the Admin Console framework. A sample
 </fieldset>
 
 <p>
-In this example, we've defined a new tab "Example", a sidebar section
-"My Plugin" and a page "My Plugin Admin". We've registered <tt>my-plugin-admin.jsp</tt>
-as the page. You can override existing tabs, sections, and items by using
-the existing id attribute values in your own <tt>&lt;adminconsole&gt;</tt> defintion.
+In this example, we've defined a new tab "Example", a sidebar section "My Plugin" and two pages: "My Plugin Admin"
+and "My Plugin Overview". We've registered <tt>my-plugin-admin.jsp</tt> respectively <tt>my-plugin-overview.jsp</tt>
+as the pages.
+</p>
+<p>
+By default, the tabs, sidebars and pages will be presented in the order in which they are defined. You can, however,
+define explicit ordering by adding an "order" attribute to each element. It's numeric value defines order. If no
+order is specified, the value 0 (zero) is used as a default. In the example above, the items are ordered using this
+construct. In the admin console, the "My Plugin Overview" page will be presented before the "My Plugin Admin" page,
+as its 'order' value is lower. If neither item had defined the 'order' attribute, the presentation of both pages
+would have been reversed (as it would have used to order in which the pages are defined in XML).
+</p>
+<p>
+You can override existing tabs, sections, and items by using the existing id attribute values in your own
+<tt>&lt;adminconsole&gt;</tt> definition.
 </p>
 
 <h3>Admin Console Best Practices</h3>

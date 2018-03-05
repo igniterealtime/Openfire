@@ -551,7 +551,7 @@
     </tab>
 
     <!-- Plugins -->
-    <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}">
+    <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}" order="10000">
 
         <!-- Plugin Admin -->
         <sidebar id="sidebar-plugin-admin" name="${sidebar.sidebar-plugin-admin}">

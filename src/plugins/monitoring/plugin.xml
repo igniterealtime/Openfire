@@ -6,7 +6,7 @@
     <description>Monitors conversations and statistics of the server.</description>
     <author>IgniteRealtime // Jive Software</author>
     <version>1.6.0</version>
-    <date>2/25/2018</date>
+    <date>03/05/2018</date>
     <minServerVersion>4.1.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>4</databaseVersion>

@@ -39,6 +39,7 @@ import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.archive.cluster.GetConversationCountTask;
 import org.jivesoftware.openfire.archive.cluster.GetConversationTask;
 import org.jivesoftware.openfire.archive.cluster.GetConversationsTask;
+import org.jivesoftware.openfire.archive.cluster.HasWrittenAllDataTask;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -988,11 +989,48 @@ public class ConversationManager implements Startable, ComponentEventListener{
      * content) to a request for archived data. Such response should only be generated after all data that was
      * queued before the request arrived has been written to the database.
      *
+     * This method performs a cluster-wide check, unlike {@link #hasLocalNodeWrittenAllDataBefore(Date)}.
+     *
      * @param date A date (cannot be null).
      * @return false if any of the the queues contain work that was created before the provided date, otherwise true.
      */
     public boolean hasWrittenAllDataBefore( Date date )
     {
+        final boolean localNode = hasLocalNodeWrittenAllDataBefore( date );
+        if ( !localNode )
+        {
+            return false;
+        }
+
+        // Check all other cluster nodes.
+        final Collection<Object> objects = CacheFactory.doSynchronousClusterTask( new HasWrittenAllDataTask( date ), false );
+        for ( final Object object : objects )
+        {
+            if ( !( (Boolean) object ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if none of the queues hold data that was delivered before the provided argument.
+     *
+     * This method is intended to be used to determine if it's safe to construct an answer (based on database
+     * content) to a request for archived data. Such response should only be generated after all data that was
+     * queued before the request arrived has been written to the database.
+     *
+     * This method performs a check on the local cluster-node only, unlike {@link #hasWrittenAllDataBefore(Date)}.
+     *
+     * @param date A date (cannot be null).
+     * @return false if any of the the queues contain work that was created before the provided date, otherwise true.
+     */
+    public boolean hasLocalNodeWrittenAllDataBefore( Date date )
+    {
+        if ( date == null )
+        {
+            throw new IllegalArgumentException( "Argument 'date' cannot be null." );
+        }
         final ArchiveCandidate c = conversationQueue.peek();
         final ArchiveCandidate m = messageQueue.peek();
         final ArchiveCandidate p = participantQueue.peek();

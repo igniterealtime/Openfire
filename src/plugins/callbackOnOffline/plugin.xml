@@ -6,7 +6,7 @@
     <name>CallbackOnOffline</name>
     <description>Url is called when recipient is offline</description>
     <author>Pavel Goski / Krzysztof Misztal</author>
-    <version>1.2</version>
+    <version>1.2.0</version>
     <date>12/15/2017</date>
     <minServerVersion>2.3.0</minServerVersion>
 

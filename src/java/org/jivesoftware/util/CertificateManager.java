@@ -17,11 +17,13 @@
 package org.jivesoftware.util;
 
 import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.ExtensionsGenerator;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.cert.CertException;
@@ -47,6 +49,8 @@ import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.bouncycastle.util.io.pem.PemObjectGenerator;
 import org.bouncycastle.util.io.pem.PemWriter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateUtils;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
@@ -61,6 +65,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -232,12 +237,84 @@ public class CertificateManager {
      * @param privKey the private key of the certificate.
      * @return the content of a new singing request for the specified certificate.
      */
-    public static String createSigningRequest(X509Certificate cert, PrivateKey privKey) throws OperatorCreationException, IOException {
-
+    public static String createSigningRequest(X509Certificate cert, PrivateKey privKey) throws OperatorCreationException, IOException, CertificateParsingException
+    {
         JcaPKCS10CertificationRequestBuilder csrBuilder = new JcaPKCS10CertificationRequestBuilder( //
                 cert.getSubjectX500Principal(), //
                 cert.getPublicKey() //
                 );
+
+        // Add SubjectAlternativeNames (SANs)
+        final ASN1EncodableVector subjectAlternativeNames = new ASN1EncodableVector();
+
+        final Collection<List<?>> certSans = cert.getSubjectAlternativeNames();
+        if ( certSans != null )
+        {
+            for ( final List<?> certSan : certSans )
+            {
+                final int nameType = (Integer) certSan.get( 0 );
+                final Object value = certSan.get( 1 ); // this is either a string, or a byte-array that represents the ASN.1 DER encoded form.
+                switch ( nameType )
+                {
+                    case 0:
+                        // OtherName: search for "id-on-xmppAddr" or 'sRVName' or 'userPrincipalName'
+                        try ( final ASN1InputStream decoder = new ASN1InputStream( (byte[]) value ) )
+                        {
+                            // By specification, OtherName instances must always be an ASN.1 Sequence.
+                            final ASN1Primitive object = decoder.readObject();
+                            final ASN1Sequence otherNameSeq = (ASN1Sequence) object;
+
+                            // By specification, an OtherName instance consists of:
+                            // - the type-id (which is an Object Identifier), followed by:
+                            // - a tagged value, of which the tag number is 0 (zero) and the value is defined by the type-id.
+                            final ASN1ObjectIdentifier typeId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt( 0 );
+                            final ASN1TaggedObject taggedValue = (ASN1TaggedObject) otherNameSeq.getObjectAt( 1 );
+
+                            final int tagNo = taggedValue.getTagNo();
+                            if ( tagNo != 0 )
+                            {
+                                throw new IllegalArgumentException( "subjectAltName 'otherName' sequence's second object is expected to be a tagged value of which the tag number is 0. The tag number that was detected: " + tagNo );
+                            }
+                            subjectAlternativeNames.add(
+                                new DERTaggedObject( false,
+                                                     GeneralName.otherName,
+                                                     new DERSequence(
+                                                         new ASN1Encodable[] {
+                                                             typeId,
+                                                             taggedValue
+                                                         }
+                                                     )
+                                )
+                            );
+                        }
+                        catch ( Exception e )
+                        {
+                            Log.warn( "Unable to parse certificate SAN 'otherName' value", e );
+                        }
+                        break;
+                    case 2:
+                        // DNS
+                        subjectAlternativeNames.add( new GeneralName( GeneralName.dNSName, (String) value ) );
+                        break;
+                    case 6:
+                        // URI
+                        subjectAlternativeNames.add( new GeneralName( GeneralName.uniformResourceIdentifier, (String) value ) );
+                        break;
+                    default:
+                        // Not applicable to XMPP, so silently ignore them
+                        break;
+                }
+
+            }
+        }
+
+        final GeneralNames subjectAltNames = GeneralNames.getInstance(
+            new DERSequence( subjectAlternativeNames )
+        );
+
+        final ExtensionsGenerator extGen = new ExtensionsGenerator();
+        extGen.addExtension(Extension.subjectAlternativeName, false, subjectAltNames);
+        csrBuilder.addAttribute( PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extGen.generate());
 
         String signatureAlgorithm = "SHA256WITH" + cert.getPublicKey().getAlgorithm();
 
@@ -443,6 +520,13 @@ public class CertificateManager {
                                                                         String subjectCommonName, String domain,
                                                                         String signAlgoritm)
             throws GeneralSecurityException, IOException {
+        return createX509V3Certificate( kp, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, null );
+    }
+
+    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerCommonName,
+                                                                        String subjectCommonName, String domain,
+                                                                        String signAlgoritm, Set<String> sanDnsNames)
+            throws GeneralSecurityException, IOException {
 
         // subjectDN
         X500NameBuilder subjectBuilder = new X500NameBuilder();
@@ -452,7 +536,7 @@ public class CertificateManager {
         X500NameBuilder issuerBuilder = new X500NameBuilder();
         issuerBuilder.addRDN(BCStyle.CN, issuerCommonName);
 
-        return createX509V3Certificate(kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm);
+        return createX509V3Certificate(kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, sanDnsNames);
     }
 
     /**
@@ -469,7 +553,13 @@ public class CertificateManager {
      * @throws IOException
      */
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, X500NameBuilder issuerBuilder,
-            X500NameBuilder subjectBuilder, String domain, String signAlgoritm) throws GeneralSecurityException, IOException {
+            X500NameBuilder subjectBuilder, String domain, String signAlgoritm ) throws GeneralSecurityException, IOException
+    {
+        return createX509V3Certificate( kp, days, issuerBuilder, subjectBuilder, domain, signAlgoritm, null );
+    }
+
+    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, X500NameBuilder issuerBuilder,
+            X500NameBuilder subjectBuilder, String domain, String signAlgoritm, Set<String> sanDnsNames ) throws GeneralSecurityException, IOException {
         PublicKey pubKey = kp.getPublic();
         PrivateKey privKey = kp.getPrivate();
 
@@ -492,18 +582,11 @@ public class CertificateManager {
                 pubKey //
                 );
 
-        // add subjectAlternativeName extension
-        boolean critical = subjectDN.getRDNs().length == 0;
-        ASN1Sequence othernameSequence = new DERSequence(
-            new ASN1Encodable[] {
-                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"),
-                new DERTaggedObject( true, GeneralName.otherName, new DERUTF8String( domain ) )
-            }
-        );
-        DERTaggedObject othernameGN = new DERTaggedObject(false, GeneralName.otherName, othernameSequence);
+        // add subjectAlternativeName extension that includes all relevant names.
+        final GeneralNames subjectAlternativeNames = getSubjectAlternativeNames( sanDnsNames );
 
-        GeneralNames subjectAltNames = GeneralNames.getInstance( new DERSequence( othernameGN ) );
-        certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAltNames);
+        final boolean critical = subjectDN.getRDNs().length == 0;
+        certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAlternativeNames);
 
         // add keyIdentifiers extensions
         JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
@@ -531,5 +614,51 @@ public class CertificateManager {
         } catch (OperatorCreationException | CertException e) {
             throw new GeneralSecurityException(e);
         }
+    }
+
+    protected static GeneralNames getSubjectAlternativeNames( Set<String> sanDnsNames )
+    {
+        final ASN1EncodableVector subjectAlternativeNames = new ASN1EncodableVector();
+        if ( sanDnsNames != null )
+        {
+            for ( final String dnsNameValue : sanDnsNames )
+            {
+                subjectAlternativeNames.add(
+                    new GeneralName( GeneralName.dNSName, dnsNameValue )
+                );
+            }
+        }
+
+        return GeneralNames.getInstance(
+            new DERSequence( subjectAlternativeNames )
+        );
+    }
+
+    /**
+     * Finds all values that aught to be added as a Subject Alternate Name of the dnsName type to a certificate that
+     * identifies this XMPP server.
+     *
+     * @return A set of names, possibly empty, never null.
+     */
+    public static Set<String> determineSubjectAlternateNameDnsNameValues()
+    {
+        final HashSet<String> result = new HashSet<>();
+
+        // Add the XMPP domain name itself.
+        result.add( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+
+        // The fully qualified domain name of the server
+        result.add( XMPPServer.getInstance().getServerInfo().getHostname() );
+
+        if ( XMPPServer.getInstance().getIQDiscoItemsHandler() != null ) // When we're not in setup any longer...
+        {
+            // Add the name of each of the domain level item nodes as reported by service discovery.
+            for ( final DiscoItem item : XMPPServer.getInstance().getIQDiscoItemsHandler().getServerItems() )
+            {
+                result.add( item.getJID().toBareJID() );
+            }
+        }
+
+        return result;
     }
 }

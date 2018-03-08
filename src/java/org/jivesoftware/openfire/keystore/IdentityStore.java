@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -110,7 +111,7 @@ public class IdentityStore extends CertificateStore
 
             return pemCSR;
         }
-        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException e )
+        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException | CertificateParsingException e )
         {
             throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"'", e );
         }
@@ -443,6 +444,69 @@ public class IdentityStore extends CertificateStore
     }
 
     /**
+     * Checks if the store contains a certificate of a particular algorithm that contains at least all of the identities
+     * of this server (which includes the XMPP domain name, but also its hostname, and XMPP addresses of components
+     * that are currently being hosted).
+     *
+     * This method will not distinguish between self-signed and non-self-signed certificates.
+     */
+    public synchronized boolean containsAllIdentityCertificate( String algorithm ) throws CertificateStoreConfigException
+    {
+        final Collection<String> dns = CertificateManager.determineSubjectAlternateNameDnsNameValues();
+
+        try
+        {
+            for ( final String alias : Collections.list( store.aliases() ) )
+            {
+                final Set<String> missingDns = new HashSet<>();
+
+                final Certificate certificate = store.getCertificate( alias );
+                if ( !( certificate instanceof X509Certificate ) )
+                {
+                    continue;
+                }
+
+                if ( !certificate.getPublicKey().getAlgorithm().equalsIgnoreCase( algorithm ) )
+                {
+                    continue;
+                }
+
+                final List<String> serverIdentities = CertificateManager.getServerIdentities( (X509Certificate) certificate );
+
+                // Are all of our DNS names covered?
+                for ( String dnsId : dns )
+                {
+                    boolean found = false;
+                    for ( String identity : serverIdentities )
+                    {
+                        if ( !DNSUtil.isNameCoveredByPattern( dnsId, identity ) )
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if ( !found )
+                    {
+                        Log.info( "Certificate with alias '{}' is missing DNS identity '{}'.", alias, dnsId );
+                        missingDns.add( dnsId );
+                    }
+                }
+
+                if ( missingDns.isEmpty() )
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch ( KeyStoreException e )
+        {
+            throw new CertificateStoreConfigException( "An exception occurred while searching for " + algorithm + " certificates that match the Openfire domain.", e );
+        }
+    }
+
+    /**
      * Populates the key store with a self-signed certificate for the domain of this XMPP service.
      */
     public synchronized void addSelfSignedDomainCertificate( String algorithm ) throws CertificateStoreConfigException
@@ -469,6 +533,7 @@ public class IdentityStore extends CertificateStore
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final int validityInDays = 5*365;
+        final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
 
         Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys
@@ -477,7 +542,7 @@ public class IdentityStore extends CertificateStore
             final KeyPair keyPair = generateKeyPair( algorithm.toUpperCase(), keySize );
 
             // Create X509 certificate with keys and specified domain
-            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, name, name, name, signAlgorithm );
+            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, name, name, name, signAlgorithm, sanDnsNames );
 
             // Store new certificate and private key in the key store
             store.setKeyEntry( alias, keyPair.getPrivate(), configuration.getPassword(), new X509Certificate[]{cert} );

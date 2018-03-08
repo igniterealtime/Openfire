@@ -43,7 +43,20 @@ public class IdentityStore extends CertificateStore
 
         try
         {
-            final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+            KeyManagerFactory keyManagerFactory;
+            try
+            {
+                // OF-1501: If multiple certificates are available, the 'NewSunX509' implementation in the SunJSSE
+                // provider makes the effort to pick a certificate with the appropriate key usage and prefers valid
+                // to expired certificates.
+                keyManagerFactory = KeyManagerFactory.getInstance( "NewSunX509" );
+            }
+            catch ( NoSuchAlgorithmException e )
+            {
+                Log.info( "Unable to load the 'NewSunX509' KeyManager implementation. Will fall back to the default." );
+                keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+            }
+
             keyManagerFactory.init( this.getStore(), configuration.getPassword() );
         }
         catch ( NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex )

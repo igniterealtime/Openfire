@@ -53,7 +53,19 @@ public class EncryptionArtifactFactory
         {
             if ( keyManagerFactory == null )
             {
-                keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+                try
+                {
+                    // OF-1501: If multiple certificates are available, the 'NewSunX509' implementation in the SunJSSE
+                    // provider makes the effort to pick a certificate with the appropriate key usage and prefers valid
+                    // to expired certificates.
+                    keyManagerFactory = KeyManagerFactory.getInstance( "NewSunX509" );
+                }
+                catch ( NoSuchAlgorithmException e )
+                {
+                    Log.info( "Unable to load the 'NewSunX509' KeyManager implementation. Will fall back to the default." );
+                    keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+                }
+
                 keyManagerFactory.init( configuration.getIdentityStore().getStore(), configuration.getIdentityStoreConfiguration().getPassword() );
             }
 

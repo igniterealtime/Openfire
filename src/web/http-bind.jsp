@@ -22,6 +22,11 @@
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.Connection" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -47,6 +52,17 @@
             final boolean isCORSEnabled = ParamUtils.getBooleanParameter( request, "CORSEnabled", serverManager.isCORSEnabled() );
             final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", serverManager.isXFFEnabled() );
             final String CORSDomains = ParamUtils.getParameter( request, "CORSDomains", true );
+
+            final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+            final ConnectionConfiguration configuration = manager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+            final String mutualAuthenticationText = ParamUtils.getParameter( request, "mutualauthentication", true );
+            final Connection.ClientAuth mutualAuthentication;
+            if ( mutualAuthenticationText == null || mutualAuthenticationText.isEmpty() ) {
+                mutualAuthentication = configuration.getClientAuth();
+            } else {
+                mutualAuthentication = Connection.ClientAuth.valueOf( mutualAuthenticationText );
+            }
+
             try
             {
                 serverManager.setHttpBindPorts( requestedPort, requestedSecurePort );
@@ -57,6 +73,7 @@
                 serverManager.setXFFServerHeader( ParamUtils.getParameter( request, "XFFServerHeader" ) );
                 serverManager.setXFFHostHeader( ParamUtils.getParameter( request, "XFFHostHeader" ) );
                 serverManager.setXFFHostName( ParamUtils.getParameter( request, "XFFHostName" ) );
+                manager.getListener( ConnectionType.BOSH_C2S, true ).setClientAuth( mutualAuthentication );
             }
             catch ( Exception e )
             {
@@ -93,10 +110,14 @@
 
     csrfParam = StringUtils.randomString( 15 );
     CookieUtils.setCookie( request, response, "csrf", csrfParam, -1 );
+    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionConfiguration configuration = manager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+
     pageContext.setAttribute( "csrf", csrfParam );
     pageContext.setAttribute( "errors", errorMap );
     pageContext.setAttribute( "serverManager", serverManager );
     pageContext.setAttribute( "crossDomainContent", FlashCrossDomainServlet.getCrossDomainContent() );
+    pageContext.setAttribute( "configuration", configuration );
 %>
 
 <html>
@@ -183,6 +204,31 @@
                     </td>
                 </tr>
             </tbody>
+        </table>
+    </admin:contentBox>
+
+    <fmt:message key="httpbind.settings.clientauth.boxtitle" var="clientauthboxtitle"/>
+    <admin:contentBox title="${clientauthboxtitle}">
+        <p><fmt:message key="httpbind.settings.clientauth.info"/></p>
+        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
+            <tr valign="middle">
+                <td>
+                    <input type="radio" name="mutualauthentication" value="disabled" id="mutualauthentication-disabled" ${configuration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
+                    <label for="mutualauthentication-disabled"><fmt:message key="httpbind.settings.clientauth.label_disabled"/></label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td>
+                    <input type="radio" name="mutualauthentication" value="wanted" id="mutualauthentication-wanted" ${configuration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>
+                    <label for="mutualauthentication-wanted"><fmt:message key="httpbind.settings.clientauth.label_wanted"/></label>
+                </td>
+            </tr>
+            <tr valign="middle">
+                <td>
+                    <input type="radio" name="mutualauthentication" value="needed" id="mutualauthentication-needed" ${configuration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>
+                    <label for="mutualauthentication-needed"><fmt:message key="httpbind.settings.clientauth.label_needed"/></label>
+                </td>
+            </tr>
         </table>
     </admin:contentBox>
 

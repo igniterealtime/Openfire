@@ -26,8 +26,6 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ElementUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -97,12 +95,6 @@ public class LocalMUCRole implements MUCRole {
     private Element extendedInformation;
 
     /**
-     * Cache session of local user that is a room occupant. If the room occupant is not a local
-     * user then nothing will be cached and packets will be sent through the PacketRouter.
-     */
-    private ClientSession session;
-
-    /**
      * Create a new role.
      * 
      * @param chatserver the server hosting the role.
@@ -125,8 +117,6 @@ public class LocalMUCRole implements MUCRole {
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
-        // Cache the user's session (will only work for local users)
-        this.session = XMPPServer.getInstance().getSessionManager().getSession(presence.getFrom());
 
         extendedInformation =
                 DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
@@ -267,13 +257,7 @@ public class LocalMUCRole implements MUCRole {
         }
         packet.setTo(user.getAddress());
 
-        if (session != null && session.getStatus() == Session.STATUS_AUTHENTICATED) {
-            // Send the packet directly to the local user session
-            session.process(packet);
-        }
-        else {
-            router.route(packet);
-        }
+        router.route(packet);
     }
 
     /**

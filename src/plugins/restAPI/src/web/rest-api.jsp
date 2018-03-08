@@ -181,7 +181,7 @@
 
                 <p>You can find here detailed documentation over the Openfire REST API: 
                     <a
-                        href="/plugin-admin.jsp?plugin=restapi&showReadme=true&decorator=none">REST
+                        href="/plugin-showfile.jsp?plugin=restapi&showReadme=true&decorator=none">REST
                         API Documentation</a>
                 </p>
             </div>

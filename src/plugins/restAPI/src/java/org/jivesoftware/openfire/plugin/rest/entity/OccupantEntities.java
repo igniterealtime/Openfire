@@ -5,6 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 @XmlRootElement(name = "occupants")
 public class OccupantEntities {
     List<OccupantEntity> occupants;
@@ -17,6 +19,7 @@ public class OccupantEntities {
     }
 
     @XmlElement(name = "occupant")
+    @JsonProperty(value = "occupants")
     public List<OccupantEntity> getOccupants() {
         return occupants;
     }

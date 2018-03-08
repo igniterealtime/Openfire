@@ -5,6 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /**
  * The Class GroupEntities.
  */
@@ -35,6 +37,7 @@ public class GroupEntities {
      * @return the groups
      */
     @XmlElement(name = "group")
+    @JsonProperty(value = "groups")
     public List<GroupEntity> getGroups() {
         return groups;
     }

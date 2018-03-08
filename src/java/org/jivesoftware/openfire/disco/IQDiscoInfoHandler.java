@@ -69,26 +69,42 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private Map<String, DiscoInfoProvider> entities = new HashMap<>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
     private Cache<String, Set<NodeID>> serverFeatures;
-    private List<Element> serverIdentities = new ArrayList<>();
+    private List<ServerIdentitiesProvider> serverIdentityProviders = new ArrayList<>();
     private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
 
-    private List<Element> anonymousUserIdentities = new ArrayList<>();
-    private List<Element> registeredUserIdentities = new ArrayList<>();
+    private List<UserIdentitiesProvider> anonymousUserIdentityProviders = new ArrayList<>();
+    private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", NAMESPACE_DISCO_INFO);
-        // Initialize the user identity and features collections (optimization to avoid creating
-        // the same objects for each response)
-        Element userIdentity = DocumentHelper.createElement("identity");
-        userIdentity.addAttribute("category", "account");
-        userIdentity.addAttribute("type", "anonymous");
-        anonymousUserIdentities.add(userIdentity);
-        userIdentity = DocumentHelper.createElement("identity");
-        userIdentity.addAttribute("category", "account");
-        userIdentity.addAttribute("type", "registered");
-        registeredUserIdentities.add(userIdentity);
+
+        anonymousUserIdentityProviders.add( new UserIdentitiesProvider()
+        {
+            @Override
+            public Iterator<Element> getIdentities()
+            {
+                final Element userIdentity = DocumentHelper.createElement( "identity" );
+                userIdentity.addAttribute( "category", "account" );
+                userIdentity.addAttribute( "type", "anonymous" );
+
+                return Collections.singleton( userIdentity ).iterator();
+            }
+        } );
+
+        registeredUserIdentityProviders.add( new UserIdentitiesProvider()
+        {
+            @Override
+            public Iterator<Element> getIdentities()
+            {
+                final Element userIdentity = DocumentHelper.createElement( "identity" );
+                userIdentity.addAttribute( "category", "account" );
+                userIdentity.addAttribute( "type", "registered" );
+
+                return Collections.singleton( userIdentity ).iterator();
+            }
+        } );
     }
 
     @Override
@@ -139,7 +155,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 boolean hasDiscoInfoFeature = false;
                 boolean hasDiscoItemsFeature = false;
                 boolean hasResultSetManagementFeature = false;
-                
+
                 while (features.hasNext()) {
                     final String feature = features.next();
                     queryElement.addElement("feature").addAttribute("var", feature);
@@ -158,13 +174,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     queryElement.addElement("feature").addAttribute("var",
                             ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
                 }
-                
+
                 if (!hasDiscoInfoFeature) {
                     // XEP-0030 requires that every entity that supports service
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
                 }
-                
+
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
                 DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
@@ -251,10 +267,63 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      *
      * @param provider the ServerFeaturesProvider that provides new server features.
      */
-    private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
+    public void addServerFeaturesProvider(ServerFeaturesProvider provider) {
         for (Iterator<String> it = provider.getFeatures(); it.hasNext();) {
             addServerFeature(it.next());
         }
+    }
+
+    /**
+     * Adds the "discoverable" identities provided by the provider whenever a disco for info is made against the server.
+     *
+     * @param provider The provider of identities.
+     */
+    public void addServerIdentitiesProvider(ServerIdentitiesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        serverIdentityProviders.add( provider );
+    }
+
+    /**
+     * Removes this provider of identities.
+     *
+     * @param provider The provider of identities.
+     */
+    public void removeServerIdentitiesProvider(ServerIdentitiesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        serverIdentityProviders.remove( provider );
+    }
+
+    /**
+     * Adds the "discoverable" user identities provided by the provider whenever a disco for info is made against users
+     * of the server.
+     *
+     * @param provider The provider of user identities.
+     */
+    public void addUserIdentitiesProvider(UserIdentitiesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        registeredUserIdentityProviders.add( provider );
+    }
+
+    /**
+     * Removes this provider of user identities.
+     *
+     * @param provider The provider of identities.
+     */
+    public void removeUserIdentitiesProvider(UserIdentitiesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        registeredUserIdentityProviders.remove( provider );
     }
 
     /**
@@ -314,26 +383,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         super.initialize(server);
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);
-        // Track the implementors of ServerFeaturesProvider so that we can collect the features
-        // provided by the server
-        for (ServerFeaturesProvider provider : server.getServerFeaturesProviders()) {
-            addServerFeaturesProvider(provider);
-        }
-        // Collect the implementors of ServerIdentitiesProvider so that we can collect the identities
-        // for protocols supported by the server
-        for (ServerIdentitiesProvider provider : server.getServerIdentitiesProviders()) {
-            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
-                serverIdentities.add(it.next());
-            }
-        }
-        // Collect the implementors of UserIdentitiesProvider so that we can collect identities
-        // for registered users.
-        for (UserIdentitiesProvider provider : server.getUserIdentitiesProviders()) {
-            for (Iterator<Element> it = provider.getIdentities(); it.hasNext();) {
-                registeredUserIdentities.add(it.next());
-            }
-        }
-
         setProvider(server.getServerInfo().getXMPPDomain(), getServerInfoProvider());
         // Listen to cluster events
         ClusterManager.addListener(this);
@@ -415,7 +464,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     private DiscoInfoProvider getServerInfoProvider() {
         return new DiscoInfoProvider() {
-            final ArrayList<Element> identities = new ArrayList<>();
 
             @Override
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
@@ -425,20 +473,20 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     // Answer identity of the server
-                    synchronized (identities) {
-                        if (identities.isEmpty()) {
-                            Element identity = DocumentHelper.createElement("identity");
-                            identity.addAttribute("category", "server");
-                            identity.addAttribute("name", JiveGlobals.getProperty(
-                                    "xmpp.server.name", "Openfire Server"));
-                            identity.addAttribute("type", "im");
+                    final ArrayList<Element> identities = new ArrayList<>();
+                    final Element identity = DocumentHelper.createElement("identity");
+                    identity.addAttribute("category", "server");
+                    identity.addAttribute("name", JiveGlobals.getProperty("xmpp.server.name", "Openfire Server"));
+                    identity.addAttribute("type", "im");
+                    identities.add(identity);
 
-                            identities.add(identity);
-                            
-                            // Include identities from modules that implement ServerIdentitiesProvider
-                            for (Element identityElement : serverIdentities) {
-                                identities.add(identityElement);
-                            }
+                    // Include identities from modules that implement ServerIdentitiesProvider
+                    for (ServerIdentitiesProvider provider : serverIdentityProviders )
+                    {
+                        final Iterator<Element> iterator = provider.getIdentities();
+                        while ( iterator.hasNext() )
+                        {
+                            identities.add( iterator.next() );
                         }
                     }
                     return identities.iterator();
@@ -449,12 +497,30 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 else {
                     if (SessionManager.getInstance().isAnonymousRoute(name)) {
                         // Answer identity of an anonymous user.
-                        return anonymousUserIdentities.iterator();
+                        final Set<Element> result = new HashSet<>();
+                        for ( final UserIdentitiesProvider provider : anonymousUserIdentityProviders )
+                        {
+                            final Iterator<Element> identities = provider.getIdentities();
+                            while ( identities.hasNext() )
+                            {
+                                result.add( identities.next() );
+                            }
+                        }
+                        return result.iterator();
                     }
                     else {
                         // Answer identity of a registered user.
                         // Note: We know that this user exists because #hasInfo returned true
-                        return registeredUserIdentities.iterator();
+                        final Set<Element> result = new HashSet<>();
+                        for ( final UserIdentitiesProvider provider : registeredUserIdentityProviders )
+                        {
+                            final Iterator<Element> identities = provider.getIdentities();
+                            while ( identities.hasNext() )
+                            {
+                                result.add( identities.next() );
+                            }
+                        }
+                        return result.iterator();
                     }
                 }
             }

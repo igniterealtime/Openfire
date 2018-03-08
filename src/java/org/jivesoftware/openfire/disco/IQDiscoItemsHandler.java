@@ -82,6 +82,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
+    private List<UserItemsProvider> userItemsProviders = new ArrayList<>();
 
     public IQDiscoItemsHandler() {
         super("XMPP Disco Items Handler");
@@ -291,7 +292,27 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             infoHandler.removeProvider(host);
             removeProvider(host);
         }
+    }
 
+    /**
+     * Adds the items provided by the new service that implements the UserItemsProvider interface. This information will
+     * be used whenever a disco for items is made against users of the server.
+     *
+     * @param provider the UserItemsProvider that provides new user items.
+     */
+    public void addUserItemsProvider( UserItemsProvider provider )
+    {
+        this.userItemsProviders.add( provider );
+    }
+
+    /**
+     * Removes the UserItemsProvider
+     *
+     * @param provider the UserItemsProvider that provides new user items.
+     */
+    public void removeUserItemsProvider( UserItemsProvider provider )
+    {
+        this.userItemsProviders.remove( provider );
     }
 
     /**
@@ -409,9 +430,6 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     @Override
     public void start() throws IllegalStateException {
         super.start();
-        for (ServerItemsProvider provider : XMPPServer.getInstance().getServerItemsProviders()) {
-            addServerItemsProvider(provider);
-        }
     }
 
     @Override
@@ -503,22 +521,17 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     return null;
                 }
                 if (name == null) {
-                    List<DiscoItem> answer = new ArrayList<>();
-                    for (ClusteredServerItem item : serverItems.values()) {
-                        answer.add(new DiscoItem(item.element));
-                    }
-                    return answer.iterator();
+                    return getServerItems().iterator();
                 }
                 else {
                     // If addressed to user@domain, add items from UserItemsProviders to
                     // the reply.
-                    List<UserItemsProvider> itemsProviders = XMPPServer.getInstance().getUserItemsProviders();
-                    if (itemsProviders.isEmpty()) {
+                    if ( userItemsProviders.isEmpty()) {
                         // If we didn't find any UserItemsProviders, then answer a not found error
                         return null;
                     }
                     List<DiscoItem> answer = new ArrayList<>();
-                    for (UserItemsProvider itemsProvider : itemsProviders) {
+                    for (UserItemsProvider itemsProvider : userItemsProviders ) {
                         // Check if we have items associated with the requested name
                         Iterator<Element> itemsItr = itemsProvider.getUserItems(name, senderJID);
                         if (itemsItr != null) {
@@ -581,5 +594,17 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         catch (UserNotFoundException e) {
             return answer.iterator();
         }
+    }
+
+    /**
+     * Returns all server items.
+     * @return A collection of server items.
+     */
+    public List<DiscoItem> getServerItems() {
+        List<DiscoItem> answer = new ArrayList<>();
+        for (ClusteredServerItem item : serverItems.values()) {
+            answer.add(new DiscoItem(item.element));
+        }
+        return answer;
     }
 }

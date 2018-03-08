@@ -29,6 +29,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,15 +59,20 @@ public class ClusterManager {
             @Override
             public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
             @Override
-            public void xmlPropertySet(String property, Map<String, Object> params) {
+            public void xmlPropertySet(final String property, final Map<String, Object> params) {
                 if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
-                    if (Boolean.parseBoolean((String) params.get("value"))) {
-                        // Reload/sync all Jive properties
-                        JiveProperties.getInstance().init();
-                        ClusterManager.startup();
-                    } else {
-                        ClusterManager.shutdown();
-                    }
+                    TaskEngine.getInstance().submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (Boolean.parseBoolean((String) params.get("value"))) {
+                                // Reload/sync all Jive properties
+                                JiveProperties.getInstance().init();
+                                ClusterManager.startup();
+                            } else {
+                                ClusterManager.shutdown();
+                            }
+                        }
+                    });
                 }
             }
         });

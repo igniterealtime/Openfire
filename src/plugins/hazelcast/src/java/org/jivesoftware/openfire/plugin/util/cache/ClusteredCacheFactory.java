@@ -112,6 +112,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     @Override
     public boolean startCluster() {
+        logger.info("Starting hazelcast clustering");
         state = State.starting;
 
         // Set the serialization strategy to use for transmitting objects between node clusters
@@ -149,6 +150,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
                 clusterListener = new ClusterListener(cluster);
                 lifecycleListener = hazelcast.getLifecycleService().addLifecycleListener(clusterListener);
                 membershipListener = cluster.addMembershipListener(clusterListener);
+                logger.info("Hazelcast clustering started");
                 break;
             } catch (Exception e) {
                 cluster = null;

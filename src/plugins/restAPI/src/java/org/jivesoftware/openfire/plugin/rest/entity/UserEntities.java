@@ -5,6 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /**
  * The Class UserEntities.
  */
@@ -37,6 +39,7 @@ public class UserEntities {
      * @return the users
      */
     @XmlElement(name = "user")
+    @JsonProperty(value = "users")
     public List<UserEntity> getUsers() {
         return users;
     }

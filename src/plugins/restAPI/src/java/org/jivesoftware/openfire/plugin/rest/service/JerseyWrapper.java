@@ -5,9 +5,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import java.lang.ClassNotFoundException;
-import java.lang.Class;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
@@ -71,6 +68,8 @@ public class JerseyWrapper extends ServletContainer {
         JERSEY_LOGGER.setLevel(Level.SEVERE);
         config = new HashMap<String, Object>();
         config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
+        config.put("com.sun.jersey.api.json.POJOMappingFeature", true);
+        
         prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
         prc.setPropertiesAndFeatures(config);		
         prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
@@ -95,6 +94,7 @@ public class JerseyWrapper extends ServletContainer {
         prc.getClasses().add(MsgArchiveService.class);
         prc.getClasses().add(StatisticsService.class);
         prc.getClasses().add(MessageService.class);
+        prc.getClasses().add(SecurityAuditLogService.class);
 
         prc.getClasses().add(RESTExceptionMapper.class);
     }

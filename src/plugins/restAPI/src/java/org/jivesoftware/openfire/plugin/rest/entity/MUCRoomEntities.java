@@ -5,6 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 @XmlRootElement(name = "chatRooms")
 public class MUCRoomEntities {
     List<MUCRoomEntity> mucRooms;
@@ -17,6 +19,7 @@ public class MUCRoomEntities {
     }
 
     @XmlElement(name = "chatRoom")
+    @JsonProperty(value = "chatRooms")
     public List<MUCRoomEntity> getMucRooms() {
         return mucRooms;
     }

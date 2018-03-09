@@ -327,6 +327,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         finally {
             if (bindingError.getErrorType() == BoshBindingError.Type.terminate) {
+                Log.debug( "Closing session due to error: {}. Affected session: {}", bindingError, session );
                 session.close();
             }
         }

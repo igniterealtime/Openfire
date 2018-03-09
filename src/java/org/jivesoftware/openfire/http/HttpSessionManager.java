@@ -128,6 +128,7 @@ public class HttpSessionManager {
         Log.info( "Stopping instance" );
         inactivityTask.cancel();
         for (HttpSession session : sessionMap.values()) {
+            Log.debug( "Closing as session manager instance is being stopped: {}", session );
             session.close();
         }
         sessionMap.clear();
@@ -350,14 +351,14 @@ public class HttpSessionManager {
                 try {
                     long lastActive = currentTime - session.getLastActivity();
                     if (Log.isDebugEnabled()) {
-                        Log.debug("Session was last active " + lastActive + " ms ago: " + session.getAddress());
+                        Log.debug("Session was last active {} ms ago: {}", lastActive, session );
                     }
                     if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
-                        Log.info("Closing idle session: " + session.getAddress());
+                        Log.info("Closing idle session: {}", session);
                         session.close();
                     }
                 } catch (Exception e) {
-                    Log.error("Failed to determine idle state for session: " + session, e);
+                    Log.error("Failed to determine idle state for session: {}", session, e);
                 }
             }
         }

@@ -184,7 +184,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         if (sessions != null) {
             Session session = sessions.remove(streamID);
             if (session != null) {
-                // Close the session
+                Log.debug( "Closing session: {}", session );
                 session.close();
             }
         }

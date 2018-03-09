@@ -475,6 +475,7 @@ public class SASLAuthentication {
         session.setSessionData("authRetries", retries);
         if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
             // Close the connection
+            Log.debug( "Closing session that failed to authenticate {} times: {}", retries, session );
             session.close();
         }
     }

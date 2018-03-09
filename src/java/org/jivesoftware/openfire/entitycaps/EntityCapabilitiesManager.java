@@ -315,13 +315,16 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
     /**
      * Returns the entity capabilities for a specific JID. The specified JID
-     * should be a full JID that identitied the entity's connection.
+     * should be a full JID that identified the entity's connection.
      * 
      * @param jid the full JID of entity
-     * @return the entity capabilities of jid.
+     * @return the entity capabilities of jid, or null if these are unavailable.
      */
     public EntityCapabilities getEntityCapabilities(JID jid) {
         String verAttribute = entityCapabilitiesUserMap.get(jid);
+        if ( verAttribute == null ) {
+            return null;
+        }
         return entityCapabilitiesMap.get(verAttribute);
     }
 

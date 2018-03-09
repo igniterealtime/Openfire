@@ -26,7 +26,7 @@
 This document outlines how to <b>manually</b> customize the SSL support in
 Openfire. As of Openfire 3.2 certificate management can be performed from the
 Admin Console. However, if needed you can still manually manage certificates
-using JDK 1.5 tools.
+using Java Develpment Kit (JDK) tools.
 
 <font color="red"><b>Important note:</b></font>
 Once the setup process is completed Openfire will create self-signed certificates
@@ -36,7 +36,7 @@ with your own certificates.</p>
 
 <p>Openfire's SSL support is built using the standard Java security
 SSL implementation (javax.net.ssl.SSLServerSocket). In this document, we will
-describe how use the standard JDK 1.5 tools to accomplish these tasks.
+describe how use the standard Java Development Kit (JDK) tools to accomplish these tasks.
 </p>
 <h2>Background</h2>
 <p>
@@ -91,12 +91,12 @@ servers they've never interacted with before. Certificate signing is similar
 to a public notary (with equivalent amounts of verification of identity,
 record keeping, and costs).
 </p>
-<h2>Sun JDK 1.5 security tools</h2>
+<h2>Oracle Java Development Kit security tools</h2>
 <p>
-The Sun JDK (version 1.5.x) ships with all the security tools you need
+The Oracle JDK ships with all the security tools you need
 to configure SSL with Openfire. The most important is the
 <tt>keytool</tt> located in the <tt>JAVA_HOME/bin directory</tt> of the
-JDK. Sun JVMs persist keystores and truststores on the filesystem as
+JDK. Java Virtual Machines persist keystores and truststores on the filesystem as
 encrypted files. The <tt>keytool</tt> is used to create, read, update,
 and delete entries in these files. Openfire ships with a self-signed
 "dummy" certificate designed for initial evaluation testing. You will need

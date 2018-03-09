@@ -55,11 +55,11 @@ possible, instructions are provided for both Unix/Linux and Windows users.
 
 <b><a name="javaSetup">Configure Java for Openfire</a></b>
 <ul>
-    Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
+    Java 8 (JDK 1.8) must be installed and setup on your machine. To test the installation,
     open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
-    Java with "java -version" -- it must version 1.5 or greater.
+    Java with "java -version" -- it must version 1.8 or greater.
     If Java isn't installed, download a copy from the
-    <a href="http://java.sun.com/">Java website</a>.
+    <a href="http://www.oracle.com/technetwork/java/javase/overview/index.html">Java website</a>.
     <p>
     <font color="red">Important!</font> -- the Openfire build tool needs to know
     where Java is installed on your system. You must configure the "JAVA_HOME"
@@ -75,10 +75,10 @@ possible, instructions are provided for both Unix/Linux and Windows users.
                 <li>Set the JAVA_HOME environment variable by adding the
                     following line to the file:
                     <p><span class="code">
-                    export JAVA_HOME=/usr/local/jdk1.5
+                    export JAVA_HOME=/usr/local/jdk1.8
                     </span>
                     <p>
-                    The value "/usr/local/jdk1.5" should be replaced with your actual
+                    The value "/usr/local/jdk1.8" should be replaced with your actual
                     Java directory. Be sure there are no spaces after the end of
                     the directory name. Do not add an extra slash after the directory name.
                 <li>Save changes to the file and then "source" it:
@@ -99,7 +99,7 @@ possible, instructions are provided for both Unix/Linux and Windows users.
                 <li>Click the "New..." button in the System variables section.
                     Enter the variable name "JAVA_HOME" and set the variable
                     value to the full path of your Java installation. For example,
-                    "c:\jdk1.5". Be sure to not add an extra slash to the end
+                    "c:\jdk1.8". Be sure to not add an extra slash to the end
                     of the directory name.
                 <li>Click "OK" in all of the menus to accept the changes.
                 <li>Close any open command prompt windows. The next time you
@@ -113,10 +113,10 @@ possible, instructions are provided for both Unix/Linux and Windows users.
                 <li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
                 <li>Add a line to the end of the file that resembles the following:
                     <p><span class="code">
-                    set JAVA_HOME=c:\jdk1.5
+                    set JAVA_HOME=c:\jdk1.8
                     </span>
                     <p>
-                    The value "c:\jdk1.5" should be replaced with your actual
+                    The value "c:\jdk1.8" should be replaced with your actual
                     Java directory. Be sure there are no spaces between
                     the "=" sign or after the end of the directory name. Do
                     not add an extra slash after the directory name.

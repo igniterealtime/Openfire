@@ -214,7 +214,11 @@ public abstract class StanzaHandler {
         }
 
         String tag = doc.getName();
-        if ("message".equals(tag)) {
+        if ("error".equals(tag)) {
+            Log.info("The stream is being closed by the peer, which sent this stream error: " + doc.asXML());
+            session.close();
+        }
+        else if ("message".equals(tag)) {
             Message packet;
             try {
                 packet = new Message(doc, !validateJIDs());

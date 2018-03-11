@@ -181,6 +181,7 @@ class LocalRoutingTable {
                     Session session = (Session) route;
                     try {
                         if (session.getLastActiveDate().getTime() < deadline) {
+                            Log.debug( "ServerCleanupTask is closing an outgoing server session that has been idle for a long time. Last active: {}. Session to be closed: {}", session.getLastActiveDate(), session );
                             session.close();
                         }
                     }

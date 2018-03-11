@@ -101,6 +101,7 @@ class BlockingReadingMode extends SocketReadingMode {
                     Log.debug("Logging off " + socketReader.session.getAddress() + " on " + socketReader.connection);
                 }
                 try {
+                    Log.debug( "Closing session: {}", socketReader.session );
                     socketReader.session.close();
                 }
                 catch (Exception e) {

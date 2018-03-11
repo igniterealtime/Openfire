@@ -152,6 +152,7 @@ public abstract class StanzaHandler {
         if (stanza.equals("</stream:stream>")) {
             if (session != null) {
                 session.getStreamManager().formalClose();
+                Log.debug( "Closing session as an end-of-stream was received: {}", session );
                 session.close();
             }
             return;
@@ -304,6 +305,7 @@ public abstract class StanzaHandler {
             }
             if (packet.getID() == null && JiveGlobals.getBooleanProperty("xmpp.server.validation.enabled", false)) {
                 // IQ packets MUST have an 'id' attribute so close the connection
+                Log.debug( "Closing session, as it sent us an IQ packet that has no ID attribute: {}. Affected session: {}", packet.toXML(), session );
                 StreamError error = new StreamError(StreamError.Condition.invalid_xml);
                 session.deliverRawText(error.toXML());
                 session.close();
@@ -313,8 +315,7 @@ public abstract class StanzaHandler {
         }
         else {
             if (!processUnknowPacket(doc)) {
-                Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") +
-                        doc.asXML());
+                Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") + doc.asXML() + ". Closing session: " + session);
                 session.close();
             }
         }

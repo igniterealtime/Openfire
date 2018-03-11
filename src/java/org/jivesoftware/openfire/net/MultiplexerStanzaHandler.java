@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.multiplex.MultiplexerPacketHandler;
 import org.jivesoftware.openfire.multiplex.Route;
 import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
@@ -37,6 +39,8 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public class MultiplexerStanzaHandler extends StanzaHandler {
+
+    private static final Logger Log = LoggerFactory.getLogger( MultiplexerStanzaHandler.class );
 
     /**
      * Handler of IQ packets sent from the Connection Manager to the server.
@@ -112,10 +116,12 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
             return true;
         } else if ("handshake".equals(tag)) {
             if (!((LocalConnectionMultiplexerSession) session).authenticate(doc.getStringValue())) {
+                Log.debug( "Closing session that failed to authenticate: {}", session );
                 session.close();
             }
             return true;
         } else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
+            Log.debug( "Closing session because of received stream error {}. Affected session: {}", doc.asXML(), session );
             session.close();
             return true;
         }

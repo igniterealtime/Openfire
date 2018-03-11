@@ -149,6 +149,7 @@ public class ExternalComponentManager {
         String domain = subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Session session = SessionManager.getInstance().getComponentSession(domain);
         if (session != null) {
+            Log.debug( "Closing session for external component '{}' as the domain is being blocked. Affected session: {}", domain, session );
             session.close();
         }
     }
@@ -486,6 +487,7 @@ public class ExternalComponentManager {
         for (ComponentSession session : SessionManager.getInstance().getComponentSessions()) {
             for (String domain : session.getExternalComponent().getSubdomains()) {
                 if (!canAccess(domain)) {
+                    Log.debug( "Closing session for external component '{}' as a changed permission policy is taken into effect. Affected session: {}", domain, session );
                     session.close();
                     break;
                 }

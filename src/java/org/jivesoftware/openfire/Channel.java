@@ -16,15 +16,15 @@
 
 package org.jivesoftware.openfire;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A channel provides a mechanism to queue work units for processing. Each work unit is
@@ -83,23 +83,34 @@ public class Channel<T extends Packet> {
      *
      * @param packet an XMPP packet to add to the channel for processing.
      */
-    public void add(final T packet) {
-        Runnable r = new Runnable() {
+    public void add( final T packet )
+    {
+        Runnable r = new Runnable()
+        {
             @Override
-            public void run() {
-                try {
-                    channelHandler.process(packet);
+            public void run()
+            {
+                try
+                {
+                    channelHandler.process( packet );
                 }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                   
-                        try {
-                            Session session = SessionManager.getInstance().getSession(packet.getFrom());
+                catch ( Exception e )
+                {
+                    Log.error( LocaleUtils.getLocalizedString( "admin.error" ), e );
+
+                    try
+                    {
+                        Session session = SessionManager.getInstance().getSession( packet.getFrom() );
+                        if ( session != null )
+                        {
+                            Log.debug( "Closing session of '{}': {}", packet.getFrom(), session );
                             session.close();
                         }
-                        catch (Exception e1) {
-                           Log.error(e1.getMessage(), e1);
-                        }
+                    }
+                    catch ( Exception e1 )
+                    {
+                        Log.error( "Unexpected exception while trying to close session of '{}'.", packet.getFrom(), e1 );
+                    }
                 }
             }
         };

@@ -89,12 +89,14 @@ public class RemoteServerManager {
         addConfiguration(config);
         // Check if the remote server was connected and proceed to close the connection
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
+            Log.debug( "Closing session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
             session.close();
         }
         // Can't just lookup a single remote server anymore, so check them all.
         for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
             if (domainPair.getRemote().equals(domain)) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
+                Log.debug( "Closing (domain-pair) session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
                 session.close();
             }
         }
@@ -348,6 +350,7 @@ public class RemoteServerManager {
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {
                 for (Session session : SessionManager.getInstance().getIncomingServerSessions(hostname)) {
+                    Log.debug( "Closing session for hostname '{}' as a changed permission policy is taken into effect. Affected session: {}", hostname, session );
                     session.close();
                 }
             }
@@ -355,6 +358,7 @@ public class RemoteServerManager {
         for (DomainPair domainPair : SessionManager.getInstance().getOutgoingDomainPairs()) {
             if (!canAccess(domainPair.getRemote())) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
+                Log.debug( "Closing session as a changed permission policy is taken into effect. Affected session: {}", session );
                 session.close();
             }
         }

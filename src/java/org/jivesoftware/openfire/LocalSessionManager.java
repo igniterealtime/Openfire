@@ -175,6 +175,7 @@ class LocalSessionManager {
             for (LocalIncomingServerSession session : incomingServerSessions.values()) {
                 try {
                     if (session.getLastActiveDate().getTime() < deadline) {
+                        Log.debug( "ServerCleanupTask is closing an incoming server session that has been idle for a long time. Last active: {}. Session to be closed: {}", session.getLastActiveDate(), session );
                         session.close();
                     }
                 }

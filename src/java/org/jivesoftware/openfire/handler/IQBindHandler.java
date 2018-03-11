@@ -129,7 +129,7 @@ public class IQBindHandler extends IQHandler {
 
                     int conflictCount = oldSession.incrementConflictCount();
                     if (conflictCount > conflictLimit) {
-                        // Kick out the old connection that is conflicting with the new one
+                        Log.debug( "Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession );
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());
                         oldSession.close();

@@ -192,6 +192,7 @@ public class PresenceRouter extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error.routing"), e);
             Session session = sessionManager.getSession(packet.getFrom());
             if (session != null) {
+                Log.debug( "Closing session of '{}': {}", packet.getFrom(), session );
                 session.close();
             }
         }

@@ -53,6 +53,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
             if (session instanceof LocalSession) {
                 Object ws = ((LocalSession) session).getSessionData("ws");
                 if (ws != null && (Boolean) ws) {
+                    Log.debug( "Closing session as websocket servlet is being destroyed: {}", session );
                     session.close();
                 }
             }

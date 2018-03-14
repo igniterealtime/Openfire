@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -67,15 +68,18 @@ public class StreamManager {
      * Count of how many stanzas/packets
      * sent from the client that the server has processed
      */
-    private long serverProcessedStanzas = 0;
+    private AtomicLong serverProcessedStanzas = new AtomicLong( 0 );
 
     /**
      * Count of how many stanzas/packets
      * sent from the server that the client has processed
      */
-    private long clientProcessedStanzas = 0;
+    private AtomicLong clientProcessedStanzas = new AtomicLong( 0 );
 
-    static private long mask = new BigInteger("2").pow(32).longValue() - 1; // This is used to emulate rollover.
+    /**
+     * The value (2^32)-1, used to emulate roll-over
+     */
+    private static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
 
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
@@ -301,7 +305,7 @@ public class StreamManager {
                 Log.debug("Session is detached, won't request an ack.");
                 return;
             }
-            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
+            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas.get() & MASK );
             session.deliverRawText( ack );
         }
     }
@@ -350,7 +354,7 @@ public class StreamManager {
      * @return false if we sent less stanzas to the client than the number it is acknowledging.
      */
     private synchronized boolean validateClientAcknowledgement(long h) {
-        return h <= ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+        return h <= ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x );
     }
 
     /**
@@ -366,7 +370,7 @@ public class StreamManager {
                 throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
             }
 
-            clientProcessedStanzas = h;
+            clientProcessedStanzas.set( h );
 
             // Remove stanzas from temporary storage as now acknowledged
             Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
@@ -379,11 +383,11 @@ public class StreamManager {
 
             // Ensure that unacknowledged stanzas are purged after the client rolled over 'h' which occurs at h= (2^32)-1
             final int maxUnacked = getMaximumUnacknowledgedStanzas();
-            final boolean clientHadRollOver = h < maxUnacked && !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - maxUnacked;
+            final boolean clientHadRollOver = h < maxUnacked && !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > MASK - maxUnacked;
             if ( clientHadRollOver )
             {
                 Log.info( "Client rolled over 'h'. Purging high-numbered unacknowledged stanzas." );
-                while ( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - maxUnacked)
+                while ( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > MASK - maxUnacked)
                 {
                     unacknowledgedServerStanzas.removeLast();
                 }
@@ -430,7 +434,7 @@ public class StreamManager {
             synchronized (this)
             {
                 // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
-                final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
+                final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x );
                 unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
 
                 size = unacknowledgedServerStanzas.size();
@@ -481,7 +485,7 @@ public class StreamManager {
         Log.debug("Agreeing to resume");
         Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
-        resumed.addAttribute("h", Long.toString(serverProcessedStanzas));
+        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
         session.getConnection().deliverRawText(resumed.asXML());
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
@@ -535,7 +539,7 @@ public class StreamManager {
      */
     public void incrementServerProcessedStanzas() {
         if(isEnabled()) {
-            this.serverProcessedStanzas++;
+            this.serverProcessedStanzas.incrementAndGet();
         }
     }
 

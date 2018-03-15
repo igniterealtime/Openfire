@@ -226,35 +226,35 @@
                     </label>
                 </td>
             </tr>
-            <tr valign="top">
-                <td colspan="2" style="padding-top: 1em;">
-                    <b><fmt:message key="config.page.view_mode.label"/></b> - <fmt:message key="config.page.view_mode.description"/>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td colspan="2">
-                    <input type="radio" name="view_mode" id="overlayed" value="overlayed" <%= "overlayed".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
-                    <label for="overlayed">
-                        <fmt:message key="config.page.view_mode.overlayed.label"/>
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td colspan="2">
-                    <input type="radio" name="view_mode" id="fullscreen" value="fullscreen" <%= "fullscreen".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
-                    <label for="fullscreen">
-                        <fmt:message key="config.page.view_mode.fullscreen.label"/>
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td colspan="2">
-                    <input type="radio" name="view_mode" id="mobile" value="mobile" <%= "mobile".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;
-                    <label for="mobile">
-                        <fmt:message key="config.page.view_mode.mobile.label"/>
-                    </label>
-                </td>
-            </tr>
+            <%--<tr valign="top">--%>
+                <%--<td colspan="2" style="padding-top: 1em;">--%>
+                    <%--<b><fmt:message key="config.page.view_mode.label"/></b> - <fmt:message key="config.page.view_mode.description"/>--%>
+                <%--</td>--%>
+            <%--</tr>--%>
+            <%--<tr valign="top">--%>
+                <%--<td colspan="2">--%>
+                    <%--<input type="radio" name="view_mode" id="overlayed" value="overlayed" <%= "overlayed".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;--%>
+                    <%--<label for="overlayed">--%>
+                        <%--<fmt:message key="config.page.view_mode.overlayed.label"/>--%>
+                    <%--</label>--%>
+                <%--</td>--%>
+            <%--</tr>--%>
+            <%--<tr valign="top">--%>
+                <%--<td colspan="2">--%>
+                    <%--<input type="radio" name="view_mode" id="fullscreen" value="fullscreen" <%= "fullscreen".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;--%>
+                    <%--<label for="fullscreen">--%>
+                        <%--<fmt:message key="config.page.view_mode.fullscreen.label"/>--%>
+                    <%--</label>--%>
+                <%--</td>--%>
+            <%--</tr>--%>
+            <%--<tr valign="top">--%>
+                <%--<td colspan="2">--%>
+                    <%--<input type="radio" name="view_mode" id="mobile" value="mobile" <%= "mobile".equalsIgnoreCase( viewMode ) ? "checked" : "" %>/>&nbsp;--%>
+                    <%--<label for="mobile">--%>
+                        <%--<fmt:message key="config.page.view_mode.mobile.label"/>--%>
+                    <%--</label>--%>
+                <%--</td>--%>
+            <%--</tr>--%>
             </tbody>
         </table>
 

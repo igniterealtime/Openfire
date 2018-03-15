@@ -6,7 +6,7 @@
     <title>inVerse</title>
     <link rel="shortcut icon" type="image/ico" href="inverse/css/images/favicon.ico"/>
     <link type="text/css" rel="stylesheet" media="screen" href="inverse/css/inverse.min.css" />
-    <script src="inverse/dist/inverse.min.js"></script>
+    <script src="inverse/dist/converse.min.js"></script>
 </head>
 <body>
 <div class="content">
@@ -14,16 +14,42 @@
         <h1 class="brand-heading"><i class="icon-conversejs"></i> inVerse</h1>
     </div>
 </div>
-<script src="jquery/dist/jquery.min.js"></script>
 <script>
-    $( document ).ready( function()
+    function ready(fn) {
+        if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading"){
+            fn();
+        } else {
+            document.addEventListener('DOMContentLoaded', fn);
+        }
+    }
+
+    function initConverse()
     {
-        var config = {};
-        $.getJSON( 'config.json', function ( config )
+        var request = new XMLHttpRequest();
+        request.open( 'GET', 'config.json', true );
+
+        request.onload = function ()
         {
-            converse.initialize( config );
-        });
-    });
+            if ( request.status >= 200 && request.status < 400 )
+            {
+                var config = JSON.parse( request.responseText );
+                converse.initialize( config );
+            }
+            else
+            {
+                console.error( "We reached our target server, but it returned an error: " + request.status );
+            }
+        };
+
+        request.onerror = function ( e )
+        {
+            console.error( "There was a connection error of some sort:" + e );
+        };
+
+        request.send();
+    }
+
+    ready( initConverse );
 </script>
 </body>
 </html>

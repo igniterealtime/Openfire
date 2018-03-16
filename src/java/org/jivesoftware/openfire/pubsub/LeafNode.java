@@ -89,7 +89,7 @@ public class LeafNode extends Node {
         if ("pubsub#persist_items".equals(field.getVariable())) {
             values = field.getValues();
             booleanValue = (values.size() > 0 ? values.get(0) : "1");
-            persistPublishedItems = "1".equals(booleanValue);
+            persistPublishedItems = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
         }
         else if ("pubsub#max_payload_size".equals(field.getVariable())) {
             values = field.getValues();
@@ -98,7 +98,7 @@ public class LeafNode extends Node {
         else if ("pubsub#send_item_subscribe".equals(field.getVariable())) {
             values = field.getValues();
             booleanValue = (values.size() > 0 ? values.get(0) : "1");
-            sendItemSubscribe = "1".equals(booleanValue);
+            sendItemSubscribe = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
         }
     }
 

@@ -527,38 +527,38 @@ public abstract class Node {
                 else if ("pubsub#deliver_payloads".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    deliverPayloads = "1".equals(booleanValue);
+                    deliverPayloads = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#notify_config".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyConfigChanges = "1".equals(booleanValue);
+                    notifyConfigChanges = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#notify_delete".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyDelete = "1".equals(booleanValue);
+                    notifyDelete = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#notify_retract".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyRetract = "1".equals(booleanValue);
+                    notifyRetract = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#presence_based_delivery".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    presenceBasedDelivery = "1".equals(booleanValue);
+                    presenceBasedDelivery = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#subscribe".equals(field.getVariable())) {
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    subscriptionEnabled = "1".equals(booleanValue);
+                    subscriptionEnabled = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#subscription_required".equals(field.getVariable())) {
                     // TODO Replace this variable for the one defined in the JEP (once one is defined)
                     values = field.getValues();
                     booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    subscriptionConfigurationRequired = "1".equals(booleanValue);
+                    subscriptionConfigurationRequired = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
                 }
                 else if ("pubsub#type".equals(field.getVariable())) {
                     values = field.getValues();

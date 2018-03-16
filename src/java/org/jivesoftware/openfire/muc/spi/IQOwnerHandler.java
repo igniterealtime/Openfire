@@ -264,7 +264,7 @@ public class IQOwnerHandler {
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setCanOccupantsChangeSubject(("1".equals(booleanValue)));
+            room.setCanOccupantsChangeSubject("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue));
         }
 
         field = completedForm.getField("muc#roomconfig_maxusers");
@@ -283,14 +283,14 @@ public class IQOwnerHandler {
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setPublicRoom(("1".equals(booleanValue)));
+            room.setPublicRoom(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         field = completedForm.getField("muc#roomconfig_persistentroom");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            boolean isPersistent = ("1".equals(booleanValue));
+            boolean isPersistent = ("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue));
             // Delete the room from the DB if it's no longer persistent
             if (room.isPersistent() && !isPersistent) {
                 MUCPersistenceManager.deleteFromDB(room);
@@ -302,21 +302,21 @@ public class IQOwnerHandler {
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setModerated(("1".equals(booleanValue)));
+            room.setModerated(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         field = completedForm.getField("muc#roomconfig_membersonly");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            presences.addAll(room.setMembersOnly(("1".equals(booleanValue))));
+            presences.addAll(room.setMembersOnly(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue))));
         }
 
         field = completedForm.getField("muc#roomconfig_allowinvites");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setCanOccupantsInvite(("1".equals(booleanValue)));
+            room.setCanOccupantsInvite(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
 
@@ -388,28 +388,28 @@ public class IQOwnerHandler {
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setLogEnabled(("1".equals(booleanValue)));
+            room.setLogEnabled(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         field = completedForm.getField("x-muc#roomconfig_reservednick");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setLoginRestrictedToNickname(("1".equals(booleanValue)));
+            room.setLoginRestrictedToNickname(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         field = completedForm.getField("x-muc#roomconfig_canchangenick");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setChangeNickname(("1".equals(booleanValue)));
+            room.setChangeNickname(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         field = completedForm.getField("x-muc#roomconfig_registration");
         if (field != null) {
             final String value = field.getFirstValue();
             booleanValue = ((value != null ? value : "1"));
-            room.setRegistrationEnabled(("1".equals(booleanValue)));
+            room.setRegistrationEnabled(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
         }
 
         // Update the modification date to reflect the last time when the room's configuration

@@ -437,12 +437,12 @@ public class NodeSubscription {
             if ("pubsub#deliver".equals(field.getVariable())) {
                 values = field.getValues();
                 booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                deliverNotifications = "1".equals(booleanValue);
+                deliverNotifications = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
             }
             else if ("pubsub#digest".equals(field.getVariable())) {
                 values = field.getValues();
                 booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                usingDigest = "1".equals(booleanValue);
+                usingDigest = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
             }
             else if ("pubsub#digest_frequency".equals(field.getVariable())) {
                 values = field.getValues();
@@ -459,7 +459,7 @@ public class NodeSubscription {
             else if ("pubsub#include_body".equals(field.getVariable())) {
                 values = field.getValues();
                 booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                includingBody = "1".equals(booleanValue);
+                includingBody = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
             }
             else if ("pubsub#show-values".equals(field.getVariable())) {
                 // Get the new list of presence states for which an entity wants to

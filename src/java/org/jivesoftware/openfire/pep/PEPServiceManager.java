@@ -59,6 +59,18 @@ public class PEPServiceManager {
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
+     *
+     * @param jid
+     *            the JID of the user that owns the PEP service.
+     * @return the requested PEP service if found or null if not found.
+     */
+    public PEPService getPEPService(JID jid) {
+        return getPEPService( jid.toBareJID() );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
      * 
      * @param jid
      *            the bare JID of the user that owns the PEP service.

@@ -336,7 +336,7 @@ public class PubSubEngine {
         if (node == null) {
             if (service instanceof PEPService && service.isServiceAdmin(owner) && canAutoCreate( publishOptions ) ) {
                 // If it is a PEP service & publisher is service owner - auto create nodes.
-                CreateNodeResponse response = createNodeHelper(service, iq, iq.getChildElement(), publishElement, publishOptions);
+                CreateNodeResponse response = createNodeHelper(service, iq.getFrom(), iq.getChildElement().element("configure"), publishElement.attributeValue("node"), publishOptions);
 
                 if (response.newNode == null) {
                     // New node creation failed. Since pep#auto-create is advertised
@@ -1238,7 +1238,7 @@ public class PubSubEngine {
 
     private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement, DataForm publishOptions) {
         // Call createNodeHelper and get the node creation status.
-        CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement, publishOptions);
+        CreateNodeResponse response = createNodeHelper(service, iq.getFrom(), childElement.element("configure"), createElement.attributeValue("node"), publishOptions);
         if (response.newNode == null) {
             // New node creation failed
             sendErrorPacket(iq, response.creationStatus, response.pubsubError);
@@ -1258,7 +1258,7 @@ public class PubSubEngine {
     /**
      * Response Object returned by createNodeHelper method
      */
-    private class CreateNodeResponse {
+    public static class CreateNodeResponse {
         public final PacketError.Condition creationStatus;
         public final Node newNode;
         public final Element pubsubError;
@@ -1281,19 +1281,21 @@ public class PubSubEngine {
      * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
      * do not call this method in the same thread in which a response might arrive
      *
+     * @param service The service instance that's responsible for processing (cannot be null)
+     * @param requester The (full) JID of the entity that performs the action (cannot be null)
+     * @param configuration Optional Configuration dataform, if user requested to configure the node (can be null)
+     * @param nodeID The ID of the node to be created, or null when an instant node is to be created.
+     * @param publishOptions Optional Publishing Options, which are either preconditions or configuration overrides (can be null)
      * @return {@link CreateNodeResponse}
      */
-    private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement, DataForm publishOptions) {
-        // Get sender of the IQ packet
-        JID from = iq.getFrom();
+    public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(from) || (!isComponent(from) && !UserManager.getInstance().isRegisteredUser(from))) {
+        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester))) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }
         DataForm completedForm = null;
         CollectionNode parentNode = null;
-        String nodeID = createElement.attributeValue("node");
         String newNodeID = nodeID;
         if (nodeID == null) {
             // User requested an instant node
@@ -1312,11 +1314,11 @@ public class PubSubEngine {
             while (service.getNode(newNodeID) != null);
         }
         boolean collectionType = false;
+
         // Check if user requested to configure the node (using a data form)
-        Element configureElement = childElement.element("configure");
-        if (configureElement != null) {
+        if (configuration!= null) {
             // Get the data form that contains the parent nodeID
-            completedForm = getSentConfigurationForm( configureElement );
+            completedForm = getSentConfigurationForm( configuration );
         }
 
         if (publishOptions != null) {
@@ -1384,7 +1386,7 @@ public class PubSubEngine {
 
         if (parentNode != null && !collectionType) {
             // Check if requester is allowed to add a new leaf child node to the parent node
-            if (!parentNode.isAssociationAllowed(from)) {
+            if (!parentNode.isAssociationAllowed(requester)) {
                 // User is not allowed to add child leaf node to parent node. Return an error.
                 return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
             }
@@ -1402,15 +1404,15 @@ public class PubSubEngine {
         Node newNode = null;
         try {
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-            JID owner = from.asBareJID();
+            JID owner = requester.asBareJID();
             synchronized (newNodeID.intern()) {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
                     if (collectionType) {
-                        newNode = new CollectionNode(service, parentNode, newNodeID, from);
+                        newNode = new CollectionNode(service, parentNode, newNodeID, requester);
                     }
                     else {
-                        newNode = new LeafNode(service, parentNode, newNodeID, from);
+                        newNode = new LeafNode(service, parentNode, newNodeID, requester);
                     }
                     // Add the creator as the node owner
                     newNode.addOwner(owner);
@@ -1863,7 +1865,7 @@ public class PubSubEngine {
      * @return the data form included in the configure element sent by the node owner or
      *         <tt>null</tt> if none was included or access model was defined.
      */
-    private DataForm getSentConfigurationForm(Element configureElement) {
+    private static DataForm getSentConfigurationForm(Element configureElement) {
         DataForm completedForm = null;
         FormField formField;
         Element formElement = configureElement.element(QName.get("x", "jabber:x:data"));
@@ -2048,7 +2050,7 @@ public class PubSubEngine {
      * @param jid
      * @return <tt>true</tt> if the JID is a component, <tt>false<.tt> if not.
      */
-    private boolean isComponent(JID jid) {
+    private static boolean isComponent(JID jid) {
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         if (routingTable != null) {
             return routingTable.hasComponentRoute(jid);
@@ -2061,7 +2063,7 @@ public class PubSubEngine {
      * @param jid the JID representing the remote server
      * @return true if the supplied JID is a connected server session
      */
-    private boolean isRemoteServer(final JID jid) {
+    private static boolean isRemoteServer(final JID jid) {
         final String jidString = jid.toString();
         final SessionManager sessionManager = SessionManager.getInstance();
         for (final String incomingServer : sessionManager.getIncomingServers()) {

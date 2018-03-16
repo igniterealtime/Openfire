@@ -37,15 +37,6 @@ CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime);
 CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime);
 
 
-CREATE TABLE ofPrivate (
-  username              VARCHAR(64)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  namespace             VARCHAR(200)    NOT NULL,
-  privateData           TEXT            NOT NULL,
-  CONSTRAINT ofPrivate_pk PRIMARY KEY (username, name, namespace)
-);
-
-
 CREATE TABLE ofOffline (
   username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
@@ -385,7 +376,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 26);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 28);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

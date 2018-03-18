@@ -21,9 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
@@ -173,6 +171,29 @@ public class PrivacyList implements Cacheable, Externalizable {
         }
         // If no rule blocked the communication then allow the packet to flow
         return false;
+    }
+
+    /**
+     * Returns all JIDs that are on the blocklist (as defined in XEP-0191).
+     *
+     * @return a collection of JIDs (possibly empty, never null)
+     */
+    public Set<JID> getBlockedJIDs()
+    {
+        final Set<JID> result = new HashSet<>();
+
+        for ( final PrivacyItem item : items )
+        {
+            if ( !item.isAllow() && item.isType( PrivacyItem.Type.jid ) )
+            {
+                if ( item.getJID() != null )
+                {
+                    result.add( item.getJID() );
+                }
+            }
+        }
+
+        return result;
     }
 
     /**

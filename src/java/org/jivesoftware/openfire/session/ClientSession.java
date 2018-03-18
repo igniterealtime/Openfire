@@ -157,4 +157,18 @@ public interface ClientSession extends Session {
      * @see <a href="hhttp://xmpp.org/extensions/xep-0280.html">XEP-0280: Message Carbons</a>
      */
     void setMessageCarbonsEnabled(boolean enabled);
+
+    /**
+     * Indicates whether this session has requested a blocklist, as specified in XEP-0191.
+     *
+     * @return true when a blocklist was requested, otherwise false;
+     */
+    boolean hasRequestedBlocklist();
+
+    /**
+     * Defines if this session has requested a blocklist, as specified in XEP-0191.
+     *
+     * @param hasRequestedBlocklist True when a blocklist has been requested by this session, otherwise false.
+     */
+    void setHasRequestedBlocklist( boolean hasRequestedBlocklist );
 }

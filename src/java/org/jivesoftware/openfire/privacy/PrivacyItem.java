@@ -138,6 +138,16 @@ class PrivacyItem implements Cacheable, Comparable {
         return allow;
     }
 
+    boolean isType( Type type )
+    {
+        return this.type == type;
+    }
+
+    JID getJID()
+    {
+        return this.jidValue;
+    }
+
     private boolean matchesPacketSenderCondition(Packet packet, Roster roster, JID userJID) {
         if (type == null) {
             // This is the "fall-through" case
@@ -267,7 +277,7 @@ class PrivacyItem implements Cacheable, Comparable {
     /**
      * Type defines if the rule is based on JIDs, roster groups or presence subscription types.
      */
-    private static enum Type {
+    enum Type {
         /**
          * JID being analyzed should belong to a roster group of the list's owner.
          */

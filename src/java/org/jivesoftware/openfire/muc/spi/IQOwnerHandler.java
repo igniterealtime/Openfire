@@ -207,7 +207,6 @@ public class IQOwnerHandler {
             throws ForbiddenException, ConflictException, NotAcceptableException
     {
         List<String> values;
-        String booleanValue;
         FormField field;
 
         // Get the new list of admins
@@ -262,9 +261,7 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_changesubject");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setCanOccupantsChangeSubject("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue));
+            room.setCanOccupantsChangeSubject( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("muc#roomconfig_maxusers");
@@ -281,16 +278,12 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_publicroom");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setPublicRoom(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setPublicRoom( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("muc#roomconfig_persistentroom");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            boolean isPersistent = ("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue));
+            boolean isPersistent = parseFirstValueAsBoolean( field, true );
             // Delete the room from the DB if it's no longer persistent
             if (room.isPersistent() && !isPersistent) {
                 MUCPersistenceManager.deleteFromDB(room);
@@ -300,23 +293,17 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_moderatedroom");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setModerated(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setModerated( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("muc#roomconfig_membersonly");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            presences.addAll(room.setMembersOnly(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue))));
+            presences.addAll(room.setMembersOnly( parseFirstValueAsBoolean( field, true ) ) );
         }
 
         field = completedForm.getField("muc#roomconfig_allowinvites");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setCanOccupantsInvite(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setCanOccupantsInvite( parseFirstValueAsBoolean( field, true ) );
         }
 
 
@@ -330,9 +317,7 @@ public class IQOwnerHandler {
         if (field != null)
         {
             passwordProtectionChanged = true;
-            final String value = field.getFirstValue();
-            booleanValue = ( ( value != null ? value : "1" ) );
-            updatedIsPasswordProtected = "1".equals( booleanValue );
+            updatedIsPasswordProtected = parseFirstValueAsBoolean( field, true );
         }
 
         field = completedForm.getField("muc#roomconfig_roomsecret");
@@ -373,43 +358,32 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_whois");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue)));
+            room.setCanAnyoneDiscoverJID(("anyone".equals(field.getFirstValue())));
         }
 
         field = completedForm.getField("muc#roomconfig_allowpm");
         if (field != null) {
-            final String value = field.getFirstValue();
-            room.setCanSendPrivateMessage(value);
+            room.setCanSendPrivateMessage(field.getFirstValue());
         }
 
         field = completedForm.getField("muc#roomconfig_enablelogging");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setLogEnabled(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setLogEnabled( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("x-muc#roomconfig_reservednick");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setLoginRestrictedToNickname(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setLoginRestrictedToNickname( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("x-muc#roomconfig_canchangenick");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setChangeNickname(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setChangeNickname( parseFirstValueAsBoolean( field, true ) );
         }
 
         field = completedForm.getField("x-muc#roomconfig_registration");
         if (field != null) {
-            final String value = field.getFirstValue();
-            booleanValue = ((value != null ? value : "1"));
-            room.setRegistrationEnabled(("1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue)));
+            room.setRegistrationEnabled( parseFirstValueAsBoolean( field, true ) );
         }
 
         // Update the modification date to reflect the last time when the room's configuration
@@ -718,5 +692,34 @@ public class IQOwnerHandler {
         // Create the probeResult and add the basic info together with the configuration form
         probeResult = element;
         probeResult.add(configurationForm.getElement());
+    }
+
+    /**
+     * Returns the first value of the formfield as a boolean.
+     *
+     * @param field A form field (cannot be null)
+     * @param defaultValue Returned if first value is null or empty.
+     * @return true if the provided input equals '1' or 'true', false if the input equals '0' or 'false'.
+     * @throws IllegalArgumentException when the input cannot be parsed as a boolean.
+     * @Deprecated Use {@link FormField#parseFirstValueAsBoolean(String)} provided by Tinder version 1.3.1 or newer.
+     */
+    @Deprecated
+    public static boolean parseFirstValueAsBoolean( FormField field, boolean defaultValue )
+    {
+        final String value = field.getFirstValue();
+        if ( value == null || value.isEmpty() )
+        {
+            return defaultValue;
+        }
+        if ( "0".equals( value ) || "false".equals( value ) )
+        {
+            return false;
+        }
+        if ( "1".equals( value ) || "true".equals( value ) )
+        {
+            return true;
+        }
+
+        throw new IllegalArgumentException( "Unable to parse value '" + value + "' as Data Form Field boolean." );
     }
 }

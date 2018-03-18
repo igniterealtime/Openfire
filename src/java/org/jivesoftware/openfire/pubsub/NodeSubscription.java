@@ -36,6 +36,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
+import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
+
 /**
  * A subscription to a node. Entities may subscribe to a node to be notified when new events
  * are published to the node. Published events may contain a {@link PublishedItem}. Only
@@ -409,7 +411,6 @@ public class NodeSubscription {
 
     void configure(DataForm options) {
         List<String> values;
-        String booleanValue;
 
         boolean wasUsingPresence = !presenceStates.isEmpty();
 
@@ -435,14 +436,10 @@ public class NodeSubscription {
         for (FormField field : options.getFields()) {
             boolean fieldExists = true;
             if ("pubsub#deliver".equals(field.getVariable())) {
-                values = field.getValues();
-                booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                deliverNotifications = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
+                deliverNotifications = parseFirstValueAsBoolean( field, true ) ;
             }
             else if ("pubsub#digest".equals(field.getVariable())) {
-                values = field.getValues();
-                booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                usingDigest = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
+                usingDigest = parseFirstValueAsBoolean( field, true ) ;
             }
             else if ("pubsub#digest_frequency".equals(field.getVariable())) {
                 values = field.getValues();
@@ -457,9 +454,7 @@ public class NodeSubscription {
                 }
             }
             else if ("pubsub#include_body".equals(field.getVariable())) {
-                values = field.getValues();
-                booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                includingBody = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
+                includingBody = parseFirstValueAsBoolean( field, true ) ;
             }
             else if ("pubsub#show-values".equals(field.getVariable())) {
                 // Get the new list of presence states for which an entity wants to

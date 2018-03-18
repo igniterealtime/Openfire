@@ -33,6 +33,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
+
 /**
  * A type of node that contains published items only. It is NOT a container for
  * other nodes.
@@ -84,27 +86,19 @@ public class LeafNode extends Node {
 
     @Override
     protected void configure(FormField field) throws NotAcceptableException {
-        List<String> values;
-        String booleanValue;
         if ("pubsub#persist_items".equals(field.getVariable())) {
-            values = field.getValues();
-            booleanValue = (values.size() > 0 ? values.get(0) : "1");
-            persistPublishedItems = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
+            persistPublishedItems = parseFirstValueAsBoolean( field, true );
         }
         else if ("pubsub#max_payload_size".equals(field.getVariable())) {
-            values = field.getValues();
-            maxPayloadSize = values.size() > 0 ? Integer.parseInt(values.get(0)) : 5120;
+            maxPayloadSize = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 5120;
         }
         else if ("pubsub#send_item_subscribe".equals(field.getVariable())) {
-            values = field.getValues();
-            booleanValue = (values.size() > 0 ? values.get(0) : "1");
-            sendItemSubscribe = "1".equals(booleanValue) || "true".equalsIgnoreCase(booleanValue);
+            sendItemSubscribe = parseFirstValueAsBoolean( field, true );
         }
     }
 
     @Override
     void postConfigure(DataForm completedForm) {
-        List<String> values;
         if (!persistPublishedItems) {
             // Always save the last published item when not configured to use persistent items
             maxPublishedItems = 1;
@@ -112,8 +106,7 @@ public class LeafNode extends Node {
         else {
             FormField field = completedForm.getField("pubsub#max_items");
             if (field != null) {
-                values = field.getValues();
-                maxPublishedItems = values.size() > 0 ? Integer.parseInt(values.get(0)) : 50;
+                maxPublishedItems = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 50;
             }
         }
     }

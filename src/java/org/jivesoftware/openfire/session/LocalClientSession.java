@@ -109,11 +109,17 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * session and only for the duration of the session.
      */
     private String activeList;
+
     /**
      * Default privacy list used for the session's user. This list is processed if there
      * is no active list set for the session.
      */
     private String defaultList;
+
+    /**
+     * Defines whether a XEP-0191 blocklist was requested by the client of this session.
+     */
+    private boolean hasRequestedBlocklist = false;
 
     static {
         // Fill out the allowedIPs with the system property
@@ -932,6 +938,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
         messageCarbonsEnabled = enabled;
+    }
+
+    @Override
+    public boolean hasRequestedBlocklist() {
+        return hasRequestedBlocklist;
+    }
+
+    @Override
+    public void setHasRequestedBlocklist(boolean hasRequestedBlocklist) {
+        this.hasRequestedBlocklist = hasRequestedBlocklist;
     }
 
     /**

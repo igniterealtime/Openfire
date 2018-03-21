@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLSession;
 
@@ -86,8 +87,8 @@ public abstract class LocalSession implements Session {
     private long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
-    private long clientPacketCount = 0;
-    private long serverPacketCount = 0;
+    private AtomicLong clientPacketCount = new AtomicLong( 0 );
+    private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
      * Session temporary data. All data stored in this <code>Map</code> disapear when session
@@ -272,7 +273,7 @@ public abstract class LocalSession implements Session {
      * Increments the number of packets sent from the client to the server.
      */
     public void incrementClientPacketCount() {
-        clientPacketCount++;
+        clientPacketCount.incrementAndGet();
         lastActiveDate = System.currentTimeMillis();
         streamManager.incrementServerProcessedStanzas();
     }
@@ -281,7 +282,7 @@ public abstract class LocalSession implements Session {
      * Increments the number of packets sent from the server to the client.
      */
     public void incrementServerPacketCount() {
-        serverPacketCount++;
+        serverPacketCount.incrementAndGet();
         lastActiveDate = System.currentTimeMillis();
     }
 
@@ -292,7 +293,7 @@ public abstract class LocalSession implements Session {
      */
     @Override
     public long getNumClientPackets() {
-        return clientPacketCount;
+        return clientPacketCount.get();
     }
 
     /**
@@ -302,7 +303,7 @@ public abstract class LocalSession implements Session {
      */
     @Override
     public long getNumServerPackets() {
-        return serverPacketCount;
+        return serverPacketCount.get();
     }
 
     /**

@@ -262,6 +262,15 @@ plugins on-demand without impacting Openfire.</p>
 Plugins can be managed inside the Openfire admin console. You can also manually delete a plugin at any time by
 deleting its JAR file (Openfire will automatically remove the plugin from memory and delete it's directory when you
 do so).
+    
+<h2><a name="plugins">Firewall</a></h2>
+    
+Server's administrator should open TCP port 5222 for incoming connections for XMPP clients to be able to connect to Openfire.
+Additionally an administrator can also open TCP 9090 (for http) and TCP 9091 (for https), if there is a need to remotely administrate
+Openfire connecting to its Admin Console. We recommend only using 9091 port as it is an encrypted connection. For server to server
+connections one should also open TCP 5269 port and for secure HTTP-BIND connections TCP 7443 port. Port number can be different, if
+the default configuration has been changed by an administrator. All ports used by Openfire can be found on the first page of 
+Admin Console in the Server Ports section.
 
     </div>
 

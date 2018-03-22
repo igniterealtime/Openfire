@@ -167,7 +167,7 @@
             <%= event.getNode() %>
         </td>
         <td width="59%">
-            <%= event.getSummary() %>
+            <%= StringUtils.escapeHTMLTags(event.getSummary()) %>
             <% if (event.getDetails() != null) { %>
             &nbsp; <a href="" onclick="if (document.getElementById('details<%= event.getMsgID() %>').style.display == 'none') { document.getElementById('details<%= event.getMsgID() %>').style.display = 'block'; document.getElementById('label<%= event.getMsgID() %>').innerHTML = '<%= LocaleUtils.getLocalizedString("security.audit.viewer.hide_details")%>'; return false;} else { document.getElementById('details<%= event.getMsgID() %>').style.display = 'none'; document.getElementById('label<%= event.getMsgID() %>').innerHTML = '<%= LocaleUtils.getLocalizedString("security.audit.viewer.show_details")%>'; return false;}" id="label<%= event.getMsgID() %>"><fmt:message key="security.audit.viewer.show_details" /></a><br/>
             <pre id="details<%= event.getMsgID() %>" style="display:none; margin: 0px; padding: 1px;"><%= StringUtils.escapeHTMLTags(event.getDetails()) %></pre>

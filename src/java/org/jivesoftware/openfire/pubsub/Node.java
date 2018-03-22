@@ -44,6 +44,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
+
 /**
  * A virtual location to which information can be published and from which event
  * notifications and/or payloads can be received (in other pubsub systems, this may
@@ -498,7 +500,6 @@ public abstract class Node {
         }
         else if (DataForm.Type.submit.equals(completedForm.getType())) {
             List<String> values;
-            String booleanValue;
 
             // Get the new list of owners
             FormField ownerField = completedForm.getField("pubsub#owner");
@@ -525,40 +526,26 @@ public abstract class Node {
                     // Do nothing
                 }
                 else if ("pubsub#deliver_payloads".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    deliverPayloads = "1".equals(booleanValue);
+                    deliverPayloads = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#notify_config".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyConfigChanges = "1".equals(booleanValue);
+                    notifyConfigChanges = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#notify_delete".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyDelete = "1".equals(booleanValue);
+                    notifyDelete = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#notify_retract".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    notifyRetract = "1".equals(booleanValue);
+                    notifyRetract = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#presence_based_delivery".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    presenceBasedDelivery = "1".equals(booleanValue);
+                    presenceBasedDelivery = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#subscribe".equals(field.getVariable())) {
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    subscriptionEnabled = "1".equals(booleanValue);
+                    subscriptionEnabled = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#subscription_required".equals(field.getVariable())) {
                     // TODO Replace this variable for the one defined in the JEP (once one is defined)
-                    values = field.getValues();
-                    booleanValue = (values.size() > 0 ? values.get(0) : "1");
-                    subscriptionConfigurationRequired = "1".equals(booleanValue);
+                    subscriptionConfigurationRequired = parseFirstValueAsBoolean( field, true ) ;
                 }
                 else if ("pubsub#type".equals(field.getVariable())) {
                     values = field.getValues();

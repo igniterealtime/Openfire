@@ -194,7 +194,7 @@ public class CollectionNode extends Node {
         formField.addValue(maxLeafNodes);
 
         formField = form.addField();
-        formField.setVariable("pubsub#chilren_max");
+        formField.setVariable("pubsub#children_max");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max"));

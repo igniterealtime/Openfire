@@ -19,11 +19,7 @@ package org.jivesoftware.openfire.pubsub;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
@@ -37,20 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
@@ -133,7 +118,7 @@ public class PubSubEngine {
                 return TaskEngine.getInstance().submit(new Runnable() {
                     @Override
                     public void run() {
-                        createNode(service, iq, childElement, finalAction);
+                        createNode(service, iq, childElement, finalAction, getPublishOptions( iq ));
                     }
                 });
             }
@@ -338,34 +323,42 @@ public class PubSubEngine {
         if (nodeID == null) {
             // XEP-0060 Section 7.2.3.3 - No node was specified. Return bad_request error
             // This suggests that Instant nodes should not be auto-created
-            Element pubsubError = DocumentHelper.createElement(QName.get(
-                    "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
+            Element pubsubError = DocumentHelper.createElement(QName.get("nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
-        else {
-            // Look for the specified node
-            node = service.getNode(nodeID);
-            if (node == null) {
-                if (service instanceof PEPService && service.isServiceAdmin(owner)){
-                    // If it is a PEP service & publisher is service owner -
-                    // auto create nodes.
-                    Element childElement = iq.getChildElement();
-                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, publishElement);
 
-                    if (response.newNode == null) {
-                        // New node creation failed. Since pep#auto-create is advertised 
-                        // in disco#info, node creation error should be sent to the client.
-                        sendErrorPacket(iq, response.creationStatus, response.pubsubError);
-                    } else {
-                        // Node creation succeeded, set node to newNode.
-                        node = response.newNode;
-                    }
-                } else {
-                    // Node does not exist. Return item-not-found error
-                    sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+        // Optional Publish Options.
+        final DataForm publishOptions = getPublishOptions( iq );
+
+        // Look for the specified node
+        node = service.getNode(nodeID);
+        if (node == null) {
+            if (service instanceof PEPService && service.isServiceAdmin(owner) && canAutoCreate( publishOptions ) ) {
+                // If it is a PEP service & publisher is service owner - auto create nodes.
+                CreateNodeResponse response = createNodeHelper(service, iq, iq.getChildElement(), publishElement, publishOptions);
+
+                if (response.newNode == null) {
+                    // New node creation failed. Since pep#auto-create is advertised
+                    // in disco#info, node creation error should be sent to the client.
+                    sendErrorPacket(iq, response.creationStatus, response.pubsubError);
                     return;
+                } else {
+                    // Node creation succeeded, set node to newNode.
+                    node = response.newNode;
                 }
+            } else {
+                // Node does not exist. Return item-not-found error
+                sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+                return;
+            }
+        } else {
+            // Check if the preconditions defined in the publish options (if any) are met.
+            if ( !nodeMeetsPreconditions( node, publishOptions ) )
+            {
+                Element pubsubError = DocumentHelper.createElement(QName.get("precondition-not-met", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.conflict, pubsubError);
+                return;
             }
         }
 
@@ -431,6 +424,120 @@ public class PubSubEngine {
         router.route(IQ.createResultIQ(iq));
         // Publish item and send event notifications to subscribers
         leafNode.publishItems(from, items);
+    }
+
+    /**
+     * Get the dataform that describes the publish options from the request, or null if no such form was included.
+     *
+     * @param iq The publish request (cannot be null).
+     * @return A publish options data form (possibly null).
+     */
+    public static DataForm getPublishOptions( IQ iq )
+    {
+        final Element publishOptionsElement = iq.getChildElement().element( "publish-options" );
+        if ( publishOptionsElement == null )
+        {
+            return null;
+        }
+
+        final Element x = publishOptionsElement.element( QName.get( DataForm.ELEMENT_NAME, DataForm.NAMESPACE ) );
+        if ( x == null )
+        {
+            return null;
+        }
+
+        final DataForm result = new DataForm( x );
+        if ( result.getType() != DataForm.Type.submit )
+        {
+            return null;
+        }
+
+        final FormField formType = result.getField( "FORM_TYPE" );
+        if ( formType == null || !"http://jabber.org/protocol/pubsub#publish-options".equals( formType.getFirstValue() ) )
+        {
+            return null;
+        }
+
+        return result;
+    }
+
+    /**
+     * Checks if a node is allowed to be auto-created, given the configuration of the service and the optional publish options.
+     *
+     * @param publishOptions publish options (can be null)
+     * @return true if auto-creation of nodes on publish to a non-existent node is allowed, otherwise false.
+     */
+    private boolean canAutoCreate( DataForm publishOptions )
+    {
+        // Since pep#auto-create is advertised in disco#info in hard-code, this is always allowed, unless the publish options explicitly forbid this.
+        if ( publishOptions == null )
+        {
+            return true;
+        }
+
+        final FormField field = publishOptions.getField( "pubsub#auto-create" );
+        if ( field == null )
+        {
+            return true;
+        }
+
+        final String firstValue = field.getFirstValue();
+        return "1".equals( firstValue ) || "true".equalsIgnoreCase( firstValue );
+
+    }
+
+    /**
+     * Checks of the configuration of the node meets the preconditions, as supplied in the dataform.
+     *
+     * This method returns true only if the configuration of the node at least contains each of the fields
+     * defined in the preconditions (with matching values).
+     *
+     * @param node The node (cannot be null)
+     * @param preconditions The preconditions (can be null, in which case 'true' is returned).
+     * @return True if all preconditions are met, otherwise false.
+     */
+    private boolean nodeMeetsPreconditions( Node node, DataForm preconditions )
+    {
+        if ( preconditions == null )
+        {
+            return true;
+        }
+
+        final DataForm conditions = node.getConfigurationForm();
+        for ( final FormField precondition : preconditions.getFields() )
+        {
+            if ( precondition.getVariable().equals( "FORM_TYPE" ) )
+            {
+                continue;
+            }
+
+            final FormField condition = conditions.getField( precondition.getVariable() );
+            if ( condition == null )
+            {
+                // Unknown condition. Reject.
+                return false;
+            }
+
+            if ( condition.getValues().size() > 1 )
+            {
+                if ( !condition.getValues().containsAll( precondition.getValues() ) || !precondition.getValues().containsAll( condition.getValues() ) )
+                {
+                    // The condition value list does contain different values than the precondtion value list.
+                    return false;
+                }
+            }
+            else
+            {
+                final String a = condition.getFirstValue();
+                final String b = precondition.getFirstValue();
+                if ( !a.equals( b ) && !(a.equals( "true" ) && b.equals( "1" )) && !(a.equals( "1" ) && b.equals( "true" ))
+                                    && !(a.equals( "false" ) && b.equals( "0" )) && !(a.equals( "0" ) && b.equals( "false" )) )
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void deleteItems(PubSubService service, IQ iq, Element retractElement) {
@@ -1129,9 +1236,9 @@ public class PubSubEngine {
         leafNode.sendPublishedItems(iq, items, forceToIncludePayload);
     }
 
-    private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement) {
+    private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement, DataForm publishOptions) {
         // Call createNodeHelper and get the node creation status.
-        CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement);
+        CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement, publishOptions);
         if (response.newNode == null) {
             // New node creation failed
             sendErrorPacket(iq, response.creationStatus, response.pubsubError);
@@ -1174,13 +1281,9 @@ public class PubSubEngine {
      * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
      * do not call this method in the same thread in which a response might arrive
      *
-     * @param service
-     * @param iq
-     * @param childElement
-     * @param createElement
      * @return {@link CreateNodeResponse}
      */
-    private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement) {
+    private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement, DataForm publishOptions) {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
@@ -1213,36 +1316,53 @@ public class PubSubEngine {
         Element configureElement = childElement.element("configure");
         if (configureElement != null) {
             // Get the data form that contains the parent nodeID
-            completedForm = getSentConfigurationForm(configureElement);
-            if (completedForm != null) {
-                // Calculate newNodeID when new node is affiliated with a Collection
-                FormField field = completedForm.getField("pubsub#collection");
-                if (field != null) {
-                    List<String> values = field.getValues();
-                    if (!values.isEmpty()) {
-                        String parentNodeID = values.get(0);
-                        Node tempNode = service.getNode(parentNodeID);
-                        if (tempNode == null) {
-                            // Requested parent node was not found so return an error
-                            return new CreateNodeResponse(PacketError.Condition.item_not_found, null, null);
-                        }
-                        else if (!tempNode.isCollectionNode()) {
-                            // Requested parent node is not a collection node so return an error
-                            return new CreateNodeResponse(PacketError.Condition.not_acceptable, null, null);
-                        }
-                        parentNode = (CollectionNode) tempNode;
-                    }
-                }
-                field = completedForm.getField("pubsub#node_type");
-                if (field != null) {
-                    // Check if user requested to create a new collection node
-                    List<String> values = field.getValues();
-                    if (!values.isEmpty()) {
-                        collectionType = "collection".equals(values.get(0));
+            completedForm = getSentConfigurationForm( configureElement );
+        }
+
+        if (publishOptions != null) {
+            // Apply publish options to override provided config.
+            if ( completedForm == null ) {
+                completedForm = publishOptions;
+            } else {
+                for ( final FormField publishOption : publishOptions.getFields() ) {
+                    completedForm.removeField( publishOption.getVariable() );
+                    final FormField formField = completedForm.addField( publishOption.getVariable(), publishOption.getLabel(), publishOption.getType() );
+                    for ( final String value : publishOption.getValues() ) {
+                        formField.addValue( value );
                     }
                 }
             }
         }
+
+        if (completedForm != null) {
+            // Calculate newNodeID when new node is affiliated with a Collection
+            FormField field = completedForm.getField("pubsub#collection");
+            if (field != null) {
+                List<String> values = field.getValues();
+                if (!values.isEmpty()) {
+                    String parentNodeID = values.get(0);
+                    Node tempNode = service.getNode(parentNodeID);
+                    if (tempNode == null) {
+                        // Requested parent node was not found so return an error
+                        return new CreateNodeResponse(PacketError.Condition.item_not_found, null, null);
+                    }
+                    else if (!tempNode.isCollectionNode()) {
+                        // Requested parent node is not a collection node so return an error
+                        return new CreateNodeResponse(PacketError.Condition.not_acceptable, null, null);
+                    }
+                    parentNode = (CollectionNode) tempNode;
+                }
+            }
+            field = completedForm.getField("pubsub#node_type");
+            if (field != null) {
+                // Check if user requested to create a new collection node
+                List<String> values = field.getValues();
+                if (!values.isEmpty()) {
+                    collectionType = "collection".equals(values.get(0));
+                }
+            }
+        }
+
         // If no parent was defined then use the root collection node
         if (parentNode == null && service.isCollectionNodesSupported()) {
             parentNode = service.getRootCollectionNode();

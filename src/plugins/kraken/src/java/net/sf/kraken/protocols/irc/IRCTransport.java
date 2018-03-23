@@ -14,8 +14,9 @@ import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.util.LocaleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /***
@@ -28,7 +29,7 @@ import org.xmpp.packet.JID;
  */
 public class IRCTransport extends BaseTransport<IRCBuddy> {
 
-    static Logger Log = Logger.getLogger(IRCTransport.class);
+    static Logger Log = LoggerFactory.getLogger( IRCTransport.class);
 
     /**
      * @see net.sf.kraken.BaseTransport#getTerminologyUsername()

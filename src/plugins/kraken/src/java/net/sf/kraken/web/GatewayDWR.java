@@ -24,7 +24,7 @@ import javax.xml.parsers.DocumentBuilder;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 /**
  * IM Gateway DWR servlet
@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 @SuppressWarnings("serial")
 public class GatewayDWR extends DWRServlet {
 
-    static Logger Log = Logger.getLogger(GatewayDWR.class);
+    static Logger Log = LoggerFactory.getLogger(GatewayDWR.class);
 
     private Document document;
 

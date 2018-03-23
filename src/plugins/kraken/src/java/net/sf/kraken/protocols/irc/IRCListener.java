@@ -21,10 +21,11 @@ import net.sf.kraken.muc.MUCTransportSession;
 import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.type.PresenceType;
 
-import org.apache.log4j.Logger;
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
@@ -63,7 +64,7 @@ import f00f.net.irc.martyr.util.IRCStringUtils;
  */
 public class IRCListener extends GenericAutoService {
 
-    static Logger Log = Logger.getLogger(IRCListener.class);
+    static Logger Log = LoggerFactory.getLogger( IRCListener.class);
 
     public IRCListener(IRCSession session) {
         super(session.getConnection());

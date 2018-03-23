@@ -11,7 +11,7 @@ import net.sf.kraken.registration.Registration;
 import net.sf.kraken.registration.RegistrationManager;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
@@ -31,7 +31,7 @@ public class PseudoRosterManager {
 
     private static PseudoRosterManager instance = null;
 
-    static Logger Log = Logger.getLogger(PseudoRosterManager.class);
+    static Logger Log = LoggerFactory.getLogger(PseudoRosterManager.class);
 
     private static final String REMOVE_ROSTER =
             "DELETE FROM ofGatewayPseudoRoster WHERE registrationID=?";

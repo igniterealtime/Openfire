@@ -26,7 +26,7 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.NameSpace;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManagerListener;
 import org.jivesoftware.smack.ConnectionListener;
@@ -53,7 +53,7 @@ import org.xmpp.packet.Message;
  */
 public class XMPPListener implements MessageListener, ConnectionListener, ChatManagerListener, PacketListener, RosterListener {
 
-    static Logger Log = Logger.getLogger(XMPPListener.class);
+    static Logger Log = LoggerFactory.getLogger(XMPPListener.class);
 
     /**
      * Creates an XMPP listener instance and ties to session.

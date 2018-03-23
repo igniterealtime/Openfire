@@ -18,7 +18,7 @@ import net.kano.joscar.snac.SnacPacketEvent;
 import net.kano.joscar.snac.SnacResponseEvent;
 import net.kano.joscar.snaccmd.conn.RateInfoCmd;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 /**
  * Represents a connection to a particular OSCAR service.
@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  */
 public class ServiceConnection extends BasicFlapConnection {
 
-    static Logger Log = Logger.getLogger(ServiceConnection.class);
+    static Logger Log = LoggerFactory.getLogger(ServiceConnection.class);
 
     protected int serviceFamily;
 

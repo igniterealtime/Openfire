@@ -14,7 +14,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +29,7 @@ import java.lang.ref.WeakReference;
  */
 public class TransportBuddyManager<B extends TransportBuddy> {
 
-    static Logger Log = Logger.getLogger(TransportBuddyManager.class);
+    static Logger Log = LoggerFactory.getLogger(TransportBuddyManager.class);
 
     /**
      * Creates the transport buddy manager instance and initializes.

@@ -27,7 +27,7 @@ import net.sf.kraken.registration.Registration;
 import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.Roster.SubscriptionMode;
@@ -57,7 +57,7 @@ import org.xmpp.packet.JID;
  */
 public class XMPPSession extends TransportSession<XMPPBuddy> {
 
-    static Logger Log = Logger.getLogger(XMPPSession.class);
+    static Logger Log = LoggerFactory.getLogger(XMPPSession.class);
     
     /**
      * Create an XMPP Session instance.

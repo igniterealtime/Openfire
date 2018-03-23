@@ -12,7 +12,6 @@ import net.sf.kraken.registration.RegistrationManager;
 import net.sf.kraken.session.cluster.TransportSessionRouter;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.PropertyConfigurator;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -313,7 +312,7 @@ public class KrakenPlugin implements Plugin {
 
     public static void setLoggerProperty(String property, String setting) {
         log4jProperties.setProperty(property, setting);
-        PropertyConfigurator.configure(log4jProperties);
+        // FIXME this is no longer supported in slf4j/log4j2: PropertyConfigurator.configure(log4jProperties);
     }
 
 }

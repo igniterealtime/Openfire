@@ -21,13 +21,14 @@ import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.NameSpace;
 
-import org.apache.log4j.Logger;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;
@@ -50,7 +51,7 @@ import org.xmpp.packet.PacketError.Condition;
  */
 public abstract class BaseMUCTransport<B extends TransportBuddy> implements Component {
 
-    static Logger Log = Logger.getLogger(BaseMUCTransport.class);
+    static Logger Log = LoggerFactory.getLogger(BaseMUCTransport.class);
 
     /**
      * Create a new BaseMUCTransport instance.

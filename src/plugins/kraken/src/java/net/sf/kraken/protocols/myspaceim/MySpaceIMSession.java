@@ -21,7 +21,8 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -34,7 +35,7 @@ import org.xmpp.packet.JID;
  */
 public class MySpaceIMSession extends TransportSession<MySpaceIMBuddy> {
 
-    static Logger Log = Logger.getLogger(MySpaceIMSession.class);
+    static Logger Log = LoggerFactory.getLogger( MySpaceIMSession.class);
 
     /**
      * Create a MySpaceIM Session instance.

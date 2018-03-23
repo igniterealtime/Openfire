@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -25,7 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class SimplePresence {
 
-    static Logger Log = Logger.getLogger(SimplePresence.class);
+    static Logger Log = LoggerFactory.getLogger(SimplePresence.class);
 
     /**
      * Tuple status of the presence packet.

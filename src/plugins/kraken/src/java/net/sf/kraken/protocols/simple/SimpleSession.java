@@ -51,7 +51,7 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -67,7 +67,7 @@ import org.xmpp.packet.Presence;
  */
 public class SimpleSession extends TransportSession<SimpleBuddy> {
 
-    static Logger Log = Logger.getLogger(SimpleSession.class);
+    static Logger Log = LoggerFactory.getLogger(SimpleSession.class);
 
     private SipFactory sipFactory = null;
     

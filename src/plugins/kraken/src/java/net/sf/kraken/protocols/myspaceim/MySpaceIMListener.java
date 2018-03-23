@@ -22,9 +22,10 @@ import net.sf.jmyspaceiml.packet.StatusMessage;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.util.chatstate.ChatStateEventSource;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -33,7 +34,7 @@ import org.xmpp.packet.Message;
  */
 public class MySpaceIMListener implements MessageListener, ContactListener {
 
-    static Logger Log = Logger.getLogger(MySpaceIMListener.class);
+    static Logger Log = LoggerFactory.getLogger( MySpaceIMListener.class);
     
     MySpaceIMListener(MySpaceIMSession session) {
         this.myspaceimSessionRef = new WeakReference<MySpaceIMSession>(session);

@@ -12,7 +12,7 @@ import java.util.Vector;
 
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.xmpp.packet.JID;
 
 import com.lotus.sametime.awareness.AwarenessServiceEvent;
@@ -33,7 +33,7 @@ import com.lotus.sametime.im.ImServiceListener;
  */
 public class SameTimeListener implements LoginListener, ImServiceListener, ImListener, BLServiceListener, AwarenessServiceListener, StatusListener {
 
-    static Logger Log = Logger.getLogger(SameTimeListener.class);
+    static Logger Log = LoggerFactory.getLogger(SameTimeListener.class);
     
     private Vector<Im> imOpened = new Vector<Im>();
 

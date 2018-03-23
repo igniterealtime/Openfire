@@ -10,7 +10,7 @@
     </description>
     <author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
     <version>2.2.2-SNAPSHOT</version>
-    <date>11/17/2017</date>
+    <date>03/23/2018</date>
     <databaseKey>gojara</databaseKey>
     <databaseVersion>1</databaseVersion>
     <minServerVersion>4.0.0</minServerVersion>

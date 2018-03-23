@@ -16,7 +16,7 @@ import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.roster.TransportBuddyManager;
 import net.sf.kraken.type.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.roster.Roster;
@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class TransportSession<B extends TransportBuddy> {
 
-    static Logger Log = Logger.getLogger(TransportSession.class);
+    static Logger Log = LoggerFactory.getLogger(TransportSession.class);
 
     /**
      * Convenience constructor that includes priority.

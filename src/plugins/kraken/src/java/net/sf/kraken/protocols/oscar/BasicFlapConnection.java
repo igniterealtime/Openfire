@@ -61,7 +61,7 @@ import net.sf.kraken.type.TransportType;
 import net.sf.kraken.util.StringUtils;
 import net.sf.kraken.util.chatstate.ChatStateEventSource;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
@@ -76,7 +76,7 @@ import org.xmpp.packet.Message;
  */
 public abstract class BasicFlapConnection extends AbstractFlapConnection {
 
-    static Logger Log = Logger.getLogger(BasicFlapConnection.class);
+    static Logger Log = LoggerFactory.getLogger(BasicFlapConnection.class);
 
     protected final ByteBlock cookie;
     protected boolean sentClientReady = false;

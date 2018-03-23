@@ -26,7 +26,7 @@ import net.kano.joscar.snaccmd.mailcheck.MailCheckCmd;
 import net.kano.joscar.snaccmd.mailcheck.MailStatusRequest;
 import net.kano.joscar.snaccmd.mailcheck.MailUpdate;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.packet.Message;
@@ -36,7 +36,7 @@ import org.xmpp.packet.Message;
  */
 public class EmailConnection extends ServiceConnection {
 
-    static Logger Log = Logger.getLogger(EmailConnection.class);
+    static Logger Log = LoggerFactory.getLogger(EmailConnection.class);
 
     private Integer lastMailCount = 0;
 

@@ -48,10 +48,11 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 import net.sf.kraken.util.chatstate.ChatStateEventSource;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
@@ -67,7 +68,7 @@ import org.xmpp.packet.Presence;
 public class MSNListener implements MsnContactListListener, MsnMessageListener, MsnMessengerListener,
                                     MsnSwitchboardListener, MsnEmailListener, SessionListener {
 
-    static Logger Log = Logger.getLogger(MSNListener.class);
+    static Logger Log = LoggerFactory.getLogger( MSNListener.class);
 
     /**
      * Creates the MSN Listener instance.

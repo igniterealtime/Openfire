@@ -12,7 +12,7 @@ import redstone.xmlrpc.XmlRpcServlet;
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.PropertyEventDispatcher;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import javax.servlet.ServletException;
 @SuppressWarnings("serial")
 public class GatewayXMLRPC extends XmlRpcServlet implements PropertyEventListener {
 
-    static Logger Log = Logger.getLogger(GatewayXMLRPC.class);
+    static Logger Log = LoggerFactory.getLogger(GatewayXMLRPC.class);
 
     XMLRPCConduit conduit;
 

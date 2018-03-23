@@ -7,10 +7,10 @@
 
 package net.sf.kraken.util;
 
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.Priority;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.AppenderSkeleton;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Priority;
+import org.apache.logging.log4j.spi.LoggingEvent;
 import org.jivesoftware.util.Log;
 
 /**
@@ -21,7 +21,7 @@ public class Log4JToOpenfireAppender extends AppenderSkeleton {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.log4j.AppenderSkeleton#append(org.apache.log4j.spi.LoggingEvent)
+     * @see org.apache.logging.log4j.AppenderSkeleton#append(org.apache.logging.log4j.spi.LoggingEvent)
      */
     @Override
     protected void append(LoggingEvent event)
@@ -64,7 +64,7 @@ public class Log4JToOpenfireAppender extends AppenderSkeleton {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.log4j.AppenderSkeleton#close()
+     * @see org.apache.logging.log4j.AppenderSkeleton#close()
      */
     //@Override
     public void close()
@@ -75,7 +75,7 @@ public class Log4JToOpenfireAppender extends AppenderSkeleton {
     /*
      * (non-Javadoc)
      *
-     * @see org.apache.log4j.AppenderSkeleton#requiresLayout()
+     * @see org.apache.logging.log4j.AppenderSkeleton#requiresLayout()
      */
     //@Override
     public boolean requiresLayout()

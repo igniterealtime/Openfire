@@ -3,7 +3,6 @@ package org.jivesoftware.openfire.plugin.married;
 import java.io.File;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.SharedGroupException;
@@ -21,11 +20,13 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
 
 public class JustMarriedPlugin implements Plugin {
 
-    private static Logger Log = Logger.getLogger(JustMarriedPlugin.class);
+    private static Logger Log = LoggerFactory.getLogger( JustMarriedPlugin.class );
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
     }
@@ -163,11 +164,8 @@ public class JustMarriedPlugin implements Plugin {
                         justCreated.setSubStatus(oldUserOnOthersRoster.getSubStatus());
                         otherRoster.updateRosterItem(justCreated);
                     }
-                } catch (UserAlreadyExistsException e) {
+                } catch (UserAlreadyExistsException | SharedGroupException e) {
                     Log.error("Could not create roster item for user " + newUser.getUsername(), e);
-                } catch (SharedGroupException e) {
-                    Log.error(e);
-
                 }
             } catch (UserNotFoundException e) {
                 Log.error("Could not create roster item for user " + newUser.getUsername()

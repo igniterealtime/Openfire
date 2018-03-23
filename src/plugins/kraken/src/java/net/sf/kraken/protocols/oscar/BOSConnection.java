@@ -58,7 +58,7 @@ import net.kano.joscar.ssiitem.VisibilityItem;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.Presence;
@@ -71,7 +71,7 @@ import org.xmpp.packet.Presence;
  */
 public class BOSConnection extends BasicFlapConnection {
 
-    static Logger Log = Logger.getLogger(BOSConnection.class);
+    static Logger Log = LoggerFactory.getLogger(BOSConnection.class);
 
     protected SsiItemObjectFactory itemFactory = new DefaultSsiItemObjFactory();
 

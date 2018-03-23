@@ -16,7 +16,7 @@ import java.util.Map;
 
 import net.kano.joscar.snac.SnacRequest;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 /**
  * Handles incoming SNAC packets.
@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
  */
 public class SnacManager {
 
-    static Logger Log = Logger.getLogger(SnacManager.class);
+    static Logger Log = LoggerFactory.getLogger(SnacManager.class);
 
     protected Map<Integer,List<BasicFlapConnection>> conns = new HashMap<Integer,List<BasicFlapConnection>>();
     protected PendingSnacMgr pendingSnacs = new PendingSnacMgr();

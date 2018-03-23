@@ -22,7 +22,6 @@ import net.sf.kraken.util.chatstate.ChatStateChangeEvent;
 import net.sf.kraken.util.chatstate.ChatStateEventListener;
 import net.sf.kraken.util.chatstate.ChatStateEventSource;
 
-import org.apache.log4j.Logger;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -52,6 +51,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.*;
@@ -75,7 +76,7 @@ import java.util.concurrent.locks.Lock;
  */
 public abstract class BaseTransport<B extends TransportBuddy> implements Component, RosterEventListener, UserEventListener, PacketInterceptor, SessionEventListener, VCardListener, ChatStateEventListener {
 
-    static Logger Log = Logger.getLogger(BaseTransport.class);
+    static Logger Log = LoggerFactory.getLogger( BaseTransport.class);
 
     private final ChatStateEventSource chatStateEventSource = new ChatStateEventSource(this);
 

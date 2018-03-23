@@ -13,7 +13,7 @@ import net.sf.kraken.TransportInstance;
 import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.session.TransportSession;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -35,7 +35,7 @@ import java.util.concurrent.locks.Lock;
  */
 public class TransportSessionRouter implements ClusterEventListener {
 
-    static Logger Log = Logger.getLogger(TransportSessionRouter.class);
+    static Logger Log = LoggerFactory.getLogger(TransportSessionRouter.class);
 
     public static final String TRANSPORTSESSION_CACHE_NAME = "Kraken Session Location Cache";
 

@@ -11,7 +11,7 @@ import net.sf.kraken.avatars.Avatar;
 import net.sf.kraken.type.NameSpace;
 import net.sf.kraken.type.PresenceType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public abstract class TransportBuddy {
 
-    static Logger Log = Logger.getLogger(TransportBuddy.class);
+    static Logger Log = LoggerFactory.getLogger(TransportBuddy.class);
 
     /**
      * Default constructor, nothing set up.

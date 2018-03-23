@@ -7,7 +7,7 @@
 
 package net.sf.kraken.pseudoroster;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.NotFoundException;
 
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PseudoRoster {
 
-    static Logger Log = Logger.getLogger(PseudoRoster.class);
+    static Logger Log = LoggerFactory.getLogger(PseudoRoster.class);
 
     private static final String GET_ALL_USER_ROSTER_ITEMS =
             "SELECT username FROM ofGatewayPseudoRoster WHERE registrationID=?";

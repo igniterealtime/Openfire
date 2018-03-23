@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Holger Bergunde
@@ -24,7 +25,7 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class DatabaseManager {
 
-    private static Logger Log = Logger.getLogger(DatabaseManager.class);
+    private static Logger Log = LoggerFactory.getLogger(DatabaseManager.class);
     private List<LogEntry> logbuffer;
 
     private static volatile DatabaseManager _myself;
@@ -122,7 +123,7 @@ public class DatabaseManager {
 
             pstmt.close();
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while gettting log entries.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -143,7 +144,7 @@ public class DatabaseManager {
             Log.debug("Cleaned statistic database. Affected rows: " + rows);
             pstmt.close();
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while cleaning old log entries.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -179,9 +180,11 @@ public class DatabaseManager {
                         pstmt.setString(5, log.getComponent());
                         pstmt.addBatch();
                     }
-                    pstmt.executeBatch();
+                    if ( pstmt != null) {
+                        pstmt.executeBatch();
+                    }
                 } catch (SQLException sqle) {
-                    Log.error(sqle);
+                    Log.error("An exception occurred while adding a new log entry.", sqle);
                 } finally {
                     DbConnectionManager.closeConnection(pstmt, con);
                     logbuffer.clear();
@@ -218,7 +221,7 @@ public class DatabaseManager {
         }
 
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting all log entries.", sqle);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
@@ -241,7 +244,7 @@ public class DatabaseManager {
             rs.next();
             return rs.getInt(1);
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting log table size.", sqle);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
@@ -262,7 +265,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Counts the number of log entries in the databse that are older than specified value
+     * Counts the number of log entries in the database that are older than specified value
      * 
      * @param component
      *            subdomain of the component the packages were flown by
@@ -287,7 +290,7 @@ public class DatabaseManager {
             rs.next();
             return rs.getInt(1);
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while counting the log entries older than {} minutes.", minutes, sqle);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
@@ -320,7 +323,7 @@ public class DatabaseManager {
                 Log.debug("I have updated " + user + " with " + transport + " at " + time);
             }
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while inserting or updating session entry.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -339,7 +342,7 @@ public class DatabaseManager {
             pstmt.setString(2, transport);
             result = pstmt.executeUpdate();
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while removing a session entry.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -366,7 +369,7 @@ public class DatabaseManager {
 
             pstmt.close();
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting session entries for {}.", username, sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -399,7 +402,7 @@ public class DatabaseManager {
             }
             pstmt.close();
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting session entries.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -417,7 +420,7 @@ public class DatabaseManager {
             rs.next();
             result = rs.getInt(1);
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting number of registrations.", sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -436,7 +439,7 @@ public class DatabaseManager {
             rs.next();
             result = rs.getInt(1);
         } catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting number of registrations for transport {}.", transport, sqle);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }

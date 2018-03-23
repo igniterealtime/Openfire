@@ -31,8 +31,8 @@ import net.kano.joscar.snac.SnacRequestAdapter;
 import net.kano.joscar.snac.SnacRequestListener;
 import net.kano.joscar.snac.SnacResponseEvent;
 import net.kano.joscar.snaccmd.DefaultClientFactoryList;
-
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for all FLAP handlers.
@@ -42,7 +42,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class AbstractFlapConnection extends ClientFlapConn {
 
-    static Logger Log = Logger.getLogger(AbstractFlapConnection.class);
+    static Logger Log = LoggerFactory.getLogger( AbstractFlapConnection.class);
 
     /**
      * Timer to send keep alive messages.

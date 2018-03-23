@@ -18,7 +18,8 @@ import net.sf.kraken.type.ChatStateType;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import pl.mn.communicator.GGConfiguration;
@@ -42,7 +43,7 @@ import pl.mn.communicator.User;
  */
 public class GaduGaduSession extends TransportSession<GaduGaduBuddy> {
 
-    static Logger Log = Logger.getLogger(GaduGaduSession.class);
+    static Logger Log = LoggerFactory.getLogger( GaduGaduSession.class);
 
     /**
      * Create a Gadu-Gadu Session instance.

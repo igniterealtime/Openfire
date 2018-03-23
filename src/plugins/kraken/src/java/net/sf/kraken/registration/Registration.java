@@ -9,7 +9,7 @@ package net.sf.kraken.registration;
 
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
@@ -34,7 +34,7 @@ import java.util.Date;
 @JiveID(125)
 public class Registration {
 
-    static Logger Log = Logger.getLogger(Registration.class);
+    static Logger Log = LoggerFactory.getLogger(Registration.class);
 
     private static final String INSERT_REGISTRATION =
             "INSERT INTO ofGatewayRegistration(registrationID, jid, transportType, " +

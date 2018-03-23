@@ -34,7 +34,7 @@ import javax.sip.message.Response;
 
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -51,7 +51,7 @@ import org.xmpp.packet.Presence;
  */
 public class SimpleListener implements SipListener {
 
-    static Logger Log = Logger.getLogger(SimpleListener.class);
+    static Logger Log = LoggerFactory.getLogger(SimpleListener.class);
 
     /**
      * Stores the SIMPLE session object to which this listener belongs.

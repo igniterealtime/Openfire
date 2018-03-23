@@ -19,7 +19,7 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 import net.sf.kraken.util.chatstate.ChatStateEventSource;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
@@ -41,7 +41,7 @@ import org.xmpp.packet.Presence;
 @SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
 public class YahooListener implements SessionListener {
 
-    static Logger Log = Logger.getLogger(YahooListener.class);
+    static Logger Log = LoggerFactory.getLogger(YahooListener.class);
 
     /**
      * Handles converting messages between formats.

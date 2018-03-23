@@ -19,7 +19,7 @@ import net.sf.kraken.registration.Registration;
 import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.*;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -53,7 +53,7 @@ public class YahooSession extends TransportSession<YahooBuddy> {
      */
     public static final String DEFAULT_GROUPNAME = "Friends";
 
-    static Logger Log = Logger.getLogger(YahooSession.class);
+    static Logger Log = LoggerFactory.getLogger(YahooSession.class);
 
     /**
      * Create a Yahoo Session instance.

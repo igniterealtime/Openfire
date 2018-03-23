@@ -22,12 +22,12 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.xmpp.packet.JID;
 
 public class QQSession extends TransportSession<QQBuddy> {
 
-    static Logger Log = Logger.getLogger(QQSession.class);
+    static Logger Log = LoggerFactory.getLogger(QQSession.class);
 
     private List<String> tcpServerList = new ArrayList<String>();
     private List<String> udpServerList = new ArrayList<String>();

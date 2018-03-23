@@ -14,7 +14,7 @@ import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.openymsg.network.Status;
 import org.xmpp.packet.JID;
@@ -29,7 +29,7 @@ import org.xmpp.packet.JID;
  */
 public class YahooTransport extends BaseTransport<YahooBuddy> {
 
-    static Logger Log = Logger.getLogger(YahooTransport.class);
+    static Logger Log = LoggerFactory.getLogger(YahooTransport.class);
 
     /**
      * @see net.sf.kraken.BaseTransport#getTerminologyUsername()

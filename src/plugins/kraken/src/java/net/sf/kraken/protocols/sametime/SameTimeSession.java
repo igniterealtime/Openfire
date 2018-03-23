@@ -15,7 +15,7 @@ import net.sf.kraken.type.ChatStateType;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 
@@ -39,7 +39,7 @@ import com.lotus.sametime.im.InstantMessagingService;
  */
 public class SameTimeSession extends TransportSession<SameTimeBuddy> {
 
-    static Logger Log = Logger.getLogger(SameTimeSession.class);
+    static Logger Log = LoggerFactory.getLogger(SameTimeSession.class);
 
     /**
      * Create a SameTime Session instance.

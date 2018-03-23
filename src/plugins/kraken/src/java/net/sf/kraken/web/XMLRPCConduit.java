@@ -16,7 +16,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.xmpp.packet.JID;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 import java.util.*;
 
@@ -27,7 +27,7 @@ import java.util.*;
  */
 public class XMLRPCConduit {
 
-    static Logger Log = Logger.getLogger(XMLRPCConduit.class);
+    static Logger Log = LoggerFactory.getLogger(XMLRPCConduit.class);
 
     ConfigManager configManager = new ConfigManager();
 

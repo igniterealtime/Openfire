@@ -14,9 +14,10 @@ import net.sf.jml.MsnGroup;
 import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.roster.TransportBuddyManager;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -24,7 +25,7 @@ import org.xmpp.packet.JID;
  */
 public class MSNBuddy extends TransportBuddy {
 
-    static Logger Log = Logger.getLogger(MSNBuddy.class);
+    static Logger Log = LoggerFactory.getLogger( MSNBuddy.class);
 
     public MSNBuddy(TransportBuddyManager<MSNBuddy> manager, MsnContact msnContact) {
         super(manager, msnContact.getEmail().toString(), msnContact.getFriendlyName(), null);

@@ -16,11 +16,12 @@ import net.sf.kraken.pseudoroster.PseudoRosterItem;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.mn.communicator.GGException;
 import pl.mn.communicator.IIncommingMessage;
 import pl.mn.communicator.ILocalStatus;
@@ -42,7 +43,7 @@ import pl.mn.communicator.event.UserListener;
  */
 public class GaduGaduListener implements ConnectionListener, LoginListener, MessageListener, ContactListListener, UserListener {
 
-    static Logger Log = Logger.getLogger(GaduGaduListener.class);
+    static Logger Log = LoggerFactory.getLogger( GaduGaduListener.class);
 
     GaduGaduListener(GaduGaduSession session) {
         this.gadugaduSessionRef = new WeakReference<GaduGaduSession>(session);

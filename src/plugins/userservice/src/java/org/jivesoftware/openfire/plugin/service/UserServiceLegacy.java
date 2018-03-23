@@ -14,18 +14,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.plugin.UserServicePlugin;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 @Path("userService")
 public class UserServiceLegacy {
-    private static Logger Log = Logger.getLogger(UserServiceLegacy.class);
+    private static Logger Log = LoggerFactory.getLogger(UserServiceLegacy.class);
 
     @Context
     private HttpServletRequest request;

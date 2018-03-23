@@ -44,7 +44,7 @@ import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.SupportedFeature;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -65,7 +65,7 @@ import org.xmpp.packet.JID;
  */
 public class OSCARSession extends TransportSession<OSCARBuddy> {
 
-    static Logger Log = Logger.getLogger(OSCARSession.class);
+    static Logger Log = LoggerFactory.getLogger(OSCARSession.class);
 
     private BOSConnection bosConn = null;
     private LoginConnection loginConn = null;

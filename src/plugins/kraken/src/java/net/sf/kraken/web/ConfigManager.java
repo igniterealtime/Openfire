@@ -29,7 +29,7 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Attribute;
 import org.xmpp.packet.JID;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class ConfigManager {
 
-    static Logger Log = Logger.getLogger(ConfigManager.class);
+    static Logger Log = LoggerFactory.getLogger(ConfigManager.class);
 
     /**
      * Toggles whether a transport is enabled or disabled.

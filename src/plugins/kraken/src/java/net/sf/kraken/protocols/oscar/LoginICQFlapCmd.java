@@ -18,7 +18,7 @@ import net.kano.joscar.flap.FlapCommand;
 import net.kano.joscar.snaccmd.auth.ClientVersionInfo;
 import net.kano.joscar.tlv.Tlv;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 /**
  * Representation of an ICQ auth request.
@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  */
 public class LoginICQFlapCmd extends FlapCommand {
 
-    static Logger Log = Logger.getLogger(LoginICQFlapCmd.class);
+    static Logger Log = LoggerFactory.getLogger(LoginICQFlapCmd.class);
 
     /**
      * The FLAP channel on which this command resides.

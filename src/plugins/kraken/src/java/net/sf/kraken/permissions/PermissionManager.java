@@ -9,13 +9,14 @@ package net.sf.kraken.permissions;
 
 import net.sf.kraken.type.TransportType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.user.User;
-import org.apache.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,7 +36,7 @@ import java.util.Collection;
  */
 public class PermissionManager {
 
-    static Logger Log = Logger.getLogger(PermissionManager.class);
+    static Logger Log = LoggerFactory.getLogger(PermissionManager.class);
 
     private static final String IS_USER_LISTED =
             "SELECT count(*) FROM ofGatewayRestrictions WHERE transportType=? AND username=?";
@@ -101,7 +102,7 @@ public class PermissionManager {
             return (rs.getInt(1) > 0);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while checking if user {} has access to the transport.", jid, sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -130,7 +131,7 @@ public class PermissionManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while checking if user {} is in a group that has access to the transport.", jid, sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -168,7 +169,7 @@ public class PermissionManager {
             pstmt.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while storing a list of users as having access to the transport.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -200,7 +201,7 @@ public class PermissionManager {
             pstmt.close();
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while storing a list of groups as having access to the transport.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -227,7 +228,7 @@ public class PermissionManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting the list of users that have access to the transport.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -255,7 +256,7 @@ public class PermissionManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting the list of groups that have access to the transport.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

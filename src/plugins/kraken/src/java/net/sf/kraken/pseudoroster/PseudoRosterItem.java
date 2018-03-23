@@ -9,7 +9,7 @@ package net.sf.kraken.pseudoroster;
 
 import net.sf.kraken.util.StringUtils;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.NotFoundException;
 
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class PseudoRosterItem {
 
-    static Logger Log = Logger.getLogger(PseudoRosterItem.class);
+    static Logger Log = LoggerFactory.getLogger(PseudoRosterItem.class);
 
     private static final String INSERT_ROSTER_ITEM =
             "INSERT INTO ofGatewayPseudoRoster(registrationID, username, nickname, groups) VALUES (?,?,?,?)";

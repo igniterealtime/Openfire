@@ -24,9 +24,10 @@ import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.*;
 import net.sf.kraken.util.StringUtils;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import f00f.net.irc.martyr.IRCConnection;
@@ -45,7 +46,7 @@ import f00f.net.irc.martyr.services.AutoResponder;
  */
 public class IRCSession extends TransportSession<IRCBuddy> {
 
-    static Logger Log = Logger.getLogger(IRCSession.class);
+    static Logger Log = LoggerFactory.getLogger( IRCSession.class);
 
     /**
      * Timer to check for online status.

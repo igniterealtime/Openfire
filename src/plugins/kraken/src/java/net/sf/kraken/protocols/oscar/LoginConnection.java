@@ -28,7 +28,7 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.LocaleUtils;
 
 /**
@@ -39,7 +39,7 @@ import org.jivesoftware.util.LocaleUtils;
  */
 public class LoginConnection extends AbstractFlapConnection {
 
-    static Logger Log = Logger.getLogger(LoginConnection.class);
+    static Logger Log = LoggerFactory.getLogger(LoginConnection.class);
 
     public LoginConnection(ConnDescriptor cd, OSCARSession mainSession) {
         super(cd, mainSession); // Hand off to AbstractFlapConnection

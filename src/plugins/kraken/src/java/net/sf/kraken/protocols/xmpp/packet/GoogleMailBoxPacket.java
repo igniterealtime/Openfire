@@ -12,7 +12,7 @@ import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smack.provider.IQProvider;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 
 import java.util.Vector;
 import java.util.Date;
@@ -28,7 +28,7 @@ import java.io.IOException;
  */
 public class GoogleMailBoxPacket extends IQ {
 
-    static Logger Log = Logger.getLogger(GoogleMailBoxPacket.class);
+    static Logger Log = LoggerFactory.getLogger(GoogleMailBoxPacket.class);
 
     public static String MAILBOX_ELEMENT = "mailbox";
     public static String MAILBOX_NAMESPACE = "google:mail:notify";

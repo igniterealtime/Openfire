@@ -9,7 +9,7 @@ package net.sf.kraken.protocols.xmpp;
 import net.sf.kraken.avatars.Avatar;
 import net.sf.kraken.type.NameSpace;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.DefaultPacketExtension;
@@ -33,7 +33,7 @@ import org.xmpp.packet.Presence;
  */
 public class XMPPPresenceHandler implements PacketListener{
 
-    final static Logger Log = Logger.getLogger(XMPPPresenceHandler.class);
+    final static Logger Log = LoggerFactory.getLogger(XMPPPresenceHandler.class);
     
     private final XMPPSession session;
     

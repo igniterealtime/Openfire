@@ -7,11 +7,12 @@
 
 package net.sf.kraken.avatars;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.Base64;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import java.io.ByteArrayInputStream;
@@ -28,7 +29,7 @@ import java.util.Date;
  */
 public class Avatar {
 
-    static Logger Log = Logger.getLogger(Avatar.class);
+    static Logger Log = LoggerFactory.getLogger( Avatar.class);
 
     private static final String INSERT_AVATAR =
             "INSERT INTO ofGatewayAvatars(jid, xmppHash, legacyIdentifier, createDate, lastUpdate, imageType, imageData) " +
@@ -239,7 +240,7 @@ public class Avatar {
             imageData = rs.getString(1);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while getting image data.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -307,7 +308,7 @@ public class Avatar {
             this.mimeType = rs.getString(5);
         }
         catch (SQLException sqle) {
-            Log.error(sqle);
+            Log.error("An exception occurred while loading from database.", sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

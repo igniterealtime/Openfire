@@ -11,7 +11,6 @@ import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.session.cluster.TransportSessionRouter;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
@@ -19,6 +18,8 @@ import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentManager;
 
 import java.util.Map;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class TransportInstance<B extends TransportBuddy> implements PropertyEventListener {
 
-    final static Logger Log = Logger.getLogger(TransportInstance.class);
+    final static Logger Log = LoggerFactory.getLogger( TransportInstance.class);
 
     private final ComponentManager componentManager;
     private final String description;

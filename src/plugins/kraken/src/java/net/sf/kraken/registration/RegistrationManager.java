@@ -9,7 +9,7 @@ package net.sf.kraken.registration;
 
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.util.NotFoundException;
@@ -30,7 +30,7 @@ public class RegistrationManager {
 
     private static RegistrationManager instance = null;
 
-    static Logger Log = Logger.getLogger(RegistrationManager.class);
+    static Logger Log = LoggerFactory.getLogger(RegistrationManager.class);
 
     private static final String DELETE_REGISTRATION =
             "DELETE FROM ofGatewayRegistration WHERE registrationID=?";

@@ -30,7 +30,6 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.PresenceType;
 import net.sf.kraken.type.SupportedFeature;
 
-import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -38,6 +37,8 @@ import org.jivesoftware.util.Base64;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -51,7 +52,7 @@ import org.xmpp.packet.Message;
  */
 public class MSNSession extends TransportSession<MSNBuddy> {
 
-    static Logger Log = Logger.getLogger(MSNSession.class);
+    static Logger Log = LoggerFactory.getLogger( MSNSession.class);
 
     /**
      * Create a MSN Session instance.

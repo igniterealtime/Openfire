@@ -15,7 +15,7 @@ import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.NameSpace;
 
 import net.sf.kraken.type.PresenceType;
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -45,7 +45,7 @@ import org.xmpp.packet.PacketError.Condition;
  */
 public class RegistrationHandler implements ChannelHandler<IQ> {
 
-    static Logger Log = Logger.getLogger(RegistrationHandler.class);
+    static Logger Log = LoggerFactory.getLogger(RegistrationHandler.class);
 
     private final BaseTransport parent;
 

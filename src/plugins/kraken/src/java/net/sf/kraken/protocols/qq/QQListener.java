@@ -24,14 +24,14 @@ import net.sf.jqql.packets.in._08._08GetOnlineOpReplyPacket;
 import net.sf.kraken.type.ConnectionFailureReason;
 import net.sf.kraken.type.TransportLoginStatus;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 
 public class QQListener implements IQQListener {
 
-    static Logger Log = Logger.getLogger(QQListener.class);
+    static Logger Log = LoggerFactory.getLogger(QQListener.class);
 
     private static String defaultGroupName = JiveGlobals.getProperty(
             "plugin.gateway.qq.defaultRosterName", "Friends");

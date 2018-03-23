@@ -14,8 +14,9 @@ import net.sf.kraken.muc.MUCTransportSession;
 import net.sf.kraken.session.TransportSession;
 import net.sf.kraken.type.PresenceType;
 
-import org.apache.log4j.Logger;
 import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
@@ -31,7 +32,7 @@ import f00f.net.irc.martyr.services.AutoJoin;
 
 public class IRCMUCSession extends MUCTransportSession<IRCBuddy> {
 
-    static Logger Log = Logger.getLogger(IRCMUCSession.class);
+    static Logger Log = LoggerFactory.getLogger( IRCMUCSession.class);
 
     public IRCMUCSession(TransportSession<IRCBuddy> session, String roomname, String nickname, IRCMUCTransport transport) {
         super(session, roomname, nickname, transport);

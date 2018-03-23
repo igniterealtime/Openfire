@@ -32,7 +32,7 @@ import net.sf.kraken.roster.TransportBuddy;
 import net.sf.kraken.roster.TransportBuddyManager;
 import net.sf.kraken.type.TransportType;
 
-import org.apache.log4j.Logger;
+import org.slf4j.*;
 import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.JID;
 
@@ -49,7 +49,7 @@ import org.xmpp.packet.JID;
  */
 public class SSIHierarchy {
 
-    private static final Logger Log = Logger.getLogger(SSIHierarchy.class);
+    private static final Logger Log = LoggerFactory.getLogger(SSIHierarchy.class);
 
     /**
      * Default group name for AIM. This group name should be used only if no

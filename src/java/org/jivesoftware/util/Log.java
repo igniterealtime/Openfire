@@ -16,6 +16,11 @@
 
 package org.jivesoftware.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -94,14 +99,18 @@ public class Log {
 
     public static void setDebugEnabled(boolean enabled) {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        final org.apache.log4j.Level newLevel;
+        final org.apache.logging.log4j.Level newLevel;
         if (enabled) {
-            newLevel = org.apache.log4j.Level.ALL;
+            newLevel = org.apache.logging.log4j.Level.ALL;
         } else {
-            newLevel = org.apache.log4j.Level.INFO;
+            newLevel = org.apache.logging.log4j.Level.INFO;
         }
-            
-        org.apache.log4j.LogManager.getRootLogger().setLevel(newLevel);
+
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
+        final Configuration config = ctx.getConfiguration();
+        final LoggerConfig loggerConfig = config.getLoggerConfig( LogManager.ROOT_LOGGER_NAME );
+        loggerConfig.setLevel( newLevel );
+        ctx.updateLoggers();  // This causes all Loggers to refetch information from their LoggerConfig.
     }
 
     /**

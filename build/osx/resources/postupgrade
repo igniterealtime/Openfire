@@ -19,8 +19,8 @@ if [ -f /tmp/openfireInstallBackup/client.truststore ]; then
 	/bin/mv /tmp/openfireInstallBackup/client.truststore /usr/local/openfire/resources/security/client.truststore
 fi
 
-if [ -f /tmp/openfireInstallBackup/log4j.xml ]; then
-	/bin/mv /tmp/openfireInstallBackup/log4j.xml /usr/local/openfire/lib/log4j.xml
+if [ -f /tmp/openfireInstallBackup/log4j2.xml ]; then
+	/bin/mv /tmp/openfireInstallBackup/log4j2.xml /usr/local/openfire/lib/log4j2.xml
 fi
 
 OPENFIRE_HOME=/usr/local/openfire/

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration>
+    <Appenders>
+        <RollingFile name="debug-out" fileName="${sys:openfireHome}/logs/debug.log" filePattern="${sys:openfireHome}/logs/debug.log-%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <Filters>
+                <ThresholdFilter level="DEBUG"/>
+                <ThresholdFilter level="INFO" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="info-out" fileName="${sys:openfireHome}/logs/info.log" filePattern="${sys:openfireHome}/logs/info.log-%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <Filters>
+                <ThresholdFilter level="INFO"/>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="warn-out" fileName="${sys:openfireHome}/logs/warn.log" filePattern="${sys:openfireHome}/logs/warn.log-%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <Filters>
+                <ThresholdFilter level="WARN"/>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="error-out" fileName="${sys:openfireHome}/logs/error.log" filePattern="${sys:openfireHome}/logs/error.log-%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <Filters>
+                <ThresholdFilter level="ERROR"/>
+            </Filters>
+        </RollingFile>
+
+        <RollingFile name="all-out" fileName="${sys:openfireHome}/logs/all.log" filePattern="${sys:openfireHome}/logs/all.log-%i">
+            <PatternLayout>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%msg%n%throwable{0}"/>
+            <Filters>
+                <ThresholdFilter level="INFO"/>
+            </Filters>
+        </Console>
+        
+    </Appenders>
+
+    <Loggers>
+        <!-- OF-1095: Uniform output of loading/unloading of plugins to std-out. -->
+        <Logger name="org.jivesoftware.openfire.container.PluginManager">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Logger name="org.jivesoftware.openfire.container.PluginMonitor">
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
+        <Logger name="org.eclipse.jetty" level="warn"/>
+
+        <Root level="info">
+            <AppenderRef ref="all-out"/>
+            <AppenderRef ref="debug-out"/>
+            <AppenderRef ref="info-out"/>
+            <AppenderRef ref="warn-out"/>
+            <AppenderRef ref="error-out"/>
+        </Root>
+    </Loggers>
+</Configuration>

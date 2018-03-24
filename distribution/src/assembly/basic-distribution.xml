@@ -76,11 +76,11 @@
             <fileMode>0755</fileMode>
         </fileSet>
 
-        <!-- Copy log4j.xml to lib -->
+        <!-- Copy log4j2.xml to lib -->
         <fileSet>
             <directory>${project.basedir}/../build/lib/dist</directory>
             <includes>
-                <include>log4j.xml</include>
+                <include>log4j2.xml</include>
             </includes>
             <outputDirectory>lib</outputDirectory>
         </fileSet>

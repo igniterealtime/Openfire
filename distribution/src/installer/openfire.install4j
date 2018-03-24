@@ -52,12 +52,12 @@
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/keystore" overwriteMode="0" shared="false" fileMode="644" uninstallMode="1" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/openfire.xml" overwriteMode="0" shared="false" fileMode="644" uninstallMode="1" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/security.xml" overwriteMode="0" shared="false" fileMode="644" uninstallMode="1" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" />
-      <fileEntry mountPoint="47" file="${compiler:RELEASE_FULL_PATH}/lib/log4j.xml" overwriteMode="0" shared="false" fileMode="644" uninstallMode="1" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" />
+      <fileEntry mountPoint="47" file="${compiler:RELEASE_FULL_PATH}/lib/log4j2.xml" overwriteMode="0" shared="false" fileMode="644" uninstallMode="1" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" />
       <dirEntry mountPoint="1" file="${compiler:RELEASE_FULL_PATH}" overwriteMode="4" shared="false" fileMode="644" uninstallMode="0" overrideFileMode="true" overrideOverwriteMode="true" overrideUninstallMode="true" entryMode="direct" subDirectory="" excludeSuffixes="" dirMode="755" overrideDirMode="true">
         <exclude>
           <entry location="conf/openfire.xml" fileType="regular" />
           <entry location="conf/security.xml" fileType="regular" />
-          <entry location="lib/log4j.xml" fileType="regular" />
+          <entry location="lib/log4j2.xml" fileType="regular" />
           <entry location="resources/security/keystore" fileType="regular" />
           <entry location="resources/security/truststore" fileType="regular" />
         </exclude>
@@ -1743,8 +1743,6 @@ return console.askYesNo(message, true);
       </postUninstallScript>
     </linuxRPM>
   </mediaSets>
-  <buildIds buildAll="false">
-    <mediaSet refId="18" />
-  </buildIds>
+  <buildIds buildAll="true" />
   <buildOptions verbose="false" faster="false" disableSigning="false" disableJreBundling="false" debug="false" />
 </install4j>

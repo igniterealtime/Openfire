@@ -1,7 +1,14 @@
 package org.jivesoftware.util;
 
-import org.apache.log4j.*;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQPingHandler;
@@ -19,12 +26,11 @@ import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.Packet;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -78,8 +84,8 @@ public class S2STestService {
         pingRequest.setTo( domain );
 
         // Intercept logging.
-        final StringBuilder logs = new StringBuilder();
-        Appender appender = interceptLogging(logs);
+        final Writer logs = new StringWriter();
+        final String appenderName = addAppender( logs );
 
         // Intercept packets.
         final PacketInterceptor interceptor = new S2SInterceptor( pingRequest );
@@ -108,40 +114,39 @@ public class S2STestService {
         {
             // Cleanup
             InterceptorManager.getInstance().removeInterceptor( interceptor );
-            Logger.getRootLogger().removeAppender( appender );
+            removeAppender( appenderName );
         }
     }
 
-    /**
-     * Begins intercepting logging.
-     *
-     * @param logs The StringBuilder to collect log output.
-     * @return A reference to the log4j appender which receives log output.
-     */
-    private Appender interceptLogging(final StringBuilder logs) {
-        WriterAppender appender = new WriterAppender() {
-            @Override
-            public void append(LoggingEvent event) {
-                logs.append(String.format("%s: %s: %s\n",
-                        new Date(event.getTimeStamp()).toString(),
-                        event.getLevel().toString(),
-                        event.getRenderedMessage()));
+    String addAppender(final Writer writer) {
+        final String name = "openfire-s2s-test-appender-" + StringUtils.randomString( 10 );
+        final LoggerContext context = LoggerContext.getContext(false);
+        final Configuration config = context.getConfiguration();
+        final PatternLayout layout = PatternLayout.createDefaultLayout(config);
+        final Appender appender = WriterAppender.createAppender(layout, null, writer, name, false, true);
+        appender.start();
+        config.addAppender(appender);
 
-                String[] throwableInfo = event.getThrowableStrRep();
-                if (throwableInfo != null) {
-                    for (String line : throwableInfo) {
-                        logs.append(line +"\n");
-                    }
-                }
-            }
-        };
-        appender.setLayout(new PatternLayout("%d [%p|%c|%C{1}] %m%n"));
-        appender.setThreshold(Level.ALL);
-        appender.activateOptions();
-        Logger.getRootLogger().addAppender(appender);
-
-        return appender;
+        final Level level = null;
+        final Filter filter = null;
+        for (final LoggerConfig loggerConfig : config.getLoggers().values()) {
+            loggerConfig.addAppender(appender, level, filter);
+        }
+        config.getRootLogger().addAppender(appender, level, filter);
+        return name;
     }
+
+    void removeAppender(final String name) {
+        final LoggerContext context = LoggerContext.getContext(false);
+        final Configuration config = context.getConfiguration();
+        config.getAppenders().remove( name ).stop();
+
+        for (final LoggerConfig loggerConfig : config.getLoggers().values()) {
+            loggerConfig.removeAppender( name );
+        }
+        config.getRootLogger().removeAppender( name );
+    }
+
 
     /**
      * Logs the status of the session.

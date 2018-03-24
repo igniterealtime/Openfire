@@ -119,7 +119,7 @@ exit 0
 %config(noreplace) %{homedir}/conf/crowd.properties
 %dir %{homedir}/lib
 %{homedir}/lib/*.jar
-%config(noreplace) %{homedir}/lib/log4j.xml
+%config(noreplace) %{homedir}/lib/log4j2.xml
 %dir %{homedir}/logs
 %dir %{homedir}/plugins
 %{homedir}/plugins/search.jar

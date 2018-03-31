@@ -219,7 +219,7 @@ public class IQMUCSearchHandler
         {
             boolean find = false;
 
-            if (names.isEmpty())
+            if (!names.isEmpty())
             {
                 for (final String name : names)
                 {

@@ -39,6 +39,10 @@ import java.util.*;
  */
 public class IQMUCSearchHandler
 {
+    public static final String JABBER_IQ_SEARCH = "jabber:iq:search";
+    public static final String SUBJECT = "subject";
+    public static final String NUM_USERS = "num_users";
+    public static final String NUM_MAX_USERS = "num_max_users";
     /**
      * The MUC-server to extend with jabber:iq:search functionality.
      */
@@ -71,7 +75,7 @@ public class IQMUCSearchHandler
         final FormField typeFF = searchForm.addField();
         typeFF.setVariable("FORM_TYPE");
         typeFF.setType(FormField.Type.hidden);
-        typeFF.addValue("jabber:iq:search");
+        typeFF.addValue(JABBER_IQ_SEARCH);
 
         final FormField nameFF = searchForm.addField();
         nameFF.setVariable("name");
@@ -86,19 +90,19 @@ public class IQMUCSearchHandler
         matchFF.setRequired(false);
 
         final FormField subjectFF = searchForm.addField();
-        subjectFF.setVariable("subject");
+        subjectFF.setVariable(SUBJECT);
         subjectFF.setType(FormField.Type.text_single);
         subjectFF.setLabel("Subject");
         subjectFF.setRequired(false);
 
         final FormField userAmountFF = searchForm.addField();
-        userAmountFF.setVariable("num_users");
+        userAmountFF.setVariable(NUM_USERS);
         userAmountFF.setType(FormField.Type.text_single);
         userAmountFF.setLabel("Number of users");
         userAmountFF.setRequired(false);
 
         final FormField maxUsersFF = searchForm.addField();
-        maxUsersFF.setVariable("num_max_users");
+        maxUsersFF.setVariable(NUM_MAX_USERS);
         maxUsersFF.setType(FormField.Type.text_single);
         maxUsersFF.setLabel("Max number allowed of users");
         maxUsersFF.setRequired(false);
@@ -110,7 +114,7 @@ public class IQMUCSearchHandler
         includePasswordProtectedFF.setRequired(false);
 
         final Element probeResult = DocumentHelper.createElement(QName.get(
-            "query", "jabber:iq:search"));
+            "query", JABBER_IQ_SEARCH));
         probeResult.add(searchForm.getElement());
         return probeResult;
     }
@@ -136,10 +140,10 @@ public class IQMUCSearchHandler
 
         // parse params from request.
         final DataForm df = new DataForm(formElement);
-        boolean name_is_exact_match = false;
+        boolean nameIsExactMatch = false;
         String subject = null;
-        int numusers = -1;
-        int numaxusers = -1;
+        int numUsers = -1;
+        int numMaxUsers = -1;
         boolean includePasswordProtectedRooms = true;
 
         final Set<String> names = new HashSet<>();
@@ -151,19 +155,19 @@ public class IQMUCSearchHandler
             }
         }
 
-        final FormField matchFF = df.getField("name_is_exact_match");
+        final FormField matchFF = df.getField("nameIsExactMatch");
         if (matchFF != null)
         {
             final String b = matchFF.getFirstValue();
             if (b != null)
             {
-                name_is_exact_match = b.equals("1")
+                nameIsExactMatch = b.equals("1")
                         || b.equalsIgnoreCase("true")
                         || b.equalsIgnoreCase("yes");
             }
         }
 
-        final FormField subjectFF = df.getField("subject");
+        final FormField subjectFF = df.getField(SUBJECT);
         if (subjectFF != null)
         {
             subject = subjectFF.getFirstValue();
@@ -171,21 +175,21 @@ public class IQMUCSearchHandler
 
         try
         {
-            final FormField userAmountFF = df.getField("num_users");
+            final FormField userAmountFF = df.getField(NUM_USERS);
             if (userAmountFF != null)
             {
                 String value = userAmountFF.getFirstValue();
                 if (value != null && !"".equals(value)) {
-                    numusers = Integer.parseInt(value);
+                    numUsers = Integer.parseInt(value);
                 }
             }
 
-            final FormField maxUsersFF = df.getField("num_max_users");
+            final FormField maxUsersFF = df.getField(NUM_MAX_USERS);
             if (maxUsersFF != null)
             {
                 String value = maxUsersFF.getFirstValue();
                 if (value != null && !"".equals(value)) {
-                    numaxusers = Integer.parseInt(value);
+                    numMaxUsers = Integer.parseInt(value);
                 }
             }
         }
@@ -215,11 +219,11 @@ public class IQMUCSearchHandler
         {
             boolean find = false;
 
-            if (names.size() > 0)
+            if (names.isEmpty())
             {
                 for (final String name : names)
                 {
-                    if (name_is_exact_match)
+                    if (nameIsExactMatch)
                     {
                         if (name.equalsIgnoreCase(room.getNaturalLanguageName()))
                         {
@@ -246,12 +250,12 @@ public class IQMUCSearchHandler
                 find = true;
             }
 
-            if (numusers > -1 && room.getParticipants().size() < numusers)
+            if (numUsers > -1 && room.getParticipants().size() < numUsers)
             {
                 find = false;
             }
 
-            if (numaxusers > -1 && room.getMaxUsers() < numaxusers)
+            if (numMaxUsers > -1 && room.getMaxUsers() < numMaxUsers)
             {
                 find = false;
             }
@@ -306,7 +310,7 @@ public class IQMUCSearchHandler
         }
 
         final Element res = DocumentHelper.createElement(QName.get("query",
-            "jabber:iq:search"));
+            JABBER_IQ_SEARCH));
 
         final DataForm resultform = new DataForm(DataForm.Type.result);
         boolean atLeastoneResult = false;
@@ -314,9 +318,9 @@ public class IQMUCSearchHandler
         {
             final Map<String, Object> fields = new HashMap<>();
             fields.put("name", room.getNaturalLanguageName());
-            fields.put("subject", room.getSubject());
-            fields.put("num_users", room.getOccupantsCount());
-            fields.put("num_max_users", room.getMaxUsers());
+            fields.put(SUBJECT, room.getSubject());
+            fields.put(NUM_USERS, room.getOccupantsCount());
+            fields.put(NUM_MAX_USERS, determineMaxUsersDisplay(room.getMaxUsers()));
             fields.put("is_password_protected", room.isPasswordProtected());
             fields.put("is_member_only", room.isMembersOnly());
             fields.put("jid", room.getRole().getRoleAddress().toString());
@@ -326,9 +330,9 @@ public class IQMUCSearchHandler
         if (atLeastoneResult)
         {
             resultform.addReportedField("name", "Name", FormField.Type.text_single);
-            resultform.addReportedField("subject", "Subject", FormField.Type.text_single);
-            resultform.addReportedField("num_users", "Number of users", FormField.Type.text_single);
-            resultform.addReportedField("num_max_users", "Max number allowed of users", FormField.Type.text_single);
+            resultform.addReportedField(SUBJECT, "Subject", FormField.Type.text_single);
+            resultform.addReportedField(NUM_USERS, "Number of users", FormField.Type.text_single);
+            resultform.addReportedField(NUM_MAX_USERS, "Max number allowed of users", FormField.Type.text_single);
             resultform.addReportedField("is_password_protected", "Is a password protected room.", FormField.Type.boolean_type);
             resultform.addReportedField("is_member_only", "Is a member only room.", FormField.Type.boolean_type);
             resultform.addReportedField("jid", "JID", FormField.Type.jid_single);
@@ -343,6 +347,18 @@ public class IQMUCSearchHandler
 
         return reply;
     }
+
+    private String determineMaxUsersDisplay(int maxUsers) {
+        String maxUsersDisplay;
+        if (maxUsers == 0) {
+            maxUsersDisplay = "unlimited";
+        } else {
+            maxUsersDisplay = String.valueOf(maxUsers);
+        }
+
+        return maxUsersDisplay;
+    }
+
 
     /**
      * Sorts the provided list in such a way that the MUC with the most users

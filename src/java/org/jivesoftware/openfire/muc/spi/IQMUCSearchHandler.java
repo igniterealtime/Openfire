@@ -28,6 +28,7 @@ import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.resultsetmanagement.ResultSet;
 import org.xmpp.resultsetmanagement.ResultSetImpl;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -348,16 +349,9 @@ public class IQMUCSearchHandler
         return reply;
     }
 
-    private String determineMaxUsersDisplay(int maxUsers) {
-        String maxUsersDisplay;
-        if (maxUsers == 0) {
-            maxUsersDisplay = "unlimited";
-        } else {
-            maxUsersDisplay = String.valueOf(maxUsers);
-        }
-
-        return maxUsersDisplay;
-    }
+    private String determineMaxUsersDisplay(@NotNull int maxUsers) {
+        return (maxUsers == 0) ? "unlimited" : String.valueOf(maxUsers);
+     }
 
 
     /**

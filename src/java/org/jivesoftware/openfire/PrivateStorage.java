@@ -16,60 +16,50 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.event.UserEventDispatcher;
-import org.jivesoftware.openfire.event.UserEventListener;
-import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.pep.PEPService;
+import org.jivesoftware.openfire.pep.PEPServiceManager;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
+import org.xmpp.packet.JID;
+
+import java.util.Collections;
 
 /**
- * Private storage for user accounts (JEP-0049). It is used by some XMPP systems
- * for saving client settings on the server.
+ * Private storage for user accounts (XEP-0049). It is used by some XMPP systems for saving client settings on the server.
+ *
+ * This implementation uses the Personal Eventing Protocol implementation to store and retrieve data. This ensures that
+ * XEP-0049 operates on the same data as XEP-0223.
  *
  * @author Iain Shigeoka
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class PrivateStorage extends BasicModule implements UserEventListener {
+public class PrivateStorage extends BasicModule {
 
     private static final Logger Log = LoggerFactory.getLogger(PrivateStorage.class);
 
-    private static final String LOAD_PRIVATE =
-        "SELECT privateData FROM ofPrivate WHERE username=? AND name=? AND namespace=?";
-    private static final String INSERT_PRIVATE =
-        "INSERT INTO ofPrivate (privateData, name, username, namespace) VALUES (?,?,?,?)";
-    private static final String UPDATE_PRIVATE =
-        "UPDATE ofPrivate SET privateData=? WHERE name=? AND username=? AND namespace=?";
-    private static final String DELETE_PRIVATES =
-        "DELETE FROM ofPrivate WHERE username=?";
+    /**
+     * PubSub 7.1.5 specificy Publishing Options that are applicable to private data storage (as described in XEP-0223).
+     */
+    private static final DataForm PRIVATE_DATA_PUBLISHING_OPTIONS;
 
-    private static final int POOL_SIZE = 10;
-    
-    // Currently no delete supported, we can detect an add of an empty element and
-    // use that to signal a delete but that optimization doesn't seem necessary.
-    // private static final String DELETE_PRIVATE =
-    //     "DELETE FROM ofPrivate WHERE userID=? AND name=? AND namespace=?";
+    static {
+        PRIVATE_DATA_PUBLISHING_OPTIONS = new DataForm( DataForm.Type.submit );
+        PRIVATE_DATA_PUBLISHING_OPTIONS.addField( "FORM_TYPE", null, FormField.Type.hidden ).addValue( "http://jabber.org/protocol/pubsub#publish-options" );
+        PRIVATE_DATA_PUBLISHING_OPTIONS.addField( "pubsub#persist_items", null, null ).addValue( "true" );
+        PRIVATE_DATA_PUBLISHING_OPTIONS.addField( "pubsub#access_model", null, null ).addValue( "whitelist" );
+    }
 
     private boolean enabled = JiveGlobals.getBooleanProperty("xmpp.privateStorageEnabled", true);
-
-    /**
-     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
-     */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /**
      * Constructs a new PrivateStore instance.
@@ -105,43 +95,44 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
      * @param username the username of the account where private data is being stored
      */
     public void add(String username, Element data) {
-        if (enabled) {
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            ResultSet rs = null;
-            try {
-                StringWriter writer = new StringWriter();
-                data.write(writer);
-                con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(LOAD_PRIVATE);
-                pstmt.setString(1, username);
-                pstmt.setString(2, data.getName());
-                pstmt.setString(3, data.getNamespaceURI());
-                rs = pstmt.executeQuery();
-                boolean update = false;
-                if (rs.next()) {
-                    update = true;
-                }
-                DbConnectionManager.fastcloseStmt(rs, pstmt);
-                if (update) {
-                    pstmt = con.prepareStatement(UPDATE_PRIVATE);
-                }
-                else {
-                    pstmt = con.prepareStatement(INSERT_PRIVATE);
-                }
-                pstmt.setString(1, writer.toString());
-                pstmt.setString(2, data.getName());
-                pstmt.setString(3, username);
-                pstmt.setString(4, data.getNamespaceURI());
-                pstmt.executeUpdate();
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-            finally {
-                DbConnectionManager.closeConnection(rs, pstmt, con);
+        if (!enabled)
+        {
+            return;
+        }
+
+        final JID owner = XMPPServer.getInstance().createJID( username, null );
+        final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+        PEPService pepService = serviceMgr.getPEPService( owner );
+        if ( pepService == null )
+        {
+            pepService = serviceMgr.create( owner );
+        }
+
+        Node node = pepService.getNode( data.getNamespaceURI() );
+        if ( node == null )
+        {
+            PubSubEngine.CreateNodeResponse response = PubSubEngine.createNodeHelper( pepService, owner, pepService.getDefaultNodeConfiguration( true ).getConfigurationForm().getElement(), data.getNamespaceURI(), PRIVATE_DATA_PUBLISHING_OPTIONS );
+            node = response.newNode;
+
+            if ( node == null )
+            {
+                Log.error( "Unable to create new PEP node, to be used to store private data. Error condition: {}", response.creationStatus.toXMPP() );
+                return;
             }
         }
+
+        if (!(node instanceof LeafNode))
+        {
+            Log.error( "Unable to store private data into a PEP node. The node that is available is not a leaf node." );
+            return;
+        }
+
+        data.detach();
+        final Element item = DocumentHelper.createElement( "item" );
+        item.addAttribute( "id", "current" );
+        item.add( data );
+
+        ((LeafNode) node).publishItems( owner, Collections.singletonList( item ) );
     }
 
     /**
@@ -158,91 +149,26 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
      * @param username the username of the account where private data is being stored.
      * @return the data stored under the given key or the data element.
      */
-    public Element get(String username, Element data) {
-        if (enabled) {
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            ResultSet rs = null;
-            SAXReader xmlReader = null;
-            try {
-                // Get a sax reader from the pool
-                xmlReader = xmlReaders.take();
-                con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(LOAD_PRIVATE);
-                pstmt.setString(1, username);
-                pstmt.setString(2, data.getName());                
-                pstmt.setString(3, data.getNamespaceURI());
-                rs = pstmt.executeQuery();
-                if (rs.next()) {
-                    data.clearContent();
-                    String result = rs.getString(1).trim();
-                    Document doc = xmlReader.read(new StringReader(result));
-                    data = doc.getRootElement();
-                }
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            }
-            finally {
-                DbConnectionManager.closeConnection(rs, pstmt, con);
-                // Return the sax reader to the pool
-                if (xmlReader != null) {
-                    xmlReaders.add(xmlReader);
+    public Element get(String username, Element data)
+    {
+        if (enabled)
+        {
+            final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+            final PEPService pepService = serviceMgr.getPEPService( XMPPServer.getInstance().createJID( username, null ) );
+            if ( pepService != null )
+            {
+                final Node node = pepService.getNode( data.getNamespaceURI() );
+                if ( node != null )
+                {
+                    final PublishedItem item = node.getPublishedItem( "current" );
+                    if ( item != null )
+                    {
+                        data.clearContent();
+                        data = item.getPayload();
+                    }
                 }
             }
         }
         return data;
-    }
-
-    @Override
-    public void userCreated(User user, Map params) {
-        //Do nothing
-    }
-
-    @Override
-    public void userDeleting(User user, Map params) {
-        // Delete all private properties of the user
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PRIVATES);
-            pstmt.setString(1, user.getUsername());
-            pstmt.executeUpdate();
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    @Override
-    public void userModified(User user, Map params) {
-        //Do nothing
-    }
-
-    @Override
-    public void start() throws IllegalStateException {
-        super.start();
-        // Initialize the pool of sax readers
-        for (int i=0; i<POOL_SIZE; i++) {
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
-            xmlReaders.add(xmlReader);
-        }
-        // Add this module as a user event listener so we can delete
-        // all user properties when a user is deleted
-        UserEventDispatcher.addListener(this);
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        // Clean up the pool of sax readers
-        xmlReaders.clear();
-        // Remove this module as a user event listener
-        UserEventDispatcher.removeListener(this);
     }
 }

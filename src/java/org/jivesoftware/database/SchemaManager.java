@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 
+import org.jivesoftware.database.bugfix.OF1515;
 import org.jivesoftware.database.bugfix.OF33;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -66,7 +67,7 @@ public class SchemaManager {
     /**
      * Current Openfire database schema version.
      */
-    private static final int DATABASE_VERSION = 26;
+    private static final int DATABASE_VERSION = 28;
 
     /**
      * Checks the Openfire database schema to ensure that it's installed and up to date.
@@ -269,6 +270,9 @@ public class SchemaManager {
                     try {
                         if (i == 21 && schemaKey.equals("openfire")) {
                             OF33.executeFix(con);
+                        }
+                        if (i == 27 && schemaKey.equals("openfire")) {
+                            OF1515.executeFix();
                         }
                     } catch (Exception e) {
                         Log.error(e.getMessage(), e);

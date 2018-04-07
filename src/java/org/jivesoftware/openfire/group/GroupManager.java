@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.group;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -141,7 +142,7 @@ public class GroupManager {
                         type.equals("propertyDeleted") || type.equals("propertyAdded"))
                     {
                         Object key = params.get("propertyKey");
-                        if (key instanceof String && (key.equals("sharedRoster.showInRoster") || key.equals("*")))
+                        if ("sharedRoster.showInRoster".equals(key) || "*".equals(key))
                         {
                             groupMetaCache.remove(GROUP_NAMES_KEY);
                             groupMetaCache.remove(SHARED_GROUPS_KEY);
@@ -155,6 +156,15 @@ public class GroupManager {
                                 if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
                                     evictCachedUserSharedGroups();
                                 }
+                            }
+                        } else if ("sharedRoster.groupList".equals(key)) {
+
+                            String originalValue = (String) params.get("originalValue");
+                            String newValue = (String) group.getProperties().get("sharedRoster.groupList");
+
+                            // 'groupList' has changed
+                            if (!StringUtils.equals(originalValue, newValue)) {
+                                evictCachedUsersForGroup(group, originalValue);
                             }
                         }
                     }
@@ -698,6 +708,10 @@ public class GroupManager {
     }
 
     private void evictCachedUsersForGroup(Group group) {
+        evictCachedUsersForGroup(group, null);
+    }
+
+    private void evictCachedUsersForGroup(Group group, String oldGroupList) {
         // Evict cached information for affected users
         for (JID user : group.getAdmins()) {
             evictCachedUserForGroup(user.toBareJID());
@@ -715,14 +729,20 @@ public class GroupManager {
                     evictCachedUserSharedGroups();
                     break;
 
-                case "spefgroups":
-                    final String groupList = group.getProperties().get( "sharedRoster.groupList" );
-                    if ( groupList != null )
-                    {
+                case "onlygroup":
+                    String groupList = group.getProperties().get( "sharedRoster.groupList" );
+                    if (groupList != null && oldGroupList != null) {
+                        groupList = groupList + "," + oldGroupList;
+                    } else if (groupList == null) {
+                        groupList = oldGroupList;
+                    }
+                    if (groupList != null) {
+                        HashSet<String> spefgroups = new HashSet<>();
                         final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
-                        while ( tokenizer.hasMoreTokens() )
-                        {
-                            final String spefgroup = tokenizer.nextToken().trim();
+                        while ( tokenizer.hasMoreTokens() ) {
+                            spefgroups.add(tokenizer.nextToken().trim());
+                        }
+                        for (String spefgroup : spefgroups){
                             try
                             {
                                 final Group nested = getGroup( spefgroup );

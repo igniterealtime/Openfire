@@ -748,6 +748,10 @@ public class GroupManager {
                                 final Group nested = getGroup( spefgroup );
                                 evictCachedUsersForGroup( nested );
                             }
+                            catch ( StackOverflowError e )
+                            {
+                                Log.warn( "Cyclic sharing groups found. Please remove the cycle of groups '{}' and '{}'", group.getName(), spefgroup );
+                            }
                             catch ( GroupNotFoundException e )
                             {
                                 Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );

@@ -16,6 +16,17 @@
 
 package org.jivesoftware.util;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.dom4j.Attribute;
+import org.dom4j.CDATA;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +49,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import org.dom4j.Attribute;
-import org.dom4j.CDATA;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.SAXReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -706,18 +706,24 @@ public class XMLProperties {
      * @param name the name of the property to migrate.
      */
     public void migrateProperty(String name) {
-        if (getProperty(name) != null) {
-            if (JiveGlobals.getProperty(name) == null) {
-                Log.debug("JiveGlobals: Migrating XML property '"+name+"' into database.");
-                JiveGlobals.setProperty(name, getProperty(name));
+        final String xmlPropertyValue = getProperty(name);
+        if (xmlPropertyValue != null) {
+            final String databasePropertyValue = JiveGlobals.getProperty(name);
+            if (databasePropertyValue == null) {
+                Log.debug("JiveGlobals: Migrating XML property '" + name + "' into database.");
+                JiveGlobals.setProperty(name, xmlPropertyValue);
+                if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                    JiveGlobals.setPropertyEncrypted(name, true);
+                }
                 deleteProperty(name);
-            }
-            else if (JiveGlobals.getProperty(name).equals(getProperty(name))) {
-                Log.debug("JiveGlobals: Deleting duplicate XML property '"+name+"' that is already in database.");
+            } else if (databasePropertyValue.equals(xmlPropertyValue)) {
+                Log.debug("JiveGlobals: Deleting duplicate XML property '" + name + "' that is already in database.");
+                if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                    JiveGlobals.setPropertyEncrypted(name, true);
+                }
                 deleteProperty(name);
-            }
-            else if (!JiveGlobals.getProperty(name).equals(getProperty(name))) {
-                Log.warn("XML Property '"+name+"' differs from what is stored in the database.  Please make property changes in the database instead of the configuration file.");
+            } else if (!databasePropertyValue.equals(xmlPropertyValue)) {
+                Log.warn("XML Property '" + name + "' differs from what is stored in the database.  Please make property changes in the database instead of the configuration file.");
             }
         }
     }

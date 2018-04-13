@@ -1,0 +1,52 @@
+<!--
+  ~ Copyright (C) 2018 Ignite Realtime Foundation. All rights reserved.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<jsp:root xmlns:c="http://java.sun.com/jsp/jstl/core"
+          xmlns:jsp="http://java.sun.com/JSP/Page"
+          xmlns:fmt="http://java.sun.com/jsp/jstl/fmt"
+          xmlns:admin="admin"
+          version="2.0">
+    <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+
+    <jsp:directive.attribute name="connectionType" required="true" type="org.jivesoftware.openfire.spi.ConnectionType"/>
+
+    <h4><fmt:message key="ssl.certificates.identity-store"/></h4>
+
+    <c:if test="${empty webManager.XMPPServer.certificateStoreManager.getIdentityStore(connectionType)}">
+        <admin:infobox type="warning"><fmt:message key="ssl.certificates.store-management.error.cannot-access"/></admin:infobox>
+    </c:if>
+
+    <c:set var="pwdKey" value=""/>
+    <c:forEach items="${webManager.XMPPServer.certificateStoreManager.getIdentityStoreConfiguration(connectionType).password}" var="c">
+        <c:set var="pwdKey" value="${pwdKey}${c}"/>
+    </c:forEach>
+
+    <table cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+        <tr>
+            <td><label for="loc-key"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
+            <td><input id="loc-key" name="loc-key" type="text" size="80" value="${webManager.XMPPServer.certificateStoreManager.getIdentityStoreConfiguration(connectionType).file}"/></td>
+        </tr>
+        <tr>
+            <td><label for="pwd-key"><fmt:message key="ssl.certificates.store-management.password_label"/>:</label></td>
+            <td><input id="pwd-key" name="pwd-key" type="password" size="30" value="${pwdKey}"/></td>
+        </tr>
+        <tr>
+            <td>&#160;</td>
+            <td><a href="security-keystore.jsp?connectionType=${connectionType}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
+        </tr>
+        </tbody>
+    </table>
+</jsp:root>

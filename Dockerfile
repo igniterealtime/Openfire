@@ -1,9 +1,9 @@
 FROM openjdk:8-jdk
 COPY . /usr/src
 RUN apt-get update -qq \
-    && apt-get install -qqy ant \
+    && apt-get install -qqy maven \
     && cd /usr/src \
-    && ant -Dhalt.on.plugin.error=true -Dno.package=true -f build/build.xml dist.bin
+    && mvn package
 
 FROM openjdk:8-jre
 COPY --from=0 /usr/src/target/release/openfire /usr/local/openfire

@@ -5,16 +5,16 @@ all: build-openfire
 # Can not use 'build' as target name, because there is a
 # directory called build
 build-openfire:
-	cd build && ant
+	mvn package
 
 clean:
-	cd build && ant clean
+	mvn clean
 
-dpkg:
-	cd build && ant installer.debian
+dist:
+	mvn package
 
 plugins:
-	cd build && ant plugins
+	mvn package
 
 eclipse: .settings .classpath .project
 

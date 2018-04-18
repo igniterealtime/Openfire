@@ -23,29 +23,29 @@
 
     <organization>
         <name>Ignite Realtime</name>
-        <url>http://www.igniterealtime.org</url>
+        <url>https://www.igniterealtime.org</url>
     </organization>
-    <url>http://www.igniterealtime.org/projects/openfire/</url>
+    <url>https://www.igniterealtime.org/projects/openfire/</url>
 
     <inceptionYear>2003</inceptionYear>
 
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
 
     <issueManagement>
         <system>jira</system>
-        <url>http://issues.igniterealtime.org/browse/OF</url>
+        <url>https://issues.igniterealtime.org/browse/OF</url>
     </issueManagement>
 
     <scm>
-        <connection>scm:svn:http://svn.igniterealtime.org/svn/repos/openfire/trunk/</connection>
-        <developerConnection>scm:svn:https://svn.igniterealtime.org/svn/repos/openfire/trunk/</developerConnection>
-        <url>http://fisheye.igniterealtime.org/viewrep/openfire/trunk/</url>
+        <connection>scm:git:https://github.com/igniterealtime/Openfire.git</connection>
+        <developerConnection>scm:git:git@github.com:igniterealtime/Openfire.git</developerConnection>
+        <url>https://github.com/igniterealtime/Openfire/tree/master</url>
     </scm>
 
     <developers>
@@ -57,7 +57,7 @@
             <email>guus.der.kinderen@gmail.com</email>
             <timezone>+1</timezone>
             <organization>Ignite Realtime</organization>
-            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+            <organizationUrl>https://www.igniterealtime.org</organizationUrl>
         </developer>
         <developer>
             <name>Robin Collier</name>
@@ -67,7 +67,7 @@
             <email>robincollier@hotmail.com</email>
             <timezone>-5</timezone>
             <organization>Ignite Realtime</organization>
-            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+            <organizationUrl>https://www.igniterealtime.org</organizationUrl>
         </developer>
         <developer>
             <name>Matt Tucker</name>
@@ -99,7 +99,7 @@
             <email>daniel@vorpalcloud.org</email>
             <timezone>-5</timezone>
             <organization>Ignite Realtime</organization>
-            <organizationUrl>http://www.igniterealtime.org</organizationUrl>
+            <organizationUrl>https://www.igniterealtime.org</organizationUrl>
         </developer>
     </developers>
 
@@ -111,7 +111,7 @@
             </roles>
             <email>akrherz@iastate.edu</email>
             <organization>Iowa State University</organization>
-            <organizationUrl>http://mesonet.agron.iastate.edu</organizationUrl>
+            <organizationUrl>https://mesonet.agron.iastate.edu</organizationUrl>
             <timezone>-6</timezone>
         </contributor>
     </contributors>

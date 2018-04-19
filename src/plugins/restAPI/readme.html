@@ -2170,7 +2170,7 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 </span><span class="pun">}</span></code></pre>
 
 <p><strong>Payload Example 2 (available parameters):</strong></p>
-
+    <p>REST API Version 1.3.0 and later</p>
 
 
 <pre class="prettyprint prettyprinted"><code><span class="pun">{</span><span class="pln">
@@ -2178,18 +2178,16 @@ If you want to create a resource with JSON data format, please add “<strong>Co
     </span><span class="str">"password"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"p4ssword"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"name"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"Administrator"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"email"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"admin@example.com"</span><span class="pun">,</span><span class="pln">
-    </span><span class="str">"properties"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
-        </span><span class="str">"property"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="pln">
-            </span><span class="pun">{</span><span class="pln">
-                </span><span class="str">"@key"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"console.rows_per_page"</span><span class="pun">,</span><span class="pln">
-                </span><span class="str">"@value"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"user-summary=8"</span><span class="pln">
-            </span><span class="pun">},</span><span class="pln">
-            </span><span class="pun">{</span><span class="pln">
-                </span><span class="str">"@key"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"console.order"</span><span class="pun">,</span><span class="pln">
-                </span><span class="str">"@value"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"session-summary=1"</span><span class="pln">
-            </span><span class="pun">}</span><span class="pln">
-        </span><span class="pun">]</span><span class="pln">
-    </span><span class="pun">}</span><span class="pln">
+    </span><span class="str">"properties"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="pln">
+        </span><span class="pun">{</span><span class="pln">
+            </span><span class="str">"@key"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"console.rows_per_page"</span><span class="pun">,</span><span class="pln">
+            </span><span class="str">"@value"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"user-summary=8"</span><span class="pln">
+        </span><span class="pun">},</span><span class="pln">
+        </span><span class="pun">{</span><span class="pln">
+            </span><span class="str">"@key"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"console.order"</span><span class="pun">,</span><span class="pln">
+            </span><span class="str">"@value"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"session-summary=1"</span><span class="pln">
+        </span><span class="pun">}</span><span class="pln">
+    </span><span class="pun">]</span><span class="pln">
 </span><span class="pun">}</span></code></pre>
 
 
@@ -2289,7 +2287,6 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <p><strong>Payload:</strong></p>
 
 
-
 <pre class="prettyprint prettyprinted"><code><span class="pun">&lt;?</span><span class="pln">xml version</span><span class="pun">=</span><span class="str">"1.0"</span><span class="pln"> encoding</span><span class="pun">=</span><span class="str">"UTF-8"</span><span class="pln"> standalone</span><span class="pun">=</span><span class="str">"yes"</span><span class="pun">?&gt;</span><span class="pln">
 </span><span class="tag">&lt;user&gt;</span><span class="pln">
     </span><span class="tag">&lt;username&gt;</span><span class="pln">testuser</span><span class="tag">&lt;/username&gt;</span><span class="pln">
@@ -2314,7 +2311,6 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <p><strong>Payload:</strong></p>
 
 
-
 <pre class="prettyprint prettyprinted"><code><span class="pun">&lt;?</span><span class="pln">xml version</span><span class="pun">=</span><span class="str">"1.0"</span><span class="pln"> encoding</span><span class="pun">=</span><span class="str">"UTF-8"</span><span class="pln"> standalone</span><span class="pun">=</span><span class="str">"yes"</span><span class="pun">?&gt;</span><span class="pln">
 </span><span class="tag">&lt;user&gt;</span><span class="pln">
     </span><span class="tag">&lt;username&gt;</span><span class="pln">newUsername</span><span class="tag">&lt;/username&gt;</span><span class="pln">
@@ -2329,6 +2325,7 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 <h4 id="json-example">JSON Example</h4>
 
+
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
   <strong>Header:</strong> Content-Type application/json</p>
@@ -2337,19 +2334,19 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 </blockquote>
 
 <p><strong>Payload:</strong></p>
-
+    <p>REST API Version 1.3.0 and later</p>
 
 
 <pre class="prettyprint prettyprinted"><code><span class="pun">{</span><span class="pln">
     </span><span class="str">"username"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"testuser"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"name"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"Test User edit"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"email"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"test@edit.de"</span><span class="pun">,</span><span class="pln">
-    </span><span class="str">"properties"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
-        </span><span class="str">"property"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="str">"properties"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="pln">
+        </span><span class="pln"></span><span class="pun">{</span><span class="pln">
             </span><span class="str">"@key"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"keyname"</span><span class="pun">,</span><span class="pln">
             </span><span class="str">"@value"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"value"</span><span class="pln">
         </span><span class="pun">}</span><span class="pln">
-    </span><span class="pun">}</span><span class="pln">
+    </span><span class="pun">]</span><span class="pln">
 </span><span class="pun">}</span></code></pre>
 
 
@@ -3274,10 +3271,10 @@ Payload Example 1 (required parameters):</p>
 </span><span class="pun">}</span></code></pre>
 
 <p><strong>Payload Example 2 (available parameters):</strong></p>
+    <p>REST API Version 1.3.0 and later</p>
 
 
-
-<pre class="prettyprint prettyprinted"><code><span class="str">```
+<pre class="prettyprint prettyprinted"><code><span class="str">
 {
     "roomName": "global-1",
     "naturalName": "global-1_test_hello",
@@ -3297,34 +3294,26 @@ Payload Example 1 (required parameters):</p>
     "loginRestrictedToNickname": "true",
     "membersOnly": "false",
     "moderated": "false",
-    "broadcastPresenceRoles": {
-        "broadcastPresenceRole": [
-            "moderator",
-            "participant",
-            "visitor"
-        ]
-    },
-    "owners": {
+    "broadcastPresenceRoles": [
+        "moderator",
+        "participant",
+        "visitor"
+    ],
+    "owners": [
         "owner": "owner@localhost"
-    },
-    "admins": {
-        "admin": [
-            "admin@localhost",
-            "admin2@localhost"
-        ]
-    },
-    "members": {
-        "member": [
+    ],
+    "admins": [
+        "admin@localhost",
+        "admin2@localhost"
+    ],
+    "members": [
             "member@localhost",
             "member2@localhost"
-        ]
-    },
-    "outcasts": {
-        "outcast": [
+    ],
+    "outcasts": [
             "outcast@localhost",
             "outcast2@localhost"
-        ]
-    }
+    ]
 }</span></code></pre>
 
 

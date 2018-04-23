@@ -9,7 +9,7 @@
 </head>
 
 <body class="stackedit">
-  <div class="stackedit__left" style="height: 100%; overflow-x: scroll;">
+  <div class="stackedit__left">
     <div class="stackedit__toc">
       
 <ul>
@@ -334,6 +334,29 @@ The secret key can be defined in Openfire Admin console under Server &gt; Server
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
+<p><strong>REST API Version 1.3.0 and later - Payload Example 2 (available parameters):</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+    <span class="token string">"users"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+            <span class="token string">"username"</span><span class="token punctuation">:</span> <span class="token string">"admin"</span><span class="token punctuation">,</span>
+            <span class="token string">"name"</span><span class="token punctuation">:</span> <span class="token string">"Administrator"</span><span class="token punctuation">,</span>
+            <span class="token string">"email"</span><span class="token punctuation">:</span> <span class="token string">"admin@example.com"</span><span class="token punctuation">,</span>
+            <span class="token string">"password"</span><span class="token punctuation">:</span> <span class="token string">"p4ssword"</span><span class="token punctuation">,</span>
+            <span class="token string">"properties"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    <span class="token string">"key"</span><span class="token punctuation">:</span> <span class="token string">"console.order"</span><span class="token punctuation">,</span>
+                    <span class="token string">"value"</span><span class="token punctuation">:</span> <span class="token string">"session-summary=0"</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token string">"username"</span><span class="token punctuation">:</span> <span class="token string">"test"</span><span class="token punctuation">,</span>
+            <span class="token string">"name"</span><span class="token punctuation">:</span> <span class="token string">"Test"</span><span class="token punctuation">,</span>
+            <span class="token string">"password"</span><span class="token punctuation">:</span> <span class="token string">"p4ssword"</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
 <h2 id="delete-a-user">Delete a user</h2>
 <p>Endpoint to delete a user</p>
 <blockquote>
@@ -449,6 +472,19 @@ The secret key can be defined in Openfire Admin console under Server &gt; Server
             <span class="token string">"@value"</span><span class="token punctuation">:</span> <span class="token string">"value"</span>
         <span class="token punctuation">}</span>
     <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>REST API Version 1.3.0 and later - Payload Example 2 (available parameters):</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+    <span class="token string">"username"</span><span class="token punctuation">:</span> <span class="token string">"testuser"</span><span class="token punctuation">,</span>
+    <span class="token string">"name"</span><span class="token punctuation">:</span> <span class="token string">"Test User edit"</span><span class="token punctuation">,</span>
+    <span class="token string">"email"</span><span class="token punctuation">:</span> <span class="token string">"test@edit.de"</span><span class="token punctuation">,</span>
+    <span class="token string">"properties"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+            <span class="token string">"key"</span><span class="token punctuation">:</span> <span class="token string">"keyname"</span><span class="token punctuation">,</span>
+            <span class="token string">"value"</span><span class="token punctuation">:</span> <span class="token string">"value"</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
 <span class="token punctuation">}</span>
 </code></pre>
 <h2 id="retrieve-all-user-groups">Retrieve all user groups</h2>
@@ -1198,6 +1234,45 @@ Payload Example 1 (required parameters):</p>
             <span class="token string">"outcast2@localhost"</span>
         <span class="token punctuation">]</span>
     <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>REST API Version 1.3.0 and later - Payload Example 2 (available parameters):</strong></p>
+<pre class=" language-json"><code class="prism  language-json"><span class="token punctuation">{</span>
+    <span class="token string">"roomName"</span><span class="token punctuation">:</span> <span class="token string">"global-1"</span><span class="token punctuation">,</span>
+    <span class="token string">"naturalName"</span><span class="token punctuation">:</span> <span class="token string">"global-1_test_hello"</span><span class="token punctuation">,</span>
+    <span class="token string">"description"</span><span class="token punctuation">:</span> <span class="token string">"Global chat room"</span><span class="token punctuation">,</span>
+    <span class="token string">"subject"</span><span class="token punctuation">:</span> <span class="token string">"Global chat room subject"</span><span class="token punctuation">,</span>
+    <span class="token string">"creationDate"</span><span class="token punctuation">:</span> <span class="token string">"2012-10-18T16:55:12.803+02:00"</span><span class="token punctuation">,</span>
+    <span class="token string">"modificationDate"</span><span class="token punctuation">:</span> <span class="token string">"2014-07-10T09:49:12.411+02:00"</span><span class="token punctuation">,</span>
+    <span class="token string">"maxUsers"</span><span class="token punctuation">:</span> <span class="token string">"0"</span><span class="token punctuation">,</span>
+    <span class="token string">"persistent"</span><span class="token punctuation">:</span> <span class="token string">"true"</span><span class="token punctuation">,</span>
+    <span class="token string">"publicRoom"</span><span class="token punctuation">:</span> <span class="token string">"true"</span><span class="token punctuation">,</span>
+    <span class="token string">"registrationEnabled"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"canAnyoneDiscoverJID"</span><span class="token punctuation">:</span> <span class="token string">"true"</span><span class="token punctuation">,</span>
+    <span class="token string">"canOccupantsChangeSubject"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"canOccupantsInvite"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"canChangeNickname"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"logEnabled"</span><span class="token punctuation">:</span> <span class="token string">"true"</span><span class="token punctuation">,</span>
+    <span class="token string">"loginRestrictedToNickname"</span><span class="token punctuation">:</span> <span class="token string">"true"</span><span class="token punctuation">,</span>
+    <span class="token string">"membersOnly"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"moderated"</span><span class="token punctuation">:</span> <span class="token string">"false"</span><span class="token punctuation">,</span>
+    <span class="token string">"broadcastPresenceRoles"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+	    <span class="token string">"moderator"</span><span class="token punctuation">,</span>
+	    <span class="token string">"participant"</span><span class="token punctuation">,</span>
+	    <span class="token string">"visitor"</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string">"owners"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+	   <span class="token string">"owner@localhost"</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string">"admins"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+       <span class="token string">"admin@localhost"</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string">"members"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+		<span class="token string">"member@localhost"</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string">"outcasts"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+		<span class="token string">"outcast@localhost"</span>
+	<span class="token punctuation">]</span>
 <span class="token punctuation">}</span>
 </code></pre>
 <h2 id="delete-a-chat-room">Delete a chat room</h2>

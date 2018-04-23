@@ -124,8 +124,8 @@ public class GroupManager {
             @Override
             public void groupDeleting(Group group, Map params) {
                 // Since the group could be deleted by the provider, remove it possible again
-                groupCache.remove(group.getName());
-                
+                groupCache.put(group.getName(), null);
+
                 // Evict only the information related to Groups.
                 // Do not evict groups with 'user' as keys.
                 clearGroupCountCache();
@@ -341,13 +341,24 @@ public class GroupManager {
         } else {
             group = groupCache.get(name);
         }
-        // If ID wan't found in cache, load it up and put it there.
+
         if (group == null) {
             synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
                 group = groupCache.get(name);
                 if (group == null) {
-                    group = provider.getGroup(name);
-                    groupCache.put(name, group);
+                    if (groupCache.containsKey(name) && !forceLookup) {
+                        throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
+                    }
+                    try
+                    {
+                        group = provider.getGroup( name );
+                        groupCache.put(name, group);
+                    }
+                    catch (GroupNotFoundException e)
+                    {
+                        groupCache.put( name, null );
+                        throw e;
+                    }
                 }
             }
         }
@@ -367,8 +378,8 @@ public class GroupManager {
         // Delete the group.
         provider.deleteGroup(group.getName());
 
-        // Expire cache.
-        groupCache.remove(group.getName());
+        // Add a no-hit to the cache.
+        groupCache.put(group.getName(), null);
         clearGroupNameCache();
         clearGroupCountCache();
     }

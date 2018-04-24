@@ -227,14 +227,6 @@
                     <groupId>org.apache.mina</groupId>
                     <artifactId>mina-core</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.apache.mina</groupId>
-                    <artifactId>mina-integration-beans</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.mina</groupId>
-                    <artifactId>mina-integration-ognl</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -247,13 +239,33 @@
                     <groupId>org.apache.mina</groupId>
                     <artifactId>mina-core</artifactId>
                 </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-integration-beans</artifactId>
+            <version>${mina.version}</version>
+            <type>jar</type>
+            <exclusions>
                 <exclusion>
                     <groupId>org.apache.mina</groupId>
-                    <artifactId>mina-integration-beans</artifactId>
+                    <artifactId>mina-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-integration-ognl</artifactId>
+            <version>${mina.version}</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.mina</groupId>
+                    <artifactId>mina-core</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.mina</groupId>
-                    <artifactId>mina-integration-ognl</artifactId>
+                    <artifactId>mina-integration-beans</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

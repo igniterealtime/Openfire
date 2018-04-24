@@ -16,6 +16,7 @@ import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
@@ -274,6 +275,7 @@ public class MUCRoomController {
         
         // Fire RoomUpdateEvent if cluster is started
         if (ClusterManager.isClusteringStarted()) {
+          CacheFactory.doClusterTask(new RoomAvailableEvent((LocalMUCRoom) room));
           CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
         }
 

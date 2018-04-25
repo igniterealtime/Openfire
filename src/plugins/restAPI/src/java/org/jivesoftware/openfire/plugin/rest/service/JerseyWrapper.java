@@ -37,13 +37,16 @@ public class JerseyWrapper extends ServletContainer {
     
     /** The Constant CONTAINER_RESPONSE_FILTERS. */
     private static final String CONTAINER_RESPONSE_FILTERS = "com.sun.jersey.spi.container.ContainerResponseFilters";
+    
+    /** The Constant GZIP_FILTER. */
+    private static final String GZIP_FILTER = "com.sun.jersey.api.container.filter.GZIPContentEncodingFilter";
 
     /** The Constant RESOURCE_CONFIG_CLASS_KEY. */
     private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
 
     /** The Constant RESOURCE_CONFIG_CLASS. */
     private static final String RESOURCE_CONFIG_CLASS = "com.sun.jersey.api.core.PackagesResourceConfig";
-
+    
     /** The Constant SCAN_PACKAGE_DEFAULT. */
     private static final String SCAN_PACKAGE_DEFAULT = JerseyWrapper.class.getPackage().getName();
 
@@ -73,6 +76,7 @@ public class JerseyWrapper extends ServletContainer {
         prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
         prc.setPropertiesAndFeatures(config);		
         prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
+        prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, GZIP_FILTER);
         loadAuthenticationFilter();
 
         prc.getClasses().add(RestAPIService.class);
@@ -132,7 +136,8 @@ public class JerseyWrapper extends ServletContainer {
             loadingStatusMessage = "No custom auth filter found for restAPI plugin! " + customAuthFilterClassName + " " + restAuthType;
         }
         
-        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);	
+        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);
+        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, GZIP_FILTER);
         return loadingStatusMessage;
     }
     

@@ -1998,8 +1998,10 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 </blockquote>
 <h1 id="data-format">Data format</h1>
 <p>Openfire REST API provides XML and JSON as data format. The default data format is XML.<br>
-To get a JSON result, please add “<strong>Accept application/json</strong>” to the request header.<br>
-If you want to create a resource with JSON data format, please add “<strong>Content-Type: application/json</strong>”.</p>
+To get a JSON result, please add “<strong>Accept: application/json</strong>” to the request header.<br>
+If you want to create a resource with JSON data format, please add “<strong>Content-Type: application/json</strong>”.<br>
+Since version RESP API 1.3.2 you can also use GZIP to compress the payload of the request or and the response.<br>
+“<strong>Content-Encoding: gzip</strong>” for the request. “<strong>Accept-Encoding: gzip</strong>” for the response.</p>
 <h2 id="data-types">Data types</h2>
 <h3 id="user">User</h3>
 

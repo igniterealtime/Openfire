@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
+import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
@@ -124,6 +125,9 @@ public class MUCRoomController {
 
         if (chatRoom != null) {
             chatRoom.destroyRoom(null, null);
+            if (ClusterManager.isClusteringStarted()) {
+                CacheFactory.doClusterTask(new RoomRemovedEvent((LocalMUCRoom) chatRoom));
+            }
         } else {
             throw new ServiceException("Could not remove the channel", roomName, ExceptionType.ROOM_NOT_FOUND, Response.Status.NOT_FOUND);
         }

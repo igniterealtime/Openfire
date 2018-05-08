@@ -90,6 +90,27 @@ public class ParamUtils {
     }
 
     /**
+     * Returns a parameter as a String.
+     *
+     * @param request    the HttpServletRequest object, known as "request" in a
+     *                   JSP page.
+     * @param name       the name of the parameter you want to get
+     * @param defaultVal the value to use if the supplied parameter is not present or is empty
+     * @return either the value of parameter in the request, or the defaultVal
+     */
+    public static String getStringParameter(
+        final HttpServletRequest request,
+        final String name,
+        final String defaultVal) {
+        final String parameterValue = request.getParameter(name);
+        if (parameterValue == null || parameterValue.isEmpty()) {
+            return defaultVal;
+        } else {
+            return parameterValue;
+        }
+    }
+
+    /**
      * Returns a parameter as a boolean.
      *
      * @param request the HttpServletRequest object, known as "request" in a

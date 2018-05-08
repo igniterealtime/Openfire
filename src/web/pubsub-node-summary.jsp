@@ -1,14 +1,15 @@
-<%@ page import="org.jivesoftware.openfire.pep.PEPService,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.pep.PEPServiceInfo,
                  org.jivesoftware.openfire.pep.PEPServiceManager,
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.util.ListPager,
                  org.jivesoftware.util.ParamUtils,
                  org.xmpp.packet.JID,
                  java.util.Collections,
                  java.util.Comparator,
-                 java.util.List"
+                 java.util.List,
+                 java.util.function.Predicate"
     errorPage="error.jsp"
 %>
 
@@ -20,8 +21,6 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("pubsub-node-summary", 15));
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
     {
@@ -38,10 +37,6 @@
         {
             owner = XMPPServer.getInstance().createJID( ownerString, null );
         }
-    }
-
-    if (request.getParameter("range") != null) {
-        webManager.setRowsPerPage("pubsub-node-summary", range);
     }
 
     boolean PEPMode = false;
@@ -76,27 +71,52 @@
         }
     });
 
-    int nodeCount = nodes.size();
-
-    // paginator vars
-    int numPages = (int)Math.ceil((double)nodeCount/(double)range);
-
-    if(start > nodeCount) {
-        start=nodeCount;
+    // By default, display all nodes
+    Predicate<Node> filter = new Predicate<Node>() {
+        @Override
+        public boolean test(final Node node) {
+            return true;
+        }
+    };
+    final String searchNodeId = ParamUtils.getStringParameter(request, "searchNodeId", "");
+    if(!searchNodeId.trim().isEmpty()) {
+        final String searchCriteria = searchNodeId.trim().toLowerCase();
+        filter = filter.and(new Predicate<Node>() {
+            @Override
+            public boolean test(final Node node) {
+                return node.getNodeID().toLowerCase().contains(searchCriteria);
+            }
+        });
+    }
+    final String searchNodeName = ParamUtils.getStringParameter(request, "searchNodeName", "");
+    if(!searchNodeName.trim().isEmpty()) {
+        final String searchCriteria = searchNodeName.trim().toLowerCase();
+        filter = filter.and(new Predicate<Node>() {
+            @Override
+            public boolean test(final Node node) {
+                return node.getName().toLowerCase().contains(searchCriteria);
+            }
+        });
+    }
+    final String searchNodeDescription = ParamUtils.getStringParameter(request, "searchNodeDescription", "");
+    if(!searchNodeDescription.trim().isEmpty()) {
+        final String searchCriteria = searchNodeDescription.trim().toLowerCase();
+        filter = filter.and(new Predicate<Node>() {
+            @Override
+            public boolean test(final Node node) {
+                return node.getDescription().toLowerCase().contains(searchCriteria);
+            }
+        });
     }
 
-    int curPage = (start/range) + 1;
-    int maxNodeIndex = (start+range <= nodeCount ? start+range : nodeCount);
+    final ListPager<Node> listPager = new ListPager<>(request, response, nodes, filter, "searchNodeId", "searchNodeName", "searchNodeDescription");
+    pageContext.setAttribute("listPager", listPager);
 
-    pageContext.setAttribute("nodeCount", nodeCount);
-    pageContext.setAttribute("numPages", numPages);
-    pageContext.setAttribute("start", start);
-    pageContext.setAttribute("range", range);
-    pageContext.setAttribute("curPage", curPage);
-    pageContext.setAttribute("maxNodeIndex", maxNodeIndex);
-    pageContext.setAttribute("nodes", nodes.subList(start, maxNodeIndex));
     pageContext.setAttribute("owner", owner );
     pageContext.setAttribute("PEPMode", PEPMode);
+    pageContext.setAttribute("searchNodeId", searchNodeId);
+    pageContext.setAttribute("searchNodeName", searchNodeName);
+    pageContext.setAttribute("searchNodeDescription", searchNodeDescription);
 
 %>
 <html>
@@ -132,36 +152,19 @@
 </c:if>
 
 <p>
-<fmt:message key="pubsub.node.summary.total_nodes" />: <c:out value="${nodeCount}"/>
-<c:if test="${numPages gt 1}">
-
-    <fmt:message key="global.showing" /> <c:out value="${start+1}"/>-<c:out value="${maxNodeIndex}"/>
-
+<fmt:message key="pubsub.node.summary.total_nodes" />: <c:out value="${listPager.totalItemCount}"/>
+<c:if test="${listPager.filtered}">
+    <fmt:message key="pubsub.node.summary.filtered_node_count" />: <c:out value="${listPager.filteredItemCount}"/>
 </c:if>
 
-<fmt:message key="pubsub.node.summary.sorted_id" />
+<c:if test="${listPager.totalPages > 1}">
+    <fmt:message key="global.showing" /> <c:out value="${listPager.firstItemNumberOnPage}"/>-<c:out value="${listPager.lastItemNumberOnPage}"/>
+</c:if>
+-- <fmt:message key="pubsub.node.summary.nodes_per_page" />: ${listPager.pageSizeSelection} <fmt:message key="pubsub.node.summary.sorted_id" />
 
 </p>
 
-<c:if test="${numPages gt 1}">
-    <p>
-    <fmt:message key="global.pages" />:
-    [
-    <c:forEach begin="1" end="${numPages}" varStatus="loop">
-        <c:url value="pubsub-node-summary.jsp" var="url">
-            <c:param name="start" value="${(loop.index-1)*range}" />
-            <c:param name="owner" value="${owner}"/>
-        </c:url>
-        <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
-            <c:out value="${loop.index}"/>
-        </a>
-        <c:if test="${loop.index < numPages}">
-            &nbsp;
-        </c:if>
-    </c:forEach>
-    ]
-    </p>
-</c:if>
+<p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -179,63 +182,113 @@
         </c:if>
         <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
+    <tr>
+        <td></td>
+        <td nowrap>
+            <input type="search"
+                   id="searchNodeId"
+                   size="20"
+                   value="${searchNodeId}"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap>
+            <input type="search"
+                   id="searchNodeName"
+                   size="20"
+                   value="${searchNodeName}"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap>
+            <input type="search"
+                   id="searchNodeDescription"
+                   size="20"
+                   value="${searchNodeDescription}"/>
+             <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <c:if test="${not PEPMode}">
+            <td></td>
+        </c:if>
+        <td></td>
+    </tr>
 </thead>
 <tbody>
 
-<c:if test="${nodeCount lt 1}">
+<c:if test="${listPager.filteredItemCount lt 1}">
     <tr>
         <td align="center" colspan="${PEPMode ? 8 : 9}">
-            <fmt:message key="pubsub.node.summary.table.no_nodes" />
+            <c:choose>
+                <c:when test="${listPager.filtered}"><fmt:message key="pubsub.node.summary.table.no_nodes_matching" /></c:when>
+                <c:otherwise><fmt:message key="pubsub.node.summary.table.no_nodes" /></c:otherwise>
+            </c:choose>
         </td>
     </tr>
 </c:if>
 
-<c:forEach var="node" items="${nodes}" varStatus="loop">
+<%--@elvariable id="node" type="org.jivesoftware.openfire.pubsub.Node"--%>
+<c:forEach var="node" items="${listPager.itemsOnCurrentPage}" varStatus="loop">
 
     <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
         <td width="1%">
-            <c:out value="${start + 1 + loop.index}"/>
+            <c:out value="${listPager.firstItemNumberOnPage + loop.index}"/>
         </td>
         <td width="1%" valign="middle">
-            <c:out value="${node.getNodeID()}"/>
+            <c:out value="${node.nodeID}"/>
         </td>
         <td nowrap width="1%" valign="middle">
-            <c:out value="${node.getName()}"/>
+            <c:out value="${node.name}"/>
         </td>
         <td valign="middle">
-            <c:out value="${node.getDescription()}"/>
+            <c:out value="${node.description}"/>
         </td>
         <td width="1%" align="center">
             <c:url value="pubsub-node-items.jsp" var="url">
-                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}">
-                <c:out value="${node.getPublishedItems().size()}" />
+                <c:out value="${node.publishedItems.size()}" />
             </a>
         </td>
         <td width="1%" align="center">
             <c:url value="pubsub-node-affiliates.jsp" var="url">
-                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}">
-                <c:out value="${node.getAllAffiliates().size()}" />
+                <c:out value="${node.allAffiliates.size()}" />
             </a>
         </td>
         <td width="1%" align="center">
             <c:url value="pubsub-node-subscribers.jsp" var="url">
-                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}">
-                <c:out value="${node.getAllSubscriptions().size()}" />
+                <c:out value="${node.allSubscriptions.size()}" />
             </a>
         </td>
         <c:if test="${not PEPMode}" >
             <td width="1%" align="center">
                 <c:url value="pubsub-node-edit.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_edit" />">
                     <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
@@ -244,7 +297,7 @@
         </c:if>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">
-                <c:param name="nodeID" value="${node.getNodeID()}" />
+                <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}" title="<fmt:message key="global.click_delete" />">
@@ -258,26 +311,12 @@
 </table>
 </div>
 
-<c:if test="${numPages gt 1}">
-    <br>
-    <p>
-    <fmt:message key="global.pages" />:
-    [
-    <c:forEach begin="1" end="${numPages}" varStatus="loop">
-        <c:url value="pubsub-node-summary.jsp" var="url">
-            <c:param name="start" value="${(loop.index-1)*range}" />
-            <c:param name="owner" value="${owner}" />
-        </c:url>
-        <a href="${url}" class="${ loop.index == curPage ? 'jive-current' : ''}">
-            <c:out value="${loop.index}"/>
-        </a>
-        <c:if test="${loop.index < numPages}">
-            &nbsp;
-        </c:if>
-    </c:forEach>
-    ]
-    </p>
-</c:if>
+<p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
 
+${listPager.jumpToPageForm}
+
+<script type="text/javascript">
+${listPager.pageFunctions}
+</script>
     </body>
 </html>

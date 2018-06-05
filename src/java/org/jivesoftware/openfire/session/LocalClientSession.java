@@ -671,12 +671,20 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param resource the resource this session authenticated under.
      */
     public void setAuthToken(AuthToken auth, String resource) {
-        setAddress(new JID(auth.getUsername(), getServerName(), resource));
+        final JID jid;
+        if (auth.isAnonymous()) {
+            jid = new JID(resource, getServerName(), resource);
+        } else {
+            jid = new JID(auth.getUsername(), getServerName(), resource);
+        }
+        setAddress(jid);
         authToken = auth;
         setStatus(Session.STATUS_AUTHENTICATED);
 
         // Set default privacy list for this session
-        setDefaultList(PrivacyListManager.getInstance().getDefaultPrivacyList(auth.getUsername()));
+        if (!auth.isAnonymous()) {
+            setDefaultList( PrivacyListManager.getInstance().getDefaultPrivacyList( auth.getUsername() ) );
+        }
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
     }

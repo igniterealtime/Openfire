@@ -447,7 +447,14 @@ public class SASLAuthentication {
         sendElement(session, "success", successData);
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
-            ((LocalClientSession) session).setAuthToken(new AuthToken(username));
+            final AuthToken authToken;
+            if (username == null) {
+                // AuthzId is null, which indicates that authentication was anonymous.
+                authToken = AuthToken.generateAnonymousToken();
+            } else {
+                authToken = AuthToken.generateUserToken(username);
+            }
+            ((LocalClientSession) session).setAuthToken(authToken);
         }
         else if (session instanceof IncomingServerSession) {
             String hostname = username;

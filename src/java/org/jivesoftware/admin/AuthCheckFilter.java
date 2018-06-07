@@ -233,7 +233,7 @@ public class AuthCheckFilter implements Filter {
         loginLimitManager.recordSuccessfulAttempt(userFromRequest, request.getRemoteAddr());
 
         // Set the auth token
-        request.getSession().setAttribute("jive.admin.authToken", new AuthToken(userFromRequest));
+        request.getSession().setAttribute("jive.admin.authToken", AuthToken.generateUserToken( userFromRequest ));
 
         // And proceed
         return true;

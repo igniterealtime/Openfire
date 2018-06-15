@@ -259,20 +259,14 @@
 
         <!-- RSS feed -->
         <dependency>
-            <groupId>rome</groupId>
-            <artifactId>rome</artifactId>
-            <version>1.0</version>
+            <groupId>com.rometools</groupId>
+            <artifactId>rome-fetcher</artifactId>
+            <version>1.10.0</version>
         </dependency>
         <dependency>
-            <groupId>rome</groupId>
-            <artifactId>rome-fetcher</artifactId>
-            <version>1.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
         </dependency>
 
         <!-- Random stuff -->

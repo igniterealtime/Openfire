@@ -242,7 +242,12 @@ public class StreamManager {
             sendUnexpectedError();
             return;
         }
-        JID fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+        final JID fullJid;
+        if ( authToken.isAnonymous() ){
+            fullJid = new JID(resource, authToken.getDomain(), resource, true);
+        } else {
+            fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+        }
         Log.debug("Resuming session {}", fullJid);
 
         // Locate existing session.

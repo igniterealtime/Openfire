@@ -1157,7 +1157,7 @@ public final class StringUtils {
 
     /**
      * @param nullableString the string to check
-     * @param value the string to match against
+     * @param value          the string to match against
      * @return {@code true} is nullableString is not null and contains the supplied value, otherwise {@code false}
      */
     public static boolean containsIgnoringCase(final String nullableString, final String value) {

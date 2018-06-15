@@ -16,12 +16,6 @@
   - limitations under the License.
 --%>
 
-<%@ page import="com.sun.syndication.feed.synd.SyndEntry,
-                 com.sun.syndication.feed.synd.SyndFeed,
-                 com.sun.syndication.fetcher.FeedFetcher"
-%>
-<%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache"%>
-<%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
 <%@ page import="org.jivesoftware.openfire.Connection"%>
 <%@ page import="org.jivesoftware.openfire.FlashCrossDomainHandler" %>
@@ -37,7 +31,6 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="org.jivesoftware.util.HttpClientWithTimeoutFeedFetcher" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
@@ -48,6 +41,16 @@
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.io.InputStream" %>
+<%@ page import="org.apache.http.impl.client.CloseableHttpClient" %>
+<%@ page import="org.apache.http.impl.client.HttpClients" %>
+<%@ page import="org.apache.http.client.methods.HttpUriRequest" %>
+<%@ page import="org.apache.http.client.methods.HttpGet" %>
+<%@ page import="org.apache.http.client.methods.CloseableHttpResponse" %>
+<%@ page import="com.rometools.rome.io.SyndFeedInput" %>
+<%@ page import="com.rometools.rome.feed.synd.SyndFeed" %>
+<%@ page import="com.rometools.rome.feed.synd.SyndEntry" %>
+<%@ page import="java.io.InputStreamReader" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -408,15 +411,15 @@
             <% long nowTime = System.currentTimeMillis();
                 if (lastBlogFeed == null || nowTime - lastRSSFetch > 21600000) {
 
-                    FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
-                    FeedFetcher feedFetcher = new HttpClientWithTimeoutFeedFetcher(feedInfoCache);
-
-                    try {
-                        lastBlogFeed = feedFetcher.retrieveFeed(new URL(blogFeedRSS));
-
-                        lastRSSFetch = nowTime;
-                    }
-                    catch (Throwable throwable) {
+                    try (final CloseableHttpClient client = HttpClients.createMinimal()) {
+                        final HttpUriRequest httpRequest = new HttpGet(blogFeedRSS);
+                        try (final CloseableHttpResponse httpResponse = client.execute(httpRequest);
+                             final InputStream stream = httpResponse.getEntity().getContent()) {
+                            final SyndFeedInput input = new SyndFeedInput();
+                            lastBlogFeed = input.build(new InputStreamReader(stream));
+                            lastRSSFetch = nowTime;
+                        }
+                    } catch (final Throwable throwable) {
                         LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
                     }
                 }

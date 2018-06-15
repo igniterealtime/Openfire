@@ -17,8 +17,6 @@
 package org.jivesoftware.openfire.container;
 
 import java.io.File;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +36,6 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -138,7 +135,7 @@ public class AdminConsolePlugin implements Plugin {
         try {
             IdentityStore identityStore = null;
             if (XMPPServer.getInstance().getCertificateStoreManager() == null){
-                Log.warn( "Admin console: CertifcateStoreManager has not been initialized yet. HTTPS will be unavailable." );
+                Log.warn( "Admin console: CertificateStoreManager has not been initialized yet. HTTPS will be unavailable." );
             } else {
                 identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
             }
@@ -159,25 +156,16 @@ public class AdminConsolePlugin implements Plugin {
                     final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.WEBADMIN, true ).generateConnectionConfiguration();
                     final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
-                    final ServerConnector httpsConnector;
-                    if ( "npn".equals( JiveGlobals.getXMLProperty( "spdy.protocol", "" ) ) )
-                    {
-                        httpsConnector = new HTTPSPDYServerConnector( adminServer, sslContextFactory );
-                    }
-                    else
-                    {
-                        final HttpConfiguration httpsConfig = new HttpConfiguration();
-                        httpsConfig.setSendServerVersion( false );
-                        httpsConfig.setSecureScheme( "https" );
-                        httpsConfig.setSecurePort( adminSecurePort );
-                        httpsConfig.addCustomizer( new SecureRequestCustomizer() );
+                    final HttpConfiguration httpsConfig = new HttpConfiguration();
+                    httpsConfig.setSendServerVersion( false );
+                    httpsConfig.setSecureScheme( "https" );
+                    httpsConfig.setSecurePort( adminSecurePort );
+                    httpsConfig.addCustomizer( new SecureRequestCustomizer() );
 
-                        final HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
-                        final SslConnectionFactory sslConnectionFactory = new SslConnectionFactory( sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString() );
+                    final HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
+                    final SslConnectionFactory sslConnectionFactory = new SslConnectionFactory( sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString() );
 
-                        httpsConnector = new ServerConnector( adminServer, null, null, null, -1, serverThreads,
-                                sslConnectionFactory, httpConnectionFactory );
-                    }
+                    final ServerConnector httpsConnector = new ServerConnector( adminServer, null, null, null, -1, serverThreads, sslConnectionFactory, httpConnectionFactory );
                     final String bindInterface = getBindInterface();
                     httpsConnector.setHost(bindInterface);
                     httpsConnector.setPort(adminSecurePort);
@@ -377,7 +365,6 @@ public class AdminConsolePlugin implements Plugin {
                 getBindInterface();
         boolean isPlainStarted = false;
         boolean isSecureStarted = false;
-        boolean isSPDY = false;
 
         for (Connector connector : adminServer.getConnectors()) {
             if (((ServerConnector) connector).getPort() == adminPort) {
@@ -387,9 +374,6 @@ public class AdminConsolePlugin implements Plugin {
                 isSecureStarted = true;
             }
 
-            if (connector instanceof HTTPSPDYServerConnector) {
-                isSPDY = true;
-            }
         }
 
         if (isPlainStarted && isSecureStarted) {
@@ -397,10 +381,10 @@ public class AdminConsolePlugin implements Plugin {
                     "  http://" + hostname + ":" +
                     adminPort + System.getProperty("line.separator") +
                     "  https://" + hostname + ":" +
-                    adminSecurePort + (isSPDY ? " (SPDY)" : ""));
+                    adminSecurePort);
         }
         else if (isSecureStarted) {
-            log(listening + " https://" + hostname + ":" + adminSecurePort + (isSPDY ? " (SPDY)" : ""));
+            log(listening + " https://" + hostname + ":" + adminSecurePort);
         }
         else if (isPlainStarted) {
             log(listening + " http://" + hostname + ":" + adminPort);

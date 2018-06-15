@@ -21,3 +21,6 @@ out/
 nbproject/
 nbbuild/
 /bin/
+
+# Microsoft Visual Studio Code
+.vscode/

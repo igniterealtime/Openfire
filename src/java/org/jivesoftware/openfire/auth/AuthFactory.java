@@ -201,7 +201,7 @@ public class AuthFactory {
             throw new UnauthorizedException();
         }
         authProvider.authenticate(username, password);
-        return new AuthToken(username);
+        return AuthToken.generateUserToken( username );
     }
 
     /**

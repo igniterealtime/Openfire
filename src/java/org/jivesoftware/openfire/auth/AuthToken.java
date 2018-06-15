@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 
@@ -27,42 +28,71 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class AuthToken {
 
-    private static final long serialVersionUID = 01L;
-    private String username;
-    private String domain;
-    private Boolean anonymous;
+    private static final long serialVersionUID = 2L;
+    private final String username;
+
+    /**
+     * Constructs a new AuthToken that represents an authenticated user identified by
+     * the provider username.
+     *
+     * @param username the username to create an authToken token with.
+     */
+    public static AuthToken generateUserToken( String username )
+    {
+        if ( username == null || username.isEmpty() ) {
+            throw new IllegalArgumentException( "Argument 'username' cannot be null." );
+        }
+        return new AuthToken( username );
+    }
+
+    /**
+     * Constructs a new AuthToken that represents an authenticated, but anonymous user.
+     */
+    public static AuthToken generateAnonymousToken()
+    {
+        return new AuthToken( null );
+    }
 
     /**
      * Constucts a new AuthToken with the specified username.
      * The username can be either a simple username or a full JID.
      *
      * @param jid the username or bare JID to create an authToken token with.
+     * @deprecated replaced by {@link #generateUserToken(String)}
      */
+    @Deprecated
     public AuthToken(String jid) {
         if (jid == null) {
-            this.domain = JiveGlobals.getProperty("xmpp.domain");
+            this.username = null;
             return;
         }
         int index = jid.indexOf("@");
         if (index > -1) {
             this.username = jid.substring(0,index);
-            this.domain = jid.substring(index+1);
         } else {
             this.username = jid;
-            this.domain = JiveGlobals.getProperty("xmpp.domain");
         }
     }
 
+    /**
+     * Constucts a new AuthToken with the specified username.
+     * The username can be either a simple username or a full JID.
+     *
+     * @param jid the username or bare JID to create an authToken token with.
+     * @deprecated replaced by {@link #generateAnonymousToken()}
+     */
+    @Deprecated
     public AuthToken(String jid, Boolean anonymous) {
+        if (jid == null || (anonymous != null && anonymous) ) {
+            this.username = null;
+            return;
+        }
         int index = jid.indexOf("@");
         if (index > -1) {
             this.username = jid.substring(0,index);
-            this.domain = jid.substring(index+1);
         } else {
             this.username = jid;
-            this.domain = JiveGlobals.getProperty("xmpp.domain");
         }
-        this.anonymous = anonymous;
     }
 
     /**
@@ -79,9 +109,11 @@ public class AuthToken {
      * Returns the domain associated with this AuthToken.
      *
      * @return the domain associated with this AuthToken.
+     * @deprecated As Openfire serves only one domain, there's no need for a domain-specific token. Use {@link XMPPServerInfo#getXMPPDomain()} instead.
      */
+    @Deprecated
     public String getDomain() {
-        return domain;
+        return JiveGlobals.getProperty("xmpp.domain");
     }
 
     /**
@@ -90,9 +122,6 @@ public class AuthToken {
      * @return true if this token is the anonymous AuthToken.
      */
     public boolean isAnonymous() {
-        if (anonymous == null) {
-            anonymous = username == null || !UserManager.getInstance().isRegisteredUser(username);
-        }
-        return anonymous;
+        return username == null;
     }
 }

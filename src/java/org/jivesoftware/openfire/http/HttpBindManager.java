@@ -24,11 +24,9 @@ import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.AsyncGzipFilter;
-import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -46,13 +44,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
 import java.io.File;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.*;
 
 /**
@@ -298,16 +290,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
                 configureProxiedConnector(httpsConfig);
                 httpsConfig.addCustomizer(new SecureRequestCustomizer());
 
-                final ServerConnector sslConnector;
-
-                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
-                {
-                    sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
-                }
-                else
-                {
-                    sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
-                }
+                final ServerConnector sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
                 return sslConnector;
@@ -577,7 +560,13 @@ public final class HttpBindManager implements CertificateEventListener, Property
      */
     protected Handler createBoshHandler()
     {
-        final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", ServletContextHandler.SESSIONS );
+        final int options;
+        if(isHttpCompressionEnabled()) {
+            options = ServletContextHandler.SESSIONS | ServletContextHandler.GZIP;
+        } else {
+            options = ServletContextHandler.SESSIONS;
+        }
+        final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", options );
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
@@ -592,22 +581,10 @@ public final class HttpBindManager implements CertificateEventListener, Property
         context.addServlet( new ServletHolder( new HttpBindServlet() ), "/*" );
 
         // Add compression filter when needed.
-        if ( isHttpCompressionEnabled() )
-        {
-            final Filter gzipFilter = new AsyncGzipFilter()
-            {
-                @Override
-                public void init( FilterConfig config ) throws ServletException
-                {
-                    super.init( config );
-                    _methods.add( HttpMethod.POST.asString() );
-                    Log.info( "Installed response compression filter" );
-                }
-            };
-
-            final FilterHolder filterHolder = new FilterHolder();
-            filterHolder.setFilter( gzipFilter );
-            context.addFilter( filterHolder, "/*", EnumSet.of( DispatcherType.REQUEST ) );
+        if (isHttpCompressionEnabled()) {
+            final GzipHandler gzipHandler = context.getGzipHandler();
+            gzipHandler.addIncludedPaths("/*");
+            gzipHandler.addIncludedMethods(HttpMethod.POST.asString());
         }
 
         return context;

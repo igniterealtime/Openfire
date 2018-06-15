@@ -188,7 +188,7 @@
             <input type="search"
                    id="searchNodeId"
                    size="20"
-                   value="${searchNodeId}"/>
+                   value="<c:out value="${searchNodeId}"/>"/>
             <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"
@@ -200,7 +200,7 @@
             <input type="search"
                    id="searchNodeName"
                    size="20"
-                   value="${searchNodeName}"/>
+                   value="<c:out value="${searchNodeName}"/>"/>
             <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"
@@ -212,7 +212,7 @@
             <input type="search"
                    id="searchNodeDescription"
                    size="20"
-                   value="${searchNodeDescription}"/>
+                   value="<c:out value="${searchNodeDescription}"/>"/>
              <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"

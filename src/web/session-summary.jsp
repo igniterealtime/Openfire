@@ -21,38 +21,34 @@
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.CookieUtils,
-                 org.jivesoftware.util.StringUtils,
-                 java.util.Collection"
+                 org.jivesoftware.util.StringUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Date" %>
+<%@ page import="java.util.List" %>
+<%@ page import="org.jivesoftware.util.ListPager" %>
+<%@ page import="java.util.stream.Collectors" %>
+<%@ page import="java.util.function.Predicate" %>
+<%@ page import="java.net.UnknownHostException" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%!
-    static final String NONE = LocaleUtils.getLocalizedString("global.none");
+    private static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
-    final int DEFAULT_RANGE = 15;
-    final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
-
-    static final int[] REFRESHES = {0, 10, 30, 60, 90};
-    static final String[] REFRESHES_LABELS = {NONE,"10","30","60","90"};
+    private static final int[] REFRESHES = {0, 10, 30, 60, 90};
+    private static final String[] REFRESHES_LABELS = {NONE,"10","30","60","90"};
 %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("session-summary", DEFAULT_RANGE));
     int refresh = ParamUtils.getIntParameter(request,"refresh",webManager.getRefreshValue("session-summary", 0));
+    pageContext.setAttribute("refresh", refresh);
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     int order = ParamUtils.getIntParameter(request, "order",
             webManager.getPageProperty("session-summary", "console.order", SessionResultFilter.ASCENDING));
     String jid = ParamUtils.getParameter(request,"jid");
-
-    if (request.getParameter("range") != null) {
-        webManager.setRowsPerPage("session-summary", range);
-    }
 
     if (request.getParameter("refresh") != null) {
         webManager.setRefreshValue("session-summary", refresh);
@@ -64,9 +60,6 @@
 
     // Get the user manager
     SessionManager sessionManager = webManager.getSessionManager();
-
-    // Get the session count
-    int sessionCount = sessionManager.getUserSessionsCount(false);
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -98,21 +91,157 @@
         return;
     }
 
-    // paginator vars
-    int numPages = (int)Math.ceil((double)sessionCount/(double)range);
-    int curPage = (start/range) + 1;
-    // Check that we are not out of bounds
-    if (curPage > numPages && numPages > 0){
-      curPage = numPages;
-      start = (numPages-1)*range;
-    }
-%>
+    SessionResultFilter sessionResultFilter = SessionResultFilter.createDefaultSessionFilter();
+    sessionResultFilter.setSortOrder(order);
+    // Filter out the dodgy looking sessions
+    // Note; dodgy looking cast as we're stuck using Java 7 to compile JSPs - see OF-1528
+    List<ClientSession> sessions = (List<ClientSession>)(Object)sessionManager.getSessions(sessionResultFilter)
+        .stream()
+        .filter(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession clientSession) {
+                try { // skip invalid sessions (OF-590)
+                    return clientSession.validate();
+                } catch (Exception ex) {
+                    return false;
+                }
+            }
+        })
+        .collect(Collectors.toList());
 
+    // By default, display all nodes
+    Predicate<ClientSession> filter = new Predicate<ClientSession>() {
+        @Override
+        public boolean test(final ClientSession session) {
+            return true;
+        }
+    };
+    final String searchName = ParamUtils.getStringParameter(request, "searchName", "");
+    if(!searchName.trim().isEmpty()) {
+        final String searchCriteria = searchName.trim();
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                return StringUtils.containsIgnoringCase(session.getAddress().getNode(), searchCriteria);
+            }
+        });
+    }
+    final String searchResource = ParamUtils.getStringParameter(request, "searchResource", "");
+    if(!searchResource.trim().isEmpty()) {
+        final String searchCriteria = searchResource.trim();
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                return StringUtils.containsIgnoringCase(session.getAddress().getResource(), searchCriteria);
+            }
+        });
+    }
+    final String searchNode = ParamUtils.getStringParameter(request, "searchNode", "");
+    if(!searchNode.isEmpty()) {
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                return searchNode.equals("local") && session instanceof LocalClientSession;
+            }
+        });
+    }
+    final String searchStatus = ParamUtils.getStringParameter(request, "searchStatus", "");
+    if(!searchStatus.isEmpty()) {
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                switch (session.getStatus()) {
+                    case Session.STATUS_CLOSED:
+                        return "closed".equals(searchStatus);
+                    case Session.STATUS_CONNECTED:
+                        return "connected".equals(searchStatus);
+                    case Session.STATUS_AUTHENTICATED:
+                        return "authenticated".equals(searchStatus);
+                    default:
+                        return "unknown".equals(searchStatus);
+                }
+            }
+        });
+    }
+    final String searchPresence = ParamUtils.getStringParameter(request, "searchPresence", "");
+    if(!searchPresence.isEmpty()) {
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                final Presence presence = session.getPresence();
+                if (!presence.isAvailable()) {
+                    return "offline".equals(searchPresence);
+                }
+                final Presence.Show show = presence.getShow();
+                if (show == null) {
+                    return "online".equals(searchPresence);
+                }
+                switch (show) {
+                    case away:
+                        return "away".equals(searchPresence);
+                    case chat:
+                        return "chat".equals(searchPresence);
+                    case dnd:
+                        return "dnd".equals(searchPresence);
+                    case xa:
+                        return "xa".equals(searchPresence);
+                    default:
+                        return "unknown".equals(searchPresence);
+                }
+            }
+        });
+    }
+    final String searchPriority = ParamUtils.getStringParameter(request, "searchPriority", "");
+    if (!searchPriority.trim().isEmpty()) {
+        int intValue;
+        try {
+            intValue = Integer.parseInt(searchPriority.trim());
+        } catch (final NumberFormatException e) {
+            // If we can't parse it, use a default which no session can actually have
+            intValue = Integer.MIN_VALUE;
+        }
+        final int searchCriteria = intValue;
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                return session.getPresence().getPriority() == searchCriteria;
+            }
+        });
+    }
+    final String searchHostAddress = ParamUtils.getStringParameter(request, "searchHostAddress", "");
+    if(!searchHostAddress.trim().isEmpty()) {
+        final String searchCriteria = searchHostAddress.trim();
+        filter = filter.and(new Predicate<ClientSession>() {
+            @Override
+            public boolean test(final ClientSession session) {
+                try {
+                    return StringUtils.containsIgnoringCase(session.getHostAddress(), searchCriteria);
+                } catch (final UnknownHostException e) {
+                    return false;
+                }
+            }
+        });
+    }
+
+    final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter,
+        "refresh", "searchName", "searchResource", "searchNode", "searchStatus", "searchPresence", "searchPriority", "searchHostAddress");
+    pageContext.setAttribute("listPager", listPager);
+    pageContext.setAttribute("searchName", searchName);
+    pageContext.setAttribute("searchResource", searchResource);
+    pageContext.setAttribute("searchNode", searchNode);
+    pageContext.setAttribute("searchStatus", searchStatus);
+    pageContext.setAttribute("searchPresence", searchPresence);
+    pageContext.setAttribute("searchPriority", searchPriority);
+    pageContext.setAttribute("searchHostAddress", searchHostAddress);
+%>
 <html>
     <head>
         <title><fmt:message key="session.summary.title"/></title>
         <meta name="pageID" content="session-summary"/>
         <meta name="helpPage" content="view_active_client_sessions.html"/>
+        <c:if test="${refresh > 0}">
+            <meta http-equiv="refresh" content="${refresh}">
+        </c:if>
     </head>
     <body>
 
@@ -124,55 +253,24 @@
 
 <%  } %>
 
-<%  if (refresh > 0) { %>
-    <meta http-equiv="refresh" content="<%= refresh %>">
-<%  } %>
-
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tbody>
-<form action="session-summary.jsp" method="get">
     <tr valign="top">
         <td width="99%">
-            <fmt:message key="session.summary.active" />: <b><%= sessionCount %></b>
-
-            <%  if (numPages > 1) { %>
-
-                -- <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
-
-            <%  } %>
-
-            <%  if (numPages > 1) { %>
-
-                <p>
-                <fmt:message key="global.pages" />:
-                [
-                <%  for (int i=0; i<numPages; i++) {
-                        String sep = ((i+1)<numPages) ? " " : "";
-                        boolean isCurrent = (i+1) == curPage;
-                %>
-                    <a href="session-summary.jsp?start=<%= (i*range) %>"
-                     class="<%= ((isCurrent) ? "jive-current" : "") %>"
-                     ><%= (i+1) %></a><%= sep %>
-
-                <%  } %>
-                ]
-
-            <%  } %>
+            <fmt:message key="session.summary.active" />: <b>${listPager.totalItemCount}</b>
+            <c:if test="${listPager.filtered}">
+                <fmt:message key="session.summary.filtered_session_count" />: <c:out value="${listPager.filteredItemCount}"/>
+            </c:if>
+        <c:if test="${listPager.totalPages > 1}">
+                -- <fmt:message key="global.showing" /> <c:out value="${listPager.firstItemNumberOnPage}"/>-<c:out value="${listPager.lastItemNumberOnPage}"/>
+                <p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]
+            </c:if>
             -- <fmt:message key="session.summary.sessions_per_page" />:
-            <select size="1" name="range" onchange="this.form.submit();">
-
-                <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
-
-                <option value="<%= aRANGE_PRESETS %>"<%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
-                </option>
-
-                <% } %>
-
-            </select>
+            ${listPager.pageSizeSelection}
         </td>
         <td width="1%" nowrap>
-            <fmt:message key="global.refresh" />:
-            <select size="1" name="refresh" onchange="this.form.submit();">
+            <label for="refresh"><fmt:message key="global.refresh" />:</label>
+            <select size="1" id="refresh" name="refresh" onchange="submitForm();">
             <%  for (int j=0; j<REFRESHES.length; j++) {
                     String selected = REFRESHES[j] == refresh ? " selected" : "";
             %>
@@ -184,18 +282,10 @@
 
         </td>
     </tr>
-</form>
 </tbody>
 </table>
 <br>
 
- <% // Get the iterator of sessions, print out session info if any exist.
-     SessionResultFilter filter = SessionResultFilter.createDefaultSessionFilter();
-     filter.setSortOrder(order);
-     filter.setStartIndex(start);
-     filter.setNumResults(range);
-     Collection<ClientSession> sessions = sessionManager.getSessions(filter);
- %>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -204,8 +294,8 @@
         <th>&nbsp;</th>
         <th nowrap>
         <%
-            if (filter.getSortField() == SessionResultFilter.SORT_USER) {
-                if (filter.getSortOrder() == SessionResultFilter.DESCENDING) {
+            if (sessionResultFilter.getSortField() == SessionResultFilter.SORT_USER) {
+                if (sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING) {
         %>
         <table border="0"><tr valign="middle"><th>
         <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
@@ -243,6 +333,88 @@
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
+    <tr>
+        <td nowrap></td>
+        <td nowrap>
+            <input type="search"
+                   id="searchName"
+                   size="20"
+                   value="<c:out value="${searchName}"/>"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap>
+            <input type="search"
+                   id="searchResource"
+                   size="20"
+                   value="<c:out value="${searchResource}"/>"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap>
+            <select id="searchNode" onchange="submitForm();">
+                <option <c:if test='${searchNode eq ""}'>selected</c:if> value=""></option>
+                <option <c:if test='${searchNode eq "local"}'>selected </c:if>value="local"><fmt:message key="session.details.local"/></option>
+                <option <c:if test='${searchNode eq "remote"}'>selected </c:if>value="remote"><fmt:message key="session.details.remote"/></option>
+            </select>
+        </td>
+        <td nowrap colspan="2">
+            <select id="searchStatus" onchange="submitForm();">
+                <option <c:if test='${searchStatus eq ""}'>selected</c:if> value=""></option>
+                <option <c:if test='${searchStatus eq "closed"}'>selected</c:if> value="closed"><fmt:message key="session.details.close"/></option>
+                <option <c:if test='${searchStatus eq "connected"}'>selected</c:if> value="connected"><fmt:message key="session.details.connect"/></option>
+                <option <c:if test='${searchStatus eq "authenticated"}'>selected</c:if> value="authenticated"><fmt:message key="session.details.authenticated"/></option>
+                <option <c:if test='${searchStatus eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
+            </select>
+        </td>
+        <td nowrap colspan="2">
+            <select id="searchPresence" onchange="submitForm();">
+                <option <c:if test='${searchPresence eq ""}'>selected</c:if> value=""></option>
+                <option <c:if test='${searchPresence eq "online"}'>selected</c:if> value="online"><fmt:message key="session.details.online"/></option>
+                <option <c:if test='${searchPresence eq "away"}'>selected</c:if> value="away"><fmt:message key="session.details.away"/></option>
+                <option <c:if test='${searchPresence eq "xa"}'>selected</c:if> value="xa"><fmt:message key="session.details.extended"/></option>
+                <option <c:if test='${searchPresence eq "offline"}'>selected</c:if> value="offline"><fmt:message key="user.properties.offline"/></option>
+                <option <c:if test='${searchPresence eq "chat"}'>selected</c:if> value="chat"><fmt:message key="session.details.chat_available"/></option>
+                <option <c:if test='${searchPresence eq "dnd"}'>selected</c:if> value="dnd"><fmt:message key="session.details.not_disturb"/></option>
+                <option <c:if test='${searchPresence eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
+            </select>
+        </td>
+        <td nowrap>
+            <input type="search"
+                   id="searchPriority"
+                   size="5"
+                   min="-128"
+                   max="127"
+                   value="<c:out value="${searchPriority}"/>"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap>
+            <input type="search"
+                   id="searchHostAddress"
+                   size="20"
+                   value="<c:out value="${searchHostAddress}"/>"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <td nowrap></td>
+    </tr>
 </thead>
 <tbody>
     <%
@@ -258,47 +430,34 @@
 
     <%  } %>
 
-    <%  int count = start;
-        boolean current = false; // needed in session-row.jspf
-        String linkURL = "session-details.jsp";
-        for (ClientSession sess : sessions) {
-            try { // skip invalid sessions (OF-590)
-                if (!sess.validate()) continue;
-            } catch (Exception ex) {
-                continue;
-            }
-            count++;
+    <%
+        // needed in session-row.jspf
+        int count = listPager.getFirstItemNumberOnPage();
+        final boolean current = false;
+        final String linkURL = "session-details.jsp";
+        for (final ClientSession sess : listPager.getItemsOnCurrentPage()) {
     %>
         <%@ include file="session-row.jspf" %>
-    <%  } %>
+    <%  count++;
+        } %>
 
 </tbody>
 </table>
 </div>
 
-<%  if (numPages > 1) { %>
-
-    <p>
-    <fmt:message key="global.pages" />:
-    [
-    <%  for (int i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="session-summary.jsp?start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
-    ]
-    </p>
-
-<%  } %>
+<c:if test="${listPager.totalPages > 1}">
+<p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
+</c:if>
 
 <br>
 <p>
 <fmt:message key="session.summary.last_update" />: <%= JiveGlobals.formatDateTime(new Date()) %>
 </p>
 
+${listPager.jumpToPageForm}
+
+<script type="text/javascript">
+    ${listPager.pageFunctions}
+</script>
     </body>
 </html>

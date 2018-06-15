@@ -120,7 +120,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Versions -->
-        <jetty.version>9.4.10.v20180503</jetty.version>
+        <jetty.version>9.4.11.v20180605</jetty.version>
         <mina.version>2.0.7</mina.version>
         <bouncycastle.version>1.53</bouncycastle.version>
         <slf4j.version>1.7.7</slf4j.version>

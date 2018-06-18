@@ -16,6 +16,11 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import java.net.UnknownHostException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -24,7 +29,7 @@ import org.xmpp.packet.Packet;
 /**
  * Packet interceptor that prints to the stdout XML packets (i.e. XML after
  * it was parsed).<p>
- *
+ * <p>
  * If you find in the logs an entry for raw XML, an entry that a session was closed and
  * never find the corresponding interpreted XML for the raw XML then there was an error
  * while parsing the XML that closed the session.
@@ -33,11 +38,26 @@ import org.xmpp.packet.Packet;
  */
 public class InterpretedXMLPrinter implements PacketInterceptor {
 
-    static final String PROPERTY_ENABLED = "plugin.debugger.interpretedAllowed";
+    private static final Logger LOGGER = LogManager.getLogger();
+    static final String PROPERTY_ENABLED = DebuggerPlugin.PROPERTY_PREFIX + "interpretedAllowed";
+    private DebuggerPlugin plugin;
 
+    InterpretedXMLPrinter(final DebuggerPlugin plugin) {
+
+        this.plugin = plugin;
+    }
+
+    @Override
     public void interceptPacket(final Packet packet, final Session session, final boolean incoming, final boolean processed) {
-        if (!processed && incoming) {
-            System.out.println("INTERPRETED: " + packet.toXML());
+        if (!processed) {
+            String hostAddress;
+            try {
+                hostAddress = "/" + session.getHostAddress() + ":?????";
+            } catch (final UnknownHostException ignored) {
+                hostAddress = "";
+            }
+            // Pad this out so it aligns with the RawPrintFilter output
+            plugin.log(String.format("INT %-16s - %s - (%11s): %s", hostAddress, incoming ? "RECD" : "SENT", session.getStreamID(), packet.toXML()));
         }
     }
 
@@ -47,6 +67,16 @@ public class InterpretedXMLPrinter implements PacketInterceptor {
 
     public void setEnabled(final boolean enabled) {
         JiveGlobals.setProperty(PROPERTY_ENABLED, Boolean.toString(enabled));
+    }
+
+    void wasEnabled(final boolean enabled) {
+        if (enabled) {
+            LOGGER.debug("Interpreted XML logger enabled");
+            InterceptorManager.getInstance().addInterceptor(this);
+        } else {
+            LOGGER.debug("Interpreted XML logger disabled");
+            InterceptorManager.getInstance().removeInterceptor(this);
+        }
     }
 
 }

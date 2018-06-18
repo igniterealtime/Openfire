@@ -21,6 +21,8 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
@@ -36,19 +38,28 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class RawPrintFilter extends IoFilterAdapter {
 
-    public static final String FILTER_NAME = "rawDebugger";
+    private static final Logger LOGGER = LogManager.getLogger();
+    static final String FILTER_NAME = "rawDebugger";
 
-    private boolean enabled = true;
-    private String prefix;
-    private Collection<IoSession> sessions = new ConcurrentLinkedQueue<IoSession>();
+    private DebuggerPlugin plugin;
+    private final String prefix;
+    private final String propertyName;
+    private final Collection<IoSession> sessions = new ConcurrentLinkedQueue<>();
+    private boolean enabled;
 
-    public RawPrintFilter(String prefix) {
+    RawPrintFilter(final DebuggerPlugin plugin, final String prefix) {
+        this.plugin = plugin;
         this.prefix = prefix;
-        this.enabled = JiveGlobals.getBooleanProperty("plugin.xmldebugger." + prefix.toLowerCase(), true);
+        this.propertyName = DebuggerPlugin.PROPERTY_PREFIX + prefix.toLowerCase();
+        this.enabled = JiveGlobals.getBooleanProperty(propertyName, true);
+    }
+
+    String getPropertyName() {
+        return propertyName;
     }
 
     @Override
-    public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+    public void messageReceived(final NextFilter nextFilter, final IoSession session, final Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
         if (enabled && message instanceof IoBuffer) {
             logBuffer(session, (IoBuffer) message, "RECV");
@@ -62,18 +73,18 @@ public class RawPrintFilter extends IoFilterAdapter {
         int currentPos = ioBuffer.position();
         // Decode buffer
         CharBuffer charBuffer = Charset.forName("UTF-8").decode(ioBuffer.buf());
-        // Print buffer content
-        System.out.println(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
+        // Log buffer content
+        plugin.log(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
         // Reset to old position in the buffer
         ioBuffer.position(currentPos);
     }
 
     private String messagePrefix(final IoSession session, final String messageType) {
-        return String.format("%1$s %2$15s - %3$s - (%4$11s)", prefix, session.getRemoteAddress(), messageType, session.hashCode());
+        return String.format("%s %-16s - %s - (%11s)", prefix, session.getRemoteAddress() == null ? " " : session.getRemoteAddress(), messageType, session.hashCode());
     }
 
     @Override
-    public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
+    public void messageSent(final NextFilter nextFilter, final IoSession session, final WriteRequest writeRequest) throws Exception {
         if (enabled && writeRequest.getMessage() instanceof IoBuffer) {
             logBuffer(session, (IoBuffer) writeRequest.getMessage(), "SENT");
         }
@@ -85,37 +96,41 @@ public class RawPrintFilter extends IoFilterAdapter {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        JiveGlobals.setProperty("plugin.xmldebugger." + prefix.toLowerCase(), Boolean.toString(enabled)); 
+    public void setEnabled(final boolean enabled) {
+        JiveGlobals.setProperty(propertyName, Boolean.toString(enabled));
     }
 
-    public void shutdown() {
+    void wasEnabled(final boolean enabled) {
+        this.enabled = enabled;
+        LOGGER.debug("{} logger {}", prefix, enabled ? "enabled" : "disabled");
+    }
+
+    void shutdown() {
         // Remove this filter from sessions that are using it
         for (IoSession session : sessions) {
-            session.getFilterChain().remove("rawDebugger");
+            session.getFilterChain().remove(FILTER_NAME);
         }
-        sessions = null;
+        sessions.clear();
     }
 
     @Override
-    public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionCreated(final NextFilter nextFilter, final IoSession session) throws Exception {
         // Keep track of sessions using this filter
         sessions.add(session);
         if (enabled) {
-            // Print that a session was closed
-            System.out.println(messagePrefix(session, "OPEN"));
+            // Log that a session was opened
+            plugin.log(messagePrefix(session, "OPEN"));
         }
         super.sessionCreated(nextFilter, session);
     }
 
     @Override
-    public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+    public void sessionClosed(final NextFilter nextFilter, final IoSession session) throws Exception {
         // Update list of sessions using this filter
         sessions.remove(session);
         if (enabled) {
-            // Print that a session was closed
-            System.out.println(messagePrefix(session, "CLSD"));
+            // Log that a session was closed
+            plugin.log(messagePrefix(session, "CLSD"));
         }
         super.sessionClosed(nextFilter, session);
     }

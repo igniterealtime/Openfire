@@ -17,8 +17,13 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.filterchain.IoFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
@@ -26,13 +31,10 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
-import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
@@ -47,13 +49,32 @@ import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAM
  */
 public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
-    private static final Logger Log = LoggerFactory.getLogger(DebuggerPlugin.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    private final RawPrintFilter defaultPortFilter = new RawPrintFilter("C2S");
-    private final RawPrintFilter oldPortFilter = new RawPrintFilter("SSL");
-    private final RawPrintFilter componentPortFilter = new RawPrintFilter("ExComp");
-    private final RawPrintFilter multiplexerPortFilter = new RawPrintFilter("CM");
-    private final InterpretedXMLPrinter interpretedPrinter = new InterpretedXMLPrinter();
+    static final String PROPERTY_PREFIX = "plugin.xmldebugger.";
+    private static final String PROPERTY_LOG_TO_STDOUT_ENABLED = PROPERTY_PREFIX + "logToStdOut";
+    private static final String PROPERTY_LOG_TO_FILE_ENABLED = PROPERTY_PREFIX + "logToFile";
+
+
+    private final RawPrintFilter defaultPortFilter;
+    private final RawPrintFilter oldPortFilter;
+    private final RawPrintFilter componentPortFilter;
+    private final RawPrintFilter multiplexerPortFilter;
+    private final Set<RawPrintFilter> rawPrintFilters;
+    private final InterpretedXMLPrinter interpretedPrinter;
+    private boolean loggingToStdOut;
+    private boolean loggingToFile;
+
+    public DebuggerPlugin() {
+        loggingToStdOut = JiveGlobals.getBooleanProperty(PROPERTY_LOG_TO_STDOUT_ENABLED, true);
+        loggingToFile = JiveGlobals.getBooleanProperty(PROPERTY_LOG_TO_FILE_ENABLED, false);
+        defaultPortFilter = new RawPrintFilter(this, "C2S");
+        oldPortFilter = new RawPrintFilter(this, "SSL");
+        componentPortFilter = new RawPrintFilter(this, "ExComp");
+        multiplexerPortFilter = new RawPrintFilter(this, "CM");
+        rawPrintFilters = new HashSet<>(Arrays.asList(defaultPortFilter, oldPortFilter, componentPortFilter, multiplexerPortFilter));
+        interpretedPrinter = new InterpretedXMLPrinter(this);
+    }
 
     public void initializePlugin(final PluginManager pluginManager, final File pluginDirectory) {
         if (pluginManager.isExecuted()) {
@@ -72,34 +93,34 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
     private void addFilterToChain(final SocketAcceptor acceptor, final IoFilter filter) {
         if (acceptor == null) {
-            Log.debug("Not adding filter '{}' to acceptor that is null.", RawPrintFilter.FILTER_NAME);
+            LOGGER.debug("Not adding filter '{}' to acceptor that is null.", RawPrintFilter.FILTER_NAME);
             return;
         }
 
         final DefaultIoFilterChainBuilder chain = acceptor.getFilterChain();
         if (chain.contains(COMPRESSION_FILTER_NAME)) {
-            Log.debug("Adding filter '{}' as the first filter after the compression filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
+            LOGGER.debug("Adding filter '{}' as the first filter after the compression filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
             chain.addAfter(COMPRESSION_FILTER_NAME, RawPrintFilter.FILTER_NAME, filter);
         } else if (chain.contains(TLS_FILTER_NAME)) {
-            Log.debug("Adding filter '{}' as the first filter after the TLS filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
+            LOGGER.debug("Adding filter '{}' as the first filter after the TLS filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
             chain.addAfter(TLS_FILTER_NAME, RawPrintFilter.FILTER_NAME, filter);
         } else {
-            Log.debug("Adding filter '{}' as the last filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
+            LOGGER.debug("Adding filter '{}' as the last filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
             chain.addLast(RawPrintFilter.FILTER_NAME, filter);
         }
     }
 
     private void removeFilterFromChain(final SocketAcceptor acceptor) {
         if (acceptor == null) {
-            Log.debug("Not removing filter '{}' from acceptor that is null.", RawPrintFilter.FILTER_NAME);
+            LOGGER.debug("Not removing filter '{}' from acceptor that is null.", RawPrintFilter.FILTER_NAME);
             return;
         }
 
         if (acceptor.getFilterChain().contains(RawPrintFilter.FILTER_NAME)) {
-            Log.debug("Removing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
+            LOGGER.debug("Removing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
             acceptor.getFilterChain().remove(RawPrintFilter.FILTER_NAME);
         } else {
-            Log.debug("Unable to remove non-existing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
+            LOGGER.debug("Unable to remove non-existing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
         }
     }
 
@@ -112,12 +133,11 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         addFilterToChain(connManager.getComponentAcceptor(), componentPortFilter);
         addFilterToChain(connManager.getMultiplexerSocketAcceptor(), multiplexerPortFilter);
 
-        if (interpretedPrinter.isEnabled()) {
-            // Add the packet interceptor that prints interpreted XML
-            InterceptorManager.getInstance().addInterceptor(interpretedPrinter);
-        }
+        interpretedPrinter.wasEnabled(interpretedPrinter.isEnabled());
+
         // Listen to property events
         PropertyEventDispatcher.addListener(this);
+        LOGGER.debug("Plugin initialisation complete");
     }
 
     public void destroyPlugin() {
@@ -137,7 +157,9 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         multiplexerPortFilter.shutdown();
 
         // Remove the packet interceptor that prints interpreted XML
-        InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
+        interpretedPrinter.wasEnabled(false);
+
+        LOGGER.debug("Plugin destruction complete");
     }
 
     public RawPrintFilter getDefaultPortFilter() {
@@ -161,18 +183,35 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
     }
 
     public void propertySet(String property, Map<String, Object> params) {
-        if (property.equals(InterpretedXMLPrinter.PROPERTY_ENABLED)) {
-            if (Boolean.parseBoolean((String) params.get("value"))) {
-                InterceptorManager.getInstance().addInterceptor(interpretedPrinter);
-            } else {
-                InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
-            }
-        }
+        final boolean enabled = Boolean.parseBoolean(String.valueOf(params.get("value")));
+        enableOrDisableLogger(property, enabled);
     }
 
     public void propertyDeleted(String property, Map<String, Object> params) {
-        if (property.equals(InterpretedXMLPrinter.PROPERTY_ENABLED)) {
-            InterceptorManager.getInstance().removeInterceptor(interpretedPrinter);
+        enableOrDisableLogger(property, false);
+    }
+
+    private void enableOrDisableLogger(final String property, final boolean enabled) {
+        switch (property) {
+            case InterpretedXMLPrinter.PROPERTY_ENABLED:
+                interpretedPrinter.wasEnabled(enabled);
+                break;
+            case PROPERTY_LOG_TO_STDOUT_ENABLED:
+                loggingToStdOut = enabled;
+                LOGGER.debug("STDOUT logger {}", enabled ? "enabled" : "disabled");
+                break;
+            case PROPERTY_LOG_TO_FILE_ENABLED:
+                loggingToFile = enabled;
+                LOGGER.debug("file logger {}", enabled ? "enabled" : "disabled");
+                break;
+            default:
+                // Is it one of the RawPrintFilters?
+                for (final RawPrintFilter filter : rawPrintFilters) {
+                    if(filter.getPropertyName().equals(property)) {
+                        filter.wasEnabled(enabled);
+                        break;
+                    }
+                }
         }
     }
 
@@ -182,5 +221,30 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
+    }
+
+    public boolean isLoggingToStdOut() {
+        return loggingToStdOut;
+    }
+
+    public void setLoggingToStdOut(final boolean enabled) {
+        JiveGlobals.setProperty(PROPERTY_LOG_TO_STDOUT_ENABLED, String.valueOf(enabled));
+    }
+
+    public boolean isLoggingToFile() {
+        return loggingToFile;
+    }
+
+    public void setLoggingToFile(final boolean enabled) {
+        JiveGlobals.setProperty(PROPERTY_LOG_TO_FILE_ENABLED, String.valueOf(enabled));
+    }
+
+    void log(final String messageToLog) {
+        if (loggingToStdOut) {
+            System.out.println(messageToLog);
+        }
+        if (loggingToFile) {
+            LOGGER.debug(messageToLog);
+        }
     }
 }

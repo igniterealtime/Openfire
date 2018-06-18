@@ -11,7 +11,7 @@
     <version>1.7.1-SNAPSHOT</version>
     <date>06/18/2018</date>
     <minServerVersion>4.0.0</minServerVersion>
-    <minJavaVersion>1.8</minJavaVersion>
+    <minJavaVersion>1.7</minJavaVersion>
 
    <adminconsole>
       <tab id="tab-server">

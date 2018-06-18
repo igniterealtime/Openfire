@@ -1,8 +1,12 @@
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.openfire.ldap.LdapManager"%>
-<%@ page import="org.jivesoftware.util.JiveGlobals"%>
-<%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collection" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="java.util.StringTokenizer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -115,10 +119,14 @@
                     xmppSettings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
                     xmppSettings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
 
-                    JiveGlobals.setPropertyEncrypted("ldap.adminDN", true);
-                    JiveGlobals.setPropertyEncrypted("ldap.adminPassword", true);
-
                     session.setAttribute("xmppSettings", xmppSettings);
+
+                    Set<String> encryptedXmppSettings = (Set<String>) session.getAttribute("encryptedSettings");
+                    if (encryptedXmppSettings != null) {
+                        encryptedXmppSettings.add("ldap.adminDN");
+                        encryptedXmppSettings.add("ldap.adminPassword");
+                    }
+                    session.setAttribute("encryptedSettings", encryptedXmppSettings);
                 }
 
                 // Redirect to next step.

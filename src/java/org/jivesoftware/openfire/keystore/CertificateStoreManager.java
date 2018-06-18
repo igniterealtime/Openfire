@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.jivesoftware.openfire.spi.ConnectionType.SOCKET_C2S;
+
 /**
  * A manager of certificate stores.
  *
@@ -354,7 +356,7 @@ public class CertificateStoreManager extends BasicModule
         final String defaultValue;
 
         // OF-1191: For client-oriented connection types, Openfire traditionally uses a different truststore.
-        if ( Arrays.asList( ConnectionType.SOCKET_C2S, ConnectionType.BOSH_C2S, ConnectionType.WEBADMIN ).contains( type ) )
+        if ( Arrays.asList( SOCKET_C2S, ConnectionType.BOSH_C2S, ConnectionType.WEBADMIN ).contains( type ) )
         {
             defaultValue = "resources" + File.separator + "security" + File.separator + "client.truststore";
         }
@@ -388,5 +390,62 @@ public class CertificateStoreManager extends BasicModule
         }
 
         return file;
+    }
+
+    /**
+     * Checks if Openfire is configured to use the same set of three keystore files for all connection types (one
+     * identity store, and two trust stores - one for client-based connections, and one for server/component-based
+     * connections).
+     *
+     * This method will return 'false' when running Openfire without changes to its default keystore configuration. If
+     * changes are made to use different keystores for at least one connection type, this method returns 'true'.
+     *
+     * @return true if Openfire is using different keystores based on the type of connection, false when running with the default store configuration.
+     * @throws IOException
+     */
+    public boolean usesDistinctConfigurationForEachType() throws IOException
+    {
+        CertificateStoreConfiguration identityStoreConfiguration = null;
+        CertificateStoreConfiguration c2sTrustStoreConfiguration = null;
+        CertificateStoreConfiguration s2sTrustStoreConfiguration = null;
+        for ( ConnectionType connectionType : ConnectionType.values() )
+        {
+            // Identity stores
+            if ( identityStoreConfiguration == null )
+            {
+                identityStoreConfiguration = getIdentityStoreConfiguration( connectionType );
+            }
+            if ( !identityStoreConfiguration.equals( getIdentityStoreConfiguration( connectionType ) ) )
+            {
+                return true;
+            }
+
+            // Client-to-Server trust stores
+            if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S) )
+            {
+                if ( c2sTrustStoreConfiguration == null )
+                {
+                    c2sTrustStoreConfiguration = getTrustStoreConfiguration( connectionType );
+                }
+                if ( !c2sTrustStoreConfiguration.equals( getTrustStoreConfiguration( connectionType ) ) )
+                {
+                    return true;
+                }
+            }
+            else
+            // Server-to-Server trust stores (includes component connections)
+            {
+                if ( s2sTrustStoreConfiguration == null )
+                {
+                    s2sTrustStoreConfiguration = getTrustStoreConfiguration( connectionType );
+                }
+                if ( !s2sTrustStoreConfiguration.equals( getTrustStoreConfiguration( connectionType ) ) )
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

@@ -141,6 +141,14 @@
         <name>infoBox</name>
         <path>/META-INF/tags/admin/infoBox.tagx</path>
     </tag-file>
+    <tag-file>
+        <name>identityStoreConfig</name>
+        <path>/META-INF/tags/admin/security/identityStoreConfig.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>trustStoreConfig</name>
+        <path>/META-INF/tags/admin/security/trustStoreConfig.tagx</path>
+    </tag-file>
     <function>
         <name>replaceAll</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>

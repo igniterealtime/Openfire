@@ -12,8 +12,8 @@
             <outputDirectory>META-INF/tags/admin</outputDirectory>
             <directory>${project.basedir}/../src/web/WEB-INF/tags/admin</directory>
             <includes>
-                <include>*.tag</include>
-                <include>*.tagx</include>
+                <include>**/*.tag</include>
+                <include>**/*.tagx</include>
             </includes>
         </fileSet>
 

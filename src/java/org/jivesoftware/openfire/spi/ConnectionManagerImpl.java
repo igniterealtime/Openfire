@@ -477,9 +477,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 result.add( clientListener );
                 result.add( clientSslListener );
                 break;
+
             case BOSH_C2S:
                 result.add( boshListener );
                 result.add( boshSslListener );
+                break;
 
             case SOCKET_S2S:
                 result.add( serverListener ); // there's no legacy-mode server listener.
@@ -494,9 +496,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 result.add( connectionManagerListener );
                 result.add( connectionManagerSslListener );
                 break;
+
             case WEBADMIN:
                 result.add( webAdminListener );
                 result.add( webAdminSslListener );
+                break;
 
             default:
                 throw new IllegalStateException( "Unknown connection type: "+ type );

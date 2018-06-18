@@ -188,8 +188,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private boolean roomCreationRestricted = false;
 
     /**
-     * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can
-     * create a room. Might also include group jids.
+     * Bare jids of users that are allowed to create MUC rooms. Might also include group jids.
      */
     private GroupAwareList<JID> allowedToCreate = new ConcurrentGroupList<>();
 

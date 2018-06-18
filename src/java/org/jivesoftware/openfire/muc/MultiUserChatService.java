@@ -108,8 +108,7 @@ public interface MultiUserChatService extends Component {
     void setRoomCreationRestricted(boolean roomCreationRestricted);
 
     /**
-     * Returns the collection of JIDs that are allowed to create MUC rooms. An empty list means that
-     * anyone can create a room. 
+     * Returns the collection of JIDs that are allowed to create MUC rooms.
      * 
      * @return a list of user/group JIDs.
      */

@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.container;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +39,14 @@ import java.util.zip.ZipFile;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class PluginMonitor
+public class PluginMonitor implements PropertyEventListener
 {
     private static final Logger Log = LoggerFactory.getLogger( PluginMonitor.class );
 
     private final PluginManager pluginManager;
 
     private ScheduledExecutorService executor;
+    private ScheduledFuture<?> monitorTaskScheduledFuture;
 
     private boolean isTaskRunning = false;
 
@@ -53,7 +56,7 @@ public class PluginMonitor
     }
 
     /**
-     * Start periodically checking the plugin directory.
+     * Initialize the monitor.
      */
     public void start()
     {
@@ -64,25 +67,59 @@ public class PluginMonitor
 
         executor = new ScheduledThreadPoolExecutor( 1 );
 
-        // See if we're in development mode. If so, check for new plugins once every 5 seconds Otherwise, default to every 20 seconds.
-        if ( Boolean.getBoolean( "developmentMode" ) )
+        if ( JiveGlobals.getBooleanProperty( "plugins.loading.monitor.enabled", true ) )
         {
-            executor.scheduleWithFixedDelay( new MonitorTask(), 0, 5, TimeUnit.SECONDS );
+            startMonitoring();
         }
         else
         {
-            executor.scheduleWithFixedDelay( new MonitorTask(), 0, 20, TimeUnit.SECONDS );
+            // Upon start, the monitor should execute at least once - otherwise, plugins will not load at all.
+            runNow( false );
+        }
+
+        PropertyEventDispatcher.addListener( this );
+    }
+
+    /**
+     * Start periodically checking the plugin directory.
+     */
+    public void startMonitoring()
+    {
+        // See if we're in development mode. If so, check for new plugins once every 5 seconds Otherwise, default to every 20 seconds.
+        if ( Boolean.getBoolean( "developmentMode" ) )
+        {
+            monitorTaskScheduledFuture = executor.scheduleWithFixedDelay( new MonitorTask(), 0, 5, TimeUnit.SECONDS );
+        }
+        else
+        {
+            monitorTaskScheduledFuture = executor.scheduleWithFixedDelay( new MonitorTask(), 0, JiveGlobals.getIntProperty( "plugins.loading.monitor.interval", 20 ), TimeUnit.SECONDS );
+        }
+    }
+
+    /**
+     * Shutdown the monitor.
+     */
+    public void stop()
+    {
+        PropertyEventDispatcher.removeListener( this );
+
+        stopMonitoring();
+
+        if ( executor != null )
+        {
+            executor.shutdown();
         }
     }
 
     /**
      * Stop periodically checking the plugin directory.
      */
-    public void stop()
+    public void stopMonitoring()
     {
-        if ( executor != null )
+        if ( monitorTaskScheduledFuture != null && !monitorTaskScheduledFuture.isDone() )
         {
-            executor.shutdown();
+            // Cancel, with an interrupt if this task has been cancelled before.
+            monitorTaskScheduledFuture.cancel( monitorTaskScheduledFuture.isCancelled() );
         }
     }
 
@@ -108,6 +145,47 @@ public class PluginMonitor
                 Log.warn( "An exception occurred while waiting for a check of the plugin directory to complete.", e );
             }
         }
+    }
+
+    @Override
+    public void propertySet( final String property, final Map<String, Object> params )
+    {
+        switch ( property )
+        {
+            case "plugins.loading.monitor.enabled":
+                if ( JiveGlobals.getBooleanProperty( "plugins.loading.monitor.enabled", true ) ) {
+                    startMonitoring();
+                } else {
+                    stopMonitoring();
+                }
+                break;
+
+            case "plugins.loading.monitor.interval":
+                // When monitoring, restart the monitor, which will re-read the interval.
+                if ( monitorTaskScheduledFuture != null && !monitorTaskScheduledFuture.isDone() ) {
+                    stopMonitoring();
+                    startMonitoring();
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void propertyDeleted( final String property, final Map<String, Object> params )
+    {
+        propertySet( property, params );
+    }
+
+    @Override
+    public void xmlPropertySet( final String property, final Map<String, Object> params )
+    {
+        propertySet( property, params );
+    }
+
+    @Override
+    public void xmlPropertyDeleted( final String property, final Map<String, Object> params )
+    {
+        propertySet( property, params );
     }
 
     private class MonitorTask implements Runnable

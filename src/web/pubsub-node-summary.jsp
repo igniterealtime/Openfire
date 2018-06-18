@@ -59,54 +59,29 @@
     if ( pubSubServiceInfo != null )
     {
         nodes = pubSubServiceInfo.getLeafNodes();
+        nodes.sort(Comparator.comparing(node -> node.getNodeID().toLowerCase()));
     }
     else
     {
         nodes = Collections.emptyList();
     }
 
-    Collections.sort(nodes, new Comparator<Node>() {
-        public int compare(Node node1, Node node2) {
-            return node1.getNodeID().toLowerCase().compareTo(node2.getNodeID().toLowerCase());
-        }
-    });
-
     // By default, display all nodes
-    Predicate<Node> filter = new Predicate<Node>() {
-        @Override
-        public boolean test(final Node node) {
-            return true;
-        }
-    };
+    Predicate<Node> filter = node -> true;
     final String searchNodeId = ParamUtils.getStringParameter(request, "searchNodeId", "");
     if(!searchNodeId.trim().isEmpty()) {
         final String searchCriteria = searchNodeId.trim().toLowerCase();
-        filter = filter.and(new Predicate<Node>() {
-            @Override
-            public boolean test(final Node node) {
-                return node.getNodeID().toLowerCase().contains(searchCriteria);
-            }
-        });
+        filter = filter.and(node -> node.getNodeID().toLowerCase().contains(searchCriteria));
     }
     final String searchNodeName = ParamUtils.getStringParameter(request, "searchNodeName", "");
     if(!searchNodeName.trim().isEmpty()) {
         final String searchCriteria = searchNodeName.trim().toLowerCase();
-        filter = filter.and(new Predicate<Node>() {
-            @Override
-            public boolean test(final Node node) {
-                return node.getName().toLowerCase().contains(searchCriteria);
-            }
-        });
+        filter = filter.and(node -> node.getName().toLowerCase().contains(searchCriteria));
     }
     final String searchNodeDescription = ParamUtils.getStringParameter(request, "searchNodeDescription", "");
     if(!searchNodeDescription.trim().isEmpty()) {
         final String searchCriteria = searchNodeDescription.trim().toLowerCase();
-        filter = filter.and(new Predicate<Node>() {
-            @Override
-            public boolean test(final Node node) {
-                return node.getDescription().toLowerCase().contains(searchCriteria);
-            }
-        });
+        filter = filter.and(node -> node.getDescription().toLowerCase().contains(searchCriteria));
     }
 
     final ListPager<Node> listPager = new ListPager<>(request, response, nodes, filter, "searchNodeId", "searchNodeName", "searchNodeDescription");

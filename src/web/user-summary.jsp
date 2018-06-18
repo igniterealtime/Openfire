@@ -32,7 +32,6 @@
 <%@ page import="java.util.function.Predicate" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
-<%@ page import="java.util.function.Function" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -62,45 +61,20 @@
     final String searchUsername = ParamUtils.getStringParameter(request, "searchUsername", "");
     if (!searchUsername.trim().isEmpty()) {
         final String searchCriteria = searchUsername.trim().toLowerCase();
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return user.getUsername().toLowerCase().contains(searchCriteria);
-            }
-        });
+        filter = filter.and(user -> user.getUsername().toLowerCase().contains(searchCriteria));
     }
     final String searchName = ParamUtils.getStringParameter(request, "searchName", "");
     if (!searchName.trim().isEmpty()) {
         final String searchCriteria = searchName.trim().toLowerCase();
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return user.getName().toLowerCase().contains(searchCriteria);
-            }
-        });
+        filter = filter.and(user -> user.getName().toLowerCase().contains(searchCriteria));
     }
     final String searchGroup = ParamUtils.getStringParameter(request, "searchGroup", "");
     final GroupManager groupManager = webManager.getGroupManager();
     if (!searchGroup.isEmpty()) {
-        final Predicate<String> searchPredicate = new Predicate<String>() {
-            @Override
-            public boolean test(final String groupName) {
-                return searchGroup.equals(groupName);
-            }
-        };
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return groupManager.getGroups(user).stream()
-                    .map(new Function<Group, String>() {
-                        @Override
-                        public String apply(final Group group) {
-                            return group.getName();
-                        }
-                    })
-                    .anyMatch(searchPredicate);
-            }
-        });
+        final Predicate<String> searchPredicate = searchGroup::equals;
+        filter = filter.and(user -> groupManager.getGroups(user).stream()
+            .map(Group::getName)
+            .anyMatch(searchPredicate));
     }
 
     final ListPager<User> listPager = new ListPager<>(request, response, new ArrayList<>(webManager.getUserManager().getUsers()), filter,

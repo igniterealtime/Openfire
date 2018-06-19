@@ -94,7 +94,6 @@
     SessionResultFilter sessionResultFilter = SessionResultFilter.createDefaultSessionFilter();
     sessionResultFilter.setSortOrder(order);
     // Filter out the dodgy looking sessions
-    // Note; dodgy looking cast as we're stuck using Java 7 to compile JSPs - see OF-1528
     List<ClientSession> sessions = sessionManager.getSessions(sessionResultFilter)
         .stream()
         .filter(clientSession -> {

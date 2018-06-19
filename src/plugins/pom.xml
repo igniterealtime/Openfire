@@ -166,6 +166,7 @@
 
         <!-- Versions -->
         <openfire.version>4.3.0-SNAPSHOT</openfire.version>
+        <jetty.version>9.4.11.v20180605</jetty.version>
     </properties>
 
     <profiles>
@@ -278,7 +279,7 @@
                 <plugin>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-jspc-maven-plugin</artifactId>
-                    <version>9.2.14.v20151106</version>
+                    <version>${jetty.version}</version>
                     <configuration>
                         <webAppSourceDirectory>${project.build.sourceDirectory}/../web</webAppSourceDirectory>
                         <webXml>${project.build.sourceDirectory}/../web/WEB-INF/web.xml</webXml>
@@ -293,6 +294,8 @@
                                 <jspc>
                                     <package>org.jivesoftware.openfire.plugin.${plugin.name}</package>
                                 </jspc>
+                                <sourceVersion>1.8</sourceVersion>
+                                <targetVersion>1.8</targetVersion>
                             </configuration>
                         </execution>
                     </executions>

@@ -35,6 +35,7 @@
 <%  // Get parameters
     String userJID = ParamUtils.getParameter(request,"userJID");
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
+    boolean allowAllRegisteredUsers =  ParamUtils.getBooleanParameter(request,"allowAllRegisteredUsers");
     boolean add = request.getParameter("add") != null;
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
@@ -125,12 +126,14 @@
         // Handle an add
         if (add) {
             mucService.addUsersAllowedToCreate(allowedJIDs);
+            mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
             // Log the event
             webManager.logEvent("updated MUC room creation permissions for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
-    
+
+        // Handle delete
         if (delete) {
             // Remove the user from the allowed list
             mucService.removeUserAllowedToCreate(GroupJID.fromString(userJID));
@@ -249,6 +252,10 @@
         <fmt:message key="muc.create.permission.allowed_users" />
     </div>
     <div class="jive-contentBox">
+        <p>
+            <input type="checkbox" id="allowAllRegisteredUsers" name="allowAllRegisteredUsers" <%=mucService.isAllRegisteredUsersAllowedToCreate()?"checked":""%> onChange="this.form.submit()">
+            <label for="allowAllRegisteredUsers"><fmt:message key="muc.create.permission.allow_registered" /></label>
+        </p>
         <p>
         <label for="groupJIDs"><fmt:message key="muc.create.permission.add_group" /></label><br/>
         <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 

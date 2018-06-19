@@ -49,7 +49,7 @@ public class InterpretedXMLPrinter implements PacketInterceptor {
 
     @Override
     public void interceptPacket(final Packet packet, final Session session, final boolean incoming, final boolean processed) {
-        if (!processed) {
+        if (session != null && !processed) {
             String hostAddress;
             try {
                 hostAddress = "/" + session.getHostAddress() + ":?????";

@@ -4,14 +4,14 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 java.util.Map,
-                 org.jivesoftware.openfire.XMPPServer"
-%>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
 
 <%
     // Redirect if we've already run setup:
@@ -38,6 +38,10 @@
     for (String name : xmlSettings.keySet()) {
         String value = xmlSettings.get(name);
         JiveGlobals.setXMLProperty(name, value);
+    }
+    Set<String> encryptedXmppSettings = (Set<String>) session.getAttribute("encryptedSettings");
+    for (final String encryptedSetting : encryptedXmppSettings) {
+        JiveGlobals.setPropertyEncrypted(encryptedSetting, true);
     }
     // Notify that the XMPP server that setup is finished.
     XMPPServer.getInstance().finishSetup();

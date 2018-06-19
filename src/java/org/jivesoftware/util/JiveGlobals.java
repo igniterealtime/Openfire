@@ -27,8 +27,19 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.TimeZone;
+import java.util.TimerTask;
+import java.util.TreeSet;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -980,7 +991,7 @@ public class JiveGlobals {
      *            The name of the property
      * @return {@code true} if the property is stored using encryption, otherwise {@code false}
      */
-    static boolean isXMLPropertyEncrypted(final String name) {
+    public static boolean isXMLPropertyEncrypted(final String name) {
         if (securityProperties == null) {
             loadSecurityProperties();
         }

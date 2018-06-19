@@ -1,16 +1,16 @@
 <%--
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 java.util.Map,
-                 java.util.HashMap,
-                 java.net.InetAddress,
-                 org.jivesoftware.openfire.XMPPServer"
-%>
-<%@ page import="java.net.UnknownHostException" %>
-<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.net.InetAddress" %>
+<%@ page import="java.net.UnknownHostException" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.HashSet" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -97,6 +97,8 @@
             xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
             session.setAttribute("xmlSettings", xmlSettings);
+
+            session.setAttribute("encryptedSettings", new HashSet<String>());
 
             JiveGlobals.setupPropertyEncryptionAlgorithm(encryptionAlgorithm);
             JiveGlobals.setupPropertyEncryptionKey(encryptionKey);

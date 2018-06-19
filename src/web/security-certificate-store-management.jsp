@@ -1,6 +1,4 @@
 <%@ page errorPage="error.jsp"%>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.util.HashMap" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
@@ -10,6 +8,8 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.util.*" %>
+<%@ page import="static org.jivesoftware.openfire.spi.ConnectionType.SOCKET_C2S" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -24,36 +24,18 @@
     final Map<String, String> errors = new HashMap<>();
     pageContext.setAttribute( "errors", errors );
 
-    // OF-1415: Show distinct boxes for all connection types, but only when their configuration differs!
-    boolean showAll = false;
-    CertificateStoreConfiguration identityStoreConfiguration = null;
-    CertificateStoreConfiguration trustStoreConfiguration = null;
-    for ( ConnectionType connectionType : ConnectionType.values() )
+    boolean showAll = certificateStoreManager.usesDistinctConfigurationForEachType();
+    if ( !showAll )
     {
-        if ( identityStoreConfiguration == null )
-        {
-            identityStoreConfiguration = certificateStoreManager.getIdentityStoreConfiguration( connectionType );
-        }
-        if ( !identityStoreConfiguration.equals( certificateStoreManager.getIdentityStoreConfiguration( connectionType ) ) )
-        {
-            showAll = true;
-            break;
-        }
-
-        // Disabled this until we sort out the difference between regular trust stores and the client trust store.
-//        if ( trustStoreConfiguration == null )
-//        {
-//            trustStoreConfiguration = certificateStoreManager.getTrustStoreConfiguration( connectionType );
-//        }
-//        if ( !trustStoreConfiguration.equals( certificateStoreManager.getTrustStoreConfiguration( connectionType ) ) )
-//        {
-//            showAll = true;
-//            break;
-//        }
+        // Allow 'showAll' to be overridden, even when the current configuration does not call for an 'expanded' view.
+        showAll = ParamUtils.getBooleanParameter( request, "showAll", false );
     }
 
+    // OF-1415: Show distinct boxes for all connection types, but only when their configuration differs!
     pageContext.setAttribute( "showAll", showAll );
-    pageContext.setAttribute( "connectionTypes", (showAll ? ConnectionType.values() : new ConnectionType[] { ConnectionType.SOCKET_C2S } ));
+    pageContext.setAttribute( "connectionTypes", ConnectionType.values() );
+    pageContext.setAttribute( "defaultClientConnectionType", SOCKET_C2S );
+    pageContext.setAttribute( "defaultServerConnectionType", ConnectionType.SOCKET_S2S );
     pageContext.setAttribute( "certificateStoreManager", certificateStoreManager );
 
     boolean update = request.getParameter("update") != null;
@@ -70,18 +52,33 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
     if ( update ) {
-        ConnectionType connectionType = null;
-        try {
-            connectionType = ConnectionType.valueOf( request.getParameter( "connectionType" ) );
-        } catch ( IllegalArgumentException ex ) {
-            Log.warn( ex );
-            errors.put( "connectionType", ex.getMessage() );
+        final String cType = request.getParameter( "connectionType" );
+        final boolean updateAll = "all".equals( cType );
+
+        Set<ConnectionType> toUpdate = new HashSet<>();
+        if ( updateAll )
+        {
+            toUpdate.addAll( Arrays.asList( ConnectionType.values() ) );
+        }
+        else
+        {
+            try
+            {
+                toUpdate.add( ConnectionType.valueOf( cType ) );
+            }
+            catch ( IllegalArgumentException ex )
+            {
+                Log.warn( ex );
+                errors.put( "connectionType", ex.getMessage() );
+            }
         }
 
         final String locKey = request.getParameter( "loc-key" );
         final String pwdKey = request.getParameter( "pwd-key" );
-        final String locTrust = request.getParameter( "loc-trust" );
-        final String pwdTrust = request.getParameter( "pwd-trust" );
+        final String locTrustS2S = request.getParameter( "loc-trust-s2s" );
+        final String pwdTrustS2S = request.getParameter( "pwd-trust-s2s" );
+        final String locTrustC2S = request.getParameter( "loc-trust-c2s" );
+        final String pwdTrustC2S = request.getParameter( "pwd-trust-c2s" );
 
         if ( locKey == null || locKey.isEmpty() ) {
             errors.put( "locKey", "Identity Store location must be defined." );
@@ -89,25 +86,67 @@
         if ( pwdKey == null || pwdKey.isEmpty() ) {
             errors.put( "pwdKey", "Identity Store password must be defined." );
         }
-        if ( locTrust == null || locTrust.isEmpty() ) {
-            errors.put( "locTrust", "Trust Store location must be defined." );
-        }
-        if ( pwdTrust == null || pwdTrust.isEmpty() ) {
-            errors.put( "pwdTrust", "Trust Store password must be defined." );
+
+        for ( final ConnectionType connectionType : toUpdate )
+        {
+            if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S ) )
+            {
+                if ( locTrustC2S == null || locTrustC2S.isEmpty() )
+                {
+                    errors.put( "locTrustC2S", "Trust Store (C2S) location must be defined." );
+                }
+                if ( pwdTrustC2S == null || pwdTrustC2S.isEmpty() )
+                {
+                    errors.put( "pwdTrustC2S", "Trust Store (C2S) password must be defined." );
+                }
+            }
+            else
+            {
+                if ( locTrustS2S == null || locTrustS2S.isEmpty() )
+                {
+                    errors.put( "locTrustS2S", "Trust Store (S2S) location must be defined." );
+                }
+                if ( pwdTrustS2S == null || pwdTrustS2S.isEmpty() )
+                {
+                    errors.put( "pwdTrustS2S", "Trust Store (S2S) password must be defined." );
+                }
+            }
         }
 
         if ( errors.isEmpty() ) {
-            try
+            for ( final ConnectionType connectionType : toUpdate )
             {
-                final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( "jks", new File( locKey ), pwdKey.toCharArray() );
-                final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( "jks", new File( locTrust ), pwdTrust.toCharArray() );
-                certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
-                certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
-                pageContext.setAttribute( "updated", true );
-            } catch ( Exception ex ) {
-                Log.warn( ex );
-                errors.put( "update", ex.getMessage() );
+                try
+                {
+                    final String locTrust;
+                    final String pwdTrust;
+                    if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S) )
+                    {
+                        locTrust = locTrustC2S;
+                        pwdTrust = pwdTrustC2S;
+                    }
+                    else
+                    {
+                        locTrust = locTrustS2S;
+                        pwdTrust = pwdTrustS2S;
+                    }
+
+                    final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( "jks", new File( locKey ), pwdKey.toCharArray() );
+                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( "jks", new File( locTrust ), pwdTrust.toCharArray() );
+                    certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
+                    certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
+                }
+                catch ( Exception ex )
+                {
+                    Log.warn( ex );
+                    errors.put( "update", ex.getMessage() );
+                }
             }
+
+            // Log the event
+            webManager.logEvent("Updated certificate store configuration", Arrays.toString( toUpdate.toArray() ) );
+            response.sendRedirect("security-certificate-store-management.jsp?updated=true&showAll=" + showAll );
+            return;
         }
     }
 %>
@@ -135,7 +174,7 @@
 </c:forEach>
 
 <!-- Display success report, but only if there were no errors. -->
-<c:if test="${updated and empty errors}">
+<c:if test="${param.updated and empty errors}">
     <admin:infoBox type="success">
         <fmt:message key="ssl.certificates.store-management.saved_successfully"/>
     </admin:infoBox>
@@ -148,108 +187,104 @@
     <fmt:message key="ssl.certificates.store-management.info-2"/>
 </p>
 <p>
-<fmt:message key="ssl.certificates.store-management.info-3"/></p>
+    <fmt:message key="ssl.certificates.store-management.info-3"/>
+    <c:if test="${not showAll}">
+        <fmt:message key="ssl.certificates.store-management.info-4"/>
+    </c:if>
+</p>
 
-<c:forEach items="${connectionTypes}" var="connectionType">
+<c:choose>
+    <c:when test="${showAll}">
+        <c:forEach items="${connectionTypes}" var="connectionType">
 
-    <c:set var="title">
-        <c:choose>
-            <c:when test="${!showAll}"><fmt:message key="ssl.certificates.store-management.combined-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'COMPONENT'}"><fmt:message key="ssl.certificates.store-management.component-stores.title"/></c:when>
-            <c:when test="${connectionType eq 'CONNECTION_MANAGER'}"><fmt:message key="ssl.certificates.store-management.connection-manager-stores.title"/></c:when>
-        </c:choose>
-    </c:set>
+            <c:set var="title">
+                <c:choose>
+                    <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'COMPONENT'}"><fmt:message key="ssl.certificates.store-management.component-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'CONNECTION_MANAGER'}"><fmt:message key="ssl.certificates.store-management.connection-manager-stores.title"/></c:when>
+                </c:choose>
+            </c:set>
 
-    <c:set var="description">
-        <c:choose>
-            <c:when test="${!showAll}"><fmt:message key="ssl.certificates.store-management.combined-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'COMPONENT'}"><fmt:message key="ssl.certificates.store-management.component-stores.info"/></c:when>
-            <c:when test="${connectionType eq 'CONNECTION_MANAGER'}"><fmt:message key="ssl.certificates.store-management.connection-manager-stores.info"/></c:when>
-        </c:choose>
-    </c:set>
+            <c:set var="description">
+                <c:choose>
+                    <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'COMPONENT'}"><fmt:message key="ssl.certificates.store-management.component-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'CONNECTION_MANAGER'}"><fmt:message key="ssl.certificates.store-management.connection-manager-stores.info"/></c:when>
+                </c:choose>
+            </c:set>
 
-    <form action="security-certificate-store-management.jsp" method="post">
-        <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="connectionType" value="${connectionType}"/>
+            <form action="security-certificate-store-management.jsp" method="post">
+                <input type="hidden" name="csrf" value="${csrf}">
+                <input type="hidden" name="connectionType" value="${connectionType}"/>
 
-        <admin:contentBox title="${title}">
-            <p>
-                <c:out value="${description}"/>
-            </p>
+                <admin:contentBox title="${title}">
+                    <p>
+                        <c:out value="${description}"/>
+                    </p>
 
-            <h4><fmt:message key="ssl.certificates.identity-store"/></h4>
+                    <admin:identityStoreConfig connectionType="${connectionType}"/>
 
-            <c:if test="${empty certificateStoreManager.getIdentityStore(connectionType)}">
-                <admin:infobox type="warning"><fmt:message key="ssl.certificates.store-management.error.cannot-access"/></admin:infobox>
-            </c:if>
+                    <br/>
 
-            <c:set var="pwdKey" value=""/>
-            <c:forEach items="${certificateStoreManager.getIdentityStoreConfiguration(connectionType).password}" var="c">
-                <c:set var="pwdKey" value="${pwdKey}${c}"/>
-            </c:forEach>
+                    <admin:trustStoreConfig connectionType="${connectionType}"/>
 
-            <table cellpadding="0" cellspacing="0" border="0">
-                <tbody>
-                <tr>
-                    <td><label for="loc-key"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-key" name="loc-key" type="text" size="80" value="${certificateStoreManager.getIdentityStoreConfiguration(connectionType).file}"/></td>
-                </tr>
-                <tr>
-                    <td><label for="pwd-key"><fmt:message key="ssl.certificates.store-management.password_label"/>:</label></td>
-                    <td><input id="pwd-key" name="pwd-key" type="password" size="30" value="${pwdKey}"/></td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td><a href="security-keystore.jsp?connectionType=${connectionType}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
-                </tr>
-                </tbody>
-            </table>
+                    <br/>
 
-            <br/>
-            <h4><fmt:message key="ssl.certificates.trust-store"/></h4>
+                    <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 
-            <c:if test="${empty certificateStoreManager.getTrustStore(connectionType)}">
-                <admin:infobox type="warning"><fmt:message key="ssl.certificates.store-management.error.cannot-access"/></admin:infobox>
-            </c:if>
+                </admin:contentBox>
 
-            <c:set var="pwdTrust" value=""/>
-            <c:forEach items="${certificateStoreManager.getTrustStoreConfiguration(connectionType).password}" var="c">
-                <c:set var="pwdTrust" value="${pwdTrust}${c}"/>
-            </c:forEach>
+            </form>
 
-            <table cellpadding="0" cellspacing="0" border="0">
-                <tbody>
-                <tr>
-                    <td><label for="loc-trust"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-trust" name="loc-trust" type="text" size="80" value="${certificateStoreManager.getTrustStoreConfiguration(connectionType).file}"/></td>
-                </tr>
-                <tr>
-                    <td><label for="pwd-trust"><fmt:message key="ssl.certificates.store-management.password_label"/>:</label></td>
-                    <td><input id="pwd-trust" name="pwd-trust" type="password" size="30" value="${pwdTrust}"/></td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td><a href="security-truststore.jsp?connectionType=${connectionType}"><fmt:message key="ssl.certificates.store-management.manage"/></a></td>
-                </tr>
-                </tbody>
-            </table>
+        </c:forEach>
 
-            <br/>
-            <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+    </c:when>
+    <c:otherwise>
 
-        </admin:contentBox>
+        <c:set var="title">
+            <fmt:message key="ssl.certificates.store-management.combined-stores.title"/>
+        </c:set>
 
-    </form>
+        <c:set var="description">
+            <fmt:message key="ssl.certificates.store-management.combined-stores.info"/>
+        </c:set>
 
-</c:forEach>
+        <form action="security-certificate-store-management.jsp" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
+            <input type="hidden" name="connectionType" value="all"/>
 
+            <admin:contentBox title="${title}">
+                <p>
+                    <c:out value="${description}"/>
+                </p>
+
+                <c:set var="connectionType" value="SOCKET_S2S"/>
+                <admin:identityStoreConfig connectionType="${connectionType}"/>
+
+                <br/>
+
+                <c:set var="connectionType" value="SOCKET_S2S"/>
+                <admin:trustStoreConfig connectionType="${connectionType}"/>
+
+                <br/>
+
+                <c:set var="connectionType" value="SOCKET_C2S"/>
+                <admin:trustStoreConfig connectionType="${connectionType}"/>
+
+                <br/>
+
+                <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
+
+            </admin:contentBox>
+
+        </form>
+    </c:otherwise>
+</c:choose>
 </body>
 </html>

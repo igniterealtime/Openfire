@@ -24,9 +24,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
-import org.apache.mina.core.filterchain.IoFilter;
-import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -35,9 +32,6 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
 
 /**
  * Debugger plugin that prints XML traffic to stdout. By default it will only print
@@ -91,47 +85,14 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         }
     }
 
-    private void addFilterToChain(final SocketAcceptor acceptor, final IoFilter filter) {
-        if (acceptor == null) {
-            LOGGER.debug("Not adding filter '{}' to acceptor that is null.", RawPrintFilter.FILTER_NAME);
-            return;
-        }
-
-        final DefaultIoFilterChainBuilder chain = acceptor.getFilterChain();
-        if (chain.contains(COMPRESSION_FILTER_NAME)) {
-            LOGGER.debug("Adding filter '{}' as the first filter after the compression filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
-            chain.addAfter(COMPRESSION_FILTER_NAME, RawPrintFilter.FILTER_NAME, filter);
-        } else if (chain.contains(TLS_FILTER_NAME)) {
-            LOGGER.debug("Adding filter '{}' as the first filter after the TLS filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
-            chain.addAfter(TLS_FILTER_NAME, RawPrintFilter.FILTER_NAME, filter);
-        } else {
-            LOGGER.debug("Adding filter '{}' as the last filter in acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
-            chain.addLast(RawPrintFilter.FILTER_NAME, filter);
-        }
-    }
-
-    private void removeFilterFromChain(final SocketAcceptor acceptor) {
-        if (acceptor == null) {
-            LOGGER.debug("Not removing filter '{}' from acceptor that is null.", RawPrintFilter.FILTER_NAME);
-            return;
-        }
-
-        if (acceptor.getFilterChain().contains(RawPrintFilter.FILTER_NAME)) {
-            LOGGER.debug("Removing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
-            acceptor.getFilterChain().remove(RawPrintFilter.FILTER_NAME);
-        } else {
-            LOGGER.debug("Unable to remove non-existing filter '{}' from acceptor {}", RawPrintFilter.FILTER_NAME, acceptor);
-        }
-    }
-
     private void addInterceptors() {
         // Add filter to filter chain builder
         final ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
 
-        addFilterToChain(connManager.getSocketAcceptor(), defaultPortFilter);
-        addFilterToChain(connManager.getSSLSocketAcceptor(), oldPortFilter);
-        addFilterToChain(connManager.getComponentAcceptor(), componentPortFilter);
-        addFilterToChain(connManager.getMultiplexerSocketAcceptor(), multiplexerPortFilter);
+        defaultPortFilter.addFilterToChain(connManager.getSocketAcceptor());
+        oldPortFilter.addFilterToChain(connManager.getSSLSocketAcceptor());
+        componentPortFilter.addFilterToChain(connManager.getComponentAcceptor());
+        multiplexerPortFilter.addFilterToChain(connManager.getMultiplexerSocketAcceptor());
 
         interpretedPrinter.wasEnabled(interpretedPrinter.isEnabled());
 
@@ -145,10 +106,11 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         PropertyEventDispatcher.removeListener(this);
         // Remove filter from filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        removeFilterFromChain(connManager.getSocketAcceptor());
-        removeFilterFromChain(connManager.getSSLSocketAcceptor());
-        removeFilterFromChain(connManager.getComponentAcceptor());
-        removeFilterFromChain(connManager.getMultiplexerSocketAcceptor());
+
+        defaultPortFilter.removeFilterFromChain(connManager.getSocketAcceptor());
+        oldPortFilter.removeFilterFromChain(connManager.getSSLSocketAcceptor());
+        componentPortFilter.removeFilterFromChain(connManager.getComponentAcceptor());
+        multiplexerPortFilter.removeFilterFromChain(connManager.getMultiplexerSocketAcceptor());
 
         // Remove the filters from existing sessions
         defaultPortFilter.shutdown();
@@ -192,26 +154,28 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
     }
 
     private void enableOrDisableLogger(final String property, final boolean enabled) {
-        switch (property) {
-            case InterpretedXMLPrinter.PROPERTY_ENABLED:
-                interpretedPrinter.wasEnabled(enabled);
-                break;
-            case PROPERTY_LOG_TO_STDOUT_ENABLED:
-                loggingToStdOut = enabled;
-                LOGGER.debug("STDOUT logger {}", enabled ? "enabled" : "disabled");
-                break;
-            case PROPERTY_LOG_TO_FILE_ENABLED:
-                loggingToFile = enabled;
-                LOGGER.debug("file logger {}", enabled ? "enabled" : "disabled");
-                break;
-            default:
-                // Is it one of the RawPrintFilters?
-                for (final RawPrintFilter filter : rawPrintFilters) {
-                    if(filter.getPropertyName().equals(property)) {
-                        filter.wasEnabled(enabled);
-                        break;
+        if (property.startsWith(PROPERTY_PREFIX)) {
+            switch (property) {
+                case InterpretedXMLPrinter.PROPERTY_ENABLED:
+                    interpretedPrinter.wasEnabled(enabled);
+                    break;
+                case PROPERTY_LOG_TO_STDOUT_ENABLED:
+                    loggingToStdOut = enabled;
+                    LOGGER.debug("STDOUT logger {}", enabled ? "enabled" : "disabled");
+                    break;
+                case PROPERTY_LOG_TO_FILE_ENABLED:
+                    loggingToFile = enabled;
+                    LOGGER.debug("file logger {}", enabled ? "enabled" : "disabled");
+                    break;
+                default:
+                    // Is it one of the RawPrintFilters?
+                    for (final RawPrintFilter filter : rawPrintFilters) {
+                        if (filter.getPropertyName().equals(property)) {
+                            filter.wasEnabled(enabled);
+                            break;
+                        }
                     }
-                }
+            }
         }
     }
 

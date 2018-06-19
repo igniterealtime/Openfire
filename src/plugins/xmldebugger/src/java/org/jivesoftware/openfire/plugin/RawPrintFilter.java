@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.plugin;
 
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
+
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -24,9 +27,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.core.write.WriteRequest;
+import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
@@ -39,7 +44,7 @@ import org.jivesoftware.util.JiveGlobals;
 public class RawPrintFilter extends IoFilterAdapter {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    static final String FILTER_NAME = "rawDebugger";
+    private static final String FILTER_NAME = "rawDebugger";
 
     private DebuggerPlugin plugin;
     private final String prefix;
@@ -57,6 +62,40 @@ public class RawPrintFilter extends IoFilterAdapter {
     String getPropertyName() {
         return propertyName;
     }
+
+    void addFilterToChain(final SocketAcceptor acceptor) {
+        if (acceptor == null) {
+            LOGGER.debug("Not adding filter '{}' for {} to acceptor that is null.", FILTER_NAME, prefix);
+            return;
+        }
+
+        final DefaultIoFilterChainBuilder chain = acceptor.getFilterChain();
+        if (chain.contains(COMPRESSION_FILTER_NAME)) {
+            LOGGER.debug("Adding filter '{}' for {} as the first filter after the compression filter in acceptor {}", FILTER_NAME, prefix, acceptor);
+            chain.addAfter(COMPRESSION_FILTER_NAME, FILTER_NAME, this);
+        } else if (chain.contains(TLS_FILTER_NAME)) {
+            LOGGER.debug("Adding filter '{}' for {} as the first filter after the TLS filter in acceptor {}", FILTER_NAME, prefix, acceptor);
+            chain.addAfter(TLS_FILTER_NAME, FILTER_NAME, this);
+        } else {
+            LOGGER.debug("Adding filter '{}' for {} as the last filter in acceptor {}", FILTER_NAME, prefix, acceptor);
+            chain.addLast(FILTER_NAME, this);
+        }
+    }
+
+    void removeFilterFromChain(final SocketAcceptor acceptor) {
+        if (acceptor == null) {
+            LOGGER.debug("Not removing filter '{}' for {} from acceptor that is null.", FILTER_NAME, prefix);
+            return;
+        }
+
+        if (acceptor.getFilterChain().contains(FILTER_NAME)) {
+            LOGGER.debug("Removing filter '{}' for {} from acceptor {}", FILTER_NAME, prefix, acceptor);
+            acceptor.getFilterChain().remove(FILTER_NAME);
+        } else {
+            LOGGER.debug("Unable to remove non-existing filter '{}' for {} from acceptor {}", FILTER_NAME, prefix, acceptor);
+        }
+    }
+
 
     @Override
     public void messageReceived(final NextFilter nextFilter, final IoSession session, final Object message) throws Exception {
@@ -80,7 +119,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     private String messagePrefix(final IoSession session, final String messageType) {
-        return String.format("%s %-16s - %s - (%11s)", prefix, session.getRemoteAddress() == null ? " " : session.getRemoteAddress(), messageType, session.hashCode());
+        return String.format("%s %-16s - %s - (%11s)", prefix, session.getRemoteAddress() == null ? "" : session.getRemoteAddress(), messageType, session.hashCode());
     }
 
     @Override

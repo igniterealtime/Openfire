@@ -8,7 +8,7 @@
     <name>Broadcast</name>
     <description>Broadcasts messages to users.</description>
     <author>Jive Software</author>
-    <version>1.9.0</version>
+    <version>1.9.1-SNAPSHOT</version>
     <date>9/13/2013</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>3.9.0</minServerVersion>

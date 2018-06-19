@@ -8,7 +8,7 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>tikitoken</artifactId>
-    <version>0.2</version>
+    <version>0.2.1-SNAPSHOT</version>
     <name>TikiToken Plugin</name>
     <description>Allows users to authenticate with a Tiki token.</description>
 

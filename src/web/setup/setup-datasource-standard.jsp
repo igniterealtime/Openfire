@@ -6,6 +6,7 @@
                  org.jivesoftware.database.DefaultConnectionProvider,
                  org.jivesoftware.util.ClassUtils,
                  org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.openfire.XMPPServer,
@@ -238,23 +239,30 @@
 
 <%  // DB preset data
     List<String[]> presets = new ArrayList<String []>();
-    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://HOSTNAME:3306/DATABASENAME?rewriteBatchedStatements=true"});
-    presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID"});
-    presets.add(new String[]{"Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire"});
-    presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME"});
-    presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"});
-    presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"});
+    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://HOSTNAME:3306/DATABASENAME?rewriteBatchedStatements=true", LocaleUtils.getLocalizedString("setup.datasource.standard.preset-note.mysql")});
+    presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID", ""});
+    presets.add(new String[]{"Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire", ""});
+    presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME", ""});
+    presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME", ""});
+    presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire", ""});
 %>
 <script language="JavaScript" type="text/javascript">
 var data = new Array();
 <%  for (int i=0; i<presets.size(); i++) {
         String[] data = presets.get(i);
 %>
-    data[<%= i %>] = new Array('<%= data[0] %>','<%= data[1] %>','<%= data[2] %>');
+    data[<%= i %>] = new Array('<%= data[0] %>','<%= data[1] %>','<%= data[2] %>','<%= data[3] %>');
 <%  } %>
 function populate(i) {
-    document.dbform.driver.value=data[i][1];
-    document.dbform.serverURL.value=data[i][2];
+    if (i === "") {
+        document.dbform.driver.value = "";
+        document.dbform.serverURL.value = "";
+        document.getElementById('setup.datasource.standard.preset-note').innerHTML = "";
+    } else {
+        document.dbform.driver.value = data[i][1];
+        document.dbform.serverURL.value = data[i][2];
+        document.getElementById('setup.datasource.standard.preset-note').innerHTML = data[i][3];
+    }
 }
 var submitted = false;
 function checkSubmit() {
@@ -274,11 +282,13 @@ function checkSubmit() {
     <td>
         <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
-            <%  for (int i=0; i<presets.size(); i++) {
+            <%  String presetNote = "";
+                for (int i=0; i<presets.size(); i++) {
                     String[] data = presets.get(i);
                     final String selected;
                     if(data[1].equals(driver) ) {
                         selected = "SELECTED";
+                        presetNote = data[3];
                     } else {
                         selected = "";
                     }
@@ -286,6 +296,7 @@ function checkSubmit() {
                 <option value="<%= i %>" <%=selected%>> &#149; <%= data[0] %>
             <%  } %>
         </select>
+        <span id="setup.datasource.standard.preset-note"><%=presetNote%></span>
     </td>
 </tr>
 <tr valign="top">

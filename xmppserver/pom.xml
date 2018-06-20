@@ -268,7 +268,7 @@
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.7</version>
         </dependency>
         <dependency>
             <groupId>jmdns</groupId>

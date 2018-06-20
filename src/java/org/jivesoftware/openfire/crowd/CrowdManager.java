@@ -20,28 +20,41 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXB;
 
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.conn.DefaultRoutePlanner;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpState;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.lang.StringUtils;
 
 import org.jivesoftware.openfire.crowd.jaxb.AuthenticatePost;
@@ -56,21 +69,21 @@ public class CrowdManager {
     private static final Logger LOG = LoggerFactory.getLogger(CrowdManager.class);
     private static final Object O = new Object();
     private static final String APPLICATION_XML = "application/xml";
-    private static final Header HEADER_ACCEPT_APPLICATION_XML = new Header("Accept", APPLICATION_XML);
-    private static final Header HEADER_ACCEPT_CHARSET_UTF8 = new Header("Accept-Charset", "UTF-8");
+    private static final Header HEADER_CONTENT_TYPE_APPLICATION_XML = new BasicHeader(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
+    private static final Header HEADER_ACCEPT_APPLICATION_XML = new BasicHeader(HttpHeaders.ACCEPT, APPLICATION_XML);
+    private static final Header HEADER_ACCEPT_CHARSET_UTF8 = new BasicHeader(HttpHeaders.ACCEPT_CHARSET, StandardCharsets.UTF_8.name());
 
     private static CrowdManager INSTANCE;
-    
-    private HttpClient client;
+    private CloseableHttpClient client;
     private URI crowdServer;
+    private RequestConfig requestConfig;
+    private HttpClientContext clientContext;
 
     public static CrowdManager getInstance() {
         if (INSTANCE == null) {
             synchronized (O) {
                 if (INSTANCE == null) {
-                    CrowdManager manager = new CrowdManager();
-                    if (manager != null)
-                        INSTANCE = manager;
+                    INSTANCE = new CrowdManager();
                 }
             }
         }
@@ -81,47 +94,59 @@ public class CrowdManager {
         try {
             // loading crowd.properties file
             CrowdProperties crowdProps = new CrowdProperties();
-            
-            MultiThreadedHttpConnectionManager threadedConnectionManager = new MultiThreadedHttpConnectionManager();
-            HttpClient hc = new HttpClient(threadedConnectionManager);
-    
-            HttpClientParams hcParams = hc.getParams();
-            hcParams.setAuthenticationPreemptive(true);
-            
-            HttpConnectionManagerParams hcConnectionParams = hc.getHttpConnectionManager().getParams();
-            hcConnectionParams.setDefaultMaxConnectionsPerHost(crowdProps.getHttpMaxConnections());
-            hcConnectionParams.setMaxTotalConnections(crowdProps.getHttpMaxConnections());
-            hcConnectionParams.setConnectionTimeout(crowdProps.getHttpConnectionTimeout());
-            hcConnectionParams.setSoTimeout(crowdProps.getHttpSocketTimeout());
-            
+
             crowdServer = new URI(crowdProps.getCrowdServerUrl()).resolve("rest/usermanagement/latest/");
-            
-            // setting BASIC authentication in place for connection with Crowd
-            HttpState httpState = hc.getState();
-            Credentials crowdCreds = new UsernamePasswordCredentials(crowdProps.getApplicationName(), crowdProps.getApplicationPassword());
-            httpState.setCredentials(new AuthScope(crowdServer.getHost(), crowdServer.getPort()), crowdCreds);
-            
+            final HttpHost target = HttpHost.create(crowdServer.toString());
+            final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+            connectionManager.setDefaultMaxPerRoute(crowdProps.getHttpMaxConnections());
+
+            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(
+                new AuthScope(target.getHostName(), target.getPort()),
+                new UsernamePasswordCredentials(crowdProps.getApplicationName(), crowdProps.getApplicationPassword()));
+            final AuthCache authCache = new BasicAuthCache();
+            authCache.put(target, new BasicScheme());
+            clientContext = HttpClientContext.create();
+            clientContext.setAuthCache(authCache);
+
+
             // setting Proxy config in place if needed
+            final String proxyString;
+            final HttpRoutePlanner httpRoutePlanner;
             if (StringUtils.isNotBlank(crowdProps.getHttpProxyHost()) && crowdProps.getHttpProxyPort() > 0) {
-                hc.getHostConfiguration().setProxy(crowdProps.getHttpProxyHost(), crowdProps.getHttpProxyPort());
-                
+                final HttpHost proxyHost = new HttpHost(crowdProps.getHttpProxyHost(), crowdProps.getHttpProxyPort());
+                httpRoutePlanner = new DefaultProxyRoutePlanner(proxyHost);
+                proxyString = proxyHost.toString();
                 if (StringUtils.isNotBlank(crowdProps.getHttpProxyUsername()) || StringUtils.isNotBlank(crowdProps.getHttpProxyPassword())) {
-                    Credentials proxyCreds = new UsernamePasswordCredentials(crowdProps.getHttpProxyUsername(), crowdProps.getHttpProxyPassword());
-                    httpState.setProxyCredentials(new AuthScope(crowdProps.getHttpProxyHost(), crowdProps.getHttpProxyPort()), proxyCreds);
+                    credentialsProvider.setCredentials(new AuthScope(crowdProps.getHttpProxyHost(), crowdProps.getHttpProxyPort()),
+                        new UsernamePasswordCredentials(crowdProps.getHttpProxyUsername(), crowdProps.getHttpProxyPassword()));
                 }
+            } else {
+                httpRoutePlanner =  new DefaultRoutePlanner(null);
+                proxyString = "<none>";
             }
-            
+
+            client = HttpClientBuilder.create()
+                .setConnectionManager(connectionManager)
+                .setDefaultCredentialsProvider(credentialsProvider)
+                .setRoutePlanner(httpRoutePlanner)
+                .build();
+
+            requestConfig = RequestConfig.custom()
+                .setConnectTimeout(crowdProps.getHttpConnectionTimeout())
+                .setSocketTimeout(crowdProps.getHttpSocketTimeout())
+                .build();
+
+
             if (LOG.isDebugEnabled()) {
                 LOG.debug("HTTP Client config");
                 LOG.debug(crowdServer.toString());
-                LOG.debug("Max connections:" + hcConnectionParams.getMaxTotalConnections());
-                LOG.debug("Socket timeout:" + hcConnectionParams.getSoTimeout());
-                LOG.debug("Connect timeout:" + hcConnectionParams.getConnectionTimeout());
-                LOG.debug("Proxy host:" + crowdProps.getHttpProxyHost() + ":" + crowdProps.getHttpProxyPort());
-                LOG.debug("Crowd application name:" + crowdProps.getApplicationName());
+                LOG.debug("Max connections: {}", connectionManager.getDefaultMaxPerRoute());
+                LOG.debug("Socket timeout: {}", requestConfig.getSocketTimeout());
+                LOG.debug("Connect timeout: {}", requestConfig.getConnectTimeout());
+                LOG.debug("Proxy: {}", proxyString);
+                LOG.debug("Crowd application name: {}", crowdProps.getApplicationName());
             }
-            
-            client = hc;
         } catch (Exception e) {
             LOG.error("Failure to load the Crowd manager", e);
         }
@@ -137,26 +162,27 @@ public class CrowdManager {
      */
     public void authenticate(String username, String password) throws RemoteException {
         username = JID.unescapeNode(username);
-        if (LOG.isDebugEnabled()) LOG.debug("authenticate '" + String.valueOf(username) + "'");
-        
-        PostMethod post = new PostMethod(crowdServer.resolve("authentication?username=" + urlEncode(username)).toString());
-        
-        AuthenticatePost creds = new AuthenticatePost();
-        creds.value = password;
-        try {
-            StringWriter writer = new StringWriter();
-            JAXB.marshal(creds, writer);
-            post.setRequestEntity(new StringRequestEntity(writer.toString(), APPLICATION_XML, "UTF-8"));
-            
-            int httpCode = client.executeMethod(post);
-            if (httpCode != 200) {
-                handleHTTPError(post);
+        LOG.debug("authenticate '" + String.valueOf(username) + "'");
+
+        final AuthenticatePost authenticatePost = new AuthenticatePost();
+        authenticatePost.value = password;
+        final StringWriter writer = new StringWriter();
+        JAXB.marshal(authenticatePost, writer);
+
+        final HttpUriRequest postRequest = RequestBuilder.post(crowdServer.resolve("authentication?username=" + urlEncode(username)))
+            .setConfig(requestConfig)
+            .setEntity(new StringEntity(writer.toString(), StandardCharsets.UTF_8))
+            .setHeader(HEADER_CONTENT_TYPE_APPLICATION_XML)
+            .build();
+
+        try(final CloseableHttpResponse response = client.execute(postRequest, clientContext)) {
+
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                handleHTTPError(response);
             }
             
         } catch (IOException ioe) {
             handleError(ioe);
-        } finally {
-            post.releaseConnection();
         }
         
         LOG.info("authenticated user:" + username);
@@ -169,7 +195,7 @@ public class CrowdManager {
      * @throws RemoteException
      */
     public List<User> getAllUsers() throws RemoteException {
-        if (LOG.isDebugEnabled()) LOG.debug("fetching all crowd users");
+        LOG.debug("fetching all crowd users");
         
         int maxResults = 100;
         int startIndex = 0;
@@ -180,32 +206,31 @@ public class CrowdManager {
         
         try {
             while (true) {
-                GetMethod get = createGetMethodXmlResponse(crowdServer.resolve(request.toString() + startIndex));
-                Users users = null;
-                
-                try {
-                    int httpCode = client.executeMethod(get);
-                    if (httpCode != 200) {
-                        handleHTTPError(get);
+                final HttpUriRequest getRequest = RequestBuilder.get(crowdServer.resolve(request.toString() + startIndex))
+                    .setConfig(requestConfig)
+                    .addHeader(HEADER_ACCEPT_APPLICATION_XML)
+                    .addHeader(HEADER_ACCEPT_CHARSET_UTF8)
+                    .build();
+
+                try(final CloseableHttpResponse response = client.execute(getRequest, clientContext)) {
+                    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                        handleHTTPError(response);
                     }
-                    users = JAXB.unmarshal(get.getResponseBodyAsStream(), Users.class);
-                } finally {
-                    get.releaseConnection();
-                }
-                
-                if (users != null && users.user != null) {
-                    for (User user : users.user) {
-                        user.name = JID.escapeNode(user.name);
-                        results.add(user);
-                    }
-                    
-                    if (users.user.size() != maxResults) {
-                        break;
+                    final Users users = JAXB.unmarshal(response.getEntity().getContent(), Users.class);
+                    if (users != null && users.user != null) {
+                        for (final User user : users.user) {
+                            user.name = JID.escapeNode(user.name);
+                            results.add(user);
+                        }
+
+                        if (users.user.size() != maxResults) {
+                            break;
+                        } else {
+                            startIndex += maxResults;
+                        }
                     } else {
-                        startIndex += maxResults;
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
             
@@ -223,7 +248,7 @@ public class CrowdManager {
      * @throws RemoteException
      */
     public List<String> getAllGroupNames() throws RemoteException {
-        if (LOG.isDebugEnabled()) LOG.debug("fetch all crowd groups");
+        LOG.debug("fetch all crowd groups");
 
         int maxResults = 100;
         int startIndex = 0;
@@ -234,31 +259,30 @@ public class CrowdManager {
         
         try {
             while (true) {
-                GetMethod get = createGetMethodXmlResponse(crowdServer.resolve(request.toString() + startIndex));
-                Groups groups = null;
-                
-                try {
-                    int httpCode = client.executeMethod(get);
-                    if (httpCode != 200) {
-                        handleHTTPError(get);
+                final HttpUriRequest getRequest = RequestBuilder.get(crowdServer.resolve(request.toString() + startIndex))
+                    .setConfig(requestConfig)
+                    .addHeader(HEADER_ACCEPT_APPLICATION_XML)
+                    .addHeader(HEADER_ACCEPT_CHARSET_UTF8)
+                    .build();
+
+                try (final CloseableHttpResponse response = client.execute(getRequest, clientContext)) {
+                    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                        handleHTTPError(response);
                     }
-                    groups = JAXB.unmarshal(get.getResponseBodyAsStream(), Groups.class);
-                } finally {
-                    get.releaseConnection();
-                }
-                
-                if (groups != null && groups.group != null) {
-                    for (Group group : groups.group) {
-                        results.add(group.name);
-                    }
-                    
-                    if (groups.group.size() != maxResults) {
-                        break;
+                    final Groups groups = JAXB.unmarshal(response.getEntity().getContent(), Groups.class);
+                    if (groups != null && groups.group != null) {
+                        for (final Group group : groups.group) {
+                            results.add(group.name);
+                        }
+
+                        if (groups.group.size() != maxResults) {
+                            break;
+                        } else {
+                            startIndex += maxResults;
+                        }
                     } else {
-                        startIndex += maxResults;
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
             
@@ -278,7 +302,7 @@ public class CrowdManager {
      */
     public List<String> getUserGroups(String username) throws RemoteException {
         username = JID.unescapeNode(username);
-        if (LOG.isDebugEnabled()) LOG.debug("fetch all crowd groups for user:" + username);
+        LOG.debug("fetch all crowd groups for user:" + username);
         
         int maxResults = 100;
         int startIndex = 0;
@@ -289,31 +313,31 @@ public class CrowdManager {
         
         try {
             while (true) {
-                GetMethod get = createGetMethodXmlResponse(crowdServer.resolve(request.toString() + startIndex));
-                Groups groups = null;
-                
-                try {
-                    int httpCode = client.executeMethod(get);
-                    if (httpCode != 200) {
-                        handleHTTPError(get);
+                final HttpUriRequest getRequest = RequestBuilder.get(crowdServer.resolve(request.toString() + startIndex))
+                    .setConfig(requestConfig)
+                    .addHeader(HEADER_ACCEPT_APPLICATION_XML)
+                    .addHeader(HEADER_ACCEPT_CHARSET_UTF8)
+                    .build();
+
+                try (final CloseableHttpResponse response = client.execute(getRequest, clientContext)) {
+                    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                        handleHTTPError(response);
                     }
-                    groups = JAXB.unmarshal(get.getResponseBodyAsStream(), Groups.class);
-                } finally {
-                    get.releaseConnection();
-                }
-                
-                if (groups != null && groups.group != null) {
-                    for (Group group : groups.group) {
-                        results.add(group.name);
-                    }
-                    
-                    if (groups.group.size() != maxResults) {
-                        break;
+                    final Groups groups = JAXB.unmarshal(response.getEntity().getContent(), Groups.class);
+
+                    if (groups != null && groups.group != null) {
+                        for (final Group group : groups.group) {
+                            results.add(group.name);
+                        }
+
+                        if (groups.group.size() != maxResults) {
+                            break;
+                        } else {
+                            startIndex += maxResults;
+                        }
                     } else {
-                        startIndex += maxResults;
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
             
@@ -332,25 +356,24 @@ public class CrowdManager {
      * @throws RemoteException
      */
     public Group getGroup(String groupName) throws RemoteException {
-        if (LOG.isDebugEnabled()) LOG.debug("Get group:" + groupName + " from crowd");
-        
-        GetMethod get = createGetMethodXmlResponse(crowdServer.resolve("group?groupname=" + urlEncode(groupName)));
+        LOG.debug("Get group:" + groupName + " from crowd");
+
+        final HttpUriRequest getRequest = RequestBuilder.get(crowdServer.resolve("group?groupname=" + urlEncode(groupName)))
+            .setConfig(requestConfig)
+            .addHeader(HEADER_ACCEPT_APPLICATION_XML)
+            .addHeader(HEADER_ACCEPT_CHARSET_UTF8)
+            .build();
+
         Group group = null;
-        
-        try {
-            int httpCode = client.executeMethod(get);
-            if (httpCode != 200) {
-                handleHTTPError(get);
+        try (final CloseableHttpResponse response = client.execute(getRequest, clientContext)) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                handleHTTPError(response);
             }
-            
-            group = JAXB.unmarshal(get.getResponseBodyAsStream(), Group.class);
+            group = JAXB.unmarshal(response.getEntity().getContent(), Group.class);
             
         } catch (IOException ioe) {
             handleError(ioe);
-        } finally {
-            get.releaseConnection();
         }
-        
         return group;
     }
     
@@ -362,7 +385,7 @@ public class CrowdManager {
      * @throws RemoteException
      */
     public List<String> getGroupMembers(String groupName) throws RemoteException {
-        if (LOG.isDebugEnabled()) LOG.debug("Get all members for group:" + groupName);
+        LOG.debug("Get all members for group:" + groupName);
         
         int maxResults = 100;
         int startIndex = 0;
@@ -373,31 +396,31 @@ public class CrowdManager {
         
         try {
             while (true) {
-                GetMethod get = createGetMethodXmlResponse(crowdServer.resolve(request.toString() + startIndex));
-                Users users = null;
-                
-                try {
-                    int httpCode = client.executeMethod(get);
-                    if (httpCode != 200) {
-                        handleHTTPError(get);
+                final HttpUriRequest getRequest = RequestBuilder.get(crowdServer.resolve(request.toString() + startIndex))
+                    .setConfig(requestConfig)
+                    .addHeader(HEADER_ACCEPT_APPLICATION_XML)
+                    .addHeader(HEADER_ACCEPT_CHARSET_UTF8)
+                    .build();
+
+                try (final CloseableHttpResponse response = client.execute(getRequest, clientContext)) {
+                    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                        handleHTTPError(response);
                     }
-                    users = JAXB.unmarshal(get.getResponseBodyAsStream(), Users.class);
-                } finally {
-                    get.releaseConnection();
-                }
-                
-                if (users != null && users.user != null) {
-                    for (org.jivesoftware.openfire.crowd.jaxb.User user : users.user) {
-                        results.add(JID.escapeNode(user.name));
-                    }
-                    
-                    if (users.user.size() != maxResults) {
-                        break;
+                    final Users users = JAXB.unmarshal(response.getEntity().getContent(), Users.class);
+
+                    if (users != null && users.user != null) {
+                        for (final User user : users.user) {
+                            results.add(JID.escapeNode(user.name));
+                        }
+
+                        if (users.user.size() != maxResults) {
+                            break;
+                        } else {
+                            startIndex += maxResults;
+                        }
                     } else {
-                        startIndex += maxResults;
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
             
@@ -418,16 +441,12 @@ public class CrowdManager {
     }
     
     
-    private void handleHTTPError(HttpMethod method) throws RemoteException {
-        int status = method.getStatusCode();
-        String statusText = method.getStatusText();
-        String body = null;
-        try {
-            body = method.getResponseBodyAsString();
-        } catch (IOException ioe) {
-            LOG.warn("Unable to retreive Crowd http response body", ioe);
-        }
-        
+    private void handleHTTPError(CloseableHttpResponse response) throws RemoteException {
+        final StatusLine statusLine = response.getStatusLine();
+        final int status = statusLine.getStatusCode();
+        final String statusText = statusLine.getReasonPhrase();
+        final String body = response.getEntity().toString();
+
         StringBuilder strBuf = new StringBuilder();
         strBuf.append("Crowd returned HTTP error code:").append(status);
         strBuf.append(" - ").append(statusText);
@@ -441,13 +460,6 @@ public class CrowdManager {
     private void handleError(Exception e) throws RemoteException {
         LOG.error("Error occured while consuming Crowd REST service", e);
         throw new RemoteException(e.getMessage());
-    }
-    
-    private GetMethod createGetMethodXmlResponse(URI uri) {
-        GetMethod get = new GetMethod(uri.toString());
-        get.addRequestHeader(HEADER_ACCEPT_APPLICATION_XML);
-        get.addRequestHeader(HEADER_ACCEPT_CHARSET_UTF8);
-        return get;
     }
 
 }

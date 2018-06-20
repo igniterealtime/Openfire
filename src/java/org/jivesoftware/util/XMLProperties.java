@@ -16,7 +16,7 @@
 
 package org.jivesoftware.util;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.dom4j.Attribute;
 import org.dom4j.CDATA;
 import org.dom4j.Document;
@@ -486,7 +486,7 @@ public class XMLProperties {
                 childElement.addCDATA(value.substring(9, value.length()-3));
             }
             else {
-                String propValue = StringEscapeUtils.escapeXml(value);
+                String propValue = StringEscapeUtils.escapeXml10(value);
                 // check to see if the property is marked as encrypted
                 if (JiveGlobals.isPropertyEncrypted(name)) {
                     propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
@@ -610,7 +610,7 @@ public class XMLProperties {
      * @param value the new value for the property.
      */
     public synchronized void setProperty(String name, String value) {
-        if(!StringEscapeUtils.escapeXml(name).equals(name)) {
+        if(!StringEscapeUtils.escapeXml10(name).equals(name)) {
             throw new IllegalArgumentException("Property name cannot contain XML entities.");
         }
         if (name == null) {
@@ -647,7 +647,7 @@ public class XMLProperties {
             element.addCDATA(value.substring(9, value.length()-3));
         }
         else {
-            String propValue = StringEscapeUtils.escapeXml(value);
+            String propValue = StringEscapeUtils.escapeXml10(value);
             // check to see if the property is marked as encrypted
             if (JiveGlobals.isXMLPropertyEncrypted(name)) {
                 propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);

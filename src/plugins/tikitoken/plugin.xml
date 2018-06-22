@@ -3,7 +3,7 @@
     <name>TikiToken</name>
     <description>Allows users to authenticate with a Tiki token.</description>
     <author>Tiki Wiki CMS Groupware</author>
-    <version>0.2.0</version>
+    <version>0.2.1-SNAPSHOT</version>
     <date>04/24/2017</date>
     <url>https://dev.tiki.org/OpenFire</url>
     <minServerVersion>4.1.3</minServerVersion>

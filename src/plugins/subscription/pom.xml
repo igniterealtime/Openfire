@@ -10,7 +10,7 @@
     <artifactId>subscription</artifactId>
     <name>Subscription Plugin</name>
     <description>Automatically accepts or rejects subscription requests</description>
-    <version>1.4.0</version>
+    <version>1.4.1-SNAPSHOT</version>
 
     <developers>
         <developer>

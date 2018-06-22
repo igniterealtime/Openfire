@@ -9,6 +9,7 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>search</artifactId>
     <name>Search Plugin</name>
+    <version>1.7.2-SNAPSHOT</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

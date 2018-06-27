@@ -46,7 +46,9 @@ public class StreamManager {
         }
     }
     
-    public static final String SM_ACTIVE = "stream.management.active";
+    public static boolean isStreamManagementActive() {
+        return JiveGlobals.getBooleanProperty("stream.management.active", false);
+    }
 
     /**
      * Stanza namespaces

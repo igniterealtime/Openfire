@@ -277,14 +277,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     /**
-     * Broadcast the given update to all subscribers. We need to:
-     * <ul>
-     * <li>Query the roster table for subscribers</li>
-     * <li>Iterate through the list and send the update to each subscriber</li>
-     * </ul>
-     * <p/>
-     * Is there a safe way to cache the query results while maintaining
-     * integrity with roster changes?
+     * Broadcast the given update to all subscribers, as well as all of the
+     * user's available resources (including the resource that generated the
+     * presence notification in the first place). We need to:
      *
      * @param update The update to broadcast
      */
@@ -293,23 +288,34 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
-            // Do nothing if roster service is disabled
-            if (!RosterManager.isRosterServiceEnabled()) {
-                return;
-            }
-            // Local updates can simply run through the roster of the local user
-            String name = update.getFrom().getNode();
-            try {
-                if (name != null && !"".equals(name)) {
-                    Roster roster = rosterManager.getRoster(name);
-                    roster.broadcastPresence(update);
+            // Send presence to all roster contacts.
+            if (RosterManager.isRosterServiceEnabled()) {
+                // Local updates can simply run through the roster of the local user
+                String name = update.getFrom().getNode();
+                try {
+                    if (name != null && !"".equals(name)) {
+                        Roster roster = rosterManager.getRoster(name);
+                        roster.broadcastPresence(update);
+                    }
+                }
+                catch (UserNotFoundException e) {
+                    Log.warn("Presence being sent from unknown user " + name, e);
+                }
+                catch (PacketException e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                 }
             }
-            catch (UserNotFoundException e) {
-                Log.warn("Presence being sent from unknown user " + name, e);
-            }
-            catch (PacketException e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+
+            // Send presence to all of the user's available resources.
+            for ( ClientSession session : sessionManager.getSessions( update.getFrom().getNode() ) ) {
+                final Presence presence = session.getPresence();
+                if ( presence != null && presence.isAvailable() ) {
+                    try {
+                        session.process( update );
+                    } catch ( PacketException e ) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    }
+                }
             }
         }
         else {

@@ -147,24 +147,28 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     Log.warn("Rejected available presence: " + presence + " - " + session);
                     return;
                 }
-                broadcastUpdate(presence.createCopy());
+
                 if (session != null) {
                     session.setPresence(presence);
-                    if (!session.isInitialized()) {
-                        initSession(session);
-                        session.setInitialized(true);
-                    }
                 }
+
+                broadcastUpdate(presence.createCopy());
+
+                if (session != null && !session.isInitialized()) {
+                    initSession(session);
+                    session.setInitialized(true);
+                }
+
                 // Notify the presence manager that the user is now available. The manager may
                 // remove the last presence status sent by the user when he went offline.
                 presenceManager.userAvailable(presence);
             }
             else if (Presence.Type.unavailable == type) {
-                broadcastUpdate(presence.createCopy());
-                broadcastUnavailableForDirectedPresences(presence);
                 if (session != null) {
                     session.setPresence(presence);
                 }
+                broadcastUpdate(presence.createCopy());
+                broadcastUnavailableForDirectedPresences(presence);
                 // Notify the presence manager that the user is now unavailable. The manager may
                 // save the last presence status sent by the user and keep track when the user
                 // went offline.
@@ -472,7 +476,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         if (localServer.isLocal(from)) {
             // Remove the registry of directed presences of this user
         	Collection<DirectedPresence> directedPresences = null;
-        	
+
         	Lock lock = CacheFactory.getLock(from.toString(), directedPresencesCache);
         	try {
         		lock.lock();

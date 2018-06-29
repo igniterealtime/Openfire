@@ -655,13 +655,22 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     /**
+     * @deprecated Use {@link #broadcastPresenceToResources(JID, Presence)} instead.
+     */
+    @Deprecated
+    public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence)
+    {
+        broadcastPresenceToResources(originatingResource, presence);
+    }
+
+    /**
      * Broadcasts presence updates from the originating user's resource to any of the user's
-     * existing available resources (if any).
+     * existing available resources (including the resource from where the update originates).
      *
      * @param originatingResource the full JID of the session that sent the presence update.
      * @param presence the presence.
      */
-    public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
+    public void broadcastPresenceToResources( JID originatingResource, Presence presence) {
         // RFC 6121 4.4.2 says we always send to the originating resource.
         // Also RFC 6121 4.2.2 for updates.
         presence.setTo(originatingResource);

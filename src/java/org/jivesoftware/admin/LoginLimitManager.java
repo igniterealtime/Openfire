@@ -158,7 +158,7 @@ public class LoginLimitManager {
     public void recordSuccessfulAttempt(String username, String address) {
         attemptsPerIP.remove(address);
         attemptsPerUsername.remove(username);
-        securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address);
+        securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address + ". ");
     }
 
     /**

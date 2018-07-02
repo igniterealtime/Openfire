@@ -27,7 +27,7 @@ public class LoginLimitManagerTest {
 
         loginLimitManager.recordSuccessfulAttempt("test-user", "a.b.c.d");
 
-        verify(securityAuditManager).logEvent("test-user", "Successful admin console login attempt", "The user logged in successfully to the admin console from address a.b.c.d");
+        verify(securityAuditManager).logEvent("test-user", "Successful admin console login attempt", "The user logged in successfully to the admin console from address a.b.c.d. ");
     }
 
     @Test

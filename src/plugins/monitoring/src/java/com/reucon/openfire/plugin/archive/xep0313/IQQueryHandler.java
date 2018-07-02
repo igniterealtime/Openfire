@@ -156,6 +156,18 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
                 Log.debug("Unable to process query as requestor '{}' is forbidden to retrieve archive for room '{}'.", requestor, archiveJid);
                 return buildForbiddenResponse(packet);
             }
+
+            // Password protected room
+            if (room.isPasswordProtected())  {
+				// check whether requestor is occupant in the room
+				MUCRole occupant = room.getOccupantByFullJID(packet.getFrom());
+
+				if (occupant == null) {
+					// no occupant so currently not authenticated to query archive
+				    Log.debug("Unable to process query as requestor '{}' is currently not authenticated for this password protected room '{}'.", requestor, archiveJid);
+                    return buildForbiddenResponse(packet);
+				}
+            }
         } else if(!archiveJid.equals(requestor)) { // Not user's own
             // ... disallow unless admin.
             if (!XMPPServer.getInstance().getAdmins().contains(requestor)) {

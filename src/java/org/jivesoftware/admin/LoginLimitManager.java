@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 public class LoginLimitManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LoginLimitManager.class);
+    private final SecurityAuditManager securityAuditManager;
 
     // Wrap this guy up so we can mock out the LoginLimitManager class.
     private static class LoginLimitManagerContainer {
@@ -67,6 +69,14 @@ public class LoginLimitManager {
      * Constructs a new login limit manager.
      */
     private LoginLimitManager() {
+        this(SecurityAuditManager.getInstance());
+    }
+
+    /**
+     * Constructs a new login limit manager. Exposed for test use only.
+     */
+    LoginLimitManager(final SecurityAuditManager securityAuditManager) {
+        this.securityAuditManager = securityAuditManager;
         // Set up initial maps
         attemptsPerIP = new ConcurrentHashMap<>();
         attemptsPerUsername = new ConcurrentHashMap<>();
@@ -118,8 +128,10 @@ public class LoginLimitManager {
         }
         cnt++;
         attemptsPerIP.put(address, cnt);
+        final StringBuilder sb = new StringBuilder();
         if (cnt > maxAttemptsPerIP) {
-            Log.warn("Login attempt limit breeched for address "+address);
+            Log.warn("Login attempt limit breached for address "+address);
+            sb.append("Future login attempts from this address will be temporarily locked out. ");
         }
 
         cnt = (long)0;
@@ -129,8 +141,12 @@ public class LoginLimitManager {
         cnt++;
         attemptsPerUsername.put(username, cnt);
         if (cnt > maxAttemptsPerUsername) {
-            Log.warn("Login attempt limit breeched for username "+username);
+            Log.warn("Login attempt limit breached for username "+username);
+            sb.append("Future login attempts for this user will be temporarily locked out. ");
         }
+
+        securityAuditManager.logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address " + address + ". " + sb);
+
     }
 
     /**
@@ -142,6 +158,7 @@ public class LoginLimitManager {
     public void recordSuccessfulAttempt(String username, String address) {
         attemptsPerIP.remove(address);
         attemptsPerUsername.remove(username);
+        securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address);
     }
 
     /**

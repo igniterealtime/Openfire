@@ -982,7 +982,9 @@ public class HttpSession extends LocalClientSession {
             if (pendingConnections > 0) {
                 Log.warn("Unable to deliver a stanza (it is being queued instead), although there are available connections! RID / Connection processing is out of sync!");
             }
-            pendingElements.add(stanza);
+            synchronized(pendingElements) {
+                pendingElements.add( stanza );
+            }
         }
     }
 

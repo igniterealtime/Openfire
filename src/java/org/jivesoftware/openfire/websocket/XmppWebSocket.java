@@ -231,7 +231,7 @@ public class XmppWebSocket {
                 configureStream();
             } else if (Status.authenticated.equals(saslStatus)) {
                 if (router == null) {
-                    if (isStreamManagementAvailable()) {
+                    if (StreamManager.isStreamManagementActive()) {
                         router = new StreamManagementPacketRouter(xmppSession);
                     } else {
                         // fall back for older Openfire installations
@@ -314,7 +314,7 @@ public class XmppWebSocket {
             sb.append(String.format("<bind xmlns='%s'/>", "urn:ietf:params:xml:ns:xmpp-bind"));
             sb.append(String.format("<session xmlns='%s'><optional/></session>", "urn:ietf:params:xml:ns:xmpp-session"));
 
-            if (isStreamManagementAvailable()) {
+            if (StreamManager.isStreamManagementActive()) {
                 sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
         }
@@ -373,10 +373,6 @@ public class XmppWebSocket {
             readerPool.setTestOnReturn(true);
             readerPool.setTimeBetweenEvictionRunsMillis(JiveConstants.MINUTE);
         }
-    }
-
-    private boolean isStreamManagementAvailable() {
-        return JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true);
     }
 
     //-- Keep-alive ping for idle peers

@@ -1485,8 +1485,18 @@ public class Blowfish implements Encryptor {
     }
 
     @Override
+    public String encrypt(String value, byte[] iv) {
+        return encrypt(value);
+    }
+
+    @Override
     public String decrypt(String value) {
         return this.decryptString(value);
+    }
+
+    @Override
+    public String decrypt(String value, byte[] iv) {
+        return decrypt(value);
     }
 
     @Override

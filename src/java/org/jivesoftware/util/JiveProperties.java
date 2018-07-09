@@ -16,6 +16,7 @@
 
 package org.jivesoftware.util;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,9 +43,9 @@ public class JiveProperties implements Map<String, String> {
 
     private static final Logger Log = LoggerFactory.getLogger(JiveProperties.class);
 
-    private static final String LOAD_PROPERTIES = "SELECT name, propValue, encrypted FROM ofProperty";
-    private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue, encrypted) VALUES(?,?,?)";
-    private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=?, encrypted=? WHERE name=?";
+    private static final String LOAD_PROPERTIES = "SELECT name, propValue, encrypted, iv FROM ofProperty";
+    private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue, encrypted, iv) VALUES(?,?,?,?)";
+    private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=?, encrypted=?, iv=? WHERE name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name LIKE ?";
 
     private static JiveProperties instance = null;
@@ -354,9 +355,21 @@ public class JiveProperties implements Map<String, String> {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
+            final String valueToSave;
+            final String ivString;
+            if (isEncrypted) {
+                final byte[] iv = new byte[16];
+                new SecureRandom().nextBytes(iv);
+                ivString = java.util.Base64.getEncoder().encodeToString(iv);
+                valueToSave = encryptor.encrypt(value, iv);
+            } else {
+                ivString = null;
+                valueToSave = value;
+            }
             pstmt.setString(1, name);
-            pstmt.setString(2, isEncrypted ? encryptor.encrypt(value) : value);
+            pstmt.setString(2, valueToSave);
             pstmt.setInt(3, isEncrypted ? 1 : 0);
+            pstmt.setString(4, ivString);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -374,9 +387,21 @@ public class JiveProperties implements Map<String, String> {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, isEncrypted ? encryptor.encrypt(value) : value);
+            final String valueToSave;
+            final String ivString;
+            if (isEncrypted) {
+                final byte[] iv = new byte[16];
+                new SecureRandom().nextBytes(iv);
+                ivString = java.util.Base64.getEncoder().encodeToString(iv);
+                valueToSave = encryptor.encrypt(value, iv);
+            } else {
+                ivString = null;
+                valueToSave = value;
+            }
+            pstmt.setString(1, valueToSave);
             pstmt.setInt(2, isEncrypted ? 1 : 0);
-            pstmt.setString(3, name);
+            pstmt.setString(3, ivString);
+            pstmt.setString(4, name);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -416,10 +441,24 @@ public class JiveProperties implements Map<String, String> {
             while (rs.next()) {
                 String name = rs.getString(1);
                 String value = rs.getString(2);
+                String ivString = rs.getString(4);
+                byte[] iv = null;
+                if (ivString != null) {
+                    try {
+                        iv = java.util.Base64.getDecoder().decode(ivString);
+                        if (iv.length != 16) {
+                            Log.error("Unable to correctly decode iv from string " + ivString);
+                            iv = null;
+                        }
+                    } catch (final IllegalArgumentException e) {
+                        Log.error("Unable to decode iv from string " + ivString, e);
+                    }
+                }
+
                 boolean isEncrypted = rs.getInt(3) == 1 || JiveGlobals.isXMLPropertyEncrypted(name);
                 if (isEncrypted) {
                     try { 
-                        value = encryptor.decrypt(value); 
+                        value = encryptor.decrypt(value, iv);
                     } catch (Exception ex) {
                         Log.error("Failed to load encrypted property value for " + name, ex);
                         value = null;

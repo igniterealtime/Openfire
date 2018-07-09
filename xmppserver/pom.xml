@@ -255,13 +255,8 @@
         <!-- RSS feed -->
         <dependency>
             <groupId>com.rometools</groupId>
-            <artifactId>rome-fetcher</artifactId>
+            <artifactId>rome</artifactId>
             <version>1.10.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.5</version>
         </dependency>
 
         <!-- Random stuff -->
@@ -292,15 +287,9 @@
             <version>2.5.0</version>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -330,17 +319,12 @@
         <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>1.8.2</version>
+            <version>1.10.3</version>
         </dependency>
         <dependency>
             <groupId>org.jsmpp</groupId>
             <artifactId>jsmpp</artifactId>
             <version>2.2.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-            <artifactId>concurrentlinkedhashmap-lru</artifactId>
-            <version>1.0</version>
         </dependency>
 
         <!-- Database Drivers -->
@@ -373,13 +357,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.10.0</version>
+            <version>2.19.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

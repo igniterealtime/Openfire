@@ -203,7 +203,7 @@
         </td>
         <td></td>
         <td></td>
-        <c:if test="${!UserManager.userProvider.readOnly}">
+        <c:if test="${!UserManager.getUserProvider().readOnly}">
             <td></td>
             <td></td>
         </c:if>

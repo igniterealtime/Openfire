@@ -624,8 +624,8 @@ public class Roster implements Cacheable, Externalizable {
             }
         }
         if (from != null) {
-            // Broadcast presence to other user's resources
-            SessionManager.getInstance().broadcastPresenceToOtherResources(from, packet);
+            // Broadcast presence to all resources of the user.
+            SessionManager.getInstance().broadcastPresenceToResources( from, packet);
         }
     }
 

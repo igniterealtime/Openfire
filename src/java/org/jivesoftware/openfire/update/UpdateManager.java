@@ -21,20 +21,32 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.conn.DefaultRoutePlanner;
+import org.apache.http.util.EntityUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentFactory;
@@ -43,7 +55,9 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.container.*;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginMetadata;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -68,12 +82,12 @@ public class UpdateManager extends BasicModule {
 
     private static final Logger Log = LoggerFactory.getLogger(UpdateManager.class);
 
-    protected static DocumentFactory docFactory = DocumentFactory.getInstance();
+    private static final DocumentFactory docFactory = DocumentFactory.getInstance();
 
     /**
      * URL of the servlet (JSP) that provides the "check for update" service.
      */
-    private static String updateServiceURL = "http://www.igniterealtime.org/projects/openfire/versions.jsp";
+    private static final String updateServiceURL = "https://www.igniterealtime.org/projects/openfire/versions.jsp";
 
     /**
      * Information about the available server update.
@@ -204,50 +218,41 @@ public class UpdateManager extends BasicModule {
      * @throws Exception if some error happens during the query.
      */
     public synchronized void checkForServerUpdate(boolean notificationsEnabled) throws Exception {
-        // Get the XML request to include in the HTTP request
-        String requestXML = getServerUpdateRequest();
-        // Send the request to the server
-        HttpClient httpClient = new HttpClient();
-        // Check if a proxy should be used
-        if (isUsingProxy()) {
-            HostConfiguration hc = new HostConfiguration();
-            hc.setProxy(getProxyHost(), getProxyPort());
-            httpClient.setHostConfiguration(hc);
-        }
-        PostMethod postMethod = new PostMethod(updateServiceURL);
-        NameValuePair[] data = {
-                new NameValuePair("type", "update"),
-                new NameValuePair("query", requestXML)
-        };
-        postMethod.setRequestBody(data);
-        if (httpClient.executeMethod(postMethod) == 200) {
-            // Process answer from the server
-            String responseBody = postMethod.getResponseBodyAsString();
-            processServerUpdateResponse(responseBody, notificationsEnabled);
+        final Optional<String> response = getResponse("update", getServerUpdateRequest());
+        if (response.isPresent()) {
+            processServerUpdateResponse(response.get(), notificationsEnabled);
         }
     }
 
     public synchronized void checkForPluginsUpdates(boolean notificationsEnabled) throws Exception {
-        // Get the XML request to include in the HTTP request
-        String requestXML = getAvailablePluginsUpdateRequest();
-        // Send the request to the server
-        HttpClient httpClient = new HttpClient();
-        // Check if a proxy should be used
-        if (isUsingProxy()) {
-            HostConfiguration hc = new HostConfiguration();
-            hc.setProxy(getProxyHost(), getProxyPort());
-            httpClient.setHostConfiguration(hc);
+        final Optional<String> response = getResponse("available", getAvailablePluginsUpdateRequest());
+        if (response.isPresent()) {
+            processAvailablePluginsResponse(response.get(), notificationsEnabled);
         }
-        PostMethod postMethod = new PostMethod(updateServiceURL);
-        NameValuePair[] data = {
-                new NameValuePair("type", "available"),
-                new NameValuePair("query", requestXML)
-        };
-        postMethod.setRequestBody(data);
-        if (httpClient.executeMethod(postMethod) == 200) {
-            // Process answer from the server
-            String responseBody = postMethod.getResponseBodyAsString();
-            processAvailablePluginsResponse(responseBody, notificationsEnabled);
+    }
+
+    private Optional<String> getResponse(final String requestType, final String requestXML) throws IOException {
+        final HttpUriRequest postRequest = RequestBuilder.post(updateServiceURL)
+            .addParameter("type", requestType)
+            .addParameter("query", requestXML)
+            .build();
+
+        try (final CloseableHttpClient httpClient = HttpClients.custom().setRoutePlanner(getRoutePlanner()).build();
+             final CloseableHttpResponse response = httpClient.execute(postRequest)) {
+            final int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                return Optional.of(EntityUtils.toString(response.getEntity()));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    private HttpRoutePlanner getRoutePlanner() {
+        if (isUsingProxy()) {
+            return new DefaultProxyRoutePlanner(new HttpHost(getProxyHost(), getProxyPort()));
+        } else {
+            return new DefaultRoutePlanner(null);
         }
     }
 
@@ -260,26 +265,16 @@ public class UpdateManager extends BasicModule {
     public boolean downloadPlugin(String url) {
         boolean installed = false;
         // Download and install new version of plugin
-        HttpClient httpClient = new HttpClient();
-        // Check if a proxy should be used
-        if (isUsingProxy()) {
-            HostConfiguration hc = new HostConfiguration();
-            hc.setProxy(getProxyHost(), getProxyPort());
-            httpClient.setHostConfiguration(hc);
-        }
-        
         if (isKnownPlugin(url)) {
-            GetMethod getMethod = new GetMethod(url);
-            //execute the method
-            try {
-                int statusCode = httpClient.executeMethod(getMethod);
-                if (statusCode == 200) {
-                    //get the resonse as an InputStream
-                    try (InputStream in = getMethod.getResponseBodyAsStream()) {
-                        String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-                        installed = XMPPServer.getInstance().getPluginManager()
-                                .installPlugin(in, pluginFilename);
-                    }
+            final HttpGet httpGet = new HttpGet(url);
+
+            try (final CloseableHttpClient httpClient = HttpClients.custom().setRoutePlanner(getRoutePlanner()).build();
+                 final CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                final int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_OK) {
+                    String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+                    installed = XMPPServer.getInstance().getPluginManager()
+                        .installPlugin(response.getEntity().getContent(), pluginFilename);
                     if (installed) {
                         // Remove the plugin from the list of plugins to update
                         for (Update update : pluginUpdates) {
@@ -291,8 +286,7 @@ public class UpdateManager extends BasicModule {
                         saveLatestServerInfo();
                     }
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.warn("Error downloading new plugin version", e);
             }
         } else {
@@ -372,11 +366,7 @@ public class UpdateManager extends BasicModule {
         }
 
         // Sort alphabetically.
-        Collections.sort(result, new Comparator<AvailablePlugin>() {
-            public int compare(AvailablePlugin o1, AvailablePlugin o2) {
-                return o1.getName().compareToIgnoreCase(o2.getName());
-            }
-        });
+        result.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
         return result;
     }
@@ -462,7 +452,7 @@ public class UpdateManager extends BasicModule {
      * @return true if a proxy is being used to connect to igniterealtime.org.
      */
     public boolean isUsingProxy() {
-        return getProxyHost() != null;
+        return !getProxyHost().isEmpty() && getProxyPort() > 0;
     }
 
     /**
@@ -472,7 +462,7 @@ public class UpdateManager extends BasicModule {
      * @return the host of the proxy or null if no proxy is used.
      */
     public String getProxyHost() {
-        return JiveGlobals.getProperty("update.proxy.host");
+        return JiveGlobals.getProperty("update.proxy.host", "");
     }
 
     /**
@@ -593,7 +583,7 @@ public class UpdateManager extends BasicModule {
                     Log.warn( "Unable to parse URL from openfire download url value '{}'.", openfire.attributeValue("url"), e );
                 }
                 // Keep information about the available server update
-                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), changelog.toExternalForm(), url.toExternalForm() );
+                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), String.valueOf(changelog), String.valueOf(url));
             }
         }
         // Check if we need to send notifications to admins
@@ -847,7 +837,7 @@ public class UpdateManager extends BasicModule {
             // Check if current server version is correct
             Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
             if (latestVersion.isNewerThan(currentServerVersion)) {
-                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), changelog.toExternalForm(), url.toExternalForm() );
+                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), String.valueOf(changelog), String.valueOf(url) );
             }
         }
     }

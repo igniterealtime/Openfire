@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -60,7 +60,7 @@ public class BasicStreamIDFactory implements StreamIDFactory {
             if ( id == null || id.isEmpty() ) {
                 throw new IllegalArgumentException( "Argument 'id' cannot be null." );
             }
-            this.id = StringEscapeUtils.escapeXml( id );
+            this.id = StringEscapeUtils.escapeXml10( id );
         }
 
         @Override

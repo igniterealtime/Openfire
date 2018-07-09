@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -289,7 +289,7 @@ public class HttpBindServlet extends HttpServlet {
                 response.addHeader("Cache-Control", "no-cache");
                 response.addHeader("Pragma", "no-cache");
             }
-            content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
+            content = "_BOSH_(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\")";
         }
         
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {

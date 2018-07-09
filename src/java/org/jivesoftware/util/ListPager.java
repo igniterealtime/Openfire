@@ -1,6 +1,6 @@
 package org.jivesoftware.util;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -232,7 +232,7 @@ public class ListPager<T> {
             .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
         for (final String additionalFormField : additionalFormFields) {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "");
-            sb.append(String.format("\t<input type='hidden' name='%s' value='%s'%s>\n", additionalFormField, StringEscapeUtils.escapeHtml(formFieldValue), formFieldValue.isEmpty() ? " disabled" : ""));
+            sb.append(String.format("\t<input type='hidden' name='%s' value='%s'%s>\n", additionalFormField, StringEscapeUtils.escapeHtml4(formFieldValue), formFieldValue.isEmpty() ? " disabled" : ""));
         }
         sb.append("</form>\n");
         return sb.toString();

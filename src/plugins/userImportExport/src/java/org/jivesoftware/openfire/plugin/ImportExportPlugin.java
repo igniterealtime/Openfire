@@ -22,7 +22,7 @@ import java.io.StringWriter;
 import java.util.List;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.OutputFormat;
@@ -107,7 +107,7 @@ public class ImportExportPlugin implements Plugin {
             }
         }
         
-        return StringEscapeUtils.escapeHtml(stringWriter.toString());
+        return StringEscapeUtils.escapeHtml4(stringWriter.toString());
     }
     
     /**
@@ -134,7 +134,7 @@ public class ImportExportPlugin implements Plugin {
     /**
      * Returns whether or not the supplied FileItem matches the openfire user schema
      *
-     * @param file a FileItem to be validated.
+     * @param usersFile a FileItem to be validated.
      * @return True if FileItem matches the openfire user schema.
      */
     public boolean validateImportFile(FileItem usersFile, boolean xep227Support) {

@@ -55,7 +55,7 @@ import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import org.jivesoftware.openfire.crowd.jaxb.AuthenticatePost;
 import org.jivesoftware.openfire.crowd.jaxb.Group;

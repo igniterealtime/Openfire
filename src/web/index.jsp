@@ -42,11 +42,14 @@
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.io.InputStream" %>
+<%@ page import="org.apache.http.HttpHost" %>
+<%@ page import="org.apache.http.conn.routing.HttpRoutePlanner" %>
+<%@ page import="org.apache.http.impl.conn.DefaultProxyRoutePlanner" %>
+<%@ page import="org.apache.http.impl.conn.DefaultRoutePlanner" %>
 <%@ page import="org.apache.http.impl.client.CloseableHttpClient" %>
 <%@ page import="org.apache.http.impl.client.HttpClients" %>
-<%@ page import="org.apache.http.client.methods.HttpUriRequest" %>
-<%@ page import="org.apache.http.client.methods.HttpGet" %>
 <%@ page import="org.apache.http.client.methods.CloseableHttpResponse" %>
+<%@ page import="org.apache.http.client.methods.HttpGet" %>
 <%@ page import="com.rometools.rome.io.SyndFeedInput" %>
 <%@ page import="com.rometools.rome.feed.synd.SyndFeed" %>
 <%@ page import="com.rometools.rome.feed.synd.SyndEntry" %>
@@ -411,14 +414,22 @@
             <% long nowTime = System.currentTimeMillis();
                 if (lastBlogFeed == null || nowTime - lastRSSFetch > 21600000) {
 
-                    try (final CloseableHttpClient client = HttpClients.createMinimal()) {
-                        final HttpUriRequest httpRequest = new HttpGet(blogFeedRSS);
-                        try (final CloseableHttpResponse httpResponse = client.execute(httpRequest);
-                             final InputStream stream = httpResponse.getEntity().getContent()) {
-                            final SyndFeedInput input = new SyndFeedInput();
-                            lastBlogFeed = input.build(new InputStreamReader(stream));
-                            lastRSSFetch = nowTime;
-                        }
+                    final String proxyHost = JiveGlobals.getProperty("update.proxy.host", "").trim();
+                    final int proxyPort = JiveGlobals.getIntProperty("update.proxy.port", -1);
+                    final HttpRoutePlanner routePlanner;
+                    if( !proxyHost.isEmpty() && proxyPort > 0) {
+                        routePlanner = new DefaultProxyRoutePlanner(new HttpHost(proxyHost, proxyPort, "http"));
+                    } else {
+                        routePlanner = new DefaultRoutePlanner(null);
+                    }
+                    final HttpGet httpGet = new HttpGet(blogFeedRSS);
+
+                    try (final CloseableHttpClient client = HttpClients.custom().setRoutePlanner(routePlanner).build();
+                         final CloseableHttpResponse httpResponse = client.execute(httpGet);
+                         final InputStream stream = httpResponse.getEntity().getContent()) {
+                        final SyndFeedInput input = new SyndFeedInput();
+                        lastBlogFeed = input.build(new InputStreamReader(stream));
+                        lastRSSFetch = nowTime;
                     } catch (final Throwable throwable) {
                         LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
                     }

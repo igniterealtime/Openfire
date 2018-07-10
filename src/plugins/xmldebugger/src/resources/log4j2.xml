@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <RollingFile name="analytics" fileName="${sys:openfireHome}/logs/xmldebugger.log" filePattern="${sys:openfireHome}/logs/xmldebugger.%i.log.zip">
+            <PatternLayout>
+                <pattern>%d %-5p %X [%c{1}] - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="50"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- By default log everything DEBUG and above -->
+        <Logger name="root" level="debug">
+            <appender-ref ref="analytics"/>
+        </Logger>
+    </Loggers>
+</Configuration>

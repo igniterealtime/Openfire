@@ -20,6 +20,8 @@
     boolean extcomp = ParamUtils.getBooleanParameter(request,"extcomp");
     boolean cm = ParamUtils.getBooleanParameter(request,"cm");
     boolean interpreted = ParamUtils.getBooleanParameter(request, "interpreted");
+    boolean loggingToStdOut = ParamUtils.getBooleanParameter(request, "loggingToStdOut");
+    boolean loggingToFile = ParamUtils.getBooleanParameter(request, "loggingToFile");
 
     DebuggerPlugin plugin = (DebuggerPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("xmldebugger");
     if (update) {
@@ -29,14 +31,17 @@
         plugin.getComponentPortFilter().setEnabled(extcomp);
         plugin.getMultiplexerPortFilter().setEnabled(cm);
         plugin.getInterpretedPrinter().setEnabled(interpreted);
-    }
-    else {
+        plugin.setLoggingToStdOut(loggingToStdOut);
+        plugin.setLoggingToFile(loggingToFile);
+    } else {
         // Set current values
         c2s = plugin.getDefaultPortFilter().isEnabled();
         ssl = plugin.getOldPortFilter().isEnabled();
         extcomp = plugin.getComponentPortFilter().isEnabled();
         cm = plugin.getMultiplexerPortFilter().isEnabled();
         interpreted = plugin.getInterpretedPrinter().isEnabled();
+        loggingToStdOut = plugin.isLoggingToStdOut();
+        loggingToFile = plugin.isLoggingToFile();
     }
 %>
 
@@ -95,6 +100,26 @@
             <td width="99%">
                 <label for="rb05">
                     Interpreted XML
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb06" type="checkbox" name="loggingToStdOut" <%= (loggingToStdOut ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb06">
+                    Log to STDOUT
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb07" type="checkbox" name="loggingToFile" <%= (loggingToFile ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb07">
+                    Log to file
                 </label>
             </td>
         </tr>

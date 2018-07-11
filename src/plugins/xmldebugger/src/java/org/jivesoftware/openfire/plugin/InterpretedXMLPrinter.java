@@ -57,7 +57,7 @@ public class InterpretedXMLPrinter implements PacketInterceptor {
                 hostAddress = "";
             }
             // Pad this out so it aligns with the RawPrintFilter output
-            plugin.log(String.format("INT %-16s - %s - (%11s): %s", hostAddress, incoming ? "RECD" : "SENT", session.getStreamID(), packet.toXML()));
+            plugin.log(String.format("INT %-16s - %s - (%11s): %s", hostAddress, incoming ? "RECV" : "SENT", session.getStreamID(), packet.toXML()));
         }
     }
 

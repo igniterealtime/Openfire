@@ -5,14 +5,12 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.util.CertificateManager" %>
-<%@ page import="org.bouncycastle.cert.X509CertificateHolder" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -21,6 +19,18 @@
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="now" class="java.util.Date"/>
+<%!
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+%>
 <%  webManager.init(request, response, session, application, out );
 
     final String alias            = ParamUtils.getParameter( request, "alias" );
@@ -430,7 +440,7 @@
                 <tr valign="top">
                     <%
                         final X509Certificate certificate = (X509Certificate) pageContext.getAttribute("certificate");
-                        final String hex = DatatypeConverter.printHexBinary( certificate.getSignature());
+                        final String hex = bytesToHex(certificate.getSignature());
                         final StringBuilder sb = new StringBuilder();
                         for (int i=0; i<hex.length(); i++) {
                             if (i != 0 && i != hex.length() - 1) {

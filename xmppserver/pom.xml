@@ -13,17 +13,6 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>org/jivesoftware/openfire/starter/JiveClassLoader.java</exclude>
-                        <exclude>org/jivesoftware/openfire/starter/ServerStarter.java</exclude>
-                        <exclude>org/jivesoftware/openfire/launcher/*.java</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
@@ -58,6 +47,55 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <profile>
+            <id>pre-1.9</id>
+            <activation>
+                <jdk>(,1.8]</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>org/jivesoftware/openfire/starter/JiveClassLoader.java</exclude>
+                                <exclude>org/jivesoftware/openfire/starter/ServerStarter.java</exclude>
+                                <exclude>org/jivesoftware/openfire/launcher/*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>post-1.8</id>
+            <activation>
+                <jdk>(1.8,]</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>org/jivesoftware/openfire/starter/JiveClassLoader.java</exclude>
+                                <exclude>org/jivesoftware/openfire/starter/ServerStarter.java</exclude>
+                                <exclude>org/jivesoftware/openfire/launcher/*.java</exclude>
+                            </excludes>
+                            <compilerArgs>
+                                <arg>--add-modules</arg>
+                                <arg>java.xml.bind</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
         <!-- Ignite Realtime -->

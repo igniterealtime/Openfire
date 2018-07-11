@@ -10,21 +10,55 @@
     <name>Administration Interface Taglibs</name>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <includes>
-                        <include>org/jivesoftware/admin/*Tag.java</include>
-                        <include>org/jivesoftware/admin/JSTL*.java</include>
-                    </includes>
-                </configuration>
-            </plugin>
-        </plugins>
-
         <sourceDirectory>../src/java</sourceDirectory>
     </build>
+
+    <profiles>
+        <profile>
+            <id>pre-1.9</id>
+            <activation>
+                <jdk>(,1.8]</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/jivesoftware/admin/*Tag.java</include>
+                                <include>org/jivesoftware/admin/JSTL*.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>post-1.8</id>
+            <activation>
+                <jdk>(1.8,]</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/jivesoftware/admin/*Tag.java</include>
+                                <include>org/jivesoftware/admin/JSTL*.java</include>
+                            </includes>
+                            <compilerArgs>
+                                <arg>--add-modules</arg>
+                                <arg>java.xml.bind</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>

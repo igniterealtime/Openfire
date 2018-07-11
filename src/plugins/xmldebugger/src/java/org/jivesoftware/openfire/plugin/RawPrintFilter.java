@@ -100,8 +100,8 @@ public class RawPrintFilter extends IoFilterAdapter {
     @Override
     public void messageReceived(final NextFilter nextFilter, final IoSession session, final Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
-        if (enabled && message instanceof IoBuffer) {
-            logBuffer(session, (IoBuffer) message, "RECV");
+        if (enabled && message instanceof String && !((String) message).isEmpty()) {
+            plugin.log(messagePrefix(session, "RECV") + ": " + message);
         }
         // Pass the message to the next filter
         super.messageReceived(nextFilter, session, message);
@@ -113,7 +113,10 @@ public class RawPrintFilter extends IoFilterAdapter {
         // Decode buffer
         CharBuffer charBuffer = Charset.forName("UTF-8").decode(ioBuffer.buf());
         // Log buffer content
-        plugin.log(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
+        final String message = charBuffer.toString();
+        if (!message.isEmpty()) {
+            plugin.log(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
+        }
         // Reset to old position in the buffer
         ioBuffer.position(currentPos);
     }

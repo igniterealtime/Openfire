@@ -20,6 +20,7 @@
     boolean extcomp = ParamUtils.getBooleanParameter(request,"extcomp");
     boolean cm = ParamUtils.getBooleanParameter(request,"cm");
     boolean interpreted = ParamUtils.getBooleanParameter(request, "interpreted");
+    boolean logWhitespace = ParamUtils.getBooleanParameter(request, "logWhitespace");
     boolean loggingToStdOut = ParamUtils.getBooleanParameter(request, "loggingToStdOut");
     boolean loggingToFile = ParamUtils.getBooleanParameter(request, "loggingToFile");
 
@@ -31,6 +32,7 @@
         plugin.getComponentPortFilter().setEnabled(extcomp);
         plugin.getMultiplexerPortFilter().setEnabled(cm);
         plugin.getInterpretedPrinter().setEnabled(interpreted);
+        plugin.setLogWhitespace(logWhitespace);
         plugin.setLoggingToStdOut(loggingToStdOut);
         plugin.setLoggingToFile(loggingToFile);
     } else {
@@ -40,6 +42,7 @@
         extcomp = plugin.getComponentPortFilter().isEnabled();
         cm = plugin.getMultiplexerPortFilter().isEnabled();
         interpreted = plugin.getInterpretedPrinter().isEnabled();
+        logWhitespace = plugin.isLoggingWhitespace();
         loggingToStdOut = plugin.isLoggingToStdOut();
         loggingToFile = plugin.isLoggingToFile();
     }
@@ -90,6 +93,16 @@
             <td width="99%">
                 <label for="rb04">
                     Connection Manager
+                </label>
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap>
+                <input id="rb08" type="checkbox" name="logWhitespace" <%= (logWhitespace ? "checked" : "") %>/>
+            </td>
+            <td width="99%">
+                <label for="rb08">
+                    Log whitespace only traffic
                 </label>
             </td>
         </tr>

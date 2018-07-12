@@ -48,6 +48,7 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
     static final String PROPERTY_PREFIX = "plugin.xmldebugger.";
     private static final String PROPERTY_LOG_TO_STDOUT_ENABLED = PROPERTY_PREFIX + "logToStdOut";
     private static final String PROPERTY_LOG_TO_FILE_ENABLED = PROPERTY_PREFIX + "logToFile";
+    private static final String PROPERTY_LOG_WHITESPACE = PROPERTY_PREFIX + "logWhitespace";
 
 
     private final RawPrintFilter defaultPortFilter;
@@ -56,6 +57,7 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
     private final RawPrintFilter multiplexerPortFilter;
     private final Set<RawPrintFilter> rawPrintFilters;
     private final InterpretedXMLPrinter interpretedPrinter;
+    private boolean logWhitespace;
     private boolean loggingToStdOut;
     private boolean loggingToFile;
 
@@ -167,6 +169,10 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
                     loggingToFile = enabled;
                     LOGGER.debug("file logger {}", enabled ? "enabled" : "disabled");
                     break;
+                case PROPERTY_LOG_WHITESPACE:
+                    logWhitespace = enabled;
+                    LOGGER.debug("whitespace logging {}", enabled ? "enabled" : "disabled");
+                    break;
                 default:
                     // Is it one of the RawPrintFilters?
                     for (final RawPrintFilter filter : rawPrintFilters) {
@@ -210,5 +216,13 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         if (loggingToFile) {
             LOGGER.debug(messageToLog);
         }
+    }
+
+    public void setLogWhitespace(final boolean enabled) {
+        JiveGlobals.setProperty(PROPERTY_LOG_WHITESPACE, String.valueOf(enabled));
+    }
+
+    public boolean isLoggingWhitespace() {
+        return logWhitespace;
     }
 }

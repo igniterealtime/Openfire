@@ -156,6 +156,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
          */
         isInitialized,
         incrementConflictCount,
+        hasRequestedBlocklist,
         
         /**
          * Operations of outgoing server sessions

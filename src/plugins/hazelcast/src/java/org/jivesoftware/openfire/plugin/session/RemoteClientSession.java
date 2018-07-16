@@ -46,6 +46,8 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
 
     private boolean messageCarbonsEnabled;
 
+    private boolean hasRequestedBlocklist;
+
     public RemoteClientSession(byte[] nodeID, JID address) {
         super(nodeID, address);
     }
@@ -163,6 +165,29 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
         this.messageCarbonsEnabled = enabled;
+    }
+
+    @Override
+    public boolean hasRequestedBlocklist()
+    {
+        // After it's determined that a session has requested a blocklist, this value will never revert back to false.
+        // It's safe to skip the remote operation here.
+        if (hasRequestedBlocklist) {
+            return true;
+        }
+
+        final ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.hasRequestedBlocklist);
+        final Object result = doSynchronousClusterTask(task);
+        hasRequestedBlocklist = result != null && (Boolean) result;
+
+        return hasRequestedBlocklist;
+    }
+
+    @Override
+    public void setHasRequestedBlocklist( final boolean hasRequestedBlocklist )
+    {
+        // This is suspicious. Why would this be called on a non-local client session?
+        this.hasRequestedBlocklist = hasRequestedBlocklist;
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {

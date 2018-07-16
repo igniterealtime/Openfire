@@ -81,7 +81,7 @@ public class ClientSessionTask extends RemoteSessionTask {
         }
         if (operation == Operation.isInitialized) {
             if (session instanceof RemoteClientSession) {
-                // Something is wrong since the session shoud be local instead of remote
+                // Something is wrong since the session should be local instead of remote
                 // Assume some default value
                 result = true;
             }
@@ -91,12 +91,22 @@ public class ClientSessionTask extends RemoteSessionTask {
         }
         else if (operation == Operation.incrementConflictCount) {
             if (session instanceof RemoteClientSession) {
-                // Something is wrong since the session shoud be local instead of remote
+                // Something is wrong since the session should be local instead of remote
                 // Assume some default value
                 result = 2;
             }
             else {
                 result = session.incrementConflictCount();
+            }
+        }
+        else if (operation == Operation.hasRequestedBlocklist) {
+            if (session instanceof RemoteClientSession) {
+                // Something is wrong since the session should be local instead of remote
+                // Assume some default value
+                result = false;
+            }
+            else {
+                result = session.hasRequestedBlocklist();
             }
         }
     }

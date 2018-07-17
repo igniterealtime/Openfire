@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -135,6 +136,14 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             Element iq = packet.getChildElement();
             String node = iq.attributeValue("node");
             //String node = metaData.getProperty("query:node");
+
+            // Legacy implementation assumes that, when querying the server, the node is null.
+            // This is not true for the XEP-0115 based requests for the server itself. As a
+            // hack, the node value is considered 'null' when the request that's being handled
+            // appears to be such a request.
+            if ( node != null && node.startsWith( EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE + "#" ) ) {
+                node = null;
+            }
 
             // Check if we have information about the requested name and node
             if (infoProvider.hasInfo(name, node, packet.getFrom())) {

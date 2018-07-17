@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SASLAuthentication.Status;
@@ -318,7 +319,13 @@ public class XmppWebSocket {
                 sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
         }
-        
+
+        // Add XEP-0115 entity capabilities for the server, so that peer can skip service discovery.
+        final String ver = EntityCapabilitiesManager.getLocalDomainVerHash();
+        if ( ver != null ) {
+            sb.append( String.format( "<c xmlns=\"http://jabber.org/protocol/caps\" hash=\"sha-1\" node=\"%s\" ver=\"%s\"/>", EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE, ver ) );
+        }
+
         sb.append("</stream:features>");
         deliver(sb.toString());
     }

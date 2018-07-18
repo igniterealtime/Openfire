@@ -510,7 +510,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     return serverNodeProviders.get(node).getIdentities(name, node, senderJID);
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                    // Answer identity of the server
+                    // Answer identity of the server itself.
                     final ArrayList<Element> identities = new ArrayList<>();
                     final Element identity = DocumentHelper.createElement("identity");
                     identity.addAttribute("category", "server");
@@ -533,33 +533,30 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     return XMPPServer.getInstance().getIQPEPHandler().getIdentities(name, node, senderJID);
                 }
                 else {
-                    if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                    // Answer with identities of users of the server.
+                    final Collection<UserIdentitiesProvider> providers;
+                    if (SessionManager.getInstance().isAnonymousRoute(name))
+                    {
                         // Answer identity of an anonymous user.
-                        final Set<Element> result = new HashSet<>();
-                        for ( final UserIdentitiesProvider provider : anonymousUserIdentityProviders )
-                        {
-                            final Iterator<Element> identities = provider.getIdentities();
-                            while ( identities.hasNext() )
-                            {
-                                result.add( identities.next() );
-                            }
-                        }
-                        return result.iterator();
+                        providers = anonymousUserIdentityProviders;
                     }
-                    else {
+                    else
+                    {
                         // Answer identity of a registered user.
                         // Note: We know that this user exists because #hasInfo returned true
-                        final Set<Element> result = new HashSet<>();
-                        for ( final UserIdentitiesProvider provider : registeredUserIdentityProviders )
-                        {
-                            final Iterator<Element> identities = provider.getIdentities();
-                            while ( identities.hasNext() )
-                            {
-                                result.add( identities.next() );
-                            }
-                        }
-                        return result.iterator();
+                        providers = registeredUserIdentityProviders;
                     }
+
+                    final Set<Element> result = new HashSet<>();
+                    for ( final UserIdentitiesProvider provider : providers )
+                    {
+                        final Iterator<Element> identities = provider.getIdentities();
+                        while ( identities.hasNext() )
+                        {
+                            result.add( identities.next() );
+                        }
+                    }
+                    return result.iterator();
                 }
             }
 
@@ -570,40 +567,36 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     return serverNodeProviders.get(node).getFeatures(name, node, senderJID);
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                    // Answer features of the server
+                    // Answer features of the server itself.
                     return new HashSet<>(serverFeatures.keySet()).iterator();
                 }
                 else if (node != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getFeatures(name, node, senderJID);
                 }
                 else {
-                    if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                    // Answer with features of users of the server.
+                    final Collection<UserFeaturesProvider> providers;
+                    if (SessionManager.getInstance().isAnonymousRoute(name))
+                    {
                         // Answer features of an anonymous user.
-                        final Set<String> result = new HashSet<>();
-                        for ( final UserFeaturesProvider provider : anonymousUserFeatureProviders )
-                        {
-                            final Iterator<String> features = provider.getFeatures();
-                            while ( features.hasNext() )
-                            {
-                                result.add( features.next() );
-                            }
-                        }
-                        return result.iterator();
+                        providers = anonymousUserFeatureProviders;
                     }
-                    else {
+                    else
+                    {
                         // Answer features of a registered user.
                         // Note: We know that this user exists because #hasInfo returned true
-                        final Set<String> result = new HashSet<>();
-                        for ( final UserFeaturesProvider provider : registeredUserFeatureProviders )
-                        {
-                            final Iterator<String> identities = provider.getFeatures();
-                            while ( identities.hasNext() )
-                            {
-                                result.add( identities.next() );
-                            }
-                        }
-                        return result.iterator();
+                        providers = registeredUserFeatureProviders;
                     }
+                    final Set<String> result = new HashSet<>();
+                    for ( final UserFeaturesProvider provider : providers )
+                    {
+                        final Iterator<String> features = provider.getFeatures();
+                        while ( features.hasNext() )
+                        {
+                            result.add( features.next() );
+                        }
+                    }
+                    return result.iterator();
                 }
             }
 

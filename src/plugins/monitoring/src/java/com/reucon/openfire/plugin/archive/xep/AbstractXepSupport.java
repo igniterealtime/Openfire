@@ -29,7 +29,7 @@ public abstract class AbstractXepSupport implements UserFeaturesProvider {
 
         this.server = server;
         this.element2Handlers = Collections
-                .synchronizedMap(new HashMap<String, IQHandler>());
+                .synchronizedMap(new HashMap<>());
         this.iqDispatcher = new AbstractIQHandler(iqDispatcherName, null, iqDispatcherNamespace) {
             public IQ handleIQ(IQ packet) throws UnauthorizedException {
                 if (!MonitoringPlugin.getInstance().isEnabled()) {

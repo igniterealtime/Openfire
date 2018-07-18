@@ -107,9 +107,7 @@ public abstract class AbstractXepSupport implements UserFeaturesProvider {
             if (iqHandler instanceof ServerFeaturesProvider) {
                 for (Iterator<String> i = ((ServerFeaturesProvider) iqHandler)
                         .getFeatures(); i.hasNext();) {
-                    if (iqDiscoInfoHandler != null) {
-                        iqDiscoInfoHandler.removeServerFeature(i.next());
-                    }
+                    iqDiscoInfoHandler.removeServerFeature(i.next());
                 }
             }
             if (muc) {

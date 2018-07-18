@@ -7,7 +7,7 @@
     <author>IgniteRealtime // Jive Software</author>
     <version>${project.version}</version>
     <date>07/19/2018</date>
-    <minServerVersion>4.1.0</minServerVersion>
+    <minServerVersion>4.3.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>4</databaseVersion>
 

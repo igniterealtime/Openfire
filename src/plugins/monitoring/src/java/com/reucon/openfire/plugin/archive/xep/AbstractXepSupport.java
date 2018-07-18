@@ -12,6 +12,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.disco.UserFeaturesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
@@ -20,7 +21,7 @@ import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
-public abstract class AbstractXepSupport {
+public abstract class AbstractXepSupport implements UserFeaturesProvider {
 
     protected final XMPPServer server;
     protected final Map<String, IQHandler> element2Handlers;
@@ -82,13 +83,17 @@ public abstract class AbstractXepSupport {
                 }
             }
         }
-        server.getIQDiscoInfoHandler().addServerFeature(namespace);
+        IQDiscoInfoHandler iqDiscoInfoHandler = server.getIQDiscoInfoHandler();
+        iqDiscoInfoHandler.addServerFeature(namespace);
+        iqDiscoInfoHandler.addUserFeaturesProvider(this);
         server.getIQRouter().addHandler(iqDispatcher);
     }
 
     public void stop() {
         IQRouter iqRouter = server.getIQRouter();
         IQDiscoInfoHandler iqDiscoInfoHandler = server.getIQDiscoInfoHandler();
+        iqDiscoInfoHandler.removeServerFeature( namespace );
+        iqDiscoInfoHandler.removeUserFeaturesProvider( this );
 
         for (IQHandler iqHandler : iqHandlers) {
             element2Handlers.remove(iqHandler.getInfo().getName());
@@ -120,4 +125,9 @@ public abstract class AbstractXepSupport {
         }
     }
 
+    @Override
+    public Iterator<String> getFeatures()
+    {
+        return Collections.singleton( namespace ).iterator();
+    }
 }

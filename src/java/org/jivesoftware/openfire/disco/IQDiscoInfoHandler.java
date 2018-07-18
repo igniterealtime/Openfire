@@ -76,6 +76,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     private List<UserIdentitiesProvider> anonymousUserIdentityProviders = new ArrayList<>();
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
+    private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
+    private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -336,6 +338,33 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
+     * Adds the "discoverable" user features provided by the provider whenever a disco for info is made against users
+     * of the server.
+     *
+     * @param provider The provider of user features.
+     */
+    public void addUserFeaturesProvider(UserFeaturesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        registeredUserFeatureProviders.add( provider );
+    }
+
+    /**
+     * Removes this provider of user features.
+     *
+     * @param provider The provider of features.
+     */
+    public void removeUserFeaturesProvider(UserFeaturesProvider provider) {
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
+        registeredUserFeatureProviders.remove( provider );
+    }
+
+    /**
      * Adds one specific feature to the information returned whenever a disco for information is
      * made against the server.
      *
@@ -540,11 +569,42 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getFeatures(name, node, senderJID);
                 }
-                if (node != null && name != null) {
+                if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                    // Answer features of the server
+                    return new HashSet<>(serverFeatures.keySet()).iterator();
+                }
+                else if (node != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getFeatures(name, node, senderJID);
                 }
-                // Answer features of the server
-                return new HashSet<>(serverFeatures.keySet()).iterator();
+                else {
+                    if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                        // Answer features of an anonymous user.
+                        final Set<String> result = new HashSet<>();
+                        for ( final UserFeaturesProvider provider : anonymousUserFeatureProviders )
+                        {
+                            final Iterator<String> features = provider.getFeatures();
+                            while ( features.hasNext() )
+                            {
+                                result.add( features.next() );
+                            }
+                        }
+                        return result.iterator();
+                    }
+                    else {
+                        // Answer features of a registered user.
+                        // Note: We know that this user exists because #hasInfo returned true
+                        final Set<String> result = new HashSet<>();
+                        for ( final UserFeaturesProvider provider : registeredUserFeatureProviders )
+                        {
+                            final Iterator<String> identities = provider.getFeatures();
+                            while ( identities.hasNext() )
+                            {
+                                result.add( identities.next() );
+                            }
+                        }
+                        return result.iterator();
+                    }
+                }
             }
 
             @Override

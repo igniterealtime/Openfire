@@ -30,13 +30,7 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
-import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
@@ -712,6 +706,10 @@ public class XMPPServer {
 
             if (module instanceof UserIdentitiesProvider) {
                 getIQDiscoInfoHandler().addUserIdentitiesProvider( (UserIdentitiesProvider) module );
+            }
+
+            if (module instanceof UserFeaturesProvider ) {
+                getIQDiscoInfoHandler().addUserFeaturesProvider( (UserFeaturesProvider) module );
             }
 
             // Service discovery items

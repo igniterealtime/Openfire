@@ -82,7 +82,7 @@ import org.xmpp.packet.Presence;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
-        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener,
+        UserIdentitiesProvider, UserFeaturesProvider, UserItemsProvider, PresenceEventListener,
         RosterEventListener, UserEventListener, DiscoInfoProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);

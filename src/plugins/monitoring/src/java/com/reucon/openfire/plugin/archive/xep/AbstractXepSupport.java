@@ -22,7 +22,7 @@ public abstract class AbstractXepSupport implements UserFeaturesProvider {
     protected final Map<String, IQHandler> element2Handlers;
     protected final IQHandler iqDispatcher;
     protected final String namespace;
-    protected boolean muc = false;
+    protected boolean muc;
     protected Collection<IQHandler> iqHandlers;
 
     public AbstractXepSupport(XMPPServer server, String namespace,String iqDispatcherNamespace, String iqDispatcherName, boolean muc) {

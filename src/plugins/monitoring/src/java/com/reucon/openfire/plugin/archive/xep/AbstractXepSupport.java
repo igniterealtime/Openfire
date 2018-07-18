@@ -1,15 +1,8 @@
 package com.reucon.openfire.plugin.archive.xep;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.disco.UserFeaturesProvider;
@@ -20,6 +13,8 @@ import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
+
+import java.util.*;
 
 public abstract class AbstractXepSupport implements UserFeaturesProvider {
 

@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -207,13 +208,13 @@ public class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
-
-            if ( socket == null ) {
+            final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
+            if ( socketToXmppDomain  == null ) {
                 log.info( "Unable to create new outgoing session: Cannot create a plain socket connection with any applicable remote host." );
                 return null;
             }
 
+            final Socket socket = socketToXmppDomain.getKey();
             connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
 
             log.debug( "Send the stream header and wait for response..." );
@@ -529,15 +530,16 @@ public class ServerDialback {
 
                 String key = doc.getTextTrim();
 
-                Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
+                final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
 
-                if ( socket == null )
+                if ( socketToXmppDomain == null )
                 {
                     log.debug( "Unable to validate domain: No server available for verifying key of remote server." );
                     dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_not_found, PacketError.Type.cancel, "Unable to connect to authoritative server"));
                     return false;
                 }
 
+                Socket socket = socketToXmppDomain.getKey();
                 VerifyResult result;
                 try {
                     log.debug( "Verifying dialback key..." );

@@ -52,7 +52,7 @@ public class ConnectionListener
 
     /**
      * Name of property that configures the maximum amount (in bytes) of IO data can be cached, pending processing.
-     * 'null' indicates that the cache size is unbounded. Unbounded caches should be used for high-volume and/or trusted
+     * 'nll' indicates that the cache size is unbounded. Unbounded caches should be used for high-volume and/or trusted
      * connections only (if at all).
      */
     private final String maxReadBufferPropertyName; // Max buffer size

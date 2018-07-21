@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.spi;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.SocketAcceptThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class LegacyConnectionAcceptor extends ConnectionAcceptor
         }
 
         try {
-            socketAcceptThread = new SocketAcceptThread(configuration.getPort(), configuration.getBindAddress());
+            socketAcceptThread = new SocketAcceptThread(configuration.getPort(), configuration.getBindAddress(), configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode);
             socketAcceptThread.setDaemon(true);
             socketAcceptThread.setPriority(Thread.MAX_PRIORITY);
             socketAcceptThread.start();

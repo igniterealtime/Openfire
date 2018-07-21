@@ -545,7 +545,14 @@
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'SOCKET_S2S'}">
+                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy ne 'legacyMode'}" >
+                    <fmt:message key="ports.server_to_server.desc"/>
+                    <fmt:message key="ports.plaintext.desc">
+                        <fmt:param><a href='connection-settings-socket-s2s.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy eq 'legacyMode'}" >
                     <fmt:message key="ports.server_to_server.desc"/>
                     <fmt:message key="ports.legacymode.desc">
                         <fmt:param><a href='connection-settings-socket-s2s.jsp'></fmt:param>

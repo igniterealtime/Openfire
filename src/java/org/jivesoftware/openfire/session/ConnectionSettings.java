@@ -34,6 +34,8 @@ public final class ConnectionSettings {
 
         public static final String SOCKET_ACTIVE = "xmpp.server.socket.active";
         public static final String PORT = "xmpp.server.socket.port";
+        public static final String OLD_SSLPORT = "xmpp.server.socket.ssl.port";
+        public static final String ENABLE_OLD_SSLPORT = "xmpp.server.socket.ssl.active";
         public static final String REMOTE_SERVER_PORT = "xmpp.server.socket.remotePort";
         public static final String SOCKET_READ_TIMEOUT = "xmpp.server.read.timeout";
 

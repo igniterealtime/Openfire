@@ -47,6 +47,7 @@
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled");
     int componentPort = ParamUtils.getIntParameter(request, "componentPort", -1);
     int serverPort = ParamUtils.getIntParameter(request, "serverPort", -1);
+    int serverSslPort = ParamUtils.getIntParameter(request, "serverSslPort", -1);
     boolean jmxEnabled = ParamUtils.getBooleanParameter(request, "jmxEnabled");
     boolean jmxSecure = ParamUtils.getBooleanParameter(request, "jmxSecure");
     int jmxPort = ParamUtils.getIntParameter(request, "jmxPort", -1);
@@ -65,6 +66,7 @@
         sslPort = ConnectionManager.DEFAULT_SSL_PORT;
         componentPort = ConnectionManager.DEFAULT_COMPONENT_PORT;
         serverPort = ConnectionManager.DEFAULT_SERVER_PORT;
+        serverSslPort = ConnectionManager.DEFAULT_SERVER_SSL_PORT;
         embeddedPort = 9090;
         embeddedSecurePort = 9091;
         sslEnabled = true;
@@ -110,6 +112,9 @@
         if (serverPort < 1) {
             errors.put("serverPort", "");
         }
+        if (serverSslPort < 1) {
+            errors.put("serverSslPort", "");
+        }
         if (XMPPServer.getInstance().isStandAlone()) {
             if (embeddedPort < 1) {
                 errors.put("embeddedPort", "");
@@ -131,6 +136,11 @@
                 errors.put("portsEqual", "");
             }
         }
+        if (serverPort > 0 && serverSslPort > 0) {
+            if (serverPort == serverSslPort) {
+                errors.put("serverPortsEqual", "");
+            }
+        }
         if (jmxPort < 1 && jmxEnabled) {
             errors.put("jmxPort", "");
         }
@@ -145,6 +155,7 @@
             connectionManager.setClientSSLListenerPort(sslPort);
             connectionManager.setComponentListenerPort(componentPort);
             connectionManager.setServerListenerPort(serverPort);
+            connectionManager.setServerSslListenerPort(serverSslPort);
             if (!String.valueOf(embeddedPort).equals(JiveGlobals.getXMLProperty("adminConsole.port"))) {
                 JiveGlobals.setXMLProperty("adminConsole.port", String.valueOf(embeddedPort));
                 needRestart = true;
@@ -158,7 +169,7 @@
             JMXManager.setPort(jmxPort);
 
             // Log the event
-            webManager.logEvent("edit server properties", "serverName = "+serverName+"\nport = "+port+"\nsslPort = "+sslPort+"\ncomponentPort = "+componentPort+"\nserverPort = "+serverPort+"\nembeddedPort = "+embeddedPort+"\nembeddedSecurePort = "+embeddedSecurePort);
+            webManager.logEvent("edit server properties", "serverName = "+serverName+"\nport = "+port+"\nsslPort = "+sslPort+"\ncomponentPort = "+componentPort+"\nserverPort = "+serverPort+"\nserverSslPort = "+serverSslPort+"\nembeddedPort = "+embeddedPort+"\nembeddedSecurePort = "+embeddedSecurePort);
             if (needRestart) {
                 response.sendRedirect("server-props.jsp?success=true&restart=true");
             } else {
@@ -173,6 +184,7 @@
         sslPort = connectionManager.getClientSSLListenerPort();
         componentPort = connectionManager.getComponentListenerPort();
         serverPort = connectionManager.getServerListenerPort();
+        serverSslPort = connectionManager.getServerSslListenerPort();
         try {
             embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port"));
         } catch (Exception ignored) {
@@ -266,6 +278,23 @@
                 <fmt:message key="server.props.valid_port" />
                 <a href="#" onclick="document.editform.serverPort.value='<%=ConnectionManager.DEFAULT_SERVER_PORT%>';"
                  ><fmt:message key="server.props.valid_port1" /></a>.
+                </span>
+            <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="server.props.server_ssl_port" />
+        </td>
+        <td class="c2">
+            <input type="text" name="serverSslPort" value="<%= (serverSslPort > 0 ? String.valueOf(serverSslPort) : "") %>"
+                   size="5" maxlength="5">
+            <%  if (errors.containsKey("serverSslPort")) { %>
+            <br>
+            <span class="jive-error-text">
+                <fmt:message key="server.props.valid_port" />
+                <a href="#" onclick="document.editform.serverPort.value='<%=ConnectionManager.DEFAULT_SERVER_SSL_PORT%>';"
+                ><fmt:message key="server.props.valid_port1" /></a>.
                 </span>
             <%  } %>
         </td>

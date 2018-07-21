@@ -39,17 +39,19 @@ public class SocketAcceptThread extends Thread {
      */
     private final int tcpPort;
     private InetAddress bindInterface;
+    private final boolean directTLS;
 
     private SocketAcceptingMode acceptingMode;
 
-    public SocketAcceptThread( int tcpPort, InetAddress bindInterface )
+    public SocketAcceptThread( int tcpPort, InetAddress bindInterface, boolean directTLS )
             throws IOException {
-        super("Socket Listener at port " + tcpPort);
+        super("Socket Listener at port " + tcpPort + ( directTLS ? " (direct TLS)" : ""));
         this.tcpPort = tcpPort;
         this.bindInterface = bindInterface;
+        this.directTLS = directTLS;
 
         // Set the blocking reading mode to use
-        acceptingMode = new BlockingAcceptingMode(tcpPort, bindInterface);
+        acceptingMode = new BlockingAcceptingMode(tcpPort, bindInterface, directTLS);
     }
 
     /**
@@ -67,7 +69,17 @@ public class SocketAcceptThread extends Thread {
      * @return information about the port on which the server is listening for connections.
      */
     public ServerPort getServerPort() {
-        return new ServerPort(tcpPort, null, bindInterface.getHostName(), false, null, ServerPort.Type.server);
+        return new ServerPort(tcpPort, null, bindInterface.getHostName(), directTLS, null, ServerPort.Type.server);
+    }
+
+    /**
+     * Returns if the port expects sockets to be encrypted immediately (direct
+     * TLS).
+     *
+     * @return true when direct TLS is expected, otherwise false.
+     */
+    public boolean isDirectTLS() {
+        return directTLS;
     }
 
     /**

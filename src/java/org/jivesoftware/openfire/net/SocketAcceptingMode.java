@@ -41,7 +41,23 @@ abstract class SocketAcceptingMode {
      */
     protected ServerSocket serverSocket;
 
-    protected SocketAcceptingMode() {
+    /**
+     * true if data is to be encrypted directly (as opposed to StartTLS).
+     */
+    protected final boolean directTLS;
+
+    protected SocketAcceptingMode(boolean directTLS) {
+        this.directTLS = directTLS;
+    }
+
+    /**
+     * Returns if the port expects sockets to be encrypted immediately (direct
+     * TLS).
+     *
+     * @return true when direct TLS is expected, otherwise false.
+     */
+    public boolean isDirectTLS() {
+        return directTLS;
     }
 
     public abstract void run();
@@ -67,6 +83,9 @@ abstract class SocketAcceptingMode {
         final RoutingTable routingTable = server.getRoutingTable();
         final PacketDeliverer deliverer = server.getPacketDeliverer();
         final SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
+        if (directTLS) {
+            conn.startTLS( false );
+        }
         return new ServerSocketReader(router, routingTable, serverName, sock, conn, useBlockingMode);
     }
 }

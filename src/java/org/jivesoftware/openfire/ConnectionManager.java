@@ -47,9 +47,14 @@ public interface ConnectionManager {
     int DEFAULT_COMPONENT_SSL_PORT = 5276;
 
     /**
-     * The default XMPP port for server2server communication.
+     * The default XMPP port for server2server communication, optionally using StartTLS.
      */
     int DEFAULT_SERVER_PORT = 5269;
+
+    /**
+     * The default XMPP port for server2server communication using Direct TLS.
+     */
+    int DEFAULT_SERVER_SSL_PORT = 5270;
 
     /**
      * The default XMPP port for connection multiplex.
@@ -216,6 +221,22 @@ public interface ConnectionManager {
      * @return the port to use for remote servers.
      */
     int getServerListenerPort();
+
+    /**
+     * Sets the port to use for remote servers. This port is used for remote servers to connect
+     * to this server, using direct TLS. Default port: 5270.
+     *
+     * @param port the port to use for remote servers.
+     */
+    void setServerSslListenerPort( int port );
+
+    /**
+     * Returns the port to use for remote servers. This port is used for remote servers to connect
+     * to this server, using direct TLS. Default port: 5270.
+     *
+     * @return the port to use for remote servers.
+     */
+    int getServerSslListenerPort();
 
     /**
      * Sets the port to use for connection managers. This port is used for connection managers

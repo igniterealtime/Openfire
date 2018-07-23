@@ -4,8 +4,9 @@
     <name>External Service Discovery</name>
     <description>Allows XMPP entities to discover services external to the XMPP network, such as STUN and TURN servers.</description>
     <author>Guus der Kinderen</author>
-    <version>1.0.0</version>
-    <date>01/26/2018</date>
+    <version>1.0.1-SNAPSHOT</version>
+    <date>tbc.</date>
+    <minServerVersion>4.2.0</minServerVersion>
 
     <databaseKey>externalservicediscovery</databaseKey>
     <databaseVersion>1</databaseVersion>

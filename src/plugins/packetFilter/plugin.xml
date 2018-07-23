@@ -7,8 +7,8 @@
     <name>Packet Filter</name>
     <description>Rules to enforce ethical communication</description>
     <author>Nate Putnam</author>
-    <version>3.3.0</version>
-    <date>10/12/2015</date>
+    <version>3.3.1-SNAPSHOT</version>
+    <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
     <databaseKey>packetfilter</databaseKey>
     <databaseVersion>2</databaseVersion>

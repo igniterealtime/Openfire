@@ -6,8 +6,8 @@
    <name>User Import Export</name>
    <description>Enables import and export of user data</description>
    <author>Ryan Graham</author>
-   <version>2.6.2</version>
-   <date>10/02/2017</date>
+   <version>2.6.3-SNAPSHOT</version>
+   <date>tbc.</date>
    <minServerVersion>4.0.0</minServerVersion>
 
    <adminconsole>

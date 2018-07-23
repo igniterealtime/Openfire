@@ -9,7 +9,7 @@
     <description>XEP-0321: Remote Roster Management support
     </description>
     <author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
-    <version>2.2.1</version>
+    <version>2.2.2-SNAPSHOT</version>
     <date>11/17/2017</date>
     <databaseKey>gojara</databaseKey>
     <databaseVersion>1</databaseVersion>

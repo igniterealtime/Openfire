@@ -4,11 +4,11 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>callbackOnOffline</artifactId>
-    <version>1.2</version>
+    <version>1.2.1-SNAPSHOT</version>
     <name>Callback on Offline Plugin</name>
     <description>Url is called when recipient is offline</description>
 

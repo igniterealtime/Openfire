@@ -3,8 +3,8 @@
     <!-- Main plugin class -->
     <class>com.fotsum.CallbackOnOffline</class>
 
-    <name>CallbackOnOffline</name>
-    <description>Url is called when recipient is offline</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Pavel Goski / Krzysztof Misztal</author>
     <version>${project.version}</version>
     <date>tbc.</date>

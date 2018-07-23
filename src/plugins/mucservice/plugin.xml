@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.MUCServicePlugin</class>
-    <name>MUC Service</name>
-    <description>(Deprecated) Please use the REST API Plugin. MUC administration over REST Interface</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Roman Soldatow</author>
     <version>${project.version}</version>
     <date>tbc</date>

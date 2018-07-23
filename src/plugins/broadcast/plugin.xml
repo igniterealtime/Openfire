@@ -5,8 +5,8 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.BroadcastPlugin</class>
-    <name>Broadcast</name>
-    <description>Broadcasts messages to users.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
     <date>tbc.</date>

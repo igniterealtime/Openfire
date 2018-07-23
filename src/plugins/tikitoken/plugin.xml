@@ -1,7 +1,7 @@
 <plugin>
     <class>org.tiki.tikitoken.TikiTokenPlugin</class>
-    <name>TikiToken</name>
-    <description>Allows users to authenticate with a Tiki token.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Tiki Wiki CMS Groupware</author>
     <version>${project.version}</version>
     <date>04/24/2017</date>

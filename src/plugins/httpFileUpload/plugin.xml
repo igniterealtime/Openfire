@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
     <class>org.igniterealtime.openfire.plugins.httpfileupload.HttpFileUploadPlugin</class>
-    <name>HTTP File Upload</name>
-    <description>Allows clients to share files, as described in the XEP-0363 'HTTP File Upload' specification.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Guus der Kinderen</author>
     <version>${project.version}</version>
     <date>02/19/2018</date>

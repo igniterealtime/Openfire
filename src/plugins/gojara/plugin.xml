@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
     <!-- Main plugin class -->
-    <class>org.jivesoftware.openfire.plugin.gojara.base.RemoteRosterPlugin
-    </class>
-
-
-    <name>GoJara</name>
-    <description>XEP-0321: Remote Roster Management support
-    </description>
+    <class>org.jivesoftware.openfire.plugin.gojara.base.RemoteRosterPlugin</class>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
     <version>${project.version}</version>
     <date>03/23/2018</date>
@@ -21,23 +17,25 @@
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
                 <item id="remoteRoster" name="Gojara Settings" url="rr-main.jsp"
-                    description="Manage GoJara Settings" />
+                      description="Manage GoJara Settings"/>
             </sidebar>
         </tab>
         <tab id="tab-server">
             <sidebar id="sidebar-server-manager">
                 <item id="gojaraGatewayStatistics" name="Spectrum2 Stats"
-                    url="gojara-gatewayStatistics.jsp" description="Click to see Stats of Spectrum2 Components"></item>
+                      url="gojara-gatewayStatistics.jsp"
+                      description="Click to see Stats of Spectrum2 Components"/>
             </sidebar>
         </tab>
         <tab id="tab-session">
             <sidebar id="sidebar-session">
                 <item id="gojaraSessions" name="Gateway Sessions" url="gojara-activeSessions.jsp"
-                    description="Click to manage Gateway sessions"></item>
+                      description="Click to manage Gateway sessions"/>
             </sidebar>
             <sidebar id="sidebar-tools">
                 <item id="gojaraRegistrationAdministration" name="Gateway Registration Overview"
-                    url="gojara-RegistrationsOverview.jsp" description="Manage existing Spectrum2 registrations"></item>
+                      url="gojara-RegistrationsOverview.jsp"
+                      description="Manage existing Spectrum2 registrations"/>
             </sidebar>
         </tab>
     </adminconsole>

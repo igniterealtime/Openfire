@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
     <class>org.igniterealtime.openfire.plugins.certificatemanager.CertificateManagerPlugin</class>
-    <name>Certificate Manager</name>
-    <description>Adds certificate management features.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Guus der Kinderen</author>
     <version>${project.version}</version>
     <date>11/24/2017</date>

@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.rest.RESTServicePlugin</class>
-    <name>REST API</name>
-    <description>Allows administration over a RESTful API.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Roman Soldatow</author>
     <version>${project.version}</version>
     <date>tbc.</date>
@@ -12,7 +12,7 @@
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
                 <item id="rest-api" name="REST API" url="rest-api.jsp"
-                     description="Click to manage the service that allows to configure the Openfire over a RESTFul API" />
+                      description="Click to manage the service that allows to configure the Openfire over a RESTFul API"/>
             </sidebar>
         </tab>
     </adminconsole>

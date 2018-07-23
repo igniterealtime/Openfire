@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jinglenodes.JingleNodesPlugin</class>
-    <name>Jingle Nodes Plugin</name>
-    <description>Provides support for Jingle Nodes</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jingle Nodes (Rodrigo Martins)</author>
     <version>${project.version}</version>
     <date>10/12/2015</date>

@@ -2,18 +2,18 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.PresencePlugin</class>
-    <name>Presence Service</name>
-    <description>Exposes presence information through HTTP.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
-    
-    <adminconsole>		
+
+    <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
                 <item id="presence-service" name="Presence Service" url="presence-service.jsp"
-                     description="Click to manage the service that exposes presence information" />
+                      description="Click to manage the service that exposes presence information"/>
             </sidebar>
         </tab>
     </adminconsole>

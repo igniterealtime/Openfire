@@ -4,11 +4,11 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>clientControl</artifactId>
-    <version>2.1.2</version>
+    <version>2.1.4-SNAPSHOT</version>
     <name>ClientControl Plugin</name>
     <description>Controls clients allowed to connect and available features</description>
 

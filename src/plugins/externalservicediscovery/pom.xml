@@ -5,13 +5,13 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>externalservicediscovery</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <name>External Service Discovery Plugin</name>
     <description>Openfire plugin that implements XEP-0215: External Service Discovery, allowing XMPP entities to discover services external to the XMPP network.</description>

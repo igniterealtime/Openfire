@@ -4,11 +4,11 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>motd</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
     <name>Message of the Day Plugin</name>
     <description>Allows admins to have a message sent to users each time they log in.</description>
 

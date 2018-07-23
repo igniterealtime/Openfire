@@ -4,11 +4,11 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.2.0</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>fastpath</artifactId>
-    <version>4.4.2</version>
+    <version>4.4.4-SNAPSHOT</version>
     <name>Fastpath Plugin</name>
     <description>Support for managed queued chat requests, such as a support team might use.</description>
 

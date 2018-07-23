@@ -4,7 +4,7 @@
     <name>inVerse</name>
     <description>Adds the (third-party) inVerse web client to Openfire.</description>
     <author>Guus der Kinderen</author>
-    <version>3.3.5-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.1.5</minServerVersion>
     <adminconsole>

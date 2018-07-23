@@ -4,7 +4,7 @@
     <name>HTTP File Upload</name>
     <description>Allows clients to share files, as described in the XEP-0363 'HTTP File Upload' specification.</description>
     <author>Guus der Kinderen</author>
-    <version>1.1.0</version>
+    <version>${project.version}</version>
     <date>02/19/2018</date>
     <minServerVersion>4.1.0</minServerVersion>
 </plugin>

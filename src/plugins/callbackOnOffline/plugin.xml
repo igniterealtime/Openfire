@@ -6,7 +6,7 @@
     <name>CallbackOnOffline</name>
     <description>Url is called when recipient is offline</description>
     <author>Pavel Goski / Krzysztof Misztal</author>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 

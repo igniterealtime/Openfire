@@ -4,7 +4,7 @@
     <name>Candy</name>
     <description>Adds the (third-party) Candy web client to Openfire.</description>
     <author>Guus der Kinderen</author>
-    <version>2.2.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.1.5</minServerVersion>
     <adminconsole>

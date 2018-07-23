@@ -8,7 +8,7 @@
     <name>Bookmarks</name>
     <description>Allows clients to store URL and group chat bookmarks (XEP-0048)</description>
     <author>Ignite Realtime</author>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 

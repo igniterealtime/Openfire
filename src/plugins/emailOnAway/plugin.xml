@@ -6,7 +6,7 @@
     <name>Email on Away</name>
     <description>Messages sent to alternate location when recipient is away</description>
     <author>Nick Mossie</author>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 

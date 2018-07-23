@@ -5,7 +5,7 @@
     <name>NodeJs</name>
     <description>Integrates NodeJs Applications with Openfire.</description>
     <licenseType>Apache 2.0</licenseType>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 

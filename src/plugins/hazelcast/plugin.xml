@@ -5,7 +5,7 @@
     <name>Hazelcast plugin</name>
     <description>Adds clustering support</description>
     <author>Tom Evans</author>
-    <version>2.4.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.3.0</minServerVersion>
 </plugin>

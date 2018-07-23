@@ -4,7 +4,7 @@
     <class>com.ifsoft.jmxweb.plugin.JmxWebPlugin</class>
     <name>JmxWeb Plugin</name>
     <description>JmxWeb plugin is web based platform for managing and monitoring openfire via JMX.</description>
-    <version>0.0.9-SNAPSHOT</version>
+    <version>${project.version}</version>
     <licenseType>Apache 2.0</licenseType>    
     <date>05/09/2018</date>
     <minServerVersion>4.3.0</minServerVersion>

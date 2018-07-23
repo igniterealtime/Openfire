@@ -5,11 +5,11 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.EmailListenerPlugin</class>
-    <name>Email Listener</name>
-    <description>Listens for emails and sends alerts to specific users.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
     <url>http://www.igniterealtime.org</url>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 
@@ -17,7 +17,7 @@
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
                 <item id="email-listener" name="Email Listener" url="email-listener.jsp"
-                     description="Click to configure email listener" />
+                      description="Click to configure email listener"/>
             </sidebar>
         </tab>
     </adminconsole>

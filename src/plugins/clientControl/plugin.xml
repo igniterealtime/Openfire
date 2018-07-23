@@ -3,17 +3,17 @@
 
     <!-- Main plugin class -->
     <class>org.jivesoftware.openfire.plugin.ClientControlPlugin</class>
-    
+
     <!-- Plugin meta-data -->
-    <name>Client Control</name>
-    <description>Controls clients allowed to connect and available features</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
-    <version>2.1.4-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.0.0</minServerVersion>
 
     <!-- UI extension -->
-    <adminconsole>		
+    <adminconsole>
         <tab id="tab-server">
             <sidebar id="client" name="${admin.sidebar.client.name}" description="${admin.sidebar.client.description}">
                 <item id="client-features" name="${admin.item.client-features.name}"
@@ -31,5 +31,5 @@
             </sidebar>
         </tab>
     </adminconsole>
-    
+
 </plugin>

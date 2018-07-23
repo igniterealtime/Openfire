@@ -5,10 +5,10 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.BroadcastPlugin</class>
-    <name>Broadcast</name>
-    <description>Broadcasts messages to users.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
-    <version>1.9.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>4.0.0</minServerVersion>

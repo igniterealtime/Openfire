@@ -5,10 +5,10 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.UserCreationPlugin</class>
-    <name>User Creation</name>
-    <description>Creates users and populates rosters.</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Jive Software</author>
-    <version>1.3.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc.</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>4.3.0</minServerVersion>
@@ -17,8 +17,8 @@
         <tab id="tab-users">
             <sidebar id="sidebar-users">
                 <item id="users-creation" name="Users Creation"
-                    url="users-creation.jsp"
-                    description="Quickly create users and populate their rosters" />
+                      url="users-creation.jsp"
+                      description="Quickly create users and populate their rosters"/>
             </sidebar>
         </tab>
     </adminconsole>

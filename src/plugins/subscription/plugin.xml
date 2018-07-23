@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
-   <class>org.jivesoftware.openfire.plugin.SubscriptionPlugin</class>
+    <class>org.jivesoftware.openfire.plugin.SubscriptionPlugin</class>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
+    <author>Ryan Graham</author>
+    <version>${project.version}</version>
+    <date>tbc.</date>
+    <url>http://www.igniterealtime.org</url>
+    <minServerVersion>4.0.0</minServerVersion>
 
-   <name>Subscription</name>
-   <description>Automatically accepts or rejects subscription requests</description>
-   <author>Ryan Graham</author>
-   <version>1.4.1-SNAPSHOT</version>
-   <date>tbc.</date>
-   <url>http://www.igniterealtime.org</url>
-   <minServerVersion>4.0.0</minServerVersion>
-
-   <adminconsole>
-      <tab id="tab-server">
-         <sidebar id="sidebar-server-settings">
-            <item id="subscription-plugin-properties" 
-                  name="Subscription Properties" 
-                  url="subscription-plugin-properties.jsp" 
-                  description="Edit subscription plugin properties" />
-         </sidebar>
-      </tab>
-   </adminconsole>
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="subscription-plugin-properties"
+                      name="Subscription Properties"
+                      url="subscription-plugin-properties.jsp"
+                      description="Edit subscription plugin properties"/>
+            </sidebar>
+        </tab>
+    </adminconsole>
 </plugin>

@@ -2,10 +2,10 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.HazelcastPlugin</class>
-    <name>Hazelcast plugin</name>
-    <description>Adds clustering support</description>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
     <author>Tom Evans</author>
-    <version>2.4.1-SNAPSHOT</version>
+    <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.3.0</minServerVersion>
 </plugin>

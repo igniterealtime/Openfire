@@ -113,7 +113,7 @@ public class ServerStanzaHandler extends StanzaHandler {
                 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
                 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
         //needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted
-        connection.startTLS(false);
+        connection.startTLS(false, false);
     }
     @Override
     protected void processIQ(IQ packet) throws UnauthorizedException {

@@ -84,8 +84,8 @@ abstract class SocketAcceptingMode {
         final PacketDeliverer deliverer = server.getPacketDeliverer();
         final SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
         if (directTLS) {
-            conn.startTLS( false );
+            conn.startTLS( false, directTLS );
         }
-        return new ServerSocketReader(router, routingTable, serverName, sock, conn, useBlockingMode);
+        return new ServerSocketReader(router, routingTable, serverName, sock, conn, useBlockingMode, directTLS);
     }
 }

@@ -212,7 +212,6 @@ public class DNSUtil {
 
         // _service._proto.name.
         final String lookup = (service + proto + name).toLowerCase();
-
         try {
             Attributes dnsLookup =
                     context.getAttributes(lookup, new String[]{"SRV"});
@@ -222,8 +221,9 @@ public class DNSUtil {
                 return Collections.emptyList();
             }
             WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+            final boolean directTLS = lookup.startsWith( "_xmpps-" ); // XEP-0368
             for (int i = 0; i < srvRecords.size(); i++) {
-                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
+                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "), directTLS);
             }
 
             return prioritize(hosts);
@@ -387,10 +387,10 @@ public class DNSUtil {
         private final int priority;
         private final int weight;
 
-        private WeightedHostAddress(String [] srvRecordEntries) {
+        private WeightedHostAddress(String[] srvRecordEntries, boolean directTLS) {
             super(srvRecordEntries[srvRecordEntries.length-1],
                   Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]),
-                  srvRecordEntries[0].startsWith( "_xmpps-" ) // XEP-0368
+                  directTLS
             );
             weight = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-3]);
             priority = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-4]);

@@ -331,39 +331,16 @@ public interface Connection extends Closeable {
      * connection the server requesting the TLS negotiation will be the client and the other server
      * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
      * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
-     * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.
-     * Both servers should specify the xmpp domain of the other server in the <tt>remoteServer</tt>
-     * parameter.<p>
-     *
-     * In the case of client-2-server the XMPP server must pass <code>false</code> in the
-     * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation. The
-     * <tt>remoteServer</tt> parameter will always be <tt>null</tt>.
-     *
-     * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
-     * @param remoteServer xmpp domain of the remote server or <tt>null</tt>. When null a
-     *       {@link org.jivesoftware.openfire.net.ClientTrustManager} will be used for verifying certificates
-     *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
-     * @param authentication policy to use for authenticating the remote peer.
-     * @throws Exception if an error occured while securing the connection.
-     * @deprecated Use {@link #startTLS(boolean)} instead.
-     */
-    @Deprecated
-    void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
-
-    /**
-     * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
-     * connection the server requesting the TLS negotiation will be the client and the other server
-     * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
-     * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
      * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.<p>
      *
      * In the case of client-2-server the XMPP server must pass <code>false</code> in the
      * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation.
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
+     * @param directTLS boolean indicating if the negotiation is directTLS (true) or startTLS (false).
      * @throws Exception if an error occured while securing the connection.
      */
-    void startTLS(boolean clientMode) throws Exception;
+    void startTLS(boolean clientMode, boolean directTLS) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter

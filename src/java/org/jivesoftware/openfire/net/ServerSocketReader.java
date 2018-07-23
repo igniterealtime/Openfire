@@ -55,8 +55,8 @@ public class ServerSocketReader extends SocketReader {
     private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);
 
     public ServerSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
-            Socket socket, SocketConnection connection, boolean useBlockingMode) {
-        super(router, routingTable, serverName, socket, connection, useBlockingMode);
+            Socket socket, SocketConnection connection, boolean useBlockingMode, boolean directTLS) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode, directTLS);
     }
 
     /**

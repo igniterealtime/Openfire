@@ -139,13 +139,7 @@ public abstract class VirtualConnection implements Connection {
         return null;
     }
 
-    @Deprecated
-    @Override
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        //Ignore
-    }
-
-    public void startTLS(boolean clientMode) throws Exception {
+    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
         //Ignore
     }
 

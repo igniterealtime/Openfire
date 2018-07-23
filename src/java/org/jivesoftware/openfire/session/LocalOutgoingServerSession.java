@@ -17,7 +17,9 @@
 package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -255,7 +257,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         try {
             connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
             if (directTLS) {
-                connection.startTLS(true);
+                connection.startTLS(true, directTLS);
             }
 
             log.debug( "Send the stream header and wait for response..." );
@@ -274,8 +276,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             socket.setSoTimeout(5000);
 
             XMPPPacketReader reader = new XMPPPacketReader();
-            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                    StandardCharsets.UTF_8));
+
+            final InputStream inputStream;
+            if (directTLS) {
+                inputStream = connection.getTLSStreamHandler().getInputStream();
+            } else {
+                inputStream = socket.getInputStream();
+            }
+            reader.getXPPParser().setInput(new InputStreamReader( inputStream, StandardCharsets.UTF_8 ));
+
             // Get the answer from the Receiving Server
             XmlPullParser xpp = reader.getXPPParser();
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
@@ -297,7 +306,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 if (features != null) {
                     if (directTLS) {
                         log.debug( "We connected to the remote server using direct TLS. Authenticate the connection with SASL..." );
-                        LocalOutgoingServerSession answer = authenticate(remoteDomain, connection, reader, openingStream, localDomain, features);
+                        LocalOutgoingServerSession answer = authenticate(remoteDomain, connection, reader, openingStream, localDomain, features, id);
                         if (answer != null) {
                             log.debug( "Successfully authenticated the connection with SASL)!" );
                             // Everything went fine so return the secured and
@@ -364,8 +373,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (SSLHandshakeException e)
         {
-            // This is a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
-            log.info( "STARTTLS negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", e );
+            // When not doing direct TLS but startTLS, this a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
+            log.info( "{} negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", (directTLS ? "Direct TLS" : "StartTLS" ), e );
 
             // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
             // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
@@ -422,7 +431,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 //                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
 //                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
 //                        		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-                connection.startTLS(true);
+                connection.startTLS(true, false);
             } catch(Exception e) {
                 log.debug("TLS negotiation failed: " + e.getMessage());
                 throw e;
@@ -446,11 +455,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
             }
+            // Get the stream ID
+            String id = xpp.getAttributeValue("", "id");
             // Get new stream features
             features = reader.parseDocument().getRootElement();
             if (features != null) {
-                return authenticate( remoteDomain, connection, reader, openingStream, localDomain, features );
-
+                return authenticate( remoteDomain, connection, reader, openingStream, localDomain, features, id );
             }
             else {
                 log.debug( "Failed to secure and authenticate connection: neither SASL mechanisms nor SERVER DIALBACK were offered by the remote host." );
@@ -468,13 +478,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                                             final XMPPPacketReader reader,
                                                             final StringBuilder openingStream,
                                                             final String localDomain,
-                                                            final Element features ) throws DocumentException, IOException, XmlPullParserException
+                                                            final Element features,
+                                                            final String id ) throws DocumentException, IOException, XmlPullParserException
     {
         final Logger log = LoggerFactory.getLogger(Log.getName() + "[Authenticate connection for: " + localDomain + " to: " + remoteDomain + "]" );
 
-        // Get the stream ID
         MXParser xpp = reader.getXPPParser();
-        String id = xpp.getAttributeValue("", "id");
 
         // Bookkeeping: determine what functionality the remote server offers.
         boolean saslEXTERNALoffered = false;

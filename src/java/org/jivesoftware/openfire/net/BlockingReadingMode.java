@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.net;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
@@ -55,8 +56,14 @@ class BlockingReadingMode extends SocketReadingMode {
     @Override
     public void run() {
         try {
+            final InputStream inputStream;
+            if (socketReader.directTLS ) {
+                inputStream = socketReader.connection.getTLSStreamHandler().getInputStream();
+            } else {
+                inputStream = socket.getInputStream();
+            }
             socketReader.reader.getXPPParser().setInput(new InputStreamReader(
-                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
+                    ServerTrafficCounter.wrapInputStream(inputStream), CHARSET));
 
             // Read in the opening tag and prepare for packet stream
             try {

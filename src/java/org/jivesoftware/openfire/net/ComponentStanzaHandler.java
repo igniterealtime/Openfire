@@ -191,7 +191,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
     @Override
     void startTLS() throws Exception {
-        connection.startTLS(false);
+        connection.startTLS(false, false);
     }
 
     @Override

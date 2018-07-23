@@ -69,13 +69,13 @@ public class LoginLimitManager {
      * Constructs a new login limit manager.
      */
     private LoginLimitManager() {
-        this(SecurityAuditManager.getInstance());
+        this(SecurityAuditManager.getInstance(), TaskEngine.getInstance());
     }
 
     /**
      * Constructs a new login limit manager. Exposed for test use only.
      */
-    LoginLimitManager(final SecurityAuditManager securityAuditManager) {
+    LoginLimitManager(final SecurityAuditManager securityAuditManager, final TaskEngine taskEngine) {
         this.securityAuditManager = securityAuditManager;
         // Set up initial maps
         attemptsPerIP = new ConcurrentHashMap<>();
@@ -90,9 +90,9 @@ public class LoginLimitManager {
         // Time frame before attempts per ip addresses are reset (15 minutes default)
         millisecondsBetweenPerUsername = JiveGlobals.getLongProperty("adminConsole.perUsernameAttemptResetInterval", 900000);
         // Set up per username attempt reset task
-        TaskEngine.getInstance().scheduleAtFixedRate(new PerUsernameTask(), 0, millisecondsBetweenPerUsername);
+        taskEngine.scheduleAtFixedRate(new PerUsernameTask(), 0, millisecondsBetweenPerUsername);
         // Set up per IP attempt reset task
-        TaskEngine.getInstance().scheduleAtFixedRate(new PerIPAddressTask(), 0, millisecondsBetweenPerIP);
+        taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), 0, millisecondsBetweenPerIP);
     }
 
     /**

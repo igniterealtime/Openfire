@@ -680,6 +680,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             } else {
                 // Grab the existing one.
                 joinRole = (LocalMUCRole) occupantsByFullJID.get(user.getAddress());
+                joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
            }
         }
         finally {

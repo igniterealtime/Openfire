@@ -4,6 +4,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.util.TaskEngine;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,10 +17,11 @@ public class LoginLimitManagerTest {
     private LoginLimitManager loginLimitManager;
 
     @Mock private SecurityAuditManager securityAuditManager;
+    @Mock private TaskEngine taskEngine;
 
     @Before
     public void setUp() {
-        loginLimitManager = new LoginLimitManager(securityAuditManager);
+        loginLimitManager = new LoginLimitManager(securityAuditManager, taskEngine);
     }
 
     @Test

@@ -1142,7 +1142,7 @@ public class PluginManager
         pluginManagerListeners.add( listener );
         if ( isExecuted() )
         {
-            firePluginsMonitored();
+            firePluginsMonitored(listener);
         }
     }
 
@@ -1216,14 +1216,18 @@ public class PluginManager
 
         for ( final PluginManagerListener listener : pluginManagerListeners )
         {
-            try
-            {
-                listener.pluginsMonitored();
-            }
-            catch ( Exception ex )
-            {
-                Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'monitored' event!", ex );
-            }
+            firePluginsMonitored(listener);
+        }
+    }
+
+    private void firePluginsMonitored(final PluginManagerListener listener) {
+        try
+        {
+            listener.pluginsMonitored();
+        }
+        catch ( Exception ex )
+        {
+            Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'monitored' event!", ex );
         }
     }
 

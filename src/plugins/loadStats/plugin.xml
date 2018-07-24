@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.StatisticPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>Load Statistic</name>
+    <description>Logs load statistics to a file</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
     <date>tbc.</date>

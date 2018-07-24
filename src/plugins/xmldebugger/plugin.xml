@@ -5,22 +5,22 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.DebuggerPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>Debugger Plugin</name>
+    <description>Prints XML traffic to the stdout (raw and interpreted XML)</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
     <date>07/11/2018</date>
     <minServerVersion>4.0.0</minServerVersion>
     <minJavaVersion>1.7</minJavaVersion>
 
-    <adminconsole>
-        <tab id="tab-server">
-            <sidebar id="sidebar-server-settings">
-                <item id="debugger-conf"
-                      name="Debugger Properties"
-                      url="debugger-conf.jsp"
-                      description="Edit debugger plugin properties"/>
-            </sidebar>
-        </tab>
-    </adminconsole>
+   <adminconsole>
+      <tab id="tab-server">
+         <sidebar id="sidebar-server-settings">
+            <item id="debugger-conf"
+                  name="Debugger Properties"
+                  url="debugger-conf.jsp"
+                  description="Edit debugger plugin properties" />
+         </sidebar>
+      </tab>
+   </adminconsole>
 </plugin>

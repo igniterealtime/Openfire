@@ -3,10 +3,10 @@
 
     <!-- Main plugin class -->
     <class>com.reucon.openfire.plugins.userstatus.UserStatusPlugin</class>
-
+    
     <!-- Plugin meta-data -->
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>User Status Plugin</name>
+    <description>Openfire plugin to save the user status to the database.</description>
     <author>Stefan Reuter</author>
     <version>${project.version}</version>
     <date>tbc.</date>
@@ -14,14 +14,14 @@
     <databaseKey>user-status</databaseKey>
     <databaseVersion>0</databaseVersion>
     <licenseType>gpl</licenseType>
-
+    
     <!-- Admin console meta-data -->
-    <adminconsole>
+    <adminconsole>              
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">
-                <item id="user-status-settings" name="${user-status.settings.title}"
-                      url="user-status-settings.jsp"
-                      description="${user-status.settings.description}"/>
+               <item id="user-status-settings" name="${user-status.settings.title}"
+                   url="user-status-settings.jsp"
+                   description="${user-status.settings.description}" />
             </sidebar>
         </tab>
     </adminconsole>

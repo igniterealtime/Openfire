@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.MonitoringPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>Monitoring Service</name>
+    <description>Monitors conversations and statistics of the server.</description>
     <author>IgniteRealtime // Jive Software</author>
     <version>${project.version}</version>
     <date>06/28/2018</date>
@@ -13,8 +13,7 @@
 
     <adminconsole>
         <tab id="tab-server">
-            <sidebar id="stats-dashboard" name="${admin.sidebar.statistics.name}"
-                     description="${admin.item.stats-dashboard.description}">
+            <sidebar id="stats-dashboard" name="${admin.sidebar.statistics.name}" description="${admin.item.stats-dashboard.description}">
                 <item id="statistics" name="${admin.sidebar.statistics.name}"
                       url="stats-dashboard.jsp"
                       description="${admin.sidebar.statistics.description}"/>
@@ -23,8 +22,7 @@
                       description="${admin.item.stats-reporter.description}"/>
             </sidebar>
 
-            <sidebar id="archiving" name="${admin.sidebar.archiving.name}"
-                     description="${admin.sidebar.archiving.description}">
+            <sidebar id="archiving" name="${admin.sidebar.archiving.name}" description="${admin.sidebar.archiving.description}">
                 <item id="archive-search" name="${admin.item.archive-search.name}"
                       url="archive-search.jsp"
                       description="${admin.item.archive-search.description}"/>

@@ -3,8 +3,8 @@
     <!-- Main plugin class -->
     <class>com.tempstop.emailOnAway</class>
 
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>Email on Away</name>
+    <description>Messages sent to alternate location when recipient is away</description>
     <author>Nick Mossie</author>
     <version>${project.version}</version>
     <date>tbc.</date>

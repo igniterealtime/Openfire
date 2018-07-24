@@ -3,10 +3,10 @@
 
     <!-- Main plugin class -->
     <class>org.igniterealtime.openfire.plugin.BookmarksPlugin</class>
-
+    
     <!-- Plugin meta-data -->
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>Bookmarks</name>
+    <description>Allows clients to store URL and group chat bookmarks (XEP-0048)</description>
     <author>Ignite Realtime</author>
     <version>${project.version}</version>
     <date>tbc.</date>
@@ -17,10 +17,9 @@
     <databaseVersion>0</databaseVersion>
 
     <!-- UI extension -->
-    <adminconsole>
+    <adminconsole>		
         <tab id="tab-server">
-            <sidebar id="bookmarks" name="${admin.sidebar.bookmarks.name}"
-                     description="${admin.sidebar.bookmarks.description}">
+            <sidebar id="bookmarks" name="${admin.sidebar.bookmarks.name}" description="${admin.sidebar.bookmarks.description}">
                 <item id="groupchat-bookmarks" name="${admin.item.groupchat-bookmarks.name}"
                       url="groupchat-bookmarks.jsp"
                       description="${admin.item.groupchat-bookmarks.description}"/>
@@ -30,5 +29,5 @@
             </sidebar>
         </tab>
     </adminconsole>
-
+    
 </plugin>

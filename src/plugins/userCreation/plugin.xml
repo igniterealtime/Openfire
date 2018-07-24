@@ -5,8 +5,8 @@
 -->
 <plugin>
     <class>org.jivesoftware.openfire.plugin.UserCreationPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>User Creation</name>
+    <description>Creates users and populates rosters.</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
     <date>tbc.</date>
@@ -17,8 +17,8 @@
         <tab id="tab-users">
             <sidebar id="sidebar-users">
                 <item id="users-creation" name="Users Creation"
-                      url="users-creation.jsp"
-                      description="Quickly create users and populate their rosters"/>
+                    url="users-creation.jsp"
+                    description="Quickly create users and populate their rosters" />
             </sidebar>
         </tab>
     </adminconsole>

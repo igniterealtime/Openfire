@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin>
-    <class>org.jivesoftware.openfire.plugin.married.JustMarriedPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
-    <author>Holger Bergunde</author>
+   <class>org.jivesoftware.openfire.plugin.married.JustMarriedPlugin</class>
+   <name>Just married</name>
+   <description>Allows admins to rename or copy users</description>
+   <author>Holger Bergunde</author>
     <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
-
-    <adminconsole>
+   
+   <adminconsole>
         <tab id="tab-users">
             <sidebar id="sidebar-users">
                 <item id="justmarried" name="Just married"
-                      url="married.jsp"
-                      description="Just married"/>
+                    url="married.jsp"
+                    description="Just married" />
             </sidebar>
-        </tab>
+         </tab>
     </adminconsole>
 </plugin>

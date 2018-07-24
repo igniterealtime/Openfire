@@ -2,14 +2,14 @@
 <plugin>
     <author>igniterealtime.org</author>
     <class>org.ifsoft.nodejs.openfire.PluginImpl</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>NodeJs</name>
+    <description>Integrates NodeJs Applications with Openfire.</description>
     <licenseType>Apache 2.0</licenseType>
     <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
 
-    <adminconsole>
+   <adminconsole>
         <tab id="tab-server">
             <sidebar id="siderbar-nodejs"
                      name="${plugin.title}">
@@ -19,5 +19,5 @@
                       url="nodejs.jsp"/>
             </sidebar>
         </tab>
-    </adminconsole>
+    </adminconsole> 
 </plugin>

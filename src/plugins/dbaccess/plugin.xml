@@ -2,8 +2,8 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.DbAccessPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>DB Access</name>
+    <description>Provides administrators with a simple direct access interface to their Openfire DB.</description>
     <author>Daniel Henninger</author>
     <version>${project.version}</version>
     <date>tbc.</date>
@@ -13,8 +13,8 @@
         <tab id="tab-server">
             <sidebar id="sidebar-server-manager">
                 <item id="db-access" name="DB Access"
-                      url="db-access.jsp"
-                      description="Direct database manipulation tool."/>
+                    url="db-access.jsp"
+                    description="Direct database manipulation tool." />
             </sidebar>
         </tab>
     </adminconsole>

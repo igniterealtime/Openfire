@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
     <class>org.igniterealtime.openfire.plugins.externalservicediscovery.ExternalServiceDiscoveryPlugin</class>
-    <name>${project.name}</name>
-    <description>${project.description}</description>
+    <name>External Service Discovery</name>
+    <description>Allows XMPP entities to discover services external to the XMPP network, such as STUN and TURN servers.</description>
     <author>Guus der Kinderen</author>
     <version>${project.version}</version>
     <date>tbc.</date>

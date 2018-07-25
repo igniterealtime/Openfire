@@ -47,7 +47,7 @@ public class StreamManager {
     }
     
     public static boolean isStreamManagementActive() {
-        return JiveGlobals.getBooleanProperty("stream.management.active", false);
+        return JiveGlobals.getBooleanProperty("stream.management.active", true);
     }
 
     /**

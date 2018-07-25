@@ -108,7 +108,7 @@ public class PluginServletContext implements ServletContext
     @Override
     public Set<String> getResourcePaths( String s )
     {
-        final String pluginPath = "/plugins/" + pluginManager.getName( plugin ) + "/";
+        final String pluginPath = "/plugins/" + PluginMetadataHelper.getName(plugin) + "/";
         final Set<String> proxyResults = proxy.getResourcePaths( pluginPath + s );
         final Set<String> results = new HashSet<>();
         for ( final String proxyResult : proxyResults )

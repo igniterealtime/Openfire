@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -101,11 +102,11 @@ public class PresencePlugin implements Plugin, Component {
     }
 
     public String getName() {
-        return pluginManager.getName(this);
+        return PluginMetadataHelper.getName(this);
     }
 
     public String getDescription() {
-        return pluginManager.getDescription(this);
+        return PluginMetadataHelper.getDescription(this);
     }
 
     public void initialize(JID jid, ComponentManager componentManager) {

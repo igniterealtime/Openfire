@@ -331,7 +331,7 @@ public class PluginServlet extends HttpServlet {
             Plugin plugin, GenericServlet servlet, String relativeUrl)
             throws ServletException {
 
-        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        String pluginName = pluginManager.getPluginPath(plugin).getFileName().toString();
         PluginServlet.pluginManager = pluginManager;
         if (servlet == null) {
             throw new ServletException("Servlet is missing");
@@ -352,7 +352,7 @@ public class PluginServlet extends HttpServlet {
      */
     public static GenericServlet unregisterServlet(Plugin plugin, String url)
             throws ServletException {
-        String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+        String pluginName = pluginManager.getPluginPath(plugin).getFileName().toString();
         if (url == null) {
             throw new ServletException("Servlet URL is missing");
         }
@@ -542,7 +542,7 @@ public class PluginServlet extends HttpServlet {
                 return false;
             }
 
-            File pluginDirectory = pluginManager.getPluginDirectory(plugin);
+            File pluginDirectory = pluginManager.getPluginPath(plugin).toFile();
 
             File compilationDir = new File(pluginDirectory, "classes");
             compilationDir.mkdirs();
@@ -604,7 +604,7 @@ public class PluginServlet extends HttpServlet {
     private static String getClasspathForPlugin(Plugin plugin) {
         final StringBuilder classpath = new StringBuilder();
 
-        File pluginDirectory = pluginManager.getPluginDirectory(plugin);
+        File pluginDirectory = pluginManager.getPluginPath(plugin).toFile();
 
         PluginDevEnvironment pluginEnv = pluginManager.getDevEnvironment(plugin);
 

@@ -37,6 +37,7 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.group.Group;
@@ -142,7 +143,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * @see org.xmpp.component.Component#getName()
      */
     public String getName() {
-        return pluginManager.getName(this);
+        return PluginMetadataHelper.getName(this);
     }
 
     /*
@@ -151,7 +152,7 @@ public class SearchPlugin implements Component, Plugin, PropertyEventListener {
      * @see org.xmpp.component.Component#getDescription()
      */
     public String getDescription() {
-        return pluginManager.getDescription(this);
+        return PluginMetadataHelper.getDescription(this);
     }
 
     /*

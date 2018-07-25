@@ -35,6 +35,7 @@ import org.jivesoftware.database.bugfix.OF33;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -115,8 +116,8 @@ public class SchemaManager {
      */
     public boolean checkPluginSchema(final Plugin plugin) {
         final PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        String schemaKey = pluginManager.getDatabaseKey(plugin);
-        int schemaVersion = pluginManager.getDatabaseVersion(plugin);
+        String schemaKey = PluginMetadataHelper.getDatabaseKey(plugin);
+        int schemaVersion = PluginMetadataHelper.getDatabaseVersion(plugin);
         // If the schema key or database version aren't defined, then the plugin doesn't
         // need database tables.
         if (schemaKey == null || schemaVersion == -1) {
@@ -128,7 +129,7 @@ public class SchemaManager {
             return checkSchema(con, schemaKey, schemaVersion, new ResourceLoader() {
                 @Override
                 public InputStream loadResource(String resourceName) {
-                    File file = new File(pluginManager.getPluginDirectory(plugin) +
+                    File file = new File(pluginManager.getPluginPath(plugin) +
                             File.separator + "database", resourceName);
                     try {
                         return new FileInputStream(file);

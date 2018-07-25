@@ -5,6 +5,7 @@
                 org.jivesoftware.openfire.container.Plugin,
                 org.jivesoftware.openfire.container.PluginManager"
     errorPage="error.jsp"%>
+<%@ page import="org.jivesoftware.openfire.container.PluginMetadataHelper" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -53,8 +54,8 @@
             plugin.setCustomAuthFiIterClassName(customAuthFilterClassName);
             
             if(is2Reload) {
-                String pluginName  = pluginManager.getName(plugin);
-                String pluginDir = pluginManager.getPluginDirectory(plugin).getName();
+                String pluginName  = PluginMetadataHelper.getName(plugin);
+                String pluginDir = pluginManager.getPluginPath(plugin).getFileName().toString();
                 pluginManager.reloadPlugin(pluginDir);
             
                 // Log the event

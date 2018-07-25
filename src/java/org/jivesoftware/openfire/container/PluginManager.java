@@ -92,7 +92,7 @@ public class PluginManager
     /**
      * Plugin metadata for all extracted plugins, mapped by canonical name.
      */
-    private final Map<String, PluginMetadata> pluginMetadata = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
+    private final Map<String, PluginMetadata> pluginMetadata = Collections.synchronizedMap(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
     private final Map<Plugin, PluginDevEnvironment> pluginDevelopment = new HashMap<>();
     private final Map<Plugin, List<String>> parentPluginMap = new HashMap<>();
@@ -296,7 +296,12 @@ public class PluginManager
      */
     public Map<String, PluginMetadata> getMetadataExtractedPlugins()
     {
-        return Collections.unmodifiableMap( this.pluginMetadata );
+        // Create a copy of the TreeMap to avoid ConcurrentModificationExceptions
+        // Note; needs to be synchronized as creating the copy iterates over the elements
+        // See https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#synchronizedMap-java.util.Map-
+        synchronized (this.pluginMetadata) {
+            return Collections.unmodifiableMap(new TreeMap<>(this.pluginMetadata));
+        }
     }
 
     /**

@@ -227,7 +227,7 @@ public class ChatSettingsCreator {
     private void createImageSettings(JID workgroupJID) {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         Plugin fastpathPlugin = pluginManager.getPlugin("fastpath");
-        File fastpathPluginDirectory = pluginManager.getPluginDirectory(fastpathPlugin);
+        File fastpathPluginDirectory = pluginManager.getPluginPath(fastpathPlugin).toFile();
 
         File imagesDir = new File(fastpathPluginDirectory, "web/images");
 

@@ -7,7 +7,7 @@
     <author>Roman Soldatow</author>
     <version>${project.version}</version>
     <date>tbc.</date>
-    <minServerVersion>4.1.0</minServerVersion>
+    <minServerVersion>4.1.1</minServerVersion>
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">

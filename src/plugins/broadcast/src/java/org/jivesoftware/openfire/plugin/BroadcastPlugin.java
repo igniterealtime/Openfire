@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -140,12 +141,12 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
 
     public String getName() {
         // Get the name from the plugin.xml file.
-        return pluginManager.getName(this);
+        return PluginMetadataHelper.getName(this);
     }
 
     public String getDescription() {
         // Get the description from the plugin.xml file.
-        return pluginManager.getDescription(this);
+        return PluginMetadataHelper.getDescription(this);
     }
 
     public void processPacket(Packet packet) {

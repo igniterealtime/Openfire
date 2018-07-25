@@ -206,6 +206,11 @@ public interface Connection extends Closeable {
      * Delivers the packet to this connection without checking the recipient.
      * The method essentially calls <code>socket.send(packet.getWriteBuffer())</code>.
      *
+     * Use with caution! This code is unlikely to be called directly. Instead, ensure
+     * that data sent to the entities is sent through the appropriate LocalSession object.
+     * For clients, this prevents, for example, synchronisation issues with stanza counts
+     * related to Stream Management (XEP-0198).
+     *
      * @param packet the packet to deliver.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException if a permission error was detected.
      */

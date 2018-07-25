@@ -195,11 +195,11 @@ public class PluginManager
             Files.copy( in, partFile, StandardCopyOption.REPLACE_EXISTING );
 
             // Check if zip file, else ZipException caught below.
-            try (JarFile file = new JarFile(partFile.toFile())) {
+            try (JarFile ignored = new JarFile(partFile.toFile())) {
             } catch (ZipException e) {
                 Files.deleteIfExists(partFile);
                 throw e;
-            };
+            }
 
             // Rename temp file to .jar
             Files.move( partFile, absolutePath, StandardCopyOption.REPLACE_EXISTING );
@@ -230,8 +230,7 @@ public class PluginManager
         final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>()
         {
             @Override
-            public boolean accept( Path entry ) throws IOException
-            {
+            public boolean accept( Path entry ) {
                 final String name = entry.getFileName().toString();
                 return Files.exists( entry ) && !Files.isDirectory( entry ) &&
                         ( name.equalsIgnoreCase( canonicalName + ".jar" ) || name.equalsIgnoreCase( canonicalName + ".war" ) );
@@ -327,7 +326,7 @@ public class PluginManager
      */
     public Collection<Plugin> getPlugins()
     {
-        return Collections.unmodifiableCollection( Arrays.asList( pluginsLoaded.values().toArray( new Plugin[ pluginsLoaded.size() ] ) ) );
+        return Collections.unmodifiableCollection( Arrays.asList( pluginsLoaded.values().toArray(new Plugin[0]) ) );
     }
 
     /**
@@ -732,8 +731,7 @@ public class PluginManager
         try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), new DirectoryStream.Filter<Path>()
         {
             @Override
-            public boolean accept( final Path path ) throws IOException
-            {
+            public boolean accept( final Path path ) {
                 if ( Files.isDirectory( path ) )
                 {
                     return false;
@@ -824,7 +822,7 @@ public class PluginManager
             // See if any child plugins are defined.
             if ( parentPluginMap.containsKey( plugin ) )
             {
-                String[] childPlugins = parentPluginMap.get( plugin ).toArray( new String[ parentPluginMap.get( plugin ).size() ] );
+                String[] childPlugins = parentPluginMap.get( plugin ).toArray(new String[0]);
                 for ( String childPlugin : childPlugins )
                 {
                     Log.debug( "Unloading child plugin: '{}'.", childPlugin );
@@ -953,12 +951,8 @@ public class PluginManager
      * @param className the name of the class to load.
      * @return the class.
      * @throws ClassNotFoundException if the class was not found.
-     * @throws IllegalAccessException if not allowed to access the class.
-     * @throws InstantiationException if the class could not be created.
      */
-    public Class loadClass( Plugin plugin, String className ) throws ClassNotFoundException,
-            IllegalAccessException, InstantiationException
-    {
+    public Class loadClass( Plugin plugin, String className ) throws ClassNotFoundException {
         PluginClassLoader loader = classloaders.get( plugin );
         return loader.loadClass( className );
     }

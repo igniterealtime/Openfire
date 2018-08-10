@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="7.0.3" transformSequenceNumber="7">
-  <directoryPresets config="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" />
+<install4j version="7.0.6" transformSequenceNumber="7">
+  <directoryPresets config="../../../src/bin/extra/sysconfig/openfire" />
   <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/distributions" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:sys.version}" compression="9" lzmaCompression="true" pack200Compression="false" excludeSignedFromPacking="true" commonExternalFiles="false" createMd5Sums="true" shrinkRuntime="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:sys.version}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" macVolumeId="419a18ebe125f2bf" javaMinVersion="1.8" javaMaxVersion="" allowBetaVM="true" jdkMode="runtimeJre" jdkName="">
     <languages skipLanguageSelection="false" languageSelectionInPrincipalLanguage="false">
       <principalLanguage id="en" customLocalizationFile="" />
@@ -1524,9 +1524,9 @@ return console.askYesNo(message, true);
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
         <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1534,7 +1534,7 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <linuxRPM name="Linux noarch RPM" id="18" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.noarch" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false" overwriteNeverAsConfigFiles="true" os="linux" arch="noarch">
+    <linuxRPM name="Linux noarch RPM" id="18" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.noarch" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="noarch">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -1558,10 +1558,10 @@ return console.askYesNo(message, true);
       <preInstallScript mode="1" file="">
         <content />
       </preInstallScript>
-      <postInstallScript mode="1" file="">
+      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
         <content />
       </postInstallScript>
-      <preUninstallScript mode="1" file="">
+      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
         <content />
       </preUninstallScript>
       <postUninstallScript mode="1" file="">
@@ -1580,9 +1580,9 @@ return console.askYesNo(message, true);
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
         <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1601,9 +1601,9 @@ return console.askYesNo(message, true);
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
         <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1622,9 +1622,9 @@ return console.askYesNo(message, true);
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
         <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1632,7 +1632,7 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <windows name="Windows Bundled JRE x86" id="1394" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_162" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows Bundled JRE x86" id="1394" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-x86-1.8.0_181" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -1643,9 +1643,9 @@ return console.askYesNo(message, true);
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
         <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1653,7 +1653,7 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <windows name="Windows Bundled JRE x64" id="1396" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_162" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
+    <windows name="Windows Bundled JRE x64" id="1396" customizedId="" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="64" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="false" includedJRE="windows-amd64-1.8.0_181" manualJREEntry="false" bundleType="1" jreURL="" jreShared="false" directDownload="false" installOnlyIfNecessary="false" customInstallBaseDir="" contentFilesType="1" verifyIntegrity="true">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -1664,9 +1664,9 @@ return console.askYesNo(message, true);
       <exclude>
         <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
         <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location=".i4j_external_1568" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1674,7 +1674,7 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <linuxRPM name="Linux x86_64 RPM" id="1541" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.x86_64" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-amd64-1.8.0_162" manualJREEntry="true" overwriteNeverAsConfigFiles="true" os="linux" arch="x86_64">
+    <linuxRPM name="Linux x86_64 RPM" id="1541" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.x86_64" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-amd64-1.8.0_181" manualJREEntry="true" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="x86_64">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -1698,17 +1698,17 @@ return console.askYesNo(message, true);
       <preInstallScript mode="1" file="">
         <content />
       </preInstallScript>
-      <postInstallScript mode="1" file="">
+      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
         <content />
       </postInstallScript>
-      <preUninstallScript mode="1" file="">
+      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
         <content />
       </preUninstallScript>
       <postUninstallScript mode="1" file="">
         <content />
       </postUninstallScript>
     </linuxRPM>
-    <linuxRPM name="Linux i686 RPM" id="1549" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.i686" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-x86-1.8.0_162" manualJREEntry="true" overwriteNeverAsConfigFiles="true" os="linux" arch="i686">
+    <linuxRPM name="Linux i686 RPM" id="1549" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.i686" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-x86-1.8.0_181" manualJREEntry="true" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="i686">
       <excludedComponents />
       <includedDownloadableComponents />
       <excludedLaunchers>
@@ -1732,6 +1732,31 @@ return console.askYesNo(message, true);
       <preInstallScript mode="1" file="">
         <content />
       </preInstallScript>
+      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
+        <content />
+      </postInstallScript>
+      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
+        <content />
+      </preUninstallScript>
+      <postUninstallScript mode="1" file="">
+        <content />
+      </postUninstallScript>
+    </linuxRPM>
+    <linuxDeb name="Linux Deb Archive" id="1577" customizedId="" mediaFileName="" installDir="/opt/${compiler:sys.shortName}" overridePrincipalLanguage="false" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false" overwriteNeverAsConfigFiles="false" dependencies="" bzip="false" description="" maintainerEmail="" architectureSet="false" architecture="">
+      <excludedComponents />
+      <includedDownloadableComponents />
+      <excludedLaunchers />
+      <excludedBeans />
+      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
+      <exclude />
+      <variables />
+      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
+        <commentFiles />
+        <customAttributes />
+      </autoUpdate>
+      <preInstallScript mode="1" file="">
+        <content />
+      </preInstallScript>
       <postInstallScript mode="1" file="">
         <content />
       </postInstallScript>
@@ -1741,8 +1766,10 @@ return console.askYesNo(message, true);
       <postUninstallScript mode="1" file="">
         <content />
       </postUninstallScript>
-    </linuxRPM>
+    </linuxDeb>
   </mediaSets>
-  <buildIds buildAll="true" />
+  <buildIds buildAll="true">
+    <mediaSet refId="18" />
+  </buildIds>
   <buildOptions verbose="false" faster="false" disableSigning="false" disableJreBundling="false" debug="false" />
 </install4j>

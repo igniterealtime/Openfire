@@ -21,21 +21,21 @@
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.LocaleUtils"
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils"
 %><%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
-<%@ page import="org.jivesoftware.util.ListPager" %>
-<%@ page import="java.util.ArrayList" %>
-<%@ page import="java.util.function.Predicate" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
-<%@ page import="java.util.function.Function" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+
+<%!
+    final int DEFAULT_RANGE = 100;
+    final int[] RANGE_PRESETS = {25, 50, 75, 100, 500, 1000, -1};
+%>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -48,69 +48,23 @@
     </head>
     <body>
 
-<%
+<%  // Get parameters
+    int start = ParamUtils.getIntParameter(request,"start",0);
+    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("user-summary", DEFAULT_RANGE));
+
+    if (request.getParameter("range") != null) {
+        webManager.setRowsPerPage("user-summary", range);
+    }
+
+    // Get the user manager
+    int userCount = webManager.getUserManager().getUserCount();
+
     // Get the presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();
 
-    // By default, display all users
-    Predicate<User> filter = new Predicate<User>() {
-        @Override
-        public boolean test(final User user) {
-            return true;
-        }
-    };
-    final String searchUsername = ParamUtils.getStringParameter(request, "searchUsername", "");
-    if (!searchUsername.trim().isEmpty()) {
-        final String searchCriteria = searchUsername.trim().toLowerCase();
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return user.getUsername().toLowerCase().contains(searchCriteria);
-            }
-        });
-    }
-    final String searchName = ParamUtils.getStringParameter(request, "searchName", "");
-    if (!searchName.trim().isEmpty()) {
-        final String searchCriteria = searchName.trim().toLowerCase();
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return user.getName().toLowerCase().contains(searchCriteria);
-            }
-        });
-    }
-    final String searchGroup = ParamUtils.getStringParameter(request, "searchGroup", "");
-    final GroupManager groupManager = webManager.getGroupManager();
-    if (!searchGroup.isEmpty()) {
-        final Predicate<String> searchPredicate = new Predicate<String>() {
-            @Override
-            public boolean test(final String groupName) {
-                return searchGroup.equals(groupName);
-            }
-        };
-        filter = filter.and(new Predicate<User>() {
-            @Override
-            public boolean test(final User user) {
-                return groupManager.getGroups(user).stream()
-                    .map(new Function<Group, String>() {
-                        @Override
-                        public String apply(final Group group) {
-                            return group.getName();
-                        }
-                    })
-                    .anyMatch(searchPredicate);
-            }
-        });
-    }
-
-    final ListPager<User> listPager = new ListPager<>(request, response, new ArrayList<>(webManager.getUserManager().getUsers()), filter,
-        "searchUsername", "searchName", "searchGroup");
-    pageContext.setAttribute("listPager", listPager);
-    pageContext.setAttribute("searchUsername", searchUsername);
-    pageContext.setAttribute("searchName", searchName);
-    pageContext.setAttribute("searchGroup", searchGroup);
-
-    pageContext.setAttribute("groups", groupManager.getGroups());
+    // paginator vars
+    int numPages = (int)Math.ceil((double)userCount/(double)range);
+    int curPage = (start/range) + 1;
 %>
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
@@ -129,24 +83,72 @@
 <%  } %>
 
 <p>
-<fmt:message key="user.summary.total_user" />: <b><%= LocaleUtils.getLocalizedNumber(listPager.getTotalItemCount()) %></b>
-<c:if test="${listPager.filtered}">
-    <fmt:message key="user.summary.filtered_user_count" />: <c:out value="${listPager.filteredItemCount}"/>
-</c:if>
+<fmt:message key="user.summary.total_user" />:
+<b><%= LocaleUtils.getLocalizedNumber(userCount) %></b> --
 
-<c:if test="${listPager.totalPages > 1}">
+<%  if (numPages > 1) { %>
+
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(listPager.getFirstItemNumberOnPage()) %>-<%= LocaleUtils.getLocalizedNumber(listPager.getLastItemNumberOnPage()) %>,
-</c:if>
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > userCount ? userCount:start+range) %>,
+
+<%  } %>
 <fmt:message key="user.summary.sorted" />
 
--- <fmt:message key="user.summary.users_per_page" />: ${listPager.pageSizeSelection}
+-- <fmt:message key="user.summary.users_per_page" />:
+<select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
+    <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
+
+    <option value="<%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= userCount %><%}%>"
+            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= userCount %><%}%>
+    </option>
+
+    <% } %>
+
+</select>
 </p>
 
-<c:if test="${listPager.totalPages > 1}">
-    <p><fmt:message key="global.pages" />: ${listPager.pageLinks}</p>
-</c:if>
+<%  if (numPages > 1) { %>
+
+    <p>
+    <fmt:message key="global.pages" />:
+    [
+    <%  int num = 15 + curPage;
+        int s = curPage-1;
+        if (s > 5) {
+            s -= 5;
+        }
+        if (s < 5) {
+            s = 0;
+        }
+        if (s > 2) {
+    %>
+        <a href="user-summary.jsp?start=0&range=<%= range %>">1</a> ...
+
+    <%
+        }
+        int i;
+        for (i=s; i<numPages && i<num; i++) {
+            String sep = ((i+1)<numPages) ? " " : "";
+            boolean isCurrent = (i+1) == curPage;
+    %>
+        <a href="user-summary.jsp?start=<%= (i*range) %>&range=<%= range %>"
+         class="<%= ((isCurrent) ? "jive-current" : "") %>"
+         ><%= (i+1) %></a><%= sep %>
+
+    <%  } %>
+
+    <%  if (i < numPages) { %>
+
+        ... <a href="user-summary.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
+
+    <%  } %>
+
+    ]
+
+    </p>
+
+<%  } %>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -165,63 +167,24 @@
         <th nowrap><fmt:message key="global.delete" /></th>
         <% } %>
     </tr>
-    <tr>
-        <td></td>
-        <td></td>
-        <td nowrap>
-            <input type="search"
-                   id="searchUsername"
-                   size="20"
-                   value="<c:out value="${searchUsername}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
-        <td nowrap>
-            <input type="search"
-                   id="searchName"
-                   size="20"
-                   value="<c:out value="${searchName}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
-        <td nowrap>
-            <select id="searchGroup" onchange="submitForm();">
-                <option <c:if test='${searchGroup eq ""}'>selected</c:if> value=""></option>
-                <%--@elvariable id="group" type="org.jivesoftware.openfire.group.Group"--%>
-                <c:forEach var="group" items="${groups}">
-                    <option <c:if test='${searchGroup eq group.name}'>selected</c:if> value="<c:out value="${group.name}"/>"><c:out value="${group.name}"/></option>
-                </c:forEach>
-            </select>
-        </td>
-        <td></td>
-        <td></td>
-        <c:if test="${!UserManager.getUserProvider().readOnly}">
-            <td></td>
-            <td></td>
-        </c:if>
-    </tr>
 </thead>
 <tbody>
 
-<c:if test="${listPager.totalItemCount == 0}">
+<%  // Print the list of users
+    Collection<User> users = webManager.getUserManager().getUsers(start, range);
+    if (users.isEmpty()) {
+%>
     <tr>
         <td align="center" colspan="7">
             <fmt:message key="user.summary.not_user" />
         </td>
     </tr>
-</c:if>
 
 <%
-    int i = listPager.getFirstItemNumberOnPage();
-    for (User user : listPager.getItemsOnCurrentPage()) {
+    }
+    int i = start;
+    for (User user : users) {
+        i++;
         Boolean lockedOut = false;
         Boolean pendingLockOut = false;
         if (webManager.getLockOutManager().getDisabledStatus(user.getUsername()) != null) {
@@ -267,16 +230,16 @@
         </td>
         <td width="23%">
             <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a>
-            <% if (isAdmin) { %><img src="images/star-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
-            <% if (lockedOut) { %><img src="images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
-            <% if (pendingLockOut) { %><img src="images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
+            <% if (isAdmin) { %><img src="/images/star-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
+            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
+            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
         <td width="23%">
             <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
         </td>
         <td width="15%">
             <%
-                Collection<Group> groups = groupManager.getGroups(user);
+                Collection<Group> groups = webManager.getGroupManager().getGroups(user);
                 if (groups.isEmpty()) {
             %>
                 <i>None</i>
@@ -325,21 +288,52 @@
     </tr>
 
 <%
-        i++;
     }
 %>
 </tbody>
 </table>
 </div>
 
-<c:if test="${listPager.totalPages > 1}">
-    <p><fmt:message key="global.pages" />: ${listPager.pageLinks}</p>
-</c:if>
+<%  if (numPages > 1) { %>
 
-${listPager.jumpToPageForm}
+    <p>
+    <fmt:message key="global.pages" />:
+    [
+    <%  int num = 15 + curPage;
+        int s = curPage-1;
+        if (s > 5) {
+            s -= 5;
+        }
+        if (s < 5) {
+            s = 0;
+        }
+        if (s > 2) {
+    %>
+        <a href="user-summary.jsp?start=0&range=<%= range %>">1</a> ...
 
-<script type="text/javascript">
-    ${listPager.pageFunctions}
-</script>
+    <%
+        }
+        for (i=s; i<numPages && i<num; i++) {
+            String sep = ((i+1)<numPages) ? " " : "";
+            boolean isCurrent = (i+1) == curPage;
+    %>
+        <a href="user-summary.jsp?start=<%= (i*range) %>&range=<%= range %>"
+         class="<%= ((isCurrent) ? "jive-current" : "") %>"
+         ><%= (i+1) %></a><%= sep %>
+
+    <%  } %>
+
+    <%  if (i < numPages) { %>
+
+        ... <a href="user-summary.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
+
+    <%  } %>
+
+    ]
+
+    </p>
+
+<%  } %>
+
     </body>
 </html>

@@ -31,9 +31,9 @@ public class DNSUtilTest {
     @Test
     public void testJabberDotOrgMock() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress fallback = new DNSUtil.WeightedHostAddress("fallback.jabber.org", 5269, 31, 31);
-        final DNSUtil.WeightedHostAddress hermes6  = new DNSUtil.WeightedHostAddress("hermes6.jabber.org",  5269, 30, 30);
-        final DNSUtil.WeightedHostAddress hermes   = new DNSUtil.WeightedHostAddress("hermes.jabber.org",   5269, 30, 30);
+        final DNSUtil.WeightedHostAddress fallback = new DNSUtil.WeightedHostAddress("fallback.jabber.org", 5269, false, 31, 31);
+        final DNSUtil.WeightedHostAddress hermes6  = new DNSUtil.WeightedHostAddress("hermes6.jabber.org",  5269, false, 30, 30);
+        final DNSUtil.WeightedHostAddress hermes   = new DNSUtil.WeightedHostAddress("hermes.jabber.org",   5269, false, 30, 30);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{fallback, hermes6, hermes});
@@ -52,7 +52,7 @@ public class DNSUtilTest {
     @Test
     public void testOneHost() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, 1, 1);
+        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 1);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
@@ -68,7 +68,7 @@ public class DNSUtilTest {
     @Test
     public void testOneHostZeroPiority() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, 0, 1);
+        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 0, 1);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
@@ -84,7 +84,7 @@ public class DNSUtilTest {
     @Test
     public void testOneHostZeroWeight() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, 1, 0);
+        final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 0);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
@@ -102,9 +102,9 @@ public class DNSUtilTest {
     @Test
     public void testDifferentPriorities() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, 1, 1);
-        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, 3, 1);
-        final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, 2, 1);
+        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 1);
+        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, false, 3, 1);
+        final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, false, 2, 1);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
@@ -122,9 +122,9 @@ public class DNSUtilTest {
     @Test
     public void testZeroPriority() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, 0, 1);
-        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, 2, 1);
-        final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, 1, 1);
+        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 0, 1);
+        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, false, 2, 1);
+        final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, false, 1, 1);
 
         // do magic
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
@@ -145,8 +145,8 @@ public class DNSUtilTest {
     @Test
     public void testSameWeights() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, 1, 10);
-        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, 1, 10);
+        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 10);
+        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, false, 1, 10);
         final DNSUtil.WeightedHostAddress[] hosts = new DNSUtil.WeightedHostAddress[] { hostA, hostB };
 
         // do magic
@@ -183,8 +183,8 @@ public class DNSUtilTest {
     @Test
     public void testZeroWeights() throws Exception {
         // setup
-        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, 1, 0);
-        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, 1, 0);
+        final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 0);
+        final DNSUtil.WeightedHostAddress hostB = new DNSUtil.WeightedHostAddress("hostB", 5222, false, 1, 0);
         final DNSUtil.WeightedHostAddress[] hosts = new DNSUtil.WeightedHostAddress[] { hostA, hostB };
 
         // do magic

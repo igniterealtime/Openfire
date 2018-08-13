@@ -80,7 +80,7 @@ abstract class SocketReadingMode {
         // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
             // This code is only used for s2s
-            socketReader.connection.startTLS(false);
+            socketReader.connection.startTLS(false, false);
         }
         catch (SSLHandshakeException e) {
             // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending any more data (<failure/> nor </stream>).

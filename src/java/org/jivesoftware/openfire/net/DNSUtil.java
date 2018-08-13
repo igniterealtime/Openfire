@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,21 +64,29 @@ public class DNSUtil {
     }
 
     /**
-     * Returns a sorted list of host names and ports that the specified XMPP domain
-     * can be reached at for server-to-server communication. A DNS lookup for a SRV
-     * record in the form "_xmpp-server._tcp.example.com" is attempted, according
-     * to section 14.4 of RFC 3920. If that lookup fails, a lookup in the older form
-     * of "_jabber._tcp.example.com" is attempted since servers that implement an
-     * older version of the protocol may be listed using that notation. If that
-     * lookup fails as well, it's assumed that the XMPP server lives at the
-     * host resolved by a DNS lookup at the specified domain on the specified default port.<p>
+     * Returns a sorted list of host names and ports that the specified XMPP
+     * domain can be reached at for server-to-server communication.
+     *
+     * DNS lookups for a SRV records in the form "_xmpp-server._tcp.example.com"
+     * and "_xmpps-server._tcp.example.com" are attempted, in line with section
+     * 3.2 of XMPP Core and XEP-0368.
+     *
+     * If those lookup fail to provide any records, a lookup in the older form
+     * of "_jabber._tcp.example.com" is attempted since servers that implement
+     * an older version of the protocol may be listed using that notation.
+     *
+     * If that lookup fails as well, it's assumed that the XMPP server lives at
+     * the host resolved by a DNS A lookup at the specified domain on the
+     * specified default port.<p>
      *
      * As an example, a lookup for "example.com" may return "im.example.com:5269".
      *
      * @param domain the domain.
      * @param defaultPort default port to return if the DNS look up fails.
-     * @return a list of  HostAddresses, which encompasses the hostname and port that the XMPP
-     *      server can be reached at for the specified domain.
+     * @return a list of  HostAddresses, which encompasses the hostname and port
+     *         that the XMPP server can be reached at for the specified domain.
+     * @see <a href="https://tools.ietf.org/html/rfc6120#section-3.2">XMPP CORE</a>
+     * @see <a href="https://xmpp.org/extensions/xep-0368.html">XEP-0368</a>
      */
     public static List<HostAddress> resolveXMPPDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
@@ -94,14 +103,25 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        results.addAll(srvLookup("xmpp-server", "tcp", domain ) );
+        final List<WeightedHostAddress> srvLookups = new LinkedList<>();
+        srvLookups.addAll(srvLookup("xmpp-server", "tcp", domain ) );
+
+        final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
+        if (allowTLS) {
+            srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain));
+        }
+        if (!srvLookups.isEmpty()) {
+            // we have to re-prioritize the combination of both lookups.
+            results.addAll( prioritize( srvLookups.toArray( new WeightedHostAddress[0] ) ) );
+        }
+
         if (results.isEmpty()) {
             results.addAll(srvLookup( "jabber", "tcp", domain ) );
         }
 
         // Use domain and default port as fallback.
         if (results.isEmpty()) {
-            results.add(new HostAddress(domain, defaultPort));
+            results.add(new HostAddress(domain, defaultPort, false));
         }
         return results;
     }
@@ -152,7 +172,7 @@ public class DNSUtil {
         StringTokenizer st = new StringTokenizer(encodedValue, "{},:");
         while (st.hasMoreElements()) {
             String key = st.nextToken();
-            answer.put(key, new HostAddress(st.nextToken(), Integer.parseInt(st.nextToken())));
+            answer.put(key, new HostAddress(st.nextToken(), Integer.parseInt(st.nextToken()), false));
         }
         return answer;
     }
@@ -197,7 +217,6 @@ public class DNSUtil {
 
         // _service._proto.name.
         final String lookup = (service + proto + name).toLowerCase();
-
         try {
             Attributes dnsLookup =
                     context.getAttributes(lookup, new String[]{"SRV"});
@@ -207,8 +226,9 @@ public class DNSUtil {
                 return Collections.emptyList();
             }
             WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+            final boolean directTLS = lookup.startsWith( "_xmpps-" ); // XEP-0368
             for (int i = 0; i < srvRecords.size(); i++) {
-                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
+                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "), directTLS);
             }
 
             return prioritize(hosts);
@@ -260,8 +280,9 @@ public class DNSUtil {
 
         private final String host;
         private final int port;
+        private boolean directTLS;
 
-        private HostAddress(String host, int port) {
+        private HostAddress(String host, int port, boolean directTLS) {
             // Host entries in DNS should end with a ".".
             if (host.endsWith(".")) {
                 this.host = host.substring(0, host.length()-1);
@@ -270,6 +291,7 @@ public class DNSUtil {
                 this.host = host;
             }
             this.port = port;
+            this.directTLS = directTLS;
         }
 
         /**
@@ -288,6 +310,11 @@ public class DNSUtil {
          */
         public int getPort() {
             return port;
+        }
+
+        public boolean isDirectTLS()
+        {
+            return directTLS;
         }
 
         @Override
@@ -365,15 +392,17 @@ public class DNSUtil {
         private final int priority;
         private final int weight;
 
-        private WeightedHostAddress(String [] srvRecordEntries) {
+        private WeightedHostAddress(String[] srvRecordEntries, boolean directTLS) {
             super(srvRecordEntries[srvRecordEntries.length-1],
-                    Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]));
+                  Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]),
+                  directTLS
+            );
             weight = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-3]);
             priority = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-4]);
         }
 
-        WeightedHostAddress(String host, int port, int priority, int weight) {
-            super(host, port);
+        WeightedHostAddress(String host, int port, boolean directTLS, int priority, int weight) {
+            super(host, port, directTLS);
             this.priority = priority;
             this.weight = weight;
         }

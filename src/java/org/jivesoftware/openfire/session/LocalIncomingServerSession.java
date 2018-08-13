@@ -96,6 +96,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @param serverName hostname of this server.
      * @param reader reader on the new established connection with the remote server.
      * @param connection the new established connection with the remote server.
+     * @param directTLS true of connections are immediately encrypted (as opposed to plain text / startls).
      * @return a new session that will receive packets or null if a problem occured while
      *         authenticating the remote server or when acting as the Authoritative Server during
      *         a Server Dialback authentication process.
@@ -103,7 +104,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @throws java.io.IOException if an input/output error occurs while using the connection.
      */
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection) throws XmlPullParserException, IOException {
+            SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();
                 
         String version = xpp.getAttributeValue("", "version");
@@ -174,7 +175,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 // Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
                 sb.append("<stream:features>");
 
-                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
+                if (!directTLS && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
                     sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
                     if (!ServerDialback.isEnabled()) {
                         // Server dialback is disabled so TLS is required

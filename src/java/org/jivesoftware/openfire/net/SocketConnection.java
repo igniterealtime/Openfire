@@ -166,12 +166,7 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    @Deprecated
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        startTLS( clientMode );
-    }
-
-    public void startTLS(boolean clientMode) throws IOException {
+    public void startTLS(boolean clientMode, boolean directTLS) throws IOException {
         if (!secure) {
             secure = true;
 
@@ -186,7 +181,7 @@ public class SocketConnection implements Connection {
                 clientAuth = ClientAuth.wanted;
             }
             tlsStreamHandler = new TLSStreamHandler(socket, getConfiguration(), clientMode);
-            if (!clientMode) {
+            if (!clientMode && !directTLS) {
                 // Indicate the client that the server is ready to negotiate TLS
                 deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             }

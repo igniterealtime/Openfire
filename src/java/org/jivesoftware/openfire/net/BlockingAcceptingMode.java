@@ -36,8 +36,8 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
 
     private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
 
-    protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface) throws IOException {
-        super();
+    protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface, boolean directTLS) throws IOException {
+        super(directTLS);
         serverSocket = new ServerSocket(tcpPort, -1, bindInterface);
     }
 

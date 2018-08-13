@@ -364,13 +364,7 @@ public class NIOConnection implements Connection {
         }
     }
 
-    @Deprecated
-    @Override
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        startTLS( clientMode );
-    }
-
-    public void startTLS(boolean clientMode) throws Exception {
+    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
 
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
         final SslFilter filter;
@@ -384,9 +378,13 @@ public class NIOConnection implements Connection {
         }
 
         ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
-        ioSession.setAttribute(SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
 
-        if ( !clientMode ) {
+        if (!directTLS)
+        {
+            ioSession.setAttribute( SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE );
+        }
+
+        if ( !clientMode && !directTLS ) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
         }

@@ -82,6 +82,11 @@ public abstract class SocketReader implements Runnable {
     protected String serverName;
 
     /**
+     * Indicates if sockets initially will be plain text (false), or ecnrypted (true).
+     */
+    protected boolean directTLS;
+
+    /**
      * Router used to route incoming packets to the correct channels.
      */
     private PacketRouter router;
@@ -114,13 +119,15 @@ public abstract class SocketReader implements Runnable {
      * @param socket the socket to read from.
      * @param connection the connection being read.
      * @param useBlockingMode true means that the server will use a thread per connection.
+     * @param directTLS false means that the socket initially is a plaintext connection.
      */
     public SocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
-            Socket socket, SocketConnection connection, boolean useBlockingMode) {
+            Socket socket, SocketConnection connection, boolean useBlockingMode, boolean directTLS ) {
         this.serverName = serverName;
         this.router = router;
         this.routingTable = routingTable;
         this.connection = connection;
+        this.directTLS = directTLS;
 
         connection.setSocketReader(this);
 

@@ -55,8 +55,8 @@ public class ServerSocketReader extends SocketReader {
     private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);
 
     public ServerSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
-            Socket socket, SocketConnection connection, boolean useBlockingMode) {
-        super(router, routingTable, serverName, socket, connection, useBlockingMode);
+            Socket socket, SocketConnection connection, boolean useBlockingMode, boolean directTLS) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode, directTLS);
     }
 
     /**
@@ -191,7 +191,7 @@ public class ServerSocketReader extends SocketReader {
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
-            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
+            session = LocalIncomingServerSession.createSession(serverName, reader, connection, directTLS);
             return true;
         }
         return false;

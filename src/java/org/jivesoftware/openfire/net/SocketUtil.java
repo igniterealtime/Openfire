@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Utility class to generate Socket instances.
@@ -35,7 +37,7 @@ public class SocketUtil
      * @return a Socket instance that is connected, or null.
      * @see DNSUtil#resolveXMPPDomain(String, int)
      */
-    public static Socket createSocketToXmppDomain( String xmppDomain, int port )
+    public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( String xmppDomain, int port )
     {
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
 
@@ -49,6 +51,7 @@ public class SocketUtil
         {
             final String realHostname = remoteHost.getHost();
             final int realPort = remoteHost.getPort();
+            final boolean directTLS = remoteHost.isDirectTLS();
 
             try
             {
@@ -58,7 +61,7 @@ public class SocketUtil
                 Log.debug( "Trying to create socket connection to XMPP domain '{}' using remote host: {}:{} (blocks up to {} ms) ...", xmppDomain, realHostname, realPort, socketTimeout );
                 socket.connect( new InetSocketAddress( realHostname, realPort ), socketTimeout );
                 Log.debug( "Successfully created socket connection to XMPP domain '{}' using remote host: {}:{}!", xmppDomain, realHostname, realPort );
-                return socket;
+                return new AbstractMap.SimpleEntry<>(socket, directTLS);
             }
             catch ( Exception e )
             {

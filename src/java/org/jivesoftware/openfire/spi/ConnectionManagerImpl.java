@@ -58,6 +58,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private final ConnectionListener boshListener;
     private final ConnectionListener boshSslListener;
     private final ConnectionListener serverListener;
+    private final ConnectionListener serverSslListener;
     private final ConnectionListener componentListener;
     private final ConnectionListener componentSslListener;
     private final ConnectionListener connectionManagerListener; // Also known as 'multiplexer'
@@ -172,6 +173,21 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S ),
                 ConnectionSettings.Server.COMPRESSION_SETTINGS
         );
+        serverSslListener = new ConnectionListener(
+            ConnectionType.SOCKET_S2S,
+            ConnectionSettings.Server.OLD_SSLPORT,
+            DEFAULT_SERVER_SSL_PORT,
+            ConnectionSettings.Server.ENABLE_OLD_SSLPORT,
+            "xmpp.server.processing.threads",
+            null,
+            Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+            ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
+            bindAddress,
+            certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
+            certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S ),
+            ConnectionSettings.Server.COMPRESSION_SETTINGS
+        );
+
         // external components (XEP 0114)
         componentListener = new ConnectionListener(
                 ConnectionType.COMPONENT,
@@ -396,6 +412,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         listeners.add( boshListener );
         listeners.add( boshSslListener );
         listeners.add( serverListener );
+        listeners.add( serverSslListener );
         listeners.add( componentListener );
         listeners.add( componentSslListener );
         listeners.add( connectionManagerListener );
@@ -435,7 +452,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     return boshListener;
                 }
             case SOCKET_S2S:
-                return serverListener; // there's no legacy-mode server listener.
+                if (startInSslMode) {
+                    return serverSslListener;
+                } else {
+                    return serverListener;
+                }
 
             case COMPONENT:
                 if (startInSslMode) {
@@ -484,7 +505,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 break;
 
             case SOCKET_S2S:
-                result.add( serverListener ); // there's no legacy-mode server listener.
+                result.add( serverListener );
+                result.add( serverSslListener );
                 break;
 
             case COMPONENT:
@@ -820,6 +842,36 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public int getServerListenerPort()
     {
         return getPort( ConnectionType.SOCKET_S2S, false );
+    }
+
+    @Deprecated
+    public void enableServerSslListener( boolean enabled )
+    {
+        enable( ConnectionType.SOCKET_S2S, true, enabled );
+    }
+
+    @Deprecated
+    public boolean isServerSslListenerEnabled()
+    {
+        return isEnabled( ConnectionType.SOCKET_S2S, true );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getServerSslListenerSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.SOCKET_S2S, true );
+    }
+
+    @Deprecated
+    public void setServerSslListenerPort( int port )
+    {
+        setPort( ConnectionType.SOCKET_S2S, true, port );
+    }
+
+    @Deprecated
+    public int getServerSslListenerPort()
+    {
+        return getPort( ConnectionType.SOCKET_S2S, true );
     }
 
     // Connection Manager

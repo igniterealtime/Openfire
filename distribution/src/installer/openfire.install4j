@@ -1534,40 +1534,6 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <linuxRPM name="Linux noarch RPM" id="18" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.noarch" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="noarch">
-      <excludedComponents />
-      <includedDownloadableComponents />
-      <excludedLaunchers>
-        <launcher id="2" />
-        <launcher id="12" />
-        <launcher id="15" />
-      </excludedLaunchers>
-      <excludedBeans />
-      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
-      </exclude>
-      <variables />
-      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
-        <commentFiles />
-        <customAttributes />
-      </autoUpdate>
-      <preInstallScript mode="1" file="">
-        <content />
-      </preInstallScript>
-      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
-        <content />
-      </postInstallScript>
-      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
-        <content />
-      </preUninstallScript>
-      <postUninstallScript mode="1" file="">
-        <content />
-      </postUninstallScript>
-    </linuxRPM>
     <unixArchive name="Unix Archive" id="30" customizedId="" mediaFileName="" installDir="${compiler:PRODUCT_NAME}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false">
       <excludedComponents />
       <includedDownloadableComponents />
@@ -1674,74 +1640,6 @@ return console.askYesNo(message, true);
         <customAttributes />
       </autoUpdate>
     </windows>
-    <linuxRPM name="Linux x86_64 RPM" id="1541" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.x86_64" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-amd64-1.8.0_181" manualJREEntry="true" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="x86_64">
-      <excludedComponents />
-      <includedDownloadableComponents />
-      <excludedLaunchers>
-        <launcher id="2" />
-        <launcher id="12" />
-        <launcher id="15" />
-      </excludedLaunchers>
-      <excludedBeans />
-      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
-      </exclude>
-      <variables />
-      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
-        <commentFiles />
-        <customAttributes />
-      </autoUpdate>
-      <preInstallScript mode="1" file="">
-        <content />
-      </preInstallScript>
-      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
-        <content />
-      </postInstallScript>
-      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
-        <content />
-      </preUninstallScript>
-      <postUninstallScript mode="1" file="">
-        <content />
-      </postUninstallScript>
-    </linuxRPM>
-    <linuxRPM name="Linux i686 RPM" id="1549" customizedId="" mediaFileName="${compiler:FILE_PREFIX}-${compiler:sys.version}-1.i686" installDir="/opt/${compiler:UNIX_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="linux-x86-1.8.0_181" manualJREEntry="true" overwriteNeverAsConfigFiles="true" dependencies="" os="linux" arch="i686">
-      <excludedComponents />
-      <includedDownloadableComponents />
-      <excludedLaunchers>
-        <launcher id="2" />
-        <launcher id="12" />
-        <launcher id="15" />
-      </excludedLaunchers>
-      <excludedBeans />
-      <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
-      <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="documentation/javadoc" fileType="regular" />
-      </exclude>
-      <variables />
-      <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
-        <commentFiles />
-        <customAttributes />
-      </autoUpdate>
-      <preInstallScript mode="1" file="">
-        <content />
-      </preInstallScript>
-      <postInstallScript mode="2" file="./rpmscripts/post_install.sh">
-        <content />
-      </postInstallScript>
-      <preUninstallScript mode="2" file="./rpmscripts/pre_uninstall.sh">
-        <content />
-      </preUninstallScript>
-      <postUninstallScript mode="1" file="">
-        <content />
-      </postUninstallScript>
-    </linuxRPM>
     <linuxDeb name="Linux Deb Archive" id="1577" customizedId="" mediaFileName="" installDir="/opt/${compiler:sys.shortName}" overridePrincipalLanguage="false" jreBitType="all" runPostProcessor="false" postProcessor="" failOnPostProcessorError="false" useLegacyMediaFileIds="false" legacyMediaFileIds="" downloadURL="" includeAllDownloadableComponents="true" includedJRE="" manualJREEntry="false" overwriteNeverAsConfigFiles="false" dependencies="" bzip="false" description="" maintainerEmail="" architectureSet="false" architecture="">
       <excludedComponents />
       <includedDownloadableComponents />

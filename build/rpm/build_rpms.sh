@@ -51,7 +51,7 @@ mv openfire.tar.gz ~/rpmbuild/SOURCES/
 cd ../..
 
 # command="-ba --target ${rpmbuild.arch} 
-rpmbuild -ba \
+rpmbuild -bb \
   --target ${RPMARCH} \
   --define "JRE_BUNDLE ${JRE_BUNDLE}" \
   --define "OPENFIRE_BUILDDATE ${RPM_BUILDDATE}" \

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +105,11 @@ public class DNSUtil {
         // Attempt the SRV lookup.
         final List<WeightedHostAddress> srvLookups = new LinkedList<>();
         srvLookups.addAll(srvLookup("xmpp-server", "tcp", domain ) );
-        srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain ) );
+
+        final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
+        if (allowTLS) {
+            srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain));
+        }
         if (!srvLookups.isEmpty()) {
             // we have to re-prioritize the combination of both lookups.
             results.addAll( prioritize( srvLookups.toArray( new WeightedHostAddress[0] ) ) );

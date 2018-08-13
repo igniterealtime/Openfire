@@ -3,9 +3,9 @@ package org.jivesoftware.util;
 import java.util.UUID;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.*;
 
 public class AesEncryptorTest {
 
@@ -56,4 +56,32 @@ public class AesEncryptorTest {
         
         assertNull(b64Encrypted);
     }
+
+    @Test
+    public void testEncryptionWithKeyAndIV() {
+
+        final String plainText = UUID.randomUUID().toString();
+        final byte[] iv = "0123456789abcdef".getBytes();
+        final Encryptor encryptor = new AesEncryptor(UUID.randomUUID().toString());
+        final String encryptedText = encryptor.encrypt(plainText, iv);
+
+        final String decryptedText = encryptor.decrypt(encryptedText, iv);
+
+        assertThat(decryptedText, is(plainText));
+    }
+
+    @Test
+    public void testEncryptionWithKeyAndBadIV() {
+
+        final String plainText = UUID.randomUUID().toString();
+        final byte[] iv = "0123456789abcdef".getBytes();
+        final Encryptor encryptor = new AesEncryptor(UUID.randomUUID().toString());
+        final String encryptedText = encryptor.encrypt(plainText, iv);
+
+        final String decryptedText = encryptor.decrypt(encryptedText);
+
+        assertThat(decryptedText, is(not(plainText)));
+
+    }
+
 }

@@ -57,21 +57,29 @@ public class AesEncryptor implements Encryptor {
      * @see org.jivesoftware.util.Encryptor#encrypt(java.lang.String)
      */
     @Override
-    public String encrypt(String value)
-    {
+    public String encrypt(String value) {
+        return encrypt(value, null);
+    }
+
+    @Override
+    public String encrypt(String value, byte[] iv) {
         if (value == null) { return null; }
         byte [] bytes = value.getBytes(StandardCharsets.UTF_8);
-        return Base64.encodeBytes( cipher(bytes, getKey(), Cipher.ENCRYPT_MODE) );
+        return Base64.encodeBytes(cipher(bytes, getKey(), iv == null ? INIT_PARM : iv, Cipher.ENCRYPT_MODE));
     }
 
     /* (non-Javadoc)
      * @see org.jivesoftware.util.Encryptor#decrypt(java.lang.String)
      */
     @Override
-    public String decrypt(String value)
-    {
+    public String decrypt(String value) {
+        return decrypt(value, null);
+    }
+
+    @Override
+    public String decrypt(String value, byte[] iv) {
         if (value == null) { return null; }
-        byte [] bytes = cipher(Base64.decode(value), getKey(), Cipher.DECRYPT_MODE);
+        byte [] bytes = cipher(Base64.decode(value), getKey(), iv == null ? INIT_PARM : iv, Cipher.DECRYPT_MODE);
         if (bytes == null) { return null; }
         return new String(bytes, StandardCharsets.UTF_8);
     }
@@ -84,7 +92,7 @@ public class AesEncryptor implements Encryptor {
      * @param mode The cipher mode (encrypt or decrypt)
      * @return The converted attribute, or null if conversion fails
      */
-    private byte [] cipher(byte [] attribute, byte [] key, int mode)
+    private byte [] cipher(byte [] attribute, byte [] key, byte[] iv, int mode)
     {
         byte [] result = null;
         try
@@ -96,7 +104,7 @@ public class AesEncryptor implements Encryptor {
             Cipher aesCipher = Cipher.getInstance(ALGORITHM);
 
             // Initialize AES Cipher and convert
-            aesCipher.init(mode, aesKey, new IvParameterSpec(INIT_PARM));
+            aesCipher.init(mode, aesKey, new IvParameterSpec(iv));
             result = aesCipher.doFinal(attribute);
         }
         catch (Exception e)

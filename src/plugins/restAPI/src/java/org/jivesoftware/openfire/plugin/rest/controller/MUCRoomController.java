@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Iterator;
 
 import javax.ws.rs.core.Response;
 
@@ -27,6 +28,8 @@ import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
+import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntities;
+import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
@@ -36,10 +39,20 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import org.xmpp.packet.Message;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.MUCRoomHistory;
+import org.dom4j.Element;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The Class MUCRoomController.
  */
 public class MUCRoomController {
+    private static Logger logger = LoggerFactory.getLogger(MUCRoomController.class);
+
     /** The Constant INSTANCE. */
     public static final MUCRoomController INSTANCE = new MUCRoomController();
 
@@ -64,6 +77,7 @@ public class MUCRoomController {
      * @return the chat rooms
      */
     public MUCRoomEntities getChatRooms(String serviceName, String channelType, String roomSearch, boolean expand) {
+        logger.info("getChatRooms");
         List<MUCRoom> rooms = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
                 .getChatRooms();
 
@@ -98,6 +112,7 @@ public class MUCRoomController {
      *             the service exception
      */
     public MUCRoomEntity getChatRoom(String roomName, String serviceName, boolean expand) throws ServiceException {
+        logger.info("getChatRoom, "+roomName);
         MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
                 .getChatRoom(roomName);
 
@@ -120,6 +135,7 @@ public class MUCRoomController {
      *             the service exception
      */
     public void deleteChatRoom(String roomName, String serviceName) throws ServiceException {
+        logger.info("deleteChatRoom, "+roomName);
         MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
                 .getChatRoom(roomName.toLowerCase());
 
@@ -144,6 +160,7 @@ public class MUCRoomController {
      *             the service exception
      */
     public void createChatRoom(String serviceName, MUCRoomEntity mucRoomEntity) throws ServiceException {
+        logger.info("createChatRoom, "+mucRoomEntity.getRoomName());
         try {
             createRoom(mucRoomEntity, serviceName);
         } catch (NotAllowedException e) {
@@ -175,6 +192,7 @@ public class MUCRoomController {
      */
     public void updateChatRoom(String roomName, String serviceName, MUCRoomEntity mucRoomEntity)
             throws ServiceException {
+        logger.info("updateChatRoom, "+mucRoomEntity.getRoomName());
         try {
             // If the room name is different throw exception
             if (!roomName.equals(mucRoomEntity.getRoomName())) {
@@ -212,7 +230,7 @@ public class MUCRoomController {
      */
     private void createRoom(MUCRoomEntity mucRoomEntity, String serviceName) throws NotAllowedException,
             ForbiddenException, ConflictException, AlreadyExistsException {
-
+        logger.info("createRoom entry, "+mucRoomEntity.getRoomName());
         // Set owner
         JID owner = XMPPServer.getInstance().createJID("admin", null);
         if (mucRoomEntity.getOwners() != null && mucRoomEntity.getOwners().size() > 0) {
@@ -299,6 +317,7 @@ public class MUCRoomController {
      * @return the room participants
      */
     public ParticipantEntities getRoomParticipants(String roomName, String serviceName) {
+        logger.info("ParticipantEntities, "+roomName);
         ParticipantEntities participantEntities = new ParticipantEntities();
         List<ParticipantEntity> participants = new ArrayList<ParticipantEntity>();
 
@@ -328,6 +347,7 @@ public class MUCRoomController {
      * @return the room occupants
      */
     public OccupantEntities getRoomOccupants(String roomName, String serviceName) {
+        logger.info("getRoomOccupants, "+roomName);
         OccupantEntities occupantEntities = new OccupantEntities();
         List<OccupantEntity> occupants = new ArrayList<OccupantEntity>();
 
@@ -345,6 +365,48 @@ public class MUCRoomController {
 
         occupantEntities.setOccupants(occupants);
         return occupantEntities;
+    }
+
+    /**
+     * Gets the room chat history.
+     *
+     * @param roomName
+     *            the room name
+     * @param serviceName
+     *            the service name
+     * @return the room chat history
+     */
+    public MUCRoomMessageEntities getRoomHistory(String roomName, String serviceName) {
+        logger.info("getRoomHistory, "+roomName);
+        MUCRoomMessageEntities mucRoomMessageEntities = new MUCRoomMessageEntities();
+        List<MUCRoomMessageEntity> listMessages = new ArrayList<>();
+
+        MultiUserChatService mucS =XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+        MUCRoomHistory mucRH = mucS.getChatRoom(roomName).getRoomHistory();
+        Iterator<Message> messageHistory = mucRH.getMessageHistory();
+
+        while (messageHistory.hasNext()) {
+            Message message = messageHistory.next();
+
+            logger.debug(message.toString());
+            MUCRoomMessageEntity mucMsgEntity = new MUCRoomMessageEntity();
+            mucMsgEntity.setTo(message.getTo().toString());
+            mucMsgEntity.setFrom(message.getFrom().toFullJID());
+            mucMsgEntity.setType(message.getType().name());
+            mucMsgEntity.setBody(message.getBody());
+
+            Element delay = message.getChildElement("delay","urn:xmpp:delay");
+            if (delay!=null) {
+                mucMsgEntity.setDelayStamp(delay.attributeValue("stamp"));
+                String delayFrom = delay.attributeValue("from");
+                if (delayFrom!=null)
+                    mucMsgEntity.setDelayFrom(delayFrom);
+            }
+            listMessages.add(mucMsgEntity);
+        }
+        logger.debug("getRoomHistory, room: "+roomName+ ", chat history message count: "+listMessages.size());
+        mucRoomMessageEntities.setMessages(listMessages);
+        return mucRoomMessageEntities;
     }
 
 

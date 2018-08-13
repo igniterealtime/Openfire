@@ -50,7 +50,7 @@ rm -rf openfire
 mv openfire.tar.gz ~/rpmbuild/SOURCES/
 cd ../..
 
-# command="-ba --target ${rpmbuild.arch} 
+# Finally build the RPM
 rpmbuild -bb \
   --target ${RPMARCH} \
   --define "JRE_BUNDLE ${JRE_BUNDLE}" \
@@ -60,3 +60,7 @@ rpmbuild -bb \
   --define "OPENFIRE_SOURCE openfire.tar.gz" \
   --define "OPENFIRE_REPOVERSION ${OPENFIRE_REPOVERSION}" \
   build/rpm/openfire.spec
+
+# Move generated artifacts back into a rpms folder, so bamboo can grab it
+mkdir -p distribution/target/rpms
+mv ~/rpmbuild/RPMS/${RPMARCH}/openfire*rpm distribution/target/rpms/

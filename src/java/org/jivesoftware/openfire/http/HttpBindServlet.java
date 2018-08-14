@@ -440,32 +440,41 @@ public class HttpBindServlet extends HttpServlet {
     private static class WriteListenerImpl implements WriteListener {
 
         private final AsyncContext context;
-        private final byte[] data;
+        private final InputStream data;
         private final String remoteAddress;
-        private volatile boolean written;
 
         public WriteListenerImpl(AsyncContext context, byte[] data) {
             this.context = context;
-            this.data = data;
+            this.data = new ByteArrayInputStream( data );
             this.remoteAddress = getRemoteAddress(context);
         }
 
         @Override
         public void onWritePossible() throws IOException {
             // This method may be invoked multiple times and by different threads, e.g. when writing large byte arrays.
+            // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
+            // Otherwise WritePendingException is thrown.
             Log.trace("Data can be written to [" + remoteAddress + "]");
-            ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
-            while (servletOutputStream.isReady()) {
-                // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
-                // Otherwise WritePendingException is thrown.
-                if (!written) {
-                    written = true;
-                    servletOutputStream.write(data);
-                    // After this write isReady() may return false, indicating the write is not finished.
-                    // In this case onWritePossible() is invoked again as soon as the isReady() == true again,
-                    // in which case we would only complete the request.
-                } else {
-                    context.complete();
+            synchronized ( context )
+            {
+                final ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
+                while ( servletOutputStream.isReady() )
+                {
+                    final byte[] buffer = new byte[8*1024];
+                    final int len = data.read( buffer );
+                    if ( len < 0 )
+                    {
+                        // EOF - all done!
+                        context.complete();
+                        return;
+                    }
+
+                    // This is an async write, will never block.
+                    servletOutputStream.write( buffer, 0, len );
+
+                    // When isReady() returns false for the next iteration, the
+                    // interface contract guarantees that onWritePossible() will
+                    // be called once a write is possible again.
                 }
             }
         }
@@ -473,7 +482,10 @@ public class HttpBindServlet extends HttpServlet {
         @Override
         public void onError(Throwable throwable) {
             Log.warn("Error writing response data to [" + remoteAddress + "]", throwable);
-            context.complete();
+            synchronized ( context )
+            {
+                context.complete();
+            }
         }
     }
 }

@@ -766,22 +766,14 @@ public class GroupManager {
     }
 
     private void evictCachedPaginatedGroupNames() {
-        for(Map.Entry<String, Object> entry : groupMetaCache.entrySet())
-        {
-            if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
-                groupMetaCache.remove(entry.getKey());
-            }
-        }
+        groupMetaCache.keySet()
+            .removeIf( key -> key.startsWith( GROUP_NAMES_KEY ) );
     }
 
     private void evictCachedUserSharedGroups() {
         synchronized (USER_SHARED_GROUPS_KEY.intern()) {
-            for(Map.Entry<String, Object> entry : groupMetaCache.entrySet())
-            {
-                if (entry.getKey().startsWith(USER_SHARED_GROUPS_KEY)) {
-                    groupMetaCache.remove(entry.getKey());
-                }
-            }
+            groupMetaCache.keySet()
+                .removeIf( key -> key.startsWith( USER_SHARED_GROUPS_KEY ) );
         }
     }
 }

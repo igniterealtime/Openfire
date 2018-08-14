@@ -47,7 +47,7 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
     public static final RESTServicePlugin INSTANCE = new RESTServicePlugin();
 
     private static final String CUSTOM_AUTH_FILTER_PROPERTY_NAME = "plugin.restapi.customAuthFilter";
-    public static final String SERVICE_LOGGING_ENABLED = "plugin.psiassignment.serviceLoggingEnabled";
+    public static final String SERVICE_LOGGING_ENABLED = "plugin.restapi.serviceLoggingEnabled";
 
     /** The secret. */
     private String secret;

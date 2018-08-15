@@ -7,16 +7,17 @@ if [ "$#" -ne 2 ]; then
 fi
 export RPMARCH=$1
 export JRE_BUNDLE=$2
+export RPMBUILD_HOME=${HOME}/rpmbuild
 
 # Setup rpmbuild folders
-mkdir -p ~/rpmbuild/SPECS
-mkdir -p ~/rpmbuild/SOURCES
-mkdir -p ~/rpmbuild/BUILD
-mkdir -p ~/rpmbuild/SRPMS
-mkdir -p ~/rpmbuild/RPMS
+mkdir -p ${RPMBUILD_HOME}/SPECS
+mkdir -p ${RPMBUILD_HOME}/SOURCES
+mkdir -p ${RPMBUILD_HOME}/BUILD
+mkdir -p ${RPMBUILD_HOME}/SRPMS
+mkdir -p ${RPMBUILD_HOME}/RPMS
 
 if [ -f $JRE_BUNDLE ]; then
-    cp -f $JRE_BUNDLE ~/rpmbuild/SOURCES/
+    cp -f $JRE_BUNDLE ${RPMBUILD_HOME}/SOURCES/
 fi
 
 # Define some variables
@@ -47,13 +48,13 @@ cp -r distribution-base openfire
 mkdir -p openfire/logs
 tar -czf openfire.tar.gz openfire
 rm -rf openfire
-mv openfire.tar.gz ~/rpmbuild/SOURCES/
+mv openfire.tar.gz ${RPMBUILD_HOME}/SOURCES/
 cd ../..
 
 # Finally build the RPM
 rpmbuild -bb \
   --target ${RPMARCH} \
-  --define "_topdir ~/rpmbuild" \
+  --define "_topdir ${RPMBUILD_HOME}" \
   --define "JRE_BUNDLE ${JRE_BUNDLE}" \
   --define "OPENFIRE_BUILDDATE ${RPM_BUILDDATE}" \
   --define "OPENFIRE_VERSION ${OPENFIRE_VERSION}" \
@@ -64,4 +65,4 @@ rpmbuild -bb \
 
 # Move generated artifacts back into a rpms folder, so bamboo can grab it
 mkdir -p distribution/target/rpms
-mv ~/rpmbuild/RPMS/${RPMARCH}/openfire*rpm distribution/target/rpms/
+mv ${RPMBUILD_HOME}/RPMS/${RPMARCH}/openfire*rpm distribution/target/rpms/

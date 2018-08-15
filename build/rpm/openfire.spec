@@ -17,7 +17,7 @@ Vendor: Igniterealtime Community
 Packager: Igniterealtime Community
 License: Apache license v2.0
 AutoReqProv: no
-URL: http://www.igniterealtime.org/
+URL: https://igniterealtime.org/projects/openfire/
 
 %define prefix /opt
 %define homedir %{prefix}/openfire
@@ -31,20 +31,17 @@ XMPP (Jabber) protocol. It has great performance, is easy to setup and use,
 and delivers an innovative feature set.
 
 %prep
-%setup -q -n openfire_src
+%setup -q -n openfire
 
 %build
-cd build
-ant openfire
-ant -Dplugin=search plugin
-cd ..
+# Nothing to be done
 
 %install
 # Prep the install location.
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{prefix}
 # Copy over the main install tree.
-cp -R target/openfire $RPM_BUILD_ROOT%{homedir}
+cp -R . $RPM_BUILD_ROOT%{homedir}
 %ifnarch noarch
 # Set up distributed JRE
 pushd $RPM_BUILD_ROOT%{homedir}
@@ -65,8 +62,6 @@ cp -R documentation $RPM_BUILD_ROOT%{homedir}/documentation
 cp changelog.html $RPM_BUILD_ROOT%{homedir}/
 cp LICENSE.html $RPM_BUILD_ROOT%{homedir}/
 cp README.html $RPM_BUILD_ROOT%{homedir}/
-# Copy over the i18n files
-cp -R resources/i18n $RPM_BUILD_ROOT%{homedir}/resources/i18n
 # Make sure scripts are executable
 chmod 755 $RPM_BUILD_ROOT%{homedir}/bin/extra/openfired
 chmod 755 $RPM_BUILD_ROOT%{homedir}/bin/extra/redhat-postinstall.sh
@@ -131,8 +126,6 @@ exit 0
 %dir %{homedir}/resources/database/upgrade
 %dir %{homedir}/resources/database/upgrade/*
 %{homedir}/resources/database/upgrade/*/*
-%dir %{homedir}/resources/i18n
-%{homedir}/resources/i18n/*
 %dir %{homedir}/resources/nativeAuth
 %dir %{homedir}/resources/nativeAuth/linux-i386
 %{homedir}/resources/nativeAuth/linux-i386/*

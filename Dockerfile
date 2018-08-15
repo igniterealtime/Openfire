@@ -6,7 +6,7 @@ RUN apt-get update -qq \
     && mvn package
 
 FROM openjdk:8-jre
-COPY --from=0 /usr/src/target/release/openfire /usr/local/openfire
+COPY --from=0 /usr/src/distribution/target/distribution-base /usr/local/openfire
 COPY --from=0 /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 WORKDIR /usr/local/openfire
 

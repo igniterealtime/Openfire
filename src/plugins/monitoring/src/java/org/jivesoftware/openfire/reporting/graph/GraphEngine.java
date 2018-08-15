@@ -15,33 +15,48 @@
  */
 package org.jivesoftware.openfire.reporting.graph;
 
-import org.jivesoftware.openfire.reporting.stats.StatsViewer;
-import org.jfree.chart.JFreeChart;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
+
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.axis.*;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.DateTickMarkPosition;
+import org.jfree.chart.axis.DateTickUnit;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.TickUnits;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.encoders.KeypointPNGEncoderAdapter;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
+import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.data.time.*;
-import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.Minute;
+import org.jfree.data.time.RegularTimePeriod;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.IntervalXYDataset;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.util.Rotation;
+import org.jivesoftware.openfire.reporting.stats.StatsViewer;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.util.JiveGlobals;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.text.NumberFormat;
 
 /**
  * Builds graphs off of statistics tracked in the <i>StatsEngine</i>.
@@ -469,7 +484,7 @@ public class GraphEngine {
         plot.getRenderer().setBaseItemLabelsVisible(false);
         plot.getRenderer().setBaseOutlinePaint(backgroundColor);
         plot.setOutlineStroke(null);
-        plot.setDomainGridlinePaint(null);
+        //plot.setDomainGridlinePaint(null);
 
         NumberAxis xAxis = (NumberAxis)chart.getXYPlot().getDomainAxis();
 
@@ -581,7 +596,7 @@ public class GraphEngine {
         plot.getRenderer().setBaseItemLabelsVisible(false);
         plot.getRenderer().setBaseOutlinePaint(backgroundColor);
         plot.setOutlineStroke(null);
-        plot.setDomainGridlinePaint(null);
+        //plot.setDomainGridlinePaint(null);
 
         ValueAxis xAxis = chart.getXYPlot().getDomainAxis();
 

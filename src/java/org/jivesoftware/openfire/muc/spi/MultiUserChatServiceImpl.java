@@ -55,6 +55,7 @@ import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
@@ -182,14 +183,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     /**
      * Returns the permission policy for creating rooms. A true value means that not anyone can
-     * create a room, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
-     * rooms.
+     * create a room. Users are allowed to create rooms only when
+     * <code>isAllRegisteredUsersAllowedToCreate</code> or <code>getUsersAllowedToCreate</code>
+     * (or both) allow them to.
      */
     private boolean roomCreationRestricted = false;
 
     /**
-     * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can
-     * create a room. Might also include group jids.
+     * Determines if all registered users (as opposed to anonymous users, and users from other
+     * XMPP domains) are allowed to create rooms.
+     */
+    private boolean allRegisteredUsersAllowedToCreate = false;
+
+    /**
+     * Bare jids of users that are allowed to create MUC rooms. Might also include group jids.
      */
     private GroupAwareList<JID> allowedToCreate = new ConcurrentGroupList<>();
 
@@ -648,7 +655,38 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
     }
- 
+
+    /**
+     * Checks if a particular JID is allowed to create rooms.
+     *
+     * @param jid The jid for which to check (cannot be null).
+     * @return true if the JID is allowed to create a room, otherwise false.
+     */
+    protected boolean isAllowedToCreate(JID jid) {
+        // If room creation is not restricted, everyone is allowed to create a room.
+        if (!isRoomCreationRestricted()) {
+            return true;
+        }
+
+        final JID bareJID = jid.asBareJID();
+
+        // System administrators are always allowed to create rooms.
+        if (sysadmins.includes(bareJID)) {
+            return true;
+        }
+
+        // If the JID of the user has explicitly been given permission, room creation is allowed.
+        if (allowedToCreate.includes(bareJID)) {
+            return true;
+        }
+
+        // Verify the policy that allows all local, registered users to create rooms.
+        if (allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID)) {
+            return true;
+        }
+
+        return false;
+    }
 
     @Override
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
@@ -686,15 +724,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                     else {
                         // The room does not exist so check for creation permissions
-                        // Room creation is always allowed for sysadmin
-                        final JID bareJID = userjid.asBareJID();
-                        if (isRoomCreationRestricted() && !sysadmins.includes(bareJID)) {
-                            // The room creation is only allowed for certain JIDs
-                            if (!allowedToCreate.includes(bareJID)) {
-                                // The user is not in the list of allowed JIDs to create a room so raise
-                                // an exception
-                                throw new NotAllowedException();
-                            }
+                        if (!isAllowedToCreate(userjid)) {
+                            throw new NotAllowedException();
                         }
                         room.addFirstOwner(userjid);
                         created = true;
@@ -1094,6 +1125,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
+    public boolean isAllRegisteredUsersAllowedToCreate() {
+        return allRegisteredUsersAllowedToCreate;
+    }
+
+    @Override
+    public void setAllRegisteredUsersAllowedToCreate( final boolean allow ) {
+        this.allRegisteredUsersAllowedToCreate = allow;
+        MUCPersistenceManager.setProperty(chatServiceName, "create.all-registered", Boolean.toString(allow));
+    }
+
+    @Override
     public void addUsersAllowedToCreate(Collection<JID> userJIDs) {
         boolean listChanged = false;
 
@@ -1185,6 +1227,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.membersOnly", true);
         roomCreationRestricted =
                 MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.anyone", false);
+        allRegisteredUsersAllowedToCreate =
+                MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.all-registered", false );
         // Load the list of JIDs that are allowed to create a MUC room
         property = MUCPersistenceManager.getProperty(chatServiceName, "create.jid");
         allowedToCreate.clear();

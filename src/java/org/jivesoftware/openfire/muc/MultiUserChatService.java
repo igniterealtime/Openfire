@@ -100,17 +100,37 @@ public interface MultiUserChatService extends Component {
     boolean isRoomCreationRestricted();
 
     /**
-     * Sets if anyone can create rooms or if only the returned JIDs in
-     * <code>getUsersAllowedToCreate</code> are allowed to create rooms.
+     * Sets if anyone can create rooms. When set to true, users are allowed to
+     * create rooms only when <code>isAllRegisteredUsersAllowedToCreate</code>
+     * or <code>getUsersAllowedToCreate</code> (or both) allow them to.
      *
      * @param roomCreationRestricted whether anyone can create rooms or not.
      */
     void setRoomCreationRestricted(boolean roomCreationRestricted);
 
     /**
-     * Returns the collection of JIDs that are allowed to create MUC rooms. An empty list means that
-     * anyone can create a room. 
-     * 
+     * Sets if all registered users of Openfire are allowed to create rooms.
+     *
+     * When true, anonymous users and users from other domains (through
+     * federation) are initially prohibited from creating rooms, but can still
+     * be allowed by registering their JIDs in <code>addUserAllowedToCreate</code>.
+     *
+     * @return true if all registered users are allowed to create rooms.
+     */
+    boolean isAllRegisteredUsersAllowedToCreate();
+
+    /**
+     * Sets if all registered users of Openfire are allowed to create rooms.
+     *
+     * @param allow whether all registered users can create rooms.
+     */
+    void setAllRegisteredUsersAllowedToCreate(boolean allow);
+
+    /**
+     * Returns the collection of JIDs that are allowed to create MUC rooms.
+     * When <code>isAllRegisteredUsersAllowedToCreate</code>, this method will
+     * not return a JID of every user in the system.
+     *
      * @return a list of user/group JIDs.
      */
     Collection<JID> getUsersAllowedToCreate();

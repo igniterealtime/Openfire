@@ -48,6 +48,7 @@
 <li><a href="#retrieve-a-chat-room">Retrieve a chat room</a></li>
 <li><a href="#retrieve-chat-room-participants">Retrieve chat room participants</a></li>
 <li><a href="#retrieve-chat-room-occupants">Retrieve chat room occupants</a></li>
+<li><a href="#retrieve-chat-room-history">Retrieve chat room message history</a></li>
 <li><a href="#create-a-chat-room">Create a chat room</a></li>
 <li><a href="#delete-a-chat-room">Delete a chat room</a></li>
 <li><a href="#update-a-chat-room">Update a chat room</a></li>
@@ -117,16 +118,17 @@
 <p>The REST API Plugin provides the ability to manage Openfire by sending an REST/HTTP request to the server. This plugin’s functionality is useful for applications that need to administer Openfire outside of the Openfire admin console.</p>
 <h2 id="feature-list">Feature list</h2>
 <ul>
-<li>Get overview over all or specific user and to create, update or delete a user</li>
-<li>Get overview over all or specific group and to create, update or delete a group</li>
-<li>Get overview over all user roster entries and to add, update or delete a roster entry</li>
-<li>Add user to a group and remove a user from a group</li>
-<li>Lockout, unlock or kick the user (enable / disable)</li>
-<li>Get overview over all or specific system properties and to create, update or delete system property</li>
-<li>Get overview over all or specific chat room and to create, update or delete a chat room</li>
-<li>Get overview over all or specific user sessions</li>
-<li>Send broadcast message to all online users</li>
-<li>Get overview of all or specific security audit logs</li>
+    <li>Get overview over all or specific user and to create, update or delete a user</li>
+    <li>Get overview over all or specific group and to create, update or delete a group</li>
+    <li>Get overview over all user roster entries and to add, update or delete a roster entry</li>
+    <li>Add user to a group and remove a user from a group</li>
+    <li>Lockout, unlock or kick the user (enable / disable)</li>
+    <li>Get overview over all or specific system properties and to create, update or delete system property</li>
+    <li>Get overview over all or specific chat room and to create, update or delete a chat room</li>
+    <li>Get overview over all or specific user sessions</li>
+    <li>Send broadcast message to all online users</li>
+    <li>Get overview of all or specific security audit logs</li>
+    <li>Get chat message history from a Multi User Chatroom</li>
 </ul>
 <h2 id="available-rest-api-clients">Available REST API clients</h2>
 <p>REST API clients are implementations of the REST API in a specific programming language.</p>
@@ -1090,6 +1092,43 @@ Payload Example 1 (required parameters):</p>
 <blockquote>
 <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/room1/occupants">http://example.org:9090/plugins/restapi/v1/chatrooms/room1/occupants</a></p>
 </blockquote>
+        <h2 id="retrieve-chat-room-history">Retrieve chat room message history</h2>
+        <p>Endpoint to get the chat message history of a specified room.</p>
+        <blockquote>
+            <p>
+                <strong>GET</strong> /chatrooms/{roomName}/chathistory</p>
+        </blockquote>
+        <p>
+            <strong>Payload:</strong> none<br>
+            <strong>Return value:</strong> Chat History</p>
+        <h3 id="possible-parameters-18">Possible parameters</h3>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Parameter Type</th>
+                <th>Description</th>
+                <th>Default value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>roomname</td>
+                <td>@Path</td>
+                <td>Exact room name</td>
+                <td/>
+            </tr>
+            <tr>
+                <td>servicename</td>
+                <td>@QueryParam</td>
+                <td>The name of the Group Chat Service</td>
+                <td>conference</td>
+            </tr>
+            </tbody>
+        </table>
+        </p>
+
 <h2 id="create-a-chat-room">Create a chat room</h2>
 <p>Endpoint to create a new chat room.</p>
 <blockquote>

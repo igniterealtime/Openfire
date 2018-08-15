@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
+import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntities;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.plugin.rest.controller.MUCRoomController;
 
@@ -82,4 +83,13 @@ public class MUCRoomService {
             @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
         return MUCRoomController.getInstance().getRoomOccupants(roomName, serviceName);
     }
+
+    @GET
+    @Path("/{roomName}/chathistory")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public MUCRoomMessageEntities getMUCRoomHistory(@PathParam("roomName") String roomName,
+                                                    @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
+        return MUCRoomController.getInstance().getRoomHistory(roomName, serviceName);
+    }
+
 }

@@ -47,7 +47,8 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
     public static final RESTServicePlugin INSTANCE = new RESTServicePlugin();
 
     private static final String CUSTOM_AUTH_FILTER_PROPERTY_NAME = "plugin.restapi.customAuthFilter";
-    
+    public static final String SERVICE_LOGGING_ENABLED = "plugin.restapi.serviceLoggingEnabled";
+
     /** The secret. */
     private String secret;
     
@@ -56,7 +57,18 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
     
     /** The enabled. */
     private boolean enabled;
-    
+
+    public boolean isServiceLoggingEnabled() {
+        return serviceLoggingEnabled;
+    }
+
+    public void setServiceLoggingEnabled(boolean serviceLoggingEnabled) {
+        JiveGlobals.setProperty(SERVICE_LOGGING_ENABLED, Boolean.toString(serviceLoggingEnabled));
+        this.serviceLoggingEnabled = serviceLoggingEnabled;
+    }
+
+    private boolean serviceLoggingEnabled;
+
     /** The http auth. */
     private String httpAuth;
     
@@ -97,6 +109,7 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
         // means that this filter is disabled.
         allowedIPs = StringUtils.stringToCollection(JiveGlobals.getProperty("plugin.restapi.allowedIPs", ""));
 
+        setServiceLoggingEnabled(JiveGlobals.getBooleanProperty(SERVICE_LOGGING_ENABLED, false));
         // Listen to system property events
         PropertyEventDispatcher.addListener(this);
     }

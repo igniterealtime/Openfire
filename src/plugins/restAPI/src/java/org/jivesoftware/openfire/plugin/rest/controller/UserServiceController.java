@@ -9,10 +9,12 @@ import javax.ws.rs.core.Response;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.plugin.rest.RESTServicePlugin;
 import org.jivesoftware.openfire.plugin.rest.dao.PropertyDAO;
 import org.jivesoftware.openfire.plugin.rest.entity.GroupEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.RosterEntities;
@@ -35,10 +37,15 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The Class UserServiceController.
  */
 public class UserServiceController {
+    private static Logger logger = LoggerFactory.getLogger(UserServiceController.class);
+
     /** The Constant INSTANCE. */
     public static final UserServiceController INSTANCE = new UserServiceController();
 
@@ -63,6 +70,9 @@ public class UserServiceController {
         return INSTANCE;
     }
 
+    private static final PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+    private static final RESTServicePlugin plugin = (RESTServicePlugin) pluginManager.getPlugin("restapi");
+
     /**
      * Instantiates a new user service controller.
      */
@@ -71,6 +81,11 @@ public class UserServiceController {
         userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
         lockOutManager = server.getLockOutManager();
+    }
+
+    public static void log(String logMessage) {
+        if (plugin.isServiceLoggingEnabled())
+            logger.info(logMessage);
     }
 
     /**
@@ -87,6 +102,7 @@ public class UserServiceController {
                 throw new ServiceException("Could not create new user, because password is null",
                         userEntity.getUsername(), "PasswordIsNull", Response.Status.BAD_REQUEST);
             }
+            log("createUser, "+userEntity.getUsername());
             try {
                 userManager.createUser(userEntity.getUsername(), userEntity.getPassword(), userEntity.getName(),
                         userEntity.getEmail());
@@ -113,6 +129,7 @@ public class UserServiceController {
      */
     public void updateUser(String username, UserEntity userEntity) throws ServiceException {
         if (userEntity != null && !username.isEmpty()) {
+            log("updateUser, "+userEntity.getUsername());
             // Payload contains another username than provided over path
             // parameter
             if (userEntity.getUsername() != null) {
@@ -147,6 +164,7 @@ public class UserServiceController {
      *             the service exception
      */
     public void deleteUser(String username) throws ServiceException {
+        log("deleteUser, "+username);
         User user = getAndCheckUser(username);
         userManager.deleteUser(user);
 
@@ -166,8 +184,10 @@ public class UserServiceController {
     public UserEntities getUserEntities(String userSearch, String propertyKey, String propertyValue)
             throws ServiceException {
         if (propertyKey != null) {
+            log("getUserEntities, "+userSearch+", propertyKey: "+propertyKey);
             return getUserEntitiesByProperty(propertyKey, propertyValue);
         }
+        log("getUserEntities, "+userSearch);
         UserEntities userEntities = new UserEntities();
         userEntities.setUsers(UserUtils.convertUsersToUserEntities(userManager.getUsers(), userSearch));
         return userEntities;
@@ -183,6 +203,7 @@ public class UserServiceController {
      *             the service exception
      */
     public UserEntity getUserEntity(String username) throws ServiceException {
+        log("getUserEntity, "+username);
         return UserUtils.convertUserToUserEntity(getAndCheckUser(username));
     }
 
@@ -195,6 +216,7 @@ public class UserServiceController {
      *             the service exception
      */
     public void enableUser(String username) throws ServiceException {
+        log("enableUser, "+username);
         getAndCheckUser(username);
         lockOutManager.enableAccount(username);
     }
@@ -208,6 +230,7 @@ public class UserServiceController {
      *             the service exception
      */
     public void disableUser(String username) throws ServiceException {
+        log("disableUser, "+username);
         getAndCheckUser(username);
         lockOutManager.disableAccount(username, null, null);
         
@@ -230,6 +253,7 @@ public class UserServiceController {
      *             the service exception
      */
     public RosterEntities getRosterEntities(String username) throws ServiceException {
+        log("getRosterEntities, "+username);
         Roster roster = getUserRoster(username);
 
         List<RosterItemEntity> rosterEntities = new ArrayList<RosterItemEntity>();
@@ -267,7 +291,7 @@ public class UserServiceController {
             throw new ServiceException("JID is null", "JID", "IllegalArgumentException", Response.Status.BAD_REQUEST);
         }
         JID jid = new JID(rosterItemEntity.getJid());
-
+        log("addRosterItem, "+rosterItemEntity.getJid());
         try {
             roster.getRosterItem(jid);
             throw new UserAlreadyExistsException(jid.toBareJID());
@@ -304,6 +328,7 @@ public class UserServiceController {
      */
     public void updateRosterItem(String username, String rosterJid, RosterItemEntity rosterItemEntity)
             throws ServiceException, UserNotFoundException, UserAlreadyExistsException, SharedGroupException {
+        log("updateRosterItem, "+username+", "+rosterJid);
         getAndCheckUser(username);
 
         Roster roster = getUserRoster(username);
@@ -335,6 +360,7 @@ public class UserServiceController {
      *             the service exception
      */
     public void deleteRosterItem(String username, String rosterJid) throws SharedGroupException, ServiceException {
+        log("deleteRosterItem, "+username+", "+rosterJid);
         getAndCheckUser(username);
         Roster roster = getUserRoster(username);
         JID jid = new JID(rosterJid);
@@ -355,6 +381,7 @@ public class UserServiceController {
      *             the service exception
      */
     public List<String> getUserGroups(String username) throws ServiceException {
+        log("getUserGroups, "+username);
         User user = getAndCheckUser(username);
         Collection<Group> groups = GroupManager.getInstance().getGroups(user);
         List<String> groupNames = new ArrayList<String>();
@@ -377,12 +404,14 @@ public class UserServiceController {
      */
     public void addUserToGroups(String username, UserGroupsEntity userGroupsEntity) throws ServiceException {
         if (userGroupsEntity != null) {
+            log("addUserToGroups, "+username);
             Collection<Group> groups = new ArrayList<Group>();
 
             for (String groupName : userGroupsEntity.getGroupNames()) {
                 Group group = null;
                 try {
                     group = GroupManager.getInstance().getGroup(groupName);
+                    log("addUserToGroups, "+username+", groupName : "+groupName);
                 } catch (GroupNotFoundException e) {
                     // Create this group
                     group = GroupController.getInstance().createGroup(new GroupEntity(groupName, ""));
@@ -403,6 +432,7 @@ public class UserServiceController {
      * @throws ServiceException the service exception
      */
     public void addUserToGroup(String username, String groupName) throws ServiceException {
+        log("addUserToGroup, "+username+ ", groupName: "+groupName);
         Group group = null;
         try {
             group = GroupManager.getInstance().getGroup(groupName);
@@ -426,7 +456,9 @@ public class UserServiceController {
      */
     public void deleteUserFromGroups(String username, UserGroupsEntity userGroupsEntity) throws ServiceException {
         if (userGroupsEntity != null) {
+            log("deleteUserFromGroups, "+username);
             for (String groupName : userGroupsEntity.getGroupNames()) {
+                log("deleteUserFromGroups, "+username+ ", groupName: "+groupName);
                 Group group = null;
                 try {
                     group = GroupManager.getInstance().getGroup(groupName);
@@ -447,6 +479,7 @@ public class UserServiceController {
      * @throws ServiceException the service exception
      */
     public void deleteUserFromGroup(String username, String groupName) throws ServiceException {
+        log("deleteUserFromGroup, "+username+", groupName: "+groupName);
         Group group = null;
         try {
             group = GroupManager.getInstance().getGroup(groupName);
@@ -469,6 +502,7 @@ public class UserServiceController {
      *             the service exception
      */
     public UserEntities getUserEntitiesByProperty(String propertyKey, String propertyValue) throws ServiceException {
+        log("getUserEntitiesByProperty, "+propertyKey+", propertyValue: "+propertyValue);
         List<String> usernames = PropertyDAO.getUsernameByProperty(propertyKey, propertyValue);
         List<UserEntity> users = new ArrayList<UserEntity>();
         UserEntities userEntities = new UserEntities();
@@ -490,6 +524,7 @@ public class UserServiceController {
      *             the service exception
      */
     private void addProperties(String username, List<UserProperty> properties) throws ServiceException {
+        log("addProperties, "+username);
         User user = getAndCheckUser(username);
         user.getProperties().clear();
         if (properties != null) {
@@ -533,6 +568,7 @@ public class UserServiceController {
      *             the service exception
      */
     private Roster getUserRoster(String username) throws ServiceException {
+        log("getUserRoster, "+username);
         try {
             return rosterManager.getRoster(username);
         } catch (UserNotFoundException e) {

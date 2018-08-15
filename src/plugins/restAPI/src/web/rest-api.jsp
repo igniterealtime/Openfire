@@ -26,7 +26,8 @@
     String httpAuth = ParamUtils.getParameter(request, "authtype");
     String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
     String customAuthFilterClassName = ParamUtils.getParameter(request, "customAuthFilterClassName");
-    
+    boolean loggingEnabled = ParamUtils.getBooleanParameter(request, "loggingEnabled");
+
     String loadingStatus = null;
     
     final PluginManager pluginManager = admin.getXMPPServer().getPluginManager();
@@ -52,7 +53,8 @@
             plugin.setHttpAuth(httpAuth);
             plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
             plugin.setCustomAuthFiIterClassName(customAuthFilterClassName);
-            
+            plugin.setServiceLoggingEnabled(loggingEnabled);
+
             if(is2Reload) {
                 String pluginName  = PluginMetadataHelper.getName(plugin);
                 String pluginDir = pluginManager.getPluginPath(plugin).getFileName().toString();
@@ -72,6 +74,7 @@
     httpAuth = plugin.getHttpAuth();
     allowedIPs = StringUtils.collectionToString(plugin.getAllowedIPs());
     customAuthFilterClassName = plugin.getCustomAuthFilterClassName();
+    loggingEnabled = plugin.isServiceLoggingEnabled();
 %>
 
 <html>
@@ -178,6 +181,20 @@
 
                     <label for="allowedIPs">Allowed IP Addresses:</label>
                     <textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><%=((allowedIPs != null) ? allowedIPs : "")%></textarea>
+                    <br>
+                    <br>
+
+                    <P>Logging</P>
+                    <input type="radio" name="loggingEnabled" value="true" id="loggingEnabledInputEnabled"
+                        <%=((loggingEnabled) ? "checked" : "")%>>
+                    <label for="loggingEnabledInputEnabled"><b>Enabled</b> - Logging Enabled</label>
+                    <br>
+                    <input type="radio" name="loggingEnabled" value="false" id="loggingEnabledInputDisabled"
+                        <%=((!loggingEnabled) ? "checked" : "")%>>
+                    <label for="loggingEnabledInputDisabled"><b>Disabled</b> - Logging disabled</label>
+                    <br>
+
+
                 </ul>
 
                 <p>You can find here detailed documentation over the Openfire REST API: 

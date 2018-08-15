@@ -16,7 +16,7 @@ mkdir -p $WORKDIR
 
 cp -r distribution/target/distribution-base/. $WORKDIR/
 # Need to copy in plugins that are defaulted to distribute
-cp -f plugins/search/target/search.jar $WORKDIR/plugins/
+cp -f src/plugins/search/target/search.jar $WORKDIR/plugins/
 
 mkdir -p $WORKDIR/debian
 cp build/debian/* $WORKDIR/debian/

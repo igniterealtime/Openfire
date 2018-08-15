@@ -60,6 +60,12 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private static final EntityCapabilitiesManager instance = new EntityCapabilitiesManager();
 
     /**
+     * A XEP-0115 described identifier for the Openfire server software,
+     * intended to be used as a value of 'node' attributes.
+     */
+    public static final String OPENFIRE_IDENTIFIER_NODE = "https://www.igniterealtime.org/projects/openfire/";
+
+    /**
      * Entity Capabilities cache map. This cache stores entity capabilities
      * that may be shared among users.
      * 
@@ -480,5 +486,23 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing.
+    }
+
+    /**
+     * Returns the 'ver' hash for this server.
+     *
+     * @return A 'ver' hash, or null if none could be generated.
+     */
+    public static String getLocalDomainVerHash()
+    {
+        // TODO Cache results to increase performance.
+        final IQ discoInfoRequest = new IQ( IQ.Type.get );
+        discoInfoRequest.setChildElement( "query", "http://jabber.org/protocol/disco#info" );
+        final IQ discoInfoResponse = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ( discoInfoRequest );
+        if ( discoInfoResponse.getType() == IQ.Type.result )
+        {
+            return EntityCapabilitiesManager.generateVerHash( discoInfoResponse, "SHA-1" );
+        }
+        return null;
     }
 }

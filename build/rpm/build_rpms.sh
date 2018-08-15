@@ -53,6 +53,7 @@ cd ../..
 # Finally build the RPM
 rpmbuild -bb \
   --target ${RPMARCH} \
+  --define "_topdir ~/rpmbuild" \
   --define "JRE_BUNDLE ${JRE_BUNDLE}" \
   --define "OPENFIRE_BUILDDATE ${RPM_BUILDDATE}" \
   --define "OPENFIRE_VERSION ${OPENFIRE_VERSION}" \

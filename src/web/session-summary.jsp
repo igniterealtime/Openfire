@@ -94,100 +94,72 @@
     SessionResultFilter sessionResultFilter = SessionResultFilter.createDefaultSessionFilter();
     sessionResultFilter.setSortOrder(order);
     // Filter out the dodgy looking sessions
-    // Note; dodgy looking cast as we're stuck using Java 7 to compile JSPs - see OF-1528
-    List<ClientSession> sessions = (List<ClientSession>)(Object)sessionManager.getSessions(sessionResultFilter)
+    List<ClientSession> sessions = sessionManager.getSessions(sessionResultFilter)
         .stream()
-        .filter(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession clientSession) {
-                try { // skip invalid sessions (OF-590)
-                    return clientSession.validate();
-                } catch (Exception ex) {
-                    return false;
-                }
+        .filter(clientSession -> {
+            try { // skip invalid sessions (OF-590)
+                return clientSession.validate();
+            } catch (Exception ex) {
+                return false;
             }
         })
         .collect(Collectors.toList());
 
     // By default, display all nodes
-    Predicate<ClientSession> filter = new Predicate<ClientSession>() {
-        @Override
-        public boolean test(final ClientSession session) {
-            return true;
-        }
-    };
+    Predicate<ClientSession> filter = clientSession -> true;
     final String searchName = ParamUtils.getStringParameter(request, "searchName", "");
     if(!searchName.trim().isEmpty()) {
         final String searchCriteria = searchName.trim();
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                return StringUtils.containsIgnoringCase(session.getAddress().getNode(), searchCriteria);
-            }
-        });
+        filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getNode(), searchCriteria));
     }
     final String searchResource = ParamUtils.getStringParameter(request, "searchResource", "");
     if(!searchResource.trim().isEmpty()) {
         final String searchCriteria = searchResource.trim();
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                return StringUtils.containsIgnoringCase(session.getAddress().getResource(), searchCriteria);
-            }
-        });
+        filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
     }
     final String searchNode = ParamUtils.getStringParameter(request, "searchNode", "");
-    if(!searchNode.isEmpty()) {
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                return searchNode.equals("local") && session instanceof LocalClientSession;
-            }
-        });
+    if(searchNode.equals("local")) {
+        filter = filter.and(LocalClientSession.class::isInstance);
+    } else if (searchNode.equals("remote")) {
+        filter = filter.and(clientSession -> !LocalClientSession.class.isInstance(clientSession));
     }
     final String searchStatus = ParamUtils.getStringParameter(request, "searchStatus", "");
     if(!searchStatus.isEmpty()) {
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                switch (session.getStatus()) {
-                    case Session.STATUS_CLOSED:
-                        return "closed".equals(searchStatus);
-                    case Session.STATUS_CONNECTED:
-                        return "connected".equals(searchStatus);
-                    case Session.STATUS_AUTHENTICATED:
-                        return "authenticated".equals(searchStatus);
-                    default:
-                        return "unknown".equals(searchStatus);
-                }
+        filter = filter.and(clientSession -> {
+            switch (clientSession.getStatus()) {
+                case Session.STATUS_CLOSED:
+                    return "closed".equals(searchStatus);
+                case Session.STATUS_CONNECTED:
+                    return "connected".equals(searchStatus);
+                case Session.STATUS_AUTHENTICATED:
+                    return "authenticated".equals(searchStatus);
+                default:
+                    return "unknown".equals(searchStatus);
             }
         });
     }
     final String searchPresence = ParamUtils.getStringParameter(request, "searchPresence", "");
     if(!searchPresence.isEmpty()) {
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                final Presence presence = session.getPresence();
-                if (!presence.isAvailable()) {
-                    return "offline".equals(searchPresence);
-                }
-                final Presence.Show show = presence.getShow();
-                if (show == null) {
-                    return "online".equals(searchPresence);
-                }
-                switch (show) {
-                    case away:
-                        return "away".equals(searchPresence);
-                    case chat:
-                        return "chat".equals(searchPresence);
-                    case dnd:
-                        return "dnd".equals(searchPresence);
-                    case xa:
-                        return "xa".equals(searchPresence);
-                    default:
-                        return "unknown".equals(searchPresence);
-                }
+        filter = filter.and(clientSession -> {
+            final Presence presence = clientSession.getPresence();
+            if (!presence.isAvailable()) {
+                return "offline".equals(searchPresence);
+            }
+            final Presence.Show show = presence.getShow();
+            if (show == null) {
+                return "online".equals(searchPresence);
+            }
+            switch (show) {
+                case away:
+                    return "away".equals(searchPresence);
+                case chat:
+                    return "chat".equals(searchPresence);
+                case dnd:
+                    return "dnd".equals(searchPresence);
+                case xa:
+                    return "xa".equals(searchPresence);
+                default:
+                    return "unknown".equals(searchPresence);
             }
         });
     }
@@ -201,24 +173,16 @@
             intValue = Integer.MIN_VALUE;
         }
         final int searchCriteria = intValue;
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                return session.getPresence().getPriority() == searchCriteria;
-            }
-        });
+        filter = filter.and(clientSession -> clientSession.getPresence().getPriority() == searchCriteria);
     }
     final String searchHostAddress = ParamUtils.getStringParameter(request, "searchHostAddress", "");
     if(!searchHostAddress.trim().isEmpty()) {
         final String searchCriteria = searchHostAddress.trim();
-        filter = filter.and(new Predicate<ClientSession>() {
-            @Override
-            public boolean test(final ClientSession session) {
-                try {
-                    return StringUtils.containsIgnoringCase(session.getHostAddress(), searchCriteria);
-                } catch (final UnknownHostException e) {
-                    return false;
-                }
+        filter = filter.and(clientSession -> {
+            try {
+                return StringUtils.containsIgnoringCase(clientSession.getHostAddress(), searchCriteria);
+            } catch (final UnknownHostException e) {
+                return false;
             }
         });
     }

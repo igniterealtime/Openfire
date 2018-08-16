@@ -274,7 +274,7 @@ public class StreamManager {
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
-        if (!validateClientAcknowledgement(h)) {
+        if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
             Log.debug("Not allowing a client to resume a session, as it reports it received more stanzas from us than that we've send it." );
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;

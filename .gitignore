@@ -24,3 +24,7 @@ nbbuild/
 
 # Microsoft Visual Studio Code
 .vscode/
+
+# build temp folders
+rpmbuild/
+debian/

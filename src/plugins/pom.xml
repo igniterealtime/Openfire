@@ -317,6 +317,8 @@
                                 <jspc>
                                     <package>org.jivesoftware.openfire.plugin.${plugin.name}</package>
                                 </jspc>
+                                <sourceVersion>1.8</sourceVersion>
+                                <targetVersion>1.8</targetVersion>
                             </configuration>
                         </execution>
                     </executions>

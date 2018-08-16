@@ -246,7 +246,9 @@ public class CollectionNode extends Node {
         // Build packet to broadcast to subscribers
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-        Element item = event.addElement("items").addElement("item");
+        Element items = event.addElement("items");
+        items.addAttribute("node", getNodeID()); 
+        Element item = items.addElement("item");
         item.addAttribute("id", child.getNodeID());
         if (deliverPayloads) {
             item.add(child.getMetadataForm().getElement());

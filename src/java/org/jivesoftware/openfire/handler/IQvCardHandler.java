@@ -17,17 +17,22 @@
 package org.jivesoftware.openfire.handler;
 
 import java.util.Iterator;
+import java.util.Locale;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -87,11 +92,23 @@ public class IQvCardHandler extends IQHandler {
                 User user = userManager.getUser(packet.getFrom().getNode());
                 Element vcard = packet.getChildElement();
                 if (vcard != null) {
-                    VCardManager.getInstance().setVCard(user.getUsername(), vcard);
+                    try {
+                        VCardManager.getInstance().setVCard( user.getUsername(), vcard );
+                    } catch ( UnsupportedOperationException e ) {
+                        Log.debug( "Entity '{}' tried to set VCard, but the configured VCard provider is read-only. An IQ error will be returned to sender.", packet.getFrom() );
+                        result.setChildElement( packet.getChildElement().createCopy() );
+                        result.setError( PacketError.Condition.not_allowed );
+
+                        Locale locale = JiveGlobals.getLocale(); // default to server locale.
+                        final Session session = SessionManager.getInstance().getSession( result.getTo() );
+                        if ( session != null && session.getLanguage() != null ) {
+                            locale = session.getLanguage(); // use client locale if one is available.
+                        }
+                        result.getError().setText( LocaleUtils.getLocalizedString( "vcard.read_only", locale ), locale.getLanguage() );
+                    }
                 }
             }
             catch (UserNotFoundException e) {
-                result = IQ.createResultIQ(packet);
                 result.setChildElement(packet.getChildElement().createCopy());
                 result.setError(PacketError.Condition.item_not_found);
             }

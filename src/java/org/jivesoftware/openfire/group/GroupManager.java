@@ -18,7 +18,7 @@ package org.jivesoftware.openfire.group;
 
 import java.util.*;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
@@ -601,15 +601,11 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String key = USER_GROUPS_KEY + user.toBareJID();
+        String key = user.toBareJID();
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
-<<<<<<< HEAD
             synchronized((key + MUTEX_SUFFIX_USER).intern()) {
-=======
-            synchronized(USER_GROUPS_KEY.intern()) {
->>>>>>> Clear groupMetaCache when sharing/unsharing a group with all users
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(user);

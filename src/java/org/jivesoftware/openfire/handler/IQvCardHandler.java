@@ -96,7 +96,9 @@ public class IQvCardHandler extends IQHandler {
                         VCardManager.getInstance().setVCard( user.getUsername(), vcard );
                     } catch ( UnsupportedOperationException e ) {
                         Log.debug( "Entity '{}' tried to set VCard, but the configured VCard provider is read-only. An IQ error will be returned to sender.", packet.getFrom() );
-                        result.setChildElement( packet.getChildElement().createCopy() );
+                        // VCards can include binary data. Let's not echo that back in the error.
+                        // result.setChildElement( packet.getChildElement().createCopy() );
+
                         result.setError( PacketError.Condition.not_allowed );
 
                         Locale locale = JiveGlobals.getLocale(); // default to server locale.
@@ -109,7 +111,9 @@ public class IQvCardHandler extends IQHandler {
                 }
             }
             catch (UserNotFoundException e) {
-                result.setChildElement(packet.getChildElement().createCopy());
+                // VCards can include binary data. Let's not echo that back in the error.
+                // result.setChildElement( packet.getChildElement().createCopy() );
+
                 result.setError(PacketError.Condition.item_not_found);
             }
             catch (Exception e) {

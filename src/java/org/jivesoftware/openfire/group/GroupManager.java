@@ -51,6 +51,10 @@ public class GroupManager {
         private static final GroupManager instance = new GroupManager();
     }
 
+    private static final String MUTEX_SUFFIX_GROUP = " grp";
+    private static final String MUTEX_SUFFIX_USER = " grpu";
+    private static final String MUTEX_SUFFIX_KEY = " grpk";
+    
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
     private static final String GROUP_NAMES_KEY = "GROUP_NAMES";
@@ -286,7 +290,7 @@ public class GroupManager {
      * @throws GroupAlreadyExistsException if the group name already exists in the system.
      */
     public Group createGroup(String name) throws GroupAlreadyExistsException {
-        synchronized (name.intern()) {
+        synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
             Group newGroup;
             try {
                 getGroup(name);
@@ -347,7 +351,7 @@ public class GroupManager {
         }
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
-            synchronized (name.intern()) {
+            synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
                 group = groupCache.get(name);
                 if (group == null) {
                     group = provider.getGroup(name);
@@ -474,7 +478,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(userName);
         if (groupNames == null) {
-            synchronized(userName.intern()) {
+            synchronized((userName + MUTEX_SUFFIX_USER).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
                     // assume this is a local user
@@ -555,7 +559,7 @@ public class GroupManager {
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
-            synchronized(key.intern()) {
+            synchronized((key + MUTEX_SUFFIX_KEY).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(startIndex, numResults);
@@ -587,7 +591,7 @@ public class GroupManager {
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
-            synchronized(key.intern()) {
+            synchronized((key + MUTEX_SUFFIX_USER).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(user);

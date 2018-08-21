@@ -58,6 +58,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
 
     private static final Logger Log = LoggerFactory.getLogger(RosterManager.class);
 
+    private static final String MUTEX_SUFFIX = " ro";
+    
     private Cache<String, Roster> rosterCache = null;
     private XMPPServer server;
     private RoutingTable routingTable;
@@ -118,7 +120,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (roster == null) {
             // Synchronize using a unique key so that other threads loading the User
             // and not the Roster cannot produce a deadlock
-            synchronized ((username + " ro").intern()) {
+           synchronized ((username  + MUTEX_SUFFIX).intern()) {
                 roster = rosterCache.get(username);
                 if (roster == null) {
                     // Not in cache so load a new one:

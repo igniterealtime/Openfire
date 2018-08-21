@@ -38,6 +38,8 @@ public class PrivacyListManager {
 
     private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
+    private static final String MUTEX_SUFFIX = " prv";
+    
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {
             @Override
@@ -153,7 +155,7 @@ public class PrivacyListManager {
         String cacheKey = getDefaultCacheKey(username);
         PrivacyList list = listsCache.get(cacheKey);
         if (list == null) {
-            synchronized (username.intern()) {
+            synchronized ((username + MUTEX_SUFFIX).intern()) {
                 list = listsCache.get(cacheKey);
                 if (list == null) {
                     // Load default list from the database

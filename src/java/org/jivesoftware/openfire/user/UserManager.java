@@ -55,6 +55,8 @@ public class UserManager implements IQResultListener {
 
     private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
+    private static final String MUTEX_SUFFIX = " usr";
+    
     // Wrap this guy up so we can mock out the UserManager class.
     private static class UserManagerContainer {
         private static UserManager instance = new UserManager();
@@ -265,7 +267,7 @@ public class UserManager implements IQResultListener {
         username = username.trim().toLowerCase();
         User user = userCache.get(username);
         if (user == null) {
-            synchronized (username.intern()) {
+            synchronized ((username + MUTEX_SUFFIX).intern()) {
                 user = userCache.get(username);
                 if (user == null) {
                     user = provider.loadUser(username);
@@ -447,7 +449,7 @@ public class UserManager implements IQResultListener {
                     // Send the disco#info request to the remote server. The reply will be
                     // processed by the IQResultListener (interface that this class implements)
                     server.getIQRouter().addIQResultListener(iq.getID(), this);
-                    synchronized (user.toBareJID().intern()) {
+                    synchronized ((user.toBareJID() + MUTEX_SUFFIX).intern()) {
                         server.getIQRouter().route(iq);
                         // Wait for the reply to be processed. Time out in 1 minute by default
                         try {
@@ -494,7 +496,7 @@ public class UserManager implements IQResultListener {
         remoteUsersCache.put(from.toBareJID(), isRegistered);
 
         // Wake up waiting thread
-        synchronized (from.toBareJID().intern()) {
+        synchronized ((from.toBareJID() + MUTEX_SUFFIX).intern()) {
             from.toBareJID().intern().notifyAll();
         }
     }

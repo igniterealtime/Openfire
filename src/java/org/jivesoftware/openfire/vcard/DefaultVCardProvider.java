@@ -43,6 +43,8 @@ public class DefaultVCardProvider implements VCardProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
 
+    private static final String MUTEX_SUFFIX = " dvcp";
+    
     private static final String LOAD_PROPERTIES =
         "SELECT vcard FROM ofVCard WHERE username=?";
     private static final String DELETE_PROPERTIES =
@@ -71,7 +73,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
     @Override
     public Element loadVCard(String username) {
-        synchronized (username.intern()) {
+        synchronized ((username + MUTEX_SUFFIX).intern()) {
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;

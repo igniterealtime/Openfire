@@ -44,6 +44,8 @@ public class LockOutManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
 
+    private static final String MUTEX_SUFFIX = " lck";
+    
     // Wrap this guy up so we can mock out the LockOutManager class.
     private static class LockOutManagerContainer {
         private static LockOutManager instance = new LockOutManager();
@@ -241,7 +243,7 @@ public class LockOutManager {
         LockOutFlag flag = lockOutCache.get(username);
         // If ID wan't found in cache, load it up and put it there.
         if (flag == null) {
-            synchronized (username.intern()) {
+            synchronized ((username+ MUTEX_SUFFIX).intern()) {
                 flag = lockOutCache.get(username);
                 // If group wan't found in cache, load it up and put it there.
                 if (flag == null) {

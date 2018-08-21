@@ -48,6 +48,8 @@ public class PubSubEngine {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
+    private static final String MUTEX_SUFFIX_USER = " psu";
+    private static final String MUTEX_SUFFIX_NODE = " psn";
     /**
      * The packet router for the server.
      */
@@ -251,7 +253,7 @@ public class PubSubEngine {
             JID subscriber = presence.getFrom();
             Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
             if (fullPresences == null) {
-                synchronized (subscriber.toBareJID().intern()) {
+                synchronized ((subscriber.toBareJID() + MUTEX_SUFFIX_USER).intern()) {
                     fullPresences = service.getBarePresences().get(subscriber.toBareJID());
                     if (fullPresences == null) {
                         fullPresences = new ConcurrentHashMap<>();
@@ -1405,7 +1407,7 @@ public class PubSubEngine {
         try {
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
             JID owner = requester.asBareJID();
-            synchronized (newNodeID.intern()) {
+            synchronized ( (newNodeID + MUTEX_SUFFIX_NODE).intern()) {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
                     if (collectionType) {

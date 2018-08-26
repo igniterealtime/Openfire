@@ -89,11 +89,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -138,6 +142,7 @@ public class XMPPServer {
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
     public static final String EXIT = "exit";
+    private static Set<String> XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fqdn")));
 
     /**
      * All modules loaded by this server
@@ -492,10 +497,12 @@ public class XMPPServer {
 
     private void finalSetupSteps() {
         for (String propName : JiveGlobals.getXMLPropertyNames()) {
-            if (JiveGlobals.getProperty(propName) == null) {
-                JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+            if (!XML_ONLY_PROPERTIES.contains(propName)) {
+                if (JiveGlobals.getProperty(propName) == null) {
+                    JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+                }
+                JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
             }
-            JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
         }
         // Set default SASL SCRAM-SHA-1 iteration count
         JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));

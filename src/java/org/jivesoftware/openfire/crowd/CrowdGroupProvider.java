@@ -72,11 +72,11 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
         String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_GROUPS_CACHE_TTL_SECS);
         int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
 
-        Cache<String, Collection<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
+        Cache<String, ArrayList<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
         groupMembershipCache.setMaxCacheSize(-1);
         groupMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 
-        Cache<JID, Collection<String>> userMembershipCache = CacheFactory.createLocalCache(USER_MEMBERSHIP_CACHE_NAME);
+        Cache<JID, ArrayList<String>> userMembershipCache = CacheFactory.createLocalCache(USER_MEMBERSHIP_CACHE_NAME);
         userMembershipCache.setMaxCacheSize(-1);
         userMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
         
@@ -106,7 +106,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 
     
     private Collection<JID> getGroupMembers(String groupName) {
-        Cache<String, Collection<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
+        Cache<String, ArrayList<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
         Collection<JID> members = groupMembershipCache.get(groupName);
         if (members != null) {
             return members;
@@ -114,7 +114,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
         
         try {
             List<String> users = manager.getGroupMembers(groupName);
-            Collection<JID> results = new ArrayList<>();
+            ArrayList<JID> results = new ArrayList<>();
 
             for (String username : users) {
                 results.add(server.createJID(username, null));
@@ -133,14 +133,14 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     
     @Override
     public Collection<String> getGroupNames(JID user) {
-        Cache<JID, Collection<String>> userMembershipCache = CacheFactory.createCache(USER_MEMBERSHIP_CACHE_NAME);
-        Collection<String> groups = userMembershipCache.get(user);
+        Cache<JID, ArrayList<String>> userMembershipCache = CacheFactory.createCache(USER_MEMBERSHIP_CACHE_NAME);
+        ArrayList<String> groups = userMembershipCache.get(user);
         if (groups != null) {
             return groups;
         }
         
         try {
-            groups = manager.getUserGroups(user.getNode());
+            groups = new ArrayList(manager.getUserGroups(user.getNode()));
             userMembershipCache.put(user, groups);
             return groups;
         } catch (RemoteException re) {

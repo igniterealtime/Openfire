@@ -77,7 +77,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
      */
-    private Cache<String, Set<NodeID>> componentsCache;
+    private Cache<String, HashSet<NodeID>> componentsCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
@@ -93,7 +93,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * (includes anonymous).
      * Key: bare JID, Value: list of full JIDs of the user
      */
-    private Cache<String, Collection<String>> usersSessions;
+    private Cache<String, ArrayList<String>> usersSessions;
 
     private String serverName;
     private XMPPServer server;
@@ -135,7 +135,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = CacheFactory.getLock(address, componentsCache);
         try {
             lock.lock();
-            Set<NodeID> nodes = componentsCache.get(address);
+            HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
                 nodes = new HashSet<>();
             }
@@ -167,7 +167,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
-                    usersSessions.put(route.toBareJID(), Arrays.asList(route.toString()));
+                    usersSessions.put(route.toBareJID(), new ArrayList<>(Collections.singletonList(route.toString())));
                 }
                 finally {
                     lock.unlock();
@@ -188,15 +188,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
-                    Collection<String> jids = usersSessions.get(route.toBareJID());
+                    ArrayList<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
-                        // Optimization - use different class depending on current setup
-                        if (ClusterManager.isClusteringStarted()) {
-                            jids = new HashSet<>();
-                        }
-                        else {
-                            jids = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-                        }
+                        jids = new ArrayList<>();
                     }
                     jids.add(route.toString());
                     usersSessions.put(route.toBareJID(), jids);
@@ -931,7 +925,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     usersSessions.remove(route.toBareJID());
                 }
                 else {
-                    Collection<String> jids = usersSessions.get(route.toBareJID());
+                    ArrayList<String> jids = usersSessions.get(route.toBareJID());
                     if (jids != null) {
                         jids.remove(route.toString());
                         if (!jids.isEmpty()) {
@@ -975,7 +969,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = CacheFactory.getLock(address, componentsCache);
         try {
             lock.lock();
-            Set<NodeID> nodes = componentsCache.get(address);
+            HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes != null) {
                 removed = nodes.remove(server.getNodeID());
                 if (nodes.isEmpty()) {
@@ -1112,7 +1106,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             componentLock.lock();
             List<String> remoteComponents = new ArrayList<>();
             NodeID nodeIDInstance = NodeID.getInstance( nodeID );
-            for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
+            for (Map.Entry<String, HashSet<NodeID>> entry : componentsCache.entrySet()) {
                 if (entry.getValue().remove(nodeIDInstance) && entry.getValue().size() == 0) {
                     remoteComponents.add(entry.getKey());
                 }

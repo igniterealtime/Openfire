@@ -16,6 +16,8 @@
 package org.jivesoftware.util.cache;
 
 
+import java.io.Serializable;
+
 /**
  * This specialized wrapper is used for the Components cache, which
  * should not be purged.
@@ -23,7 +25,7 @@ package org.jivesoftware.util.cache;
  * See <a href="http://issues.igniterealtime.org/browse/OF-114">OF-114</a> for more info.
  *
  */
-public class ComponentCacheWrapper<K, V> extends CacheWrapper<K, V> {
+public class ComponentCacheWrapper<K extends Serializable, V extends Serializable> extends CacheWrapper<K, V> {
 
     public ComponentCacheWrapper(Cache<K, V> cache) {
         super(cache);

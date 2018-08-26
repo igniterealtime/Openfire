@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.dom4j.Element;
+import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -53,7 +54,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
     private EventHandler eventHandler;
 
-    private Cache<String, Element> vcardCache;
+    private Cache<String, DefaultElement> vcardCache;
     public static VCardManager getInstance() {
         return instance;
     }
@@ -81,13 +82,13 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             @Override
             public void vCardCreated(String username, Element vCard) {
                 // Since the vCard could be created by the provider, add it to the cache.
-                vcardCache.put(username, vCard);
+                vcardCache.put(username, (DefaultElement) vCard);
             }
 
             @Override
             public void vCardUpdated(String username, Element vCard) {
                 // Since the vCard could be updated by the provider, update it to the cache.
-                vcardCache.put(username, vCard);
+                vcardCache.put(username, (DefaultElement) vCard);
             }
 
             @Override
@@ -165,13 +166,13 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             if (!oldVCard.equals(vCardElement)) {
                 try {
                     newvCard = provider.updateVCard(username, vCardElement);
-                    vcardCache.put(username, newvCard);
+                    vcardCache.put(username, (DefaultElement) newvCard);
                     updated = true;
                 }
                 catch (NotFoundException e) {
                     Log.warn("Tried to update a vCard that does not exist", e);
                     newvCard = provider.createVCard(username, vCardElement);
-                    vcardCache.put(username, newvCard);
+                    vcardCache.put(username, (DefaultElement) newvCard);
                     created = true;
                 }
             }
@@ -179,13 +180,13 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         else {
             try {
                 newvCard = provider.createVCard(username, vCardElement);
-                vcardCache.put(username, newvCard);
+                vcardCache.put(username, (DefaultElement) newvCard);
                 created = true;
             }
             catch (AlreadyExistsException e) {
                 Log.warn("Tried to create a vCard when one already exist", e);
                 newvCard = provider.updateVCard(username, vCardElement);
-                vcardCache.put(username, newvCard);
+                vcardCache.put(username, (DefaultElement) newvCard);
                 updated = true;
             }
         }
@@ -238,7 +239,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         if (vCardElement == null) {
             vCardElement = provider.loadVCard(username);
             if (vCardElement != null) {
-                vcardCache.put(username, vCardElement);
+                vcardCache.put(username, (DefaultElement) vCardElement);
             }
         }
         return vCardElement;

@@ -69,7 +69,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
     private Map<String, DiscoInfoProvider> entities = new HashMap<>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
-    private Cache<String, Set<NodeID>> serverFeatures;
+    private Cache<String, HashSet<NodeID>> serverFeatures;
     private List<ServerIdentitiesProvider> serverIdentityProviders = new ArrayList<>();
     private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
@@ -375,7 +375,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             Lock lock = CacheFactory.getLock(namespace, serverFeatures);
             try {
                 lock.lock();
-                Set<NodeID> nodeIDs = serverFeatures.get(namespace);
+                HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs == null) {
                     nodeIDs = new HashSet<>();
                 }
@@ -399,7 +399,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             Lock lock = CacheFactory.getLock(namespace, serverFeatures);
             try {
                 lock.lock();
-                Set<NodeID> nodeIDs = serverFeatures.get(namespace);
+                HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs != null) {
                     nodeIDs.remove(XMPPServer.getInstance().getNodeID());
                     if (nodeIDs.isEmpty()) {
@@ -448,12 +448,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         if (ClusterManager.isSeniorClusterMember()) {
             NodeID leftNode = NodeID.getInstance(nodeID);
             // Remove server features added by node that is gone
-            for (Map.Entry<String, Set<NodeID>> entry : serverFeatures.entrySet()) {
+            for (Map.Entry<String, HashSet<NodeID>> entry : serverFeatures.entrySet()) {
                 String namespace = entry.getKey();
                 Lock lock = CacheFactory.getLock(namespace, serverFeatures);
                 try {
                     lock.lock();
-                    Set<NodeID> nodeIDs = entry.getValue();
+                    HashSet<NodeID> nodeIDs = entry.getValue();
                     if (nodeIDs.remove(leftNode)) {
                         if (nodeIDs.isEmpty()) {
                             serverFeatures.remove(namespace);
@@ -480,7 +480,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             Lock lock = CacheFactory.getLock(feature, serverFeatures);
             try {
                 lock.lock();
-                Set<NodeID> nodeIDs = serverFeatures.get(feature);
+                HashSet<NodeID> nodeIDs = serverFeatures.get(feature);
                 if (nodeIDs == null) {
                     nodeIDs = new HashSet<>();
                 }

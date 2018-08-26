@@ -16,6 +16,7 @@
 package org.jivesoftware.util.cache;
 
 import java.time.Duration;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -58,11 +59,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Matt Tucker
  */
-public class DefaultCache<K, V> implements Cache<K, V> {
+public class DefaultCache<K extends Serializable, V extends Serializable> implements Cache<K, V> {
 
     private static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
     private static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
-    private static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", true);
+    private static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", false);
     private static final long MAX_CULL_COUNT_PERIOD = Duration.ofHours(12).toMillis();
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
@@ -105,7 +106,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
     /**
      * Maintain the number of cache hits and misses. A cache hit occurs every
      * time the get method is called and the cache contains the requested
-     * object. A cache miss represents the opposite occurence.<p>
+     * object. A cache miss represents the opposite occurrence.<p>
      *
      * Keeping track of cache hits and misses lets one measure how efficient
      * the cache is; the higher the percentage of hits, the more efficient.

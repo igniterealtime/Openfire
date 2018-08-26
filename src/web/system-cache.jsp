@@ -2,9 +2,12 @@
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.jivesoftware.util.cache.Cache"%>
+<%@ page import="org.jivesoftware.util.cache.CacheWrapper"%>
+<%@ page import="org.jivesoftware.util.cache.DefaultCache"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="java.time.Duration" %>
 <%--
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
@@ -162,6 +165,7 @@
     String hitPercent;
     long hits;
     long misses;
+    Long[] culls;
 %>
 
 <form action="system-cache.jsp" method="post" name="cacheForm">
@@ -177,6 +181,7 @@
         <th width="10%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.current" /></th>
         <th width="10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
         <th width="20%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
+        <th width="20%" nowrap style="text-align: center;"><fmt:message key="system.cache.head.culls" /><br/>3/6/12 <fmt:message key="global.hours" /></th>
         <th width="1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
 </thead>
@@ -203,6 +208,15 @@
             double hitValue = 100*(double)hits/(hits+misses);
             hitPercent = percentFormat.format(hitValue) + "%";
             lowEffec = (hits > 500 && hitValue < 85.0 && freeMem < 20.0);
+        }
+        if (cache instanceof CacheWrapper && ((CacheWrapper) cache).getWrappedCache() instanceof DefaultCache) {
+            culls = new Long[3];
+            final DefaultCache defaultCache = (DefaultCache) ((CacheWrapper) cache).getWrappedCache();
+            culls[0] = defaultCache.getCacheCulls(Duration.ofHours(3));
+            culls[1] = defaultCache.getCacheCulls(Duration.ofHours(6));
+            culls[2] = defaultCache.getCacheCulls(Duration.ofHours(12));
+        } else {
+            culls = null;
         }
         // OF-1365: Don't allow caches that do not expire to be purged. Many of these caches store data that cannot be recovered again.
         final boolean canPurge = cache.getMaxLifetime() > -1;
@@ -249,7 +263,13 @@
         <td class="c4" style="text-align: left; padding-left:0;">
             (<%=hitPercent%>)
         </td>
-
+        <td class="c4" style="text-align: center">
+            <% if (culls != null) {%>
+            <%=culls[0]%>/<%=culls[1]%>/<%=culls[2]%>
+            <% } else { %>
+            N/A
+            <% } %>
+        </td>
         <td width="1%" class="c5">
             <% if ( canPurge ) {%>
             <input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);">

@@ -58,7 +58,7 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     @Override
     public String getHostname()
     {
-        final String fqdn = JiveGlobals.getProperty( "xmpp.fqdn" );
+        final String fqdn = JiveGlobals.getXMLProperty( "fqdn" );
         if ( fqdn != null && !fqdn.trim().isEmpty() )
         {
             return fqdn.trim().toLowerCase();
@@ -80,11 +80,11 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     {
         if ( fqdn == null || fqdn.isEmpty() )
         {
-            JiveGlobals.deleteProperty( "xmpp.fqdn" );
+            JiveGlobals.deleteXMLProperty( "fqdn" );
         }
         else
         {
-            JiveGlobals.setProperty( "xmpp.fqdn", fqdn.toLowerCase() );
+            JiveGlobals.setXMLProperty( "fqdn", fqdn.toLowerCase() );
         }
     }
 

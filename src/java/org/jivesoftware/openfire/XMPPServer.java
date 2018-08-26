@@ -83,6 +83,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -343,7 +345,6 @@ public class XMPPServer {
         }
 
         JiveGlobals.migrateProperty("xmpp.domain");
-        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
         Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
@@ -357,6 +358,28 @@ public class XMPPServer {
             this.runAutoSetup();
             JiveGlobals.deleteXMLProperty("autosetup");
             JiveGlobals.deleteProperty("autosetup");
+        }
+
+        // OF-1548: Move the storage of the FQDN from the database to the XML configuration
+        final String hostNameFromDatabase = JiveGlobals.getProperty("xmpp.fqdn", "");
+        final String hostNameFromXML = JiveGlobals.getXMLProperty("fqdn", "");
+        if (!hostNameFromDatabase.isEmpty() && hostNameFromXML.isEmpty()) {
+            final String hostname;
+            if (ClusterManager.isClusteringEnabled()) {
+                // The database value has at best a 50% chance of being right - so instead use a sensible default
+                String hostnameFromOS;
+                try {
+                    hostnameFromOS = InetAddress.getLocalHost().getHostName();
+                } catch (final UnknownHostException e) {
+                    logger.warn("Unable to determine local hostname", e);
+                    hostnameFromOS = "localhost";
+                }
+                hostname = hostnameFromOS;
+            } else {
+                hostname = hostNameFromDatabase;
+            }
+            JiveGlobals.setXMLProperty("fqdn", hostname);
+            JiveGlobals.deleteProperty("xmpp.fqdn");
         }
     }
 
@@ -413,9 +436,8 @@ public class XMPPServer {
 
         // steps from setup-host-settings.jsp
         JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
-        JiveGlobals.setXMLProperty("xmpp.fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
+        JiveGlobals.setXMLProperty("fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
         JiveGlobals.migrateProperty("xmpp.domain");
-        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.setProperty("xmpp.socket.ssl.active", JiveGlobals.getXMLProperty("autosetup.xmpp.socket.ssl.active", "true"));
         JiveGlobals.setProperty("xmpp.auth.anonymous", JiveGlobals.getXMLProperty("autosetup.xmpp.auth.anonymous", "false"));

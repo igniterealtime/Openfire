@@ -136,8 +136,8 @@ public class JerseyWrapper extends ServletContainer {
             loadingStatusMessage = "No custom auth filter found for restAPI plugin! " + customAuthFilterClassName + " " + restAuthType;
         }
         
-        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);
         prc.getProperties().put(CONTAINER_REQUEST_FILTERS, GZIP_FILTER);
+        prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);
         return loadingStatusMessage;
     }
     

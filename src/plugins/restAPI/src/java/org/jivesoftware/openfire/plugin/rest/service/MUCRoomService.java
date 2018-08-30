@@ -88,7 +88,7 @@ public class MUCRoomService {
     @Path("/{roomName}/chathistory")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public MUCRoomMessageEntities getMUCRoomHistory(@PathParam("roomName") String roomName,
-                                                    @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
+                                                    @DefaultValue("conference") @QueryParam("servicename") String serviceName) throws ServiceException {
         return MUCRoomController.getInstance().getRoomHistory(roomName, serviceName);
     }
 

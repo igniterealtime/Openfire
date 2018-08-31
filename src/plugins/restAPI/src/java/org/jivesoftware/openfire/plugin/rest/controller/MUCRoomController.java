@@ -385,23 +385,32 @@ public class MUCRoomController {
      *            the service name
      * @return the room chat history
      */
-    public MUCRoomMessageEntities getRoomHistory(String roomName, String serviceName) {
+    public MUCRoomMessageEntities getRoomHistory(String roomName, String serviceName) throws ServiceException {
         log("getRoomHistory, "+roomName);
         MUCRoomMessageEntities mucRoomMessageEntities = new MUCRoomMessageEntities();
         List<MUCRoomMessageEntity> listMessages = new ArrayList<>();
 
         MultiUserChatService mucS =XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
-        MUCRoomHistory mucRH = mucS.getChatRoom(roomName).getRoomHistory();
+        MUCRoom chatRoom = mucS.getChatRoom(roomName);
+        if (chatRoom == null) {
+            throw new ServiceException("Could not find the chat room", roomName, ExceptionType.ROOM_NOT_FOUND, Response.Status.NOT_FOUND);
+        }
+
+        MUCRoomHistory mucRH = chatRoom.getRoomHistory();
         Iterator<Message> messageHistory = mucRH.getMessageHistory();
 
         while (messageHistory.hasNext()) {
             Message message = messageHistory.next();
 
             MUCRoomMessageEntity mucMsgEntity = new MUCRoomMessageEntity();
-            mucMsgEntity.setTo(message.getTo().toString());
-            mucMsgEntity.setFrom(message.getFrom().toFullJID());
-            mucMsgEntity.setType(message.getType().name());
-            mucMsgEntity.setBody(message.getBody());
+            if (message.getTo()!=null && message.getTo().toString().length()!=0)
+                mucMsgEntity.setTo(message.getTo().toString());
+            if (message.getFrom()!=null && message.getFrom().toString().length()!=0)
+                mucMsgEntity.setFrom(message.getFrom().toFullJID());
+            if (message.getType()!=null && message.getTo().toString().length()!=0)
+                mucMsgEntity.setType(message.getType().name());
+            if (message.getBody()!=null && message.getBody().length()!=0)
+                mucMsgEntity.setBody(message.getBody());
 
             Element delay = message.getChildElement("delay","urn:xmpp:delay");
             if (delay!=null) {

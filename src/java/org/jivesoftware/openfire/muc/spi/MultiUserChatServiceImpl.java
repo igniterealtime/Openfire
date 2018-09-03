@@ -1395,13 +1395,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         // Add users from remote cluster nodes
         if (!onlyLocal) {
-            Collection<Object> results =
+            Collection<Integer> results =
                     CacheFactory.doSynchronousClusterTask(new GetNumberConnectedUsers(), false);
-            for (Object result : results) {
+            for (Integer result : results) {
                 if (result == null) {
                     continue;
                 }
-                total = total + (Integer) result;
+                total = total + result;
             }
         }
         return total;

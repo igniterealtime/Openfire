@@ -378,7 +378,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * (seconds) per member until the task is run on all members.
      */
     @Override
-    public Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember) {
+    public <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember) {
         if (cluster == null) {
             return Collections.emptyList();
         }
@@ -389,14 +389,14 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
                 members.add(member);
             }
         }
-        Collection<Object> result = new ArrayList<>();
+        Collection<T> result = new ArrayList<>();
         if (!members.isEmpty()) {
             // Asynchronously execute the task on the other cluster members
             try {
                 logger.debug("Executing MultiTask: " + task.getClass().getName());
-                Map<Member, ? extends Future<?>> futures = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(new CallableTask<>(task), members);
+                Map<Member, ? extends Future<T>> futures = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(new CallableTask<>(task), members);
                 long nanosLeft = TimeUnit.SECONDS.toNanos(MAX_CLUSTER_EXECUTION_TIME * members.size());
-                for (Future<?> future : futures.values()) {
+                for (Future<T> future : futures.values()) {
                     long start = System.nanoTime();
                     result.add(future.get(nanosLeft, TimeUnit.NANOSECONDS));
                     nanosLeft = nanosLeft - (System.nanoTime() - start);
@@ -418,18 +418,18 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * (seconds) until the task is run on the given member.
      */
     @Override
-    public Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID) {
+    public <T> T doSynchronousClusterTask(ClusterTask<T> task, byte[] nodeID) {
         if (cluster == null) {
             return null;
         }
         Member member = getMember(nodeID);
-        Object result = null;
+        T result = null;
         // Check that the requested member was found
         if (member != null) {
             // Asynchronously execute the task on the target member
             logger.debug("Executing DistributedTask: " + task.getClass().getName());
             try {
-                Future<?> future = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(new CallableTask<>(task), member);
+                Future<T> future = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(new CallableTask<>(task), member);
                 result = future.get(MAX_CLUSTER_EXECUTION_TIME, TimeUnit.SECONDS);
                 logger.debug("DistributedTask result: " + (result == null ? "null" : result));
             } catch (TimeoutException te) {

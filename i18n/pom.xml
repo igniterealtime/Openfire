@@ -5,7 +5,6 @@
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
         <version>4.3.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
     </parent>
     <artifactId>i18n</artifactId>
     <name>Internationalization files for Openfire</name>
@@ -13,7 +12,7 @@
     <build>
         <resources>
             <resource>
-                <directory>../src/i18n</directory>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
 

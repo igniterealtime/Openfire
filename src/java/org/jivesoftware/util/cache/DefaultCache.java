@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.util.cache;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,9 +24,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedListNode;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +63,12 @@ public class DefaultCache<K, V> implements Cache<K, V> {
     private static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
     private static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
     private static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", true);
+    private static final long MAX_CULL_COUNT_PERIOD = Duration.ofHours(12).toMillis();
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
+    // Contains the set of times when the Cache was last culled
+    private final Set<Long> cullTimes;
+
 
     /**
      * The map the keys and values are stored in.
@@ -130,6 +138,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         lastAccessedList = new org.jivesoftware.util.LinkedList<>();
         ageList = new org.jivesoftware.util.LinkedList<>();
+        cullTimes = ConcurrentHashMap.newKeySet();
     }
 
     @Override
@@ -634,6 +643,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             desiredSize = (int)(maxCacheSize * .90);
             if (cacheSize > desiredSize) {
                 long t = System.currentTimeMillis();
+                cullTimes.add(t);
                 do {
                     // Get the key and invoke the remove method on it.
                     remove(lastAccessedList.getLast().object);
@@ -642,6 +652,28 @@ public class DefaultCache<K, V> implements Cache<K, V> {
                 Log.warn("Cache " + name + " was full, shrinked to 90% in " + t + "ms.");
             }
         }
+
+        cullCacheTimes();
+    }
+
+    private void cullCacheTimes() {
+        final long oldestCullToKeep = System.currentTimeMillis() - MAX_CULL_COUNT_PERIOD;
+        final Set<Long> oldCulls = cullTimes.stream()
+            .filter(cullTime -> cullTime < oldestCullToKeep)
+            .collect(Collectors.toSet());
+        cullTimes.removeAll(oldCulls);
+    }
+
+    public long getCacheCulls(final Duration duration) {
+        final long millis = duration.toMillis();
+        if(millis > MAX_CULL_COUNT_PERIOD) {
+            throw new IllegalArgumentException("Request duration exceed maximum of " + StringUtils.getFullElapsedTime(duration));
+        }
+        cullCacheTimes();
+        final long oldestCullToCount = System.currentTimeMillis() - millis;
+        return cullTimes.stream()
+            .filter(cullTime -> cullTime >= oldestCullToCount)
+            .count();
     }
 
     /**

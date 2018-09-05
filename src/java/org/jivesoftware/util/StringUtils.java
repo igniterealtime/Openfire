@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.BreakIterator;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -893,6 +894,16 @@ public final class StringUtils {
      * Returns a textual representation for the time that has elapsed.
      *
      * @param delta the elapsed time.
+     * @return textual representation for the time that has elapsed.
+     */
+    public static String getFullElapsedTime(final Duration delta) {
+        return getFullElapsedTime(delta.toMillis());
+    }
+
+    /**
+     * Returns a textual representation for the time that has elapsed.
+     *
+     * @param delta the elapsed time in milliseconds.
      * @return textual representation for the time that has elapsed.
      */
     public static String getElapsedTime(long delta) {

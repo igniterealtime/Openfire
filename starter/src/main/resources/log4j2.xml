@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Configuration>
+<Configuration monitorInterval="30">
     <Appenders>
         <RollingFile name="debug-out" fileName="${sys:openfireHome}/logs/debug.log" filePattern="${sys:openfireHome}/logs/debug.log-%i">
             <PatternLayout>

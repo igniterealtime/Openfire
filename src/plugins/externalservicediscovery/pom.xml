@@ -11,7 +11,7 @@
 
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>externalservicediscovery</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
 
     <name>External Service Discovery Plugin</name>
     <description>Openfire plugin that implements XEP-0215: External Service Discovery, allowing XMPP entities to discover services external to the XMPP network.</description>

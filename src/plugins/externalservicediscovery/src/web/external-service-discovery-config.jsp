@@ -323,7 +323,7 @@
             <tr>
                 <td nowrap>&nbsp;</td>
                 <td>
-                    <input type="radio" id="udp" name="transport" value="tcp"><label for="udp"><fmt:message key="external-service-discovery-config.udp"/></label>
+                    <input type="radio" id="udp" name="transport" value="udp"><label for="udp"><fmt:message key="external-service-discovery-config.udp"/></label>
                 </td>
             </tr>
             <tr>

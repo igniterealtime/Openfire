@@ -276,9 +276,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         if (clusterListener == null || !clusterListener.isClusterMember()) {
             return false;
         }
-        // first cluster member is the oldest
-        Iterator<Member> members = cluster.getMembers().iterator();
-        return members.next().getUuid().equals(cluster.getLocalMember().getUuid());
+        return clusterListener.isSeniorClusterMember();
     }
 
     @Override

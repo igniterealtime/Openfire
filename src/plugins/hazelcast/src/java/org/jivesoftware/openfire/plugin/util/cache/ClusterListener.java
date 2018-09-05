@@ -59,6 +59,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -626,14 +627,22 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 
         // Trigger events
         clusterMember = true;
+        seniorClusterMember = isSeniorClusterMember();
+
         ClusterManager.fireJoinedCluster(false);
-        if (CacheFactory.isSeniorClusterMember()) {
-            seniorClusterMember = true;
+
+        if (seniorClusterMember) {
             ClusterManager.fireMarkedAsSeniorClusterMember();
         }
         logger.info("Joined cluster as node: " + cluster.getLocalMember().getUuid() + ". Senior Member: " +
-                (CacheFactory.isSeniorClusterMember() ? "YES" : "NO"));
+            (seniorClusterMember ? "YES" : "NO"));
         done = false;
+    }
+
+    boolean isSeniorClusterMember() {
+        // first cluster member is the oldest
+        Iterator<Member> members = cluster.getMembers().iterator();
+        return members.next().getUuid().equals(cluster.getLocalMember().getUuid());
     }
 
     private synchronized void leaveCluster() {
@@ -696,7 +705,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             // Clean up directed presences sent to entities hosted in the leaving node from local entities
             cleanupDirectedPresences(NodeID.getInstance(nodeID));
 
-            if (!seniorClusterMember && CacheFactory.isSeniorClusterMember()) {
+            if (!seniorClusterMember && isSeniorClusterMember()) {
                 seniorClusterMember = true;
                 ClusterManager.fireMarkedAsSeniorClusterMember();
             }

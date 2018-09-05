@@ -28,10 +28,9 @@
             </plugin>
         </plugins>
 
-        <sourceDirectory>../src/java</sourceDirectory>
         <resources>
             <resource>
-                <directory>../build/lib/dist</directory>
+                <directory>src/main/resources</directory>
                 <includes>
                     <include>log4j2.xml</include>
                 </includes>
@@ -46,55 +45,6 @@
             </resource>
         </resources>
     </build>
-
-    <profiles>
-        <profile>
-            <id>pre-1.9</id>
-            <activation>
-                <jdk>(,1.8]</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <includes>
-                                <include>org/jivesoftware/openfire/starter/ServerStarter.java</include>
-                                <include>org/jivesoftware/openfire/starter/JiveClassLoader.java</include>
-                                <include>org/jivesoftware/openfire/launcher/*.java</include>
-                            </includes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>post-1.8</id>
-            <activation>
-                <jdk>(1.8,]</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <includes>
-                                <include>org/jivesoftware/openfire/starter/ServerStarter.java</include>
-                                <include>org/jivesoftware/openfire/starter/JiveClassLoader.java</include>
-                                <include>org/jivesoftware/openfire/launcher/*.java</include>
-                            </includes>
-                            <compilerArgs>
-                                <arg>--add-modules</arg>
-                                <arg>java.xml.bind</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <dependencies>
         <dependency>
@@ -111,26 +61,11 @@
             <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-        </dependency>
-        <!-- This is required because ServerStarter.java references org.jivesoftware.util.Log etc... -->
-        <!-- TODO ServerStarter should only use slf4j -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>xmppserver</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>install4j</groupId>
             <artifactId>install4j</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/../build/lib/i4jruntime.jar</systemPath>
+            <systemPath>${project.basedir}/libs/i4jruntime.jar</systemPath>
         </dependency>
     </dependencies>
 </project>

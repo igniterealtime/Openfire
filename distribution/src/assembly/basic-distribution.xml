@@ -78,7 +78,7 @@
 
         <!-- Copy log4j2.xml to lib -->
         <fileSet>
-            <directory>${project.basedir}/../build/lib/dist</directory>
+            <directory>${project.basedir}/../starter/src/main/resources</directory>
             <includes>
                 <include>log4j2.xml</include>
             </includes>

@@ -35,9 +35,8 @@
                     <include>log4j2.xml</include>
                 </includes>
             </resource>
-            <!-- TODO: Move these resources to starter/src/main/resources !? -->
             <resource>
-                <directory>../build/installer/images</directory>
+                <directory>../distribution/src/installer/images</directory>
                 <includes>
                     <include>*.gif</include>
                     <include>*.png</include>

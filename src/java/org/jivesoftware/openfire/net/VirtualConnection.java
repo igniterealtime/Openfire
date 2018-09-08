@@ -185,15 +185,25 @@ public abstract class VirtualConnection implements Connection {
             if (session != null) {
                 session.setStatus(Session.STATUS_CLOSED);
             }
-            
+
+            // See OF-1596
+            // The notification will trigger some shutdown procedures that, amongst other things,
+            // check what type of session (eg: anonymous) is being closed. This check depends on the
+            // session still being available.
+            //
+            // For that reason, it's important to first notify the listeners, and then close the
+            // session - not the other way around.
+            //
+            // This fixes a very visible bug where MUC users would remain in the MUC room long after
+            // their session was closed. Effectively, the bug prevents the MUC room from getting a
+            // presence update to notify it that the user logged off.
+            notifyCloseListeners();
+
             try {
                 closeVirtualConnection();
             } catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
             }
-            
-            notifyCloseListeners();
-            
         }
     }
 

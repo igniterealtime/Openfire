@@ -248,7 +248,7 @@
                 <td class="c2">
                     <% final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S ); %>
                     <% try { %>
-                    <% if (!identityStore.containsDomainCertificate( "RSA" )) {%>
+                    <% if (!identityStore.containsDomainCertificate()) {%>
                     <img src="images/warning-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>

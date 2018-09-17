@@ -275,9 +275,8 @@ public final class HttpBindManager implements CertificateEventListener, Property
             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
 
             if (securePort > 0 && identityStore.getStore().aliases().hasMoreElements() ) {
-                if ( !identityStore.containsDomainCertificate( "RSA" ) ) {
-                    Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
-                            "the hosted domain");
+                if ( !identityStore.containsDomainCertificate( ) ) {
+                    Log.warn("HTTP binding: Using certificates but they are not valid for the hosted domain");
                 }
 
                 final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());

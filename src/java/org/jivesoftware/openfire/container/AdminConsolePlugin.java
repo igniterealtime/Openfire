@@ -147,9 +147,9 @@ public class AdminConsolePlugin implements Plugin {
                 }
                 else
                 {
-                    if ( !identityStore.containsDomainCertificate( "RSA" ) )
+                    if ( !identityStore.containsDomainCertificate() )
                     {
-                        Log.warn( "Admin console: Using RSA certificates but they are not valid for the hosted domain" );
+                        Log.warn( "Admin console: Using certificates but they are not valid for the hosted domain" );
                     }
 
                     final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );

@@ -105,7 +105,7 @@
 
     if (generate) {
         try {
-            if (errors.containsKey("ioerror") || !identityStore.containsAllIdentityCertificate()) {
+            if (!identityStore.containsAllIdentityCertificate()) {
                 identityStore.addSelfSignedDomainCertificate();
             }
             // Save new certificates into the key store
@@ -163,9 +163,6 @@
         <c:forEach var="err" items="${errors}">
             <admin:infobox type="error">
                 <c:choose>
-                    <c:when test="${err.key eq 'ioerror'}">
-                        <fmt:message key="ssl.certificates.keystore.io_error"/>
-                    </c:when>
                     <c:when test="${err.key eq 'importReply'}">
                         <fmt:message key="ssl.certificates.keystore.error_importing-reply"/>
                     </c:when>

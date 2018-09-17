@@ -24,7 +24,6 @@
 
 <% // Get parameters:
     boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
-    boolean generateFull      = ParamUtils.getBooleanParameter(request, "generateFull");
     boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
     boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
     final String alias              = ParamUtils.getParameter( request, "alias" );
@@ -34,10 +33,9 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (generate | generateFull | delete | importReply) {
+    if (generate |  delete | importReply) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             generate = false;
-            generateFull = false;
             delete = false;
             importReply = false;
             errors.put("csrf", "CSRF Failure!");
@@ -107,7 +105,7 @@
 
     if (generate) {
         try {
-            if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate()) {
+            if (errors.containsKey("ioerror") || !identityStore.containsAllIdentityCertificate()) {
                 identityStore.addSelfSignedDomainCertificate();
             }
             // Save new certificates into the key store
@@ -122,22 +120,6 @@
         }
     }
 
-    if (generateFull) {
-        try {
-            if (!identityStore.containsAllIdentityCertificate()) {
-                identityStore.addSelfSignedDomainCertificate();
-            }
-            // Save new certificates into the key store
-            identityStore.persist();
-            // Log the event
-            webManager.logEvent("generated SSL self-signed cert", null);
-            response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
-            return;
-        } catch (Exception e) {
-            e.printStackTrace();
-            errors.put("generate", e.getMessage());
-        }
-    }
     if (importReply) {
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
@@ -211,7 +193,7 @@
             <c:when test="${not allIDCert}">
                 <admin:infobox type="info">
                     <fmt:message key="ssl.certificates.keystore.no_complete_installed">
-                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generateFull=true&connectionType=${connectionType}'>"/>
+                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
                         <fmt:param value="</a>"/>
                         <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                         <fmt:param value="</a>"/>

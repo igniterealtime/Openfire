@@ -107,11 +107,14 @@
         try {
             if (!identityStore.containsAllIdentityCertificate()) {
                 identityStore.addSelfSignedDomainCertificate();
+
+                // Save new certificates into the key store
+                identityStore.persist();
+
+                // Log the event
+                webManager.logEvent("generated SSL self-signed cert", null);
             }
-            // Save new certificates into the key store
-            identityStore.persist();
-            // Log the event
-            webManager.logEvent("generated SSL self-signed cert", null);
+
             response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
             return;
         } catch (Exception e) {

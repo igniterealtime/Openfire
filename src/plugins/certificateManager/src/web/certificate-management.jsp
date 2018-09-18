@@ -26,6 +26,7 @@
 <%@ page import="java.nio.file.Paths" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.igniterealtime.openfire.plugins.certificatemanager.CertificateManagerPlugin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
@@ -54,6 +55,8 @@
         final boolean enabled = ParamUtils.getBooleanParameter( request, "directorywatcherEnabled" );
         final boolean replace = ParamUtils.getBooleanParameter( request, "directorywatcherReplace" );
         final boolean delete  = ParamUtils.getBooleanParameter( request, "directorywatcherDelete" );
+        final int minCertChainLength = ParamUtils.getIntParameter( request, "minCertChainLength", DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH_DEFAULT );
+
         String path = ParamUtils.getParameter( request, "directorywatcherPath" );
 
         if ( path != null && !path.isEmpty() )
@@ -92,15 +95,17 @@
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_REPLACE, Boolean.toString( replace ) );
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_DELETE,  Boolean.toString( delete  ) );
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH, path );
+            JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH, Integer.toString( minCertChainLength ) );
             response.sendRedirect("certificate-management.jsp?success=true");
             return;
         }
     }
     // Read all updated values from the properties.
-    pageContext.setAttribute( "directorywatcherIsEnabled", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_ENABLED, DirectoryWatcher.PROPERTY_ENABLED_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherPath",      JiveGlobals.getProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH,   DirectoryWatcher.PROPERTY_WATCHED_PATH_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherIsReplace", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_REPLACE, DirectoryWatcher.PROPERTY_REPLACE_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherIsDelete",  JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_DELETE,  DirectoryWatcher.PROPERTY_DELETE_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsEnabled", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_ENABLED,      DirectoryWatcher.PROPERTY_ENABLED_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherPath",      JiveGlobals.getProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH,        DirectoryWatcher.PROPERTY_WATCHED_PATH_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsReplace", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_REPLACE,      DirectoryWatcher.PROPERTY_REPLACE_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsDelete",  JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_DELETE,       DirectoryWatcher.PROPERTY_DELETE_DEFAULT ) );
+    pageContext.setAttribute( "minCertChainLength",        JiveGlobals.getIntProperty( DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH, DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH_DEFAULT ) );
     pageContext.setAttribute( "errors", errors );
 %>
 <html>
@@ -175,6 +180,9 @@
             <%--</tr>--%>
             <tr valign="middle">
                 <td colspan="2"><input type="checkbox" name="directorywatcherDelete" id="directorywatcherDelete" ${directorywatcherIsDelete ? 'checked' : ''}/><label for="directorywatcherDelete"><fmt:message key="certificate-management.directorywatcher.label_delete"/></label></td>
+            </tr>
+            <tr valign="middle">
+                <td colspan="2"><label for="minCertChainLength"><fmt:message key="certificate-management.detection.chain.min-certs"/></label> <input type="number" min="1" id="minCertChainLength" name="minCertChainLength" value="${minCertChainLength}"></td>
             </tr>
         </table>
 

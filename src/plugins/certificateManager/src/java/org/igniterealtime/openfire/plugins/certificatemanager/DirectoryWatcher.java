@@ -56,6 +56,8 @@ public class DirectoryWatcher
     public static final boolean PROPERTY_REPLACE_DEFAULT = true;
     public static final String PROPERTY_DELETE = "certificate-manager.directory-watcher.delete";
     public static final boolean PROPERTY_DELETE_DEFAULT = false;
+    public static final String PROPERTY_CHAIN_MIN_LENGTH = "certificate-manager.chain-min-length";
+    public static final int PROPERTY_CHAIN_MIN_LENGTH_DEFAULT = 2;
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -232,7 +234,7 @@ public class DirectoryWatcher
             try ( final InputStream is = new FileInputStream( file ) )
             {
                 final Collection<X509Certificate> x509Certificates = CertificateManager.parseCertificates( is );
-                return !x509Certificates.isEmpty();
+                return x509Certificates.size() >= JiveGlobals.getIntProperty( PROPERTY_CHAIN_MIN_LENGTH, PROPERTY_CHAIN_MIN_LENGTH_DEFAULT );
             }
             catch ( Exception e )
             {

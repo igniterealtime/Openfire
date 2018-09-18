@@ -16,6 +16,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A wrapper class for a store of certificates, its metadata (password, location) and related functionality that is
@@ -616,7 +617,23 @@ public class IdentityStore extends CertificateStore
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final int validityInDays = JiveGlobals.getIntProperty( "cert.validity-days", 5*365 );
-        final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
+        Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
+
+        // OF-1605: Check if a wildcard entry is to be used to represent/replace any subdomains of the XMPP domain name.
+        final boolean useWildcard = JiveGlobals.getBooleanProperty( "cert.wildcard", true );
+        if ( useWildcard )
+        {
+            final String wildcard = "*." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+
+            // Remove any names that match the wildcard.
+            sanDnsNames = sanDnsNames.stream()
+                .filter( sanDnsName -> !DNSUtil.isNameCoveredByPattern( sanDnsName, wildcard )  )
+                .collect( Collectors.toSet() );
+
+            // Add the domain and wildcard entries.
+            sanDnsNames.add( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+            sanDnsNames.add( wildcard );
+        }
 
         Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys

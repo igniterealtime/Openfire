@@ -85,13 +85,12 @@ public class AdminConsolePlugin implements Plugin {
      * Create a Jetty module.
      */
     public AdminConsolePlugin() {
-        contexts = new ContextHandlerCollection();
     }
 
     /**
      * Starts the Jetty instance.
      */
-    public void startup() {
+    protected void startup() {
         restartNeeded = false;
 
         // Add listener for certificate events
@@ -188,6 +187,8 @@ public class AdminConsolePlugin implements Plugin {
             return;
         }
 
+        createWebAppContext();
+
         HandlerCollection collection = new HandlerCollection();
         adminServer.setHandler(collection);
         collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
@@ -206,7 +207,7 @@ public class AdminConsolePlugin implements Plugin {
     /**
      * Shuts down the Jetty server.
      * */
-    public void shutdown() {
+    protected void shutdown() {
         // Remove listener for certificate events
         if (certificateListener != null) {
             CertificateManager.removeListener(certificateListener);
@@ -220,14 +221,22 @@ public class AdminConsolePlugin implements Plugin {
         catch (Exception e) {
             Log.error("Error stopping admin console server", e);
         }
+
+        if (contexts != null ) {
+            try {
+                contexts.stop();
+                contexts.destroy();
+            } catch ( Exception e ) {
+                Log.error("Error stopping admin console server", e);
+            }
+        }
         adminServer = null;
+        contexts = null;
     }
 
     @Override
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
-
-        createWebAppContext();
 
         startup();
     }
@@ -308,10 +317,13 @@ public class AdminConsolePlugin implements Plugin {
         return contexts;
     }
 
+    /**
+     * Restart the admin console (and it's HTTP server) without restarting the plugin.
+     */
     public void restart() {
         try {
-            adminServer.stop();
-            adminServer.start();
+            shutdown();
+            startup();
         }
         catch (Exception e) {
             Log.error("An exception occurred while restarting the admin console:", e);
@@ -319,6 +331,9 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     private void createWebAppContext() {
+
+        contexts = new ContextHandlerCollection();
+
         WebAppContext context;
         // Add web-app. Check to see if we're in development mode. If so, we don't
         // add the normal web-app location, but the web-app in the project directory.

@@ -539,7 +539,7 @@ public class IdentityStore extends CertificateStore
                     boolean found = false;
                     for ( String identity : serverIdentities )
                     {
-                        if ( !DNSUtil.isNameCoveredByPattern( dnsId, identity ) )
+                        if ( DNSUtil.isNameCoveredByPattern( dnsId, identity ) )
                         {
                             found = true;
                             break;

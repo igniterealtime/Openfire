@@ -141,14 +141,14 @@ public class DirectoryWatcher
                         final File file = changedFile.toFile();
                         if ( isCertificateChain( file ) )
                         {
-                            Log.info( "Found a certificate chain file in the hot-deploy directory." );
+                            Log.info( "Found a certificate chain file in the hot-deploy directory: {}", file );
                             lastChangeCertificateChain = System.currentTimeMillis();
                             lastChangedCertificateChain = changedFile;
                         }
 
                         if ( isPrivateKey( file ) )
                         {
-                            Log.info( "Found a private key file in the hot-deploy directory." );
+                            Log.info( "Found a private key file in the hot-deploy directory: {}", file );
                             lastChangePrivateKey = System.currentTimeMillis();
                             lastChangedPrivateKey = changedFile;
                         }
@@ -156,7 +156,7 @@ public class DirectoryWatcher
                         // If both the private key and certificate chain files were updated, reload them.
                         if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < 60000 )
                         {
-                            Log.info( "Files containing both a private key as well as a certificate chain were recently added to the hot-deploy directory. Attempting to install them..." );
+                            Log.info( "Files containing both a private key ({}) as well as a certificate chain ({}) were recently added to the hot-deploy directory. Attempting to install them...", lastChangedPrivateKey, lastChangedCertificateChain );
                             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S );
 
                             try
@@ -172,7 +172,7 @@ public class DirectoryWatcher
 //                                {
                                     identityStore.installCertificate( certsChain, privateKey, null );
 //                                }
-                                SecurityAuditManager.getInstance().logEvent( "", "hot-deployed private key and certificate chain.", "A private key and coresponding certificate chain were automatically installed." );
+                                SecurityAuditManager.getInstance().logEvent( "", "hot-deployed private key and certificate chain.", "A private key and corresponding certificate chain were automatically installed. Files used: " + lastChangedPrivateKey + " and: " + lastChangedCertificateChain );
 
                                 Log.info( "Hot-deployment of certificate and private key was successful." );
 
@@ -180,12 +180,12 @@ public class DirectoryWatcher
                                 {
                                     if ( !lastChangedCertificateChain.toFile().delete() )
                                     {
-                                        Log.info( "Unable to delete the hot-deployed certificate chain file." );
+                                        Log.info( "Unable to delete the hot-deployed certificate chain file: {}", lastChangedCertificateChain );
                                     }
 
                                     if ( !lastChangedPrivateKey.toFile().delete() )
                                     {
-                                        Log.info( "Unable to delete the hot-deployed private key file." );
+                                        Log.info( "Unable to delete the hot-deployed private key file: {}", lastChangedPrivateKey );
                                     }
                                 }
 

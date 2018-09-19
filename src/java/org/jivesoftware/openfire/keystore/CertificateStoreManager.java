@@ -1,21 +1,25 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.bouncycastle.bcpg.ElGamalSecretBCPGKey;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.util.CollectionUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jivesoftware.openfire.spi.ConnectionType.SOCKET_C2S;
 
@@ -230,9 +234,11 @@ public class CertificateStoreManager extends BasicModule
         final String keyStoreType = getKeyStoreType( type );
         final String password = getIdentityStorePassword( type );
         final String location = getIdentityStoreLocation( type );
+        final String backupDirectory = getIdentityStoreBackupDirectory( type );
         final File file = canonicalize( location );
+        final File dir = canonicalize( backupDirectory );
 
-        return new CertificateStoreConfiguration( keyStoreType, file, password.toCharArray() );
+        return new CertificateStoreConfiguration( keyStoreType, file, password.toCharArray(), dir );
     }
 
     public CertificateStoreConfiguration getTrustStoreConfiguration( ConnectionType type ) throws IOException
@@ -243,9 +249,50 @@ public class CertificateStoreManager extends BasicModule
         final String keyStoreType = getKeyStoreType( type );
         final String password = getTrustStorePassword( type );
         final String location = getTrustStoreLocation( type );
+        final String backupDirectory = getTrustStoreBackupDirectory( type );
         final File file = canonicalize( location );
+        final File dir = canonicalize( backupDirectory );
 
-        return new CertificateStoreConfiguration( keyStoreType, file, password.toCharArray() );
+        return new CertificateStoreConfiguration( keyStoreType, file, password.toCharArray(), dir );
+    }
+
+    /**
+     * Creates a backup of all files that back any of the certificate stores.
+     *
+     * Each certificate store can be configured to use a distinct file, as well as use a distinct backup location.
+     * In practise, there will be a lot of overlap. This implementation creates a backup (by copying the file) for
+     * each unique file/backup-location combination in the collection of all certificate stores.
+     */
+    public Collection<Path> backup() throws IOException
+    {
+        // Create a collection that holds all of the certificate stores.
+        final Collection<CertificateStore> allStores = new ArrayList<>();
+        allStores.addAll( identityStores.values() );
+        allStores.addAll( trustStores.values() );
+
+        // Extract the set of unique file/backup-directory combinations. This prevents Openfire from creating duplicate backup files.
+        final Set<CertificateStore> unique = allStores.stream().filter(
+            CollectionUtils.distinctByKey(
+                store -> store.getConfiguration().getFile().getAbsolutePath() + "|" + store.configuration.backupDirectory.getAbsolutePath() ) )
+            .collect( Collectors.toSet() );
+
+        // Trigger a backup for each of the unique combinations.
+        unique.forEach( CertificateStore::backup );
+
+        // Check how many non-null backups were made.
+        final Collection<Path> backups = unique.stream()
+            .map( CertificateStore::backup )
+            .filter( Objects::nonNull )
+            .distinct()
+            .sorted()
+            .collect( Collectors.toList() );
+
+        // If the number of backups is smaller than the number of unique file/backup-directory combinations, something went wrong!
+        if ( unique.size() != backups.size() ) {
+            throw new IOException( "Unable to create (all) backups!" );
+        }
+
+        return backups;
     }
 
     /**
@@ -372,6 +419,46 @@ public class CertificateStoreManager extends BasicModule
         else
         {
             return JiveGlobals.getProperty( propertyName, getTrustStoreLocation( type.getFallback() ) ).trim();
+        }
+    }
+
+    /**
+     * The location (relative to OPENFIRE_HOME) of the directory that holds backups for identity stores.
+     *
+     * @return a path (never null).
+     */
+    public static String getIdentityStoreBackupDirectory( ConnectionType type )
+    {
+        final String propertyName = type.getPrefix()  + "backup.keystore.location";
+        final String defaultValue = "resources" + File.separator + "security" + File.separator + "archive" + File.separator;
+
+        if ( type.getFallback() == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, getIdentityStoreBackupDirectory( type.getFallback() ) ).trim();
+        }
+    }
+
+    /**
+     * The location (relative to OPENFIRE_HOME) of the directory that holds backups for trust stores.
+     *
+     * @return a path (never null).
+     */
+    public static String getTrustStoreBackupDirectory( ConnectionType type )
+    {
+        final String propertyName = type.getPrefix()  + "backup.truststore.location";
+        final String defaultValue = "resources" + File.separator + "security" + File.separator + "archive" + File.separator;
+
+        if ( type.getFallback() == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, getTrustStoreBackupDirectory( type.getFallback() ) ).trim();
         }
     }
 

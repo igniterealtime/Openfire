@@ -273,6 +273,10 @@
                   <!--url="security-truststore.jsp?connectivityType=administrative&amp;type=s2s"-->
                   <!--description="${sidebar.security-truststore-administrative-s2s.descr}"/>-->
 
+            <item id="security-certificate-store-backup" name="${sidebar.certificate-stores-backup}"
+                  url="security-certificate-store-backup.jsp"
+                  description="${sidebar.certificate-stores-backup.descr}"/>
+
         </sidebar>
 
         <!-- Server Settings -->

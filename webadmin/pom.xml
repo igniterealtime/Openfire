@@ -42,6 +42,8 @@
                             <goal>jspc</goal>
                         </goals>
                         <configuration>
+                            <sourceVersion>1.8</sourceVersion>
+                            <targetVersion>1.8</targetVersion>
                             <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
                             <!-- Merge this web.xml with the generated servlet declarations -->
                             <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>

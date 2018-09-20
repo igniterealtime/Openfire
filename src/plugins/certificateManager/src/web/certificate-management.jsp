@@ -68,6 +68,16 @@
             path = DirectoryWatcher.PROPERTY_WATCHED_PATH_DEFAULT;
         }
 
+        String passphrase = ParamUtils.getStringParameter( request, "passphrase", null );
+        if ( passphrase != null && !passphrase.isEmpty() )
+        {
+            passphrase = URLDecoder.decode( passphrase, "UTF-8" );
+        }
+        else
+        {
+            passphrase = null;
+        }
+
         try
         {
             final Path dir = Paths.get( path );
@@ -96,16 +106,19 @@
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_DELETE,  Boolean.toString( delete  ) );
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH, path );
             JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH, Integer.toString( minCertChainLength ) );
+            JiveGlobals.setProperty( DirectoryWatcher.PROPERTY_PRIVATEKEY_PASSPHRASE, passphrase );
+
             response.sendRedirect("certificate-management.jsp?success=true");
             return;
         }
     }
     // Read all updated values from the properties.
-    pageContext.setAttribute( "directorywatcherIsEnabled", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_ENABLED,      DirectoryWatcher.PROPERTY_ENABLED_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherPath",      JiveGlobals.getProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH,        DirectoryWatcher.PROPERTY_WATCHED_PATH_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherIsReplace", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_REPLACE,      DirectoryWatcher.PROPERTY_REPLACE_DEFAULT ) );
-    pageContext.setAttribute( "directorywatcherIsDelete",  JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_DELETE,       DirectoryWatcher.PROPERTY_DELETE_DEFAULT ) );
-    pageContext.setAttribute( "minCertChainLength",        JiveGlobals.getIntProperty( DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH, DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsEnabled", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_ENABLED,        DirectoryWatcher.PROPERTY_ENABLED_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherPath",      JiveGlobals.getProperty( DirectoryWatcher.PROPERTY_WATCHED_PATH,          DirectoryWatcher.PROPERTY_WATCHED_PATH_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsReplace", JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_REPLACE,        DirectoryWatcher.PROPERTY_REPLACE_DEFAULT ) );
+    pageContext.setAttribute( "directorywatcherIsDelete",  JiveGlobals.getBooleanProperty( DirectoryWatcher.PROPERTY_DELETE,         DirectoryWatcher.PROPERTY_DELETE_DEFAULT ) );
+    pageContext.setAttribute( "minCertChainLength",        JiveGlobals.getIntProperty( DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH,   DirectoryWatcher.PROPERTY_CHAIN_MIN_LENGTH_DEFAULT ) );
+    pageContext.setAttribute( "passphrase",                JiveGlobals.getProperty( DirectoryWatcher.PROPERTY_PRIVATEKEY_PASSPHRASE, DirectoryWatcher.PROPERTY_PRIVATEKEY_PASSPHRASE_DEFAULT ) );
     pageContext.setAttribute( "errors", errors );
 %>
 <html>
@@ -161,8 +174,11 @@
     <fmt:message key="certificate-management.directorywatcher.boxtitle" var="directorywatcherboxtitle"/>
     <admin:contentBox title="${directorywatcherboxtitle}">
 
-        <c:set var="escaped">
+        <c:set var="escapedPath">
             <c:out value="${directorywatcherPath}"/>
+        </c:set>
+        <c:set var="escapedPassphrase">
+            <c:out value="${passphrase}"/>
         </c:set>
 
         <p><fmt:message key="certificate-management.directorywatcher.info"/></p>
@@ -173,7 +189,7 @@
             </tr>
             <tr valign="middle">
                 <td width="1%" nowrap><label for="directorywatcherPath"><fmt:message key="certificate-management.directorywatcher.label_path"/></label></td>
-                <td width="99%"><input type="text" size="60" name="directorywatcherPath" id="directorywatcherPath" value="${escaped}"/></td>
+                <td width="99%"><input type="text" size="60" name="directorywatcherPath" id="directorywatcherPath" value="${escapedPath}"/></td>
             </tr>
             <%--<tr valign="middle">--%>
                 <%--<td colspan="2"><input type="checkbox" name="directorywatcherReplace" id="directorywatcherReplace" ${directorywatcherIsReplace ? 'checked' : ''}/><label for="directorywatcherReplace"><fmt:message key="certificate-management.directorywatcher.label_replace"/></label></td>--%>
@@ -183,6 +199,9 @@
             </tr>
             <tr valign="middle">
                 <td colspan="2"><label for="minCertChainLength"><fmt:message key="certificate-management.detection.chain.min-certs"/></label> <input type="number" min="1" id="minCertChainLength" name="minCertChainLength" value="${minCertChainLength}"></td>
+            </tr>
+            <tr valign="middle">
+                <td colspan="2"><label for="passphrase"><fmt:message key="certificate-management.privatekey.passphrase"/></label> <input type="password" id="passphrase" name="passphrase" value="${escapedPassphrase}"></td>
             </tr>
         </table>
 

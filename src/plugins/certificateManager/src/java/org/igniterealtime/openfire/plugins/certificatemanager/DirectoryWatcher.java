@@ -62,6 +62,8 @@ public class DirectoryWatcher
     public static final int PROPERTY_CHAIN_MIN_LENGTH_DEFAULT = 2;
     public static final String PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS = "certificate-manager.directory-watcher.file-changes.grace-period-ms";
     public static final int PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT = 60000;
+    public static final String PROPERTY_PRIVATEKEY_PASSPHRASE = "certificate-manager.privatekey.password";
+    public static final String PROPERTY_PRIVATEKEY_PASSPHRASE_DEFAULT = null;
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -130,6 +132,8 @@ public class DirectoryWatcher
 
                     final long gracePeriod = JiveGlobals.getLongProperty( PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS, PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT );
 
+                    final String passPhrase = JiveGlobals.getProperty( PROPERTY_PRIVATEKEY_PASSPHRASE, PROPERTY_PRIVATEKEY_PASSPHRASE_DEFAULT );
+
                     for ( final WatchEvent<?> event : key.pollEvents() )
                     {
                         final WatchEvent.Kind<?> kind = event.kind();
@@ -152,7 +156,7 @@ public class DirectoryWatcher
                             lastChangedCertificateChain = changedFile;
                         }
 
-                        if ( isPrivateKey( file ) )
+                        if ( isPrivateKey( file, passPhrase ) )
                         {
                             Log.info( "Found a private key file in the hot-deploy directory: {}", file );
                             lastChangePrivateKey = System.currentTimeMillis();
@@ -168,6 +172,7 @@ public class DirectoryWatcher
                             try
                             {
                                 // OF-1608: Before applying changes, create a backup.
+                                final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
                                 final Collection<Path> backupPaths = certificateStoreManager.backup();
                                 SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "Created backup of key store files.", String.join( System.lineSeparator(), backupPaths.stream().map( Path::toString ).collect( Collectors.toList() ) ) );
 
@@ -180,9 +185,9 @@ public class DirectoryWatcher
 //                                }
 //                                else
 //                                {
-                                    identityStore.installCertificate( certsChain, privateKey, null );
+                                    identityStore.installCertificate( certsChain, privateKey, passPhrase );
 //                                }
-                                SecurityAuditManager.getInstance().logEvent( "", "hot-deployed private key and certificate chain.", "A private key and corresponding certificate chain were automatically installed. Files used: " + lastChangedPrivateKey + " and: " + lastChangedCertificateChain );
+                                SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "hot-deployed private key and certificate chain.", "A private key and corresponding certificate chain were automatically installed. Files used: " + lastChangedPrivateKey + " and: " + lastChangedCertificateChain );
 
                                 Log.info( "Hot-deployment of certificate and private key was successful." );
 
@@ -219,14 +224,15 @@ public class DirectoryWatcher
         });
     }
 
-    public static boolean isPrivateKey( File file )
+    public static boolean isPrivateKey( File file, String passPhrase )
     {
         Log.debug( "Checking if {} is a private key...", file );
         if ( file.isFile() && file.canRead() )
         {
             try ( final InputStream is = new FileInputStream( file ) )
             {
-                CertificateManager.parsePrivateKey( is, "" );
+                CertificateManager.parsePrivateKey( is, passPhrase );
+                Log.debug( "{} is a private key.", file );
                 return true;
             }
             catch ( Exception e )

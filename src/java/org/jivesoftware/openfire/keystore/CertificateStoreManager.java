@@ -276,10 +276,7 @@ public class CertificateStoreManager extends BasicModule
                 store -> store.getConfiguration().getFile().getAbsolutePath() + "|" + store.configuration.backupDirectory.getAbsolutePath() ) )
             .collect( Collectors.toSet() );
 
-        // Trigger a backup for each of the unique combinations.
-        unique.forEach( CertificateStore::backup );
-
-        // Check how many non-null backups were made.
+        // Trigger a backup for each of the unique combinations, and record the unique backup locations
         final Collection<Path> backups = unique.stream()
             .map( CertificateStore::backup )
             .filter( Objects::nonNull )

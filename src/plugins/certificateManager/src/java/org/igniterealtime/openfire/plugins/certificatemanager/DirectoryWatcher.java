@@ -166,6 +166,10 @@ public class DirectoryWatcher
                         // If both the private key and certificate chain files were updated, reload them.
                         if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < gracePeriod )
                         {
+                            // Prevent another attempt
+                            lastChangeCertificateChain = 0;
+                            lastChangePrivateKey = 0;
+
                             Log.info( "Files containing both a private key ({}) as well as a certificate chain ({}) were recently added to the hot-deploy directory. Attempting to install them...", lastChangedPrivateKey, lastChangedCertificateChain );
                             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S );
 
@@ -210,9 +214,6 @@ public class DirectoryWatcher
                             catch ( Exception e )
                             {
                                 Log.warn( "Unable to hot-deploy certificate and private key.", e );
-                                // Prevent another attempt
-                                lastChangeCertificateChain = 0;
-                                lastChangePrivateKey = 0;
                             }
                         }
                     }

@@ -5,8 +5,8 @@
     <description>Adds certificate management features.</description>
     <author>Guus der Kinderen</author>
     <version>${project.version}</version>
-    <date>11/24/2017</date>
-    <minServerVersion>4.0.0</minServerVersion>
+    <date>09/20/2018</date>
+    <minServerVersion>4.3.0 alpha</minServerVersion>
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-certificates">

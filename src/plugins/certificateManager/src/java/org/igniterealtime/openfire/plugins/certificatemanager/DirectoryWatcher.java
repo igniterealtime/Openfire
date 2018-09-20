@@ -16,6 +16,7 @@
 package org.igniterealtime.openfire.plugins.certificatemanager;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Automatically installs a private key with corresponding certificate chain in Openfire's identity store, by looking
@@ -161,6 +163,10 @@ public class DirectoryWatcher
 
                             try
                             {
+                                // OF-1608: Before applying changes, create a backup.
+                                final Collection<Path> backupPaths = certificateStoreManager.backup();
+                                SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "Created backup of key store files.", String.join( System.lineSeparator(), backupPaths.stream().map( Path::toString ).collect( Collectors.toList() ) ) );
+
                                 final String certsChain = new String( Files.readAllBytes( lastChangedCertificateChain ) );
                                 final String privateKey = new String( Files.readAllBytes( lastChangedPrivateKey ) );
 

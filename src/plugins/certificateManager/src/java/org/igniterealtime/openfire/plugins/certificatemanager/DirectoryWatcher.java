@@ -60,6 +60,8 @@ public class DirectoryWatcher
     public static final boolean PROPERTY_DELETE_DEFAULT = false;
     public static final String PROPERTY_CHAIN_MIN_LENGTH = "certificate-manager.chain-min-length";
     public static final int PROPERTY_CHAIN_MIN_LENGTH_DEFAULT = 2;
+    public static final String PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS = "certificate-manager.directory-watcher.file-changes.grace-period-ms";
+    public static final int PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT = 60000;
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -102,14 +104,14 @@ public class DirectoryWatcher
             @Override
             public void run()
             {
+                Path lastChangedCertificateChain = null;
+                long lastChangeCertificateChain = 0;
+
+                Path lastChangedPrivateKey = null;
+                long lastChangePrivateKey = 0;
+
                 while ( !executorService.isShutdown() )
                 {
-                    Path lastChangedCertificateChain = null;
-                    long lastChangeCertificateChain = 0;
-
-                    Path lastChangedPrivateKey = null;
-                    long lastChangePrivateKey = 0;
-
                     final WatchKey key;
                     try
                     {
@@ -125,6 +127,8 @@ public class DirectoryWatcher
                     {
                         continue;
                     }
+
+                    final long gracePeriod = JiveGlobals.getLongProperty( PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS, PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT );
 
                     for ( final WatchEvent<?> event : key.pollEvents() )
                     {
@@ -156,7 +160,7 @@ public class DirectoryWatcher
                         }
 
                         // If both the private key and certificate chain files were updated, reload them.
-                        if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < 60000 )
+                        if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < gracePeriod )
                         {
                             Log.info( "Files containing both a private key ({}) as well as a certificate chain ({}) were recently added to the hot-deploy directory. Attempting to install them...", lastChangedPrivateKey, lastChangedCertificateChain );
                             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S );

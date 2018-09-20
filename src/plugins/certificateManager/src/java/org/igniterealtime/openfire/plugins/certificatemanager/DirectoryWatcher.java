@@ -221,6 +221,7 @@ public class DirectoryWatcher
 
     public static boolean isPrivateKey( File file )
     {
+        Log.debug( "Checking if {} is a private key...", file );
         if ( file.isFile() && file.canRead() )
         {
             try ( final InputStream is = new FileInputStream( file ) )
@@ -231,26 +232,34 @@ public class DirectoryWatcher
             catch ( Exception e )
             {
                 // This also catches events triggered by file modifications that are still underway.
+                Log.debug( "{} is not a private key (or might still be written to).", file );
                 return false;
             }
         }
+        Log.debug( "{} is not a file, or cannot be read.", file );
         return false;
     }
 
     public static boolean isCertificateChain( File file )
     {
+        Log.debug( "Checking if {} is a certificate chain...", file );
         if ( file.isFile() && file.canRead() )
         {
             try ( final InputStream is = new FileInputStream( file ) )
             {
+                final int minLength = JiveGlobals.getIntProperty( PROPERTY_CHAIN_MIN_LENGTH, PROPERTY_CHAIN_MIN_LENGTH_DEFAULT );
                 final Collection<X509Certificate> x509Certificates = CertificateManager.parseCertificates( is );
-                return x509Certificates.size() >= JiveGlobals.getIntProperty( PROPERTY_CHAIN_MIN_LENGTH, PROPERTY_CHAIN_MIN_LENGTH_DEFAULT );
+                final boolean valid = x509Certificates.size() >= minLength;
+                Log.debug( "{} is {} certificate chain that has {} or more certificates in it.", new Object[] { file, (valid ? "a" : "not a"), minLength} );
+                return valid;
             }
             catch ( Exception e )
             {
+                Log.debug( "{} is not a certificate chain (or might still be written to).", file );
                 return false;
             }
         }
+        Log.debug( "{} is not a file, or cannot be read.", file );
         return false;
     }
 

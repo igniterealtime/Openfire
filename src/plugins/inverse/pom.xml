@@ -9,7 +9,7 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>inverse</artifactId>
     <name>Inverse Webchat Plugin</name>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>

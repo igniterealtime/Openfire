@@ -554,8 +554,6 @@ public class XMPPServer {
                             // render properly!
                             Thread.sleep(1000);
                             ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
-//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
-//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
                         }
 
                         verifyDataSource();
@@ -805,8 +803,7 @@ public class XMPPServer {
                     // Otherwise, this page won't render properly!
                     try {
                         Thread.sleep(1000);
-                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
-                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

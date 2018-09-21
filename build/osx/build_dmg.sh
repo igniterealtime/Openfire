@@ -37,41 +37,44 @@ mkdir -p $MAC_TEMPLATE/.background
 cp build/osx/dmgBackground.png $MAC_TEMPLATE/.background/
 
 # replicating ant target mac.pkg
+pkgbuild --identifier "com.jivesoftware.openfire" \
+         --version "${OPENFIRE_FULLVERSION}" \
+         --root "${MAC_PKG_DIR}" \
+         ${TARGET_OSX}/PrefPane.pkg
+
+## NOTE: this would generate a distribution.plist, but by keeping a copy in git
+## we can instead tweak its metadata a bit.
+#cat << EOF > ${TARGET_OSX}/requirements.plist
+#<?xml version="1.0" encoding="UTF-8"?>
+#<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+#<plist version="1.0">
+#<dict>
+#  <key>os</key>
+#  <array>
+#    <string>10.6</string>
+#  </array>
+#</dict>
+#</plist>
+#EOF
+#productbuild --synthesize \
+#  --product ${TARGET_OSX}/requirements.plist \
+#  --package ${TARGET_OSX}/PrefPane.pkg \
+#  ${TARGET_OSX}/distribution.plist
+
 cp build/osx/distribution.plist $TARGET_OSX/
 sed -i.bak s/%VERSION%/${OPENFIRE_VERSION}/g $TARGET_OSX/distribution.plist
-sed -i.bak s/%VERSIONMAJOR%/"${VERSION_MAJOR}"/g $TARGET_OSX/distribution.plist
-sed -i.bak s/%VERSIONMINOR%/"${VERSION_MINOR}"/g $TARGET_OSX/distribution.plist
+#sed -i.bak s/%VERSIONMAJOR%/"${VERSION_MAJOR}"/g $TARGET_OSX/distribution.plist
+#sed -i.bak s/%VERSIONMINOR%/"${VERSION_MINOR}"/g $TARGET_OSX/distribution.plist
 sed -i.bak s/%COPYRIGHT%/"${COPYRIGHTYEAR}"/g $TARGET_OSX/distribution.plist
 
 # -proj build/osx/openfire.pmproj
 
-pkgbuild --identifier "com.jivesoftware.openfire" \
-         --version "${OPENFIRE_FULLVERSION}" \
-         --root "${MAC_PKG_DIR}" \
-         ${TARGET_OSX}/Openfire.pkg
-cat << EOF > ${TARGET_OSX}/requirements.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>os</key>
-  <array>
-    <string>10.6</string>
-  </array>
-</dict>
-</plist>
-EOF
-productbuild --synthesize \
-  --product ${TARGET_OSX}/requirements.plist \
-  --package ${TARGET_OSX}/Openfire.pkg \
-  ${TARGET_OSX}/distribution.plist
 productbuild \
   --distribution ${TARGET_OSX}/distribution.plist \
   --resources build/osx/resources \
-  --package-path ${TARGET_OSX}/Openfire.pkg \
+  --package-path ${TARGET_OSX} \
   ${MAC_TEMPLATE}/Openfire.pkg
 
-exit 200
 # replicating mac target installer.mac
 mkdir -p distribution/target/macosx
 hdiutil create -srcfolder "${MAC_TEMPLATE}" -volname 'Openfire' \
@@ -81,27 +84,9 @@ hdiutil create -srcfolder "${MAC_TEMPLATE}" -volname 'Openfire' \
 hdiutil attach "${TARGET_OSX}/tmp.dmg" -readwrite -noverify \
   -noautoopen -noidme -mountpoint "${MAC_DMG_DIR}"
 
-#echo '
-#   tell application "Finder"
-#     tell disk "'${title}'"
-#           open
-#           set current view of container window to icon view
-#           set toolbar visible of container window to false
-#           set statusbar visible of container window to false
-#           set the bounds of container window to {400, 100, 885, 430}
-#           set theViewOptions to the icon view options of container window
-#           set arrangement of theViewOptions to not arranged
-#           set icon size of theViewOptions to 72
-#           set background picture of theViewOptions to file ".background:'${backgroundPictureName}'"
-#           make new alias file at container window to POSIX file "/Applications" with properties {name:"Applications"}
-#           set position of item "'${applicationName}'" of container window to {100, 100}
-#           set position of item "Applications" of container window to {375, 100}
-#           update without registering applications
-#           delay 5
-#           close
-#     end tell
-#   end tell
-#' | osascript
+# OF-386 - commented out since it wasn't working with our Bamboo remote agent
+# OF-1587 - an attempted fix for pretty DMG background
+osascript build/osx/dmg_openfire.scpt Openfire build/osx 648 500 450 205 128
 
 hdiutil detach ${MAC_DMG_DIR} -quiet -force
 

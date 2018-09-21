@@ -14,8 +14,8 @@
         </line>
     </choices-outline>
     <choice id="default"/>
-    <choice id="com.jivesoftware.openfire" visible="false">
+    <choice id="com.jivesoftware.openfire" visible="false" description="Openfire is a leading Open Source, cross-platform IM server based on the XMPP (Jabber) protocol">
         <pkg-ref id="com.jivesoftware.openfire"/>
     </choice>
-    <pkg-ref id="com.jivesoftware.openfire" version="%VERSION%" onConclusion="none">Openfire.pkg</pkg-ref>
+    <pkg-ref id="com.jivesoftware.openfire" version="%VERSION%" onConclusion="none">PrefPane.pkg</pkg-ref>
 </installer-gui-script>

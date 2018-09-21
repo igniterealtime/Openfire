@@ -32,35 +32,48 @@ mkdir -p $MAC_PKG_DIR/Library/LaunchDaemons
 cp build/osx/org.jivesoftware.openfire.plist $MAC_PKG_DIR/Library/LaunchDaemons
 mkdir -p $MAC_DMG_DIR
 mkdir -p $MAC_PKG_DIR/Library/PreferencePanes
-# <copy todir="${mac.pkg.dir}/Library/PreferencePanes">
-#            <fileset dir="${mac.prefpane.build}/build/UninstalledProducts/"/>
-#        </copy>
-#        <chmod perm="o+x">
-#            <fileset dir="${mac.pkg.dir}/Library/PreferencePanes/Openfire.prefPane/Contents/MacOS/">
-#                <include name="HelperTool"/>
-#            </fileset>
-#        </chmod>
+cp -a $TARGET_OSX/prefPane/build/UninstalledProducts/macosx/* ${MAC_PKG_DIR}/Library/PreferencePanes/
 mkdir -p $MAC_TEMPLATE/.background
 cp build/osx/dmgBackground.png $MAC_TEMPLATE/.background/
 
 # replicating ant target mac.pkg
-cp build/osx/Info.plist $TARGET_OSX/
-sed -i.bak s/@VERSION@/${OPENFIRE_VERSION}/g $TARGET_OSX/Info.plist
-sed -i.bak s/@VERSIONMAJOR@/"${VERSION_MAJOR}"/g $TARGET_OSX/Info.plist
-sed -i.bak s/@VERSIONMINOR@/"${VERSION_MINOR}"/g $TARGET_OSX/Info.plist
-sed -i.bak s/@COPYRIGHT@/"${COPYRIGHTYEAR}"/g $TARGET_OSX/Info.plist
+pkgbuild --identifier "com.jivesoftware.openfire" \
+         --version "${OPENFIRE_FULLVERSION}" \
+         --root "${MAC_PKG_DIR}" \
+         ${TARGET_OSX}/PrefPane.pkg
 
-cp build/osx/Description.plist $TARGET_OSX/
+## NOTE: this would generate a distribution.plist, but by keeping a copy in git
+## we can instead tweak its metadata a bit.
+#cat << EOF > ${TARGET_OSX}/requirements.plist
+#<?xml version="1.0" encoding="UTF-8"?>
+#<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+#<plist version="1.0">
+#<dict>
+#  <key>os</key>
+#  <array>
+#    <string>10.6</string>
+#  </array>
+#</dict>
+#</plist>
+#EOF
+#productbuild --synthesize \
+#  --product ${TARGET_OSX}/requirements.plist \
+#  --package ${TARGET_OSX}/PrefPane.pkg \
+#  ${TARGET_OSX}/distribution.plist
+
+cp build/osx/distribution.plist $TARGET_OSX/
+sed -i.bak s/%VERSION%/${OPENFIRE_VERSION}/g $TARGET_OSX/distribution.plist
+#sed -i.bak s/%VERSIONMAJOR%/"${VERSION_MAJOR}"/g $TARGET_OSX/distribution.plist
+#sed -i.bak s/%VERSIONMINOR%/"${VERSION_MINOR}"/g $TARGET_OSX/distribution.plist
+sed -i.bak s/%COPYRIGHT%/"${COPYRIGHTYEAR}"/g $TARGET_OSX/distribution.plist
 
 # -proj build/osx/openfire.pmproj
-/Developer/usr/bin/packagemaker -build \
-  -f ${MAC_PKG_DIR} \
-  -i ${TARGET_OSX}/Info.plist \
-  -d ${TARGET_OSX}/Description.plist \
-  -r build/osx/resources \
-  -p ${MAC_TEMPLATE}/Openfire.pkg \
-  -ds \
-  -v
+
+productbuild \
+  --distribution ${TARGET_OSX}/distribution.plist \
+  --resources build/osx/resources \
+  --package-path ${TARGET_OSX} \
+  ${MAC_TEMPLATE}/Openfire.pkg
 
 # replicating mac target installer.mac
 mkdir -p distribution/target/macosx
@@ -70,6 +83,10 @@ hdiutil create -srcfolder "${MAC_TEMPLATE}" -volname 'Openfire' \
 
 hdiutil attach "${TARGET_OSX}/tmp.dmg" -readwrite -noverify \
   -noautoopen -noidme -mountpoint "${MAC_DMG_DIR}"
+
+# OF-386 - commented out since it wasn't working with our Bamboo remote agent
+# OF-1587 - an attempted fix for pretty DMG background
+osascript build/osx/dmg_openfire.scpt Openfire build/osx 648 500 450 205 128
 
 hdiutil detach ${MAC_DMG_DIR} -quiet -force
 

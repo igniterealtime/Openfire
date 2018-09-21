@@ -76,17 +76,18 @@
             return;
         }
     }
-    
+
     if(delete != null) {
         try {
             Group group = webManager.getGroupManager().getGroup(delete);
             group.getMembers().remove(jid);
+            group.getAdmins().remove(jid);
             response.sendRedirect("user-groups.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&updatesuccess=true");
         } catch (GroupNotFoundException exp) {
             return;
         }
     }
-    
+
     // Load the user object
     User user = null;
     try {

@@ -652,7 +652,12 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         Roster addedUserRoster = null;
         if (server.isLocal(addedUser)) {
             try {
-                addedUserRoster = getRoster(addedUser.getNode());
+                // force the roster reload to get fresh subscription in the rosterItems
+                String username = addedUser.getNode();
+                synchronized ((username + " ro").intern()) {
+                    rosterCache.remove(username);
+                    addedUserRoster = getRoster(username);
+                }
             } catch (UserNotFoundException e) {
                 Log.warn( "Unexpected exception while adding user '{}' to group '{}'.", addedUser, group, e );
             }
@@ -979,6 +984,10 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     @Override
     public void start() throws IllegalStateException {
         super.start();
+
+        // Make the GroupManager listeners be registered first
+        GroupManager.getInstance();
+
         // Add this module as a user event listener so we can update
         // rosters when users are created or deleted
         UserEventDispatcher.addListener(this);

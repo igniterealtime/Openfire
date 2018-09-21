@@ -84,7 +84,7 @@
         filter = filter.and(node -> node.getDescription().toLowerCase().contains(searchCriteria));
     }
 
-    final ListPager<Node> listPager = new ListPager<>(request, response, nodes, filter, "searchNodeId", "searchNodeName", "searchNodeDescription");
+    final ListPager<Node> listPager = new ListPager<>(request, response, nodes, filter, "searchNodeId", "searchNodeName", "searchNodeDescription", "username");
     pageContext.setAttribute("listPager", listPager);
 
     pageContext.setAttribute("owner", owner );

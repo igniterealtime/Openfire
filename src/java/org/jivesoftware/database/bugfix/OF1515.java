@@ -115,7 +115,7 @@ public class OF1515
         String domain;
         try
         {
-            domain = JiveGlobals.getProperty( "xmpp.domain", JiveGlobals.getProperty( "xmpp.fqdn", InetAddress.getLocalHost().getCanonicalHostName() ) ).toLowerCase();
+            domain = JiveGlobals.getProperty( "xmpp.domain", JiveGlobals.getXMLProperty( "fqdn", InetAddress.getLocalHost().getCanonicalHostName() ) ).toLowerCase();
         }
         catch ( UnknownHostException e )
         {

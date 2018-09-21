@@ -88,7 +88,6 @@
             Map<String, String> xmppSettings = new HashMap<String, String>();
 
             xmppSettings.put("xmpp.domain", domain);
-            xmppSettings.put("xmpp.fqdn", fqdn);
             xmppSettings.put("xmpp.socket.ssl.active", "" + sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
@@ -96,6 +95,7 @@
             Map<String, String> xmlSettings = new HashMap<String, String>();
             xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
+            xmlSettings.put("fqdn", fqdn);
             session.setAttribute("xmlSettings", xmlSettings);
 
             session.setAttribute("encryptedSettings", new HashSet<String>());
@@ -112,7 +112,7 @@
     // Load the current values:
     if (!doContinue) {
         domain = JiveGlobals.getXMLProperty("xmpp.domain");
-        fqdn = JiveGlobals.getXMLProperty("xmpp.fqdn");
+        fqdn = JiveGlobals.getXMLProperty("fqdn");
         embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
         sslEnabled = JiveGlobals.getXMLProperty("xmpp.socket.ssl.active", true);

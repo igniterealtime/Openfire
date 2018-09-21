@@ -77,15 +77,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -130,6 +136,7 @@ public class XMPPServer {
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
     public static final String EXIT = "exit";
+    private static Set<String> XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fqdn")));
 
     /**
      * All modules loaded by this server
@@ -337,7 +344,6 @@ public class XMPPServer {
         }
 
         JiveGlobals.migrateProperty("xmpp.domain");
-        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
         Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
@@ -351,6 +357,28 @@ public class XMPPServer {
             this.runAutoSetup();
             JiveGlobals.deleteXMLProperty("autosetup");
             JiveGlobals.deleteProperty("autosetup");
+        }
+
+        // OF-1548: Move the storage of the FQDN from the database to the XML configuration
+        final String hostNameFromDatabase = JiveGlobals.getProperty("xmpp.fqdn", "");
+        final String hostNameFromXML = JiveGlobals.getXMLProperty("fqdn", "");
+        if (!hostNameFromDatabase.isEmpty() && hostNameFromXML.isEmpty()) {
+            final String hostname;
+            if (ClusterManager.isClusteringEnabled()) {
+                // The database value has at best a 50% chance of being right - so instead use a sensible default
+                String hostnameFromOS;
+                try {
+                    hostnameFromOS = InetAddress.getLocalHost().getHostName();
+                } catch (final UnknownHostException e) {
+                    logger.warn("Unable to determine local hostname", e);
+                    hostnameFromOS = "localhost";
+                }
+                hostname = hostnameFromOS;
+            } else {
+                hostname = hostNameFromDatabase;
+            }
+            JiveGlobals.setXMLProperty("fqdn", hostname);
+            JiveGlobals.deleteProperty("xmpp.fqdn");
         }
     }
 
@@ -407,9 +435,8 @@ public class XMPPServer {
 
         // steps from setup-host-settings.jsp
         JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
-        JiveGlobals.setXMLProperty("xmpp.fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
+        JiveGlobals.setXMLProperty("fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
         JiveGlobals.migrateProperty("xmpp.domain");
-        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.setProperty("xmpp.socket.ssl.active", JiveGlobals.getXMLProperty("autosetup.xmpp.socket.ssl.active", "true"));
         JiveGlobals.setProperty("xmpp.auth.anonymous", JiveGlobals.getXMLProperty("autosetup.xmpp.auth.anonymous", "false"));
@@ -464,10 +491,12 @@ public class XMPPServer {
 
     private void finalSetupSteps() {
         for (String propName : JiveGlobals.getXMLPropertyNames()) {
-            if (JiveGlobals.getProperty(propName) == null) {
-                JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+            if (!XML_ONLY_PROPERTIES.contains(propName)) {
+                if (JiveGlobals.getProperty(propName) == null) {
+                    JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+                }
+                JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
             }
-            JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
         }
         // Set default SASL SCRAM-SHA-1 iteration count
         JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));

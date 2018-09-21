@@ -8,7 +8,7 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>monitoring</artifactId>
-    <version>1.7.0</version>
+    <version>1.7.0-SNAPSHOT</version>
     <name>Monitoring Plugin</name>
     <description>Monitors conversations and statistics of the server.</description>
 

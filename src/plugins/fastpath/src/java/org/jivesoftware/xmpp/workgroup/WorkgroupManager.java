@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.fastpath.commands.CreateWorkgroup;
+import org.jivesoftware.openfire.fastpath.commands.UpdateWorkgroup;
 import org.jivesoftware.openfire.fastpath.commands.DeleteWorkgroup;
 import org.jivesoftware.openfire.fastpath.events.EmailTranscriptEvent;
 import org.jivesoftware.openfire.fastpath.settings.chat.ChatSettingsManager;
@@ -85,7 +86,7 @@ import org.xmpp.packet.Presence;
 public class WorkgroupManager implements Component {
 
     private static final Logger Log = LoggerFactory.getLogger(WorkgroupManager.class);
-    
+
     private static final String LOAD_WORKGROUPS =
         "SELECT workgroupID FROM fpWorkgroup";
     private static final String ADD_WORKGROUP =
@@ -227,6 +228,7 @@ public class WorkgroupManager implements Component {
 
         // Register ad-hoc commands
         commandManager.addCommand(new CreateWorkgroup());
+        commandManager.addCommand(new UpdateWorkgroup());
         commandManager.addCommand(new DeleteWorkgroup());
     }
 

@@ -526,7 +526,7 @@ else if (deleted) { %>
                     </td>
                     <td>
                         <select name="editVariable">
-                            <% for (FormField field : dataForm.getFields()) { %>
+                            <% if (dataForm != null) for (FormField field : dataForm.getFields()) { %>
                             <option value="<%= field.getVariable()%>" <%= field.getVariable().equals(variable) ? "selected" : ""%>><%= field.getVariable()%></option>
                             <% } %>
 
@@ -600,7 +600,7 @@ else if (deleted) { %>
                             </td>
                             <td>
                                 <select name="variable" onchange="updateForm(this);">
-                                    <% for (FormField field : dataForm.getFields()) {
+                                    <% if (dataForm != null) for (FormField field : dataForm.getFields()) {
                                             if(formElement == null){
                                                 formElement = field.getVariable();
                                             }
@@ -619,7 +619,7 @@ else if (deleted) { %>
                             <%
                                 for (org.jivesoftware.openfire.fastpath.dataforms.FormElement ele : form
                                         .getFormElements()) {
-                                    if (formElement.equals(ele.getVariable())) {
+                                    if (formElement != null && formElement.equals(ele.getVariable())) {
                                         out.println(FormUtils.createAnswers(ele, "value"));
                                     }
                                 }

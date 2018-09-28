@@ -970,6 +970,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean removeComponentRoute(JID route) {
+        return removeComponentRoute(route, server.getNodeID());
+    }
+
+    /**
+     * Remove local or remote component route.
+     *
+     * @param route the route of the component to be removed.
+     * @param nodeID The node to which the to-be-removed component was connected to.
+     */
+    private boolean removeComponentRoute(JID route, NodeID nodeID) {
         String address = route.getDomain();
         boolean removed = false;
         Lock lock = CacheFactory.getLock(address, componentsCache);
@@ -977,7 +987,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);
             if (nodes != null) {
-                removed = nodes.remove(server.getNodeID());
+                removed = nodes.remove(nodeID);
                 if (nodes.isEmpty()) {
                     componentsCache.remove(address);
                 }
@@ -1110,15 +1120,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
         try {
             componentLock.lock();
-            List<String> remoteComponents = new ArrayList<>();
+            Map<String, NodeID> remoteComponents = new HashMap<>();
             NodeID nodeIDInstance = NodeID.getInstance( nodeID );
             for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
-                if (entry.getValue().remove(nodeIDInstance) && entry.getValue().size() == 0) {
-                    remoteComponents.add(entry.getKey());
+                if (entry.getValue().contains(nodeIDInstance)) {
+                    remoteComponents.put(entry.getKey(), nodeIDInstance);
                 }
             }
-            for (String jid : remoteComponents) {
-                removeComponentRoute(new JID(jid));
+            for (Map.Entry<String, NodeID> entry : remoteComponents.entrySet()) {
+                removeComponentRoute(new JID(entry.getKey()), entry.getValue());
             }
         }
         finally {

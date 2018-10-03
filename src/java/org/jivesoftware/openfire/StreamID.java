@@ -16,12 +16,14 @@
 
 package org.jivesoftware.openfire;
 
+import java.io.Serializable;
+
 /**
  * A unique identifier for a stream.
  *
  * @author Iain Shigeoka
  */
-public interface StreamID {
+public interface StreamID extends Serializable {
 
     /**
      * Obtain a unique identifier for easily identifying this stream in

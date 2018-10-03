@@ -108,12 +108,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * Key: sender, Value: list of DirectedPresences
      */
-    private Cache<String, Collection<DirectedPresence>> directedPresencesCache;
+    private Cache<String, ConcurrentLinkedQueue<DirectedPresence>> directedPresencesCache;
     /**
      * Same as the directedPresencesCache but only keeps directed presences sent from
      * users connected to this JVM.
      */
-    private Map<String, Collection<DirectedPresence>> localDirectedPresences;
+    private Map<String, ConcurrentLinkedQueue<DirectedPresence>> localDirectedPresences;
 
     private RoutingTable routingTable;
     private RosterManager rosterManager;
@@ -383,7 +383,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 Lock lock = CacheFactory.getLock(sender, directedPresencesCache);
                 try {
                     lock.lock();
-                    Collection<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
+                    ConcurrentLinkedQueue<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
                     if (Presence.Type.unavailable.equals(update.getType())) {
                         if (directedPresences != null) {
                             // It's a directed unavailable presence
@@ -555,7 +555,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // Populate directedPresencesCache with local content since when not in a cluster
         // we could still send directed presences to entities that when connected to a cluster
         // they will be replicated. An example would be MUC rooms.
-        for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+        for (Map.Entry<String, ConcurrentLinkedQueue<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
             if (entry.getValue().isEmpty()) {
                 Log.warn("PresenceUpdateHandler - Skipping empty directed presences when joining cluster for sender: " +
                         entry.getKey());
@@ -586,7 +586,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Populate directedPresencesCache with local content
-            for (Map.Entry<String, Collection<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
+            for (Map.Entry<String, ConcurrentLinkedQueue<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
                 if (entry.getValue().isEmpty()) {
                     Log.warn(
                             "PresenceUpdateHandler - Skipping empty directed presences when leaving cluster for sender: " +

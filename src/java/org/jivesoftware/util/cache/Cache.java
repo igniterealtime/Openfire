@@ -16,6 +16,8 @@
 
 package org.jivesoftware.util.cache;
 
+import java.io.Serializable;
+
 /**
  * General purpose cache. It stores objects associated with unique keys in
  * memory for fast access. All keys and values added to the cache must
@@ -42,7 +44,7 @@ package org.jivesoftware.util.cache;
  *
  * @see Cacheable
  */
-public interface Cache<K,V> extends java.util.Map<K,V> {
+public interface Cache<K extends Serializable, V extends Serializable> extends java.util.Map<K, V> {
 
     /**
      * Returns the name of the cache.

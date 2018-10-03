@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -89,7 +90,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     private final Cache<String, ClientRoute> C2SCache;
     private final Cache<String, ClientRoute> anonymousC2SCache;
     private final Cache<DomainPair, byte[]> S2SCache;
-    private final Cache<String, Set<NodeID>> componentsCache;
+    private final Cache<String, HashSet<NodeID>> componentsCache;
 
     /**
      * Caches stored in SessionManager
@@ -102,7 +103,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     /**
      * Caches stored in PresenceUpdateHandler
      */
-    private final Cache<String, Collection<DirectedPresence>> directedPresencesCache;
+    private final Cache<String, ConcurrentLinkedQueue<DirectedPresence>> directedPresencesCache;
 
     private final Map<NodeID, Set<String>[]> nodeSessions = new ConcurrentHashMap<>();
     private final Map<NodeID, Set<DomainPair>> nodeRoutes = new ConcurrentHashMap<>();
@@ -309,7 +310,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
                 Lock lock = CacheFactory.getLock(address, componentsCache);
                 try {
                     lock.lock();
-                    Set<NodeID> nodes = componentsCache.get(address);
+                    HashSet<NodeID> nodes = componentsCache.get(address);
                     if (nodes != null) {
                         nodes.remove(key);
                         if (nodes.isEmpty()) {
@@ -681,7 +682,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             joinCluster();
         } else {
             nodePresences.put(NodeID.getInstance(event.getMember().getUuid().getBytes(StandardCharsets.UTF_8)),
-                    new ConcurrentHashMap<String, Collection<String>>());
+                new ConcurrentHashMap<>());
             // Trigger event that a new node has joined the cluster
             ClusterManager.fireJoinedCluster(event.getMember().getUuid().getBytes(StandardCharsets.UTF_8), true);
         }

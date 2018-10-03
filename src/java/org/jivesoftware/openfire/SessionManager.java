@@ -115,7 +115,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * jivesoftware.com and the other socket to conference.jivesoftware.com).
      * Key: remote hostname (domain/subdomain), Value: list of stream IDs that identify each socket.
      */
-    private Cache<String, List<StreamID>> hostnameSessionsCache;
+    private Cache<String, ArrayList<StreamID>> hostnameSessionsCache;
 
     /**
      * Cache (unlimited, never expire) that holds domains, subdomains and virtual
@@ -129,7 +129,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * will have access to this clustered cache even in the case of this node going
      * down.
      */
-    private Cache<StreamID, Set<String>> validatedDomainsCache;
+    private Cache<StreamID, HashSet<String>> validatedDomainsCache;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
@@ -466,7 +466,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
-            List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+            ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs == null) {
                 streamIDs = new ArrayList<>();
             }
@@ -480,7 +480,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+            HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
                 validatedDomains = new HashSet<>();
             }
@@ -510,7 +510,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
-            List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+            ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs != null) {
                 streamIDs.remove(streamID);
                 if (streamIDs.isEmpty()) {
@@ -528,7 +528,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+            HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
                 validatedDomains = new HashSet<>();
             }
@@ -1653,7 +1653,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                 Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
                 try {
                     lock.lock();
-                    List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+                    ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
                     if (streamIDs == null) {
                         streamIDs = new ArrayList<>();
                     }
@@ -1667,7 +1667,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                 lock = CacheFactory.getLock(streamID, validatedDomainsCache);
                 try {
                     lock.lock();
-                    Set<String> validatedDomains = validatedDomainsCache.get(streamID);
+                    HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
                     if (validatedDomains == null) {
                         validatedDomains = new HashSet<>();
                     }

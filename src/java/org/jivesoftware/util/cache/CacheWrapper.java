@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.util.cache;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,7 @@ import java.util.Set;
  * Cache implementation to switch from clustered to local, etc.
  *
  */
-public class CacheWrapper<K, V> implements Cache<K, V> {
+public class CacheWrapper<K extends Serializable, V extends Serializable> implements Cache<K, V> {
 
     private Cache<K, V> cache;
 

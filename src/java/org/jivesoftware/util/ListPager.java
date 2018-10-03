@@ -5,6 +5,10 @@ import org.apache.commons.text.StringEscapeUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -91,7 +95,7 @@ public class ListPager<T> {
         this.filteredItemCount = filteredItems.size();
         this.pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, initialPageSize), 1, PAGE_SIZES[PAGE_SIZES.length - 1]);
         // Even with no filtered items, we want to display at least one page
-        this.totalPages = Math.max(1, (int) Math.ceil(filteredItemCount / pageSize));
+        this.totalPages = Math.max(1, (int) Math.ceil((double)filteredItemCount / (double)pageSize));
         // Bound the current page between 1 and the total number of pages
         this.currentPage = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1), 1, totalPages);
         this.firstItemOnPage = filteredItemCount == 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -102,7 +106,7 @@ public class ListPager<T> {
         webManager.setRowsPerPage(requestURI, pageSize);
     }
 
-    private int bound(final int value, final int minValue, final int maxValue) {
+    private static int bound(final int value, final int minValue, final int maxValue) {
         return Math.min(maxValue, Math.max(minValue, value));
     }
 
@@ -132,6 +136,13 @@ public class ListPager<T> {
      */
     public int getCurrentPageNumber() {
         return currentPage;
+    }
+
+    /**
+     * @return the maximum number of items on the page
+     */
+    public int getPageSize() {
+        return pageSize;
     }
 
     /**
@@ -171,7 +182,7 @@ public class ListPager<T> {
         for (int optionSize : PAGE_SIZES) {
             sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
         }
-        sb.append("</select");
+        sb.append("</select>");
         return sb.toString();
     }
 
@@ -223,19 +234,63 @@ public class ListPager<T> {
     }
 
     /**
-     * @return a string with an HTML form containing hidden fields, used for navigating between pages
+     * @return the list of hidden fields required to maintain the current list pager state
      */
-    public String getJumpToPageForm() {
+    public String getHiddenFields() {
         final StringBuilder sb = new StringBuilder("\n")
-            .append(String.format("<form id='%s'>\n", PAGINATION_FORM_ID))
             .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize))
             .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
         for (final String additionalFormField : additionalFormFields) {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "");
             sb.append(String.format("\t<input type='hidden' name='%s' value='%s'%s>\n", additionalFormField, StringEscapeUtils.escapeHtml4(formFieldValue), formFieldValue.isEmpty() ? " disabled" : ""));
         }
-        sb.append("</form>\n");
         return sb.toString();
+    }
+
+    /**
+     * @param request The request to retrieve the values from
+     * @param prefix The first char of the query string - either `?` or `&`
+     * @param additionalFormFields 0 or more form field names to include in requests for other pages
+     * @return a query string required to maintain the current list pager state
+     */
+    public static String getQueryString(final HttpServletRequest request, final char prefix, final String... additionalFormFields) {
+        final StringBuilder sb = new StringBuilder("");
+        char conjunction = prefix;
+        int currentPage = ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1);
+        if (currentPage > 1) {
+            sb.append(conjunction)
+                .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
+            conjunction = '&';
+        }
+        int pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, DEFAULT_PAGE_SIZE), 1, PAGE_SIZES[PAGE_SIZES.length - 1]);
+        if (pageSize != DEFAULT_PAGE_SIZE) {
+            sb.append(String.format("%s=%d", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize));
+            conjunction = '&';
+        }
+        for (final String additionalFormField : additionalFormFields) {
+            final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "").trim();
+            if(!formFieldValue.isEmpty()) {
+                String encodedValue;
+                try {
+                    encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8.name());
+                } catch (final UnsupportedEncodingException e) {
+                   encodedValue = formFieldValue;
+                }
+                sb.append(conjunction).append(String.format("%s=%s", additionalFormField, encodedValue));
+                conjunction = '&';
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return a string with an HTML form containing hidden fields, used for navigating between pages
+     */
+    public String getJumpToPageForm() {
+        return "\n" +
+            String.format("<form id='%s'>\n", PAGINATION_FORM_ID) +
+            getHiddenFields() +
+            "</form>\n";
     }
 
     /**
@@ -276,7 +331,7 @@ public class ListPager<T> {
             .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
             .append(String.format("\t\tfor(var i = 0; i < %d; i++) {\n", additionalFormFields.length))
             .append("\t\t\tvar field = document.getElementById(additionalFormFields[i]);\n")
-            .append("\t\t\tif (field !== null) {")
+            .append("\t\t\tif (field !== null) {\n")
             .append("\t\t\t\tvar formField = formObject[additionalFormFields[i]];\n")
             .append("\t\t\t\tif (typeof field !== 'object' || field.value === '') {\n")
             .append("\t\t\t\t\tformField.disabled = true;\n")
@@ -291,10 +346,11 @@ public class ListPager<T> {
             .append("\t}\n")
             .append("\n");
 
-        // Add mechanisms to auto-submit the form when hitting enter (two mechanisms for different browsers
+        // Add mechanisms to auto-submit the form when hitting enter (two mechanisms for different browsers)
         sb.append("\tfunction inputFieldOnKeyDownEventListener(e) {\n")
             .append("\t\tif (e.keyCode === 13) {\n")
             .append("\t\t\tsubmitForm();\n")
+            .append("\t\t\treturn false;\n")
             .append("\t\t}\n")
             .append("\t}\n")
             .append("\n");
@@ -302,6 +358,7 @@ public class ListPager<T> {
         sb.append("\tfunction inputFieldOnInputEventListener() {\n")
             .append("\t\tif (this.value === '') {\n")
             .append("\t\t\tsubmitFilterForm();\n")
+            .append("\t\t\treturn false;\n")
             .append("\t\t}\n")
             .append("\t};\n")
             .append("\n");

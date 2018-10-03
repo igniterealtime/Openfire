@@ -92,7 +92,7 @@ public class ListPagerTest {
 
         assertThat(listPager.isFiltered(), is(true));
         assertThat(listPager.getFilteredItemCount(), is(12));
-        assertThat(listPager.getTotalPages(), is(2));
+        assertThat(listPager.getTotalPages(), is(3));
         assertThat(listPager.getTotalItemCount(), is(25));
         assertThat(listPager.getItemsOnCurrentPage(), contains(2, 4, 6, 8, 10));
         assertThat(listPager.getFirstItemNumberOnPage(), is(1));
@@ -100,12 +100,12 @@ public class ListPagerTest {
     }
 
     @Test
-    public void name() {
+    public void willRoundUp() {
 
-        doReturn("26").when(request).getParameter("listPagerPageSize");
+        doReturn("24").when(request).getParameter("listPagerPageSize");
 
         final ListPager<Integer> listPager = new ListPager<>(request, response, LIST_OF_25);
 
-        System.out.println(listPager.getPageLinks());
+        assertThat(listPager.getTotalPages(), is(2));
     }
 }

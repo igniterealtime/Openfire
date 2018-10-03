@@ -1003,10 +1003,10 @@ public class ConversationManager implements Startable, ComponentEventListener{
         }
 
         // Check all other cluster nodes.
-        final Collection<Object> objects = CacheFactory.doSynchronousClusterTask( new HasWrittenAllDataTask( date ), false );
-        for ( final Object object : objects )
+        final Collection<Boolean> objects = CacheFactory.doSynchronousClusterTask( new HasWrittenAllDataTask( date ), false );
+        for ( final Boolean object : objects )
         {
-            if ( !( (Boolean) object ) ) {
+            if ( !object) {
                 return false;
             }
         }

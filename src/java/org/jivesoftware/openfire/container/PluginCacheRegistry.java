@@ -81,10 +81,10 @@ public class PluginCacheRegistry {
             for (CacheInfo info : caches) {
                 extraCacheMappings.remove(info.getCacheName());
                 // Check if other cluster nodes have this plugin installed
-                Collection<Object> answers =
+                Collection<Boolean> answers =
                         CacheFactory.doSynchronousClusterTask(new IsPluginInstalledTask(pluginName), false);
-                for (Object installed : answers) {
-                    if ((Boolean) installed) {
+                for (Boolean installed : answers) {
+                    if (installed) {
                         return;
                     }
                 }

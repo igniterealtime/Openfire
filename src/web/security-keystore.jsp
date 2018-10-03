@@ -24,7 +24,6 @@
 
 <% // Get parameters:
     boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
-    boolean generateFull      = ParamUtils.getBooleanParameter(request, "generateFull");
     boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
     boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
     final String alias              = ParamUtils.getParameter( request, "alias" );
@@ -34,10 +33,9 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (generate | generateFull | delete | importReply) {
+    if (generate |  delete | importReply) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             generate = false;
-            generateFull = false;
             delete = false;
             importReply = false;
             errors.put("csrf", "CSRF Failure!");
@@ -74,10 +72,8 @@
         final Map<String, X509Certificate> certificates = identityStore.getAllCertificates();
         pageContext.setAttribute( "certificates", certificates );
 
-        pageContext.setAttribute( "validRSACert", identityStore.containsDomainCertificate( "RSA" ) );
-        pageContext.setAttribute( "validDSACert", identityStore.containsDomainCertificate( "DSA" ) );
-        pageContext.setAttribute( "allIDRSACert", identityStore.containsAllIdentityCertificate( "RSA" ) );
-        pageContext.setAttribute( "allIDDSACert", identityStore.containsAllIdentityCertificate( "DSA" ) );
+        pageContext.setAttribute( "validCert", identityStore.containsAllIdentityCertificate() );
+        pageContext.setAttribute( "allIDCert", identityStore.containsAllIdentityCertificate() );
 
         if ( delete )
         {
@@ -109,16 +105,16 @@
 
     if (generate) {
         try {
-            if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate("DSA")) {
-                identityStore.addSelfSignedDomainCertificate("DSA");
+            if (!identityStore.containsAllIdentityCertificate()) {
+                identityStore.addSelfSignedDomainCertificate();
+
+                // Save new certificates into the key store
+                identityStore.persist();
+
+                // Log the event
+                webManager.logEvent("generated SSL self-signed cert", null);
             }
-            if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate("RSA")) {
-                identityStore.addSelfSignedDomainCertificate("RSA");
-            }
-            // Save new certificates into the key store
-            identityStore.persist();
-            // Log the event
-            webManager.logEvent("generated SSL self-signed certs", null);
+
             response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
             return;
         } catch (Exception e) {
@@ -127,25 +123,6 @@
         }
     }
 
-    if (generateFull) {
-        try {
-            if (!identityStore.containsAllIdentityCertificate("DSA")) {
-                identityStore.addSelfSignedDomainCertificate("DSA");
-            }
-            if (!identityStore.containsAllIdentityCertificate("RSA")) {
-                identityStore.addSelfSignedDomainCertificate("RSA");
-            }
-            // Save new certificates into the key store
-            identityStore.persist();
-            // Log the event
-            webManager.logEvent("generated SSL self-signed certs", null);
-            response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
-            return;
-        } catch (Exception e) {
-            e.printStackTrace();
-            errors.put("generate", e.getMessage());
-        }
-    }
     if (importReply) {
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
@@ -189,9 +166,6 @@
         <c:forEach var="err" items="${errors}">
             <admin:infobox type="error">
                 <c:choose>
-                    <c:when test="${err.key eq 'ioerror'}">
-                        <fmt:message key="ssl.certificates.keystore.io_error"/>
-                    </c:when>
                     <c:when test="${err.key eq 'importReply'}">
                         <fmt:message key="ssl.certificates.keystore.error_importing-reply"/>
                     </c:when>
@@ -206,7 +180,7 @@
         </c:forEach>
 
         <c:choose>
-            <c:when test="${not validDSACert or not validRSACert}">
+            <c:when test="${not validCert}">
                 <admin:infobox type="warning">
                     <fmt:message key="ssl.certificates.keystore.no_installed">
                         <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
@@ -216,10 +190,10 @@
                     </fmt:message>
                 </admin:infobox>
             </c:when>
-            <c:when test="${not allIDDSACert or not allIDRSACert}">
+            <c:when test="${not allIDCert}">
                 <admin:infobox type="info">
                     <fmt:message key="ssl.certificates.keystore.no_complete_installed">
-                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generateFull=true&connectionType=${connectionType}'>"/>
+                        <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
                         <fmt:param value="</a>"/>
                         <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                         <fmt:param value="</a>"/>

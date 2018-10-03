@@ -508,7 +508,7 @@ public class XMPPServer {
             certificateStoreManager.initialize( this );
             certificateStoreManager.start();
             final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
-            identityStore.ensureDomainCertificates( "DSA", "RSA" );
+            identityStore.ensureDomainCertificate();
 
         } catch (Exception e) {
             logger.error("Error generating self-signed certificates", e);

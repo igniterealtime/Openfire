@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.keystore;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Certificate stores are configured using a defined set of properties. This is a wrapper class for all of them.
@@ -15,6 +16,7 @@ public class CertificateStoreConfiguration
     protected final String type;
     protected final File file;
     protected final char[] password;
+    protected final File backupDirectory;
 
     /**
      * Creates a new instance.
@@ -23,7 +25,7 @@ public class CertificateStoreConfiguration
      * @param file  The file-system based representation of the store (cannot be null).
      * @param password the password used to check the integrity of the store, the password used to unlock the store, or null.
      */
-    public CertificateStoreConfiguration( String type, File file, char[] password )
+    public CertificateStoreConfiguration( String type, File file, char[] password, File backupDirectory )
     {
         if ( type == null || type.isEmpty() )
         {
@@ -33,9 +35,14 @@ public class CertificateStoreConfiguration
         {
             throw new IllegalArgumentException( "Argument 'file' cannot be null." );
         }
+        if ( backupDirectory == null )
+        {
+            throw new IllegalArgumentException( "Argument 'backupDirectory' cannot be null." );
+        }
         this.type = type;
         this.file = file;
         this.password = password;
+        this.backupDirectory = backupDirectory;
     }
 
     public String getType()
@@ -53,38 +60,28 @@ public class CertificateStoreConfiguration
         return password;
     }
 
-    @Override
-    public boolean equals( Object o )
+    public File getBackupDirectory()
     {
-        if ( this == o )
-        {
-            return true;
-        }
-        if ( !( o instanceof CertificateStoreConfiguration ) )
-        {
-            return false;
-        }
+        return backupDirectory;
+    }
 
-        CertificateStoreConfiguration that = (CertificateStoreConfiguration) o;
-
-        if ( !type.equals( that.type ) )
-        {
-            return false;
-        }
-        if ( !file.equals( that.file ) )
-        {
-            return false;
-        }
-        return Arrays.equals( password, that.password );
-
+    @Override
+    public boolean equals( final Object o )
+    {
+        if ( this == o ) { return true; }
+        if ( o == null || getClass() != o.getClass() ) { return false; }
+        final CertificateStoreConfiguration that = (CertificateStoreConfiguration) o;
+        return Objects.equals( type, that.type ) &&
+            Objects.equals( file, that.file ) &&
+            Arrays.equals( password, that.password ) &&
+            Objects.equals( backupDirectory, that.backupDirectory );
     }
 
     @Override
     public int hashCode()
     {
-        int result = type.hashCode();
-        result = 31 * result + file.hashCode();
-        result = 31 * result + ( password != null ? Arrays.hashCode( password ) : 0 );
+        int result = Objects.hash( type, file, backupDirectory );
+        result = 31 * result + Arrays.hashCode( password );
         return result;
     }
 
@@ -95,6 +92,7 @@ public class CertificateStoreConfiguration
                 "type='" + type + '\'' +
                 ", file=" + file +
                 ", password hashcode=" + password.hashCode() + // java.lang.Array.hashCode inherits from Object. As it is a reference, it should be safe to log and useful enough to compare against other passwords.
+                ", backupDirectory=" + backupDirectory +
                 '}';
     }
 }

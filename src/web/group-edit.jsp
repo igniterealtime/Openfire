@@ -26,11 +26,13 @@
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.jivesoftware.util.ListPager" %>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
+<%@ page import="java.util.function.Predicate" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -127,7 +129,8 @@
                 }
 
                 // Successful, so redirect
-                response.sendRedirect( "group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode( group.getName(), "UTF-8" ) );
+                response.sendRedirect( "group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode( group.getName(), "UTF-8" )
+                    + ListPager.getQueryString(request, '&', "searchName") );
                 return;
             }
             catch ( Exception e )
@@ -185,7 +188,8 @@
             }
 
             // Get admin list and compare it the admin posted list.
-            response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
+            response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true"
+                + ListPager.getQueryString(request, '&', "searchName") );
             return;
         }
     }
@@ -224,7 +228,8 @@
         }
 
         // Get admin list and compare it the admin posted list.
-        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true"
+            + ListPager.getQueryString(request, '&', "searchName") );
         return;
     }
 
@@ -284,7 +289,8 @@
 
             if ( memberAdded )
             {
-                response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&success=true");
+                response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&success=true"
+                    + ListPager.getQueryString(request, '&', "searchName") );
                 return;
             }
         }
@@ -297,7 +303,8 @@
             group.getMembers().remove(member);
             group.getAdmins().remove(member);
         }
-        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true");
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&deletesuccess=true"
+            + ListPager.getQueryString(request, '&', "searchName") );
         return;
     }
 
@@ -333,7 +340,14 @@
     allMembers.addAll( group.getAdmins() );
     allMembers.addAll( group.getMembers() );
     Collections.sort( allMembers );
-    pageContext.setAttribute( "allMembers", allMembers );
+    Predicate<JID> filter = jid -> true;
+    final String searchName = ParamUtils.getStringParameter(request, "searchName", "").trim();
+    if(!searchName.isEmpty()) {
+        filter = filter.and(jid -> StringUtils.containsIgnoringCase(jid.toString(), searchName));
+    }
+    final ListPager<JID> listPager = new ListPager<>(request, response, allMembers, filter, "group", "searchName");
+    pageContext.setAttribute( "listPager", listPager );
+    pageContext.setAttribute("searchName", searchName);
 %>
 
 <html>
@@ -392,6 +406,7 @@
     <form name="groupdetails">
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
+        ${listPager.hiddenFields}
 
         <c:if test="${webManager.groupManager.readOnly}">
             <admin:infobox type="info"><fmt:message key="group.read_only"/></admin:infobox>
@@ -456,6 +471,7 @@
     <form name="groupshare">
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
+        ${listPager.hiddenFields}
 
         <p>
             <fmt:message key="group.edit.share_content" />
@@ -560,6 +576,7 @@
             <input type="hidden" name="csrf" value="${csrf}">
             <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
             <input type="hidden" name="addMember" value="addMember"/>
+            ${listPager.hiddenFields}
 
             <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
                 <tr>
@@ -581,9 +598,21 @@
 
     </c:if>
 
+    <fmt:message key="user.summary.total_user" />: <b>${listPager.totalItemCount}</b>
+    <c:if test="${listPager.filtered}">
+        <fmt:message key="user.summary.filtered_users_count" />: <c:out value="${listPager.filteredItemCount}"/>
+    </c:if>
+    <c:if test="${listPager.totalPages > 1}">
+        -- <fmt:message key="global.showing" /> <c:out value="${listPager.firstItemNumberOnPage}"/>-<c:out value="${listPager.lastItemNumberOnPage}"/>
+        <p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]
+    </c:if>
+    -- <fmt:message key="user.summary.users_per_page" />:
+    ${listPager.pageSizeSelection}
+
     <form method="post" name="main">
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
+        ${listPager.hiddenFields}
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="80%">
             <tr>
                 <th>&nbsp;</th>
@@ -596,7 +625,7 @@
 
             <c:set var="showRemoteJIDsWarning" value="false"/>
 
-            <c:if test="${empty allMembers}">
+            <c:if test="${listPager.totalItemCount == 0}">
                 <tr>
                     <td align="center" colspan="4">
                         <br>
@@ -606,7 +635,29 @@
                     </td>
                 </tr>
             </c:if>
-            <c:forEach var="member" items="${allMembers}">
+            <c:if test="${listPager.totalItemCount > 0}">
+                <tr>
+                    <th></th>
+                    <th nowrap>
+                        <input type="search"
+                               id="searchName"
+                               size="20"
+                               value="<c:out value="${searchName}"/>"/>
+                        <img src="images/search-16x16.png"
+                             width="16" height="16"
+                             alt="search" title="search"
+                             style="vertical-align: middle;"
+                             onclick="submitForm();"
+                        >
+                    </th>
+                    <c:if test="${not webManager.groupManager.readOnly}">
+                        <th></th>
+                        <th></th>
+                    </c:if>
+                </tr>
+            </c:if>
+            <%--@elvariable id="member" type="org.xmpp.packet.JID"--%>
+            <c:forEach var="member" items="${listPager.itemsOnCurrentPage}">
                 <tr>
                     <td width="1%">
 
@@ -666,7 +717,7 @@
                 </tr>
             </c:forEach>
 
-            <c:if test="${ ( not empty allMembers ) and (not webManager.groupManager.readOnly)}">
+            <c:if test="${ ( listPager.totalItemCount != 0 ) and (not webManager.groupManager.readOnly)}">
                 <tr>
                     <td colspan="2">&nbsp;</td>
                     <td align="center">
@@ -684,9 +735,15 @@
         </c:if>
 
     </form>
+    <c:if test="${listPager.totalPages > 1}">
+        <p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
+    </c:if>
+
+    ${listPager.jumpToPageForm}
 
     <script type="text/javascript">
-        document.f.username.focus();
+        ${listPager.pageFunctions}
+        document.groupmembers["username"].focus();
     </script>
 
 </admin:contentBox>

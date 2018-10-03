@@ -51,10 +51,9 @@ public class NodeRuntimeStats {
     public static Map<NodeID, NodeInfo> getNodeInfo() {
 
         // Run cluster-wide stats query
-        Collection<Object> taskResult = CacheFactory.doSynchronousClusterTask(new NodeInfoTask(), true);
-        Map<NodeID, NodeInfo> result = new HashMap<NodeID, NodeInfo>();
-        for (Object tr : taskResult) {
-            NodeInfo nodeInfo = (NodeInfo) tr;
+        Collection<NodeInfo> taskResult = CacheFactory.doSynchronousClusterTask(new NodeInfoTask(), true);
+        Map<NodeID, NodeInfo> result = new HashMap<>();
+        for (NodeInfo nodeInfo : taskResult) {
             NodeID nodeId = NodeID.getInstance(nodeInfo.getNodeId());
             result.put(nodeId, nodeInfo);
         }
@@ -86,10 +85,10 @@ public class NodeRuntimeStats {
         }
 
         public void writeExternal(ObjectOutput out) throws IOException {
-            ExternalizableUtil.getInstance().writeSerializable(out, (NodeInfo) result);
+            ExternalizableUtil.getInstance().writeSerializable(out, result);
         }
         
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        public void readExternal(ObjectInput in) throws IOException {
             result = (NodeInfo) ExternalizableUtil.getInstance().readSerializable(in);
         }
 

@@ -16,6 +16,7 @@
 package org.igniterealtime.openfire.plugins.certificatemanager;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Automatically installs a private key with corresponding certificate chain in Openfire's identity store, by looking
@@ -56,6 +58,12 @@ public class DirectoryWatcher
     public static final boolean PROPERTY_REPLACE_DEFAULT = true;
     public static final String PROPERTY_DELETE = "certificate-manager.directory-watcher.delete";
     public static final boolean PROPERTY_DELETE_DEFAULT = false;
+    public static final String PROPERTY_CHAIN_MIN_LENGTH = "certificate-manager.chain-min-length";
+    public static final int PROPERTY_CHAIN_MIN_LENGTH_DEFAULT = 2;
+    public static final String PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS = "certificate-manager.directory-watcher.file-changes.grace-period-ms";
+    public static final int PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT = 60000;
+    public static final String PROPERTY_PRIVATEKEY_PASSPHRASE = "certificate-manager.privatekey.password";
+    public static final String PROPERTY_PRIVATEKEY_PASSPHRASE_DEFAULT = null;
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -98,14 +106,14 @@ public class DirectoryWatcher
             @Override
             public void run()
             {
+                Path lastChangedCertificateChain = null;
+                long lastChangeCertificateChain = 0;
+
+                Path lastChangedPrivateKey = null;
+                long lastChangePrivateKey = 0;
+
                 while ( !executorService.isShutdown() )
                 {
-                    Path lastChangedCertificateChain = null;
-                    long lastChangeCertificateChain = 0;
-
-                    Path lastChangedPrivateKey = null;
-                    long lastChangePrivateKey = 0;
-
                     final WatchKey key;
                     try
                     {
@@ -121,6 +129,10 @@ public class DirectoryWatcher
                     {
                         continue;
                     }
+
+                    final long gracePeriod = JiveGlobals.getLongProperty( PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS, PROPERTY_FILE_CHANGES_GRACE_PERIOD_MS_DEFAULT );
+
+                    final String passPhrase = JiveGlobals.getProperty( PROPERTY_PRIVATEKEY_PASSPHRASE, PROPERTY_PRIVATEKEY_PASSPHRASE_DEFAULT );
 
                     for ( final WatchEvent<?> event : key.pollEvents() )
                     {
@@ -139,26 +151,35 @@ public class DirectoryWatcher
                         final File file = changedFile.toFile();
                         if ( isCertificateChain( file ) )
                         {
-                            Log.info( "Found a certificate chain file in the hot-deploy directory." );
+                            Log.info( "Found a certificate chain file in the hot-deploy directory: {}", file );
                             lastChangeCertificateChain = System.currentTimeMillis();
                             lastChangedCertificateChain = changedFile;
                         }
 
-                        if ( isPrivateKey( file ) )
+                        if ( isPrivateKey( file, passPhrase ) )
                         {
-                            Log.info( "Found a private key file in the hot-deploy directory." );
+                            Log.info( "Found a private key file in the hot-deploy directory: {}", file );
                             lastChangePrivateKey = System.currentTimeMillis();
                             lastChangedPrivateKey = changedFile;
                         }
 
                         // If both the private key and certificate chain files were updated, reload them.
-                        if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < 60000 )
+                        if ( lastChangeCertificateChain > 0 && Math.abs( lastChangeCertificateChain - lastChangePrivateKey ) < gracePeriod )
                         {
-                            Log.info( "Files containing both a private key as well as a certificate chain were recently added to the hot-deploy directory. Attempting to install them..." );
+                            // Prevent another attempt
+                            lastChangeCertificateChain = 0;
+                            lastChangePrivateKey = 0;
+
+                            Log.info( "Files containing both a private key ({}) as well as a certificate chain ({}) were recently added to the hot-deploy directory. Attempting to install them...", lastChangedPrivateKey, lastChangedCertificateChain );
                             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S );
 
                             try
                             {
+                                // OF-1608: Before applying changes, create a backup.
+                                final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+                                final Collection<Path> backupPaths = certificateStoreManager.backup();
+                                SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "Created backup of key store files.", String.join( System.lineSeparator(), backupPaths.stream().map( Path::toString ).collect( Collectors.toList() ) ) );
+
                                 final String certsChain = new String( Files.readAllBytes( lastChangedCertificateChain ) );
                                 final String privateKey = new String( Files.readAllBytes( lastChangedPrivateKey ) );
 
@@ -168,9 +189,9 @@ public class DirectoryWatcher
 //                                }
 //                                else
 //                                {
-                                    identityStore.installCertificate( certsChain, privateKey, null );
+                                    identityStore.installCertificate( certsChain, privateKey, passPhrase );
 //                                }
-                                SecurityAuditManager.getInstance().logEvent( "", "hot-deployed private key and certificate chain.", "A private key and coresponding certificate chain were automatically installed." );
+                                SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "hot-deployed private key and certificate chain.", "A private key and corresponding certificate chain were automatically installed. Files used: " + lastChangedPrivateKey + " and: " + lastChangedCertificateChain );
 
                                 Log.info( "Hot-deployment of certificate and private key was successful." );
 
@@ -178,12 +199,12 @@ public class DirectoryWatcher
                                 {
                                     if ( !lastChangedCertificateChain.toFile().delete() )
                                     {
-                                        Log.info( "Unable to delete the hot-deployed certificate chain file." );
+                                        Log.info( "Unable to delete the hot-deployed certificate chain file: {}", lastChangedCertificateChain );
                                     }
 
                                     if ( !lastChangedPrivateKey.toFile().delete() )
                                     {
-                                        Log.info( "Unable to delete the hot-deployed private key file." );
+                                        Log.info( "Unable to delete the hot-deployed private key file: {}", lastChangedPrivateKey );
                                     }
                                 }
 
@@ -193,9 +214,6 @@ public class DirectoryWatcher
                             catch ( Exception e )
                             {
                                 Log.warn( "Unable to hot-deploy certificate and private key.", e );
-                                // Prevent another attempt
-                                lastChangeCertificateChain = 0;
-                                lastChangePrivateKey = 0;
                             }
                         }
                     }
@@ -207,38 +225,48 @@ public class DirectoryWatcher
         });
     }
 
-    public static boolean isPrivateKey( File file )
+    public static boolean isPrivateKey( File file, String passPhrase )
     {
+        Log.debug( "Checking if {} is a private key...", file );
         if ( file.isFile() && file.canRead() )
         {
             try ( final InputStream is = new FileInputStream( file ) )
             {
-                CertificateManager.parsePrivateKey( is, "" );
+                CertificateManager.parsePrivateKey( is, passPhrase );
+                Log.debug( "{} is a private key.", file );
                 return true;
             }
             catch ( Exception e )
             {
                 // This also catches events triggered by file modifications that are still underway.
+                Log.debug( "{} is not a private key (or might still be written to).", file );
                 return false;
             }
         }
+        Log.debug( "{} is not a file, or cannot be read.", file );
         return false;
     }
 
     public static boolean isCertificateChain( File file )
     {
+        Log.debug( "Checking if {} is a certificate chain...", file );
         if ( file.isFile() && file.canRead() )
         {
             try ( final InputStream is = new FileInputStream( file ) )
             {
+                final int minLength = JiveGlobals.getIntProperty( PROPERTY_CHAIN_MIN_LENGTH, PROPERTY_CHAIN_MIN_LENGTH_DEFAULT );
                 final Collection<X509Certificate> x509Certificates = CertificateManager.parseCertificates( is );
-                return !x509Certificates.isEmpty();
+                final boolean valid = x509Certificates.size() >= minLength;
+                Log.debug( "{} is {} certificate chain that has {} or more certificates in it.", new Object[] { file, (valid ? "a" : "not a"), minLength} );
+                return valid;
             }
             catch ( Exception e )
             {
+                Log.debug( "{} is not a certificate chain (or might still be written to).", file );
                 return false;
             }
         }
+        Log.debug( "{} is not a file, or cannot be read.", file );
         return false;
     }
 

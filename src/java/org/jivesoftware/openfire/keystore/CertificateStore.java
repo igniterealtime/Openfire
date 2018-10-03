@@ -9,6 +9,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -112,6 +115,31 @@ public abstract class CertificateStore
         {
             throw new CertificateStoreConfigException( "Unable to save changes to store in '" + configuration.getFile() + "'", ex );
         }
+    }
+
+    /**
+     * Copies the file that is the persistent storage for this store to a new file in the backup location.
+     *
+     * @throws IOException On any file IO issue.
+     * @return The path in which the backup was created, or null if the creation of the backup failed.
+     */
+    public Path backup()
+    {
+        final String postfix = "." + new Date().getTime();
+        final Path original = configuration.getFile().toPath();
+        final Path backup = configuration.getBackupDirectory().toPath().resolve( original.getFileName() + postfix );
+
+        Log.info( "Creating a backup of {} in {}.", original, backup );
+        try
+        {
+            Files.copy( original, backup );
+            return backup;
+        }
+        catch ( IOException e )
+        {
+            Log.error( "An error occurred creating a backup of {} in {}!", original, backup, e );
+        }
+        return null;
     }
 
     /**

@@ -943,13 +943,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     public int getConnectionsCount(boolean onlyLocal) {
         int total = connectionsCounter.get();
         if (!onlyLocal) {
-            Collection<Object> results =
+            Collection<Integer> results =
                     CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(false), false);
-            for (Object result : results) {
+            for (Integer result : results) {
                 if (result == null) {
                     continue;
                 }
-                total = total + (Integer) result;
+                total = total + result;
             }
         }
         return total;
@@ -965,13 +965,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     public int getUserSessionsCount(boolean onlyLocal) {
         int total = routingTable.getClientsRoutes(true).size();
         if (!onlyLocal) {
-            Collection<Object> results =
+            Collection<Integer> results =
                     CacheFactory.doSynchronousClusterTask(new GetSessionsCountTask(true), false);
-            for (Object result : results) {
+            for (Integer result : results) {
                 if (result == null) {
                     continue;
                 }
-                total = total + (Integer) result;
+                total = total + result;
             }
         }
         return total;

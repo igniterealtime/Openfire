@@ -321,7 +321,7 @@ public class StatsEngine implements Startable {
             lastSampleTime = newTime;
 
             // Gather sample statistics from remote cluster nodes
-            Collection<Object> remoteSamples = CacheFactory.doSynchronousClusterTask(new GetStatistics(), false);
+            Collection<Map<String, Double>> remoteSamples = CacheFactory.doSynchronousClusterTask(new GetStatistics(), false);
 
             List<String> sampledStats = new ArrayList<String>();
             for (Map.Entry<String, Statistic> statisticEntry : statsManager.getAllStatistics()) {
@@ -376,8 +376,7 @@ public class StatsEngine implements Startable {
                         // Get a statistic sample of this JVM
                         double statSample = sampleStat(key, definition);
                         // Add up samples of remote cluster nodes
-                        for (Object nodeResult : remoteSamples) {
-                            Map<String, Double> nodeSamples = (Map<String, Double>) nodeResult;
+                        for (Map<String, Double> nodeSamples : remoteSamples) {
                             Double remoteSample = nodeSamples.get(key);
                             if (remoteSample != null) {
                                 statSample += remoteSample;

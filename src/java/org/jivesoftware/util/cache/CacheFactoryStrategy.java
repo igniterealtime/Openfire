@@ -142,7 +142,7 @@ public interface CacheFactoryStrategy {
      * @param includeLocalMember true to run the task on the local member, false otherwise
      * @return collection with the result of the execution.
      */
-    Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember);
+    <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember);
 
     /**
      * Invokes a task on a given cluster member synchronously and returns the result of
@@ -153,7 +153,7 @@ public interface CacheFactoryStrategy {
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found.
      */
-    Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID);
+    <T> T doSynchronousClusterTask(ClusterTask<T> task, byte[] nodeID);
 
     /**
      * Updates the statistics of the specified caches and publishes them into

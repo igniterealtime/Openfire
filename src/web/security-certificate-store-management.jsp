@@ -131,8 +131,11 @@
                         pwdTrust = pwdTrustS2S;
                     }
 
-                    final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( "jks", new File( locKey ), pwdKey.toCharArray() );
-                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( "jks", new File( locTrust ), pwdTrust.toCharArray() );
+                    final File backupKey = new File( CertificateStoreManager.getIdentityStoreBackupDirectory( connectionType ) );
+                    final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
+
+                    final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( "jks", new File( locKey ), pwdKey.toCharArray(), backupKey );
+                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( "jks", new File( locTrust ), pwdTrust.toCharArray(), backupTrust );
                     certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
                     certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
                 }

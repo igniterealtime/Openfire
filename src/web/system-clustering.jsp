@@ -160,14 +160,13 @@
     Collection<ClusterNodeInfo> clusterNodesInfo = ClusterManager.getNodesInfo();
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
-    Collection<Object> statistics =
+    Collection<Map<String, Object>> statistics =
             CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true);
     // Calculate percentages
     int clients = 0;
     int incoming = 0;
     int outgoing = 0;
-    for (Object stat : statistics) {
-        Map<String, Object> statsMap = (Map<String, Object>) stat;
+    for (Map<String, Object> statsMap : statistics) {
         if (statsMap == null) {
             continue;
         }
@@ -175,8 +174,7 @@
         incoming += (Integer) statsMap.get(GetBasicStatistics.INCOMING);
         outgoing += (Integer) statsMap.get(GetBasicStatistics.OUTGOING);
     }
-    for (Object stat : statistics) {
-        Map<String, Object> statsMap = (Map<String, Object>) stat;
+    for (Map<String, Object> statsMap : statistics) {
         if (statsMap == null) {
             continue;
         }

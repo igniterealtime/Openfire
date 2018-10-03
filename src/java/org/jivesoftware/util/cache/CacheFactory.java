@@ -662,7 +662,7 @@ public class CacheFactory {
      * @param includeLocalMember true to run the task on the local member, false otherwise
      * @return collection with the result of the execution.
      */
-    public static Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember) {
+    public static <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, includeLocalMember);
     }
 
@@ -675,7 +675,7 @@ public class CacheFactory {
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
-    public static Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID) {
+    public static <T> T doSynchronousClusterTask(ClusterTask<T> task, byte[] nodeID) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
 

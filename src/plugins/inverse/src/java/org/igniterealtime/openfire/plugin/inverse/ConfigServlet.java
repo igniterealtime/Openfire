@@ -57,6 +57,7 @@ public class ConfigServlet extends HttpServlet
         final Language language = InversePlugin.getLanguage();
 
         final JSONObject config = new JSONObject();
+        config.put( "locales_url", "/" + InversePlugin.CONTEXT_ROOT + "/inverse/locale/{{{locale}}}/LC_MESSAGES/converse.json" );
         config.put( "auto_away", 300); // TODO make configurable.
         config.put( "notify_all_room_messages", new JSONArray() ); // TODO make configurable.
         config.put( "i18n", language.getCode() );

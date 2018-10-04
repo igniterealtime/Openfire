@@ -43,14 +43,105 @@
     inVerse Plugin Changelog
 </h1>
 
+<p><b>4.0.2 Release 1</b> -- October 4th, 2018</p>
+<ul>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1619">OF-1619: upgrade to converse.js 4.0.2</a>, which includes these changes:
+    <ul>
+        <li>M4A and WEBM files, when sent as XEP-0066 Out of Band Data, are now playable directly in chat</li>
+        <li>Updated French and Spanish translations</li>
+        <li>Two new languages supported, <a href="https://hosted.weblate.org/languages/hi/conversejs/">Hindi</a> and <a href="https://hosted.weblate.org/languages/ro/conversejs/">Romanian</a></li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1187">#1187</a> UTF-8 characters have the wrong encoding when using OMEMO</li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1189">#1189</a> Video playback failure</li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1220">#1220</a> Converse not working in Edge</li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1225">#1225</a> User profile sometimes not displayed when libsignal-protocol.js is used</li>
+    </ul>
+    </li>
+</ul>
+
 <p><b>4.0.1 Release 1</b> -- September 20th, 2018</p>
 <ul>
-    <li><a href="https://issues.igniterealtime.org/browse/OF-1612">OF-1612: upgrade to converse.js 4.0.1.</a></li>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1612">OF-1612: upgrade to converse.js 4.0.1</a>, which includes these changes:
+    <ul>
+        <li>Use <a href="https://compliance.conversations.im/">https://compliance.conversations.im</a> instead of (dead) <a href="https://xmpp.net/">https://xmpp.net</a></li>
+        <li>New config setting <a href="https://conversejs.org/docs/html/configuration.html#auto-register-muc-nickname">auto_register_muc_nickname</a></li>
+        <li>New config setting <a href="https://conversejs.org/docs/html/configuration.html#enable-muc-push">enable_muc_push</a></li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1182">#1182</a> MUC occupants without nick or JID created</li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1184">#1184</a> Notification error when message has no body</li>
+        <li><a href="https://github.com/conversejs/converse.js/issues/1201">#1201</a> Emoji picker appears when pressing enter</li>
+    </ul></li>
 </ul>
 
 <p><b>4.0.0 Release 1</b> -- September 8th, 2018</p>
 <ul>
-    <li><a href="https://issues.igniterealtime.org/browse/OF-1597">OF-1597: upgrade to converse.js 4.0.0.</a></li>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1597">OF-1597: upgrade to converse.js 4.0.0</a>, which includes these changes:
+        <h3>New Features</h3>
+        <ul>
+            <li><a href="https://github.com/conversejs/converse.js/issues/161">#161</a> XEP-0363: HTTP File Upload</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/194">#194</a> Include entity capabilities in outgoing presence stanzas</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/337">#337</a> API call to update a VCard</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/421">#421</a> XEP-0308: Last Message Correction</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/491">#497</a> XEP-0384: OMEMO encrypted messaging</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/968">#968</a> Use nickname from VCard when joining a room</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/986">#986</a> Affiliation changes aren't displayed in the chat</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1081">#1081</a> Allow for shift-enter to insert newlines</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1091">#1091</a> There's now only one CSS file for all view modes.</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1094">#1094</a> Show room members who aren't currently online</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1106">#1106</a> Support for Roster Versioning</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1137">#1137</a> Autocompletion and support for <a href="https://xmpp.org/extensions/xep-0372.html">XEP-0372</a> References, specifically section "3.2 Mentions".</li>
+            <li>It's now also possible to edit your VCard via the UI</li>
+            <li>Automatically grow/shrink input as text is entered/removed</li>
+            <li>MP4 and MP3 files when sent as XEP-0066 Out of Band Data, are now playable directly in chat</li>
+            <li>Support for rendering URLs sent according to XEP-0066 Out of Band Data.</li>
+            <li>Geo-URIs (e.g. from Conversations) are now replaced by links to openstreetmap (works in reverse also)</li>
+            <li>Add a checkbox to indicate whether a trusted device is being used or not.</li>
+            <li>If the device is not trusted, sessionStorage is used and all user data is deleted from the browser cache upon logout.</li>
+            <li>If the device is trusted, localStorage is used and user data is cached indefinitely.</li>
+            <li>Initial support for <a href="https://xmpp.org/extensions/xep-0357.html">XEP-0357 Push Notifications</a>, specifically registering an "App Server".</li>
+            <li>Add support for logging in via OAuth (see the <a href="https://conversejs.org/docs/html/configuration.html#oauth-providers">oauth_providers setting</a>)</li>
+        </ul>
+        <h3>Bugfixes</h3>
+        <ul>
+            <li>Spoiler messages didn't include the message author's name.</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1017">#1017</a> Documentation includes utf-8 charset to make minfied versions compatible across platforms.</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1026">#1026</a> Typing in MUC shows "Typing from another device"</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1039">#1039</a> Multi-option data form elements not shown and saved correctly</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1143">#1143</a> Able to send blank message</li>
+        </ul>
+        <h3>API changes</h3>
+        <ul>
+            <li>_converse.api.vcard.get now also accepts a Backbone.Model instance and has an additional force parameter to force fetching the vcard even if it has already been fetched.</li>
+            <li>New API method _converse.api.vcard.update.</li>
+            <li>The contactStatusChanged event has been renamed to contactPresenceChanged and a event presenceChanged is now also triggered on the contact.</li>
+            <li>_converse.api.chats.open and _converse.api.rooms.open now returns a Presence which resolves with the Backbone.Model representing the chat object.</li>
+        </ul>
+        <h3>UI changes</h3>
+        <ul>
+            <li><a href="https://github.com/conversejs/converse.js/issues/956">#956</a> Conversation pane should show my own identity in pane header</li>
+            <li>The UI is now based on Bootstrap4 and Flexbox is used extensively.</li>
+            <li>Fontawesome 5 is used for icons.</li>
+            <li>User Avatars are now shown in chat messages.</li>
+        </ul>
+        <h3>Configuration changes</h3>
+        <ul>
+            <li>Removed the storage configuration setting, use <a href="https://conversejs.org/docs/html/configuration.html#trusted">trusted</a> instead.</li>
+            <li>Removed the use_vcards configuration setting, instead VCards are always used.</li>
+            <li>Removed the xhr_custom_status and xhr_custom_status_url configuration settings. If you relied on these settings, you can instead listen for the <a href="https://conversejs.org/docs/html/events.html#contactstatusmessagechanged">statusMessageChanged</a> event and make the XMLHttpRequest yourself.</li>
+            <li>Removed xhr_user_search in favor of only accepting xhr_user_search_url as configuration option.</li>
+            <li>xhr_user_search_url has to include the ? character now in favor of more flexibility. See example in the documentation.</li>
+            <li>The data returned from the xhr_user_search_url must now include the user's jid instead of just an id.</li>
+            <li>New configuration settings <a href="https://conversejs.org/docs/html/configuration.html#nickname">nickname</a> and <a href="https://conversejs.org/docs/html/configuration.html#auto-join-private-chats">auto_join_private_chats</a>.</li>
+        </ul>
+        <h3>Architectural changes</h3>
+        <ul>
+            <li>Extracted the views from converse-muc.js into converse-muc-views.js and where appropriate moved methods from the views into the models/collections. This makes MUC possible in headless mode.</li>
+            <li>Created a new core plugin converse-roster.js which contains the models for roster-related data. Previously this code was in converse-core.js.</li>
+            <li>VCards are now stored separately from chats and roster contacts.</li>
+        </ul>
+        <h3>Other</h3>
+        <ul>
+            <li>Support for OTR (off-the-record) encryption has been dropped.</li>
+        </ul>
+    </li>
 </ul>
 
 <p><b>3.3.4 Release 1</b> -- March 15th, 2018</p>

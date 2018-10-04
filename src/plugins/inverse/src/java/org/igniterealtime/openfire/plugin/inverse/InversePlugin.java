@@ -38,12 +38,17 @@ import java.util.*;
  */
 public class InversePlugin implements Plugin
 {
+    /**
+     * The context root of the URL under which the web client is exposed.
+     */
+    public static final String CONTEXT_ROOT = "inverse";
+
     private static final Logger Log = LoggerFactory.getLogger( InversePlugin.class );
     private final String[] publicResources = new String[]
     {
-        "inverse/inverse",
-        "inverse/index.html",
-        "inverse/config.json"
+        CONTEXT_ROOT + "/inverse",
+        CONTEXT_ROOT + "/index.html",
+        CONTEXT_ROOT + "/config.json"
     };
 
     private WebAppContext context = null;
@@ -57,7 +62,7 @@ public class InversePlugin implements Plugin
         }
 
         // Add the Webchat sources to the same context as the one that's providing the BOSH interface.
-        context = new WebAppContext( null, pluginDirectory.getPath() + File.separator + "classes/", "/inverse" );
+        context = new WebAppContext( null, pluginDirectory.getPath() + File.separator + "classes/", "/" + CONTEXT_ROOT );
         context.setClassLoader( this.getClass().getClassLoader() );
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).

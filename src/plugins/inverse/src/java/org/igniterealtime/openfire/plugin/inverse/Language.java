@@ -35,12 +35,14 @@ public enum Language
     French ("fr"),
     German ("de"),
     Hebrew ("he"),
+    Hindi ("hi"),
     Hungarian ("hu"),
     Italian ("it"),
     Japanese ("ja"),
     Norwegian ("nb"),
     Polish ("pl"),
     Russian ("ru"),
+    Romanian ("ro"),
     Spanish ("es"),
     Ukrainian ("uk");
 

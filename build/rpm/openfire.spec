@@ -130,6 +130,8 @@ exit 0
 %dir %{homedir}/resources/nativeAuth/linux-i386
 %{homedir}/resources/nativeAuth/linux-i386/*
 %dir %{homedir}/resources/security
+%dir %{homedir}/resources/security/archive
+%{homedir}/resources/security/archive/readme.txt
 %dir %{homedir}/resources/spank
 %{homedir}/resources/spank/index.html
 %dir %{homedir}/resources/spank/WEB-INF

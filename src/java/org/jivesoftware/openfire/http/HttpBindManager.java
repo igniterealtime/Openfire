@@ -45,7 +45,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
@@ -136,6 +139,14 @@ public final class HttpBindManager implements CertificateEventListener, Property
      */
     private final HandlerCollection extensionHandlers = new HandlerCollection( true );
 
+    /**
+     * A task that, periodically, updates the 'last modified' date of all files in the Jetty 'tmp' directories. This
+     * prevents operating systems from removing files that are deemed unused.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1534">OF-1534</a>
+     */
+    private TempFileToucherTask tempFileToucherTask;
+
     public static HttpBindManager getInstance() {
         return instance;
     }
@@ -224,10 +235,20 @@ public final class HttpBindManager implements CertificateEventListener, Property
             Log.error("Error starting HTTP bind service", e);
         }
 
+        if ( JiveGlobals.getBooleanProperty( "jetty.temp-file-toucher.enabled", true ) ) {
+            tempFileToucherTask = new TempFileToucherTask( httpBindServer );
+            final long period = JiveGlobals.getLongProperty( "jetty.temp-file-toucher.period", JiveConstants.DAY );
+            TaskEngine.getInstance().schedule( tempFileToucherTask, period, period );
+        }
     }
 
     public void stop() {
         CertificateManager.removeListener(this);
+
+        if ( tempFileToucherTask != null ) {
+            TaskEngine.getInstance().cancelScheduledTask( tempFileToucherTask );
+            tempFileToucherTask = null;
+        }
 
         if (httpBindServer != null) {
             try {

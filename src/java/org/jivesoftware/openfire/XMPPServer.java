@@ -374,7 +374,7 @@ public class XMPPServer {
                 // The database value has at best a 50% chance of being right - so instead use a sensible default
                 String hostnameFromOS;
                 try {
-                    hostnameFromOS = InetAddress.getLocalHost().getHostName();
+                    hostnameFromOS = InetAddress.getLocalHost().getCanonicalHostName();
                 } catch (final UnknownHostException e) {
                     logger.warn("Unable to determine local hostname", e);
                     hostnameFromOS = "localhost";

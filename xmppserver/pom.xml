@@ -33,19 +33,6 @@
             </plugin>
 
         </plugins>
-        <!-- TODO: Use default Maven directories src/main/java, src/main/resource and src/test/java -->
-        <sourceDirectory>../src/java</sourceDirectory>
-        <testSourceDirectory>../src/test/java</testSourceDirectory>
-        <testResources>
-            <testResource>
-                <directory>../src/test/resources</directory>
-            </testResource>
-        </testResources>
-        <resources>
-            <resource>
-                <directory>../src/resources/jar</directory>
-            </resource>
-        </resources>
     </build>
 
     <profiles>

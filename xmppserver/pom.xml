@@ -9,6 +9,10 @@
     <artifactId>xmppserver</artifactId>
     <name>Core XMPP Server</name>
 
+    <properties>
+        <warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -21,6 +25,47 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+
+            <!-- Create the admin console web archive. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <!-- Exclude JSP files, they will be compiled -->
+                    <warSourceExcludes>**/*.jsp,**/*.jspf,WEB-INF/lib/*.*</warSourceExcludes>
+                    <warSourceDirectory>${warSourceDirectory}</warSourceDirectory>
+                    <!-- Use the web.xml, which contains the generated servlet declarations from the jetty-jspc-maven-plugin -->
+                    <webXml>${project.build.directory}/web.xml</webXml>
+                </configuration>
+            </plugin>
+
+            <!-- Compile the JSP pages -->
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-jspc-maven-plugin</artifactId>
+                <version>${jetty.version}</version>
+                <executions>
+                    <execution>
+                        <id>jspc</id>
+                        <goals>
+                            <goal>jspc</goal>
+                        </goals>
+                        <configuration>
+                            <sourceVersion>1.8</sourceVersion>
+                            <targetVersion>1.8</targetVersion>
+                            <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
+                            <!-- Merge this web.xml with the generated servlet declarations -->
+                            <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>
+                            <jspc>
+                                <package>org.jivesoftware.openfire.admin</package>
+                            </jspc>
+                            <sourceVersion>1.8</sourceVersion>
+                            <targetVersion>1.8</targetVersion>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Fix for Mina 2.x -->
@@ -340,6 +385,25 @@
             <groupId>org.jsmpp</groupId>
             <artifactId>jsmpp</artifactId>
             <version>2.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>opensymphony</groupId>
+            <artifactId>sitemesh</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.directwebremoting</groupId>
+            <artifactId>dwr</artifactId>
         </dependency>
 
         <!-- Database Drivers -->

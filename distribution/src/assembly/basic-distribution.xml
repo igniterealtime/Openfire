@@ -37,19 +37,6 @@
             </binaries>
         </moduleSet>
 
-        <moduleSet>
-            <useAllReactorProjects>true</useAllReactorProjects>
-
-            <includes>
-                <include>${project.groupId}:webadmin</include>
-            </includes>
-
-            <binaries>
-                <includeDependencies>false</includeDependencies>
-                <outputDirectory>plugins/admin/webapp</outputDirectory>
-                <unpack>true</unpack>
-            </binaries>
-        </moduleSet>
     </moduleSets>
 
     <files>
@@ -58,9 +45,26 @@
             <source>${project.basedir}/../src/plugins/admin/plugin.xml</source>
             <outputDirectory>plugins/admin</outputDirectory>
         </file>
+        <!-- Copy the admin console web.xml -->
+        <file>
+            <source>${project.basedir}/../xmppserver/target/web.xml</source>
+            <outputDirectory>plugins/admin/webapp/WEB-INF</outputDirectory>
+        </file>
     </files>
 
     <fileSets>
+
+        <!-- Copy the admin console resources to the admin plugin folder -->
+        <fileSet>
+            <directory>${project.basedir}/../xmppserver/src/main/webapp</directory>
+            <excludes>
+                <exclude>**/*.jsp</exclude>
+                <exclude>**/*.jspf</exclude>
+                <exclude>**/*.jspf</exclude>
+                <exclude>**/WEB-INF/lib/*.*</exclude>
+            </excludes>
+            <outputDirectory>plugins/admin/webapp</outputDirectory>
+        </fileSet>
 
         <!-- Copy the conf directory to conf -->
         <fileSet>

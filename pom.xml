@@ -16,7 +16,6 @@
         <module>xmppserver</module>
         <module>starter</module>
         <module>src/plugins</module>
-        <module>webadmin</module>
         <module>distribution</module>
     </modules>
 

@@ -14,7 +14,6 @@
             <includes>
                 <include>${project.groupId}:dbutil</include>
                 <include>${project.groupId}:i18n</include>
-                <include>${project.groupId}:webadmintld</include>
                 <include>${project.groupId}:xmppserver</include>
             </includes>
             <binaries>

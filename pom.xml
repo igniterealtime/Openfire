@@ -17,7 +17,6 @@
         <module>starter</module>
         <module>src/plugins</module>
         <module>webadmin</module>
-        <module>webadmintld</module>
         <module>distribution</module>
     </modules>
 

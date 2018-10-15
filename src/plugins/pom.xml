@@ -244,6 +244,55 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!--
+                    Java has trouble reading translations from UTF-8 files. To work around that,
+                    this plugin copies the i18n files from source to the build directory, to be
+                    modified later by the native2ascii-maven-plugin.
+                  -->
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/i18n/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.sourceDirectory}/../i18n/</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!--
+                    Java has trouble reading translations from UTF-8 files. To work around that,
+                    this plugin ensures that Java-compatible encoding is used.
+                    See https://stackoverflow.com/questions/4659929/how-to-use-utf-8-in-resource-properties-with-resourcebundle
+                  -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native2ascii-maven-plugin</artifactId>
+                <version>1.0-beta-1</version>
+                <executions>
+                    <execution>
+                        <id>native2ascii</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>native2ascii</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <workDir>${project.build.directory}/i18n/</workDir>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.0.0-M2</version>

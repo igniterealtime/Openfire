@@ -12,6 +12,12 @@
     <name>Monitoring Plugin</name>
     <description>Monitors conversations and statistics of the server.</description>
 
+    <properties>
+        <jackson.version>1.9.11</jackson.version>
+        <!-- Consider moving to the org.glassfish.jersey set of artefacts -->
+        <jersey.version>1.19.4</jersey.version>
+    </properties>
+
     <build>
         <sourceDirectory>src/java</sourceDirectory>
         <plugins>
@@ -30,27 +36,27 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-servlet</artifactId>
-            <version>1.19.4</version>
+            <version>${jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-bundle</artifactId>
-            <version>1.19.4</version>
+            <version>${jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-xc</artifactId>
-            <version>1.9.2</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-jaxrs</artifactId>
-            <version>1.9.2</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
-            <version>1.1</version>
+            <version>1.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.jrobin</groupId>
@@ -65,16 +71,19 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
+            <!-- NB. Later versions are available but require code changes -->
             <version>2.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.lowagie</groupId>
             <artifactId>itext</artifactId>
+            <!-- NB. Later versions are available at com.itextpdf:itextpdf but require code changes -->
             <version>2.0.8</version>
         </dependency>
         <dependency>
             <groupId>org.picocontainer</groupId>
             <artifactId>picocontainer</artifactId>
+            <!-- NB. Later versions are available but require code changes -->
             <version>1.2</version>
         </dependency>
     </dependencies>

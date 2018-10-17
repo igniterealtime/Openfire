@@ -9,7 +9,7 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>inverse</artifactId>
     <name>Inverse Webchat Plugin</name>
-    <version>4.0.2</version>
+    <version>4.0.3-SNAPSHOT</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>
@@ -29,7 +29,7 @@
         <dependency>
             <artifactId>json</artifactId>
             <groupId>org.json</groupId>
-            <version>20160810</version>
+            <version>20180813</version>
         </dependency>
     </dependencies>
 </project>

@@ -167,7 +167,7 @@
         <!-- Versions -->
         <openfire.version>4.3.0-SNAPSHOT</openfire.version>
         <!-- Note; the following jetty.version should be identical to the jetty.version in xmppserver/pom.xml -->
-        <jetty.version>9.4.11.v20180605</jetty.version>
+        <jetty.version>9.4.12.v20180830</jetty.version>
     </properties>
 
     <profiles>

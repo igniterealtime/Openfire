@@ -16,6 +16,31 @@
 
 package org.jivesoftware.openfire;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -30,11 +55,35 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.*;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.UserFeaturesProvider;
+import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
+import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.handler.IQBindHandler;
+import org.jivesoftware.openfire.handler.IQBlockingHandler;
+import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQLastActivityHandler;
+import org.jivesoftware.openfire.handler.IQMessageCarbonsHandler;
+import org.jivesoftware.openfire.handler.IQOfflineMessagesHandler;
+import org.jivesoftware.openfire.handler.IQPingHandler;
+import org.jivesoftware.openfire.handler.IQPrivacyHandler;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.openfire.handler.IQRegisterHandler;
+import org.jivesoftware.openfire.handler.IQRosterHandler;
+import org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler;
+import org.jivesoftware.openfire.handler.IQSharedGroupHandler;
+import org.jivesoftware.openfire.handler.IQVersionHandler;
+import org.jivesoftware.openfire.handler.IQvCardHandler;
+import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -69,31 +118,6 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -136,7 +160,14 @@ public class XMPPServer {
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
     public static final String EXIT = "exit";
-    private static Set<String> XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fqdn")));
+    private static Set<String> XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        "fqdn", "adminConsole.port", "adminConsole.securePort", "connectionProvider.className", "locale", "setup",
+        "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",
+        "database.defaultProvider.password", "database.defaultProvider.testSQL", "database.defaultProvider.testBeforeUse",
+        "database.defaultProvider.testAfterUse", "database.defaultProvider.testTimeout", "database.defaultProvider.timeBetweenEvictionRuns",
+        "database.defaultProvider.minIdleTime", "database.defaultProvider.maxWaitTime", "database.defaultProvider.minConnections",
+        "database.defaultProvider.maxConnections", "database.defaultProvider.connectionTimeout"
+    )));
 
     /**
      * All modules loaded by this server

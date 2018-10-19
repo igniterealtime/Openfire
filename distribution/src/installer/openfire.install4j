@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install4j version="7.0.6" transformSequenceNumber="7">
-  <directoryPresets config="../../../src/bin/extra/sysconfig/openfire" />
+  <directoryPresets config="src/bin/extra/sysconfig/openfire" />
   <application name="${compiler:APP_NAME}" distributionSourceDir="" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/distributions" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:sys.version}" compression="9" lzmaCompression="true" pack200Compression="false" excludeSignedFromPacking="true" commonExternalFiles="false" createMd5Sums="true" shrinkRuntime="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:sys.version}" allPathsRelative="true" backupOnSave="false" autoSave="true" convertDotsToUnderscores="true" macSignature="????" macVolumeId="419a18ebe125f2bf" javaMinVersion="1.8" javaMaxVersion="" allowBetaVM="true" jdkMode="runtimeJre" jdkName="">
     <languages skipLanguageSelection="false" languageSelectionInPrincipalLanguage="false">
       <principalLanguage id="en" customLocalizationFile="" />
@@ -1522,11 +1522,14 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
-        <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/redhat" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" fileType="regular" />
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="bin/openfirectl" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1545,10 +1548,10 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.bat" fileType="regular" />
+        <entry location="bin/openfire.bat" fileType="regular" />
+        <entry location="bin/openfire-dev.bat" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1565,11 +1568,14 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
-        <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/redhat" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" fileType="regular" />
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="bin/openfirectl" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1586,11 +1592,14 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
-        <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/redhat" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" fileType="regular" />
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="bin/openfirectl" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1607,11 +1616,14 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
-        <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/redhat" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" fileType="regular" />
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="bin/openfirectl" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">
@@ -1628,11 +1640,14 @@ return console.askYesNo(message, true);
       <excludedBeans />
       <overriddenPrincipalLanguage id="en" customLocalizationFile="" />
       <exclude>
-        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
-        <entry location="bin/extra/openfired" fileType="regular" />
-        <entry location="bin/openfire.sh" fileType="regular" />
-        <entry location="bin/openfire.bat" fileType="regular" />
         <entry location=".i4j_external_1568" fileType="regular" />
+        <entry location="bin/extra/redhat" fileType="regular" />
+        <entry location="bin/extra/embedded-db-viewer.sh" fileType="regular" />
+        <entry location="bin/extra/openfired" fileType="regular" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" fileType="regular" />
+        <entry location="bin/extra/redhat-postinstall.sh" fileType="regular" />
+        <entry location="bin/openfire.sh" fileType="regular" />
+        <entry location="bin/openfirectl" fileType="regular" />
       </exclude>
       <variables />
       <autoUpdate useMinUpdatableVersion="false" minUpdatableVersion="" useMaxUpdatableVersion="false" maxUpdatableVersion="">

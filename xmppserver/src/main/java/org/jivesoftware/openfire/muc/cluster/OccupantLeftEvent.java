@@ -20,20 +20,23 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.xmpp.packet.JID;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.List;
 
 /**
  * Task that removes a room occupant from the list of occupants in the room. The
- * occupant to remove is actualy a {@link org.jivesoftware.openfire.muc.spi.RemoteMUCRole}.
+ * occupant to remove is actually a {@link org.jivesoftware.openfire.muc.spi.RemoteMUCRole}.
  *
  * @author Gaston Dombiak
  */
 public class OccupantLeftEvent extends MUCRoomTask<Void> {
     private MUCRole role;
     private String nickname;
+    private JID userAddress;
 
     public OccupantLeftEvent() {
     }
@@ -42,12 +45,21 @@ public class OccupantLeftEvent extends MUCRoomTask<Void> {
         super(room);
         this.role = role;
         this.nickname = role.getNickname();
+        this.userAddress = role.getUserAddress();
     }
 
     public MUCRole getRole() {
         if (role == null) {
             try {
-                role = getRoom().getOccupant(nickname);
+                // If there are multiple entries, get one with same full JID
+                List<MUCRole> roles = getRoom().getOccupantsByNickname(nickname);
+                for (MUCRole r : roles) {
+                    if (userAddress.equals(r.getUserAddress())) {
+                        role = r;
+                        break;
+                    }
+                }
+                // TODO: if no matching full JID, what to do?
             } catch (UserNotFoundException e) {
                 // Ignore
             }
@@ -75,11 +87,13 @@ public class OccupantLeftEvent extends MUCRoomTask<Void> {
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
+        ExternalizableUtil.getInstance().writeSerializable(out, role.getUserAddress());
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
+        userAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }
 }

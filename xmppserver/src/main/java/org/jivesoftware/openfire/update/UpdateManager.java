@@ -212,7 +212,9 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Queries the igniterealtime.org server for new server and plugin updates.
+     * Queries the igniterealtime.org server with a request that contains the currently installed
+     * server version. It's response indicates if a server update (a newer version of Openfire) is
+     * available.
      *
      * @param notificationsEnabled true if admins will be notified when new updates are found.
      * @throws Exception if some error happens during the query.
@@ -224,6 +226,13 @@ public class UpdateManager extends BasicModule {
         }
     }
 
+    /**
+     * Queries the igniterealtime.org server. It's response is expected to include a list of
+     * plugins that are available on the server / for download.
+     *
+     * @param notificationsEnabled true if admins will be notified when new updates are found.
+     * @throws Exception if some error happens during the query.
+     */
     public synchronized void checkForPluginsUpdates(boolean notificationsEnabled) throws Exception {
         final Optional<String> response = getResponse("available", getAvailablePluginsUpdateRequest());
         if (response.isPresent()) {

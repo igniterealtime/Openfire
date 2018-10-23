@@ -60,7 +60,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM ofRosterGroups WHERE rosterID=?";
     private static final String CREATE_ROSTER_ITEM_GROUPS =
-            "INSERT INTO ofRosterGroups (rosterID, %1$srank%1$s, groupName) VALUES (?, ?, ?)";
+            "INSERT INTO ofRosterGroups (rosterID, %s, groupName) VALUES (?, ?, ?)";
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM ofRoster WHERE rosterID=?";
     private static final String LOAD_USERNAMES =
@@ -72,7 +72,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final String LOAD_ROSTER_ITEM_GROUPS =
              "SELECT ofRosterGroups.rosterID,groupName FROM ofRosterGroups " +
              "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
-             "WHERE username=? ORDER BY ofRosterGroups.rosterID, %1$srank%1$s";
+             "WHERE username=? ORDER BY ofRosterGroups.rosterID, %s";
 
     /* (non-Javadoc)
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
@@ -270,7 +270,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             // Load the groups for the loaded contact
             if (!itemList.isEmpty()) {
-                pstmt = con.prepareStatement(String.format(LOAD_ROSTER_ITEM_GROUPS, DbConnectionManager.getIdentifierQuoteString()));
+                pstmt = con.prepareStatement(String.format(LOAD_ROSTER_ITEM_GROUPS, DbConnectionManager.getDatabaseType().escapeIdentifier("rank")));
                 pstmt.setString(1, username);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
@@ -299,7 +299,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     {
         PreparedStatement pstmt = null;
         try {
-            pstmt = con.prepareStatement(String.format(CREATE_ROSTER_ITEM_GROUPS, DbConnectionManager.getIdentifierQuoteString()));
+            pstmt = con.prepareStatement(String.format(CREATE_ROSTER_ITEM_GROUPS, DbConnectionManager.getDatabaseType().escapeIdentifier("rank")));
             pstmt.setLong(1, rosterID);
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);

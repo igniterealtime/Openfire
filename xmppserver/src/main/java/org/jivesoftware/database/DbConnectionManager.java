@@ -25,6 +25,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.MissingResourceException;
 
 import org.jivesoftware.util.ClassUtils;
@@ -950,14 +952,13 @@ public class DbConnectionManager {
      * there are certain cases where it's critical to know the database for
      * performance reasons.
      */
-    @SuppressWarnings({"UnnecessarySemicolon"}) // Support for QDox parsing
-    public static enum DatabaseType {
+    public enum DatabaseType {
 
         oracle,
 
         postgresql,
 
-        mysql,
+        mysql("rank"),
 
         hsqldb,
 
@@ -968,5 +969,19 @@ public class DbConnectionManager {
         interbase,
 
         unknown;
+
+        private final HashSet<String> identifiers;
+
+        DatabaseType(final String ... identifiers) {
+            this.identifiers = new HashSet<>(Arrays.asList(identifiers));
+        }
+
+        public String escapeIdentifier(final String keyword) {
+            if (identifiers.contains(keyword)) {
+                return String.format("%1$s%2$s%1$s", DbConnectionManager.getIdentifierQuoteString(), keyword);
+            } else {
+                return keyword;
+            }
+        }
     }
 }

@@ -68,7 +68,9 @@ public class DbConnectionManager {
     // True if the database supports batch updates.
     private static boolean batchUpdatesSupported;
     /** True if the database supports the Statement.setFetchSize()) method. */
-    static boolean pstmt_fetchSizeSupported = true;
+    private static boolean pstmt_fetchSizeSupported = true;
+    /** The char used to quote identifiers */
+    private static String identifierQuoteString;
 
     private static final String SETTING_DATABASE_MAX_RETRIES = "database.maxRetries";
     private static final String SETTING_DATABASE_RETRY_DELAY = "database.retryDelay";
@@ -789,6 +791,7 @@ public class DbConnectionManager {
         streamTextRequired = false;
         maxRowsSupported = true;
         fetchSizeSupported = true;
+        identifierQuoteString = metaData.getIdentifierQuoteString();
 
         // Get the database name so that we can perform meta data settings.
         String dbName = metaData.getDatabaseProductName().toLowerCase();
@@ -919,6 +922,10 @@ public class DbConnectionManager {
 
     public static boolean isEmbeddedDB() {
         return connectionProvider != null && connectionProvider instanceof EmbeddedConnectionProvider;
+    }
+
+    public static String getIdentifierQuoteString() {
+        return identifierQuoteString;
     }
 
     public static String getTestSQL(String driver) {

@@ -30,7 +30,6 @@ import java.util.Map;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -61,7 +60,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM ofRosterGroups WHERE rosterID=?";
     private static final String CREATE_ROSTER_ITEM_GROUPS =
-            "INSERT INTO ofRosterGroups (rosterID, rank, groupName) VALUES (?, ?, ?)";
+            "INSERT INTO ofRosterGroups (rosterID, %1$srank%1$s, groupName) VALUES (?, ?, ?)";
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM ofRoster WHERE rosterID=?";
     private static final String LOAD_USERNAMES =
@@ -73,7 +72,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final String LOAD_ROSTER_ITEM_GROUPS =
              "SELECT ofRosterGroups.rosterID,groupName FROM ofRosterGroups " +
              "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
-             "WHERE username=? ORDER BY ofRosterGroups.rosterID, rank";
+             "WHERE username=? ORDER BY ofRosterGroups.rosterID, %1$srank%1$s";
 
     /* (non-Javadoc)
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
@@ -114,7 +113,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
      */
     @Override
-    public void updateItem(String username, RosterItem item) throws UserNotFoundException {
+    public void updateItem(String username, RosterItem item) {
         Connection con = null;
         PreparedStatement pstmt = null;
         long rosterID = item.getID();
@@ -271,7 +270,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             // Load the groups for the loaded contact
             if (!itemList.isEmpty()) {
-                pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+                pstmt = con.prepareStatement(String.format(LOAD_ROSTER_ITEM_GROUPS, DbConnectionManager.getIdentifierQuoteString()));
                 pstmt.setString(1, username);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
@@ -300,7 +299,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     {
         PreparedStatement pstmt = null;
         try {
-            pstmt = con.prepareStatement(CREATE_ROSTER_ITEM_GROUPS);
+            pstmt = con.prepareStatement(String.format(CREATE_ROSTER_ITEM_GROUPS, DbConnectionManager.getIdentifierQuoteString()));
             pstmt.setLong(1, rosterID);
             for (int i = 0; iter.hasNext(); i++) {
                 pstmt.setInt(2, i);

@@ -11,6 +11,7 @@
     <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.0.0</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 
     <!-- UI extension -->
     <adminconsole>		

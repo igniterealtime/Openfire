@@ -14,6 +14,7 @@
     <databaseKey>gojara</databaseKey>
     <databaseVersion>1</databaseVersion>
     <minServerVersion>4.0.0</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 
     <!-- Admin console entries -->
 

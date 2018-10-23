@@ -25,13 +25,18 @@ import java.util.Locale;
 public enum Language
 {
     Afrikaans ("af"),
+    Arabic ("ar"),
     Bahasa_Indonesia ("id"),
-    BrazilianPortuguese ("pt_br"),
+    Basque ("eu"),
+    Bulgarian ("bg"),
+    BrazilianPortuguese ("pt_BR"),
     Catalan ("ca"),
+    Czech ("cs"),
     Chinese ("zh_TW"),
     SimplifiedChinese ("zh_CN"),
     Dutch ("nl"),
     English ("en"),
+    Flemish ("nl_BE"),
     French ("fr"),
     German ("de"),
     Hebrew ("he"),
@@ -39,11 +44,13 @@ public enum Language
     Hungarian ("hu"),
     Italian ("it"),
     Japanese ("ja"),
+    Lithuanian ("lt"),
     Norwegian ("nb"),
     Polish ("pl"),
-    Russian ("ru"),
     Romanian ("ro"),
+    Russian ("ru"),
     Spanish ("es"),
+    Turkish ("tr"),
     Ukrainian ("uk");
 
     private final String code;

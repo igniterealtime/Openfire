@@ -43,10 +43,38 @@
     inVerse Plugin Changelog
 </h1>
 
-<p><b>4.0.2 Release 2</b> -- (tbd)</p>
+<p><b>4.0.3 Release 1</b> -- (tbd)</p>
 <ul>
-    <li>[<a href='https://issues.igniterealtime.org/browse/OF-1517'>OF-1517</a>] - Don't require i18n source files for all plugins to be encoded.</li>
     <li>Minimum Java requirement: 1.8</li>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1517">OF-1517: Don't require i18n source files for all plugins to be encoded.</a></li>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1629">OF-1629: include missing resources (logos, sounds).</a>
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1628">OF-1628: upgrade to converse.js 4.0.3</a>, which includes these changes:
+        <ul>
+            <li>New translations: Arabic, Basque, Czech, French, German, Hungarian, Japanese, Norwegian Bokmål, Polish, Romanian, Spanish</li>
+            <li>Bugfix. Converse continuously publishes an empty OMEMO devicelist for itself</li>
+            <li>Bugfix. Handler not triggered when submitting MUC password form 2nd time</li>
+            <li>Bugfix. MUC features weren't being refreshed when saving the config form</li>
+            <li>Don't show duplicate notification messages</li>
+            <li>New config setting <a href="https://conversejs.org/docs/html/configuration.html#show-images-inline">show_images_inline</a></li>
+            <li>Disable OMEMO when the user has indicated that Converse is running on an untrusted device.</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/537">#537</a> Render xmpp: URI as link</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1058">#1058</a> Send an inactive chat state notification when the user switches to another tab</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1062">#1062</a> Collapse multiple join/leave messages into one</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1063">#1063</a> URLs in the topic / subject are not clickable</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1140">#1140</a> Add support for destroyed chatrooms</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1169">#1169</a> Non-joined participants display an unwanted status message</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1185">#1185</a> Added Contact still shown as pending</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1190">#1190</a> MUC Participants column disappears in certain viewport widths</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1193">#1193</a> OMEMO messages without a body fallback are ignored</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1199">#1199</a> Can't get back from to login screen from registration screen</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1204">#1204</a> Link encoding issue</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1209">#1209</a> Bring color codes of users' status in line with other clients</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1214">#1214</a> Setting allow_contact_requests to false has no effect</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1221">#1221</a> Avoid creating a headlines box if we don't have anything to show inside it</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1222">#1222</a> Adding a bookmark should prefill the room name</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1228">#1228</a> Converse automatically visits links (to try and determine whether they're images to show inline)</li>
+        </ul>
+    </li>
 </ul>
 
 <p><b>4.0.2 Release 1</b> -- October 4th, 2018</p>

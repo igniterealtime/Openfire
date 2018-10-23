@@ -4,8 +4,8 @@
     <name>inVerse</name>
     <description>Adds the (third-party, Converse-based) inVerse web client to Openfire.</description>
     <author>Guus der Kinderen</author>
-    <version>4.0.2 Release 1</version>
-    <date>10/04/2018</date>
+    <version>4.0.3 Release 1</version>
+    <date>(TBD)</date>
     <minServerVersion>4.1.5</minServerVersion>
     <minJavaVersion>1.8</minJavaVersion>
     <adminconsole>

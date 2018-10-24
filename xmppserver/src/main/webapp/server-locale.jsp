@@ -15,17 +15,17 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.Log,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
-                 org.jivesoftware.util.ParamUtils"
-%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Locale"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.util.TimeZone"%>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.TimeZone" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.slf4j.Logger" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -33,13 +33,14 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%  // Get parameters //
+<%
+    final Logger Log = LoggerFactory.getLogger("server-db.jsp");
+    // Get parameters //
     String localeCode = ParamUtils.getParameter(request,"localeCode");
     String timeZoneID = ParamUtils.getParameter(request,"timeZoneID");
     boolean save = request.getParameter("save") != null;
 
-    // TODO: We're not displaying this error ever.
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -61,7 +62,8 @@
             webManager.logEvent("updated time zone to "+tz.getID(), tz.toString());
         }
         catch (Exception e) {
-            Log.error(e);
+            errors.put("timezone", "Unable to change timezone: " + e.getMessage());
+            Log.error("Unexpected exception changing timezone", e);
         }
         if (localeCode != null) {
             Locale newLocale = LocaleUtils.localeCodeToLocale(localeCode.trim());
@@ -85,6 +87,7 @@
 
     // Get the current time zone.
     TimeZone timeZone = JiveGlobals.getTimeZone();
+    pageContext.setAttribute( "errors", errors );
 %>
 
 <html>
@@ -95,7 +98,11 @@
     </head>
     <body>
 
-<p>
+    <c:forEach var="err" items="${errors}">
+        <div class="error"><c:out value="${err.value}"/></div>
+    </c:forEach>
+
+    <p>
 <fmt:message key="locale.title.info" />
 </p>
 
@@ -112,7 +119,7 @@
             <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
 
-        <%  boolean usingPreset = false;
+        <%  boolean usingPreset;
             Locale[] locales = Locale.getAvailableLocales();
             for (Locale locale1 : locales) {
                 usingPreset = locale1.equals(locale);
@@ -242,9 +249,9 @@
 
         <br>
 
-        <p><b><fmt:message key="timezone.choose" />:</b></p>
+        <p><b><label for="timeZoneID"><fmt:message key="timezone.choose" />:</label></b></p>
 
-        <select size="1" name="timeZoneID">
+        <select size="1" name="timeZoneID" id="timeZoneID">
         <% for (String[] timeZone1 : timeZones) {
             String selected = "";
             if (timeZone.getID().equals(timeZone1[0].trim())) {

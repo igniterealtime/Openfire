@@ -22,16 +22,29 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.net.URLConnection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.GenericServlet;
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.jasper.JspC;
-import org.dom4j.*;
+import org.dom4j.Document;
 import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
@@ -72,7 +85,7 @@ public class PluginServlet extends HttpServlet {
         servlets = new ConcurrentHashMap<>();
     }
     
-    public static final String PLUGINS_WEBROOT = "/plugins/";
+    private static final String PLUGINS_WEBROOT = "/plugins/";
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -81,8 +94,7 @@ public class PluginServlet extends HttpServlet {
     }
 
     @Override
-    public void service(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    public void service(HttpServletRequest request, HttpServletResponse response) {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -220,7 +232,7 @@ public class PluginServlet extends HttpServlet {
                     @Override
                     public Enumeration<String> getInitParameterNames()
                     {
-                        final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );;
+                        final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );
                         if ( params == null || params.isEmpty() )
                         {
                             return Collections.emptyEnumeration();
@@ -359,8 +371,7 @@ public class PluginServlet extends HttpServlet {
             throw new ServletException("Servlet URL is missing");
         }
         String fullUrl = pluginName + url;
-        GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
-        return servlet;
+        return servlets.remove(fullUrl.toLowerCase());
     }
     
     /**
@@ -472,41 +483,24 @@ public class PluginServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        else {
-            // Content type will be GIF or PNG.
-            String contentType = "image/gif";
-            if (pathInfo.endsWith(".png")) {
-                contentType = "image/png";
-            }
-            else if (pathInfo.endsWith(".swf")) {
-                contentType = "application/x-shockwave-flash";
-            }
-            else if (pathInfo.endsWith(".css")) {
-                contentType = "text/css";
-            }
-            else if (pathInfo.endsWith(".js")) {
-                contentType = "text/javascript";
-            }
-            else if (pathInfo.endsWith(".html") || pathInfo.endsWith(".htm")) {
-                contentType = "text/html";
-            }
 
-            // setting the content-disposition header breaks IE when downloading CSS
-            // response.setHeader("Content-disposition", "filename=\"" + file + "\";");
-            response.setContentType(contentType);
-            // Write out the resource to the user.
-            try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-                try (ServletOutputStream out = response.getOutputStream()) {
+        String contentType = URLConnection.guessContentTypeFromName(pathInfo);
+        if (contentType == null) {
+            contentType = "text/plain";
+        }
+        response.setContentType(contentType);
+        // Write out the resource to the user.
+        try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+            try (ServletOutputStream out = response.getOutputStream()) {
 
-                    // Set the size of the file.
-                    response.setContentLength((int) file.length());
+                // Set the size of the file.
+                response.setContentLength((int) file.length());
 
-                    // Use a 1K buffer.
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = in.read(buf)) != -1) {
-                        out.write(buf, 0, len);
-                    }
+                // Use a 1K buffer.
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) != -1) {
+                    out.write(buf, 0, len);
                 }
             }
         }
@@ -547,7 +541,10 @@ public class PluginServlet extends HttpServlet {
             File pluginDirectory = pluginManager.getPluginPath(plugin).toFile();
 
             File compilationDir = new File(pluginDirectory, "classes");
-            compilationDir.mkdirs();
+            final boolean dirMade = compilationDir.mkdirs();
+            if(dirMade) {
+               Log.info("Created directory for compiled JSPs: {}", compilationDir);
+            }
 
             String jsp = jspURL.substring(fileSeperator + 1);
 

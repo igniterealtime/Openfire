@@ -148,25 +148,27 @@ public class PluginServlet extends HttpServlet {
                     continue;
                 }
 
-                final Class theClass = manager.loadClass( plugin, className );
+                try {
+                    final Class theClass = manager.loadClass(plugin, className);
 
-                final Object instance = theClass.newInstance();
-                if ( !(instance instanceof GenericServlet) )
-                {
-                    Log.warn( "Could not load servlet '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.GenericServlet.", servletName, pluginName, className );
-                    continue;
+                    final Object instance = theClass.newInstance();
+                    if (!(instance instanceof GenericServlet)) {
+                        Log.warn("Could not load servlet '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.GenericServlet.", servletName, pluginName, className);
+                        continue;
+                    }
+
+                    Log.debug("Initializing servlet '{}' of plugin '{}'...", servletName, pluginName);
+                    ((GenericServlet) instance).init(servletConfig);
+
+                    Log.debug("Registering servlet '{}' of plugin '{}' URL patterns.", servletName, pluginName);
+                    final Set<String> urlPatterns = WebXmlUtils.getServletUrlPatterns(webXmlDoc, servletName);
+                    for (final String urlPattern : urlPatterns) {
+                        servlets.put((pluginName + urlPattern).toLowerCase(), (GenericServlet) instance);
+                    }
+                    Log.debug("Servlet '{}' of plugin '{}' loaded successfully.", servletName, pluginName);
+                } catch (final Exception e) {
+                    Log.warn("Exception attempting to load servlet '{}' ({}) of plugin '{}'", servletName, className, pluginName, e);
                 }
-
-                Log.debug( "Initializing servlet '{}' of plugin '{}'...", servletName, pluginName );
-                ( (GenericServlet) instance ).init( servletConfig );
-
-                Log.debug( "Registering servlet '{}' of plugin '{}' URL patterns.", servletName, pluginName );
-                final Set<String> urlPatterns = WebXmlUtils.getServletUrlPatterns( webXmlDoc, servletName );
-                for ( final String urlPattern : urlPatterns )
-                {
-                    servlets.put( ( pluginName + urlPattern ).toLowerCase(), (GenericServlet) instance );
-                }
-                Log.debug( "Servlet '{}' of plugin '{}' loaded successfully.", servletName, pluginName );
             }
 
 

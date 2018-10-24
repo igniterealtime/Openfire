@@ -363,6 +363,7 @@
                                 <goal>jspc</goal>
                             </goals>
                             <configuration>
+                                <useProvidedScope>true</useProvidedScope>
                                 <jspc>
                                     <package>org.jivesoftware.openfire.plugin.${plugin.name}</package>
                                 </jspc>
@@ -371,18 +372,6 @@
                             </configuration>
                         </execution>
                     </executions>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.igniterealtime.openfire</groupId>
-                            <artifactId>xmppserver</artifactId>
-                            <version>${openfire.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.igniterealtime.openfire</groupId>
-                            <artifactId>webadmintld</artifactId>
-                            <version>${openfire.version}</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
 
                 <plugin>

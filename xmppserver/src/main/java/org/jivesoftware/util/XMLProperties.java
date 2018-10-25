@@ -16,17 +16,6 @@
 
 package org.jivesoftware.util;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.dom4j.Attribute;
-import org.dom4j.CDATA;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.SAXReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -42,13 +31,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.apache.commons.text.StringEscapeUtils;
+import org.dom4j.Attribute;
+import org.dom4j.CDATA;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -244,7 +243,7 @@ public class XMLProperties {
      * @param name the name of the property to retrieve
      * @return all child property values for the given node name.
      */
-    public List<String> getProperties(String name, boolean asList) {
+    public List<String> getProperties(String name, boolean ignored) {
         List<String> result = new ArrayList<>();
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML hierarchy,
@@ -557,11 +556,8 @@ public class XMLProperties {
     
     private List<String> getChildPropertyNamesFor(Element parent, String parentName) {
         List<String> result = new ArrayList<>();
-        for (Element child : (Collection<Element>) parent.elements()) {
-            String childName = new StringBuilder(parentName)
-                            .append(parentName.isEmpty() ? "" : ".")
-                            .append(child.getName())
-                            .toString();
+        for (Element child : parent.elements()) {
+            String childName = parentName + (parentName.isEmpty() ? "" : ".") + child.getName();
             if (!result.contains(childName)) {
                 result.add(childName);
                 result.addAll(getChildPropertyNamesFor(child, childName));
@@ -608,13 +604,14 @@ public class XMLProperties {
      *
      * @param name  the name of the property to set.
      * @param value the new value for the property.
+     * @return {@code true} if the property was correctly saved to file, otherwise {@code false}
      */
-    public synchronized void setProperty(String name, String value) {
-        if(!StringEscapeUtils.escapeXml10(name).equals(name)) {
-            throw new IllegalArgumentException("Property name cannot contain XML entities.");
-        }
+    public synchronized boolean setProperty(String name, String value) {
         if (name == null) {
-            return;
+            return false;
+        }
+        if (!StringEscapeUtils.escapeXml10(name).equals(name)) {
+            throw new IllegalArgumentException("Property name cannot contain XML entities.");
         }
         if (value == null) {
             value = "";
@@ -644,9 +641,8 @@ public class XMLProperties {
                     break;
                 }
             }
-            element.addCDATA(value.substring(9, value.length()-3));
-        }
-        else {
+            element.addCDATA(value.substring(9, value.length() - 3));
+        } else {
             String propValue = StringEscapeUtils.escapeXml10(value);
             // check to see if the property is marked as encrypted
             if (JiveGlobals.isXMLPropertyEncrypted(name)) {
@@ -656,13 +652,13 @@ public class XMLProperties {
             element.setText(propValue);
         }
         // Write the XML properties to disk
-        saveProperties();
+        final boolean saved = saveProperties();
 
         // Generate event.
         Map<String, Object> params = new HashMap<>();
         params.put("value", value);
-        PropertyEventDispatcher.dispatchEvent(name,
-                PropertyEventDispatcher.EventType.xml_property_set, params);
+        PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.xml_property_set, params);
+        return saved;
     }
 
     /**
@@ -748,53 +744,51 @@ public class XMLProperties {
     /**
      * Saves the properties to disk as an XML document. A temporary file is
      * used during the writing process for maximum safety.
+     *
+     * @return false if the file could not be saved, otherwise true
      */
-    private synchronized void saveProperties() {
+    private synchronized boolean saveProperties() {
         if (file == null) {
             Log.error("Unable to save XML properties; no file specified");
-            return;
+            return false;
         }
-        boolean error = false;
+
         // Write data out to a temporary file first.
-        Path tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
-        try (Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
+        final Path tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
+        try (final Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+        } catch (final Exception e) {
+            Log.error("Unable to write properties to tmpFile {}", tempFile, e);
             // There were errors so abort replacing the old property file.
-            error = true;
+            return false;
         }
 
         // No errors occurred, so delete the main file.
-        if (!error) {
-            // Delete the old file so we can replace it.
-            try {
-                Files.deleteIfExists(file);
-            } catch (IOException e) {
-                Log.error("Error deleting property file: " + file);
-                return;
-            }
-            // Copy new contents to the file.
-            try {
-                Files.copy(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-                // There were errors so abort replacing the old property file.
-                error = true;
-            }
-            // If no errors, delete the temp file.
-            if (!error) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (IOException e) {
-                    Log.error("Error deleting temp file: " + tempFile);
-                }
-            }
+        // Delete the old file so we can replace it.
+        try {
+            Files.deleteIfExists(file);
+        } catch (final IOException e) {
+            Log.error("Error deleting existing property file {}: ", tempFile, e);
+            return false;
         }
+        // Copy new contents to the file.
+        try {
+            Files.copy(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+        } catch (final Exception e) {
+            Log.error("Error copying new property file from {} to {}:", tempFile, file, e);
+            // There were errors so abort replacing the old property file.
+            return false;
+        }
+
+        // If no errors, delete the temp file.
+        try {
+            Files.deleteIfExists(tempFile);
+        } catch (IOException e) {
+            Log.error("Error deleting temp file {}", tempFile, e);
+        }
+        return true;
     }
 
     /**
@@ -812,7 +806,7 @@ public class XMLProperties {
         while (tokenizer.hasMoreTokens()) {
             propName.add(tokenizer.nextToken());
         }
-        return propName.toArray(new String[propName.size()]);
+        return propName.toArray(new String[0]);
     }
 
     public void setProperties(Map<String, String> propertyMap) {

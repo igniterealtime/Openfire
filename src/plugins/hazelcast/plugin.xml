@@ -8,4 +8,5 @@
     <version>${project.version}</version>
     <date>tbc</date>
     <minServerVersion>4.3.0</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 </plugin>

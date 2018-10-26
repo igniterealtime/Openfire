@@ -8,5 +8,6 @@
     <licenseType>Apache 2.0</licenseType>    
     <date>05/09/2018</date>
     <minServerVersion>4.3.0</minServerVersion>
-    <author>igniterealtime.org</author>   
+    <minJavaVersion>1.8</minJavaVersion>
+    <author>igniterealtime.org</author>
 </plugin>

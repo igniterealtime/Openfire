@@ -7,6 +7,7 @@
     <version>4.0.2 Release 1</version>
     <date>10/04/2018</date>
     <minServerVersion>4.1.5</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
     <adminconsole>
         <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="inverse-config.jsp">
             <sidebar id="tab-inverse" name="${admin.sidebar.webclients.item.inverse.name}" description="${admin.sidebar.webclients.item.inverse.description}">

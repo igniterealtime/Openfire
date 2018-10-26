@@ -18,6 +18,11 @@
         </developer>
     </developers>
 
+    <properties>
+        <msv.version>20050913</msv.version>
+    </properties>
+
+
     <build>
         <sourceDirectory>src/java</sourceDirectory>
         <plugins>
@@ -44,27 +49,22 @@
         <dependency>
             <groupId>msv</groupId>
             <artifactId>msv</artifactId>
-            <version>20030225</version>
+            <version>${msv.version}</version>
         </dependency>
         <dependency>
             <groupId>msv</groupId>
             <artifactId>isorelax</artifactId>
-            <version>20030225</version>
+            <version>${msv.version}</version>
         </dependency>
         <dependency>
             <groupId>msv</groupId>
             <artifactId>relaxngDatatype</artifactId>
-            <version>20030225</version>
+            <version>${msv.version}</version>
         </dependency>
         <dependency>
             <groupId>msv</groupId>
             <artifactId>xsdlib</artifactId>
-            <version>20030225</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.0</version>
+            <version>${msv.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

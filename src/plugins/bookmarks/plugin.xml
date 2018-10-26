@@ -11,6 +11,7 @@
     <version>${project.version}</version>
     <date>tbc.</date>
     <minServerVersion>4.0.0</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 
     <!-- Keep the 'clientcontrol' database key for backwards compatibility. Client control itself does not have any database. -->
     <databaseKey>clientcontrol</databaseKey>

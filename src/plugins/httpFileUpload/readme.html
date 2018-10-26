@@ -32,12 +32,12 @@
         }
 
         TT {
-            font-family : courier new;
+            font-family: courier new, monospace;
             font-weight : bold;
             color : #060;
         }
         PRE {
-            font-family : courier new;
+            font-family: courier new, monospace;
             font-size : 100%;
         }
         #datatable TH {
@@ -47,9 +47,6 @@
         }
         #datatable TD {
             background-color : #FAF6EF;
-        }
-        #datatable .name {
-            background-color : #DCE2F5;
         }
     </style>
 </head>
@@ -63,6 +60,10 @@
 <p>
     The HTTP File Upload plugin adds functionality to Openfire that allows compliant clients to exchange files.
 </p>
+<p>
+    <strong>Note: </strong> This plugin requires the HTTP bind option in Openfire to be enabled:
+    <br>Server -> Server Settings -> HTTP Binding
+</p>
 
 <h2>Installation</h2>
 
@@ -75,8 +76,8 @@
 
 <p>
     To configure the maximum allowable file size to be uploaded by clients, the property
-    <tt>plugin.httpfileupload.maxFileSize</tt> can be set to a value in bytes. If not set, a default value is used. To
-    disable the file size limitation, set this property to a value of <tt>-1</tt>.
+    <samp>plugin.httpfileupload.maxFileSize</samp> can be set to a value in bytes. If not set, a default value is used. To
+    disable the file size limitation, set this property to a value of <samp>-1</samp>.
 </p>
 
 <h2>Using the Plugin</h2>

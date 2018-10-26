@@ -32,7 +32,7 @@
     boolean test = request.getParameter("test") != null;
 
     LdapManager manager = LdapManager.getInstance();
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
 
     if (save || test) {
         host = ParamUtils.getParameter(request, "host");
@@ -60,7 +60,7 @@
     
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
-            Map<String, String> settings = new HashMap<String, String>();
+            Map<String, String> settings = new HashMap<>();
             settings.put("ldap.serverType", serverType);
             settings.put("ldap.host", host);
             settings.put("ldap.port", Integer.toString(port));
@@ -71,8 +71,9 @@
             if (adminPassword != null) {
                 settings.put("ldap.adminPassword", adminPassword);
             }
-            settings.put("ldap.connectionPoolEnabled",
-                    Boolean.toString(connectionPoolEnabled));
+            // settings.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
+            // Always disable connection pooling so that connections aren't left hanging open.
+            settings.put("ldap.connectionPoolEnabled", "false");
             settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
             settings.put("ldap.startTlsEnabled", Boolean.toString(startTlsEnabled));
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
@@ -80,13 +81,11 @@
             settings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
             settings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
 
-            // Always disable connection pooling so that connections aren't left hanging open.
-            settings.put("ldap.connectionPoolEnabled", "false");
             session.setAttribute("ldapSettings", settings);
 
             if (save) {
                 // Save settings and redirect
-                Collection<String> hosts = new ArrayList<String>();
+                Collection<String> hosts = new ArrayList<>();
                 StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
                 while (st.hasMoreTokens()) {
                     hosts.add(st.nextToken());
@@ -156,6 +155,12 @@
         aliasReferralsEnabled = manager.isFollowAliasReferralsEnabled();
         encloseDNs = manager.isEnclosingDNs();
     }
+
+    pageContext.setAttribute("host", host );
+    pageContext.setAttribute("port", port );
+    pageContext.setAttribute("baseDN", baseDN );
+    pageContext.setAttribute("adminDN", adminDN );
+    pageContext.setAttribute("adminPassword", adminPassword );
 %>
 <html>
 <head>
@@ -218,11 +223,11 @@
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.type" />:</td>
                 <td colspan="3" nowrap>
-                    <select name="servertype" size="1" id="jiveLDAPserverType" style="width:90%;">
-                        <option value="1" <%= serverType == null ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_select" /></option>
-                        <option value="2" <%= "activedirectory".equals(serverType) ? "selected" : "" %>>Active Directory</option>
-                        <option value="3" <%= "openldap".equals(serverType) ? "selected" : "" %>>OpenLDAP</option>
-                        <option value="4" <%= "other".equals(serverType) ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_other" /></option>
+                    <select name="serverType" size="1" id="jiveLDAPserverType" style="width:90%;">
+                        <option value="" <%= serverType == null ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_select" /></option>
+                        <option value="activedirectory" <%= "activedirectory".equals(serverType) ? "selected" : "" %>>Active Directory</option>
+                        <option value="openldap" <%= "openldap".equals(serverType) ? "selected" : "" %>>OpenLDAP</option>
+                        <option value="other" <%= "other".equals(serverType) ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_other" /></option>
                     </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
                 </td>
             </tr>
@@ -233,7 +238,7 @@
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                         <td width="1%" nowrap="nowrap">
-                            <input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="150" value="<%= host!=null?host:"" %>">
+                            <input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="150" value="<c:out value="${host}"/>">
                         </td>
                         <td width="99%">
                             <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
@@ -242,12 +247,12 @@
                     </table>
                 </td>
                 <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.ldap.server.port" />:</td>
-                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="<%= port %>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="<c:out value="${port}"/>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
             </tr>
             <tr>
                 <td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
                 <td colspan="3">
-                    <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="300" value="<%= baseDN!=null?baseDN:""%>" style="width:90%;">
+                    <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="300" value="<c:out value="${baseDN}"/>" style="width:90%;">
                     <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></span>
                 </td>
             </tr>
@@ -258,13 +263,13 @@
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.admindn" />:</td>
                 <td colspan="3">
-                    <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="<%= adminDN!=null?adminDN:""%>" style="width:90%;">
+                    <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="<c:out value="${adminDN}"/>" style="width:90%;">
                     <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>
                 </td>
             </tr>
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.password" />:</td>
-                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="<%= adminPassword!=null?adminPassword:""%>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="<c:out value="${adminPassword}"/>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
             </tr>
             </table>
         </div>
@@ -401,9 +406,9 @@
             <!-- BEGIN right-aligned buttons -->
             <div align="right">
 
-                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
+                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test">
 
-                <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save" border="0">
+                <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue" />" id="jive-setup-save">
             </div>
             <!-- END right-aligned buttons -->
 

@@ -8,21 +8,17 @@
 %>
 
 <%
-    String serverType = null;
+    String serverType = "";
     if (request.getParameter("save") != null || request.getParameter("test") != null) {
-        int serverTypeInt = ParamUtils.getIntParameter(request, "servertype", 1);
-        switch (serverTypeInt) {
-            case 1:
-                serverType = "other";
-                break;
-            case 2:
-                serverType = "activedirectory";
-                break;
-            case 3:
-                serverType = "openldap";
+        serverType = ParamUtils.getStringParameter(request, "serverType", "");
+        // Sanitise the serverType
+        switch (serverType) {
+            case "activedirectory":
+            case "openldap":
+            case "other":
                 break;
             default:
-                serverType = "other";
+                serverType = "";
         }
     }
 

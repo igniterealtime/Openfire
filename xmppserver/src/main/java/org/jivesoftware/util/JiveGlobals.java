@@ -16,11 +16,6 @@
 
 package org.jivesoftware.util;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jivesoftware.database.DbConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -40,6 +35,11 @@ import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TimerTask;
 import java.util.TreeSet;
+
+import org.apache.commons.lang3.StringUtils;
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -77,7 +77,7 @@ public class JiveGlobals {
      */
     private static String home = null;
 
-    public static boolean failedLoading = false;
+    private static boolean failedLoading = false;
 
     private static XMLProperties openfireProperties = null;
     private static XMLProperties securityProperties = null;
@@ -427,14 +427,15 @@ public class JiveGlobals {
      * &lt;/foo&gt;
      * </pre>
      *
-     * @param name the name of the property being set.
+     * @param name  the name of the property being set.
      * @param value the value of the property being set.
+     * @return {@code true} if the property was correctly saved to file, otherwise {@code false}
      */
-    public static void setXMLProperty(String name, String value) {
+    public static boolean setXMLProperty(String name, String value) {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-        openfireProperties.setProperty(name, value);
+        return openfireProperties.setProperty(name, value);
     }
 
     /**
@@ -699,7 +700,7 @@ public class JiveGlobals {
      */
     public static List<String> getProperties( String parent )
     {
-        return getListProperty( parent, new ArrayList<String>() );
+        return getListProperty( parent, new ArrayList<>() );
     }
 
     /**
@@ -978,9 +979,9 @@ public class JiveGlobals {
     public static boolean isPropertySensitive(String name) {
         
         return name != null && (
-                name.toLowerCase().indexOf("passwd") > -1 || 
-                name.toLowerCase().indexOf("password") > -1 ||
-                name.toLowerCase().indexOf("cookiekey") > -1);
+            name.toLowerCase().contains("passwd") ||
+                name.toLowerCase().contains("password") ||
+                name.toLowerCase().contains("cookiekey"));
     }
 
 
@@ -1098,8 +1099,8 @@ public class JiveGlobals {
      * @param newKey new encryptor key
      */
     private static void updateEncryptionProperties(String oldAlg,String oldKey,String newAlg,String newKey) {
-        Encryptor oldEncryptor = null;
-        Encryptor newEncryptor = null;
+        Encryptor oldEncryptor;
+        Encryptor newEncryptor;
         // create the encryptor
         if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlg)) {
             oldEncryptor = new AesEncryptor(oldKey);
@@ -1126,8 +1127,8 @@ public class JiveGlobals {
         
         // Update configuration properties
         Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
-        Entry<String, String> entry = null;
-        String name = null;
+        Entry<String, String> entry;
+        String name;
         while(iterator.hasNext()){
             entry = iterator.next();
             name = entry.getKey();
@@ -1205,10 +1206,8 @@ public class JiveGlobals {
             // If home is null then log that the application will not work correctly
             if (home == null && !failedLoading) {
                 failedLoading = true;
-                StringBuilder msg = new StringBuilder();
-                msg.append("Critical Error! The home directory has not been configured, \n");
-                msg.append("which will prevent the application from working correctly.\n\n");
-                System.err.println(msg.toString());
+                System.err.println("Critical Error! The home directory has not been configured, \n" +
+                    "which will prevent the application from working correctly.\n\n");
             }
             // Create a manager with the full path to the Openfire config file.
             else {
@@ -1240,10 +1239,8 @@ public class JiveGlobals {
             // If home is null then log that the application will not work correctly
             if (home == null && !failedLoading) {
                 failedLoading = true;
-                StringBuilder msg = new StringBuilder();
-                msg.append("Critical Error! The home directory has not been configured, \n");
-                msg.append("which will prevent the application from working correctly.\n\n");
-                System.err.println(msg.toString());
+                System.err.println("Critical Error! The home directory has not been configured, \n" +
+                    "which will prevent the application from working correctly.\n\n");
             }
             // Create a manager with the full path to the security XML file.
             else {
@@ -1328,7 +1325,7 @@ public class JiveGlobals {
             }
             
             // rewrite existing encrypted properties using new encryption key
-            currentKey = newKey == null || newKey.isEmpty() ? null : newKey;
+            currentKey = newKey.isEmpty() ? null : newKey;
             propertyEncryptor = null;
             for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
                 Log.info("Updating encrypted value for " + propertyName);
@@ -1348,7 +1345,7 @@ public class JiveGlobals {
     
     /**
      * Read and re-write a given property to reset its encryption status
-     * @param propertyName
+     * @param propertyName the name of the property to reset
      */
     private static boolean resetProperty(String propertyName) {
         if (properties != null) {

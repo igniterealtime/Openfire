@@ -15,18 +15,13 @@
  */
 package org.jivesoftware.openfire.pep;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.concurrent.locks.Lock;
-
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -34,12 +29,18 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.concurrent.locks.Lock;
+
 /**
  * Manages the creation, persistence and removal of {@link PEPService}
  * instances.
- * 
+ *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
- * 
+ *
  */
 public class PEPServiceManager {
 
@@ -51,8 +52,8 @@ public class PEPServiceManager {
     /**
      * Cache of PEP services. Table, Key: bare JID (String); Value: PEPService
      */
-    private final Cache<String, PEPService> pepServices = CacheFactory
-            .createLocalCache("PEPServiceManager");
+    private final Cache<String, CacheableOptional<PEPService>> pepServices = CacheFactory
+        .createLocalCache("PEPServiceManager");
 
     private PubSubEngine pubSubEngine = null;
 
@@ -71,27 +72,27 @@ public class PEPServiceManager {
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
-     * 
+     *
      * @param jid
      *            the bare JID of the user that owns the PEP service.
      * @return the requested PEP service if found or null if not found.
      */
     public PEPService getPEPService(String jid) {
-        PEPService pepService = null;
+        PEPService pepService;
 
         final Lock lock = CacheFactory.getLock(jid, pepServices);
         try {
             lock.lock();
             if (pepServices.containsKey(jid)) {
                 // lookup in cache
-                pepService = pepServices.get(jid);
+                pepService = pepServices.get(jid).get();
             } else {
                 // lookup in database.
                 pepService = loadPEPServiceFromDB(jid);
-                
+
                 // always add to the cache, even if it doesn't exist. This will
                 // prevent future database lookups.
-                pepServices.put(jid, pepService);
+                pepServices.put(jid, CacheableOptional.of(pepService));
             }
         } finally {
             lock.unlock();
@@ -110,16 +111,16 @@ public class PEPServiceManager {
                             + owner);
         }
 
-        PEPService pepService = null;
+        PEPService pepService;
         final String bareJID = owner.toBareJID();
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
 
-            pepService = pepServices.get(bareJID);
+            pepService = pepServices.get(bareJID).get();
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
-                pepServices.put(bareJID, pepService);
+                pepServices.put(bareJID, CacheableOptional.of(pepService));
 
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEPService created for : " + bareJID);
@@ -134,7 +135,7 @@ public class PEPServiceManager {
 
     /**
      * Loads a PEP service from the database, if it exists.
-     * 
+     *
      * @param jid
      *            the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.
@@ -157,7 +158,7 @@ public class PEPServiceManager {
 
                 // Create a new PEPService
                 pepService = new PEPService(XMPPServer.getInstance(), serviceID);
-                pepServices.put(serviceID, pepService);
+                pepServices.put(serviceID, CacheableOptional.of(pepService));
                 pubSubEngine.start(pepService);
 
                 if (Log.isDebugEnabled()) {
@@ -176,17 +177,17 @@ public class PEPServiceManager {
 
     /**
      * Deletes the {@link PEPService} belonging to the specified owner.
-     * 
+     *
      * @param owner
      *            The JID of the owner of the service to be deleted.
      */
     public void remove(JID owner) {
-        PEPService service = null;
+        PEPService service;
 
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
-            service = pepServices.remove(owner.toBareJID());
+            service = pepServices.remove(owner.toBareJID()).get();
         } finally {
             lock.unlock();
         }
@@ -216,8 +217,10 @@ public class PEPServiceManager {
 
     public void stop() {
 
-        for (PEPService service : pepServices.values()) {
-            pubSubEngine.shutdown(service);
+        for (final CacheableOptional<PEPService> service : pepServices.values()) {
+            if (service.isPresent()) {
+                pubSubEngine.shutdown(service.get());
+            }
         }
 
         pubSubEngine = null;
@@ -226,13 +229,13 @@ public class PEPServiceManager {
     public void process(PEPService service, IQ iq) {
         pubSubEngine.process(service, iq);
     }
-    
+
     public boolean hasCachedService(JID owner) {
         return pepServices.get(owner.toBareJID()) != null;
     }
-    
+
     // mimics Shutdown, without killing the timer.
-    public void unload(PEPService service) {	
+    public void unload(PEPService service) {
         pubSubEngine.shutdown(service);
     }
 }

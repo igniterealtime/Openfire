@@ -1,5 +1,9 @@
 package org.jivesoftware.util;
 
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,7 +15,7 @@ import java.util.Optional;
  * cache instead - unfortunately an Optional is not serializable. This class therefore performs this functionality - an
  * optional value that is cacheable.
  */
-public class CacheableOptional<T extends Serializable> implements Serializable {
+public class CacheableOptional<T extends Serializable> implements Cacheable {
 
     private final T value;
 
@@ -61,4 +65,15 @@ public class CacheableOptional<T extends Serializable> implements Serializable {
         return Objects.hash(value);
     }
 
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException {
+        final int sizeOfValue = CacheSizes.sizeOfAnything(value);
+        if (value == null) {
+            // 94 bytes seems to be the overhead of a CacheableOptional representing absent value
+            return 94 + sizeOfValue;
+        } else {
+            // 72 bytes seems to be the overhead of a CacheableOptional<String> representing present value
+            return 72 + CacheSizes.sizeOfString(value.getClass().getName()) + sizeOfValue;
+        }
+    }
 }

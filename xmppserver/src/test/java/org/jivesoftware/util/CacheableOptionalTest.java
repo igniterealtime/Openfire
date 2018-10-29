@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CacheableOptionalTest {
@@ -26,10 +27,18 @@ public class CacheableOptionalTest {
     }
 
     @Test
-    public void equalsAndHashcodeAreAppropriate() {
+    public void equalsIsAppropriate() {
 
         assertThat(CacheableOptional.of("my-test"), is(CacheableOptional.of("my-test")));
+        assertThat(CacheableOptional.of("my-test"), is(not(CacheableOptional.of("not-my-test"))));
+
+    }
+
+    @Test
+    public void hashCodeIsAppropriate() {
+
         assertThat(CacheableOptional.of("my-test").hashCode(), is(CacheableOptional.of("my-test").hashCode()));
+        assertThat(CacheableOptional.of("my-test").hashCode(), is(not(CacheableOptional.of("not-my-test").hashCode())));
 
     }
 

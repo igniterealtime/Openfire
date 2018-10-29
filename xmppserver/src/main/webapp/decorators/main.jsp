@@ -184,7 +184,7 @@
             </admin:tabs>
         </div>
         <div class="jive-footer-copyright">
-            Built by <a href="http://www.jivesoftware.com">Jive Software</a> and the <a href="http://www.igniterealtime.org">IgniteRealtime.org</a> community
+            Built by the <a href="https://www.igniterealtime.org">IgniteRealtime.org</a> community.
         </div>
     </div>
 <!-- END footer -->

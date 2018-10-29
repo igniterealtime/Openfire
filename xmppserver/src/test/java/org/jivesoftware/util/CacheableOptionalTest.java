@@ -1,7 +1,13 @@
 package org.jivesoftware.util;
 
+import org.apache.commons.io.output.NullOutputStream;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -42,4 +48,52 @@ public class CacheableOptionalTest {
 
     }
 
+    @Test
+    public void cacheSizeOfAbsentCacheableOptionalStringIsCorrect() throws Exception {
+
+        final CacheableOptional<String> co = CacheableOptional.of(null);
+
+        final int actualCachedSize = calculateCachedSize(co);
+
+        assertThat(co.getCachedSize(), is(actualCachedSize));
+    }
+
+    @Test
+    public void cacheSizeOfPresentCacheableOptionalStringIsCorrect() throws Exception {
+
+        final CacheableOptional<String> co = CacheableOptional.of("my-test");
+
+        final int actualCachedSize = calculateCachedSize(co);
+
+        assertThat(co.getCachedSize(), is(actualCachedSize));
+    }
+
+    @Test
+    public void cacheSizeOfAbsentCacheableOptionalBooleanIsCorrect() throws Exception {
+
+        final CacheableOptional<Boolean> co = CacheableOptional.of(null);
+
+        final int actualCachedSize = calculateCachedSize(co);
+
+        assertThat(co.getCachedSize(), is(actualCachedSize));
+    }
+
+    // FIXME: I would expect the serialisation overhead to be constant, but that's not the case
+    @Ignore
+    @Test
+    public void cacheSizeOfPresentCacheableOptionalBooleanIsCorrect() throws Exception {
+
+        final CacheableOptional<Boolean> co = CacheableOptional.of(true);
+
+        final int actualCachedSize = calculateCachedSize(co);
+
+        assertThat(co.getCachedSize(), is(actualCachedSize));
+    }
+
+    private int calculateCachedSize(CacheableOptional co) throws IOException {
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final ObjectOutputStream oos = new ObjectOutputStream(os);
+        oos.writeObject(co);
+        return os.size();
+    }
 }

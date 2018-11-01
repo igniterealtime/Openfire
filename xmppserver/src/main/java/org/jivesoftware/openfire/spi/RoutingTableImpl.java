@@ -139,6 +139,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             if (nodes == null) {
                 nodes = new HashSet<>();
             }
+            // Remove an orphan entry (if any) in the routing table; mainly for clustering
+            if (nodes.remove(server.getDefaultNodeID())) {
+                Log.debug("Replacing DEFAULT_NODE_ID with \"{}\" for component {}",
+                    server.getNodeID(), route);
+            }
             nodes.add(server.getNodeID());
             componentsCache.put(address, nodes);
         } finally {

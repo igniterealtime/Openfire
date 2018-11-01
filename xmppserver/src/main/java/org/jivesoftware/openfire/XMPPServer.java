@@ -286,6 +286,16 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the default node ID used by this server before clustering is
+     * initialized.
+     *
+     * @return The default node ID.
+     */
+    public NodeID getDefaultNodeID() {
+        return DEFAULT_NODE_ID;
+    }
+
+    /**
      * Returns true if the given address matches a component service JID.
      *
      * @param jid the JID to check.

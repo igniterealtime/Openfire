@@ -63,9 +63,9 @@ CREATE TABLE ofRoster (
 
 CREATE TABLE ofRosterGroups (
   rosterID              BIGINT          NOT NULL,
-  rank                  TINYINT         NOT NULL,
+  `rank`                  TINYINT         NOT NULL,
   groupName             VARCHAR(255)    NOT NULL,
-  PRIMARY KEY (rosterID, rank),
+  PRIMARY KEY (rosterID, `rank`),
   INDEX ofRosterGroup_rosterid_idx (rosterID)
 );
 

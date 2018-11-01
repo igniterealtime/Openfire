@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -113,6 +114,9 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
 
     @Override
     public Iterator<String> getFeatures() {
-        return Collections.singleton("jabber:iq:private").iterator();
+        return Arrays.asList(
+            "jabber:iq:private",
+            "urn:xmpp:bookmarks-conversion:0"
+        ).iterator();
     }
 }

@@ -42,7 +42,7 @@
     <files>
         <!-- Copy the admin console plugin.xml -->
         <file>
-            <source>${project.basedir}/../src/plugins/admin/plugin.xml</source>
+            <source>${project.basedir}/../xmppserver/plugin.xml</source>
             <outputDirectory>plugins/admin</outputDirectory>
         </file>
         <!-- Copy the admin console web.xml -->

@@ -51,7 +51,6 @@ public class ServerStarter {
      * Default to this location if one has not been specified
      */
     private static final String DEFAULT_LIB_DIR = "../lib";
-    private static final String DEFAULT_ADMIN_LIB_DIR = "../plugins/admin/webapp/WEB-INF/lib";
 
     public static void main(String [] args) {
         new ServerStarter().start();
@@ -83,19 +82,6 @@ public class ServerStarter {
             }
             else {
                 libDir = new File(DEFAULT_LIB_DIR);
-            }
-
-            String adminLibDirString = System.getProperty("openfireHome");
-            if (adminLibDirString == null) {
-                adminLibDirString = DEFAULT_ADMIN_LIB_DIR;
-            }
-            else {
-                adminLibDirString = adminLibDirString+"/plugins/admin/webapp/WEB-INF/lib";
-            }
-            File adminLibDir = new File(adminLibDirString);
-            if (!adminLibDir.exists()) {
-                Log.warn("Admin Lib Directory " + adminLibDirString +
-                    " does not exist. Web admin console may not work.");
             }
 
             ClassLoader loader = new JiveClassLoader(parent, libDir);

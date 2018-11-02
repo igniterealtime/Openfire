@@ -11,7 +11,6 @@
     <description>Openfire is a cross-platform real-time collaboration server based on the XMPP (Jabber) protocol.</description>
 
     <modules>
-        <module>dbutil</module>
         <module>i18n</module>
         <module>xmppserver</module>
         <module>starter</module>
@@ -332,11 +331,6 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>xmppserver</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>dbutil</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

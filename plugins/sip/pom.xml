@@ -9,6 +9,7 @@
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>sip</artifactId>
     <name>SIP Plugin</name>
+    <version>1.2.1-SNAPSHOT</version>
 
     <build>
         <sourceDirectory>src/java</sourceDirectory>
@@ -21,9 +22,14 @@
 
     <dependencies>
         <dependency>
+            <!--
+            TODO: Replace with a proper Maven dependency. Perhaps javax.sip:jain-sip-ri - this requires code changes
+            -->
             <groupId>javax.sip</groupId>
             <artifactId>jain-sip-api</artifactId>
-            <version>1.2</version>
+            <version>1.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/JainSipApi1.1.jar</systemPath>
         </dependency>
     </dependencies>
 

@@ -89,11 +89,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     private Cache<String, ClientRoute> anonymousUsersCache;
     /**
-     * Cache (unlimited, never expire) that holds list of connected resources of authenticated users
+     * Cache (unlimited, never expire) that holds set of connected resources of authenticated users
      * (includes anonymous).
-     * Key: bare JID, Value: list of full JIDs of the user
+     * Key: bare JID, Value: set of full JIDs of the user
      */
-    private Cache<String, ArrayList<String>> usersSessions;
+    private Cache<String, HashSet<String>> usersSessions;
 
     private String serverName;
     private XMPPServer server;
@@ -172,7 +172,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
-                    usersSessions.put(route.toBareJID(), new ArrayList<>(Collections.singletonList(route.toString())));
+                    usersSessions.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
                 }
                 finally {
                     lock.unlock();
@@ -193,9 +193,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
                 try {
                     lock.lock();
-                    ArrayList<String> jids = usersSessions.get(route.toBareJID());
+                    HashSet<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
-                        jids = new ArrayList<>();
+                        jids = new HashSet<>();
                     }
                     jids.add(route.toString());
                     usersSessions.put(route.toBareJID(), jids);
@@ -930,7 +930,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     usersSessions.remove(route.toBareJID());
                 }
                 else {
-                    ArrayList<String> jids = usersSessions.get(route.toBareJID());
+                    HashSet<String> jids = usersSessions.get(route.toBareJID());
                     if (jids != null) {
                         jids.remove(route.toString());
                         if (!jids.isEmpty()) {

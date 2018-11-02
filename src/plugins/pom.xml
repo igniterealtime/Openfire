@@ -99,8 +99,6 @@
         <module>candy</module>
         <module>certificateManager</module>
         <module>clientControl</module>
-        <!-- Needs coherence.jar -->
-        <!--<module>clustering</module>-->
         <module>contentFilter</module>
         <module>dbaccess</module>
         <module>emailListener</module>
@@ -115,7 +113,6 @@
         <!--<module>jingleNodes</module>-->
         <module>jmxweb</module>
         <module>justmarried</module>
-        <!--<module>kraken</module>-->
         <module>loadStats</module>
         <module>monitoring</module>
         <module>motd</module>
@@ -123,7 +120,6 @@
         <module>nodejs</module>
         <module>nonSaslAuthentication</module>
         <module>packetFilter</module>
-        <!--<module>rayo</module>-->
         <module>presence</module>
         <module>registration</module>
         <module>restAPI</module>

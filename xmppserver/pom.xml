@@ -107,11 +107,6 @@
         <!-- Ignite Realtime -->
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>dbutil</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>i18n</artifactId>
             <version>${project.version}</version>
         </dependency>

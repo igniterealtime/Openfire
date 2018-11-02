@@ -12,7 +12,6 @@
             <useAllReactorProjects>true</useAllReactorProjects>
 
             <includes>
-                <include>${project.groupId}:dbutil</include>
                 <include>${project.groupId}:i18n</include>
                 <include>${project.groupId}:xmppserver</include>
             </includes>

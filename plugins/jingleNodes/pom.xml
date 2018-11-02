@@ -8,7 +8,7 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>jingleNodes</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1-SNAPSHOT</version>
     <name>JingleNodes Plugin</name>
     <description>Provides support for Jingle Nodes</description>
 
@@ -29,9 +29,28 @@
 
     <dependencies>
         <dependency>
+            <!--
+            TODO: Replace with a proper Maven dependency. Perhaps org.jitsi:jnsapi - this requires code changes
+            -->
             <groupId>org.xmpp</groupId>
             <artifactId>jnsapi</artifactId>
-            <version>0.0.1</version>
+            <version>0.0.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/jnsapi.jar</systemPath>
+        </dependency>
+        <!--
+        TODO: Remove the following two dependencies once the jnsapi issue above is resolved. They are transitive,
+         the following versions are guesses
+        -->
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smackx</artifactId>
+            <version>3.2.1</version>
         </dependency>
     </dependencies>
 

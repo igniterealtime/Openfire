@@ -106,9 +106,9 @@ public class GroupManager {
 
                 // Evict only the information related to Groups.
                 // Do not evict groups with 'user' as keys.
-                groupMetaCache.remove(GROUP_COUNT_KEY);
-                groupMetaCache.remove(GROUP_NAMES_KEY);
-                groupMetaCache.remove(SHARED_GROUPS_KEY);
+                clearGroupCountCache();
+                clearGroupNameCache();
+                clearSharedGroupCache();
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
@@ -124,9 +124,9 @@ public class GroupManager {
                 
                 // Evict only the information related to Groups.
                 // Do not evict groups with 'user' as keys.
-                groupMetaCache.remove(GROUP_COUNT_KEY);
-                groupMetaCache.remove(GROUP_NAMES_KEY);
-                groupMetaCache.remove(SHARED_GROUPS_KEY);
+                clearGroupCountCache();
+                clearGroupNameCache();
+                clearSharedGroupCache();
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
@@ -146,11 +146,11 @@ public class GroupManager {
                         Object key = params.get("propertyKey");
                         if ("sharedRoster.showInRoster".equals(key) || "*".equals(key))
                         {
-                            groupMetaCache.remove(GROUP_NAMES_KEY);
-                            groupMetaCache.remove(SHARED_GROUPS_KEY);
+                            clearGroupNameCache();
+                            clearSharedGroupCache();
 
                             String originalValue = (String) params.get("originalValue");
-                            String newValue = (String) group.getProperties().get("sharedRoster.showInRoster");
+                            String newValue = group.getProperties().get("sharedRoster.showInRoster");
 
                             // 'showInRoster' has changed
                             if (!StringUtils.equals(originalValue, newValue)) {
@@ -162,7 +162,7 @@ public class GroupManager {
                         } else if ("sharedRoster.groupList".equals(key)) {
 
                             String originalValue = (String) params.get("originalValue");
-                            String newValue = (String) group.getProperties().get("sharedRoster.groupList");
+                            String newValue = group.getProperties().get("sharedRoster.groupList");
 
                             // 'groupList' has changed
                             if (!StringUtils.equals(originalValue, newValue)) {
@@ -177,8 +177,8 @@ public class GroupManager {
                             groupCache.remove(originalName);
                         }
 
-                        groupMetaCache.remove(GROUP_NAMES_KEY);
-                        groupMetaCache.remove(SHARED_GROUPS_KEY);
+                        clearGroupNameCache();
+                        clearSharedGroupCache();
                         
                         // Evict cached information for affected users
                         evictCachedUsersForGroup(group);
@@ -428,13 +428,13 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
-            Integer count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+            Integer count = getGroupCountFromCache();
         if (count == null) {
-            synchronized(GROUP_COUNT_KEY.intern()) {
-                count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+            synchronized(GROUP_COUNT_KEY) {
+                count = getGroupCountFromCache();
                 if (count == null) {
                     count = provider.getGroupCount();
-                    groupMetaCache.put(GROUP_COUNT_KEY, count);
+                    saveGroupCountInCache(count);
                 }
             }
         }
@@ -452,13 +452,13 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+        ArrayList<String> groupNames = getGroupNamesFromCache();
         if (groupNames == null) {
-            synchronized(GROUP_NAMES_KEY.intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+            synchronized(GROUP_NAMES_KEY) {
+                groupNames = getGroupNamesFromCache();
                 if (groupNames == null) {
-                    groupNames = new ArrayList(provider.getGroupNames());
-                    groupMetaCache.put(GROUP_NAMES_KEY, groupNames);
+                    groupNames = new ArrayList<>(provider.getGroupNames());
+                    saveGroupNamesInCache(groupNames);
                 }
             }
         }
@@ -476,13 +476,13 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> getSharedGroups() {
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
+        ArrayList<String> groupNames = getSharedGroupsFromCache();
         if (groupNames == null) {
-            synchronized(SHARED_GROUPS_KEY.intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
+            synchronized(SHARED_GROUPS_KEY) {
+                groupNames = getSharedGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new ArrayList<>(provider.getSharedGroupNames());
-                    groupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
+                    saveSharedGroupsInCache(groupNames);
                 }
             }
         }
@@ -495,16 +495,15 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getSharedGroups(String userName) {
-        String key = USER_SHARED_GROUPS_KEY + userName;
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(key);
+        ArrayList<String> groupNames = getSharedGroupsForUserFromCache(userName);
         if (groupNames == null) {
             synchronized((userName + MUTEX_SUFFIX_USER).intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(key);
+                groupNames = getSharedGroupsForUserFromCache(userName);
                 if (groupNames == null) {
                     // assume this is a local user
-                    groupNames = new ArrayList(provider.getSharedGroupNames(new JID(userName,
+                    groupNames = new ArrayList<>(provider.getSharedGroupNames(new JID(userName,
                             XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null)));
-                    groupMetaCache.put(key, groupNames);
+                    saveSharedGroupsForUserInCache(userName, groupNames);
                 }
             }
         }
@@ -518,13 +517,13 @@ public class GroupManager {
      */
     public Collection<Group> getVisibleGroups(Group groupToCheck) {
         // Get all the public shared groups.
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(PUBLIC_GROUPS);
+        ArrayList<String> groupNames = getPublicGroupsFromCache();
         if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS.intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(PUBLIC_GROUPS);
+            synchronized(PUBLIC_GROUPS) {
+                groupNames = getPublicGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new ArrayList<>(provider.getPublicSharedGroupNames());
-                    groupMetaCache.put(PUBLIC_GROUPS, groupNames);
+                    savePublicGroupsInCache(groupNames);
                 }
             }
         }
@@ -539,13 +538,13 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> getPublicSharedGroups() {
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(PUBLIC_GROUPS);
+        ArrayList<String> groupNames = getPublicGroupsFromCache();
         if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS.intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(PUBLIC_GROUPS);
+            synchronized(PUBLIC_GROUPS) {
+                groupNames = getPublicGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new ArrayList<>(provider.getPublicSharedGroupNames());
-                    groupMetaCache.put(PUBLIC_GROUPS, groupNames);
+                    savePublicGroupsInCache(groupNames);
                 }
             }
         }
@@ -575,15 +574,13 @@ public class GroupManager {
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
-        String key = GROUP_NAMES_KEY + startIndex + "," + numResults;
-
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(key);
+        ArrayList<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
         if (groupNames == null) {
-            synchronized((key + MUTEX_SUFFIX_KEY).intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(key);
+            synchronized((getPagedGroupNameKey(startIndex, numResults) + MUTEX_SUFFIX_KEY).intern()) {
+                groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
                 if (groupNames == null) {
                     groupNames = new ArrayList<>(provider.getGroupNames(startIndex, numResults));
-                    groupMetaCache.put(key, groupNames);
+                    savePagedGroupNamesFromCache(groupNames, startIndex, numResults);
                 }
             }
         }
@@ -607,15 +604,13 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String key = USER_GROUPS_KEY + user.toBareJID();
-
-        ArrayList<String> groupNames = (ArrayList<String>)groupMetaCache.get(key);
+        ArrayList<String> groupNames = getUserGroupsFromCache(user);
         if (groupNames == null) {
             synchronized((user.getNode() + MUTEX_SUFFIX_USER).intern()) {
-                groupNames = (ArrayList<String>)groupMetaCache.get(key);
+                groupNames = getUserGroupsFromCache(user);
                 if (groupNames == null) {
                     groupNames = new ArrayList<>(provider.getGroupNames(user));
-                    groupMetaCache.put(key, groupNames);
+                    saveUserGroupsInCache(user, groupNames);
                 }
             }
         }
@@ -690,16 +685,14 @@ public class GroupManager {
             JID user = new JID(userJid);
 
             // remove cache for getGroups
-            String groupsKey = USER_GROUPS_KEY + user.toBareJID();
-            synchronized (USER_GROUPS_KEY.intern()) {
-                groupMetaCache.remove(groupsKey);
+            synchronized (USER_GROUPS_KEY) {
+                clearUserGroupsCache(user);
             }
 
             // remove cache for getSharedGroups
             if (XMPPServer.getInstance().isLocal(user)) {
-                String sharedGroupsKey = USER_SHARED_GROUPS_KEY + user.getNode();
-                synchronized (USER_SHARED_GROUPS_KEY.intern()) {
-                    groupMetaCache.remove(sharedGroupsKey);
+                synchronized (USER_SHARED_GROUPS_KEY) {
+                    clearSharedGroupsForUserCache(user.getNode());
                 }
             }
         }
@@ -769,7 +762,7 @@ public class GroupManager {
     }
 
     private void evictCachedUserSharedGroups() {
-        synchronized (USER_SHARED_GROUPS_KEY.intern()) {
+        synchronized (USER_SHARED_GROUPS_KEY) {
             groupMetaCache.keySet()
                 .removeIf( key -> key.startsWith( USER_SHARED_GROUPS_KEY ) );
             for (Map.Entry<String, Serializable> entry : groupMetaCache.entrySet()) {
@@ -779,4 +772,109 @@ public class GroupManager {
             }
         }
     }
+
+    /*
+        For reasons currently unclear, this class stores a number of different objects in the groupMetaCache. To
+        better encapsulate this, all access to the groupMetaCache is via these methods
+     */
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getGroupNamesFromCache() {
+        return (ArrayList<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+    }
+
+    private void clearGroupNameCache() {
+        groupMetaCache.remove(GROUP_NAMES_KEY);
+    }
+
+    private void saveGroupNamesInCache(final ArrayList<String> groupNames) {
+        groupMetaCache.put(GROUP_NAMES_KEY, groupNames);
+    }
+
+    private String getPagedGroupNameKey(final int startIndex, final int numResults) {
+        return GROUP_NAMES_KEY + startIndex + "," + numResults;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getPagedGroupNamesFromCache(final int startIndex, final int numResults) {
+        return (ArrayList<String>)groupMetaCache.get(getPagedGroupNameKey(startIndex, numResults));
+    }
+
+    private void savePagedGroupNamesFromCache(final ArrayList<String> groupNames, final int startIndex, final int numResults) {
+        groupMetaCache.put(getPagedGroupNameKey(startIndex, numResults), groupNames);
+
+    }
+
+    private Integer getGroupCountFromCache() {
+        return (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+    }
+
+    private void saveGroupCountInCache(final int count) {
+        groupMetaCache.put(GROUP_COUNT_KEY, count);
+    }
+
+    private void clearGroupCountCache() {
+        groupMetaCache.remove(GROUP_COUNT_KEY);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getSharedGroupsFromCache() {
+        return (ArrayList<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
+    }
+
+    private void clearSharedGroupCache() {
+        groupMetaCache.remove(SHARED_GROUPS_KEY);
+    }
+
+    private void saveSharedGroupsInCache(final ArrayList<String> groupNames) {
+        groupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
+    }
+
+
+    private String getSharedGroupsForUserKey(final String userName) {
+        return USER_SHARED_GROUPS_KEY + userName;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getSharedGroupsForUserFromCache(final String userName) {
+        return (ArrayList<String>)groupMetaCache.get(getSharedGroupsForUserKey(userName));
+    }
+
+    private void clearSharedGroupsForUserCache(final String userName) {
+        groupMetaCache.remove(getSharedGroupsForUserKey(userName));
+    }
+
+    private void saveSharedGroupsForUserInCache(final String userName, final ArrayList<String> groupNames) {
+        groupMetaCache.put(getSharedGroupsForUserKey(userName), groupNames);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getPublicGroupsFromCache() {
+        return (ArrayList<String>)groupMetaCache.get(PUBLIC_GROUPS);
+    }
+
+    private void clearPublicGroupsCache() {
+        groupMetaCache.remove(PUBLIC_GROUPS);
+    }
+
+    private void savePublicGroupsInCache(final ArrayList<String> groupNames) {
+        groupMetaCache.put(PUBLIC_GROUPS, groupNames);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> getUserGroupsFromCache(final JID user) {
+        return (ArrayList<String>)groupMetaCache.get(getUserGroupsKey(user));
+    }
+
+    private void clearUserGroupsCache(final JID user) {
+        groupMetaCache.remove(getUserGroupsKey(user));
+    }
+
+    private void saveUserGroupsInCache(final JID user, final ArrayList<String> groupNames) {
+        groupMetaCache.put(getUserGroupsKey(user), groupNames);
+    }
+
+    private String getUserGroupsKey(final JID user) {
+        return USER_GROUPS_KEY + user.toBareJID();
+    }
+
 }

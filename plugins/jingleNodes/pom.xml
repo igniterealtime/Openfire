@@ -24,33 +24,18 @@
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-jspc-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
-            <!--
-            TODO: Replace with a proper Maven dependency. Perhaps org.jitsi:jnsapi - this requires code changes
-            -->
-            <groupId>org.xmpp</groupId>
+            <groupId>org.jitsi</groupId>
             <artifactId>jnsapi</artifactId>
-            <version>0.0.3</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/jnsapi.jar</systemPath>
-        </dependency>
-        <!--
-        TODO: Remove the following two dependencies once the jnsapi issue above is resolved. They are transitive,
-         the following versions are guesses
-        -->
-        <dependency>
-            <groupId>org.igniterealtime.smack</groupId>
-            <artifactId>smack</artifactId>
-            <version>3.2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.igniterealtime.smack</groupId>
-            <artifactId>smackx</artifactId>
-            <version>3.2.1</version>
+            <version>0.0.3-jitsi-smack4.2-3</version>
         </dependency>
     </dependencies>
 

@@ -19,12 +19,11 @@ package org.jinglenodes;
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jxmpp.jid.impl.JidCreate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.AbstractComponent;
 import org.xmpp.jnodes.RelayChannel;
-import org.xmpp.jnodes.RelayPublicMask;
-import org.xmpp.jnodes.nio.LocalIPResolver;
 import org.xmpp.jnodes.smack.JingleChannelIQ;
 import org.xmpp.jnodes.smack.JingleTrackerIQ;
 import org.xmpp.jnodes.smack.TrackerEntry;
@@ -98,7 +97,7 @@ class JingleNodesComponent extends AbstractComponent {
         } else if (JingleTrackerIQ.NAME.equals(element.getName()) && JingleTrackerIQ.NAMESPACE.equals(namespace)) {
 
             final List<TrackerEntry> entries = new ArrayList<TrackerEntry>();
-            entries.add(new TrackerEntry(TrackerEntry.Type.relay, TrackerEntry.Policy._roster, plugin.getServiceName() + "." + getDomain(), UDP));
+            entries.add(new TrackerEntry(TrackerEntry.Type.relay, TrackerEntry.Policy._roster, JidCreate.from(plugin.getServiceName() + "." + getDomain()), UDP));
 
             final String elements = getChildElementXML(entries);
 

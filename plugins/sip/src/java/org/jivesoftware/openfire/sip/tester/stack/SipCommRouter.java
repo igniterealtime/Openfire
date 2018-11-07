@@ -151,4 +151,8 @@ public class SipCommRouter implements Router {
         }
     }
 
+    @Override
+    public Hop getNextHop(final Request request) {
+        throw new UnsupportedOperationException();
+    }
 }

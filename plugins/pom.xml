@@ -124,8 +124,7 @@
         <module>registration</module>
         <module>restAPI</module>
         <module>search</module>
-        <!-- Missing dependencies -->
-        <!--<module>sip</module>-->
+        <module>sip</module>
         <module>stunserver</module>
         <module>subscription</module>
         <module>tikitoken</module>

@@ -42,3 +42,53 @@ of the biggest and most active Open Source communities.
 [Openfire]: http://www.igniterealtime.org/projects/openfire/index.jsp
 [Ignite Realtime]: http://www.igniterealtime.org
 [XMPP (Jabber)]: http://xmpp.org/
+
+Making changes
+==============
+The project uses [Maven](https://maven.apache.org/) and as such should import straight in to your favourite Java IDE.
+The directory structure is fairly straightforward. The code is contained in two key folders:
+
+* `Openfire/xmppserver` - a Maven module representing the core code for Openfire itself
+* `Openfire/plugins` - a number of modules for the various [plugins](https://www.igniterealtime.org/projects/openfire/plugins.jsp) available
+
+Other folders are:  
+* `Openfire/build` - various files use to create installers for different platforms
+* `Openfire/distribution` - a Maven module used to bring all the parts together
+* `Openfire/documentation` - the documentation hosted at https://www.igniterealtime.org/projects/openfire/documentation.jsp
+* `Openfire/i18n` - files used for internationalisation of the admin interface
+* `Openfire/starter` - a small module that allows Openfire to start in a consistent manner on different platforms
+
+To build the complete project including plugins, run the command
+```
+mvn verify
+```  
+
+However much of the time it is only necessary to make changes to the core XMPP server itself in which case the command
+```
+mvn verify -pl distribution -am 
+```  
+will compile the core server and any dependencies, and then assemble it in to something that can be run. 
+
+Testing your changes
+--------------------
+Although your IDE will happily compile the project unfortunately, it's not possible to run Openfire from within an 
+IDE - it must be done at the command line. After building the project using Maven, simply run the shell script or 
+batch file to start Openfire;
+```
+./distribution/target/distribution-base/bin/openfire.sh
+```
+or
+```
+.\distribution\target\distribution-base\bin\openfire.bat
+```
+
+Adding `-debug` as the first parameter to the script will start the server in debug mode, and your IDE should be able
+to attach a remote debugger if necessary.
+
+Compiling a plugin
+------------------
+Compiling the complete project will build all the plugins - however to test changes to a plugin it's often quicker to 
+compile an individual plugin by specifing the `pom.xml` for that plugin, for example;
+```
+mvn verify -f plugins/broadcast/pom.xml
+```

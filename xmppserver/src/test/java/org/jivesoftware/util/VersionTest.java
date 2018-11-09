@@ -130,4 +130,13 @@ public class VersionTest {
 
     }
 
+    @Test
+    public void anAlphaVersionIgnoringTheReleaseStatusIsNotNewerThanTheReleaseVersion() {
+
+        final Version releaseVersion = new Version("4.3.0");
+        final Version alphaVersion = new Version("4.3.0 alpha");
+
+        assertThat(releaseVersion.isNewerThan(alphaVersion), is(true));
+        assertThat(releaseVersion.isNewerThan(alphaVersion.ignoringReleaseStatus()), is(false));
+    }
 }

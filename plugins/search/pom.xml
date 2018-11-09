@@ -8,6 +8,7 @@
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>search</artifactId>
+    <version>1.7.2-SNAPSHOT</version>
     <name>Search Plugin</name>
 
     <build>

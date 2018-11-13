@@ -231,7 +231,7 @@
                           </a>
                         </td>
                         <td width="1%" align="center">
-                            <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+                            <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>&amp;csrf=<%= URLEncoder.encode(csrfParam) %>"
                              title="<fmt:message key="groupchat.admins.dialog.title" />"
                              onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
                              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

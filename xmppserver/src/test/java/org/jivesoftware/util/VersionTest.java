@@ -67,6 +67,7 @@ public class VersionTest {
         assertEquals("0.0.0", test.getVersionString());
     }
 
+    @SuppressWarnings("EqualsWithItself")
     @Test
     public void testVersionComparisons() {
         
@@ -100,11 +101,11 @@ public class VersionTest {
         Version version1 = new Version(3, 11, 0, Version.ReleaseStatus.Alpha, -1);
         Version version2 = new Version(3, 11, 0, Version.ReleaseStatus.Alpha, -1);
         assertEquals(version1, version2);
-        assertTrue((version1.compareTo(version2) == 0) == version1.equals(version2));
+        assertEquals((version1.compareTo(version2) == 0), version1.equals(version2));
     }
 
     @Test
-    public void willVersionAThreeDigitSnapshot() throws Exception {
+    public void willVersionAThreeDigitSnapshot() {
         final String versionString = "1.2.3-SNAPSHOT";
         Version test = new Version(versionString);
 
@@ -117,7 +118,7 @@ public class VersionTest {
     }
 
     @Test
-    public void willVersionAFourDigitSnapshot() throws Exception {
+    public void willVersionAFourDigitSnapshot() {
         final String versionString = "1.2.3.4-snapshot";
         Version test = new Version(versionString);
 
@@ -130,4 +131,13 @@ public class VersionTest {
 
     }
 
+    @Test
+    public void anAlphaVersionIgnoringTheReleaseStatusIsNotNewerThanTheReleaseVersion() {
+
+        final Version releaseVersion = new Version("4.3.0");
+        final Version alphaVersion = new Version("4.3.0 alpha");
+
+        assertThat(releaseVersion.isNewerThan(alphaVersion), is(true));
+        assertThat(releaseVersion.isNewerThan(alphaVersion.ignoringReleaseStatus()), is(false));
+    }
 }

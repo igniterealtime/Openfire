@@ -278,4 +278,8 @@ public final class Version implements Comparable<Version> {
     public String toString() {
         return getVersionString();
     }
+
+    public Version ignoringReleaseStatus() {
+        return new Version(major, minor, micro, null, -1 );
+    }
 }

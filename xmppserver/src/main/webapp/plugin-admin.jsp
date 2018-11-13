@@ -26,6 +26,8 @@
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.io.InputStream" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.slf4j.Logger" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -36,6 +38,7 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%
+    final Logger Log = LoggerFactory.getLogger("plugin-admin.jsp");
     String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
     String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
     boolean downloadRequested = request.getParameter("download") != null;
@@ -91,7 +94,7 @@
     }
 
     if (csrf_check && uploadEnabled && uploadPlugin) {
-        Boolean installed = false;
+        boolean installed = false;
 
         // Create a factory for disk-based file items
         FileItemFactory factory = new DiskFileItemFactory();
@@ -161,7 +164,7 @@
 
 .textfield {
     font-size: 11px;
-    font-family: verdana;
+    font-family: verdana, serif;
     padding: 3px 2px;
     background: #efefef;
 }
@@ -180,7 +183,7 @@
 .small-label-link {
     font-size: 11px;
     font-weight: bold;
-    font-family: verdana;
+    font-family: verdana, serif;
     text-decoration: underline;
 }
 
@@ -193,9 +196,8 @@
 }
 
 .light-gray-border-bottom {
-    border-color: #dcdcdc;
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
+    border: 0 solid #dcdcdc;
+    border-bottom-width: 1px;
 }
 
 .table-header {
@@ -378,7 +380,7 @@ tr.lowerhalf > td:last-child {
     <c:set var="canonicalName" value="${entry.key}"/>
     <c:set var="plugin" value="${entry.value}"/>
     <c:if test="${canonicalName != 'admin'}">
-        <c:set var="minServerVersionFail" value="${not empty plugin.minServerVersion and plugin.minServerVersion.isNewerThan(serverVersion)}"/>
+        <c:set var="minServerVersionFail" value="${not empty plugin.minServerVersion and plugin.minServerVersion.isNewerThan(serverVersion.ignoringReleaseStatus())}"/>
         <c:set var="priorToServerVersionFail" value="${not empty plugin.priorToServerVersion and not plugin.priorToServerVersion.isNewerThan( serverVersion )}"/>
         <c:set var="unsupported" value="${ minServerVersionFail or priorToServerVersionFail }"/>
         <c:set var="update" value="${updateManager.getPluginUpdate( plugin.name, plugin.version) }"/>

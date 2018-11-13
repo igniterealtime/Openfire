@@ -436,9 +436,7 @@ public class PluginManager
             if ( metadata.getMinServerVersion() != null )
             {
                 // OF-1338: Ignore release status when comparing minimum server version requirement.
-                final Version compareVersion = new Version( currentServerVersion.getMajor(), currentServerVersion.getMinor(), currentServerVersion.getMicro(), null, -1 );
-                if ( metadata.getMinServerVersion().isNewerThan( compareVersion ) )
-                {
+                if (metadata.getMinServerVersion().isNewerThan(currentServerVersion.ignoringReleaseStatus())) {
                     Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", canonicalName, metadata.getMinServerVersion(), currentServerVersion );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
                     return false;

@@ -54,7 +54,7 @@ The directory structure is fairly straightforward. The code is contained in two 
 Other folders are:  
 * `Openfire/build` - various files use to create installers for different platforms
 * `Openfire/distribution` - a Maven module used to bring all the parts together
-* `Openfire/documentation` - the documentation hosted at https://www.igniterealtime.org/projects/openfire/documentation.jsp
+* `Openfire/documentation` - the documentation hosted at [igniterealtime.org](https://www.igniterealtime.org/projects/openfire/documentation.jsp)
 * `Openfire/i18n` - files used for internationalisation of the admin interface
 * `Openfire/starter` - a small module that allows Openfire to start in a consistent manner on different platforms
 

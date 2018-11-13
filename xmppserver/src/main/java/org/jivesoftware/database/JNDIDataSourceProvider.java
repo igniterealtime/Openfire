@@ -51,7 +51,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
     /**
      * Keys of JNDI properties to query PropertyManager for.
      */
-    private static final String[] jndiPropertyKeys = {
+    public static final String[] jndiPropertyKeys = {
         Context.APPLET,
         Context.AUTHORITATIVE,
         Context.BATCHSIZE,

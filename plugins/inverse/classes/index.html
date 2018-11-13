@@ -6,12 +6,19 @@
     <title>inVerse</title>
     <link rel="shortcut icon" type="image/ico" href="inverse/css/images/favicon.ico"/>
     <link type="text/css" rel="stylesheet" media="screen" href="inverse/css/converse.min.css" />
+    <link type="text/css" rel="stylesheet" media="screen" href="inverse/css/fullpage.css" />
     <script src="inverse/dist/converse.min.js"></script>
 </head>
-<body>
-<div class="content">
-    <div class="inner-content">
-        <h1 class="brand-heading"><i class="icon-conversejs"></i> inVerse</h1>
+<body class="reset">
+<div class="converse-content" style="display:none">
+    <div class="inner-content converse-brand row">
+        <div class="converse-brand__padding"></div>
+        <div class="converse-brand__heading">
+            <div class="converse-brand__text"><i class="icon-conversejs"></i>Converse</div>
+            <div class="converse-brand__byline">
+                brought to you by <a target="_blank" rel="nofollow" href="https://opkode.com">Opkode</a>
+            </div>
+        </div>
     </div>
 </div>
 <script>
@@ -33,7 +40,15 @@
             if ( request.status >= 200 && request.status < 400 )
             {
                 var config = JSON.parse( request.responseText );
-                converse.initialize( config );
+                converse.initialize( config )
+                        .then( function ()
+                        {
+                            setTimeout( function ()
+                            {
+                                document.querySelector('.converse-content').style = '';
+                            }
+                            , 1000 );
+                        });
             }
             else
             {

@@ -51,6 +51,7 @@ public class ConfigServlet extends HttpServlet
         final boolean lockedDomain = JiveGlobals.getBooleanProperty( "inverse.config.locked_domain", false );
         final String endpoint = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/http-bind/";
         final boolean debug = JiveGlobals.getBooleanProperty( "inverse.config.debug", false );
+        final boolean playSounds = JiveGlobals.getBooleanProperty( "inverse.config.play_sounds", false );
         //final String viewMode = JiveGlobals.getProperty( "inverse.config.view_mode" );
 
         // The language of the inVerse UI.
@@ -58,6 +59,9 @@ public class ConfigServlet extends HttpServlet
 
         final JSONObject config = new JSONObject();
         config.put( "locales_url", "/" + InversePlugin.CONTEXT_ROOT + "/inverse/locale/{{{locale}}}/LC_MESSAGES/converse.json" );
+        config.put( "sounds_path", "/" + InversePlugin.CONTEXT_ROOT + "/inverse/sounds/" );
+        config.put( "play_sounds", playSounds );
+        config.put( "notification_icon", "/" + InversePlugin.CONTEXT_ROOT + "/inverse/logo/conversejs-filled.svg" );
         config.put( "auto_away", 300); // TODO make configurable.
         config.put( "notify_all_room_messages", new JSONArray() ); // TODO make configurable.
         config.put( "i18n", language.getCode() );

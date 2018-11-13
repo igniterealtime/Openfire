@@ -352,7 +352,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public void setNodeCreationRestricted(boolean nodeCreationRestricted) {
         this.nodeCreationRestricted = nodeCreationRestricted;
-        JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(nodeCreationRestricted));
+        JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(!nodeCreationRestricted));
     }
 
     public void setUserAllowedToCreate(Collection<String> userJIDs) {
@@ -412,7 +412,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 sysadmins.add(jid.trim().toLowerCase());
             }
         }
-        nodeCreationRestricted = JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", false);
+        nodeCreationRestricted = !JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", true);
         // Load the list of JIDs that are allowed to create nodes
         property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
         if (property != null && !property.isEmpty()) {

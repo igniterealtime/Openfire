@@ -144,7 +144,7 @@ public class DefaultVCardProvider implements VCardProvider {
     @Override
     public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
         if (loadVCard(username) == null) {
-            // The user already has a vCard
+            // The user does not have a vCard
             throw new NotFoundException("Username " + username + " does not have a vCard");
         }
 

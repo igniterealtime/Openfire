@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.plugin.gojara.database.DatabaseManager"%>
 <%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.PermissionManager"%>
 <%@ page import="org.dom4j.tree.DefaultElement"%>

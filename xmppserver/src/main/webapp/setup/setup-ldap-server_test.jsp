@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager, javax.naming.*, javax.naming.ldap.LdapContext, java.net.UnknownHostException" %>
 <%@ page import="java.util.Map" %>

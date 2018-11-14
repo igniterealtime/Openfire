@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%
     String serverType = null;
     boolean initialSetup = false;

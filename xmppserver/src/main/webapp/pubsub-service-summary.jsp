@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,

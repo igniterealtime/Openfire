@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="java.sql.*" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>

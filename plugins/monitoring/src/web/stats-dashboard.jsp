@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.archive.Conversation" %>
 <%@ page import="org.jivesoftware.openfire.archive.ConversationManager" %>
 <%@ page import="org.jivesoftware.openfire.reporting.graph.GraphEngine" %>

@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="/error.jsp" import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>

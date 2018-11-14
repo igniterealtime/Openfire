@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.admin.LdapGroupTester" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.Log" %>

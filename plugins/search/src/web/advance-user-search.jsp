@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.*,
                  java.net.URLEncoder,
                  org.jivesoftware.util.*,

@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.openfire.ldap.LdapManager, org.jivesoftware.openfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
 <%@ page import="java.net.URLEncoder" %>

@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.Calendar,java.text.DateFormat,java.text.SimpleDateFormat,org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%

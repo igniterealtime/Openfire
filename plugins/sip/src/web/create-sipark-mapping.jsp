@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.sip.sipaccount.SipAccount" %>
 <%@ page import="org.jivesoftware.openfire.sip.sipaccount.SipAccountDAO" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>

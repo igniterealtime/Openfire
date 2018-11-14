@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.pep.PEPServiceInfo,
                  org.jivesoftware.openfire.pep.PEPServiceManager,

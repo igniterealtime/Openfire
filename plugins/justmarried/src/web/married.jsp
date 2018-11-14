@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page
     import="org.jivesoftware.openfire.plugin.married.JustMarriedPlugin"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>

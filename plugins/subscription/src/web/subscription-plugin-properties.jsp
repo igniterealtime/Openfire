@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -

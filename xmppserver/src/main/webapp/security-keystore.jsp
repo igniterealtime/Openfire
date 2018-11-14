@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@page import="org.jivesoftware.util.StringUtils"%>
 <%@page import="java.security.PrivateKey"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>

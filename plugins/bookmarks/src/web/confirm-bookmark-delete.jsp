@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="/error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.plugin.spark.Bookmark" %>
 <%@ page import="org.jivesoftware.openfire.plugin.spark.BookmarkManager" %>

@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.plugin.util.cluster.NodeRuntimeStats,
                  org.jivesoftware.util.cache.CacheFactory,
                  com.hazelcast.core.Hazelcast,

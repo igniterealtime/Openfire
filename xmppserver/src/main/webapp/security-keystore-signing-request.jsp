@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@page import="java.util.Enumeration"%>
 <%@page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@page import="java.security.PublicKey"%>

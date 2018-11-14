@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.io.IOException,
                  java.util.*,
                  org.jivesoftware.openfire.plugin.ImportExportPlugin,

@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="/error.jsp" import="org.jivesoftware.openfire.plugin.MonitoringPlugin"
     %>
 <%@ page import="org.jivesoftware.openfire.archive.ArchiveIndexer" %>

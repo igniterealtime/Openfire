@@ -484,7 +484,7 @@ public class PluginServlet extends HttpServlet {
             return;
         }
 
-        String contentType = URLConnection.guessContentTypeFromName(pathInfo);
+        String contentType = getServletContext().getMimeType(pathInfo);
         if (contentType == null) {
             contentType = "text/plain";
         }

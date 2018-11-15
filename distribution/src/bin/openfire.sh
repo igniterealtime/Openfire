@@ -124,6 +124,8 @@ esac
 done
 
 
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml"
+
 if [ -z "$LOCALCLASSPATH" ] ; then
 	LOCALCLASSPATH=$OPENFIRE_LIB/startup.jar
 else

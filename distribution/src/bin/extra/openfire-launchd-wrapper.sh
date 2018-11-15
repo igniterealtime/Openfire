@@ -12,7 +12,7 @@ function shutdown()
 date
 echo "Starting Openfire"
 
-/usr/bin/java -server -jar "$OPENFIRE_HOME/lib/startup.jar" -Dopenfire.lib.dir=/usr/local/openfire/lib&
+/usr/bin/java -server -jar "$OPENFIRE_HOME/lib/startup.jar" -Dlog4j.configurationFile=$$OPENFIRE_HOME/lib/log4j2.xml -Dopenfire.lib.dir=/usr/local/openfire/lib&
 
 OPENFIRE_PID=`ps auxww | grep -v wrapper | awk '/openfire/ && !/awk/ {print $2}'`
 

@@ -8,19 +8,6 @@
     <includeBaseDirectory>false</includeBaseDirectory>
 
     <moduleSets>
-        <moduleSet>
-            <useAllReactorProjects>true</useAllReactorProjects>
-
-            <includes>
-                <include>${project.groupId}:i18n</include>
-                <include>${project.groupId}:xmppserver</include>
-            </includes>
-            <binaries>
-                <includeDependencies>true</includeDependencies>
-                <outputDirectory>lib</outputDirectory>
-                <unpack>false</unpack>
-            </binaries>
-        </moduleSet>
 
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>

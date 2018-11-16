@@ -529,8 +529,10 @@ public class PluginManager
             // Initialise a logging context, if necessary
             final Path path = pluginDir.resolve("classes/log4j2.xml");
             if (Files.isRegularFile(path)) {
-                final LoggerContext loggerContext = LogManager.getContext(pluginLoader, false, path.toUri());
-                loggerContext.getLogger("To avoid LOG4J2-1094");
+                synchronized (PluginManager.class) {
+                    final LoggerContext loggerContext = LogManager.getContext(pluginLoader, false, path.toUri());
+                    loggerContext.getLogger("To avoid LOG4J2-1094");
+                }
             }
 
             // Instantiate the plugin!

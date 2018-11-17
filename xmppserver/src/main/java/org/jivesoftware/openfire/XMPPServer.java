@@ -44,6 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
@@ -160,14 +161,26 @@ public class XMPPServer {
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
 
     public static final String EXIT = "exit";
-    private static Set<String> XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        "fqdn", "adminConsole.port", "adminConsole.securePort", "connectionProvider.className", "locale", "setup",
-        "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",
-        "database.defaultProvider.password", "database.defaultProvider.testSQL", "database.defaultProvider.testBeforeUse",
-        "database.defaultProvider.testAfterUse", "database.defaultProvider.testTimeout", "database.defaultProvider.timeBetweenEvictionRuns",
-        "database.defaultProvider.minIdleTime", "database.defaultProvider.maxWaitTime", "database.defaultProvider.minConnections",
-        "database.defaultProvider.maxConnections", "database.defaultProvider.connectionTimeout"
-    )));
+    private final static Set<String> XML_ONLY_PROPERTIES;
+    static {
+        final List<String> properties = Arrays.asList(
+            // Admin console network settings
+            "adminConsole.port", "adminConsole.securePort", "adminConsole.interface", "network.interface",
+            // Misc. settings
+            "locale", "fqdn", "setup", ClusterManager.CLUSTER_PROPERTY_NAME,
+            // Database config
+            "connectionProvider.className",
+            "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",
+            "database.defaultProvider.password", "database.defaultProvider.testSQL", "database.defaultProvider.testBeforeUse",
+            "database.defaultProvider.testAfterUse", "database.defaultProvider.testTimeout", "database.defaultProvider.timeBetweenEvictionRuns",
+            "database.defaultProvider.minIdleTime", "database.defaultProvider.maxWaitTime", "database.defaultProvider.minConnections",
+            "database.defaultProvider.maxConnections", "database.defaultProvider.connectionTimeout", "database.mysql.useUnicode",
+            "database.JNDIProvider.name"
+        );
+        // JDNI database config
+        properties.addAll(Arrays.asList(JNDIDataSourceProvider.jndiPropertyKeys));
+        XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(properties));
+    }
 
     /**
      * All modules loaded by this server

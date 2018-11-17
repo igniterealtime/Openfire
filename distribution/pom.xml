@@ -94,6 +94,11 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>starter</artifactId>
             <version>${project.version}</version>
+            <!--
+                Make starter a dependency so it gets compiled, but make it provided so it's not included by default
+                in the libs - it's explicitly included as it gets renamed
+            -->
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

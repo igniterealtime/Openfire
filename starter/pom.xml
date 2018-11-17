@@ -30,12 +30,6 @@
 
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>log4j2.xml</include>
-                </includes>
-            </resource>
-            <resource>
                 <directory>../distribution/src/installer/images</directory>
                 <includes>
                     <include>*.gif</include>

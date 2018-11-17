@@ -1,7 +1,6 @@
 @echo off
 
-REM #
-REM #
+SETLOCAL
 
 if "%JAVA_HOME%" == "" goto javaerror
 if not exist "%JAVA_HOME%\bin\java.exe" goto javaerror
@@ -15,13 +14,11 @@ echo.
 goto end
 
 :run
-if "%1" == "-debug" goto debug
-start "Openfire" "%JAVA_HOME%\bin\java" -server -DopenfireHome="%OPENFIRE_HOME%" -Dopenfire.lib.dir="%OPENFIRE_HOME%\lib" -jar "%OPENFIRE_HOME%\lib\startup.jar"
+SET debug=
+if "%1" == "-debug" SET debug=-Xdebug -Xint -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
+start "Openfire" "%JAVA_HOME%\bin\java" %debug% -server -DopenfireHome="%OPENFIRE_HOME%" -Dlog4j.configurationFile="%OPENFIRE_HOME%\lib\log4j2.xml" -Dopenfire.lib.dir="%OPENFIRE_HOME%\lib" -jar "%OPENFIRE_HOME%\lib\startup.jar"
 goto end
 
-:debug
-start "Openfire" "%JAVA_HOME%\bin\java" -Xdebug -Xint -server -DopenfireHome="%OPENFIRE_HOME%" -Dopenfire.lib.dir="%OPENFIRE_HOME%\lib" -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 -jar "%OPENFIRE_HOME%\lib\startup.jar"
-goto end
 :end
 
 

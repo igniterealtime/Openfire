@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.container;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -522,6 +524,15 @@ public class PluginManager
             if ( dev != null && dev.getClassesDir() != null )
             {
                 pluginLoader.addURLFile( dev.getClassesDir().toURI().toURL() );
+            }
+
+            // Initialise a logging context, if necessary
+            final Path path = pluginDir.resolve("classes/log4j2.xml");
+            if (Files.isRegularFile(path)) {
+                synchronized (PluginManager.class) {
+                    final LoggerContext loggerContext = LogManager.getContext(pluginLoader, false, path.toUri());
+                    loggerContext.getLogger("To avoid LOG4J2-1094");
+                }
             }
 
             // Instantiate the plugin!

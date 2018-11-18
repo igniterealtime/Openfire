@@ -39,6 +39,8 @@ NAME=openfire
 DESC=openfire
 DAEMON_DIR=/usr/share/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
+PIDFILE="/var/run/$NAME.pid"
+
 
 test -x $JAVA || exit 1
 
@@ -51,14 +53,26 @@ DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
 #Helper functions
 start() {
         start-stop-daemon --start --quiet --background --make-pidfile \
-                --pidfile /var/run/$NAME.pid --chuid openfire:openfire \
+                --pidfile "$PIDFILE" --chuid openfire:openfire \
                 --exec $JAVA -- $DAEMON_OPTS
 }
 
 stop() {
-        start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+        start-stop-daemon --stop --quiet --pidfile "$PIDFILE" \
 		--exec $JAVA --retry 4
 }
+
+status(){
+    start-stop-daemon -T --pidfile "$PIDFILE"
+    status="$?"
+    if [ "$status" = 0 ]; then
+	echo "$NAME" is running with pid $(cat "$PIDFILE")
+	return 1
+    else
+	echo "$NAME" is not running
+	return 0;
+    fi
+    }
 
 case "$1" in
   start)
@@ -71,6 +85,10 @@ case "$1" in
 	stop
 	echo "$NAME."
 	;;
+  status)
+      status
+      ;;
+
   restart|force-reload)
 	#
 	#	If the "reload" option is implemented, move the "force-reload"

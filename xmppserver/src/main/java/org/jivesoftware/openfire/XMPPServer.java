@@ -163,7 +163,7 @@ public class XMPPServer {
     public static final String EXIT = "exit";
     private final static Set<String> XML_ONLY_PROPERTIES;
     static {
-        final List<String> properties = Arrays.asList(
+        final List<String> properties = new ArrayList<>(Arrays.asList(
             // Admin console network settings
             "adminConsole.port", "adminConsole.securePort", "adminConsole.interface", "network.interface",
             // Misc. settings
@@ -176,7 +176,7 @@ public class XMPPServer {
             "database.defaultProvider.minIdleTime", "database.defaultProvider.maxWaitTime", "database.defaultProvider.minConnections",
             "database.defaultProvider.maxConnections", "database.defaultProvider.connectionTimeout", "database.mysql.useUnicode",
             "database.JNDIProvider.name"
-        );
+        ));
         // JDNI database config
         properties.addAll(Arrays.asList(JNDIDataSourceProvider.jndiPropertyKeys));
         XML_ONLY_PROPERTIES = Collections.unmodifiableSet(new HashSet<>(properties));

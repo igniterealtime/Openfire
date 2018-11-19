@@ -100,10 +100,10 @@ public class PublishedItem implements Serializable {
     
     /**
      * Creates a published item
-     * @param node
-     * @param publisher
-     * @param id
-     * @param creationDate
+     * @param node The node the published item is created in
+     * @param publisher The JID of the account creating the item
+     * @param id The unique ID of the item
+     * @param creationDate The date it was created
      */
     PublishedItem(LeafNode node, JID publisher, String id, Date creationDate) {
         this.node = node;
@@ -268,11 +268,9 @@ public class PublishedItem implements Serializable {
      * @return true if the user that is trying to delete an item is allowed to delete it.
      */
     public boolean canDelete(JID user) {
-        if (publisher.equals(user) || publisher.toBareJID().equals(user.toBareJID()) ||
-                getNode().isAdmin(user)) {
-            return true;
-        }
-        return false;
+        return publisher.equals(user)
+            || publisher.toBareJID().equals(user.toBareJID())
+            || getNode().isAdmin(user);
     }
 
     /**
@@ -281,7 +279,7 @@ public class PublishedItem implements Serializable {
      * @return Unique identifier for this item
      */
     public String getItemKey() {
-        return getItemKey(nodeId,id);
+        return getItemKey(serviceId, nodeId,id);
     }
 
     /**
@@ -292,18 +290,18 @@ public class PublishedItem implements Serializable {
      * @return Unique identifier for this item
      */
     public static String getItemKey(LeafNode node, String itemId) {
-        return getItemKey(node.getNodeID(), itemId);
+        return getItemKey(node.getService().getServiceID(), node.getNodeID(), itemId);
     }
 
     /**
      * Returns a string that uniquely identifies this published item
-     * in the following format: <i>nodeId:itemId</i>
+     * in the following format: {@code serviceId:nodeId:itemId}. This matches the primary key of the ofPubSubItem table.
+     * @param serviceId Service id for the published item
      * @param nodeId Node id for the published item
      * @param itemId Id for the published item (unique within the node)
      * @return Unique identifier for this item
      */
-    public static String getItemKey(String nodeId, String itemId) {
-        return new StringBuilder(nodeId)
-            .append(':').append(itemId).toString();
+    private static String getItemKey(String serviceId, String nodeId, String itemId) {
+        return serviceId + ":" + nodeId +":" + itemId;
     }
 }

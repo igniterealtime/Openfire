@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -91,10 +92,10 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         // Add filter to filter chain builder
         final ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
 
-        defaultPortFilter.addFilterToChain(connManager.getSocketAcceptor());
-        oldPortFilter.addFilterToChain(connManager.getSSLSocketAcceptor());
-        componentPortFilter.addFilterToChain(connManager.getComponentAcceptor());
-        multiplexerPortFilter.addFilterToChain(connManager.getMultiplexerSocketAcceptor());
+        defaultPortFilter.addFilterToChain(connManager.getSocketAcceptor(ConnectionType.SOCKET_C2S, false));
+        oldPortFilter.addFilterToChain(connManager.getSocketAcceptor(ConnectionType.SOCKET_C2S, true));
+        componentPortFilter.addFilterToChain(connManager.getSocketAcceptor(ConnectionType.COMPONENT, false));
+        multiplexerPortFilter.addFilterToChain(connManager.getSocketAcceptor(ConnectionType.CONNECTION_MANAGER, false));
 
         interpretedPrinter.wasEnabled(interpretedPrinter.isEnabled());
 
@@ -109,10 +110,10 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
         // Remove filter from filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
 
-        defaultPortFilter.removeFilterFromChain(connManager.getSocketAcceptor());
-        oldPortFilter.removeFilterFromChain(connManager.getSSLSocketAcceptor());
-        componentPortFilter.removeFilterFromChain(connManager.getComponentAcceptor());
-        multiplexerPortFilter.removeFilterFromChain(connManager.getMultiplexerSocketAcceptor());
+        defaultPortFilter.removeFilterFromChain(connManager.getSocketAcceptor(ConnectionType.SOCKET_C2S, false));
+        oldPortFilter.removeFilterFromChain(connManager.getSocketAcceptor(ConnectionType.SOCKET_C2S, true));
+        componentPortFilter.removeFilterFromChain(connManager.getSocketAcceptor(ConnectionType.COMPONENT, false));
+        multiplexerPortFilter.removeFilterFromChain(connManager.getSocketAcceptor(ConnectionType.CONNECTION_MANAGER, false));
 
         // Remove the filters from existing sessions
         defaultPortFilter.shutdown();

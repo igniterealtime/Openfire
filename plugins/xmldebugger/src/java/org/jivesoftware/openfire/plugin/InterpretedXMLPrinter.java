@@ -18,12 +18,12 @@ package org.jivesoftware.openfire.plugin;
 
 import java.net.UnknownHostException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 
 /**
@@ -38,7 +38,7 @@ import org.xmpp.packet.Packet;
  */
 public class InterpretedXMLPrinter implements PacketInterceptor {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(InterpretedXMLPrinter.class);
     static final String PROPERTY_ENABLED = DebuggerPlugin.PROPERTY_PREFIX + "interpretedAllowed";
     private DebuggerPlugin plugin;
 

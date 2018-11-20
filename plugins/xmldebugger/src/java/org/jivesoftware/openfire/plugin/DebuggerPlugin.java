@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -32,6 +30,8 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Debugger plugin that prints XML traffic to stdout. By default it will only print
@@ -43,7 +43,7 @@ import org.jivesoftware.util.PropertyEventListener;
  */
 public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DebuggerPlugin.class);
 
     static final String PROPERTY_PREFIX = "plugin.xmldebugger.";
     private static final String PROPERTY_LOG_TO_STDOUT_ENABLED = PROPERTY_PREFIX + "logToStdOut";

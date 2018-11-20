@@ -91,6 +91,12 @@
             </includes>
         </fileSet>
 
+        <!-- Include any resources folder -->
+        <fileSet>
+            <directory>src/resources</directory>
+            <outputDirectory>classes</outputDirectory>
+        </fileSet>
+
         <!-- Include the classes folder -->
         <fileSet>
             <outputDirectory>classes</outputDirectory>

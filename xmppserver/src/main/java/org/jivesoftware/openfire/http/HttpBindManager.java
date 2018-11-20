@@ -16,17 +16,32 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.WebAppLoaderFix;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -40,15 +55,15 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
@@ -733,6 +748,12 @@ public final class HttpBindManager implements CertificateEventListener, Property
      */
     public void removeJettyHandler( Handler handler )
     {
+        if (handler instanceof WebAppContext) {
+            // A work-around of the Jetty bug described at https://github.com/eclipse/jetty.project/issues/1425
+            // NOTE: According to some comments on WebAppLoaderFix, this may stop working on Java 9.
+            // Hopefully the Jetty team will have fixed the underlying bug by then
+            WebAppLoaderFix.checkAndClose(((WebAppContext) handler).getClassLoader());
+        }
         extensionHandlers.removeHandler( handler );
         if ( handler.isStarted() )
         {

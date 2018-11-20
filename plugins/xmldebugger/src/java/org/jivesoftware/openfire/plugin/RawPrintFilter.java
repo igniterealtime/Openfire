@@ -107,7 +107,7 @@ public class RawPrintFilter extends IoFilterAdapter {
         super.messageReceived(nextFilter, session, message);
     }
 
-    private void logBuffer(final IoSession session, final IoBuffer ioBuffer, final String receiveOrSend) {
+    private void logBuffer(final IoSession session, final IoBuffer ioBuffer) {
         // Keep current position in the buffer
         int currentPos = ioBuffer.position();
         // Decode buffer
@@ -115,7 +115,7 @@ public class RawPrintFilter extends IoFilterAdapter {
         // Log buffer content
         final String message = charBuffer.toString();
         if (plugin.isLoggingWhitespace() || !message.isEmpty()) {
-            plugin.log(messagePrefix(session, receiveOrSend) + ": " + charBuffer);
+            plugin.log(messagePrefix(session, "SENT") + ": " + charBuffer);
         }
         // Reset to old position in the buffer
         ioBuffer.position(currentPos);
@@ -128,7 +128,7 @@ public class RawPrintFilter extends IoFilterAdapter {
     @Override
     public void messageSent(final NextFilter nextFilter, final IoSession session, final WriteRequest writeRequest) throws Exception {
         if (enabled && writeRequest.getMessage() instanceof IoBuffer) {
-            logBuffer(session, (IoBuffer) writeRequest.getMessage(), "SENT");
+            logBuffer(session, (IoBuffer) writeRequest.getMessage());
         }
         // Pass the message to the next filter
         super.messageSent(nextFilter, session, writeRequest);

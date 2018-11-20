@@ -343,18 +343,21 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private static List<String> getIdentitiesFrom(IQ packet) {
         List<String> discoIdentities = new ArrayList<>();
         Element query = packet.getChildElement();
+        if (query == null) {
+            return discoIdentities;
+        }
         Iterator<Element> identitiesIterator = query.elementIterator("identity");
         if (identitiesIterator != null) {
             while (identitiesIterator.hasNext()) {
                 Element identityElement = identitiesIterator.next();
 
                 StringBuilder discoIdentity = new StringBuilder();
-                
+
                 String cat = identityElement.attributeValue("category");
                 String type = identityElement.attributeValue("type");
                 String lang = identityElement.attributeValue("xml:lang");
                 String name = identityElement.attributeValue("name");
-                
+
                 if (cat != null) {
                     discoIdentity.append(cat);
                 }

@@ -21,6 +21,7 @@ import java.io.FileFilter;
 
 import com.reucon.openfire.plugin.archive.impl.MucMamPersistenceManager;
 import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support1;
+import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support2;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.archive.ArchiveIndexer;
 import org.jivesoftware.openfire.archive.ArchiveInterceptor;
@@ -77,6 +78,7 @@ public class MonitoringPlugin implements Plugin {
     private Xep0136Support xep0136Support;
     private Xep0313Support xep0313Support;
     private Xep0313Support1 xep0313Support1;
+    private Xep0313Support2 xep0313Support2;
     private Logger Log;
 
     public MonitoringPlugin() {
@@ -176,6 +178,9 @@ public class MonitoringPlugin implements Plugin {
 
         xep0313Support1 = new Xep0313Support1(XMPPServer.getInstance());
         xep0313Support1.start();
+
+        xep0313Support2 = new Xep0313Support2(XMPPServer.getInstance());
+        xep0313Support2.start();
 
         // Check if we Enterprise is installed and stop loading this plugin if
         // found

@@ -9,18 +9,18 @@ import org.xmpp.packet.JID;
 /**
  * XEP-0313 IQ Query Handler
  */
-class IQQueryHandler1 extends IQQueryHandler {
+class IQQueryHandler2 extends IQQueryHandler {
 
-    private static final Logger Log = LoggerFactory.getLogger(IQQueryHandler1.class);
-    private static final String MODULE_NAME = "Message Archive Management Query Handler v1";
+    private static final Logger Log = LoggerFactory.getLogger(IQQueryHandler2.class);
+    private static final String MODULE_NAME = "Message Archive Management Query Handler v2";
 
-    IQQueryHandler1() {
-        super(MODULE_NAME, "urn:xmpp:mam:1");
+    IQQueryHandler2() {
+        super(MODULE_NAME, "urn:xmpp:mam:2");
     }
 
     @Override
-    protected void sendEndQuery(IQ packet, JID jid, QueryRequest queryRequest) {
-        sendAcknowledgementResult(packet, jid, queryRequest);
+    protected void sendEndQuery(IQ packet, JID from, QueryRequest queryRequest) {
+        sendAcknowledgementResult(packet, from, queryRequest);
     }
 
     /**

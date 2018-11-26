@@ -8,6 +8,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.archive.ConversationManager;
 import org.jivesoftware.openfire.archive.MonitoringConstants;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -17,7 +18,6 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.plugin.MonitoringPlugin;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
@@ -46,6 +46,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
     private static final Logger Log = LoggerFactory.getLogger(IQQueryHandler.class);
     protected final String NAMESPACE;
     protected ExecutorService executorService;
+    protected PacketRouter router;
 
     private final XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
 
@@ -59,6 +60,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
     {
         super.initialize( server );
         executorService = Executors.newCachedThreadPool( new NamedThreadFactory( "message-archive-handler-", null, null, null ) );
+        router = server.getPacketRouter();
     }
 
     @Override
@@ -90,19 +92,8 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
     public IQ handleIQ( final IQ packet ) throws UnauthorizedException {
 
-        final Session session = sessionManager.getSession(packet.getFrom());
-
-        // If no session was found then answer with an error (if possible)
-        if (session == null) {
-            Log.error("Error during resource binding. Session not found in " +
-                    sessionManager.getPreAuthenticatedKeys() +
-                    " for key " +
-                    packet.getFrom());
-            return buildErrorResponse(packet);
-        }
-
         if(packet.getType().equals(IQ.Type.get)) {
-            return buildSupportedFieldsResult(packet, session);
+            return buildSupportedFieldsResult(packet);
         }
 
         // Default to user's own archive
@@ -159,14 +150,14 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
             // Password protected room
             if (room.isPasswordProtected())  {
-				// check whether requestor is occupant in the room
-				MUCRole occupant = room.getOccupantByFullJID(packet.getFrom());
+                // check whether requestor is occupant in the room
+                MUCRole occupant = room.getOccupantByFullJID(packet.getFrom());
 
-				if (occupant == null) {
-					// no occupant so currently not authenticated to query archive
-				    Log.debug("Unable to process query as requestor '{}' is currently not authenticated for this password protected room '{}'.", requestor, archiveJid);
+                if (occupant == null) {
+                    // no occupant so currently not authenticated to query archive
+                    Log.debug("Unable to process query as requestor '{}' is currently not authenticated for this password protected room '{}'.", requestor, archiveJid);
                     return buildForbiddenResponse(packet);
-				}
+                }
             }
         } else if(!archiveJid.equals(requestor)) { // Not user's own
             // ... disallow unless admin.
@@ -176,7 +167,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
             }
         }
 
-        sendMidQuery(packet, session);
+        sendMidQuery(packet);
 
         final QueryRequest queryRequest = new QueryRequest(packet.getChildElement(), archiveJid);
 
@@ -215,10 +206,10 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
                 Log.debug("Retrieved {} messages from archive.", archivedMessages.size());
 
                 for(ArchivedMessage archivedMessage : archivedMessages) {
-                    sendMessageResult(session, queryRequest, archivedMessage);
+                    sendMessageResult(packet.getFrom(), queryRequest, archivedMessage);
                 }
 
-                sendEndQuery(packet, session, queryRequest);
+                sendEndQuery(packet, packet.getFrom(), queryRequest);
                 Log.debug("Done with request.");
             }
         } );
@@ -226,11 +217,11 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
         return null;
     }
 
-    protected void sendMidQuery(IQ packet, Session session) {
+    protected void sendMidQuery(IQ packet) {
         // Default: Do nothing.
     }
 
-    protected abstract void sendEndQuery(IQ packet, Session session, QueryRequest queryRequest);
+    protected abstract void sendEndQuery(IQ packet, JID from, QueryRequest queryRequest);
 
     /**
      * Create error response to send to client
@@ -303,23 +294,21 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
     /**
      * Send result packet to client acknowledging query.
      * @param packet Received query packet
-     * @param session Client session to respond to
      */
-    private void sendAcknowledgementResult(IQ packet, Session session) {
+    private void sendAcknowledgementResult(IQ packet) {
         IQ result = IQ.createResultIQ(packet);
-        session.process(result);
+        router.route(result);
     }
 
     /**
      * Send final message back to client following query.
-     * @param session Client session to respond to
+     * @param JID to respond to
      * @param queryRequest Received query request
      */
-    private void sendFinalMessage(Session session,
-            final QueryRequest queryRequest) {
+    private void sendFinalMessage(JID from, final QueryRequest queryRequest) {
 
         Message finalMessage = new Message();
-        finalMessage.setTo(session.getAddress());
+        finalMessage.setTo(from);
         Element fin = finalMessage.addChildElement("fin", NAMESPACE);
         if(queryRequest.getQueryid() != null) {
             fin.addAttribute("queryid", queryRequest.getQueryid());
@@ -334,18 +323,17 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
             }
         }
 
-        session.process(finalMessage);
+        router.route(finalMessage);
     }
 
     /**
      * Send archived message to requesting client
-     * @param session Client session that send message to
+     * @param JID to recieve message
      * @param queryRequest Query request made by client
      * @param archivedMessage Message to send to client
      * @return
      */
-    private void sendMessageResult(Session session,
-            QueryRequest queryRequest, ArchivedMessage archivedMessage) {
+    private void sendMessageResult(JID from, QueryRequest queryRequest, ArchivedMessage archivedMessage) {
 
         String stanzaText = archivedMessage.getStanza();
         if(stanzaText == null || stanzaText.equals("")) {
@@ -359,7 +347,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
         }
 
         Message messagePacket = new Message();
-        messagePacket.setTo(session.getAddress());
+        messagePacket.setTo(from);
         if ( XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService( queryRequest.getArchive() ) != null )
         {
             messagePacket.setFrom( queryRequest.getArchive().asBareJID() );
@@ -379,15 +367,14 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
         if (fwd == null) return; // Shouldn't be possible.
 
         messagePacket.addExtension(new Result(fwd, NAMESPACE, queryRequest.getQueryid(), archivedMessage.getId().toString()));
-        session.process(messagePacket);
+        router.route(messagePacket);
     }
 
     /**
      * Declare DataForm fields supported by the MAM implementation on this server
      * @param packet Incoming query (form field request) packet
-     * @param session Session with client
      */
-    private IQ buildSupportedFieldsResult(IQ packet, Session session) {
+    private IQ buildSupportedFieldsResult(IQ packet) {
 
         IQ result = IQ.createResultIQ(packet);
 

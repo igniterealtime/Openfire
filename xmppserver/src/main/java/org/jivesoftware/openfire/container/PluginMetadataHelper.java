@@ -147,8 +147,9 @@ public class PluginMetadataHelper
         if ( name != null ) {
             try {
                 return AdminConsole.getAdminText(name, pluginName);
-            } catch(final Exception ignored) {
-                // Silently fail - default to non-internationalised name
+            } catch (final Exception e) {
+                Log.warn("Unexpected exception attempting to retrieve admin text", e);
+                // Default to non-internationalised name
                 return name;
             }
         }

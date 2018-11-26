@@ -144,14 +144,16 @@ public class PluginMetadataHelper
     {
         final String name = getElementValue( pluginDir, "/plugin/name" );
         final String pluginName = getCanonicalName( pluginDir );
-        if ( name != null )
-        {
-            return AdminConsole.getAdminText( name, pluginName );
+        if ( name != null ) {
+            try {
+                return AdminConsole.getAdminText(name, pluginName);
+            } catch (final Exception e) {
+                Log.warn("Unexpected exception attempting to retrieve admin text", e);
+                // Default to non-internationalised name
+                return name;
+            }
         }
-        else
-        {
-            return pluginName;
-        }
+        return pluginName;
     }
 
     /**

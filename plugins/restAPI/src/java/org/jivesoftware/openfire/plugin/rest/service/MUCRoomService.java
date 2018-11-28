@@ -13,12 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
-import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntities;
+import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.plugin.rest.controller.MUCRoomController;
 
@@ -33,7 +28,7 @@ public class MUCRoomService {
             @DefaultValue("false") @QueryParam("expandGroups") Boolean expand) {
         return MUCRoomController.getInstance().getChatRooms(serviceName, channelType, roomSearch, expand);
     }
-    
+
     @GET
     @Path("/{roomName}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -75,7 +70,7 @@ public class MUCRoomService {
             @DefaultValue("conference") @QueryParam("servicename") String serviceName) {
         return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
     }
-    
+
     @GET
     @Path("/{roomName}/occupants")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -90,6 +85,15 @@ public class MUCRoomService {
     public MUCRoomMessageEntities getMUCRoomHistory(@PathParam("roomName") String roomName,
                                                     @DefaultValue("conference") @QueryParam("servicename") String serviceName) throws ServiceException {
         return MUCRoomController.getInstance().getRoomHistory(roomName, serviceName);
+    }
+
+    @POST
+    @Path("/{roomName}/invite/{jid}")
+    public Response inviteUserToMUCRoom(@PathParam("roomName") String roomName, @PathParam("jid") String jid,
+            @DefaultValue("conference") @QueryParam("servicename") String serviceName,
+            MUCInvitationEntity mucInvitationEntity) throws ServiceException {
+        MUCRoomController.getInstance().inviteUser(serviceName, roomName, jid, mucInvitationEntity);
+        return Response.status(Status.OK).build();
     }
 
 }

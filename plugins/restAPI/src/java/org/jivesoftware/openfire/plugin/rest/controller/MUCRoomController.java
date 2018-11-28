@@ -13,25 +13,13 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.plugin.rest.RESTServicePlugin;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
-import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntity;
-import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntities;
-import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomMessageEntity;
+import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
@@ -42,8 +30,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import org.xmpp.packet.Message;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.MUCRoomHistory;
 import org.dom4j.Element;
 
 import org.slf4j.Logger;
@@ -423,6 +409,30 @@ public class MUCRoomController {
         }
         mucRoomMessageEntities.setMessages(listMessages);
         return mucRoomMessageEntities;
+    }
+
+    /**
+     * Invites the user to the MUC room.
+     *
+     * @param serviceName
+     *            the service name
+     * @param roomName
+     *            the room name
+     * @param jid
+     *            the jid to invite
+     * @throws ServiceException
+     *             the service exception
+     */
+    public void inviteUser(String serviceName, String roomName, String jid, MUCInvitationEntity mucInvitationEntity)
+            throws ServiceException {
+        MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+            .getChatRoom(roomName.toLowerCase());
+
+        try {
+            room.sendInvitation(UserUtils.checkAndGetJID(jid), mucInvitationEntity.getReason(), room.getRole(), null);
+        } catch (ForbiddenException | CannotBeInvitedException e) {
+            throw new ServiceException("Could not invite user", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+        }
     }
 
 

@@ -162,6 +162,281 @@ hr {
     
     <div id="pageBody">
 
+<h2>4.3.0 beta -- <span style="font-weight: normal;">Nov 30, 2018</span></h2>
+
+<p>With this release, the Openfire property <code>xmpp.pubsub.create.anyone</code> was updated to properly reflect its name.  Setting it
+to <code>true</code> now means that anyone can create PubSub nodes.</p>
+
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-557'>OF-557</a>] -         Fix temporary workaround: remove &#39;excludes&#39; from xmppserver build 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-559'>OF-559</a>] -         Restore or drop support for &quot;srcinc&quot; flag of buildscripts
+</li>
+</ul>
+                
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1200'>OF-1200</a>] -         Monitoring / archiving plugin does not retrieve messages that are still in cache / yet to be written to database
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1296'>OF-1296</a>] -         GroupManager.getSharedGroups returning old values
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1435'>OF-1435</a>] -         UserManager::isRegisteredUser(JID) can block for a minute
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1453'>OF-1453</a>] -         An unexpected exception occurred with loading clustering plugin
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1474'>OF-1474</a>] -         Openfire Hazelcast Clustering &amp; REST API Room Creation NPE when no modificationDate sent
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1477'>OF-1477</a>] -         NPE when ordering Pubsub affiliations (admin console)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1486'>OF-1486</a>] -         MAM request in MUC with RSM backwards-paging does not backward page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1488'>OF-1488</a>] -         Can&#39;t remove groupchat administrators
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1497'>OF-1497</a>] -         Server appears to drop client session (sends &#39;unavailable&#39;)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1504'>OF-1504</a>] -         Carbons is ignored in MUC PMs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1506'>OF-1506</a>] -         DB details not encrypted in database
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1508'>OF-1508</a>] -         NPE when getting unknown Entity Caps
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1510'>OF-1510</a>] -         Enabling clustering never completes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1513'>OF-1513</a>] -         Pubsub data forms should support all lexical representations for the xs:boolean datatype
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1514'>OF-1514</a>] -         Typo in pubsub#children_max configuration variable name
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1516'>OF-1516</a>] -         Convert Russian translation for Registration plugin to unicode
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1522'>OF-1522</a>] -         Not able to cleanly remove JmxWeb plugin
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1524'>OF-1524</a>] -         Some plugins produce red INFO messages in the launcher console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1530'>OF-1530</a>] -         ConnectionManager#getListeners() sometimes returns incorrect listeners
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1534'>OF-1534</a>] -         Web content disappears after 10 days (of inactivity?)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1535'>OF-1535</a>] -         Rest API and Multi-node Hazelcast cluster - Created Room not propagated to other nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1540'>OF-1540</a>] -         Rest API and Multi-node Hazelcast cluster - Delete Room not propagated to other nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1547'>OF-1547</a>] -         ConcurrentModificationException when viewing the plugins screen
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1548'>OF-1548</a>] -         The Openfire FQDN is not unique to each host
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1550'>OF-1550</a>] -         XML Debugger plugin fails to display admin console page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1567'>OF-1567</a>] -         ConcurrentModificationException in HttpSession
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1568'>OF-1568</a>] -         Statistics and Archiving pages are not accessible
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1569'>OF-1569</a>] -         Setup marked as successful even when openfire.xml cannot be written
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1571'>OF-1571</a>] -         XML Debugger: Does not log received C2S messages
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1578'>OF-1578</a>] -         Monitoring plugin: graphs are no longer displayed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1579'>OF-1579</a>] -         Add support for XEP-0368: SRV records for XMPP over TLS
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1580'>OF-1580</a>] -         Translation failure in S2S Testing Tool admin page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1582'>OF-1582</a>] -         PluginManager re-notifies a PluginManagerListener when a newly added plugin adds a notifier
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1586'>OF-1586</a>] -         CPU peaks when using BOSH
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1587'>OF-1587</a>] -         Updates needed for Mac OSX DMG Openfire Artifact 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1588'>OF-1588</a>] -         Typo in Spanish translation on group sharing page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1590'>OF-1590</a>] -         Resumption count is always rejected
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1595'>OF-1595</a>] -         External Service Discovery plugin: can&#39;t set &#39;udp&#39; type in admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1596'>OF-1596</a>] -         Websocket sessions are not cleaned up properly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1600'>OF-1600</a>] -         XSS in LDAP setup pages
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1601'>OF-1601</a>] -         Invalid values shown in /setup/setup-ldap-server.jsp
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1603'>OF-1603</a>] -         Generation of self-signed certs doesn&#39;t include SANs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1604'>OF-1604</a>] -         Domain name / certificate SAN matching fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1606'>OF-1606</a>] -         Restarting the webserver fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1613'>OF-1613</a>] -         Page links on PEP admin console refer to Pubsub
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1617'>OF-1617</a>] -         Clustering should handle (remote) external component removal correctly.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1620'>OF-1620</a>] -         inVerse plugin: translations are not working
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1629'>OF-1629</a>] -         inVerse plugin: resources are missing
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1630'>OF-1630</a>] -         &#39;rank&#39; is now a reserved word in MySQL 8
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1631'>OF-1631</a>] -         Deleting a Roster Item causes a NPE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1632'>OF-1632</a>] -         Unable to switch language from anything but English
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1637'>OF-1637</a>] -         Duplicate messages
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1639'>OF-1639</a>] -         Admin console erroneously reports errors over min plugin versions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1640'>OF-1640</a>] -         NPE in EntityCapabilitiesManager
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1641'>OF-1641</a>] -         Admin console fails to complete setup in non-English locales
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1642'>OF-1642</a>] -         PrivateStorage can fail to persist items
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-827'>OF-827</a>] -         Add support for XEP-0191: Blocking Command
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1412'>OF-1412</a>] -         Automated Setup via XML
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1472'>OF-1472</a>] -         XEP-0157: Expose admin contacts
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1511'>OF-1511</a>] -         Add Pubsub Publishing Options
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1553'>OF-1553</a>] -         Allow MUC room creation to be limited to registered local users.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1585'>OF-1585</a>] -         REST API - Add endpoint to retrieve MUC Chat Message History
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1605'>OF-1605</a>] -         Allow wildcards in self-signed cert generation
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-546'>OF-546</a>] -         Migrate Openfire build from Ant to Maven
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1323'>OF-1323</a>] -         Minor performance improvement
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1421'>OF-1421</a>] -         Drop Java 7 Support
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1523'>OF-1523</a>] -         Remove &#39;Jive Software&#39; from splash image
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1538'>OF-1538</a>] -         Update bundled JRE with the latest version
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1549'>OF-1549</a>] -         Replace the deprecated ROME fetcher
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1554'>OF-1554</a>] -         Update MySQL Connector/J to version 8.0.11
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1555'>OF-1555</a>] -         Update Standard Tag Library implementation to 1.2.5
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1556'>OF-1556</a>] -         Remove dependency on commonshttpclient version 3.1
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1557'>OF-1557</a>] -         Update to Java Mail 1.4.7
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1558'>OF-1558</a>] -         Remove unused dependency on com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1559'>OF-1559</a>] -         Update junit + mockito test dependencies
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1560'>OF-1560</a>] -         Update Apache Commons
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1561'>OF-1561</a>] -         Update Apache ANT to 1.10.3
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1570'>OF-1570</a>] -         Update the Debugger plugin to use the SLF4J-&gt;Log 4J2 bridge
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1597'>OF-1597</a>] -         inVerse plugin: update to 4.0.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1623'>OF-1623</a>] -         Update dependencies
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1634'>OF-1634</a>] -         Remove &quot;built by Jive Software&quot; reference from admin console.
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-852'>OF-852</a>] -         Include EntityCapabilities in Stream Feature
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1064'>OF-1064</a>] -         Update Bouncy Castle to 1.59
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1404'>OF-1404</a>] -         Migrate to use Microsoft JDBC Driver
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1419'>OF-1419</a>] -         Replace Proxool with Apache Commons DBCP
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1432'>OF-1432</a>] -         property xmpp.pubsub.create.anyone is inverted
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1458'>OF-1458</a>] -         Allow remotely connected components to subscribe
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1463'>OF-1463</a>] -         Add information about HTTP Bind requirement for HTTP File Upload
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1479'>OF-1479</a>] -         add a counter value for cullCache() calls to /system-cache.jsp
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1484'>OF-1484</a>] -         Configurable order of tabs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1487'>OF-1487</a>] -         Monitoring / Archive plugin should flush cache regularly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1491'>OF-1491</a>] -         Update log4j to log4j2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1492'>OF-1492</a>] -         Admin Console setup default database connection string is confusing ie [host-name]
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1499'>OF-1499</a>] -         Do not show &#39;max users&#39; count for a MUC when it is 0 (unlimited)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1515'>OF-1515</a>] -         Migrate Private XML storage data to PEP
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1517'>OF-1517</a>] -         Don&#39;t require i18n source files for all plugins to be encoded
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1520'>OF-1520</a>] -         PubSub Nodes page improvements
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1527'>OF-1527</a>] -         Update Jetty to version 9.4.11.v20180605
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1528'>OF-1528</a>] -         Java 8 + JSP compilation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1531'>OF-1531</a>] -         Certificate Management should show all stores
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1532'>OF-1532</a>] -         Install4j-based distributions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1533'>OF-1533</a>] -         Initialization vectors should be randomly generated
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1541'>OF-1541</a>] -         Improve display of current sessions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1544'>OF-1544</a>] -         Allow plugin monitor to be configured.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1545'>OF-1545</a>] -         AuthToken created after login should be marked as &#39;non-anonymous&#39;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1551'>OF-1551</a>] -         Allow the admin-ui to enabled the Interpreted XML option of the Debugger plugin
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1552'>OF-1552</a>] -         Allow the Debugger plugin to log to a file
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1565'>OF-1565</a>] -         Audit console login events
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1581'>OF-1581</a>] -         Use latest presence info when syncing MUC join status
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1584'>OF-1584</a>] -         Don&#39;t fail all plugin servlets when one fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1589'>OF-1589</a>] -         Ensure the Cache is Serializable, non-null
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1592'>OF-1592</a>] -         Reduce verbosity of failure to update a vcard when read-only
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1593'>OF-1593</a>] -         Add info about MAM support to Monitoring plugin&#39;s readme
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1599'>OF-1599</a>] -         Stop insisting on having certificates with two different algorithms
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1612'>OF-1612</a>] -         inVerse plugin: update to 4.0.1
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1616'>OF-1616</a>] -         Group editing page should work better for groups with large amount of members
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1619'>OF-1619</a>] -         inVerse plugin: update to 4.0.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1627'>OF-1627</a>] -         Stop copying XML properties to the DB
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1628'>OF-1628</a>] -         inVerse plugin: update to 4.0.3
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1635'>OF-1635</a>] -         inVerse plugin: update to 4.0.4
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1636'>OF-1636</a>] -         inVerse plugin: add fullpage css
+</li>
+</ul>
 
 <h2>4.2.3 -- <span style="font-weight: normal;">Mar 23, 2018</span></h2>
 <h2>        Bug

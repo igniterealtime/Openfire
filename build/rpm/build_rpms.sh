@@ -47,7 +47,7 @@ else
 fi
 
 # Need to copy in plugins that are defaulted to distribute
-cp -f src/plugins/search/target/search.jar distribution/target/distribution-base/plugins/
+cp -f plugins/search/target/search.jar distribution/target/distribution-base/plugins/
 
 # generate our psuedo source tree, which is actually dist tree from maven
 cd distribution/target

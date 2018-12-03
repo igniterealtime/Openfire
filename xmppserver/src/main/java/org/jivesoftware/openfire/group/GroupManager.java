@@ -156,6 +156,7 @@ public class GroupManager {
 
                                 if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
                                     evictCachedUserSharedGroups();
+                                    evictCachedPaginatedGroupNames();
                                 }
                             }
                         } else if ("sharedRoster.groupList".equals(key)) {
@@ -717,6 +718,7 @@ public class GroupManager {
             {
                 case "everybody":
                     evictCachedUserSharedGroups();
+                    evictCachedPaginatedGroupNames();
                     break;
 
                 case "onlygroup":
@@ -756,16 +758,19 @@ public class GroupManager {
     }
 
     private void evictCachedPaginatedGroupNames() {
-        groupMetaCache.keySet()
-            .removeIf( key -> key.startsWith( GROUP_NAMES_KEY ) );
+        synchronized(GROUP_NAMES_KEY) {
+            for (Map.Entry<String, Serializable> entry : groupMetaCache.entrySet()) {
+                if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
+                    groupMetaCache.remove(entry.getKey());
+                }
+            }
+        }
     }
 
     private void evictCachedUserSharedGroups() {
         synchronized (USER_SHARED_GROUPS_KEY) {
-            groupMetaCache.keySet()
-                .removeIf( key -> key.startsWith( USER_SHARED_GROUPS_KEY ) );
             for (Map.Entry<String, Serializable> entry : groupMetaCache.entrySet()) {
-                if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
+                if (entry.getKey().startsWith(USER_SHARED_GROUPS_KEY)) {
                     groupMetaCache.remove(entry.getKey());
                 }
             }

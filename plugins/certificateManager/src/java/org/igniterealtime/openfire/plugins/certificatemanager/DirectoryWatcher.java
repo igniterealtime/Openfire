@@ -148,6 +148,8 @@ public class DirectoryWatcher
                         final WatchEvent<Path> ev = (WatchEvent<Path>) event;
                         final Path changedFile = ((Path) key.watchable()).resolve( ev.context() );
 
+                        Log.trace( "Change detected in file {}", changedFile );
+
                         final File file = changedFile.toFile();
                         if ( isCertificateChain( file ) )
                         {
@@ -183,14 +185,14 @@ public class DirectoryWatcher
                                 final String certsChain = new String( Files.readAllBytes( lastChangedCertificateChain ) );
                                 final String privateKey = new String( Files.readAllBytes( lastChangedPrivateKey ) );
 
-//                                if ( JiveGlobals.getBooleanProperty( PROPERTY_REPLACE, PROPERTY_REPLACE_DEFAULT ) )
-//                                {
-//                                    identityStore.replaceCertificate( certsChain, privateKey, null );
-//                                }
-//                                else
-//                                {
+                                if ( JiveGlobals.getBooleanProperty( PROPERTY_REPLACE, PROPERTY_REPLACE_DEFAULT ) )
+                                {
+                                    identityStore.replaceCertificate( certsChain, privateKey, passPhrase );
+                                }
+                                else
+                                {
                                     identityStore.installCertificate( certsChain, privateKey, passPhrase );
-//                                }
+                                }
                                 SecurityAuditManager.getInstance().logEvent( "Certificate Manager plugin", "hot-deployed private key and certificate chain.", "A private key and corresponding certificate chain were automatically installed. Files used: " + lastChangedPrivateKey + " and: " + lastChangedCertificateChain );
 
                                 Log.info( "Hot-deployment of certificate and private key was successful." );

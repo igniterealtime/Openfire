@@ -192,9 +192,9 @@
                 <td width="1%" nowrap><label for="directorywatcherPath"><fmt:message key="certificate-management.directorywatcher.label_path"/></label></td>
                 <td width="99%"><input type="text" size="60" name="directorywatcherPath" id="directorywatcherPath" value="${escapedPath}"/></td>
             </tr>
-            <%--<tr valign="middle">--%>
-                <%--<td colspan="2"><input type="checkbox" name="directorywatcherReplace" id="directorywatcherReplace" ${directorywatcherIsReplace ? 'checked' : ''}/><label for="directorywatcherReplace"><fmt:message key="certificate-management.directorywatcher.label_replace"/></label></td>--%>
-            <%--</tr>--%>
+            <tr valign="middle">
+                <td colspan="2"><input type="checkbox" name="directorywatcherReplace" id="directorywatcherReplace" ${directorywatcherIsReplace ? 'checked' : ''}/><label for="directorywatcherReplace"><fmt:message key="certificate-management.directorywatcher.label_replace"/></label></td>
+            </tr>
             <tr valign="middle">
                 <td colspan="2"><input type="checkbox" name="directorywatcherDelete" id="directorywatcherDelete" ${directorywatcherIsDelete ? 'checked' : ''}/><label for="directorywatcherDelete"><fmt:message key="certificate-management.directorywatcher.label_delete"/></label></td>
             </tr>

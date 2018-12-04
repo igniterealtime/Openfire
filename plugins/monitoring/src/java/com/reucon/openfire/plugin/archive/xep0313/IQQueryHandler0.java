@@ -3,12 +3,11 @@ package com.reucon.openfire.plugin.archive.xep0313;
 import org.dom4j.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.JID;
 
 /**
  * XEP-0313 IQ Query Handler
@@ -23,35 +22,33 @@ class IQQueryHandler0 extends IQQueryHandler {
     }
 
     @Override
-    protected void sendMidQuery(IQ packet, Session session) {
-        sendAcknowledgementResult(packet, session);
+    protected void sendMidQuery(IQ packet) {
+        sendAcknowledgementResult(packet);
     }
 
     @Override
-    protected void sendEndQuery(IQ packet, Session session, QueryRequest queryRequest) {
-        sendFinalMessage(session, queryRequest);
+    protected void sendEndQuery(IQ packet, JID from, QueryRequest queryRequest) {
+        sendFinalMessage(from, queryRequest);
     }
 
     /**
      * Send result packet to client acknowledging query.
      * @param packet Received query packet
-     * @param session Client session to respond to
      */
-    private void sendAcknowledgementResult(IQ packet, Session session) {
+    private void sendAcknowledgementResult(IQ packet) {
         IQ result = IQ.createResultIQ(packet);
-        session.process(result);
+        router.route(result);
     }
 
     /**
      * Send final message back to client following query.
-     * @param session Client session to respond to
+     * @param JID to respond to
      * @param queryRequest Received query request
      */
-    private void sendFinalMessage(Session session,
-            final QueryRequest queryRequest) {
+    private void sendFinalMessage(JID from, final QueryRequest queryRequest) {
 
         Message finalMessage = new Message();
-        finalMessage.setTo(session.getAddress());
+        finalMessage.setTo(from);
         if ( XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService( queryRequest.getArchive() ) != null )
         {
             finalMessage.setFrom( queryRequest.getArchive().asBareJID() );
@@ -59,7 +56,7 @@ class IQQueryHandler0 extends IQQueryHandler {
         Element fin = finalMessage.addChildElement("fin", NAMESPACE);
         completeFinElement(queryRequest, fin);
 
-        session.process(finalMessage);
+        router.route(finalMessage);
     }
 
 }

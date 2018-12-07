@@ -4,7 +4,7 @@
 
     <groupId>org.igniterealtime.openfire</groupId>
     <artifactId>parent</artifactId>
-    <version>4.3.0-beta</version>
+    <version>4.3.0-beta2-SNAPSHOT</version>
     <name>Parent</name>
     <packaging>pom</packaging>
 
@@ -124,6 +124,8 @@
         <bouncycastle.version>1.60</bouncycastle.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.11.1</log4j.version>
+        <!--suppress UnresolvedMavenProperty -->
+        <target.repo>${maven.multiModuleProjectDirectory}/target/repo</target.repo>
     </properties>
 
     <profiles>
@@ -414,5 +416,16 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>repo</id>
+            <url>file:${target.repo}${file.separator}releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshot-repo</id>
+            <url>file:${target.repo}${file.separator}snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

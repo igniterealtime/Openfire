@@ -4,7 +4,7 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.3.0-beta</version>
+        <version>4.3.0-beta2-SNAPSHOT</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>bookmarks</artifactId>
@@ -17,6 +17,28 @@
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>plugin jar</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy-file</goal>
+                        </goals>
+                        <configuration>
+                            <groupId>org.igniterealtime.openfire.plugins</groupId>
+                            <artifactId>${project.version}</artifactId>
+                            <version>${project.artifactId}</version>
+                            <packaging>jar</packaging>
+                            <classifier>plugin</classifier>
+                            <file>target/${project.artifactId}.jar</file>
+                            <pomFile>pom.xml</pomFile>
+                            <url>file:${target.repo}${file.separator}plugins</url>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -272,7 +272,7 @@ public class SchemaManager {
                         if (i == 21 && schemaKey.equals("openfire")) {
                             OF33.executeFix(con);
                         }
-                        if (i == 27 && schemaKey.equals("openfire")) {
+                        if (i == 28 && schemaKey.equals("openfire")) {
                             OF1515.executeFix();
                         }
                     } catch (Exception e) {

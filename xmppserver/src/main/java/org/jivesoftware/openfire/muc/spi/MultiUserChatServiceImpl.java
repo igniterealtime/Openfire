@@ -38,7 +38,6 @@ import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
@@ -125,12 +124,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * the chat service's description
      */
-    private String chatDescription = null;
+    private String chatDescription;
 
     /**
      * LocalMUCRoom chat manager which supports simple chatroom management
      */
-    private LocalMUCRoomManager localMUCRoomManager = new LocalMUCRoomManager();
+    private final LocalMUCRoomManager localMUCRoomManager = new LocalMUCRoomManager();
 
     /**
      * Chat users managed by this manager. This includes only users connected to this JVM.
@@ -139,8 +138,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * table: key user jid (XMPPAddress); value ChatUser
      */
-    private Map<JID, LocalMUCUser> users = new ConcurrentHashMap<>();
-    private HistoryStrategy historyStrategy;
+    private final Map<JID, LocalMUCUser> users = new ConcurrentHashMap<>();
+    private final HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
     /**
@@ -165,7 +164,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The total time all agents took to chat *
      */
-    public long totalChatTime;
+    private long totalChatTime;
 
     /**
      * Flag that indicates if the service should provide information about locked rooms when
@@ -209,7 +208,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<>(100000);
+    private final Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<>(100000);
 
     /**
      * Max number of hours that a persistent room may be empty before the service removes the
@@ -217,11 +216,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * request. Default time limit is: 30 days.
      */
     private long emptyLimit = 30 * 24;
-    /**
-     * Task that removes rooms from memory that have been without activity for a period of time. A
-     * room is considered without activity when no occupants are present in the room for a while.
-     */
-    private CleanupTask cleanupTask;
+
     /**
      * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
      */
@@ -231,12 +226,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Total number of received messages in all rooms since the last reset. The counter
      * is reset each time the Statistic makes a sampling.
      */
-    private AtomicInteger inMessages = new AtomicInteger(0);
+    private final AtomicInteger inMessages = new AtomicInteger(0);
     /**
      * Total number of broadcasted messages in all rooms since the last reset. The counter
      * is reset each time the Statistic makes a sampling.
      */
-    private AtomicLong outMessages = new AtomicLong(0);
+    private final AtomicLong outMessages = new AtomicLong(0);
 
     /**
      * Flag that indicates if MUC service is enabled.
@@ -246,22 +241,22 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Flag that indicates if MUC service is hidden from services views.
      */
-    private boolean isHidden = true;
+    private final boolean isHidden;
 
     /**
      * Delegate responds to events for the MUC service.
      */
-    protected MUCEventDelegate mucEventDelegate;
+    private MUCEventDelegate mucEventDelegate;
 
     /**
      * Additional features to be added to the disco response for the service.
      */
-    private List<String> extraDiscoFeatures = new ArrayList<>();
+    private final List<String> extraDiscoFeatures = new ArrayList<>();
 
     /**
      * Additional identities to be added to the disco response for the service.
      */
-    private List<Element> extraDiscoIdentities = new ArrayList<>();
+    private final List<Element> extraDiscoIdentities = new ArrayList<>();
 
     /**
      * Create a new group chat server.
@@ -278,7 +273,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *             if the provided subdomain is an invalid, according to the JID
      *             domain definition.
      */
-    public MultiUserChatServiceImpl(String subdomain, String description, Boolean isHidden) {
+    public MultiUserChatServiceImpl(final String subdomain, final String description, final Boolean isHidden) {
         // Check subdomain and throw an IllegalArgumentException if its invalid
         new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
 
@@ -294,7 +289,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void addIQHandler(IQHandler iqHandler) {
+    public void addIQHandler(final IQHandler iqHandler) {
         if (this.iqHandlers == null) {
             this.iqHandlers = new HashMap<>();
         }
@@ -302,7 +297,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void removeIQHandler(IQHandler iqHandler) {
+    public void removeIQHandler(final IQHandler iqHandler) {
         if (this.iqHandlers != null) {
             if (iqHandler == this.iqHandlers.get(iqHandler.getInfo().getNamespace())) {
                 this.iqHandlers.remove(iqHandler.getInfo().getNamespace());
@@ -315,12 +310,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return chatDescription;
     }
 
-    public void setDescription(String desc) {
+    public void setDescription(final String desc) {
         this.chatDescription = desc;
     }
 
     @Override
-    public void processPacket(Packet packet) {
+    public void processPacket(final Packet packet) {
         if (!isServiceEnabled()) {
             return;
         }
@@ -334,14 +329,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     return;
                 }
             } else if (packet instanceof Message) {
-                Message msg = (Message) packet;
+                final Message msg = (Message) packet;
                 if (msg.getType() == Message.Type.error) {
                     // Bounced message, drop user.
                     removeUser(packet.getFrom());
                     return;
                 }
             } else if (packet instanceof Presence) {
-                Presence pres = (Presence) packet;
+                final Presence pres = (Presence) packet;
                 if (pres.getType() == Presence.Type.error) {
                     // Bounced presence, drop user.
                     removeUser(packet.getFrom());
@@ -364,12 +359,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             else
             {
                 // The packet is a normal packet that should possibly be sent to the room
-                JID recipient = packet.getTo();
-                String roomName = recipient != null ? recipient.getNode() : null;
+                final JID recipient = packet.getTo();
+                final String roomName = recipient != null ? recipient.getNode() : null;
                 getChatUser( packet.getFrom(), roomName ).process( packet );
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
@@ -381,8 +376,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param iq the IQ packet to process.
      * @return true if the IQ packet was processed.
      */
-    private boolean process(IQ iq) {
-        Element childElement = iq.getChildElement();
+    private boolean process(final IQ iq) {
+        final Element childElement = iq.getChildElement();
         String namespace = null;
         // Ignore IQs of type ERROR
         if (IQ.Type.error == iq.getType()) {
@@ -396,38 +391,38 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             namespace = childElement.getNamespaceURI();
         }
         if ("jabber:iq:register".equals(namespace)) {
-            IQ reply = registerHandler.handleIQ(iq);
+            final IQ reply = registerHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("jabber:iq:search".equals(namespace)) {
-            IQ reply = searchHandler.handleIQ(iq);
+            final IQ reply = searchHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
             // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
             // a component
-            IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
+            final IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
             // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
             // a component
-            IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
+            final IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
             router.route(reply);
         }
         else if ("urn:xmpp:ping".equals(namespace)) {
             router.route( IQ.createResultIQ(iq) );
         }
         else if (this.iqHandlers != null) {
-            IQHandler h = this.iqHandlers.get(namespace);
+            final IQHandler h = this.iqHandlers.get(namespace);
             if (h != null) {
                 try {
-                    IQ reply = h.handleIQ(iq);
+                    final IQ reply = h.handleIQ(iq);
                     if (reply != null) {
                         router.route(reply);
                     }
-                } catch (UnauthorizedException e) {
-                    IQ reply = IQ.createResultIQ(iq);
+                } catch (final UnauthorizedException e) {
+                    final IQ reply = IQ.createResultIQ(iq);
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.service_unavailable);
                     router.route(reply);
@@ -442,7 +437,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void initialize(JID jid, ComponentManager componentManager) {
+    public void initialize(final JID jid, final ComponentManager componentManager) {
         initialize(XMPPServer.getInstance());
 
     }
@@ -507,38 +502,33 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         for ( final LocalMUCUser user : users.values() )
         {
             // Submit a concurrent task for each local user (that could be in more than one (local) room).
-            service.submit( new Runnable()
-            {
-                @Override
-                public void run()
+            service.submit(() -> {
+                try
                 {
-                    try
+                    for ( final LocalMUCRole role : user.getRoles() )
                     {
-                        for ( final LocalMUCRole role : user.getRoles() )
-                        {
-                            final MUCRoom room = role.getChatRoom();
+                        final MUCRoom room = role.getChatRoom();
 
-                            // Send a presence stanza of type "unavailable" to the occupant
-                            final Presence presence = room.createPresence( Presence.Type.unavailable );
-                            presence.setFrom( role.getRoleAddress() );
+                        // Send a presence stanza of type "unavailable" to the occupant
+                        final Presence presence = room.createPresence( Presence.Type.unavailable );
+                        presence.setFrom( role.getRoleAddress() );
 
-                            // A fragment containing the x-extension.
-                            final Element fragment = presence.addChildElement( "x", "http://jabber.org/protocol/muc#user" );
-                            final Element item = fragment.addElement( "item" );
-                            item.addAttribute( "affiliation", "none" );
-                            item.addAttribute( "role", "none" );
-                            fragment.addElement( "status" ).addAttribute( "code", "332" );
+                        // A fragment containing the x-extension.
+                        final Element fragment = presence.addChildElement( "x", "http://jabber.org/protocol/muc#user" );
+                        final Element item = fragment.addElement( "item" );
+                        item.addAttribute( "affiliation", "none" );
+                        item.addAttribute( "role", "none" );
+                        fragment.addElement( "status" ).addAttribute( "code", "332" );
 
-                            // Make sure that the presence change for each user is only sent to that user (and not broadcasted in the room)!
-                            role.send( presence );
-                        }
-                    }
-                    catch ( Exception e )
-                    {
-                        Log.debug( "Unable to inform {} about the imminent destruction of chat service '{}'", user.getAddress(), chatServiceName, e );
+                        // Make sure that the presence change for each user is only sent to that user (and not broadcasted in the room)!
+                        role.send( presence );
                     }
                 }
-            } );
+                catch ( final Exception e )
+                {
+                    Log.debug( "Unable to inform {} about the imminent destruction of chat service '{}'", user.getAddress(), chatServiceName, e );
+                }
+            });
         }
 
         // Try to shutdown - wait - force shutdown.
@@ -548,7 +538,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             service.awaitTermination( JiveGlobals.getIntProperty( "xmpp.muc.await-termination-millis", 500 ), TimeUnit.MILLISECONDS );
             Log.debug( "Successfully notified all {} local users about the imminent destruction of chat service '{}'", users.size(), chatServiceName );
         }
-        catch ( InterruptedException e )
+        catch ( final InterruptedException e )
         {
             Log.debug( "Interrupted while waiting for all users to be notified of shutdown of chat service '{}'. Shutting down immediately.", chatServiceName );
         }
@@ -557,7 +547,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     private void checkForTimedOutUsers() {
         final long deadline = System.currentTimeMillis() - user_idle;
-        for (LocalMUCUser user : users.values()) {
+        for (final LocalMUCUser user : users.values()) {
             try {
                 // If user is not present in any room then remove the user from
                 // the list of users
@@ -573,7 +563,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     // Kick the user from all the rooms that he/she had previuosly joined
                     MUCRoom room;
                     Presence kickedPresence;
-                    for (LocalMUCRole role : user.getRoles()) {
+                    for (final LocalMUCRole role : user.getRoles()) {
                         room = role.getChatRoom();
                         try {
                             kickedPresence =
@@ -581,13 +571,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             // Send the updated presence to the room occupants
                             room.send(kickedPresence);
                         }
-                        catch (NotAllowedException e) {
+                        catch (final NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins
                         }
                     }
                 }
             }
-            catch (Throwable e) {
+            catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
@@ -602,7 +592,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 logConversation();
             }
-            catch (Throwable e) {
+            catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
@@ -650,7 +640,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 localMUCRoomManager.cleanupRooms(getCleanupDate());
             }
-            catch (Throwable e) {
+            catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
@@ -662,7 +652,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param jid The jid for which to check (cannot be null).
      * @return true if the JID is allowed to create a room, otherwise false.
      */
-    protected boolean isAllowedToCreate(JID jid) {
+    private boolean isAllowedToCreate(final JID jid) {
         // If room creation is not restricted, everyone is allowed to create a room.
         if (!isRoomCreationRestricted()) {
             return true;
@@ -681,15 +671,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Verify the policy that allows all local, registered users to create rooms.
-        if (allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID)) {
-            return true;
-        }
+        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID);
 
-        return false;
     }
 
     @Override
-    public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
+    public MUCRoom getChatRoom(final String roomName, final JID userjid) throws NotAllowedException {
         LocalMUCRoom room;
         boolean loaded = false;
         boolean created = false;
@@ -705,7 +692,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     MUCPersistenceManager.loadFromDB(room);
                     loaded = true;
                 }
-                catch (IllegalArgumentException e) {
+                catch (final IllegalArgumentException e) {
                     // Check if room needs to be recreated in case it failed to be created previously
                     // (or was deleted somehow and is expected to exist by a delegate).
                     if (mucEventDelegate != null && mucEventDelegate.shouldRecreate(roomName, userjid)) {
@@ -741,7 +728,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (loaded || created) {
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
-            for (MUCRole role : room.getOccupants()) {
+            for (final MUCRole role : room.getOccupants()) {
                 if (role instanceof LocalMUCRole) {
                     CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));
                 }
@@ -751,7 +738,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public MUCRoom getChatRoom(String roomName) {
+    public MUCRoom getChatRoom(final String roomName) {
         boolean loaded = false;
         LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
@@ -769,7 +756,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         loaded = true;
                         localMUCRoomManager.addRoom(roomName,room);
                     }
-                    catch (IllegalArgumentException e) {
+                    catch (final IllegalArgumentException e) {
                         // The room does not exist so do nothing
                         room = null;
                     }
@@ -784,27 +771,27 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void refreshChatRoom(String roomName) {
+    public void refreshChatRoom(final String roomName) {
         localMUCRoomManager.removeRoom(roomName);
         getChatRoom(roomName);
     }
 
-    public LocalMUCRoom getLocalChatRoom(String roomName) {
+    public LocalMUCRoom getLocalChatRoom(final String roomName) {
         return localMUCRoomManager.getRoom(roomName);
     }
 
     @Override
     public List<MUCRoom> getChatRooms() {
-        return new ArrayList<MUCRoom>(localMUCRoomManager.getRooms());
+        return new ArrayList<>(localMUCRoomManager.getRooms());
     }
 
     @Override
-    public boolean hasChatRoom(String roomName) {
+    public boolean hasChatRoom(final String roomName) {
         return getChatRoom(roomName) != null;
     }
 
     @Override
-    public void removeChatRoom(String roomName) {
+    public void removeChatRoom(final String roomName) {
         removeChatRoom(roomName, true);
     }
 
@@ -815,7 +802,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param room the removed room in another cluster node.
      */
     @Override
-    public void chatRoomRemoved(LocalMUCRoom room) {
+    public void chatRoomRemoved(final LocalMUCRoom room) {
         removeChatRoom(room.getName(), false);
     }
 
@@ -826,20 +813,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param room the created room in another cluster node.
      */
     @Override
-    public void chatRoomAdded(LocalMUCRoom room) {
+    public void chatRoomAdded(final LocalMUCRoom room) {
         localMUCRoomManager.addRoom(room.getName(), room) ;
     }
 
-    private void removeChatRoom(String roomName, boolean notify) {
-        MUCRoom room = localMUCRoomManager.removeRoom(roomName);
+    private void removeChatRoom(final String roomName, final boolean notify) {
+        final LocalMUCRoom room = localMUCRoomManager.removeRoom(roomName);
         if (room != null) {
             Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
-            if (room instanceof LocalMUCRoom)
-                GroupEventDispatcher.removeListener((LocalMUCRoom) room);
-           totalChatTime += room.getChatLength();
+            totalChatTime += room.getChatLength();
             if (notify) {
                 // Notify other cluster nodes that a room has been removed
-                CacheFactory.doClusterTask(new RoomRemovedEvent((LocalMUCRoom)room));
+                CacheFactory.doClusterTask(new RoomRemovedEvent(room));
             }
         } else {
             Log.info("No chatroom {} during removal.", roomName);
@@ -866,14 +851,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param jabberID The user's normal jid, not the chat nickname jid.
      */
-    private void removeUser(JID jabberID) {
-        LocalMUCUser user = users.remove(jabberID);
+    private void removeUser(final JID jabberID) {
+        final LocalMUCUser user = users.remove(jabberID);
         if (user != null) {
-            for (LocalMUCRole role : user.getRoles()) {
+            for (final LocalMUCRole role : user.getRoles()) {
                 try {
                     role.getChatRoom().leaveRoom(role);
                 }
-                catch (Exception e) {
+                catch (final Exception e) {
                     Log.error(e.getMessage(), e);
                 }
             }
@@ -887,7 +872,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param roomName name of the room to receive the packet.
      * @return The chatuser corresponding to that XMPPAddress.
      */
-    private MUCUser getChatUser(JID userjid, String roomName) {
+    private MUCUser getChatUser(final JID userjid, final String roomName) {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }
@@ -897,9 +882,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (user == null) {
                 if (roomName != null) {
                     // Check if the JID belong to a user hosted in another cluster node
-                    LocalMUCRoom localMUCRoom = localMUCRoomManager.getRoom(roomName);
+                    final LocalMUCRoom localMUCRoom = localMUCRoomManager.getRoom(roomName);
                     if (localMUCRoom != null) {
-                        MUCRole occupant = localMUCRoom.getOccupantByFullJID(userjid);
+                        final MUCRole occupant = localMUCRoom.getOccupantByFullJID(userjid);
                         if (occupant != null && !occupant.isLocal()) {
                             return new RemoteMUCUser(userjid, localMUCRoom);
                         }
@@ -913,10 +898,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public Collection<MUCRole> getMUCRoles(JID user) {
-        List<MUCRole> userRoles = new ArrayList<>();
-        for (LocalMUCRoom room : localMUCRoomManager.getRooms()) {
-            MUCRole role = room.getOccupantByFullJID(user);
+    public Collection<MUCRole> getMUCRoles(final JID user) {
+        final List<MUCRole> userRoles = new ArrayList<>();
+        for (final LocalMUCRoom room : localMUCRoomManager.getRooms()) {
+            final MUCRole role = room.getOccupantByFullJID(user);
             if (role != null) {
                 userRoles.add(role);
             }
@@ -934,7 +919,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setKickIdleUsersTimeout(int timeout) {
+    public void setKickIdleUsersTimeout(final int timeout) {
         if (this.user_timeout == timeout) {
             return;
         }
@@ -956,7 +941,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setUserIdleTime(int idleTime) {
+    public void setUserIdleTime(final int idleTime) {
         if (this.user_idle == idleTime) {
             return;
         }
@@ -971,7 +956,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setLogConversationsTimeout(int timeout) {
+    public void setLogConversationsTimeout(final int timeout) {
         if (this.log_timeout == timeout) {
             return;
         }
@@ -993,7 +978,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setLogConversationBatchSize(int size) {
+    public void setLogConversationBatchSize(final int size) {
         if (this.log_batch_size == size) {
             return;
         }
@@ -1018,19 +1003,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public boolean isSysadmin(JID bareJID) {
+    public boolean isSysadmin(final JID bareJID) {
         return sysadmins.includes(bareJID);
     }
 
     @Override
-    public void addSysadmins(Collection<JID> userJIDs) {
-        for (JID userJID : userJIDs) {
+    public void addSysadmins(final Collection<JID> userJIDs) {
+        for (final JID userJID : userJIDs) {
             addSysadmin(userJID);
         }
     }
 
     @Override
-    public void addSysadmin(JID userJID) {
+    public void addSysadmin(final JID userJID) {
         final JID bareJID = userJID.asBareJID();
 
         if (!sysadmins.contains(userJID)) {
@@ -1038,12 +1023,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-        ArrayList<JID> tempList = new ArrayList<>(sysadmins);
+        final ArrayList<JID> tempList = new ArrayList<>(sysadmins);
         Collections.sort(tempList);
         sysadmins = new ConcurrentGroupList<>(tempList);
 
         // Update the config.
-        String[] jids = new String[sysadmins.size()];
+        final String[] jids = new String[sysadmins.size()];
         for (int i = 0; i < jids.length; i++) {
             jids[i] = sysadmins.get(i).toBareJID();
         }
@@ -1051,13 +1036,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void removeSysadmin(JID userJID) {
+    public void removeSysadmin(final JID userJID) {
         final JID bareJID = userJID.asBareJID();
 
         sysadmins.remove(bareJID);
 
         // Update the config.
-        String[] jids = new String[sysadmins.size()];
+        final String[] jids = new String[sysadmins.size()];
         for (int i = 0; i < jids.length; i++) {
             jids[i] = sysadmins.get(i).toBareJID();
         }
@@ -1082,7 +1067,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *         if the service should provide information about
      *         non-public members-only rooms.
      */
-    public void setAllowToDiscoverMembersOnlyRooms(boolean allowToDiscoverMembersOnlyRooms) {
+    public void setAllowToDiscoverMembersOnlyRooms(final boolean allowToDiscoverMembersOnlyRooms) {
         this.allowToDiscoverMembersOnlyRooms = allowToDiscoverMembersOnlyRooms;
         MUCPersistenceManager.setProperty(chatServiceName, "discover.membersOnly",
                 Boolean.toString(allowToDiscoverMembersOnlyRooms));
@@ -1107,7 +1092,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param allowToDiscoverLockedRooms if the service should provide information about locked
      *        rooms.
      */
-    public void setAllowToDiscoverLockedRooms(boolean allowToDiscoverLockedRooms) {
+    public void setAllowToDiscoverLockedRooms(final boolean allowToDiscoverLockedRooms) {
         this.allowToDiscoverLockedRooms = allowToDiscoverLockedRooms;
         MUCPersistenceManager.setProperty(chatServiceName, "discover.locked",
                 Boolean.toString(allowToDiscoverLockedRooms));
@@ -1119,7 +1104,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setRoomCreationRestricted(boolean roomCreationRestricted) {
+    public void setRoomCreationRestricted(final boolean roomCreationRestricted) {
         this.roomCreationRestricted = roomCreationRestricted;
         MUCPersistenceManager.setProperty(chatServiceName, "create.anyone", Boolean.toString(roomCreationRestricted));
     }
@@ -1136,10 +1121,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void addUsersAllowedToCreate(Collection<JID> userJIDs) {
+    public void addUsersAllowedToCreate(final Collection<JID> userJIDs) {
         boolean listChanged = false;
 
-        for(JID userJID: userJIDs) {
+        for(final JID userJID: userJIDs) {
             // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
             // variable there is no need to restart the service
             if (!allowedToCreate.contains(userJID)) {
@@ -1151,7 +1136,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // if nothing was added, there's nothing to update
         if(listChanged) {
             // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-            List<JID> tempList = new ArrayList<>(allowedToCreate);
+            final List<JID> tempList = new ArrayList<>(allowedToCreate);
             Collections.sort(tempList);
             allowedToCreate = new ConcurrentGroupList<>(tempList);
             // Update the config.
@@ -1160,17 +1145,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void addUserAllowedToCreate(JID userJID) {
-        List<JID> asList = new ArrayList<>();
+    public void addUserAllowedToCreate(final JID userJID) {
+        final List<JID> asList = new ArrayList<>();
         asList.add(userJID);
         addUsersAllowedToCreate(asList);
     }
 
     @Override
-    public void removeUsersAllowedToCreate(Collection<JID> userJIDs) {
+    public void removeUsersAllowedToCreate(final Collection<JID> userJIDs) {
         boolean listChanged = false;
 
-        for(JID userJID: userJIDs) {
+        for(final JID userJID: userJIDs) {
             // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
             // variable there is no need to restart the service
             listChanged |= allowedToCreate.remove(userJID);
@@ -1183,11 +1168,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void removeUserAllowedToCreate(JID userJID) {
+    public void removeUserAllowedToCreate(final JID userJID) {
         removeUsersAllowedToCreate(Collections.singleton(userJID));
     }
 
-    public void initialize(XMPPServer server) {
+    public void initialize(final XMPPServer server) {
         initializeSettings();
 
         routingTable = server.getRoutingTable();
@@ -1209,14 +1194,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         sysadmins.clear();
         if (property != null && property.trim().length() > 0) {
             final String[] jids = property.split(",");
-            for (String jid : jids) {
+            for (final String jid : jids) {
                 if (jid == null || jid.trim().length() == 0) {
                     continue;
                 }
                 try {
                     // could be a group jid
                     sysadmins.add(GroupJID.fromString(jid.trim().toLowerCase()).asBareJID());
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     Log.warn("The 'sysadmin.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }
             }
@@ -1234,14 +1219,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         allowedToCreate.clear();
         if (property != null && property.trim().length() > 0) {
             final String[] jids = property.split(",");
-            for (String jid : jids) {
+            for (final String jid : jids) {
                 if (jid == null || jid.trim().length() == 0) {
                     continue;
                 }
                 try {
                     // could be a group jid
                     allowedToCreate.add(GroupJID.fromString(jid.trim().toLowerCase()).asBareJID());
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     Log.warn("The 'create.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }
             }
@@ -1252,7 +1237,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 user_timeout = Integer.parseInt(value);
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.user.timeout for service "+chatServiceName, e);
             }
         }
@@ -1262,7 +1247,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 user_idle = Integer.parseInt(value);
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.user.idle for service "+chatServiceName, e);
             }
         }
@@ -1272,7 +1257,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 log_timeout = Integer.parseInt(value);
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.log.timeout for service "+chatServiceName, e);
             }
         }
@@ -1282,7 +1267,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 log_batch_size = Integer.parseInt(value);
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.log.batchsize for service "+chatServiceName, e);
             }
         }
@@ -1292,7 +1277,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             try {
                 emptyLimit = Integer.parseInt(value) * 24;
             }
-            catch (NumberFormatException e) {
+            catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property unload.empty_days for service "+chatServiceName, e);
             }
         }
@@ -1311,19 +1296,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         logConversationTask = new LogConversationTask();
         TaskEngine.getInstance().schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
-        cleanupTask = new CleanupTask();
-        TaskEngine.getInstance().schedule(cleanupTask, CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
+        TaskEngine.getInstance().schedule(new CleanupTask(), CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().setServerNodeInfoProvider(this.getServiceDomain(), this);
 
-        ArrayList<String> params = new ArrayList<>();
+        final ArrayList<String> params = new ArrayList<>();
         params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
         // Load all the persistent rooms to memory
-        for (LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
+        for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
         }
     }
@@ -1339,7 +1323,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void enableService(boolean enabled, boolean persistent) {
+    public void enableService(final boolean enabled, final boolean persistent) {
         if (isServiceEnabled() == enabled) {
             // Do nothing if the service status has not changed
             return;
@@ -1386,18 +1370,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return the number of existing rooms in the server.
      */
     @Override
-    public int getNumberConnectedUsers(boolean onlyLocal) {
+    public int getNumberConnectedUsers(final boolean onlyLocal) {
         int total = 0;
-        for (LocalMUCUser user : users.values()) {
+        for (final LocalMUCUser user : users.values()) {
             if (user.isJoined()) {
                 total = total + 1;
             }
         }
         // Add users from remote cluster nodes
         if (!onlyLocal) {
-            Collection<Integer> results =
+            final Collection<Integer> results =
                     CacheFactory.doSynchronousClusterTask(new GetNumberConnectedUsers(), false);
-            for (Integer result : results) {
+            for (final Integer result : results) {
                 if (result == null) {
                     continue;
                 }
@@ -1415,7 +1399,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public int getNumberRoomOccupants() {
         int total = 0;
-        for (MUCRoom room : localMUCRoomManager.getRooms()) {
+        for (final MUCRoom room : localMUCRoomManager.getRooms()) {
             total = total + room.getOccupantsCount();
         }
         return total;
@@ -1428,7 +1412,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return the number of incoming messages through the service.
      */
     @Override
-    public long getIncomingMessageCount(boolean resetAfter) {
+    public long getIncomingMessageCount(final boolean resetAfter) {
         if (resetAfter) {
             return inMessages.getAndSet(0);
         }
@@ -1444,7 +1428,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return the number of outgoing messages through the service.
      */
     @Override
-    public long getOutgoingMessageCount(boolean resetAfter) {
+    public long getOutgoingMessageCount(final boolean resetAfter) {
         if (resetAfter) {
             return outMessages.getAndSet(0);
         }
@@ -1454,7 +1438,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void logConversation(MUCRoom room, Message message, JID sender) {
+    public void logConversation(final MUCRoom room, final Message message, final JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
             logQueue.add(new ConversationLogEntry(new Date(), room, message, sender));
@@ -1462,7 +1446,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void messageBroadcastedTo(int numOccupants) {
+    public void messageBroadcastedTo(final int numOccupants) {
         // Increment counter of received messages that where broadcasted by one
         inMessages.incrementAndGet();
         // Increment counter of outgoing messages with the number of room occupants
@@ -1487,18 +1471,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<>();
+    public Iterator<Element> getIdentities(final String name, final String node, final JID senderJID) {
+        final ArrayList<Element> identities = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the identity of the MUC service
-            Element identity = DocumentHelper.createElement("identity");
+            final Element identity = DocumentHelper.createElement("identity");
             identity.addAttribute("category", "conference");
             identity.addAttribute("name", getDescription());
             identity.addAttribute("type", "text");
             identities.add(identity);
 
             // TODO: Should internationalize Public Chatroom Search, and make it configurable.
-            Element searchId = DocumentHelper.createElement("identity");
+            final Element searchId = DocumentHelper.createElement("identity");
             searchId.addAttribute("category", "directory");
             searchId.addAttribute("name", "Public Chatroom Search");
             searchId.addAttribute("type", "chatroom");
@@ -1510,9 +1494,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if (name != null && node == null) {
             // Answer the identity of a given room
-            MUCRoom room = getChatRoom(name);
+            final MUCRoom room = getChatRoom(name);
             if (room != null) {
-                Element identity = DocumentHelper.createElement("identity");
+                final Element identity = DocumentHelper.createElement("identity");
                 identity.addAttribute("category", "conference");
                 identity.addAttribute("name", room.getNaturalLanguageName());
                 identity.addAttribute("type", "text");
@@ -1522,11 +1506,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if (name != null && "x-roomuser-item".equals(node)) {
             // Answer reserved nickname for the sender of the disco request in the requested room
-            MUCRoom room = getChatRoom(name);
+            final MUCRoom room = getChatRoom(name);
             if (room != null) {
-                String reservedNick = room.getReservedNickname(senderJID);
+                final String reservedNick = room.getReservedNickname(senderJID);
                 if (reservedNick != null) {
-                    Element identity = DocumentHelper.createElement("identity");
+                    final Element identity = DocumentHelper.createElement("identity");
                     identity.addAttribute("category", "conference");
                     identity.addAttribute("name", reservedNick);
                     identity.addAttribute("type", "text");
@@ -1539,8 +1523,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        ArrayList<String> features = new ArrayList<>();
+    public Iterator<String> getFeatures(final String name, final String node, final JID senderJID) {
+        final ArrayList<String> features = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the features of the MUC service
             features.add("http://jabber.org/protocol/muc");
@@ -1554,7 +1538,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if (name != null && node == null) {
             // Answer the features of a given room
-            MUCRoom room = getChatRoom(name);
+            final MUCRoom room = getChatRoom(name);
             if (room != null) {
                 features.add("http://jabber.org/protocol/muc");
                 if (room.isPublicRoom()) {
@@ -1601,10 +1585,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+    public DataForm getExtendedInfo(final String name, final String node, final JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
-            MUCRoom room = getChatRoom(name);
+            final MUCRoom room = getChatRoom(name);
             if (room != null) {
                 final DataForm dataForm = new DataForm(Type.result);
 
@@ -1648,7 +1632,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Adds an extra Disco feature to the list of features returned for the conference service.
      * @param feature Feature to add.
      */
-    public void addExtraFeature(String feature) {
+    public void addExtraFeature(final String feature) {
         extraDiscoFeatures.add(feature);
     }
 
@@ -1656,7 +1640,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Removes an extra Disco feature from the list of features returned for the conference service.
      * @param feature Feature to remove.
      */
-    public void removeExtraFeature(String feature) {
+    public void removeExtraFeature(final String feature) {
         extraDiscoFeatures.remove(feature);
     }
 
@@ -1666,8 +1650,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param name Descriptive name for identity.  e.g. Public Chatrooms
      * @param type Type for identity.  e.g. text
      */
-    public void addExtraIdentity(String category, String name, String type) {
-        Element identity = DocumentHelper.createElement("identity");
+    public void addExtraIdentity(final String category, final String name, final String type) {
+        final Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", category);
         identity.addAttribute("name", name);
         identity.addAttribute("type", type);
@@ -1678,10 +1662,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Removes an extra Disco identity from the list of identities returned for the conference service.
      * @param name Name of identity to remove.
      */
-    public void removeExtraIdentity(String name) {
+    public void removeExtraIdentity(final String name) {
         final Iterator<Element> iter = extraDiscoIdentities.iterator();
         while (iter.hasNext()) {
-            Element elem = iter.next();
+            final Element elem = iter.next();
             if (name.equals(elem.attribute("name").getStringValue())) {
                 iter.remove();
                 break;
@@ -1693,7 +1677,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Sets the MUC event delegate handler for this service.
      * @param delegate Handler for MUC events.
      */
-    public void setMUCDelegate(MUCEventDelegate delegate) {
+    public void setMUCDelegate(final MUCEventDelegate delegate) {
         mucEventDelegate = delegate;
     }
 
@@ -1706,7 +1690,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public boolean hasInfo(String name, String node, JID senderJID) {
+    public boolean hasInfo(final String name, final String node, final JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return false;
@@ -1727,16 +1711,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
+    public Iterator<DiscoItem> getItems(final String name, final String node, final JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
             return null;
         }
-        Set<DiscoItem> answer = new HashSet<>();
+        final Set<DiscoItem> answer = new HashSet<>();
         if (name == null && node == null)
         {
             // Answer all the public rooms as items
-            for (MUCRoom room : localMUCRoomManager.getRooms())
+            for (final MUCRoom room : localMUCRoomManager.getRooms())
             {
                 if (canDiscoverRoom(room, senderJID))
                 {
@@ -1747,9 +1731,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if (name != null && node == null) {
             // Answer the room occupants as items if that info is publicly available
-            MUCRoom room = getChatRoom(name);
+            final MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room, senderJID)) {
-                for (MUCRole role : room.getOccupants()) {
+                for (final MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
                     answer.add(new DiscoItem(role.getRoleAddress(), null, null, null));
                 }
@@ -1758,7 +1742,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return answer.iterator();
     }
 
-    private boolean canDiscoverRoom(MUCRoom room, JID senderJID) {
+    private boolean canDiscoverRoom(final MUCRoom room, final JID senderJID) {
         // Check if locked rooms may be discovered
         if (!allowToDiscoverLockedRooms && room.isLocked()) {
             return false;
@@ -1767,12 +1751,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (!allowToDiscoverMembersOnlyRooms && room.isMembersOnly()) {
                 return false;
             }
-            MUCRole.Affiliation affiliation = room.getAffiliation(senderJID.asBareJID());
-            if (affiliation != MUCRole.Affiliation.owner
-                    && affiliation != MUCRole.Affiliation.admin
-                    && affiliation != MUCRole.Affiliation.member) {
-                return false;
-            }
+            final MUCRole.Affiliation affiliation = room.getAffiliation(senderJID.asBareJID());
+            return affiliation == MUCRole.Affiliation.owner
+                || affiliation == MUCRole.Affiliation.admin
+                || affiliation == MUCRole.Affiliation.member;
         }
         return true;
     }
@@ -1783,8 +1765,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param array the array.
      * @return a comma delimited String of the array values.
      */
-    private static String fromArray(String [] array) {
-        StringBuilder buf = new StringBuilder();
+    private static String fromArray(final String [] array) {
+        final StringBuilder buf = new StringBuilder();
         for (int i=0; i<array.length; i++) {
             buf.append(array[i]);
             if (i != array.length-1) {
@@ -1800,12 +1782,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param coll the collection.
      * @return a comma delimited String of the array values.
      */
-    private static String fromCollection(Collection<JID> coll) {
-        StringBuilder buf = new StringBuilder();
-        for (JID elem: coll) {
+    private static String fromCollection(final Collection<JID> coll) {
+        final StringBuilder buf = new StringBuilder();
+        for (final JID elem: coll) {
             buf.append(elem.toBareJID()).append(',');
         }
-        int endPos = buf.length() > 1 ? buf.length() - 1 : 0;
+        final int endPos = buf.length() > 1 ? buf.length() - 1 : 0;
         return buf.substring(0, endPos);
     }
 

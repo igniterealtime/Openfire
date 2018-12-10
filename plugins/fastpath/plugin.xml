@@ -10,7 +10,8 @@
     <minServerVersion>4.1.1</minServerVersion>
     <databaseKey>fastpath</databaseKey>
     <databaseVersion>0</databaseVersion>
-    
+    <minJavaVersion>1.8</minJavaVersion>
+
     <adminconsole>
         <tab id="workgroup-tab" name="Fastpath"
                 url="workgroup-summary.jsp"

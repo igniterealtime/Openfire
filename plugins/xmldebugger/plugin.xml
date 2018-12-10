@@ -11,7 +11,7 @@
     <version>${project.version}</version>
     <date>07/11/2018</date>
     <minServerVersion>4.0.0</minServerVersion>
-    <minJavaVersion>1.7</minJavaVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 
    <adminconsole>
       <tab id="tab-server">

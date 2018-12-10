@@ -12,6 +12,7 @@
     <date>tbc.</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>4.3.0</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 
     <adminconsole>
         <tab id="tab-users">

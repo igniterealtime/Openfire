@@ -8,6 +8,8 @@
     <version>${project.version}</version>
     <date>11/28/2018</date>
     <minServerVersion>4.1.1</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
+
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">

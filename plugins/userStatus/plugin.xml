@@ -15,7 +15,7 @@
     <databaseKey>user-status</databaseKey>
     <databaseVersion>0</databaseVersion>
     <licenseType>gpl</licenseType>
-    
+
     <!-- Admin console meta-data -->
     <adminconsole>              
         <tab id="tab-server">

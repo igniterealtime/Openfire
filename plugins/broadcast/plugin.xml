@@ -12,4 +12,5 @@
     <date>tbc.</date>
     <url>http://www.igniterealtime.org</url>
     <minServerVersion>4.1.1</minServerVersion>
+    <minJavaVersion>1.8</minJavaVersion>
 </plugin>

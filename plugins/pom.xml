@@ -163,7 +163,7 @@
         <!-- Note; the following jetty.version should be identical to the jetty.version in xmppserver/pom.xml -->
         <jetty.version>9.4.12.v20180830</jetty.version>
         <!--suppress UnresolvedMavenProperty -->
-        <target.repo>${maven.multiModuleProjectDirectory}/target/repo</target.repo>
+        <target.repo>${maven.multiModuleProjectDirectory}${file.separator}target${file.separator}repo</target.repo>
     </properties>
 
     <profiles>

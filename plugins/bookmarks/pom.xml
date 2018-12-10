@@ -21,7 +21,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.5</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>attach-artifacts</id>
@@ -32,7 +32,7 @@
                         <configuration>
                             <artifacts>
                                 <artifact>
-                                    <file>target/${project.artifactId}.jar</file>
+                                    <file>target${file.separator}${project.artifactId}.jar</file>
                                     <type>jar</type>
                                     <classifier>plugin</classifier>
                                 </artifact>

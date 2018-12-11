@@ -1,5 +1,6 @@
 package org.jivesoftware.admin;
 
+import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.junit.Before;
@@ -40,6 +41,8 @@ public class AuthCheckFilterTest {
 
     @Before
     public void setUp() throws Exception {
+
+        Fixtures.reconfigureOpenfireHome();
 
         doReturn("/uri/to/page").when(request).getRequestURI();
         doReturn(httpSession).when(request).getSession();

@@ -11,6 +11,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -55,13 +58,13 @@ public class IQEntityTimeHandlerTest {
 
             DatatypeConverter.printDateTime(calendar);
         }
-        System.out.println(System.currentTimeMillis() - start);
+        assertThat(System.currentTimeMillis() - start, is(lessThan(2000L)));
 
         start = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {
             XMPPDateTimeFormat.format(date);
         }
-        System.out.println(System.currentTimeMillis() - start);
+        assertThat(System.currentTimeMillis() - start, is(lessThan(4000L)));
     }
 
     @Test

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- log4j2 config file used when running under Maven -->
+<Configuration>
+    <Appenders>
+        <File name="file" fileName="target/surefire-reports/test.log">
+            <PatternLayout>
+                <Pattern>%d %-5p %X [%c{1}] - %m%n</Pattern>
+            </PatternLayout>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="file"/>
+        </Root>
+    </Loggers>
+</Configuration>

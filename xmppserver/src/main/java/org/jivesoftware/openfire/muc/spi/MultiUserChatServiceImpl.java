@@ -59,7 +59,6 @@ import org.jivesoftware.util.AutoCloseableReentrantLock;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.QuietAutoCloseable;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -364,7 +363,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final JID recipient = packet.getTo();
                 final String roomName = recipient != null ? recipient.getNode() : null;
                 final JID userJid = packet.getFrom();
-                try (final QuietAutoCloseable ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString())) {
+                try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
                     getChatUser(userJid, roomName).process(packet);
                 }
             }
@@ -553,7 +552,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private void checkForTimedOutUsers() {
         final long deadline = System.currentTimeMillis() - user_idle;
         for (final LocalMUCUser user : users.values()) {
-            try (final QuietAutoCloseable ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, user.getAddress().toString())) {
+            try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, user.getAddress().toString()).lock()) {
                 // If user is not present in any room then remove the user from
                 // the list of users
                 if (!user.isJoined()) {

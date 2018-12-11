@@ -38,6 +38,7 @@ public enum Language
     English ("en"),
     Flemish ("nl_BE"),
     French ("fr"),
+    Galician ("gl"),
     German ("de"),
     Hebrew ("he"),
     Hindi ("hi"),

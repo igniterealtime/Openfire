@@ -43,13 +43,47 @@
     inVerse Plugin Changelog
 </h1>
 
-<p><b>4.0.4 Release 1</b> -- (tbd)</p>
+<p><b>4.0.6 Release 1</b> -- (tbd)</p>
 <ul>
     <li>Minimum Java requirement: 1.8</li>
     <li><a href="https://issues.igniterealtime.org/browse/OF-1517">OF-1517: Don't require i18n source files for all plugins to be encoded.</a></li>
     <li><a href="https://issues.igniterealtime.org/browse/OF-1629">OF-1636: Add 'fullpage' style sheet.</a>
     <li><a href="https://issues.igniterealtime.org/browse/OF-1629">OF-1629: include missing resources (logos, sounds).</a>
-    <li><a href="https://issues.igniterealtime.org/browse/OF-1628">OF-1635: upgrade to converse.js 4.0.4</a>, which includes these changes:
+    <li><a href="https://issues.igniterealtime.org/browse/OF-1653">OF-1653: upgrade to converse.js 4.0.6</a>, which includes these changes:
+      <h4>For Converse 4.0.6 (<a href="https://issues.igniterealtime.org/browse/OF-1653">OF-1653</a>):</h4>
+        <ul>
+            <li>Updated translations: ar, cs, de, es, eu, fr, gl, hu, id, it, ja, nb, pt_BR</li>
+            <li>Don't render http (i.e. non-TLS) resources</li>
+            <li>Bugfix: Converse caused RID out of range errors on Prosody</li>
+            <li>Bugfix: MUC messages sometimes appear twice after resync.</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1331">#1331</a> Fix missing checkmarks in old muc messages</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1333">#1333</a> Don't send receipt requests in MUCs</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1348">#1348</a> Font gets cut off in Firefox #1348</li>
+        </ul>
+        <h4>For Converse 4.0.5:</h4>
+        <ul>
+            <li>Error FATAL: TypeError: Cannot read property 'extend' of undefined when using embedded view mode.</li>
+            <li>Default paths in converse-notifications.js are now relative</li>
+            <li>Add a button to regenerate OMEMO keys</li>
+            <li>Add client info modal which shows Converse's version number</li>
+            <li>New config setting <a href="https://conversejs.org/docs/html/configuration.html#theme">theme</a></li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/141">#141</a> XEP-0184: Message Delivery Receipts</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1033">#1033</a> Setting show_send_button to true didn't work</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1188">#1188</a> Feature request: drag and drop file to HTTP Upload</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1268">#1268</a> Switch from SASS variables to CSS custom properties</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1278">#1278</a> Replace the default avatar with a SVG version</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1288">#1288</a> Add CSS classes to differentiate between incoming and outgoing messages</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1305">#1305</a> added value 'all' for 'show_desktop_notifications' to notifiy even if converse.js is open</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1306">#1306</a> added option notification_delay</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1312">#1312</a> Error unrecognized expression in Safari</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1316">#1316</a> show version info in login dialog</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1317">#1317</a> Don't show errors for CSI messages</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1318">#1318</a> added values 'on' and 'off' for 'trusted' option which removes the "This is a trusted device" checkbox from the login form</li>
+            <li><a href="https://github.com/conversejs/converse.js/issues/1319">#1319</a> Implement sending of presences according to XEP-0319: Last User Interaction in Presence</li>
+        </ul>
+
+        <h4>For Converse 4.0.4 (<a href="https://issues.igniterealtime.org/browse/OF-1635">OF-1635</a>):</h4>
+
         <ul>
             <li>Use <a href="https://lernajs.io/">Lerna</a> to create the @converse/headless package</li>
             <li>Use ES2015 modules instead of UMD.</li>
@@ -61,8 +95,9 @@
             <li><a href="https://github.com/conversejs/converse.js/issues/1272">#1272</a> Hiding MUC occupants leaves a blank space</li>
             <li><a href="https://github.com/conversejs/converse.js/issues/1278">#1278</a> Replace the default avatar with a SVG version</li>
         </ul>
-    </li>
-    <li><a href="https://issues.igniterealtime.org/browse/OF-1628">OF-1628: upgrade to converse.js 4.0.3</a>, which includes these changes:
+
+        <h4>For Converse 4.0.3 (<a href="https://issues.igniterealtime.org/browse/OF-1628">OF-1628</a>):</h4>
+
         <ul>
             <li>New translations: Arabic, Basque, Czech, French, German, Hungarian, Japanese, Norwegian Bokmål, Polish, Romanian, Spanish</li>
             <li>Bugfix. Converse continuously publishes an empty OMEMO devicelist for itself</li>

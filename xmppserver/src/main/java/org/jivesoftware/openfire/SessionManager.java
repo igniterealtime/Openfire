@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -376,13 +377,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @param id the streamID to use for the new session.
      * @return a newly created session.
      */
-    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id, HttpConnection connection, Locale language)
-            throws UnauthorizedException {
+    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language)
+        throws UnauthorizedException, UnknownHostException
+    {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
         PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid, connection, language);
+        HttpSession session = new HttpSession(backupDeliverer, serverName, id, connection, language);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

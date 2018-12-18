@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.AsyncContext;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
 
 /**
@@ -35,9 +37,7 @@ public class HttpConnection {
     private static final Logger Log = LoggerFactory.getLogger(HttpConnection.class);
 
     private final long requestId;
-    private final X509Certificate[] sslCertificates;
-    private final boolean isSecure;
-    
+
     private HttpSession session;
     private boolean isClosed;
 
@@ -47,13 +47,10 @@ public class HttpConnection {
      * Constructs an HTTP Connection.
      *
      * @param requestId the ID which uniquely identifies this request.
-     * @param isSecure true if this connection is using HTTPS
-     * @param sslCertificates list of certificates presented by the client.
+     * @param context execution context of the servlet request that created this instance.
      */
-    public HttpConnection(long requestId, boolean isSecure, X509Certificate[] sslCertificates, AsyncContext context) {
+    public HttpConnection(long requestId, AsyncContext context) {
         this.requestId = requestId;
-        this.isSecure = isSecure;
-        this.sslCertificates = sslCertificates;
         this.context = context;
     }
 
@@ -91,7 +88,7 @@ public class HttpConnection {
      * @return true if this connection is using HTTPS.
      */
     public boolean isSecure() {
-        return isSecure;
+        return context.getRequest().isSecure();
     }
 
     /**
@@ -147,14 +144,26 @@ public class HttpConnection {
     public HttpSession getSession() {
         return session;
     }
-    
+
+    /**
+     * Returns the Internet Protocol (IP) address of the client
+     * or last proxy that sent the request.
+     *
+     * @return IP address of the remote peer
+     * @throws UnknownHostException if no IP address for the peer could be found,
+     */
+    public InetAddress getRemoteAddr() throws UnknownHostException
+    {
+        return InetAddress.getByName(context.getRequest().getRemoteAddr());
+    }
+
     /**
      * Returns the peer certificates for this connection. 
      * 
      * @return the peer certificates for this connection or null.
      */
     public X509Certificate[] getPeerCertificates() {
-        return sslCertificates;
+        return (X509Certificate[]) context.getRequest().getAttribute("javax.servlet.request.X509Certificate");
     }
 
     @Override

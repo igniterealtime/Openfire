@@ -16,18 +16,6 @@
 
 package org.jivesoftware.openfire.http;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-
-import javax.servlet.*;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -41,6 +29,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently
@@ -214,10 +211,8 @@ public class HttpBindServlet extends HttpServlet {
         final long rid = getLongAttribute(rootNode.attributeValue("rid"), -1);
 
         try {
-            final X509Certificate[] certificates = (X509Certificate[]) context.getRequest().getAttribute("javax.servlet.request.X509Certificate");
-            final HttpConnection connection = new HttpConnection(rid, context.getRequest().isSecure(), certificates, context);
-            final InetAddress address = InetAddress.getByName(context.getRequest().getRemoteAddr());
-            connection.setSession(sessionManager.createSession(address, rootNode, connection));
+            final HttpConnection connection = new HttpConnection(rid, context);
+            connection.setSession(sessionManager.createSession(rootNode, connection));
             if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
                 Log.info(new Date() + ": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + rootNode.asXML());
             }
@@ -249,7 +244,7 @@ public class HttpBindServlet extends HttpServlet {
 
         synchronized (session) {
             try {
-                session.forwardRequest(rid, context.getRequest().isSecure(), rootNode, context);
+                session.forwardRequest(rid, rootNode, context);
             }
             catch (HttpBindException e) {
                 sendError(session, context, e.getBindingError());
@@ -453,6 +448,8 @@ public class HttpBindServlet extends HttpServlet {
         @Override
         public void onWritePossible() throws IOException {
             // This method may be invoked multiple times and by different threads, e.g. when writing large byte arrays.
+            // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
+            // Otherwise WritePendingException is thrown.
             Log.trace("Data can be written to [" + remoteAddress + "]");
             ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
             while (servletOutputStream.isReady()) {

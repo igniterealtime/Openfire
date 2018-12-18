@@ -16,16 +16,6 @@
 
 package org.jivesoftware.openfire.http;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -41,6 +31,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
@@ -148,7 +147,6 @@ public class HttpSessionManager {
     /**
      * Creates an HTTP binding session which will allow a user to exchange packets with Openfire.
      *
-     * @param address the internet address that was used to bind to Openfire.
      * @param rootNode the body element that was sent containing the request for a new session.
      * @param connection the HTTP connection object which abstracts the individual connections to
      * Openfire over the HTTP binding protocol. The initial session creation response is returned to
@@ -160,9 +158,9 @@ public class HttpSessionManager {
      * @throws HttpBindException when there is an internal server error related to the creation of
      * the initial session creation response.
      */
-    public HttpSession createSession(InetAddress address, Element rootNode,
-                                     HttpConnection connection)
-            throws UnauthorizedException, HttpBindException {
+    public HttpSession createSession(Element rootNode, HttpConnection connection)
+        throws UnauthorizedException, HttpBindException, UnknownHostException
+    {
         // TODO Check if IP address is allowed to connect to the server
 
         // Default language is English ("en").
@@ -179,7 +177,7 @@ public class HttpSessionManager {
             version = "1.5";
         }
 
-        HttpSession session = createSession(connection.getRequestId(), address, connection, Locale.forLanguageTag(language));
+        HttpSession session = createSession(connection, Locale.forLanguageTag(language));
         session.setWait(Math.min(wait, getMaxWait()));
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -291,11 +289,12 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
-    private HttpSession createSession(long rid, InetAddress address, HttpConnection connection, Locale language) throws UnauthorizedException {
+    private HttpSession createSession(HttpConnection connection, Locale language) throws UnauthorizedException, UnknownHostException
+    {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, connection, language);
+        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(sessionListener);

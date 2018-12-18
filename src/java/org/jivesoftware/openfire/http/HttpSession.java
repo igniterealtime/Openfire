@@ -16,27 +16,15 @@
 
 package org.jivesoftware.openfire.http;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-
-import org.dom4j.*;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Namespace;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.SessionPacketRouter;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -46,7 +34,6 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -62,6 +49,14 @@ import org.xmpp.packet.Presence;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
@@ -132,12 +127,13 @@ public class HttpSession extends LocalClientSession {
         }
     };
 
-    public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
-                       StreamID streamID, long rid, HttpConnection connection, Locale language) {
-        super(serverName, new HttpVirtualConnection(address, ConnectionType.SOCKET_C2S), streamID, language);
+    public HttpSession(PacketDeliverer backupDeliverer, String serverName,
+                       StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
+    {
+        super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
-        this.lastRequestID = rid;
+        this.lastRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
         this.sslCertificates = connection.getPeerCertificates();
     }
@@ -564,8 +560,6 @@ public class HttpSession extends LocalClientSession {
      * connection.
      *
      * @param rid the unique, sequential, requestID sent from the client.
-     * @param isSecure true if the request was made over a secure channel, HTTPS, and false if it
-     * was not.
      * @param rootNode the XML body of the request.
      * @param context the context of the asynchronous servlet call leading up to this method call.
      *
@@ -573,7 +567,7 @@ public class HttpSession extends LocalClientSession {
      * not recognized by the server, or if the packet type is not recognized.
      * @throws org.jivesoftware.openfire.http.HttpConnectionClosedException if the session is no longer available.
      */
-    public void forwardRequest(long rid, boolean isSecure, Element rootNode, AsyncContext context)
+    public void forwardRequest(long rid, Element rootNode, AsyncContext context)
             throws HttpBindException, HttpConnectionClosedException, IOException
     {
         List<Element> elements = rootNode.elements();
@@ -584,7 +578,7 @@ public class HttpSession extends LocalClientSession {
             isPoll = false;
         else if (rootNode.attributeValue("pause") != null)
             isPoll = false;
-        HttpConnection connection = this.createConnection(rid, isSecure, isPoll, context);
+        HttpConnection connection = this.createConnection(rid, isPoll, context);
         if (elements.size() > 0) {
             // creates the runnable to forward the packets
             packetsToSend.add(elements);
@@ -661,7 +655,6 @@ public class HttpSession extends LocalClientSession {
      * response.
      *
      * @param rid the request id related to the connection.
-     * @param isSecure true if the connection was secured using HTTPS.
      * @return the created {@link org.jivesoftware.openfire.http.HttpConnection} which represents
      *         the connection.
      *
@@ -670,10 +663,10 @@ public class HttpSession extends LocalClientSession {
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      * protocol.
      */
-    synchronized HttpConnection createConnection(long rid, boolean isSecure, boolean isPoll, AsyncContext context)
+    synchronized HttpConnection createConnection(long rid, boolean isPoll, AsyncContext context)
             throws HttpConnectionClosedException, HttpBindException, IOException
     {
-        final HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates, context);
+        final HttpConnection connection = new HttpConnection(rid, context);
         connection.setSession(this);
         context.setTimeout(getWait() * JiveConstants.SECOND);
         context.addListener(new AsyncListener() {

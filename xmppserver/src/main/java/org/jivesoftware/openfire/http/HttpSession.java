@@ -559,47 +559,36 @@ public class HttpSession extends LocalClientSession {
      * any pending packets bound for the client will be forwarded to the client through the
      * connection.
      *
-     * @param rid the unique, sequential, requestID sent from the client.
-     * @param rootNode the XML body of the request.
+     * @param body the body element that was sent containing the request for a new session.
      * @param context the context of the asynchronous servlet call leading up to this method call.
      *
      * @throws org.jivesoftware.openfire.http.HttpBindException for several reasons: if the encoding inside of an auth packet is
      * not recognized by the server, or if the packet type is not recognized.
      * @throws org.jivesoftware.openfire.http.HttpConnectionClosedException if the session is no longer available.
      */
-    public void forwardRequest(long rid, Element rootNode, AsyncContext context)
+    public void forwardRequest(HttpBindBody body, AsyncContext context)
             throws HttpBindException, HttpConnectionClosedException, IOException
     {
-        List<Element> elements = rootNode.elements();
-        boolean isPoll = (elements.size() == 0);
-        if ("terminate".equals(rootNode.attributeValue("type")))
-            isPoll = false;
-        else if ("true".equals(rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")))))
-            isPoll = false;
-        else if (rootNode.attributeValue("pause") != null)
-            isPoll = false;
-        HttpConnection connection = this.createConnection(rid, isPoll, context);
-        if (elements.size() > 0) {
+        HttpConnection connection = this.createConnection(body.getRid(), body.isPoll(), context);
+        if (!body.isEmpty()) {
             // creates the runnable to forward the packets
-            packetsToSend.add(elements);
+            packetsToSend.add( body.getStanzaElements() );
             new HttpPacketSender(this).init();
         }
 
-        final String type = rootNode.attributeValue("type");
-        String restartStream = rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")));
-        int pauseDuration = HttpBindServlet.getIntAttribute(rootNode.attributeValue("pause"), -1);
+        final String type = body.getType();
 
         if ("terminate".equals(type)) {
             connection.deliverBody(createEmptyBody(true), true);
             close();
             lastRequestID = connection.getRequestId();
         }
-        else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {
+        else if (body.isRestart() && body.isEmpty() ) {
             connection.deliverBody(createSessionRestartResponse(), true);
             lastRequestID = connection.getRequestId();
         }
-        else if (pauseDuration > 0 && pauseDuration <= getMaxPause()) {
-            pause(pauseDuration);
+        else if (body.getPause() > 0 && body.getPause() <= getMaxPause()) {
+            pause(body.getPause());
             connection.deliverBody(createEmptyBody(false), true);
             lastRequestID = connection.getRequestId();
             setLastResponseEmpty(true);

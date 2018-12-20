@@ -147,7 +147,7 @@ public class HttpSessionManager {
     /**
      * Creates an HTTP binding session which will allow a user to exchange packets with Openfire.
      *
-     * @param rootNode the body element that was sent containing the request for a new session.
+     * @param body the body element that was sent containing the request for a new session.
      * @param connection the HTTP connection object which abstracts the individual connections to
      * Openfire over the HTTP binding protocol. The initial session creation response is returned to
      * this connection.
@@ -158,28 +158,13 @@ public class HttpSessionManager {
      * @throws HttpBindException when there is an internal server error related to the creation of
      * the initial session creation response.
      */
-    public HttpSession createSession(Element rootNode, HttpConnection connection)
+    public HttpSession createSession(HttpBindBody body, HttpConnection connection)
         throws UnauthorizedException, HttpBindException, UnknownHostException
     {
         // TODO Check if IP address is allowed to connect to the server
-
-        // Default language is English ("en").
-        String language = rootNode.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI));
-        if (language == null || "".equals(language)) {
-            language = "en";
-        }
-
-        int wait = getIntAttribute(rootNode.attributeValue("wait"), 60);
-        int hold = getIntAttribute(rootNode.attributeValue("hold"), 1);
-        
-        String version = rootNode.attributeValue("ver");
-        if (version == null || "".equals(version)) {
-            version = "1.5";
-        }
-
-        HttpSession session = createSession(connection, Locale.forLanguageTag(language));
-        session.setWait(Math.min(wait, getMaxWait()));
-        session.setHold(hold);
+        HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()));
+        session.setWait(Math.min(body.getWait(), getMaxWait()));
+        session.setHold(body.getHold());
         session.setSecure(connection.isSecure());
         session.setMaxPollingInterval(getPollingInterval());
         session.setMaxRequests(getMaxRequests());
@@ -193,9 +178,8 @@ public class HttpSessionManager {
         }
         session.resetInactivityTimeout();
         
-        String [] versionString = version.split("\\.");
-        session.setMajorVersion(Integer.parseInt(versionString[0]));
-        session.setMinorVersion(Integer.parseInt(versionString[1]));
+        session.setMajorVersion(body.getMajorVersion());
+        session.setMinorVersion(body.getMinorVersion());
 
         connection.setSession(session);
         try {

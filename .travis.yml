@@ -10,6 +10,6 @@ script: mvn clean verify
 install: true
 
 after_success:
-   - curl -LO https://raw.github.com/igniterealtime/ci-tools/master/trigger-travis.sh
+   - curl -LO https://raw.github.com/igniterealtime/ci-tooling/master/trigger-travis.sh
    - chmod +x trigger-travis.sh
    - ./trigger-travis.sh igniterealtime openfire-bookmarks-plugin master $TRAVIS_ACCESS_TOKEN 

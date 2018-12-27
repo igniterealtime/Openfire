@@ -10,6 +10,43 @@ script: mvn clean verify
 install: true
 
 after_success:
-   - curl -LO https://raw.github.com/igniterealtime/ci-tooling/master/trigger-travis.sh
-   - chmod +x trigger-travis.sh
-   - ./trigger-travis.sh igniterealtime openfire-bookmarks-plugin $TRAVIS_ACCESS_TOKEN 
+  - curl -LO https://raw.github.com/igniterealtime/ci-tooling/master/trigger-travis.sh
+  - chmod +x trigger-travis.sh
+  - ./trigger-travis.sh igniterealtime openfire-bookmarks-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-callbackOnOffline-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-candy-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-certificateManager-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-clientControl-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-contentFilter-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-dbaccess-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-emailListener-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-emailOnAway-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-externalservicediscovery-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-fastpath-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-gojara-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-hazelcast-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-httpFileUpload-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-inverse-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-jingleNodes-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-jmxweb-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-justmarried-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-loadStats-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-monitoring-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-motd-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-mucservice-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-nodejs-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-nonSaslAuthentication-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-packetFilter-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-presence-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-registration-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-restAPI-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-search-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-sip-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-stunserver-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-subscription-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-tikitoken-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-userCreation-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-userImportExport-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-userservice-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-userStatus-plugin $TRAVIS_ACCESS_TOKEN
+  - ./trigger-travis.sh igniterealtime openfire-xmldebugger-plugin $TRAVIS_ACCESS_TOKEN

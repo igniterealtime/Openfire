@@ -330,9 +330,9 @@
                                 <goal>single</goal>
                             </goals>
                             <configuration>
-                                <appendAssemblyId>false</appendAssemblyId>
+                                <appendAssemblyId>true</appendAssemblyId>
                                 <finalName>${plugin.name}</finalName>
-                                <attach>false</attach>
+                                <attach>true</attach>
                                 <!-- This is where we use our shared assembly descriptor -->
                                 <descriptorRefs>
                                     <descriptorRef>openfire-plugin-assembly</descriptorRef>
@@ -393,30 +393,32 @@
         </dependency>
     </dependencies>
 
-    <repositories>
+    <distributionManagement>
+        <!-- Repository in which we deploy this project, when desired. -->
         <repository>
             <id>igniterealtime</id>
-            <name>Ignite Realtime Repository (Snapshots)</name>
-            <url>http://igniterealtime.org/repo/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <name>Ignite Realtime Repository</name>
+            <url>https://www.igniterealtime.org/archiva/repository/maven/</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <!-- Where we obtain dependencies. -->
+        <repository>
+            <id>igniterealtime</id>
+            <name>Ignite Realtime Repository</name>
+            <url>https://igniterealtime.org/archiva/repository/maven/</url>
         </repository>
     </repositories>
+
     <pluginRepositories>
+        <!-- Typically used to retrieve Maven plugins used by this project from. This
+             apparently is also used to obtain the dependencies _used by_ plugins
+             (eg: openfire-plugin-assembly-descriptor) -->
         <pluginRepository>
             <id>igniterealtime</id>
-            <name>Ignite Realtime Repository (Snapshots)</name>
-            <url>http://igniterealtime.org/repo/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <name>Ignite Realtime Repository</name>
+            <url>https://igniterealtime.org/archiva/repository/maven/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>

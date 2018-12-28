@@ -2,6 +2,9 @@ sudo: false
 language: java
 jdk:
 - oraclejdk8
+cache:
+  directories:
+  - $HOME/.m2/repository/
 before_install:
 - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
 - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml

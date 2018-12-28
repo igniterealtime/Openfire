@@ -1,5 +1,0 @@
-<h3>Replicated Broker</h3>
-
-<p>Replicated broker defaults to using 3 containers -- each running a replicated view of the broker using a share-nothing architecture. You can use more than 3 if you like, but use an odd number (5, 7, etc.) so that you can still achieve a majority of brokers even during failure scenarios.</p>
-
-<p>For each cluster of replicated brokers, one broker is always elected Master while the others  become Slaves. If the Master fails, an election will happen among the remaining slaves and a new Master will be elected. On the client side, the failover will be transparent if using <code>failover:</code> transport, fabric <code>discovery</code> transport, or a local gateway to the cluster.</p>

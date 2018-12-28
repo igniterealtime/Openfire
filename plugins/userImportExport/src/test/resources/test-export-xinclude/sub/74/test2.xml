@@ -1,2 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<user xmlns='urn:xmpp:pie:0' name='test2'><query xmlns='jabber:iq:roster' ver='8'><item jid='test1@mlink.xmpp.test' name='test1@mlink.xmpp.test' subscription='both'/><item jid='anno@mlink.xmpp.test' subscription='none'/></query><vCard xmlns='vcard-temp'><FN>test2@mlink.xmpp.test</FN><N><FAMILY>test2@mlink.xmpp.test</FAMILY></N><EMAIL><INTERNET/><WORK/><USERID>test2@mlink.xmpp.test</USERID></EMAIL></vCard></user>

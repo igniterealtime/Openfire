@@ -1,5 +1,0 @@
-<h3>N + 1 Brokers</h3>
-
-<p>N + 1 refers to where you create N logical brokers inside a Fabric Profile, then run N + 1 containers of the Profile.</p>
-
-<p>For example if N is 2, you'd run 3 containers; one container would be the master of broker1, another container the master of broker2 then the other container would be a slave of broker 1 and 2. This way you can share a smaller pool of slaves across more brokers; so you have a small number of hot stand by slaves to save hardware.</p>

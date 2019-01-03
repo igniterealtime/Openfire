@@ -488,6 +488,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1493'>OF-1493</a>] -         Allow admins to retrieve a PEM representation of installed certificates
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1495'>OF-1495</a>] -         Self-signed certificates should include alternative names
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1501'>OF-1501</a>] -         Use &#39;most appropriate&#39; certificate when multiple are available.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1507'>OF-1507</a>] -         Handling of S2S stream errors.
@@ -568,7 +570,6 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 
 
 <h2>4.2.0 -- <span style="font-weight: normal;">Dec 4, 2017</span></h2>
-
 <h2>        Sub-task
 </h2>
 <ul>
@@ -742,8 +743,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 </ul>
 
-<h2>4.1.6 -- <span style="font-weight: normal;">Oct 5, 2017</span></h2>
 
+<h2>4.1.6 -- <span style="font-weight: normal;">Oct 5, 2017</span></h2>
 <h2>        Sub-task
 </h2>
 <ul>
@@ -910,6 +911,7 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 </ul>
 
+
 <h2>4.1.2 -- <span style="font-weight: normal;">Feb 18, 2017</span></h2>
 <h2>        Bug
 </h2>
@@ -981,8 +983,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 </ul>
 
-<h2>4.1.0 -- <span style="font-weight: normal;">Dec 21, 2016</span></h2>
 
+<h2>4.1.0 -- <span style="font-weight: normal;">Dec 21, 2016</span></h2>
 <h2>        Sub-task
 </h2>
 <ul>
@@ -1009,11 +1011,11 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <ul>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-355'>OF-355</a>] -         ldap.authorizeField property is ignored in LdapAuthorizationPolicy
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-462'>OF-462</a>] -         PEP should process IQ-gets that have no &#39;to&#39; attribute.
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-477'>OF-477</a>] -         SASL server in OF creates digest-uri based on xmpp.fqdn but it sends xmpp.domain to the client
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-817'>OF-817</a>] -         ofMucConversationLog only persists body of groupchat stanzas
-</li>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-867'>OF-867</a>] -         Inconsistent use of keys in groupMetaCache
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-927'>OF-927</a>] -         Pressing enter should trigger Continue button on admin password setup page
 </li>
@@ -1075,6 +1077,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1132'>OF-1132</a>] -         Monitoring plugin does not add namespace
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1137'>OF-1137</a>] -         NPE in MUC removeChatRoom
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1146'>OF-1146</a>] -         LocalMUCRoom.addParticipant no longer works
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1156'>OF-1156</a>] -         Cache implementations should have consistent behavior regarding null keys
@@ -1111,6 +1115,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1233'>OF-1233</a>] -         Incoming stream open response always contains IM domain
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1235'>OF-1235</a>] -         user_created event not being fired on user creation due to auth
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1236'>OF-1236</a>] -         SASL code does not generate/handle equals sign properly in all cases
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1239'>OF-1239</a>] -         NPE in MultiUserChatServiceImpl#process(IQ) with null iqHandlers
@@ -1131,6 +1137,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-862'>OF-862</a>] -         Add support for XEP-313: Message Archive Management
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1139'>OF-1139</a>] -         User-to-Provider mapped User and AuthProvider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1153'>OF-1153</a>] -         Allow admin console to bind to a different interface
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1197'>OF-1197</a>] -         Support XEP-0227 Portable Import/Export Format for XMPP-IM Servers
 </li>
@@ -1157,6 +1165,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </h2>
 <ul>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-512'>OF-512</a>] -         Configurable host/IP for file transfers (streamhost / port 7777)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-952'>OF-952</a>] -         Make plugin manager work better on case sensitive file systems
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-955'>OF-955</a>] -         Update HSQLDB to the latest version
 </li>
@@ -1238,8 +1248,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 </ul>
 
-        <h2>4.0.4 -- <span style="font-weight: normal;">Dec 1, 2016</span></h2>
 
+<h2>4.0.4 -- <span style="font-weight: normal;">Dec 1, 2016</span></h2>
 <h2>        Bug
 </h2>
 <ul>
@@ -1286,6 +1296,7 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1221'>OF-1221</a>] -         Add options from default.properties to Client Control plugin
 </li>
 </ul>
+
 
 <h2>4.0.3 -- <span style="font-weight: normal;">Aug 17, 2016</span></h2>
 <h2>        Bug
@@ -1334,32 +1345,35 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 </ul>
 
+
 <h2>4.0.2 -- <span style="font-weight: normal;">Mar 21, 2016</span></h2>
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-829'>OF-829</a>] -         Ghost sessions left on a server when using Pidgin client
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-829'>OF-829</a>] -         Ghost sessions left on a server when using Pidgin client
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-954'>OF-954</a>] -         Openfire clustering fails to correctly sync MUC room occupants
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-954'>OF-954</a>] -         Openfire clustering fails to correctly sync MUC room occupants
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1082'>OF-1082</a>] -         Fix unicode read on BOSH
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1082'>OF-1082</a>] -         Fix unicode read on BOSH
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1083'>OF-1083</a>] -         Cannot join room in a cluster after an availability update
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1083'>OF-1083</a>] -         Cannot join room in a cluster after an availability update
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1087'>OF-1087</a>] -         Monitoring plugin gives invalid responses
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1084'>OF-1084</a>] -         NullPointerException in RoutingTableImpl.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1090'>OF-1090</a>] -         Outcasts should not be allowed to register with room
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1087'>OF-1087</a>] -         Monitoring plugin gives invalid responses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1090'>OF-1090</a>] -         Outcasts should not be allowed to register with room
 </li>
 </ul>
                     
 <h2>        Improvement
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1086'>OF-1086</a>] -         Update bundled JRE to 1.8u74
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1086'>OF-1086</a>] -         Update bundled JRE to 1.8u74
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1089'>OF-1089</a>] -         XEP-0313: send IQ result only after messages
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1089'>OF-1089</a>] -         XEP-0313: send IQ result only after messages
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1107'>OF-1107</a>] -         Add option to not show email in Email on Away plugin
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1107'>OF-1107</a>] -         Add option to not show email in Email on Away plugin
 </li>
 </ul>
 
@@ -1368,520 +1382,542 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1040'>OF-1040</a>] -         Banning users from room does not result in proper exit
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-977'>OF-977</a>] -         WebSocket plugin: &quot;lang&quot; attribute should be &quot;xml:lang&quot;
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1041'>OF-1041</a>] -         Using AD specific attribute breaks OpenLDAP support
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1040'>OF-1040</a>] -         Banning users from room does not result in proper exit
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1042'>OF-1042</a>] -         NPE in stanza handler (after failed TLS?)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1041'>OF-1041</a>] -         Using AD specific attribute breaks OpenLDAP support
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1045'>OF-1045</a>] -         NPE with cluster management if cluster has not been started
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1042'>OF-1042</a>] -         NPE in stanza handler (after failed TLS?)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1046'>OF-1046</a>] -         Error 503 emitted sending update notifications to offline admins that are over offline storage quota
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1045'>OF-1045</a>] -         NPE with cluster management if cluster has not been started
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1051'>OF-1051</a>] -         ConcurrentModificationException in PluginManager
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1046'>OF-1046</a>] -         Error 503 emitted sending update notifications to offline admins that are over offline storage quota
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1053'>OF-1053</a>] -         i18n params fail when text has apostrophe
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1051'>OF-1051</a>] -         ConcurrentModificationException in PluginManager
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1054'>OF-1054</a>] -         IllegalStateException when destroying MUC room prevents unavailable broadcast to be sent
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1053'>OF-1053</a>] -         i18n params fail when text has apostrophe
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1054'>OF-1054</a>] -         IllegalStateException when destroying MUC room prevents unavailable broadcast to be sent
 </li>
 </ul>
-
+                    
 <h2>        Improvement
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1048'>OF-1048</a>] -         Should not store chat state messages
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1048'>OF-1048</a>] -         Should not store chat state messages
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1049'>OF-1049</a>] -         Improve Certificate Store Management
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1049'>OF-1049</a>] -         Improve Certificate Store Management
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1055'>OF-1055</a>] -         Remove exclamation mark from the Search button
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1055'>OF-1055</a>] -         Remove exclamation mark from the Search button
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1057'>OF-1057</a>] -         Upgrade Jetty to latest patch release of its 9.2 branch.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1057'>OF-1057</a>] -         Upgrade Jetty to latest patch release of its 9.2 branch.
 </li>
 </ul>
+
 
 <h2>4.0.0 -- <span style="font-weight: normal;">Jan 11, 2016</span></h2>
 <h2>        Sub-task
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-454'>OF-454</a>] -         Openfire does not send user presence information to all resources of the user
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-454'>OF-454</a>] -         Openfire does not send user presence information to all resources of the user
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-547'>OF-547</a>] -         Create branch of code to test-drive new setup.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-631'>OF-631</a>] -         Implement SCRAM support
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-631'>OF-631</a>] -         Implement SCRAM support
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-834'>OF-834</a>] -         Admin console login.jsp allows redirects to non-local URIs
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-834'>OF-834</a>] -         Admin console login.jsp allows redirects to non-local URIs
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1022'>OF-1022</a>] -         Reflected XSS vulnerability in muc-room-edit-form.jsp params in Admin Console
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-997'>OF-997</a>] -         Admin Console: Frameable Response (potential Clickjacking)
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1022'>OF-1022</a>] -         Reflected XSS vulnerability in muc-room-edit-form.jsp params in Admin Console
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1034'>OF-1034</a>] -         RFC 6121 (8.5.3.2.1) non-compliance: Chat message sent to unavailable resource ID not sent to other available resource IDs
 </li>
 </ul>
-        
+                
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-122'>OF-122</a>] -         Shouldn&#39;t allow subject change, when it is forbidden in room settings
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-122'>OF-122</a>] -         Shouldn&#39;t allow subject change, when it is forbidden in room settings
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-317'>OF-317</a>] -         Subscribe with Response Unsubscribed Causes Roster Push to Responding Client
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-317'>OF-317</a>] -         Subscribe with Response Unsubscribed Causes Roster Push to Responding Client
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-373'>OF-373</a>] -         Ant buildscript should not check for explicit Ant version numbers
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-373'>OF-373</a>] -         Ant buildscript should not check for explicit Ant version numbers
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-484'>OF-484</a>] -         Windows installer getting stuck on Uninstalling the previous version
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-484'>OF-484</a>] -         Windows installer getting stuck on Uninstalling the previous version
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-509'>OF-509</a>] -         Unable to disable weak ciphers
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-509'>OF-509</a>] -         Unable to disable weak ciphers
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-793'>OF-793</a>] -         javax.net.ssl.SSLException: Unsupported record version Unknown-47.115
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-798'>OF-798</a>] -         Embedded RSS/community links need to be updated for new (SSL) locations
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-798'>OF-798</a>] -         Embedded RSS/community links need to be updated for new (SSL) locations
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-821'>OF-821</a>] -         MUC service returns wrong number of occupants and duplicate occupants in service discovery
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-821'>OF-821</a>] -         MUC service returns wrong number of occupants and duplicate occupants in service discovery
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-856'>OF-856</a>] -         Monitoring plugin uses secs attribute relative from beginning message instead of last message
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-856'>OF-856</a>] -         Monitoring plugin uses secs attribute relative from beginning message instead of last message
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-868'>OF-868</a>] -         User name update does not propagate to the affected roster(s)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-868'>OF-868</a>] -         User name update does not propagate to the affected roster(s)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-882'>OF-882</a>] -         Admin Console shows 0:0:0:0:0:0:0:0 instead of All addresses since the Mina update
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-898'>OF-898</a>] -         Timestamp parsing fails when fractions of seconds are supplied.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-898'>OF-898</a>] -         Timestamp parsing fails when fractions of seconds are supplied.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-905'>OF-905</a>] -         Admin console taglib URI does not correspond with usage.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-900'>OF-900</a>] -         PubSubManager:  DELETE FROM ofPubsubItem LEFT JOIN breaks MySQL
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-906'>OF-906</a>] -         SSO does not work with Openfire + Java 8
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-905'>OF-905</a>] -         Admin console taglib URI does not correspond with usage.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-913'>OF-913</a>] -         lib/log4j.xml should be denoted as a config file in the installers
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-906'>OF-906</a>] -         SSO does not work with Openfire + Java 8
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-915'>OF-915</a>] -         Private Storage should return an error if feature is disabled
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-913'>OF-913</a>] -         lib/log4j.xml should be denoted as a config file in the installers
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-918'>OF-918</a>] -         Character encoding issue in BOSH
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-915'>OF-915</a>] -         Private Storage should return an error if feature is disabled
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-919'>OF-919</a>] -         Update jDTS driver to 1.3.1 Release
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-918'>OF-918</a>] -         Character encoding issue in BOSH
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-921'>OF-921</a>] -         MUC Group ACLs are not updated when users join a group
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-919'>OF-919</a>] -         Update jDTS driver to 1.3.1 Release
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-922'>OF-922</a>] -         Major performance hit with MINA 2.0.9 vs 2.0.7
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-921'>OF-921</a>] -         MUC Group ACLs are not updated when users join a group
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-928'>OF-928</a>] -         Error with adding presence to MUC presence stanza
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-922'>OF-922</a>] -         Major performance hit with MINA 2.0.9 vs 2.0.7
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-930'>OF-930</a>] -         Overlay enhancements
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-928'>OF-928</a>] -         Error with adding presence to MUC presence stanza
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-932'>OF-932</a>] -         XEP-0202 Entity Time should respect Daylight Saving Time
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-930'>OF-930</a>] -         Overlay enhancements
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-934'>OF-934</a>] -         Buildscript: preset javac configuration should have all shared properties
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-932'>OF-932</a>] -         XEP-0202 Entity Time should respect Daylight Saving Time
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-936'>OF-936</a>] -         Plugins build should fail fast by default
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-934'>OF-934</a>] -         Buildscript: preset javac configuration should have all shared properties
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-939'>OF-939</a>] -         NPE in ScramSha1SaslServer#getStoredKey
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-936'>OF-936</a>] -         Plugins build should fail fast by default
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-958'>OF-958</a>] -         Setup fails with StackOverflowException
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-939'>OF-939</a>] -         NPE in ScramSha1SaslServer#getStoredKey
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-959'>OF-959</a>] -         Database installation script does not set correct version
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-958'>OF-958</a>] -         Setup fails with StackOverflowException
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-964'>OF-964</a>] -         message body tag getting empty xmlns set sometimes when BOSH client is in MUC room
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-959'>OF-959</a>] -         Database installation script does not set correct version
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-974'>OF-974</a>] -         Copy cache content when updating cache factory strategy
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-964'>OF-964</a>] -         message body tag getting empty xmlns set sometimes when BOSH client is in MUC room
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-976'>OF-976</a>] -         Language is not properly set in HttpSession
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-974'>OF-974</a>] -         Copy cache content when updating cache factory strategy
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-982'>OF-982</a>] -         jabber:iq:last queries without &#39;to&#39; attribute should not return server uptime
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-976'>OF-976</a>] -         Language is not properly set in HttpSession
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-983'>OF-983</a>] -         Deadlock (federation)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-982'>OF-982</a>] -         jabber:iq:last queries without &#39;to&#39; attribute should not return server uptime
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-984'>OF-984</a>] -         Deadlock (MUC / federation?)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-983'>OF-983</a>] -         Deadlock (federation)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-985'>OF-985</a>] -         Missing to attribute in stream open
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-984'>OF-984</a>] -         Deadlock (MUC / federation?)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-986'>OF-986</a>] -         Dialback verify-only connections do not negotiate TLS
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-985'>OF-985</a>] -         Missing to attribute in stream open
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-987'>OF-987</a>] -         MUC Freezes when someone joins from federated domain
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-986'>OF-986</a>] -         Dialback verify-only connections do not negotiate TLS
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-988'>OF-988</a>] -         Sometimes, messages are duplicated in MUC
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-987'>OF-987</a>] -         MUC Freezes when someone joins from federated domain
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-989'>OF-989</a>] -         BOSH packet delivery fails for larger packets with WritePendingException
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-988'>OF-988</a>] -         Sometimes, messages are duplicated in MUC
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-992'>OF-992</a>] -         BOSH fails when disabling/re-enabling the port
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-989'>OF-989</a>] -         BOSH packet delivery fails for larger packets with WritePendingException
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-995'>OF-995</a>] -         Parent Plugin case sensitivity
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-992'>OF-992</a>] -         BOSH fails when disabling/re-enabling the port
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-996'>OF-996</a>] -         NullPointerException on Admin Console /audit-policy.jsp
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-995'>OF-995</a>] -         Parent Plugin case sensitivity
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-998'>OF-998</a>] -         Openfire build should not need internet connectivity
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-996'>OF-996</a>] -         NullPointerException on Admin Console /audit-policy.jsp
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-999'>OF-999</a>] -         BOSH worker threads should be configurable
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-998'>OF-998</a>] -         Openfire build should not need internet connectivity
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1000'>OF-1000</a>] -         Audit file log rotation causes NullPointerException
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-999'>OF-999</a>] -         BOSH worker threads should be configurable
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1002'>OF-1002</a>] -         NPE during connection close with XEP-0198
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1000'>OF-1000</a>] -         Audit file log rotation causes NullPointerException
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1003'>OF-1003</a>] -         Exception during &lt;a/&gt; propcessing in XEP-0198
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1002'>OF-1002</a>] -         NPE during connection close with XEP-0198
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1008'>OF-1008</a>] -         Iteratively failure to deliver message
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1003'>OF-1003</a>] -         Exception during &lt;a/&gt; propcessing in XEP-0198
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1009'>OF-1009</a>] -         [s2s] Federation issue with talkonaut.com
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1008'>OF-1008</a>] -         Iteratively failure to deliver message
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1010'>OF-1010</a>] -         LDAPS fails
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1009'>OF-1009</a>] -         [s2s] Federation issue with talkonaut.com
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1023'>OF-1023</a>] -         Roster cache not being updated for shared group changes
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1010'>OF-1010</a>] -         LDAPS fails
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1025'>OF-1025</a>] -         web-custom.xml fails to load
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1023'>OF-1023</a>] -         Roster cache not being updated for shared group changes
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1028'>OF-1028</a>] -         NoSuchElement Exception in XEP-0198 support
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1025'>OF-1025</a>] -         web-custom.xml fails to load
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1028'>OF-1028</a>] -         NoSuchElement Exception in XEP-0198 support
 </li>
 </ul>
         
-<h2>        Improvement
-</h2>
-<ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-675'>OF-675</a>] -         Add a comment about restarting in Managing Plugins section of documentation
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-844'>OF-844</a>] -         CertificateManager logs useless warning messages
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-892'>OF-892</a>] -         Mutual authentication support
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-925'>OF-925</a>] -         AdHoc SessionData should be extensible
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-931'>OF-931</a>] -         Improve installation guide
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-935'>OF-935</a>] -         During build, parentPlugin should be on classpath
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-940'>OF-940</a>] -         Update bundled postgresql driver to 9.4-1202
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-951'>OF-951</a>] -         Drop support for the Solaris platform
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-953'>OF-953</a>] -         Replace antiquated JSP libraries
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-956'>OF-956</a>] -         Admins should be able to configure cryptographical protocols &amp; cypher suites
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-957'>OF-957</a>] -         AuditManager Module does not load properly
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-969'>OF-969</a>] -         Delete URLUTF8Encoder.java in favor of java.net.URLEncoder.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-970'>OF-970</a>] -         Modernize XMLProperties with Java NIO.2 File API 
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-971'>OF-971</a>] -         Add PropertyListener support to AuditManagerImpl
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-972'>OF-972</a>] -         Remove unused classes
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-973'>OF-973</a>] -         Tests should retrieve resources from the classpath rather than files.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-975'>OF-975</a>] -         JDBCAuthProvider: add support for bcrypt and more
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-981'>OF-981</a>] -         Remove &#39;ant-jive-edition&#39; and &#39;qdox&#39; libraries from build
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-991'>OF-991</a>] -         In Ant buildfile, use properties instead of hardcoded value.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-993'>OF-993</a>] -         Remove thread factory code duplication
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1004'>OF-1004</a>] -         Improve connection configuration in admin console
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1005'>OF-1005</a>] -         Undo module loading driven by a file
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1007'>OF-1007</a>] -         Improve support for whitelisting/blacklisting client IP addresses
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1011'>OF-1011</a>] -         When importing PEM certificates, ignore leading/trailing whitespace
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1029'>OF-1029</a>] -         Overlay should be able to override web.xml
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1033'>OF-1033</a>] -         Orderly shutdown of MUC Service
-</li>
-</ul>
-    
 <h2>        New Feature
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-446'>OF-446</a>] -         Implement XEP-0198: Stream Management
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-446'>OF-446</a>] -         Implement XEP-0198: Stream Management
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-682'>OF-682</a>] -         Add Portuguese translation
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-682'>OF-682</a>] -         Add Portuguese translation
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-923'>OF-923</a>] -         FileTransferManager should generate &#39;complete&#39; event.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-923'>OF-923</a>] -         FileTransferManager should generate &#39;complete&#39; event.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-946'>OF-946</a>] -         Allow for multiple sets of keystores
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-946'>OF-946</a>] -         Allow for multiple sets of keystores
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-947'>OF-947</a>] -         Overlay should support i18n
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-947'>OF-947</a>] -         Overlay should support i18n
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-948'>OF-948</a>] -         Overlay should allow modification of src/resources
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-948'>OF-948</a>] -         Overlay should allow modification of src/resources
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-950'>OF-950</a>] -         Buildscript should be able to clean one plugin
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-950'>OF-950</a>] -         Buildscript should be able to clean one plugin
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-967'>OF-967</a>] -         Add option to use Name as a nickname when adding muc bookmark
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-967'>OF-967</a>] -         Add option to use Name as a nickname when adding muc bookmark
 </li>
 </ul>
     
 <h2>        Story
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-990'>OF-990</a>] -         Remove support for Legacy Date Time (XEP-0090 / 91)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-990'>OF-990</a>] -         Remove support for Legacy Date Time (XEP-0090 / 91)
 </li>
 </ul>
     
 <h2>        Task
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-767'>OF-767</a>] -         Bundle Openfire with Java 8 SE JRE
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-767'>OF-767</a>] -         Bundle Openfire with Java 8 SE JRE
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1001'>OF-1001</a>] -         Drop Clearspace support
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1001'>OF-1001</a>] -         Drop Clearspace support
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-1016'>OF-1016</a>] -         Add explanation to setup about default admin password
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1016'>OF-1016</a>] -         Add explanation to setup about default admin password
 </li>
 </ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-675'>OF-675</a>] -         Add a comment about restarting in Managing Plugins section of documentation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-844'>OF-844</a>] -         CertificateManager logs useless warning messages
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-892'>OF-892</a>] -         Mutual authentication support
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-925'>OF-925</a>] -         AdHoc SessionData should be extensible
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-931'>OF-931</a>] -         Improve installation guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-935'>OF-935</a>] -         During build, parentPlugin should be on classpath
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-940'>OF-940</a>] -         Update bundled postgresql driver to 9.4-1202
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-951'>OF-951</a>] -         Drop support for the Solaris platform
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-953'>OF-953</a>] -         Replace antiquated JSP libraries
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-956'>OF-956</a>] -         Admins should be able to configure cryptographical protocols &amp; cypher suites
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-957'>OF-957</a>] -         AuditManager Module does not load properly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-969'>OF-969</a>] -         Delete URLUTF8Encoder.java in favor of java.net.URLEncoder.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-970'>OF-970</a>] -         Modernize XMLProperties with Java NIO.2 File API 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-971'>OF-971</a>] -         Add PropertyListener support to AuditManagerImpl
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-972'>OF-972</a>] -         Remove unused classes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-973'>OF-973</a>] -         Tests should retrieve resources from the classpath rather than files.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-975'>OF-975</a>] -         JDBCAuthProvider: add support for bcrypt and more
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-981'>OF-981</a>] -         Remove &#39;ant-jive-edition&#39; and &#39;qdox&#39; libraries from build
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-991'>OF-991</a>] -         In Ant buildfile, use properties instead of hardcoded value.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-993'>OF-993</a>] -         Remove thread factory code duplication
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1004'>OF-1004</a>] -         Improve connection configuration in admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1005'>OF-1005</a>] -         Undo module loading driven by a file
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1007'>OF-1007</a>] -         Improve support for whitelisting/blacklisting client IP addresses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1011'>OF-1011</a>] -         When importing PEM certificates, ignore leading/trailing whitespace
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1029'>OF-1029</a>] -         Overlay should be able to override web.xml
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1033'>OF-1033</a>] -         Orderly shutdown of MUC Service
+</li>
+</ul>
+
 
 <h2>3.10.3 -- <span style="font-weight: normal;">Nov 17, 2015</span></h2>
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-332'>OF-332</a>] -         ldap.connect.timeout not working with SSL connection
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-332'>OF-332</a>] -         ldap.connect.timeout not working with SSL connection
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-477'>OF-477</a>] -         SASL server in OF creates digest-uri based on xmpp.fqdn but it sends xmpp.domain to the client
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-887'>OF-887</a>] -         ldap.readTimeout not used when LDAP getContext() is called for queries
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-887'>OF-887</a>] -         ldap.readTimeout not used when LDAP getContext() is called for queries
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-902'>OF-902</a>] -         Admin Console is not using HttpOnly attribute in cookies
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-903'>OF-903</a>] -         ISE attempting to write data to a closed/closing session
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-903'>OF-903</a>] -         ISE attempting to write data to a closed/closing session
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-918'>OF-918</a>] -         Character encoding issue in BOSH
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-918'>OF-918</a>] -         Character encoding issue in BOSH
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-926'>OF-926</a>] -         Clients can&#39;t authenticate using LDAP SSL
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-926'>OF-926</a>] -         Clients can&#39;t authenticate using LDAP SSL
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-938'>OF-938</a>] -         BOSH packet namespace issue
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-938'>OF-938</a>] -         BOSH packet namespace issue
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-949'>OF-949</a>] -         Offline message delivery failures
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-949'>OF-949</a>] -         Offline message delivery failures
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-954'>OF-954</a>] -         Openfire clustering fails to correctly sync MUC room occupants
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-954'>OF-954</a>] -         Openfire clustering fails to correctly sync MUC room occupants
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-966'>OF-966</a>] -         failure tag not closed for TLS Negotiation Failure
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-966'>OF-966</a>] -         failure tag not closed for TLS Negotiation Failure
 </li>
 </ul>
-            
+        
 <h2>        New Feature
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-933'>OF-933</a>] -         Update websocket support per RFC 7395
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-933'>OF-933</a>] -         Update websocket support per RFC 7395
 </li>
 </ul>
 
 <h2>3.10.2 -- <span style="font-weight: normal;">Jun 22, 2015</span></h2>
-<h2>Bug</h2>
+<h2>        Bug
+</h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-922'>OF-992</a>] -         Downgrade Apache MINA to version 2.0.7 to fix performance and 100% CPU issue
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-181'>OF-181</a>] -         NPE when admin deletes logged in owner from members-only room
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-924'>OF-924</a>] -         Enable LDAP SSL Connection Pooling
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-917'>OF-917</a>] -         Openfire is not closing &quot;Half-closed&quot; sessions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-920'>OF-920</a>] -         100% CPU Usage with thread attempting to read from a should be closed session
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-922'>OF-922</a>] -         Major performance hit with MINA 2.0.9 vs 2.0.7
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-924'>OF-924</a>] -         Enable LDAP SSL Connection Pooling
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-943'>OF-943</a>] -         Hazelcast cluster task(s) timeout prematurely
 </li>
 </ul>
 
+
 <h2>3.10.1 -- <span style="font-weight: normal;">Jun 16, 2015</span></h2>
-<h2>Bug</h2>
+<h2>        Bug
+</h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-820'>OF-820</a>] -         Presence probe for local user allowed when probee not subscribed
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-883'>OF-883</a>] -         High CPU usage and hangup after a few days of running
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-883'>OF-883</a>] -         High CPU usage and hangup after a few days of running
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-889'>OF-889</a>] -         NPE on Admin Console (client sessions listing)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-889'>OF-889</a>] -         NPE on Admin Console (client sessions listing)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-907'>OF-907</a>] -         SSLv2 Hello is rejected; prevents some clients connecting
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-904'>OF-904</a>] -         LDAP authentication broken in 3.9.2 onwards
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-909'>OF-909</a>] -         BOSH response should return ack attribute
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-907'>OF-907</a>] -         SSLv2 Hello is rejected; prevents some clients connecting
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-910'>OF-910</a>] -         MUC de-synchronization issues
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-909'>OF-909</a>] -         BOSH response should return ack attribute
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-916'>OF-916</a>] -         Deadlock with MINA sslFilter
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-910'>OF-910</a>] -         MUC de-synchronization issues
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-916'>OF-916</a>] -         Deadlock with MINA sslFilter
 </li>
 </ul>
 
 <h2>3.10.0 -- <span style="font-weight: normal;">April 20, 2015</span></h2>
-
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-560'>OF-560</a>] -         Restore or drop support for Pack200 compression
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-629'>OF-629</a>] -         Remove XMPP Sessions
+</li>
+</ul>
+                
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-116'>OF-116</a>] -         Add a text explaining the path used for http-binding
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-116'>OF-116</a>] -         Add a text explaining the path used for http-binding
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-232'>OF-232</a>] -         On startup, conference room list on admin console sometimes blank
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-405'>OF-405</a>] -         Openfire fails to verify chained certificates
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-405'>OF-405</a>] -         Openfire fails to verify chained certificates
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-444'>OF-444</a>] -         Jingle Nodes plugin should use lowercase in i18n file&#39;s name
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-429'>OF-429</a>] -         Openfire is turning off debugging mode on startup
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-460'>OF-460</a>] -         Debug log is not saving its state between restarts
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-444'>OF-444</a>] -         Jingle Nodes plugin should use lowercase in i18n file&#39;s name
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-474'>OF-474</a>] -         OpenFire still provides entry forms for already-registered room users
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-460'>OF-460</a>] -         Debug log is not saving its state between restarts
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-560'>OF-560</a>] -         Restore or drop support for Pack200 compression
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-474'>OF-474</a>] -         OpenFire still provides entry forms for already-registered room users
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-565'>OF-565</a>] -         ConnectionHandler has parsing problems due to use of hashcode under heavy load.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-565'>OF-565</a>] -         ConnectionHandler has parsing problems due to use of hashcode under heavy load.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-629'>OF-629</a>] -         Remove XMPP Sessions
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-670'>OF-670</a>] -          MUC user count not kept in sync across cluster nodes
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-670'>OF-670</a>] -          MUC user count not kept in sync across cluster nodes
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-736'>OF-736</a>] -         Openfire should return &lt;incorrect-encoding/&gt; SASL failure, when not using base64 encoding
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-736'>OF-736</a>] -         Openfire should return &lt;incorrect-encoding/&gt; SASL failure, when not using base64 encoding
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-754'>OF-754</a>] -         Lock out user option works incorrectly in some cases
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-754'>OF-754</a>] -         Lock out user option works incorrectly in some cases
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-778'>OF-778</a>] -         Setup LDAP broken during initial openfire configuration
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-778'>OF-778</a>] -         Setup LDAP broken during initial openfire configuration
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-786'>OF-786</a>] -         Muc - grant membership: nickname is not stored
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-786'>OF-786</a>] -         Muc - grant membership: nickname is not stored
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-794'>OF-794</a>] -         Client sessions for failed cluster nodes are not being cleaned up properly
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-794'>OF-794</a>] -         Client sessions for failed cluster nodes are not being cleaned up properly
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-795'>OF-795</a>] -         Unable to disable Message Carbons after they have been enabled by the client
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-795'>OF-795</a>] -         Unable to disable Message Carbons after they have been enabled by the client
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-796'>OF-796</a>] -         Plugin version check should be numeric rather than textual
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-796'>OF-796</a>] -         Plugin version check should be numeric rather than textual
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-799'>OF-799</a>] -         Changing server 2 server idle settings has broken UI
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-799'>OF-799</a>] -         Changing server 2 server idle settings has broken UI
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-800'>OF-800</a>] -         Encryption setting wrong when adding a property via System Properties page
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-800'>OF-800</a>] -         Encryption setting wrong when adding a property via System Properties page
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-802'>OF-802</a>] -         MUC Invites result in 404
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-802'>OF-802</a>] -         MUC Invites result in 404
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-803'>OF-803</a>] -         Message Carbons may throw org.dom4j.IllegalAddException, resulting in disconnection
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-803'>OF-803</a>] -         Message Carbons may throw org.dom4j.IllegalAddException, resulting in disconnection
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-804'>OF-804</a>] -         Joining a locked MUC room should return &lt;item-not-found/&gt; instead of &lt;recipient-unavailable/&gt;
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-804'>OF-804</a>] -         Joining a locked MUC room should return &lt;item-not-found/&gt; instead of &lt;recipient-unavailable/&gt;
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-805'>OF-805</a>] -         [MUC] OF does not return all affiliated users when requesting multiple affiliations
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-805'>OF-805</a>] -         [MUC] OF does not return all affiliated users when requesting multiple affiliations
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-806'>OF-806</a>] -         Flash client connection closing with invalid_namespace error
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-806'>OF-806</a>] -         Flash client connection closing with invalid_namespace error
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-807'>OF-807</a>] -         S2S whitelist form saving domains with &quot;-&quot; without it
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-807'>OF-807</a>] -         S2S whitelist form saving domains with &quot;-&quot; without it
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-811'>OF-811</a>] -         Remove deprecated &quot;xml-not-well-formed&quot; error in favor of &quot;not-well-formed&quot;
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-811'>OF-811</a>] -         Remove deprecated &quot;xml-not-well-formed&quot; error in favor of &quot;not-well-formed&quot;
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-812'>OF-812</a>] -         Monitor plugin fails to handle start date properly
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-812'>OF-812</a>] -         Monitor plugin fails to handle start date properly
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-813'>OF-813</a>] -         Memory leak
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-813'>OF-813</a>] -         Memory leak
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-818'>OF-818</a>] -         Message routing to bare JID can route to negative priority resources
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-818'>OF-818</a>] -         Message routing to bare JID can route to negative priority resources
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-819'>OF-819</a>] -         IQs  (e.g. XMPP Pings) of type error get falsely routed to IQ.createResult() which results in an Exception and connection termination
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-819'>OF-819</a>] -         IQs  (e.g. XMPP Pings) of type error get falsely routed to IQ.createResult() which results in an Exception and connection termination
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-822'>OF-822</a>] -         If a non-occupant sends a request to an occupant, a MUC service MUST return a &lt;bad-request/&gt; error.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-822'>OF-822</a>] -         If a non-occupant sends a request to an occupant, a MUC service MUST return a &lt;bad-request/&gt; error.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-823'>OF-823</a>] -         Numeric overflow in MUCPersistenceManager when loading history older than 24 days.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-823'>OF-823</a>] -         Numeric overflow in MUCPersistenceManager when loading history older than 24 days.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-825'>OF-825</a>] -         Failing to connect to database after reboot if &amp; is used in a password
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-830'>OF-830</a>] -         LDAP shared groups disappear after some time
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-830'>OF-830</a>] -         LDAP shared groups disappear after some time
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-832'>OF-832</a>] -         Monitoring plugin fixes
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-832'>OF-832</a>] -         Monitoring plugin fixes
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-837'>OF-837</a>] -         PubSub should return non-persistent items (last published item)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-837'>OF-837</a>] -         PubSub should return non-persistent items (last published item)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-839'>OF-839</a>] -         Forwarded extension should not overwrite extension namespaces of the forwarded message.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-839'>OF-839</a>] -         Forwarded extension should not overwrite extension namespaces of the forwarded message.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-840'>OF-840</a>] -         BOSH &lt;stream:features&gt; does not include &lt;register/&gt;
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-840'>OF-840</a>] -         BOSH &lt;stream:features&gt; does not include &lt;register/&gt;
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-845'>OF-845</a>] -         XSS vulnerability in Monitoring Service pages in Admin Console
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-849'>OF-849</a>] -         Error decoding subjectAltName DERTaggedObject cannot be cast to ASN1Sequence
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-849'>OF-849</a>] -         Error decoding subjectAltName DERTaggedObject cannot be cast to ASN1Sequence
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-853'>OF-853</a>] -         XEP-0077 Registration must return &lt;not-acceptable/&gt; if username or password are unspecified.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-853'>OF-853</a>] -         XEP-0077 Registration must return &lt;not-acceptable/&gt; if username or password are unspecified.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-855'>OF-855</a>] -         Openfire looses messages when multiple senders send messages to the same receiver that looses connection
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-855'>OF-855</a>] -         Openfire looses messages when multiple senders send messages to the same receiver that looses connection
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-857'>OF-857</a>] -         c2s stop responding, new connections hang 
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-857'>OF-857</a>] -         c2s stop responding, new connections hang 
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-858'>OF-858</a>] -         PEP Service does not support auto-create feature
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-859'>OF-859</a>] -         Remove static service id reference in Node.class
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-859'>OF-859</a>] -         Remove static service id reference in Node.class
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-860'>OF-860</a>] -         No MUC status code 110 (self-presence) after joining a room with more than one user
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-860'>OF-860</a>] -         No MUC status code 110 (self-presence) after joining a room with more than one user
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-861'>OF-861</a>] -         Disable SSLv3 by default as per POODLE vulnerability
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-861'>OF-861</a>] -         Disable SSLv3 by default as per POODLE vulnerability
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-863'>OF-863</a>] -         Multiple NPEs encountered when running under high load/latency in cluster mode (via hazelcast plugin)
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-863'>OF-863</a>] -         Multiple NPEs encountered when running under high load/latency in cluster mode (via hazelcast plugin)
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-864'>OF-864</a>] -         Cleanup routes from defunct cluster member servers
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-864'>OF-864</a>] -         Cleanup routes from defunct cluster member servers
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-866'>OF-866</a>] -         Unexpected &quot;session not found&quot; errors under load
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-866'>OF-866</a>] -         Unexpected &quot;session not found&quot; errors under load
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-870'>OF-870</a>] -         stanza with multiple &quot;to&quot; attributes generated after restart
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-875'>OF-875</a>] -         Roster requests to bare JID of the user are not responded
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-874'>OF-874</a>] -         disco#items request SHOULD return connected or available resources
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-876'>OF-876</a>] -         IQRosterHandler does not respect error cases in RFC 6121 § 2.3.3.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-875'>OF-875</a>] -         Roster requests to bare JID of the user are not responded
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-877'>OF-877</a>] -         BOSH connector does not properly restart after a configuration change
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-876'>OF-876</a>] -         IQRosterHandler does not respect error cases in RFC 6121 § 2.3.3.
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-878'>OF-878</a>] -         NPE in MINAStatCollector
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-877'>OF-877</a>] -         BOSH connector does not properly restart after a configuration change
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-884'>OF-884</a>] -         Auditor uses wrong hour for file rotation
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-878'>OF-878</a>] -         NPE in MINAStatCollector
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-885'>OF-885</a>] -         Use non-blocking, async API for BOSH servlet
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-886'>OF-886</a>] -         Openfire fails to parse CDATA when it ends with sequence ]]]&gt;
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-884'>OF-884</a>] -         Auditor uses wrong hour for file rotation
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-888'>OF-888</a>] -         s2s locks up with gmail
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-885'>OF-885</a>] -         Use non-blocking, async API for BOSH servlet
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-894'>OF-894</a>] -         Openfire tries to close a closing session over and over.
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-886'>OF-886</a>] -         Openfire fails to parse CDATA when it ends with sequence ]]]&gt;
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-895'>OF-895</a>] -         Update postgresql driver to support PostgreSQL 9.4
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-888'>OF-888</a>] -         s2s locks up with gmail
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-896'>OF-896</a>] -         Default client compression inconsistency
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-890'>OF-890</a>] -         BOSH client connections sometimes failing
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-894'>OF-894</a>] -         Openfire tries to close a closing session over and over.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-895'>OF-895</a>] -         Update postgresql driver to support PostgreSQL 9.4
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-896'>OF-896</a>] -         Default client compression inconsistency
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-897'>OF-897</a>] -         GZipFilter fails on Async BOSH servlet
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-897'>OF-897</a>] -         GZipFilter fails on Async BOSH servlet
 </li>
 </ul>
         
-<h2>        Improvement
-</h2>
-<ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-189'>OF-189</a>] -         do not use com.sun.* classes
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-593'>OF-593</a>] -         LocaleUtils.java_dots_ to_underscores_i18n _bundles
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-797'>OF-797</a>] -         Move ant-tasks in subdirectory (and delete ant.jar)
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-801'>OF-801</a>] -         Extend ant build script to support multi-platform binaries that do not have a file extension
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-828'>OF-828</a>] -         Add the MUC service plugin to Openfire plugins
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-835'>OF-835</a>] -         Prevent fast clients flooding Openfire causing OutOfMemoryError 
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-838'>OF-838</a>] -         Allow for custom lib and conf file placement
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-841'>OF-841</a>] -         Add a note about UAC to the Installation Guide
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-842'>OF-842</a>] -         Additional properties in User Properties view
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-847'>OF-847</a>] -         Upgrade bouncycastle from 1.50 to 1.51
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-850'>OF-850</a>] -         Improve initialization state for JiveGlobals
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-869'>OF-869</a>] -         Update Jetty to 9.2.x version
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-893'>OF-893</a>] -         Mutual Authentication Broken for BOSH
-</li>
-</ul>
-    
 <h2>        New Feature
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-69'>OF-69</a>] -         Add &quot;Groups user belongs to&quot; column to the User Summary page
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-69'>OF-69</a>] -         Add &quot;Groups user belongs to&quot; column to the User Summary page
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-179'>OF-179</a>] -         Allow MUC permissions to be set using groups
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-179'>OF-179</a>] -         Allow MUC permissions to be set using groups
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-250'>OF-250</a>] -         Allow to configure the groups of a user from the user profile
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-250'>OF-250</a>] -         Allow to configure the groups of a user from the user profile
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-324'>OF-324</a>] -         Offline Email Notification
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-324'>OF-324</a>] -         Offline Email Notification
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-843'>OF-843</a>] -         Upgrade clustering components for new Session API method
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-843'>OF-843</a>] -         Upgrade clustering components for new Session API method
 </li>
 </ul>
         
 <h2>        Task
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-421'>OF-421</a>] -         Update MINA library to latest version
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-421'>OF-421</a>] -         Update MINA library to latest version
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-466'>OF-466</a>] -         Drop Java 5 support
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-466'>OF-466</a>] -         Drop Java 5 support
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-709'>OF-709</a>] -         Update Jetty from 7.4 to 9.1
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-709'>OF-709</a>] -         Update Jetty from 7.4 to 9.1
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-831'>OF-831</a>] -         A typo on Database Settings page during setup
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-831'>OF-831</a>] -         A typo on Database Settings page during setup
 </li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-901'>OF-901</a>] -         Update bundled JRE to 1.7.0_76
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-901'>OF-901</a>] -         Update bundled JRE to 1.7.0_76
 </li>
 </ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-189'>OF-189</a>] -         do not use com.sun.* classes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-261'>OF-261</a>] -         add gzip filter servlet to admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-593'>OF-593</a>] -         LocaleUtils.java_dots_ to_underscores_i18n _bundles
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-797'>OF-797</a>] -         Move ant-tasks in subdirectory (and delete ant.jar)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-801'>OF-801</a>] -         Extend ant build script to support multi-platform binaries that do not have a file extension
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-828'>OF-828</a>] -         Add the MUC service plugin to Openfire plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-835'>OF-835</a>] -         Prevent fast clients flooding Openfire causing OutOfMemoryError 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-838'>OF-838</a>] -         Allow for custom lib and conf file placement
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-841'>OF-841</a>] -         Add a note about UAC to the Installation Guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-842'>OF-842</a>] -         Additional properties in User Properties view
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-847'>OF-847</a>] -         Upgrade bouncycastle from 1.50 to 1.51
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-850'>OF-850</a>] -         Improve initialization state for JiveGlobals
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-869'>OF-869</a>] -         Update Jetty to 9.2.x version
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-893'>OF-893</a>] -         Mutual Authentication Broken for BOSH
+</li>
+</ul>
+
 
 <h2>3.9.3 -- <span style="font-weight: normal;">May 6, 2014</span></h2>
 

@@ -10,7 +10,7 @@ before_install:
 - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
 before_script:
 - gem install travis
-script: mvn verify
+script: mvn verify -P ci
 install: true
 deploy:
   provider: script

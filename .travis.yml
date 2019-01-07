@@ -14,7 +14,7 @@ script: mvn verify -P ci
 install: true
 deploy:
   provider: script
-  script: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+  script: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml  -P ci
   skip_cleanup: true
   on:
     all_branches: true

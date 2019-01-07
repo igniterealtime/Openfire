@@ -101,6 +101,13 @@
                 <exclude>**/*.properties</exclude>
             </excludes>
         </fileSet>
+
+        <!-- Include any resources folder -->
+        <fileSet>
+            <directory>src/resources</directory>
+            <outputDirectory>classes</outputDirectory>
+        </fileSet>
+
     </fileSets>
 
     <!-- Bundle the dependencies of this plugin -->

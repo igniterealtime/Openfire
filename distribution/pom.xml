@@ -42,6 +42,33 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>org.igniterealtime.openfire.plugins</groupId>
+                            <artifactId>search</artifactId>
+                            <type>jar</type>
+                            <classifier>openfire-plugin-assembly</classifier>
+                            <overWrite>true</overWrite>
+                            <outputDirectory>${project.build.directory}${file.separator}distribution-base${file.separator}plugins</outputDirectory>
+                            <destFileName>search.jar</destFileName>
+                        </artifactItem>
+                    </artifactItems>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -90,14 +117,22 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>xmppserver</artifactId>
         </dependency>
+        <!--
+            The following are provided dependencies. This means that they are not included by default in the libs/ folder
+        -->
+        <!-- starter is a dependency, but has to be renamed so is explicitly copied -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>starter</artifactId>
             <version>${project.version}</version>
-            <!--
-                Make starter a dependency so it gets compiled, but make it provided so it's not included by default
-                in the libs - it's explicitly included as it gets renamed
-            -->
+            <scope>provided</scope>
+        </dependency>
+        <!-- search is a dependency, but has to be renamed and placed in the plugins folder so is explicitly copied -->
+        <dependency>
+            <groupId>org.igniterealtime.openfire.plugins</groupId>
+            <artifactId>search</artifactId>
+            <version>1.7.1</version>
+            <classifier>openfire-plugin-assembly</classifier>
             <scope>provided</scope>
         </dependency>
     </dependencies>

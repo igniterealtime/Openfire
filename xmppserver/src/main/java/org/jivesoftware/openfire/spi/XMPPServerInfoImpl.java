@@ -38,7 +38,7 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     private final Date startDate;
 
-    public static final Version VERSION = new Version(4, 3, 0, Version.ReleaseStatus.Beta, -1 );
+    public static final Version VERSION = new Version(4, 3, 0, Version.ReleaseStatus.Release, -1 );
 
     /**
      * Simple constructor

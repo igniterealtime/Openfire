@@ -162,7 +162,7 @@ hr {
     
     <div id="pageBody">
 
-<h2>4.3.0 beta -- <span style="font-weight: normal;">Nov 30, 2018</span></h2>
+<h2>4.3.0 -- <span style="font-weight: normal;">Jan 11, 2019</span></h2>
 
 <p>With this release, the Openfire property <code>xmpp.pubsub.create.anyone</code> was updated to properly reflect its name.  Setting it
 to <code>true</code> now means that anyone can create PubSub nodes.</p>
@@ -174,11 +174,23 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-559'>OF-559</a>] -         Restore or drop support for &quot;srcinc&quot; flag of buildscripts
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1248'>OF-1248</a>] -         Null Cache Store in PEPServiceManager
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1249'>OF-1249</a>] -         Null Key Access in EntityCapabilitiesManager
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1650'>OF-1650</a>] -         Maven problems
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1660'>OF-1660</a>] -         Need maven based javadoc build artifact
+</li>
 </ul>
                 
 <h2>        Bug
 </h2>
 <ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1052'>OF-1052</a>] -         PluginManager shouldn&#39;t attempt to load a plugin forever
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1160'>OF-1160</a>] -         Update Apache commons-httpclient.jar 
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1200'>OF-1200</a>] -         Monitoring / archiving plugin does not retrieve messages that are still in cache / yet to be written to database
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1296'>OF-1296</a>] -         GroupManager.getSharedGroups returning old values
@@ -285,11 +297,15 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1639'>OF-1639</a>] -         Admin console erroneously reports errors over min plugin versions
 </li>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-1640'>OF-1640</a>] -         NPE in EntityCapabilitiesManager
-</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1641'>OF-1641</a>] -         Admin console fails to complete setup in non-English locales
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1642'>OF-1642</a>] -         PrivateStorage can fail to persist items
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1645'>OF-1645</a>] -         Windows service is not using the right path to log4j2.xml
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1648'>OF-1648</a>] -         Upgrading from 4.2.3 to 4.3.0-beta may not migrate properties to ofPubSub
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1661'>OF-1661</a>] -         Stream Management Error for failed resume not consistent
 </li>
 </ul>
         
@@ -315,10 +331,6 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <h2>        Task
 </h2>
 <ul>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-546'>OF-546</a>] -         Migrate Openfire build from Ant to Maven
-</li>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-1323'>OF-1323</a>] -         Minor performance improvement
-</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1421'>OF-1421</a>] -         Drop Java 7 Support
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1523'>OF-1523</a>] -         Remove &#39;Jive Software&#39; from splash image
@@ -343,8 +355,6 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1561'>OF-1561</a>] -         Update Apache ANT to 1.10.3
 </li>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-1570'>OF-1570</a>] -         Update the Debugger plugin to use the SLF4J-&gt;Log 4J2 bridge
-</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1597'>OF-1597</a>] -         inVerse plugin: update to 4.0.0
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1623'>OF-1623</a>] -         Update dependencies
@@ -358,7 +368,11 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <ul>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-852'>OF-852</a>] -         Include EntityCapabilities in Stream Feature
 </li>
-<li>[<a href='https://issues.igniterealtime.org/browse/OF-1064'>OF-1064</a>] -         Update Bouncy Castle to 1.59
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1064'>OF-1064</a>] -         Update Bouncy Castle to 1.60
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1299'>OF-1299</a>] -         Debugger plugin should not print encrypted or compressed data.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1300'>OF-1300</a>] -         Debugger plugin should display remote address.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1404'>OF-1404</a>] -         Migrate to use Microsoft JDBC Driver
 </li>
@@ -437,6 +451,7 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1636'>OF-1636</a>] -         inVerse plugin: add fullpage css
 </li>
 </ul>
+
 
 <h2>4.2.3 -- <span style="font-weight: normal;">Mar 23, 2018</span></h2>
 <h2>        Bug

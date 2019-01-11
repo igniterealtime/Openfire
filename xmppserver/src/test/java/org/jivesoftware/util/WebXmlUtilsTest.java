@@ -174,7 +174,7 @@ public class WebXmlUtilsTest
         // Verify result.
         assertNotNull( result );
         assertEquals( 1, result.size() );
-        assertEquals( "login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp", result.get("excludes") );
+        assertEquals( "login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp,loginToken.jsp", result.get("excludes") );
     }
 
     @Test

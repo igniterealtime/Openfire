@@ -60,6 +60,10 @@
         response.sendRedirect("setup/index.jsp");
         return;
     }
+
+    if (AuthFactory.isOneTimeAccessTokenEnabled()) {
+        response.sendRedirect("/loginToken.jsp");
+    }
 %>
 
 <% // get parameters
@@ -145,7 +149,7 @@
             LoginLimitManager.getInstance().recordFailedAttempt(username, request.getRemoteAddr());
             // Provide a special message if the user provided something containing @
             if (username.contains("@")){
-                errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.lookslikeemail"));            	
+                errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.lookslikeemail"));
             } else {
                 errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.unauthorized"));
             }
@@ -202,7 +206,7 @@
 <div align="center">
     <!-- BEGIN login box -->
     <div id="jive-loginBox">
-        
+
         <div align="center" id="jive-loginTable">
 
             <span id="jive-login-header" style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0 10px 205px;">

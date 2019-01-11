@@ -14,6 +14,7 @@
         <pattern>/setup/setup-ldap-group_test.jsp*</pattern>
         <pattern>/setup/setup-admin-settings_test.jsp*</pattern>
         <pattern>/login.jsp*</pattern>
+        <pattern>/loginToken.jsp*</pattern>
         <pattern>/plugin-icon.jsp*</pattern>
         <pattern>/js/jscalendar/i18n.jsp*</pattern>
     </excludes>

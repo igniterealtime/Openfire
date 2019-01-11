@@ -312,4 +312,25 @@ public class AuthFactory {
     public static String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
         return authProvider.getStoredKey(username);
     }
+
+    public static final String ONE_TIME_PROPERTY = "oneTimeAccessToken";
+    public static final String ONE_TIME_USERNAME_PROPERTY = ONE_TIME_PROPERTY + ".username";
+    public static final String ONE_TIME_TOKEN_PROPERTY = ONE_TIME_PROPERTY + ".token";
+
+    public static boolean isOneTimeAccessTokenEnabled() {
+        return org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_USERNAME_PROPERTY))
+            && org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_TOKEN_PROPERTY));
+    }
+
+    public static AuthToken checkOneTimeAccessToken(String userToken) throws UnauthorizedException {
+        String accessToken = JiveGlobals.getXMLProperty(ONE_TIME_TOKEN_PROPERTY);
+        if (!accessToken.equals(userToken)) {
+            throw new UnauthorizedException();
+        }
+        String username = JiveGlobals.getXMLProperty(ONE_TIME_USERNAME_PROPERTY);
+        JiveGlobals.deleteXMLProperty(ONE_TIME_USERNAME_PROPERTY);
+        JiveGlobals.deleteXMLProperty(ONE_TIME_TOKEN_PROPERTY);
+        JiveGlobals.deleteXMLProperty(ONE_TIME_PROPERTY);
+        return AuthToken.generateUserToken(username);
+    }
 }

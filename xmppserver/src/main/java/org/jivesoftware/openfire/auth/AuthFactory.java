@@ -314,23 +314,19 @@ public class AuthFactory {
     }
 
     public static final String ONE_TIME_PROPERTY = "oneTimeAccessToken";
-    public static final String ONE_TIME_USERNAME_PROPERTY = ONE_TIME_PROPERTY + ".username";
-    public static final String ONE_TIME_TOKEN_PROPERTY = ONE_TIME_PROPERTY + ".token";
 
     public static boolean isOneTimeAccessTokenEnabled() {
-        return org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_USERNAME_PROPERTY))
-            && org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_TOKEN_PROPERTY));
+        return org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_PROPERTY));
     }
 
     public static AuthToken checkOneTimeAccessToken(String userToken) throws UnauthorizedException {
-        String accessToken = JiveGlobals.getXMLProperty(ONE_TIME_TOKEN_PROPERTY);
-        if (!accessToken.equals(userToken)) {
+        String accessToken = JiveGlobals.getXMLProperty(ONE_TIME_PROPERTY);
+        if (isOneTimeAccessTokenEnabled() && accessToken.equals(userToken)) {
+            JiveGlobals.setXMLProperty(ONE_TIME_PROPERTY, "");
+            Log.info("Login with the one time access token.");
+            return new OneTimeAuthToken();
+        } else {
             throw new UnauthorizedException();
         }
-        String username = JiveGlobals.getXMLProperty(ONE_TIME_USERNAME_PROPERTY);
-        JiveGlobals.deleteXMLProperty(ONE_TIME_USERNAME_PROPERTY);
-        JiveGlobals.deleteXMLProperty(ONE_TIME_TOKEN_PROPERTY);
-        JiveGlobals.deleteXMLProperty(ONE_TIME_PROPERTY);
-        return AuthToken.generateUserToken(username);
     }
 }

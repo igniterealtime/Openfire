@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.PresenceManager;
@@ -32,6 +33,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.auth.OneTimeAuthToken;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
@@ -162,6 +164,9 @@ public class WebManager extends WebBean {
             {
                 Log.debug( "Unable to get user: no auth token on session." );
                 return null;
+            }
+            if (authToken instanceof OneTimeAuthToken) {
+                return new User(authToken.getUsername(), "one time user", null, new Date(), new Date());
             }
             final String username = authToken.getUsername();
             if (username == null || username.isEmpty())

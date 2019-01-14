@@ -54,6 +54,15 @@ public class AuthToken {
     }
 
     /**
+     * Constructs a new OneTimeAuthToken that represents an one time recovery user.
+     *
+     * @param token the one time token.
+     */
+    public static AuthToken generateOneTimeToken(String token) {
+        return new OneTimeAuthToken(token);
+    }
+
+    /**
      * Constucts a new AuthToken with the specified username.
      * The username can be either a simple username or a full JID.
      *
@@ -123,5 +132,17 @@ public class AuthToken {
      */
     public boolean isAnonymous() {
         return username == null;
+    }
+
+    /**
+     * A token that proves that a user uses an one time access token.
+     *
+     * @author ma1uta
+     */
+    public static class OneTimeAuthToken extends AuthToken {
+
+        public OneTimeAuthToken(String token) {
+            super(token);
+        }
     }
 }

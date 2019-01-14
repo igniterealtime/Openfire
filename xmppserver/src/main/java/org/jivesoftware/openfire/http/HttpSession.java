@@ -664,7 +664,7 @@ public class HttpSession extends LocalClientSession {
                 Log.debug("complete event " + asyncEvent);
                 connectionQueue.remove(connection);
                 lastActivity = System.currentTimeMillis();
-                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection );
+                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
             @Override
@@ -693,7 +693,7 @@ public class HttpSession extends LocalClientSession {
                 Log.debug("error event " + asyncEvent);
                 Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
                 connectionQueue.remove(connection);
-                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection );
+                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
             @Override
@@ -708,7 +708,7 @@ public class HttpSession extends LocalClientSession {
                         BoshBindingError.itemNotFound);
             }
             connection.deliverBody(createDeliverable(deliverable.deliverables), true);
-            addConnection(connection, isPoll);
+            addConnection(connection, context, isPoll);
             return connection;
         }
         else if (rid > (lastRequestID + maxRequests)) {
@@ -717,7 +717,7 @@ public class HttpSession extends LocalClientSession {
                         BoshBindingError.itemNotFound);
         }
 
-        addConnection(connection, isPoll);
+        addConnection(connection, context, isPoll);
         return connection;
     }
 
@@ -734,7 +734,7 @@ public class HttpSession extends LocalClientSession {
         return result;
     }
 
-    private void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
+    private void addConnection(HttpConnection connection, AsyncContext context, boolean isPoll) throws HttpBindException,
             HttpConnectionClosedException, IOException {
         if (connection == null) {
             throw new IllegalArgumentException("Connection cannot be null.");
@@ -795,7 +795,7 @@ public class HttpSession extends LocalClientSession {
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
             lastActivity = System.currentTimeMillis();
-            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection );
+            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context );
             synchronized(pendingElements) {
                 deliver(connection, pendingElements);
                 lastRequestID = connection.getRequestId();
@@ -1016,7 +1016,7 @@ public class HttpSession extends LocalClientSession {
                 pendingElements.clear();
             }
         } finally { // ensure the session is removed from the session map
-            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.session_closed, null );
+            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.session_closed, null, null );
         }
     }
 

@@ -30,6 +30,7 @@ import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.AsyncContext;
 import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -54,15 +55,7 @@ public class HttpSessionManager {
             JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
-    private SessionListener sessionListener = new SessionListener() {
-        @Override
-        public void connectionOpened(HttpSession session, HttpConnection connection) {
-        }
-
-        @Override
-        public void connectionClosed(HttpSession session, HttpConnection connection) {
-        }
-
+    private SessionListener sessionListener = new SessionEventAdapter() {
         @Override
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());

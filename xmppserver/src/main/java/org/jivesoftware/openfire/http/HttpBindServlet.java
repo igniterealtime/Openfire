@@ -180,10 +180,15 @@ public class HttpBindServlet extends HttpServlet {
 
         try {
             final HttpConnection connection = new HttpConnection(rid, context);
+
+            SessionEventDispatcher.dispatchEvent( null, SessionEventDispatcher.EventType.pre_session_created, connection, context );
+
             connection.setSession(sessionManager.createSession(body, connection));
             if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
                 Log.info(new Date() + ": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + body.asXML());
             }
+
+            SessionEventDispatcher.dispatchEvent( connection.getSession(), SessionEventDispatcher.EventType.post_session_created, connection, context );
         }
         catch (UnauthorizedException | HttpBindException e) {
             // Server wasn't initialized yet.

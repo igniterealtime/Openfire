@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.http;
 
+import javax.servlet.AsyncContext;
+
 /**
  * Listens for HTTP binding session events.
  *
@@ -26,23 +28,61 @@ public interface SessionListener {
     /**
      * A connection was opened.
      *
-     * @param session the session.
-     * @param connection the connection.
+     * @param context The servlet servlet context of the BOSH request that triggered this event.
+     * @param session the session for which a new connection was opened.
+     * @param connection the connection that was just opened.
      */
+    void connectionOpened( AsyncContext context, HttpSession session, HttpConnection connection );
+
+    /**
+     * A connection was opened.
+     *
+     * @param session the session for which a new connection was opened.
+     * @param connection the connection that was just opened.
+     * @deprecated Replaced by {@link #connectionOpened(AsyncContext, HttpSession, HttpConnection)}
+     */
+    @Deprecated // TODO Remove in or after 4.4.0 release.
     void connectionOpened( HttpSession session, HttpConnection connection );
 
     /**
-     * A conneciton was closed.
+     * A connection was closed.
      *
-     * @param session the session.
-     * @param connection the connection.
+     * @param context The servlet servlet context of the BOSH request that triggered this event.
+     * @param session The session of which a connection was closed.
+     * @param connection the connection that was closed.
+     *
      */
+    void connectionClosed( AsyncContext context, HttpSession session, HttpConnection connection );
+
+    /**
+     * A connection was closed.
+     *
+     * @param session The session of which a connection was closed.
+     * @param connection the connection that was closed.
+     * @deprecated Replaced by {@link #connectionClosed(AsyncContext, HttpSession, HttpConnection)}
+     */
+    @Deprecated // TODO Remove in or after 4.4.0 release.
     void connectionClosed( HttpSession session, HttpConnection connection );
+
+    /**
+     * Called before an {@link HttpSession} is created for a given http-bind web request
+     *
+     * @param context The servlet servlet context of the BOSH request that triggered this event.
+     */
+    void preSessionCreated( AsyncContext context );
+
+    /**
+     * Called when an {@link HttpSession} has been created for a given http-bind web request
+     *
+     * @param context The servlet servlet context of the BOSH request that triggered this event.
+     * @param session The newly created session.
+     */
+    void postSessionCreated( AsyncContext context, HttpSession session);
 
     /**
      * A session ended.
      *
-     * @param session the session.
+     * @param session the session that was closed.
      */
     void sessionClosed( HttpSession session );
 }

@@ -281,7 +281,7 @@ public class HttpSessionManager {
         HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
-        session.addSessionCloseListener(sessionListener);
+        SessionEventDispatcher.addListener( sessionListener );
         return session;
     }
 

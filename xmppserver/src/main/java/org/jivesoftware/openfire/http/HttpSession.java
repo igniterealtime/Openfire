@@ -663,7 +663,8 @@ public class HttpSession extends LocalClientSession {
             public void onComplete(AsyncEvent asyncEvent) throws IOException {
                 Log.debug("complete event " + asyncEvent);
                 connectionQueue.remove(connection);
-                fireConnectionClosed(connection);
+                lastActivity = System.currentTimeMillis();
+                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection );
             }
 
             @Override
@@ -692,7 +693,7 @@ public class HttpSession extends LocalClientSession {
                 Log.debug("error event " + asyncEvent);
                 Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
                 connectionQueue.remove(connection);
-                fireConnectionClosed(connection);
+                SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection );
             }
 
             @Override
@@ -793,7 +794,8 @@ public class HttpSession extends LocalClientSession {
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
-            fireConnectionOpened(connection);
+            lastActivity = System.currentTimeMillis();
+            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection );
             synchronized(pendingElements) {
                 deliver(connection, pendingElements);
                 lastRequestID = connection.getRequestId();
@@ -860,13 +862,6 @@ public class HttpSession extends LocalClientSession {
         }
 
         sentElements.add(delivered);
-    }
-
-    private void fireConnectionOpened(HttpConnection connection) {
-        lastActivity = System.currentTimeMillis();
-        for (SessionListener listener : listeners) {
-            listener.connectionOpened(this, connection);
-        }
     }
 
     /**
@@ -970,13 +965,6 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private void fireConnectionClosed(HttpConnection connection) {
-        lastActivity = System.currentTimeMillis();
-        for (SessionListener listener : listeners) {
-            listener.connectionClosed(this, connection);
-        }
-    }
-
     private String createDeliverable(Collection<Deliverable> elements) {
         StringBuilder builder = new StringBuilder();
         builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
@@ -1028,10 +1016,7 @@ public class HttpSession extends LocalClientSession {
                 pendingElements.clear();
             }
         } finally { // ensure the session is removed from the session map
-            for (SessionListener listener : listeners) {
-                listener.sessionClosed(this);
-            }
-            this.listeners.clear();
+            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.session_closed, null );
         }
     }
 

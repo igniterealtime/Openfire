@@ -322,9 +322,11 @@ public class AuthFactory {
     public static AuthToken checkOneTimeAccessToken(String userToken) throws UnauthorizedException {
         String accessToken = JiveGlobals.getXMLProperty(ONE_TIME_PROPERTY);
         if (isOneTimeAccessTokenEnabled() && accessToken.equals(userToken)) {
+            // Remove the one time token but left the property.
+            // This invocation will overwrite the openfire.xml with the empty OneTimeAccessToken tag.
             JiveGlobals.setXMLProperty(ONE_TIME_PROPERTY, "");
             Log.info("Login with the one time access token.");
-            return new OneTimeAuthToken();
+            return AuthToken.generateOneTimeToken(accessToken);
         } else {
             throw new UnauthorizedException();
         }

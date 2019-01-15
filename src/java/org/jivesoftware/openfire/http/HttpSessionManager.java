@@ -55,7 +55,31 @@ public class HttpSessionManager {
             JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
-    private SessionListener sessionListener = new SessionEventAdapter() {
+    private SessionListener sessionListener = new SessionListener() {
+        @Override
+        public void connectionOpened( final AsyncContext context, final HttpSession session, final HttpConnection connection )
+        {}
+
+        @Override
+        public void connectionOpened( final HttpSession session, final HttpConnection connection )
+        {}
+
+        @Override
+        public void connectionClosed( final AsyncContext context, final HttpSession session, final HttpConnection connection )
+        {}
+
+        @Override
+        public void connectionClosed( final HttpSession session, final HttpConnection connection )
+        {}
+
+        @Override
+        public void preSessionCreated( final AsyncContext context )
+        {}
+
+        @Override
+        public void postSessionCreated( final AsyncContext context, final HttpSession session )
+        {}
+
         @Override
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());

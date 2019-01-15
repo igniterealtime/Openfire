@@ -70,7 +70,7 @@ Choose your database from the list below for setup details:
 
     <p><b>Setup Instructions</b><p>
     <ol>
-        <li>Make sure that you are using MySQL 4.1.18 or later (5.x recommended) <a href="#note1">&sup1;</a>.
+        <li>Make sure that you are using recent and supported by Oracle MySQL version <a href="#note1">&sup1;</a>.
         <li>Create a database for the Openfire tables:<br>
         <code>mysqladmin create DATABASENAME</code><br>
         (note: "DATABASENAME" can be something like 'openfire')
@@ -83,11 +83,6 @@ Choose your database from the list below for setup details:
         <li>Start the Openfire setup tool, and use the appropriate JDBC connection
             settings.
     </ol>
-
-    <p><a name="note1">&sup1;</a> Character fields larger than 255 are not supported by versions prior
-    to MySQL 4.1.18. If you cannot upgrade MySQL to the latest version, you will then need to change the
-    database scripts. In particular, replace VARCHAR(1024) with VARCHAR(255) in the 
-    resources/database/openfire_mysql.sql script.</p>
     
     <p><b>Character Encoding Issues</b><p>
     
@@ -104,7 +99,7 @@ Choose your database from the list below for setup details:
     If you need help setting up MySQL, refer to the 
     following sites:<p>
     
-    <a href="http://dev.mysql.com/doc/refman/5.1/en/connector-j-reference-configuration-properties.html"> MySQL Reference Manual </a><br>
+    <a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html"> MySQL Connector/J Configuration Properties </a><br>
     </p>
 </ul>
 

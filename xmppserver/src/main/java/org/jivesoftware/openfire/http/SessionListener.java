@@ -32,7 +32,7 @@ public interface SessionListener {
      * @param session the session for which a new connection was opened.
      * @param connection the connection that was just opened.
      */
-    void connectionOpened( AsyncContext context, HttpSession session, HttpConnection connection );
+    default void connectionOpened( AsyncContext context, HttpSession session, HttpConnection connection ) {};
 
     /**
      * A connection was opened.
@@ -42,7 +42,7 @@ public interface SessionListener {
      * @deprecated Replaced by {@link #connectionOpened(AsyncContext, HttpSession, HttpConnection)}
      */
     @Deprecated // TODO Remove in or after 4.4.0 release.
-    void connectionOpened( HttpSession session, HttpConnection connection );
+    default void connectionOpened( HttpSession session, HttpConnection connection ) {};
 
     /**
      * A connection was closed.
@@ -52,7 +52,7 @@ public interface SessionListener {
      * @param connection the connection that was closed.
      *
      */
-    void connectionClosed( AsyncContext context, HttpSession session, HttpConnection connection );
+    default void connectionClosed( AsyncContext context, HttpSession session, HttpConnection connection ) {};
 
     /**
      * A connection was closed.
@@ -62,14 +62,14 @@ public interface SessionListener {
      * @deprecated Replaced by {@link #connectionClosed(AsyncContext, HttpSession, HttpConnection)}
      */
     @Deprecated // TODO Remove in or after 4.4.0 release.
-    void connectionClosed( HttpSession session, HttpConnection connection );
+    default void connectionClosed( HttpSession session, HttpConnection connection ) {};
 
     /**
      * Called before an {@link HttpSession} is created for a given http-bind web request
      *
      * @param context The servlet servlet context of the BOSH request that triggered this event.
      */
-    void preSessionCreated( AsyncContext context );
+    default void preSessionCreated( AsyncContext context ) {};
 
     /**
      * Called when an {@link HttpSession} has been created for a given http-bind web request
@@ -77,12 +77,12 @@ public interface SessionListener {
      * @param context The servlet servlet context of the BOSH request that triggered this event.
      * @param session The newly created session.
      */
-    void postSessionCreated( AsyncContext context, HttpSession session);
+    default void postSessionCreated( AsyncContext context, HttpSession session) {};
 
     /**
      * A session ended.
      *
      * @param session the session that was closed.
      */
-    void sessionClosed( HttpSession session );
+    default void sessionClosed( HttpSession session ) {};
 }

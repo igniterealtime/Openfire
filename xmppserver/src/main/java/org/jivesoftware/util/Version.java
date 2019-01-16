@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public final class Version implements Comparable<Version> {
 
     private static final Pattern PATTERN = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)(?:\\s+(\\w+))?(?:\\s+(\\d+))?");
+    private static final Pattern FOUR_DOT_PATTERN = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)");
     private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("(?i)(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?-SNAPSHOT");
 
     /**
@@ -122,6 +123,15 @@ public final class Version implements Comparable<Version> {
                 status = ReleaseStatus.Snapshot;
                 final String statusVersionString = snapshotMatcher.group(4);
                 statusVersion = statusVersionString == null ? -1 : Integer.parseInt(statusVersionString);
+                return;
+            }
+            final Matcher fourDotMatcher = FOUR_DOT_PATTERN.matcher(source);
+            if (fourDotMatcher.matches()) {
+                major = Integer.parseInt(fourDotMatcher.group(1));
+                minor = Integer.parseInt(fourDotMatcher.group(2));
+                micro = Integer.parseInt(fourDotMatcher.group(3));
+                statusVersion = Integer.parseInt(fourDotMatcher.group(4));
+                status = ReleaseStatus.Release;
                 return;
             }
         }

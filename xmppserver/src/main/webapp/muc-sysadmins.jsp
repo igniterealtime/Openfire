@@ -37,7 +37,9 @@
     String userJID = ParamUtils.getParameter(request,"userJID");
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
     boolean add = request.getParameter("add") != null;
+    boolean passwordPolicy = request.getParameter("passwordPolicy") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
+    boolean requirePassword = ParamUtils.getBooleanParameter(request,"requirePassword");
     String mucname = ParamUtils.getParameter(request,"mucname");
 
     if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
@@ -54,10 +56,11 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (add || delete) {
+    if (add || delete || passwordPolicy) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             add = false;
             delete = false;
+            passwordPolicy = false;
             errors.put("csrf", "CSRF Failure!");
         }
     }
@@ -110,6 +113,15 @@
             response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
+
+        if (passwordPolicy) {
+            mucService.setPasswordRequiredForSysadminsToJoinRoom(requirePassword);
+            // Log the event
+            webManager.logEvent("muc sysadmins for service "+mucname + "now " + (requirePassword ? "cannot" : "can") + " join a password-protected room, without supplying the password.", null);
+            // done, return
+            response.sendRedirect("muc-sysadmins.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            return;
+        }
     }
 %>
 
@@ -151,6 +163,19 @@
         </td></tr>
     </tbody>
     </table>
+    </div><br>
+
+<%  } else if ("true".equals(request.getParameter("success"))) { %>
+
+    <div class="jive-success">
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label">
+                    <fmt:message key="groupchat.admins.settings.saved_successfully"/>
+                </td></tr>
+            </tbody>
+        </table>
     </div><br>
 
 <%  } else if (errors.size() > 0) {  
@@ -247,6 +272,41 @@
 </form>
 <!-- END 'Administrators' -->
 
+<br>
+<!-- BEGIN 'Permission Policy' -->
+<form action="muc-sysadmins.jsp?passwordPolicy" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="groupchat.admins.passwordpolicy.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tbody>
+            <tr>
+                <td width="1%">
+                    <input type="radio" name="requirePassword" value="false" id="pp01"
+                        <%= ((!mucService.isPasswordRequiredForSysadminsToJoinRoom()) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="pp01"><fmt:message key="groupchat.admins.passwordpolicy.join-without-password.legend" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    <input type="radio" name="requirePassword" value="true" id="pp02"
+                        <%= ((mucService.isPasswordRequiredForSysadminsToJoinRoom()) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="pp02"><fmt:message key="groupchat.admins.passwordpolicy.join-requires-password.legend" /></label>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <input type="submit" value="<fmt:message key="global.save_settings" />">
+</form>
+<!-- END 'Permission Policy' -->
 
 </body>
 </html>

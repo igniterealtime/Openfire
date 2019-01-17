@@ -67,6 +67,7 @@ public class VersionTest {
         assertEquals("0.0.0", test.getVersionString());
     }
 
+    @SuppressWarnings("EqualsWithItself")
     @Test
     public void testVersionComparisons() {
         
@@ -130,4 +131,17 @@ public class VersionTest {
 
     }
 
+    @Test
+    public void willVersionAFourDigitRelease() {
+
+        final String versionString = "1.2.3.4";
+        final Version test = new Version(versionString);
+
+        assertThat(test.getMajor(), is(1));
+        assertThat(test.getMinor(), is(2));
+        assertThat(test.getMicro(), is(3));
+        assertThat(test.getStatusVersion(), is(4));
+        assertThat(test.getStatus(), is(ReleaseStatus.Release));
+        assertThat(test.getVersionString(),is("1.2.3 Release 4"));
+    }
 }

@@ -17,10 +17,12 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
@@ -163,6 +165,9 @@ public class LocalMUCUser implements MUCUser {
 
     @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
+
+        StanzaIDUtil.ensureUniqueAndStableStanzaID( packet, packet.getTo() );
+
         if (packet instanceof IQ) {
             process((IQ)packet);
         }

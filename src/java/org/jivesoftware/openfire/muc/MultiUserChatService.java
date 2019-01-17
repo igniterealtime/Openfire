@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -90,6 +91,26 @@ public interface MultiUserChatService extends Component {
      * @param userJID the bare JID of the user/group to remove from the list.
      */
     void removeSysadmin(JID userJID);
+
+    /**
+     * Returns true when a system administrator of the MUC service can join a
+     * password-protected room, without supplying the password.
+     *
+     * @return false if a sysadmin can join a password-protected room without a password, otherwise true.
+     */
+    default boolean isPasswordRequiredForSysadminsToJoinRoom() {
+        return MUCPersistenceManager.getBooleanProperty( getServiceName(), "sysadmin.requires.room.passwords", false );
+    }
+
+    /**
+     * Sets if a system administrator of the MUC service can join a
+     * password-protected room, without supplying the password.
+     *
+     * @param isRequired false if a sysadmin is allowed to join a password-protected room without a password, otherwise true.
+     */
+    default void setPasswordRequiredForSysadminsToJoinRoom(boolean isRequired) {
+        MUCPersistenceManager.setProperty( getServiceName(), "sysadmin.requires.room.passwords", Boolean.toString(isRequired) );
+    }
 
     /**
      * Returns false if anyone can create rooms or true if only the returned JIDs in

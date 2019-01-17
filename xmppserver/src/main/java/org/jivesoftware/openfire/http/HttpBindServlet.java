@@ -248,7 +248,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
+            Log.info(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
         final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
@@ -269,7 +269,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date() + ": HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
+            Log.info(new Date() + ": HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
             if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) || session.getMajorVersion() > 1)

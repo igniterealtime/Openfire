@@ -594,9 +594,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 }
             }
             // If the room is password protected and the provided password is incorrect raise a
-            // Unauthorized exception
+            // Unauthorized exception - unless the JID that is joining is a system admin.
             if (isPasswordProtected()) {
-                if (password == null || !password.equals(getPassword())) {
+                final boolean isCorrectPassword = (password != null && password.equals(getPassword()));
+                final boolean isSysadmin = mucService.isSysadmin(bareJID);
+                final boolean requirePassword = isSysadmin ? mucService.isPasswordRequiredForSysadminsToJoinRoom() : true;
+                if (!isCorrectPassword && requirePassword ) {
                     throw new UnauthorizedException();
                 }
             }

@@ -1034,6 +1034,26 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
+     * Returns true when a system administrator of the MUC service can join a
+     * password-protected room, without supplying the password.
+     *
+     * @return false if a sysadmin can join a password-protected room without a password, otherwise true.
+     */
+    public boolean isPasswordRequiredForSysadminsToJoinRoom() {
+        return MUCPersistenceManager.getBooleanProperty( getServiceName(), "sysadmin.requires.room.passwords", false );
+    }
+
+    /**
+     * Sets if a system administrator of the MUC service can join a
+     * password-protected room, without supplying the password.
+     *
+     * @param isRequired false if a sysadmin is allowed to join a password-protected room without a password, otherwise true.
+     */
+    public void setPasswordRequiredForSysadminsToJoinRoom(boolean isRequired) {
+        MUCPersistenceManager.setProperty( getServiceName(), "sysadmin.requires.room.passwords", Boolean.toString(isRequired) );
+    }
+
+    /**
      * Returns the flag that indicates if the service should provide information about non-public
      * members-only rooms when handling service discovery requests.
      *

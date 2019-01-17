@@ -19,11 +19,14 @@ package org.jivesoftware.openfire.nio;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.net.ClientStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -105,7 +108,14 @@ public class ClientConnectionHandler extends ConnectionHandler {
                     Log.debug("ConnectionHandler: Pinging connection that has been idle: " + connection);
                 }
 
-                connection.deliver(pingRequest);
+                // OF-1497: Ensure that data sent to the client is processed through LocalClientSession, to avoid
+                // synchronisation issues with stanza counts related to Stream Management (XEP-0198)!
+                LocalClientSession ofSession = (LocalClientSession) SessionManager.getInstance().getSession( entity );
+                if (ofSession == null) {
+                    Log.warn( "Trying to ping a MINA connection that's idle, but has no corresponding Openfire session. MINA Connection: " + connection );
+                } else {
+                    ofSession.deliver( pingRequest );
+                }
             }
         }
     }

@@ -98,9 +98,7 @@ public interface MultiUserChatService extends Component {
      *
      * @return false if a sysadmin can join a password-protected room without a password, otherwise true.
      */
-    default boolean isPasswordRequiredForSysadminsToJoinRoom() {
-        return MUCPersistenceManager.getBooleanProperty( getServiceName(), "sysadmin.requires.room.passwords", false );
-    }
+    boolean isPasswordRequiredForSysadminsToJoinRoom();
 
     /**
      * Sets if a system administrator of the MUC service can join a
@@ -108,9 +106,7 @@ public interface MultiUserChatService extends Component {
      *
      * @param isRequired false if a sysadmin is allowed to join a password-protected room without a password, otherwise true.
      */
-    default void setPasswordRequiredForSysadminsToJoinRoom(boolean isRequired) {
-        MUCPersistenceManager.setProperty( getServiceName(), "sysadmin.requires.room.passwords", Boolean.toString(isRequired) );
-    }
+    void setPasswordRequiredForSysadminsToJoinRoom(boolean isRequired);
 
     /**
      * Returns false if anyone can create rooms or true if only the returned JIDs in

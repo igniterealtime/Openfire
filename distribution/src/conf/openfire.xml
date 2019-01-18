@@ -37,5 +37,7 @@
     <!--
         One time token to gain temporary access to the admin console.
     -->
-    <oneTimeAccessToken></oneTimeAccessToken>
+    <!--
+    <oneTimeAccessToken>secretToken</oneTimeAccessToken>
+    -->
 </jive>

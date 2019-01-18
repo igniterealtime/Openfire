@@ -217,6 +217,12 @@
                                     </tr>
                                     <% } %>
                                     <tr>
+                                        <td colspan="2">
+                                            <div class="jive-error-text" style="padding-left:5px; color:#cc0000;">
+                                                <fmt:message key="login.tokenTitle"/></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td><input type="text" name="token" size="35" maxlength="80" id="u01"></td>
                                         <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;">
                                         </td>

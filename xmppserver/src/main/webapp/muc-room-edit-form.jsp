@@ -355,6 +355,7 @@
             publicRoom = "true";
             // Rooms created from the admin console are always persistent
             persistentRoom = "true";
+            enableLog = "true";
             canChangeNick = "true";
             registrationEnabled = "true";
         }

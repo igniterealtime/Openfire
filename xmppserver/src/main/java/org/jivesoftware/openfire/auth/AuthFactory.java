@@ -312,4 +312,23 @@ public class AuthFactory {
     public static String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
         return authProvider.getStoredKey(username);
     }
+
+    public static final String ONE_TIME_PROPERTY = "oneTimeAccessToken";
+
+    public static boolean isOneTimeAccessTokenEnabled() {
+        return org.apache.commons.lang3.StringUtils.isNotBlank(JiveGlobals.getXMLProperty(ONE_TIME_PROPERTY));
+    }
+
+    public static AuthToken checkOneTimeAccessToken(String userToken) throws UnauthorizedException {
+        String accessToken = JiveGlobals.getXMLProperty(ONE_TIME_PROPERTY);
+        if (isOneTimeAccessTokenEnabled() && accessToken.equals(userToken)) {
+            // Remove the one time token.
+            // This invocation will overwrite the openfire.xml with removing the OneTimeAccessToken tag.
+            JiveGlobals.deleteXMLProperty(ONE_TIME_PROPERTY);
+            Log.info("Login with the one time access token.");
+            return AuthToken.generateOneTimeToken(accessToken);
+        } else {
+            throw new UnauthorizedException();
+        }
+    }
 }

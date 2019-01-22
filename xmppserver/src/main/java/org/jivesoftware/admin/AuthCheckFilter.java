@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -189,7 +190,7 @@ public class AuthCheckFilter implements Filter {
         // Reset the defaultLoginPage variable
         String loginPage = defaultLoginPage;
         if (loginPage == null) {
-            loginPage = request.getContextPath() + "/login.jsp";
+            loginPage = request.getContextPath() + (AuthFactory.isOneTimeAccessTokenEnabled() ? "/loginToken.jsp" : "/login.jsp" );
         }
         // Get the page we're on:
         String url = request.getRequestURI().substring(1);
@@ -207,7 +208,7 @@ public class AuthCheckFilter implements Filter {
         if (!doExclude) {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
-            if (manager.getUser() == null && !authUserFromRequest(request)) {
+            if (!(manager.getAuthToken() instanceof AuthToken.OneTimeAuthToken) && manager.getUser() == null && !authUserFromRequest(request)) {
                 response.sendRedirect(getRedirectURL(request, loginPage, null));
                 return;
             }

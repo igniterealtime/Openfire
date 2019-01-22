@@ -45,6 +45,7 @@ PIDFILE="/var/run/$NAME.pid"
 test -x $JAVA || exit 1
 
 DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
+ -Dlog4j.configurationFile=${DAEMON_LIB}/log4j2.xml \
  -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
  -jar ${DAEMON_LIB}/startup.jar"
 

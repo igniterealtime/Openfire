@@ -84,9 +84,10 @@
 <h3>ZIP or TAR.GZ</h3>
     <ol>
         <li>Stop Openfire.</li>
-        <li>Backup the Openfire installation directory. This step is critical because the data will be overwritten with the new .tar.gz install.</li>
-        <li>Backup the Openfire database. Note that the embedded database is backed up in step 2.</li>
-        <li>Install the .tar.gz file (extract it over the current directory).</li>
+        <li>Backup the Openfire installation directory. This step is critical because the data will be overwritten with the new .tar.gz/zip install.</li>
+        <li>Backup the Openfire database. Note that the embedded database is inside the installation directory and is backed up in step 2.</li>
+        <li>Wipe out the contents of the Openfire installation directory (all folders and files).</li>
+        <li>Extract the .tar.gz/zip file into the installation directory.</li>
         <li>Copy the <i>conf</i> directory from the backup to the installation directory.</li>
         <li>Copy the <i>embedded-db</i> directory from the backup to the installation directory.</li>
         <li>Copy the <i>enterprise</i> directory from the backup to the installation directory, if it exists.</li>

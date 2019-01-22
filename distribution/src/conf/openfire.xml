@@ -34,4 +34,10 @@
     </network>
     -->
 
+    <!--
+        One time token to gain temporary access to the admin console.
+    -->
+    <!--
+    <oneTimeAccessToken>secretToken</oneTimeAccessToken>
+    -->
 </jive>

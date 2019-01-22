@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.PresenceManager;
@@ -162,6 +163,9 @@ public class WebManager extends WebBean {
             {
                 Log.debug( "Unable to get user: no auth token on session." );
                 return null;
+            }
+            if (authToken instanceof AuthToken.OneTimeAuthToken) {
+                return new User(authToken.getUsername(), "Recovery via One Time Auth Token", null, new Date(), new Date());
             }
             final String username = authToken.getUsername();
             if (username == null || username.isEmpty())

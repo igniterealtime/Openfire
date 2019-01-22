@@ -185,7 +185,7 @@ public class HttpBindServlet extends HttpServlet {
 
             connection.setSession(sessionManager.createSession(body, connection));
             if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-                Log.info(new Date() + ": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + body.asXML());
+                Log.info("HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + body.asXML());
             }
 
             SessionEventDispatcher.dispatchEvent( connection.getSession(), SessionEventDispatcher.EventType.post_session_created, connection, context );
@@ -201,7 +201,7 @@ public class HttpBindServlet extends HttpServlet {
     {
         final String sid = body.getSid();
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            Log.info(new Date() + ": HTTP RECV(" + sid + "): " + body.asXML());
+            Log.info("HTTP RECV(" + sid + "): " + body.asXML());
         }
 
         HttpSession session = sessionManager.getSession(sid);
@@ -248,7 +248,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
+            Log.info("HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
         final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
@@ -269,7 +269,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date() + ": HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
+            Log.info("HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
             if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) || session.getMajorVersion() > 1)

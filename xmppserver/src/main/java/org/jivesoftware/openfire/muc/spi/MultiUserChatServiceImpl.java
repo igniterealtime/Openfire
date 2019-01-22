@@ -1595,6 +1595,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (!extraDiscoFeatures.isEmpty()) {
                     features.addAll(extraDiscoFeatures);
                 }
+                features.add( "urn:xmpp:sid:0" );
             }
         }
         return features.iterator();

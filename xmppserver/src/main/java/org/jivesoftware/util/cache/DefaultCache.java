@@ -15,15 +15,12 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.time.Duration;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -271,138 +268,16 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         return map.isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Collection<V> values() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
-        return new DefaultCache.CacheObjectCollection(map.values());
-    }
 
-    /**
-     * Wraps a cached object collection to return a view of its inner objects
-     */
-    private final class CacheObjectCollection implements Collection<V> {
-        private final Collection<DefaultCache.CacheObject<V>> cachedObjects;
-
-        private CacheObjectCollection(final Collection<DefaultCache.CacheObject<V>> cachedObjects) {
-            this.cachedObjects = new ArrayList<>(cachedObjects);
-        }
-
-        @Override
-        public int size() {
-            return cachedObjects.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return size() == 0;
-        }
-
-        @Override
-        public boolean contains(final Object o) {
-            checkNotNull(o, NULL_KEY_IS_NOT_ALLOWED);
-            for (final V v : this) {
-                if (v.equals(o)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public Iterator<V> iterator() {
-            return new Iterator<V>() {
-                private final Iterator<DefaultCache.CacheObject<V>> it = cachedObjects.iterator();
-
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
-
-                @Override
-                public V next() {
-                    if(it.hasNext()) {
-                        final DefaultCache.CacheObject<V> object = it.next();
-                        if(object == null) {
-                            return null;
-                        } else {
-                            return object.object;
-                        }
-                    }
-                    else {
-                        throw new NoSuchElementException();
-                    }
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public Object[] toArray() {
-            final Object[] array = new Object[size()];
-            final Iterator it = iterator();
-            final int i = 0;
-            while (it.hasNext()) {
-                array[i] = it.next();
-            }
-            return array;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public <T>T[] toArray(final T[] a) {
-            final Iterator<T> it = (Iterator<T>) iterator();
-            int i = 0;
-            while (it.hasNext()) {
-                a[i++] = it.next();
-            }
-            return a;
-        }
-
-        @Override
-        public boolean containsAll(final Collection<?> c) {
-            for (final Object o : c) {
-                if (!contains(o)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public boolean add(final V o) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(final Object o) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean addAll(final Collection<? extends V> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean removeAll(final Collection<?> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean retainAll(final Collection<?> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void clear() {
-            throw new UnsupportedOperationException();
+        synchronized (this) {
+            return map.values().stream()
+                .map(cachedObject -> cachedObject.object)
+                .collect(Collectors.toList());
         }
     }
 
@@ -444,14 +319,11 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
-        // TODO Make this work right
 
         synchronized (this) {
-            final Map<K, V> result = new HashMap<>();
-            for (final Entry<K, DefaultCache.CacheObject<V>> entry : map.entrySet()) {
-                result.put(entry.getKey(), entry.getValue().object);
-            }
-            return result.entrySet();
+            return map.entrySet().stream()
+                .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().object))
+                .entrySet();
         }
     }
 

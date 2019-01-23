@@ -17,6 +17,9 @@
 package org.jivesoftware.util.cache;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * General purpose cache. It stores objects associated with unique keys in
@@ -137,5 +140,31 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      * @return the number of cache hits.
      */
     long getCacheMisses();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#values()} implementation, the collection returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable collection view of the values contained in this map
+     */
+    Collection<V> values();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#entrySet()} implementation, the set returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable set view of the mappings contained in this map
+     */
+    @Override
+    Set<Entry<K, V>> entrySet();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#keySet()} implementation, the set returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable set view of the keys contained in this map
+     */
+    @Override
+    Set<K> keySet();
 
 }

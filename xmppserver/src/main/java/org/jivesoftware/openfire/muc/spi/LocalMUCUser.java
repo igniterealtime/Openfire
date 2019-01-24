@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
@@ -407,7 +408,8 @@ public class LocalMUCUser implements MUCUser {
                             final String toNickname = packet.getTo().getResource();
                             if (toNickname != null) {
                                 // User is sending to a room occupant.
-                                if ( toNickname.equals( role.getNickname() )
+                                final boolean selfPingEnabled = JiveGlobals.getBooleanProperty( "xmpp.muc.self-ping.enabled", true );
+                                if ( selfPingEnabled && toNickname.equals( role.getNickname() )
                                     && packet.isRequest() && query != null
                                     && IQPingHandler.NAMESPACE.equals( query.getNamespaceURI() ) )
                                 {

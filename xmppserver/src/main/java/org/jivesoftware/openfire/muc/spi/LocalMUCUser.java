@@ -409,9 +409,8 @@ public class LocalMUCUser implements MUCUser {
                             if (toNickname != null) {
                                 // User is sending to a room occupant.
                                 final boolean selfPingEnabled = JiveGlobals.getBooleanProperty( "xmpp.muc.self-ping.enabled", true );
-                                if ( selfPingEnabled && toNickname.equals( role.getNickname() )
-                                    && packet.isRequest() && query != null
-                                    && IQPingHandler.NAMESPACE.equals( query.getNamespaceURI() ) )
+                                if ( selfPingEnabled && toNickname.equals( role.getNickname() ) && packet.isRequest()
+                                    && packet.getElement().element( QName.get( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE ) ) != null )
                                 {
                                     // User is sending an IQ 'ping' to itself. See XEP-0410: MUC Self-Ping (Schrödinger's Chat).
                                     router.route( IQ.createResultIQ(packet) );

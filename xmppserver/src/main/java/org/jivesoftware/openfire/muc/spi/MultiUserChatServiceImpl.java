@@ -1595,6 +1595,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (!extraDiscoFeatures.isEmpty()) {
                     features.addAll(extraDiscoFeatures);
                 }
+                if ( JiveGlobals.getBooleanProperty( "xmpp.muc.self-ping.enabled", true ) ) {
+                    features.add( "http://jabber.org/protocol/muc#self-ping-optimization" );
+                }
                 features.add( "urn:xmpp:sid:0" );
             }
         }

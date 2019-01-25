@@ -24,6 +24,9 @@
                             <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
+                    <excludes>
+                        <exclude>**/*_jsp.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
 
@@ -63,6 +66,7 @@
                             </jspc>
                             <sourceVersion>1.8</sourceVersion>
                             <targetVersion>1.8</targetVersion>
+                            <keepSources>true</keepSources>
                         </configuration>
                     </execution>
                 </executions>

@@ -101,7 +101,7 @@ public class Log {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
         final org.apache.logging.log4j.Level newLevel;
         if (enabled) {
-            newLevel = org.apache.logging.log4j.Level.ALL;
+            newLevel = org.apache.logging.log4j.Level.DEBUG;
         } else {
             newLevel = org.apache.logging.log4j.Level.INFO;
         }

@@ -16,11 +16,6 @@
 
 package org.jivesoftware.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -30,6 +25,11 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
 /**
  * Openfire makes use of a logging facade (slf4j) to manage its log output. The
@@ -45,23 +45,26 @@ import java.util.Map;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  * @see <a href="http://www.slf4j.org/">http://www.slf4j.org/</a>
  */
-public class Log {
+public final class Log {
 
     private static final org.slf4j.Logger Logger = org.slf4j.LoggerFactory.getLogger(Log.class);
     public static final String LOG_DEBUG_ENABLED = "log.debug.enabled";
-    
+    public static final String LOG_TRACE_ENABLED = "log.trace.enabled";
+    private static boolean debugEnabled = false;
+    private static boolean traceEnabled = false;
+
     // listen for changes to the log.debug.enabled property
     static {
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
             
             @Override
             public void propertySet(String property, Map<String, Object> params) {
-                enableDebugLog(property, Boolean.parseBoolean(params.get("value").toString()));
+                enableLog(property, Boolean.parseBoolean(params.get("value").toString()));
             }
             
             @Override
             public void propertyDeleted(String property, Map<String, Object> params) {
-                enableDebugLog(property, false);
+                enableLog(property, false);
             }
             
             // ignore these events
@@ -70,9 +73,14 @@ public class Log {
             @Override
             public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
             
-            private void enableDebugLog(String property, boolean enabled) {
-                if ((LOG_DEBUG_ENABLED).equals(property)) {
-                    Log.setDebugEnabled(enabled);
+            private void enableLog(String property, boolean enabled) {
+                switch (property) {
+                    case LOG_TRACE_ENABLED:
+                        setTraceEnabled(enabled);
+                        break;
+                    case LOG_DEBUG_ENABLED:
+                        setDebugEnabled(enabled);
+                        break;
                 }
             }
         });
@@ -97,15 +105,26 @@ public class Log {
         return Logger.isDebugEnabled();
     }
 
-    public static void setDebugEnabled(boolean enabled) {
+    public static void setDebugEnabled(final boolean enabled) {
+        debugEnabled = enabled;
+        setLogLevel();
+    }
+
+    public static void setTraceEnabled(final boolean enabled) {
+        traceEnabled = enabled;
+        setLogLevel();
+    }
+
+    private static void setLogLevel() {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
         final org.apache.logging.log4j.Level newLevel;
-        if (enabled) {
+        if (traceEnabled) {
+            newLevel = org.apache.logging.log4j.Level.TRACE;
+        } else if (debugEnabled) {
             newLevel = org.apache.logging.log4j.Level.DEBUG;
         } else {
             newLevel = org.apache.logging.log4j.Level.INFO;
         }
-
         final LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
         final Configuration config = ctx.getConfiguration();
         final LoggerConfig loggerConfig = config.getLoggerConfig( LogManager.ROOT_LOGGER_NAME );

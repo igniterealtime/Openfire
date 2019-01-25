@@ -401,7 +401,8 @@ public class XMPPServer {
 
         JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
         Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
-        
+        Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_TRACE_ENABLED, false));
+
         // Update server info
         xmppServerInfo = new XMPPServerInfoImpl(new Date());
 

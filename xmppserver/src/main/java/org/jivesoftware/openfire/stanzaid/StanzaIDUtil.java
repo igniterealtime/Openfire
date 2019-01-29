@@ -2,11 +2,10 @@ package org.jivesoftware.openfire.stanzaid;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
+import org.xmpp.packet.*;
 
 import java.util.Iterator;
 import java.util.UUID;
@@ -30,6 +29,26 @@ public class StanzaIDUtil
      */
     public static Packet ensureUniqueAndStableStanzaID( final Packet packet, final JID self )
     {
+        if ( !JiveGlobals.getBooleanProperty( "xmpp.sid.enabled", true ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof IQ && !JiveGlobals.getBooleanProperty( "xmpp.sid.iq.enabled", false ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof Message && !JiveGlobals.getBooleanProperty( "xmpp.sid.message.enabled", true ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof Presence && !JiveGlobals.getBooleanProperty( "xmpp.sid.presence.enabled", false ) )
+        {
+            return packet;
+        }
+
         final Element parentElement;
         if ( packet instanceof IQ ) {
             parentElement = ((IQ) packet).getChildElement();

@@ -4,6 +4,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
@@ -29,9 +30,16 @@ public class StanzaIDUtil
      */
     public static Packet ensureUniqueAndStableStanzaID( final Packet packet, final JID self )
     {
+        final Element parentElement;
+        if ( packet instanceof IQ ) {
+            parentElement = ((IQ) packet).getChildElement();
+        } else {
+            parentElement = packet.getElement();
+        }
+
         // Stanza ID generating entities, which encounter a <stanza-id/> element where the 'by' attribute matches the 'by'
         // attribute they would otherwise set, MUST delete that element even if they are not adding their own stanza ID.
-        final Iterator<Element> existingElementIterator = packet.getElement().elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        final Iterator<Element> existingElementIterator = parentElement.elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         while (existingElementIterator.hasNext()) {
             final Element element = existingElementIterator.next();
 
@@ -43,7 +51,7 @@ public class StanzaIDUtil
 
         final String id = generateUniqueAndStableStanzaID( packet );
 
-        final Element stanzaIdElement = packet.getElement().addElement( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        final Element stanzaIdElement = parentElement.addElement( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         stanzaIdElement.addAttribute( "id", id );
         stanzaIdElement.addAttribute( "by", self.toString() );
 

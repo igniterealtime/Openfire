@@ -17,11 +17,15 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
@@ -163,6 +167,9 @@ public class LocalMUCUser implements MUCUser {
 
     @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
+
+        StanzaIDUtil.ensureUniqueAndStableStanzaID( packet, packet.getTo() );
+
         if (packet instanceof IQ) {
             process((IQ)packet);
         }
@@ -398,9 +405,21 @@ public class LocalMUCUser implements MUCUser {
                             role.getChatRoom().getIQAdminHandler().handleIQ(packet, role);
                         }
                         else {
-                            if (packet.getTo().getResource() != null) {
-                                // User is sending an IQ packet to another room occupant
-                                role.getChatRoom().sendPrivatePacket(packet, role);
+                            final String toNickname = packet.getTo().getResource();
+                            if (toNickname != null) {
+                                // User is sending to a room occupant.
+                                final boolean selfPingEnabled = JiveGlobals.getBooleanProperty( "xmpp.muc.self-ping.enabled", true );
+                                if ( selfPingEnabled && toNickname.equals( role.getNickname() ) && packet.isRequest()
+                                    && packet.getElement().element( QName.get( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE ) ) != null )
+                                {
+                                    // User is sending an IQ 'ping' to itself. See XEP-0410: MUC Self-Ping (Schrödinger's Chat).
+                                    router.route( IQ.createResultIQ(packet) );
+                                }
+                                else
+                                {
+                                    // User is sending an IQ packet to another room occupant
+                                    role.getChatRoom().sendPrivatePacket( packet, role );
+                                }
                             }
                             else {
                                 sendErrorPacket(packet, PacketError.Condition.bad_request);

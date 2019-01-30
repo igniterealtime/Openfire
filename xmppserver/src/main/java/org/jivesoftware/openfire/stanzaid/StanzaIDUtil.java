@@ -56,6 +56,14 @@ public class StanzaIDUtil
             parentElement = packet.getElement();
         }
 
+        // The packet likely is an IQ result or error, which can, but are not required to have a child element.
+        // To have a consistent behavior for these, we'll not add a stanza-ID here.
+        if ( parentElement == null )
+        {
+            Log.debug( "Unable to find appropriate element. Not adding stanza-id to packet: {}", packet );
+            return packet;
+        }
+
         // Stanza ID generating entities, which encounter a <stanza-id/> element where the 'by' attribute matches the 'by'
         // attribute they would otherwise set, MUST delete that element even if they are not adding their own stanza ID.
         final Iterator<Element> existingElementIterator = parentElement.elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );

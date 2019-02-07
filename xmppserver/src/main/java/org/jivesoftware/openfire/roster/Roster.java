@@ -554,7 +554,7 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     /**
-     * <p>Broadcast the presence update to all subscribers of the roter.</p>
+     * <p>Broadcast the presence update to all subscribers of the roster.</p>
      * <p>Any presence change typically results in a broadcast to the roster members.</p>
      *
      * @param packet The presence packet to broadcast

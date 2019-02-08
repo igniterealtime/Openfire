@@ -8,6 +8,9 @@ import static org.junit.Assert.assertThat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -434,5 +437,64 @@ public class SystemPropertyTest {
             .build();
 
         assertThat(property.getValue(), is(defaultValue));
+    }
+
+    @Test
+    public void willCreateAListOfStringProperties() {
+        final String key = "a list property";
+
+        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
+            .setCollectionType(String.class)
+            .setKey(key)
+            .setDefaultValue(Collections.emptyList())
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(), is(Collections.emptyList()));
+        property.setValue(Arrays.asList("3", "2", "1"));
+        assertThat(property.getValue(), is(Arrays.asList("3", "2", "1")));
+        assertThat(property.getDisplayValue(), is("3,2,1"));
+        assertThat(JiveGlobals.getProperty(key), is("3,2,1"));
+    }
+
+    @Test
+    public void willCreateAListOfLongProperties() {
+        final String key = "a list of longs property";
+
+        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
+            .setCollectionType(Long.class)
+            .setKey(key)
+            .setSorted(true)
+            .setDefaultValue(Collections.emptyList())
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(), is(Collections.emptyList()));
+        property.setValue(Arrays.asList(3, 2, 1));
+        assertThat(property.getValue(), is(Arrays.asList(1L, 2L, 3L)));
+        assertThat(property.getDisplayValue(), is("1,2,3"));
+        assertThat(JiveGlobals.getProperty(key), is("1,2,3"));
+        JiveGlobals.setProperty(key, "3,2,1");
+        assertThat(property.getValue(), is(Arrays.asList(1L, 2L, 3L)));
+        assertThat(property.getDisplayValue(), is("1,2,3"));
+    }
+
+    @Test
+    public void willCreateAListOfDurationProperties() {
+        final String key = "a list of durations property";
+
+        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
+            .setCollectionType(Duration.class)
+            .setChronoUnit(ChronoUnit.HOURS)
+            .setKey(key)
+            .setDefaultValue(Collections.singletonList(Duration.ZERO))
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(), is(Collections.singletonList(Duration.ZERO)));
+        property.setValue(Arrays.asList(Duration.ofHours(1), Duration.ZERO));
+        assertThat(property.getValue(), is(Arrays.asList(Duration.ofHours(1), Duration.ZERO)));
+        assertThat(property.getDisplayValue(), is("1 hour,0 ms"));
+        assertThat(JiveGlobals.getProperty(key), is("1,0"));
     }
 }

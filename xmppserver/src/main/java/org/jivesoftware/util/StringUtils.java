@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1176,6 +1177,28 @@ public final class StringUtils {
             return nullableString.toLowerCase().contains(value.toLowerCase());
         } else {
             return false;
+        }
+    }
+
+    public static Optional<Integer> parseInteger(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Integer.valueOf(value));
+        } catch (final NumberFormatException ignored) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Long> parseLong(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.valueOf(value));
+        } catch (final NumberFormatException ignored) {
+            return Optional.empty();
         }
     }
 }

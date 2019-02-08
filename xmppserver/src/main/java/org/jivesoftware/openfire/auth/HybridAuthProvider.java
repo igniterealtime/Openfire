@@ -20,8 +20,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +79,22 @@ import org.slf4j.LoggerFactory;
 public class HybridAuthProvider implements AuthProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
+    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridAuthProvider.primaryProvider.className")
+        .setBaseClass(AuthProvider.class)
+        .setDefaultValue(DefaultAuthProvider.class)
+        .setDynamic(false)
+        .build();
+    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridAuthProvider.secondaryProvider.className")
+        .setBaseClass(AuthProvider.class)
+        .setDynamic(false)
+        .build();
+    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridAuthProvider.tertiaryProvider.className")
+        .setBaseClass(AuthProvider.class)
+        .setDynamic(false)
+        .build();
 
     private AuthProvider primaryProvider;
     private AuthProvider secondaryProvider;
@@ -90,54 +106,48 @@ public class HybridAuthProvider implements AuthProvider {
 
     public HybridAuthProvider() {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.className");
-        JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.className");
-        JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.className");
+        JiveGlobals.migrateProperty(PRIMARY_PROVIDER.getKey());
+        JiveGlobals.migrateProperty(SECONDARY_PROVIDER.getKey());
+        JiveGlobals.migrateProperty(TERTIARY_PROVIDER.getKey());
         JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.overrideList");
         JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.overrideList");
         JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.overrideList");
 
         // Load primary, secondary, and tertiary auth providers.
-        String primaryClass = JiveGlobals.getProperty(
-                "hybridAuthProvider.primaryProvider.className");
+        final Class primaryClass = PRIMARY_PROVIDER.getValue();
         if (primaryClass == null) {
             Log.error("A primary AuthProvider must be specified. Authentication will be disabled.");
             return;
         }
         try {
-            Class c = ClassUtils.forName(primaryClass);
-            primaryProvider = (AuthProvider)c.newInstance();
-            Log.debug("Primary auth provider: " + primaryClass);
+            primaryProvider = (AuthProvider)primaryClass.newInstance();
+            Log.debug("Primary auth provider: " + primaryClass.getName());
         }
         catch (Exception e) {
-            Log.error("Unable to load primary auth provider: " + primaryClass +
+            Log.error("Unable to load primary auth provider: " + primaryClass.getName() +
                     ". Authentication will be disabled.", e);
             return;
         }
 
-        String secondaryClass = JiveGlobals.getProperty(
-                "hybridAuthProvider.secondaryProvider.className");
+        final Class secondaryClass = SECONDARY_PROVIDER.getValue();
         if (secondaryClass != null) {
             try {
-                Class c = ClassUtils.forName(secondaryClass);
-                secondaryProvider = (AuthProvider)c.newInstance();
-                Log.debug("Secondary auth provider: " + secondaryClass);
+                secondaryProvider = (AuthProvider)secondaryClass.newInstance();
+                Log.debug("Secondary auth provider: " + secondaryClass.getName());
             }
             catch (Exception e) {
-                Log.error("Unable to load secondary auth provider: " + secondaryClass, e);
+                Log.error("Unable to load secondary auth provider: " + secondaryClass.getName(), e);
             }
         }
 
-        String tertiaryClass = JiveGlobals.getProperty(
-                "hybridAuthProvider.tertiaryProvider.className");
+        final Class tertiaryClass = TERTIARY_PROVIDER.getValue();
         if (tertiaryClass != null) {
             try {
-                Class c = ClassUtils.forName(tertiaryClass);
-                tertiaryProvider = (AuthProvider)c.newInstance();
-                Log.debug("Tertiary auth provider: " + tertiaryClass);
+                tertiaryProvider = (AuthProvider)tertiaryClass.newInstance();
+                Log.debug("Tertiary auth provider: " + tertiaryClass.getName());
             }
             catch (Exception e) {
-                Log.error("Unable to load tertiary auth provider: " + tertiaryClass, e);
+                Log.error("Unable to load tertiary auth provider: " + tertiaryClass.getName(), e);
             }
         }
 

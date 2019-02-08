@@ -1,11 +1,5 @@
 package org.jivesoftware.util;
 
-import org.apache.commons.text.StringEscapeUtils;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +7,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
@@ -69,6 +69,7 @@ public class ListPager<T> {
      * @param items                the list of items to display on the page
      * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
      */
+    @SuppressWarnings("WeakerAccess")
     public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final String... additionalFormFields) {
         this(request, response, items, item -> true, additionalFormFields);
     }
@@ -93,11 +94,11 @@ public class ListPager<T> {
         this.request = request;
         this.totalItemCount = items.size();
         this.filteredItemCount = filteredItems.size();
-        this.pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, initialPageSize), 1, PAGE_SIZES[PAGE_SIZES.length - 1]);
+        this.pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, initialPageSize), PAGE_SIZES[PAGE_SIZES.length - 1]);
         // Even with no filtered items, we want to display at least one page
         this.totalPages = Math.max(1, (int) Math.ceil((double)filteredItemCount / (double)pageSize));
         // Bound the current page between 1 and the total number of pages
-        this.currentPage = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1), 1, totalPages);
+        this.currentPage = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1), totalPages);
         this.firstItemOnPage = filteredItemCount == 0 ? 0 : (currentPage - 1) * pageSize + 1;
         this.lastItemOnPage = filteredItemCount == 0 ? 0 : Math.min(currentPage * pageSize, filteredItemCount);
         this.itemsOnPage = filteredItemCount == 0 ? Collections.emptyList() : filteredItems.subList(firstItemOnPage - 1, lastItemOnPage);
@@ -106,8 +107,8 @@ public class ListPager<T> {
         webManager.setRowsPerPage(requestURI, pageSize);
     }
 
-    private static int bound(final int value, final int minValue, final int maxValue) {
-        return Math.min(maxValue, Math.max(minValue, value));
+    private static int bound(final int value, final int maxValue) {
+        return Math.min(maxValue, Math.max(1, value));
     }
 
     /**
@@ -134,6 +135,7 @@ public class ListPager<T> {
     /**
      * @return the current page
      */
+    @SuppressWarnings("WeakerAccess")
     public int getCurrentPageNumber() {
         return currentPage;
     }
@@ -141,6 +143,7 @@ public class ListPager<T> {
     /**
      * @return the maximum number of items on the page
      */
+    @SuppressWarnings("unused")
     public int getPageSize() {
         return pageSize;
     }
@@ -179,7 +182,7 @@ public class ListPager<T> {
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
         sb.append(String.format("<select name='%s' onchange='return setPageSize(this.value);'>", REQUEST_PARAMETER_KEY_PAGE_SIZE));
-        for (int optionSize : PAGE_SIZES) {
+        for (final int optionSize : PAGE_SIZES) {
             sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
         }
         sb.append("</select>");
@@ -254,17 +257,18 @@ public class ListPager<T> {
      * @return a query string required to maintain the current list pager state
      */
     public static String getQueryString(final HttpServletRequest request, final char prefix, final String... additionalFormFields) {
-        final StringBuilder sb = new StringBuilder("");
+        final StringBuilder sb = new StringBuilder();
         char conjunction = prefix;
-        int currentPage = ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1);
+        final int currentPage = ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1);
         if (currentPage > 1) {
             sb.append(conjunction)
                 .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
             conjunction = '&';
         }
-        int pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, DEFAULT_PAGE_SIZE), 1, PAGE_SIZES[PAGE_SIZES.length - 1]);
+        final int pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, DEFAULT_PAGE_SIZE), PAGE_SIZES[PAGE_SIZES.length - 1]);
         if (pageSize != DEFAULT_PAGE_SIZE) {
-            sb.append(String.format("%s=%d", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize));
+            sb.append(conjunction)
+                .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize));
             conjunction = '&';
         }
         for (final String additionalFormField : additionalFormFields) {
@@ -276,7 +280,8 @@ public class ListPager<T> {
                 } catch (final UnsupportedEncodingException e) {
                    encodedValue = formFieldValue;
                 }
-                sb.append(conjunction).append(String.format("%s=%s", additionalFormField, encodedValue));
+                sb.append(conjunction)
+                    .append(String.format("%s=%s", additionalFormField, encodedValue));
                 conjunction = '&';
             }
         }
@@ -341,6 +346,10 @@ public class ListPager<T> {
             .append("\t\t\t\t}\n")
             .append("\t\t\t}\n")
             .append("\t\t}\n")
+            .append("\t\t\n")
+            .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE).append("'].value === '").append(pageSize).append("') formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE).append("'].disabled=true;\n")
+            .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE).append("'].value === '1') formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE).append("'].disabled=true;\n")
+            .append("\t\t\n")
             .append("\t\tformObject.submit();\n")
             .append("\t\treturn false;\n")
             .append("\t}\n")

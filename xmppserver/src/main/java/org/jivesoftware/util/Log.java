@@ -24,7 +24,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -48,44 +47,30 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 public final class Log {
 
     private static final org.slf4j.Logger Logger = org.slf4j.LoggerFactory.getLogger(Log.class);
-    public static final String LOG_DEBUG_ENABLED = "log.debug.enabled";
-    public static final String LOG_TRACE_ENABLED = "log.trace.enabled";
+    public static final SystemProperty<Boolean> DEBUG_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("log.debug.enabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .addListener(Log::setDebugEnabled)
+        .build();
+    /**
+     * @deprecated in favour of {@link #DEBUG_ENABLED}
+     */
+    @Deprecated
+    public static final String LOG_DEBUG_ENABLED = DEBUG_ENABLED.getKey();
+    public static final SystemProperty<Boolean> TRACE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("log.trace.enabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .addListener(Log::setTraceEnabled)
+        .build();
+    /**
+     * @deprecated in favour of {@link #TRACE_ENABLED}
+     */
+    @Deprecated
+    public static final String LOG_TRACE_ENABLED = TRACE_ENABLED.getKey();
     private static boolean debugEnabled = false;
     private static boolean traceEnabled = false;
-
-    // listen for changes to the log.debug.enabled property
-    static {
-        PropertyEventDispatcher.addListener(new PropertyEventListener() {
-            
-            @Override
-            public void propertySet(String property, Map<String, Object> params) {
-                enableLog(property, Boolean.parseBoolean(params.get("value").toString()));
-            }
-            
-            @Override
-            public void propertyDeleted(String property, Map<String, Object> params) {
-                enableLog(property, false);
-            }
-            
-            // ignore these events
-            @Override
-            public void xmlPropertySet(String property, Map<String, Object> params) { }
-            @Override
-            public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
-            
-            private void enableLog(String property, boolean enabled) {
-                switch (property) {
-                    case LOG_TRACE_ENABLED:
-                        setTraceEnabled(enabled);
-                        break;
-                    case LOG_DEBUG_ENABLED:
-                        setDebugEnabled(enabled);
-                        break;
-                }
-            }
-        });
-    }
-    
 
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.

@@ -459,7 +459,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     /**
-     * Sends an unavailable presence to the entities that send a directed (available) presence
+     * Sends an unavailable presence to the entities that sent a directed (available) presence
      * to other entities.
      *
      * @param update the unavailable presence sent by the user.

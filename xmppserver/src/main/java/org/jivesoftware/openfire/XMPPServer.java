@@ -48,6 +48,7 @@ import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -399,9 +400,9 @@ public class XMPPServer {
 
         JiveGlobals.migrateProperty("xmpp.domain");
 
-        JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
-        Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
-        Log.setTraceEnabled(JiveGlobals.getBooleanProperty(Log.LOG_TRACE_ENABLED, false));
+        JiveGlobals.migrateProperty(Log.DEBUG_ENABLED.getKey());
+        Log.setDebugEnabled(Log.DEBUG_ENABLED.getValue());
+        Log.setTraceEnabled(Log.TRACE_ENABLED.getValue());
 
         // Update server info
         xmppServerInfo = new XMPPServerInfoImpl(new Date());
@@ -505,7 +506,7 @@ public class XMPPServer {
             JiveGlobals.setXMLProperty("connectionProvider.className",
                 "org.jivesoftware.database.DefaultConnectionProvider");
 
-            JiveGlobals.setProperty("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
+            JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
                 org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
             JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
                 org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));

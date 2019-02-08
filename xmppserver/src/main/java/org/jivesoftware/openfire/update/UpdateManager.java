@@ -27,6 +27,9 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -58,9 +62,9 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginMetadata;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
@@ -79,6 +83,39 @@ import org.xmpp.packet.Message;
  * @author Gaston Dombiak
  */
 public class UpdateManager extends BasicModule {
+
+    private static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("update.service-enabled")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+    private static final SystemProperty<Boolean> NOTIFY_ADMINS = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("update.notify-admins")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+    static final SystemProperty<Instant> LAST_UPDATE_CHECK = SystemProperty.Builder.ofType(Instant.class)
+        .setKey("update.lastCheck")
+        .setDynamic(true)
+        .build();
+    private static final SystemProperty<Duration> UPDATE_FREQUENCY = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("update.frequency")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.HOURS)
+        .setDefaultValue(Duration.ofHours(48))
+        .setMinValue(Duration.ofHours(12))
+        .build();
+    private static final SystemProperty<String> PROXY_HOST = SystemProperty.Builder.ofType(String.class)
+        .setKey("update.proxy.host")
+        .setDynamic(true)
+        .build();
+    private static final SystemProperty<Integer> PROXY_PORT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("update.proxy.port")
+        .setDynamic(true)
+        .setDefaultValue(-1)
+        .setMinValue(-1)
+        .setMaxValue(65535)
+        .build();
 
     private static final Logger Log = LoggerFactory.getLogger(UpdateManager.class);
 
@@ -110,7 +147,7 @@ public class UpdateManager extends BasicModule {
     private Thread thread;
 
     /**
-     * Router to use for sending notitication messages to admins.
+     * Router to use for sending notification messages to admins.
      */
     private MessageRouter router;
     private String serverName;
@@ -118,6 +155,7 @@ public class UpdateManager extends BasicModule {
 
     public UpdateManager() {
         super("Update manager");
+        ENABLED.addListener(this::enableService);
     }
 
     @Override
@@ -155,13 +193,13 @@ public class UpdateManager extends BasicModule {
                                 Log.error("Error checking for updates", e);
                             }
                             // Keep track of the last time we checked for updates.
-                            long now = System.currentTimeMillis();
-                            JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
+                            final Instant lastUpdate = Instant.now();
+                            LAST_UPDATE_CHECK.setValue(lastUpdate);
                             // As an extra precaution, make sure that that the value
                             // we just set is saved. If not, return to make sure that
                             // no additional update checks are performed until Openfire
                             // is restarted.
-                            if (now != JiveGlobals.getLongProperty("update.lastCheck", 0)) {
+                            if(!lastUpdate.equals(LAST_UPDATE_CHECK.getValue())) {
                                 Log.error("Error: update service check did not save correctly. " +
                                         "Stopping update service.");
                                 return;
@@ -179,20 +217,16 @@ public class UpdateManager extends BasicModule {
             }
 
             private void waitForNextCheck() throws InterruptedException {
-                long lastCheck = JiveGlobals.getLongProperty("update.lastCheck", 0);
-                if (lastCheck == 0) {
+                final Instant lastCheck = LAST_UPDATE_CHECK.getValue();
+                if (lastCheck == null) {
                     // This is the first time the server is used (since we added this feature)
                     Thread.sleep(30000);
                 }
                 else {
-                    long elapsed = System.currentTimeMillis() - lastCheck;
-                    long frequency = getCheckFrequency() * JiveConstants.HOUR;
-                    // Sleep until we've waited the appropriate amount of time.
-                    while (elapsed < frequency) {
-                        Thread.sleep(frequency - elapsed);
-                        // Update the elapsed time. This check is necessary just in case the
-                        // thread woke up early.
-                        elapsed = System.currentTimeMillis() - lastCheck;
+                    final Duration updateFrequency = UPDATE_FREQUENCY.getValue();
+                    // This check is necessary just in case the thread woke up early.
+                    while (lastCheck.plus(updateFrequency).isAfter(Instant.now())) {
+                        Thread.sleep(Duration.between(Instant.now(), lastCheck.plus(updateFrequency)).toMillis());
                     }
                 }
             }
@@ -201,14 +235,21 @@ public class UpdateManager extends BasicModule {
         thread.start();
     }
 
+    private void stopService() {
+        if (thread != null) {
+            thread.interrupt();
+            thread = null;
+        }
+    }
+
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);
         router = server.getMessageRouter();
         serverName = server.getServerInfo().getXMPPDomain();
 
-        JiveGlobals.migrateProperty("update.service-enabled");
-        JiveGlobals.migrateProperty("update.notify-admins");
+        JiveGlobals.migrateProperty(ENABLED.getKey());
+        JiveGlobals.migrateProperty(NOTIFY_ADMINS.getKey());
     }
 
     /**
@@ -396,7 +437,7 @@ public class UpdateManager extends BasicModule {
      * @return true if the check for updates service is enabled.
      */
     public boolean isServiceEnabled() {
-        return JiveGlobals.getBooleanProperty("update.service-enabled", true);
+        return ENABLED.getValue();
     }
 
     /**
@@ -404,10 +445,15 @@ public class UpdateManager extends BasicModule {
      *
      * @param enabled true if the check for updates service is enabled.
      */
-    public void setServiceEnabled(boolean enabled) {
-        JiveGlobals.setProperty("update.service-enabled", enabled ? "true" : "false");
+    public void setServiceEnabled(final boolean enabled) {
+        ENABLED.setValue(enabled);
+    }
+
+    private void enableService(final boolean enabled) {
         if (enabled && thread == null) {
             startService();
+        } else if (!enabled && thread != null) {
+            stopService();
         }
     }
 
@@ -417,7 +463,7 @@ public class UpdateManager extends BasicModule {
      * @return true if admins should be notified by IM when new updates are available.
      */
     public boolean isNotificationEnabled() {
-        return JiveGlobals.getBooleanProperty("update.notify-admins", true);
+        return NOTIFY_ADMINS.getValue();
     }
 
     /**
@@ -425,33 +471,8 @@ public class UpdateManager extends BasicModule {
      *
      * @param enabled true if admins should be notified by IM when new updates are available.
      */
-    public void setNotificationEnabled(boolean enabled) {
-        JiveGlobals.setProperty("update.notify-admins", enabled ? "true" : "false");
-    }
-
-    /**
-     * Returns the frequency to check for updates. By default, this will happen every 48 hours.
-     * The frequency returned will never be less than 12 hours.
-     *
-     * @return the frequency to check for updates in hours.
-     */
-    public int getCheckFrequency() {
-        int frequency = JiveGlobals.getIntProperty("update.frequency", 48);
-        if (frequency < 12) {
-            return 12;
-        }
-        else {
-            return frequency;
-        }
-    }
-
-    /**
-     * Sets the frequency to check for updates. By default, this will happen every 48 hours.
-     *
-     * @param checkFrequency the frequency to check for updates.
-     */
-    public void setCheckFrequency(int checkFrequency) {
-        JiveGlobals.setProperty("update.frequency", Integer.toString(checkFrequency));
+    public void setNotificationEnabled(final boolean enabled) {
+        NOTIFY_ADMINS.setValue(enabled);
     }
 
     /**
@@ -461,7 +482,7 @@ public class UpdateManager extends BasicModule {
      * @return true if a proxy is being used to connect to igniterealtime.org.
      */
     public boolean isUsingProxy() {
-        return !getProxyHost().isEmpty() && getProxyPort() > 0;
+        return !StringUtils.isBlank(getProxyHost()) && getProxyPort() > 0;
     }
 
     /**
@@ -471,7 +492,7 @@ public class UpdateManager extends BasicModule {
      * @return the host of the proxy or null if no proxy is used.
      */
     public String getProxyHost() {
-        return JiveGlobals.getProperty("update.proxy.host", "");
+        return PROXY_HOST.getValue();
     }
 
     /**
@@ -481,14 +502,7 @@ public class UpdateManager extends BasicModule {
      * @param host the host of the proxy or null if no proxy is used.
      */
     public void setProxyHost(String host) {
-        if (host == null) {
-            // Remove the property
-            JiveGlobals.deleteProperty("update.proxy.host");
-        }
-        else {
-            // Create or update the property
-            JiveGlobals.setProperty("update.proxy.host", host);
-        }
+        PROXY_HOST.setValue(host);
     }
 
     /**
@@ -499,7 +513,7 @@ public class UpdateManager extends BasicModule {
      *         proxy is being used.
      */
     public int getProxyPort() {
-        return JiveGlobals.getIntProperty("update.proxy.port", -1);
+        return PROXY_PORT.getValue();
     }
 
     /**
@@ -510,7 +524,7 @@ public class UpdateManager extends BasicModule {
      *        proxy is being used.
      */
     public void setProxyPort(int port) {
-        JiveGlobals.setProperty("update.proxy.port", Integer.toString(port));
+        PROXY_PORT.setValue(port);
     }
 
     /**

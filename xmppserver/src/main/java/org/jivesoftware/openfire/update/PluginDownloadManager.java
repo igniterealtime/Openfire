@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.update;
 
+import java.time.Instant;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -85,8 +87,7 @@ public class PluginDownloadManager {
             updateManager.checkForPluginsUpdates(true);
 
             // Keep track of the last time we checked for updates
-            JiveGlobals.setProperty("update.lastCheck",
-                    String.valueOf(System.currentTimeMillis()));
+            UpdateManager.LAST_UPDATE_CHECK.setValue(Instant.now());
 
             return true;
         }

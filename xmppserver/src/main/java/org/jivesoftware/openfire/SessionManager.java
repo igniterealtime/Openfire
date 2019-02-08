@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +39,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -60,6 +60,12 @@ import org.xmpp.packet.Presence;
 public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
 
     private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
+    private static final SystemProperty<Integer> CONFLICT_LIMIT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.session.conflict-limit")
+        .setDynamic(true)
+        .setDefaultValue(0)
+        .setMinValue(-1)
+        .build();
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
@@ -176,7 +182,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             streamIDFactory = new BasicStreamIDFactory();
         }
         localSessionManager = new LocalSessionManager();
-        conflictLimit = JiveGlobals.getIntProperty("xmpp.session.conflict-limit", 0);
+        conflictLimit = CONFLICT_LIMIT.getValue();
     }
 
     /**
@@ -1214,7 +1220,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
     public void setConflictKickLimit(int limit) {
         conflictLimit = limit;
-        JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+        CONFLICT_LIMIT.setValue(limit);
     }
     /*
     @Override
@@ -1409,21 +1415,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
         else {
             streamIDFactory = new BasicStreamIDFactory();
-        }
-
-        String conflictLimitProp = JiveGlobals.getProperty("xmpp.session.conflict-limit");
-        if (conflictLimitProp == null) {
-            conflictLimit = 0;
-            JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
-        }
-        else {
-            try {
-                conflictLimit = Integer.parseInt(conflictLimitProp);
-            }
-            catch (NumberFormatException e) {
-                conflictLimit = 0;
-                JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
-            }
         }
 
         // Initialize caches.

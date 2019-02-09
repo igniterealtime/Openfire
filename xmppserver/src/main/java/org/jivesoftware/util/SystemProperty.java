@@ -97,7 +97,8 @@ public final class SystemProperty<T> {
         }
         final List<String> strings = Arrays.asList(value.split(","));
         Stream<Object> stream = strings.stream()
-            .map(singleValue -> FROM_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
+            .map(singleValue -> FROM_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty))
+            .filter(Objects::nonNull);
         if (systemProperty.sorted) {
             stream = stream.sorted();
         }
@@ -120,7 +121,8 @@ public final class SystemProperty<T> {
             }
             // noinspection unchecked
             Stream<String> stream = collection.stream()
-                .map(singleValue -> TO_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
+                .map(singleValue -> TO_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty))
+                .filter(Objects::nonNull);
             if(systemProperty.sorted) {
                 stream = stream.sorted();
             }
@@ -145,7 +147,8 @@ public final class SystemProperty<T> {
             }
             // noinspection unchecked
             Stream<String> stream = collection.stream()
-                .map(singleValue -> TO_DISPLAY_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
+                .map(singleValue -> TO_DISPLAY_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty))
+                .filter(Objects::nonNull);
             if(systemProperty.sorted) {
                 stream = stream.sorted();
             }
@@ -233,7 +236,6 @@ public final class SystemProperty<T> {
      * Removes all the properties for a specific plugin. This should be called by a plugin when it is unloaded to
      * allow it to be added again without a server restart
      */
-    @SuppressWarnings("WeakerAccess")
     public static void removePropertiesForPlugin(final String plugin) {
         getProperties().stream()
             .filter(systemProperty -> systemProperty.plugin.equals(plugin))
@@ -410,7 +412,8 @@ public final class SystemProperty<T> {
          * <li>{@link Duration} - for which a {@link ChronoUnit} must be specified, to indicate how the value will be saved, using {@link #setChronoUnit(ChronoUnit)}</li>
          * <li>{@link Instant}</li>
          * <li>{@link Class} - for which a base class must be specified from which values must be assignable to, using {@link #setBaseClass(Class)}</li>
-         * <li>{@link List} - for which a collection type must be specified, using {@link #setCollectionType(Class)}</li>
+         * <li>{@link List} - for which a collection type must be specified, using {@link #buildList(Class)}}</li>
+         * <li>{@link Set} - for which a collection type must be specified, using {@link #buildSet(Class)}}</li>
          * </ul>
          *
          * @param <T>   the type of SystemProperty
@@ -557,24 +560,6 @@ public final class SystemProperty<T> {
         }
 
         /**
-         * Sets the type of object that the list contains. This can be any of the non-Collection objects supported
-         * by {@link #ofType(Class)}.
-         *
-         * @param collectionType the type of object that the collection contains
-         * @return The current SystemProperty builder
-         */
-        public Builder<T> setCollectionType(final Class collectionType) {
-            if (!Collection.class.isAssignableFrom(clazz)) {
-                throw new IllegalArgumentException("The collection type can only set set for Collection properties");
-            }
-            if (Collections.class.isAssignableFrom(collectionType)) {
-                throw new IllegalArgumentException("A collection cannot contain a collection");
-            }
-            this.collectionType = collectionType;
-            return this;
-        }
-
-        /**
          * Validates the details of the SystemProperty, and generates one if it's valid.
          *
          * @return A SystemProperty object
@@ -590,7 +575,7 @@ public final class SystemProperty<T> {
             }
             final Class classToCheck;
             if (Collection.class.isAssignableFrom(clazz)) {
-                checkNotNull(collectionType, "The collection type must be set for collection properties");
+                checkNotNull(collectionType, "A collection type must be built using buildList() or buildSet()");
                 classToCheck = collectionType;
             } else {
                 classToCheck = clazz;
@@ -641,6 +626,35 @@ public final class SystemProperty<T> {
             final SystemProperty<T> property = new SystemProperty<>(this);
             PROPERTIES.put(key, property);
             return property;
+        }
+
+        @SuppressWarnings("unchecked")
+        public <C> SystemProperty<List<C>> buildList(final Class<C> listType) {
+            if (clazz != List.class) {
+                throw new IllegalArgumentException("Only list types can be built with buildList");
+            }
+            checkCollectionType(listType);
+            this.collectionType = listType;
+            return (SystemProperty<List<C>>) build();
+        }
+
+        @SuppressWarnings("unchecked")
+        public <C> SystemProperty<Set<C>> buildSet(final Class<C> listType) {
+            if (clazz != Set.class) {
+                throw new IllegalArgumentException("Only set types can be built with buildSet");
+            }
+            checkCollectionType(listType);
+            this.collectionType = listType;
+            return (SystemProperty<Set<C>>) build();
+        }
+
+        private void checkCollectionType(final Class collectionType) {
+            if (!FROM_STRING.containsKey(collectionType) || !TO_STRING.containsKey(collectionType) || !TO_DISPLAY_STRING.containsKey(collectionType)) {
+                throw new IllegalArgumentException("Cannot create a SystemProperty containing a collection of type " + collectionType.getName());
+            }
+            if (Collections.class.isAssignableFrom(collectionType)) {
+                throw new IllegalArgumentException("A collection cannot contain a collection");
+            }
         }
 
         private void checkNotNull(final Object value, final String s) {

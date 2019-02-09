@@ -36,14 +36,13 @@ import org.xmpp.packet.JID;
  */
 public class DefaultAdminProvider implements AdminProvider {
 
-    private static final SystemProperty<List> ADMIN_JIDS = SystemProperty.Builder.ofType(List.class)
-        .setCollectionType(String.class)
+    private static final SystemProperty<List<String>> ADMIN_JIDS = SystemProperty.Builder.ofType(List.class)
         .setKey("admin.authorizedJIDs")
         .setDefaultValue(Collections.emptyList())
         .setSorted(true)
         .setDynamic(true)
         .addListener(jids -> AdminManager.getInstance().refreshAdminAccounts())
-        .build();
+        .buildList(String.class);
     private static final Logger Log = LoggerFactory.getLogger(DefaultAdminProvider.class);
 
     /**
@@ -64,9 +63,7 @@ public class DefaultAdminProvider implements AdminProvider {
     @Override
     public List<JID> getAdmins() {
         // Add bare JIDs of users that are admins (may include remote users), primarily used to override/add to list of admin users
-        @SuppressWarnings("unchecked")
-        final List<String> jids = ADMIN_JIDS.getValue();
-        final List<JID> adminList = jids
+        final List<JID> adminList = ADMIN_JIDS.getValue()
             .stream()
             .map(jid -> {
                 try {

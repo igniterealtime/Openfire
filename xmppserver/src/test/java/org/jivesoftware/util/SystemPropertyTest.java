@@ -446,12 +446,11 @@ public class SystemPropertyTest {
     public void willCreateAListOfStringProperties() {
         final String key = "a list property";
 
-        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
-            .setCollectionType(String.class)
+        final SystemProperty<List<String>> property = SystemProperty.Builder.ofType(List.class)
             .setKey(key)
             .setDefaultValue(Collections.emptyList())
             .setDynamic(true)
-            .build();
+            .buildList(String.class);
 
         assertThat(property.getValue(), is(Collections.emptyList()));
         property.setValue(Arrays.asList("3", "2", "1"));
@@ -464,16 +463,15 @@ public class SystemPropertyTest {
     public void willCreateAListOfLongProperties() {
         final String key = "a list of longs property";
 
-        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
-            .setCollectionType(Long.class)
+        final SystemProperty<List<Long>> property = SystemProperty.Builder.ofType(List.class)
             .setKey(key)
             .setSorted(true)
             .setDefaultValue(Collections.emptyList())
             .setDynamic(true)
-            .build();
+            .buildList(Long.class);
 
         assertThat(property.getValue(), is(Collections.emptyList()));
-        property.setValue(Arrays.asList(3, 2, 1));
+        property.setValue(Arrays.asList(3L, 2L, 1L));
         assertThat(property.getValue(), is(Arrays.asList(1L, 2L, 3L)));
         assertThat(property.getDisplayValue(), is("1,2,3"));
         assertThat(JiveGlobals.getProperty(key), is("1,2,3"));
@@ -486,13 +484,12 @@ public class SystemPropertyTest {
     public void willCreateAListOfDurationProperties() {
         final String key = "a list of durations property";
 
-        final SystemProperty<List> property = SystemProperty.Builder.ofType(List.class)
-            .setCollectionType(Duration.class)
+        final SystemProperty<List<Duration>> property = SystemProperty.Builder.ofType(List.class)
             .setChronoUnit(ChronoUnit.HOURS)
             .setKey(key)
             .setDefaultValue(Collections.singletonList(Duration.ZERO))
             .setDynamic(true)
-            .build();
+            .buildList(Duration.class);
 
         assertThat(property.getValue(), is(Collections.singletonList(Duration.ZERO)));
         property.setValue(Arrays.asList(Duration.ofHours(1), Duration.ZERO));
@@ -505,13 +502,12 @@ public class SystemPropertyTest {
     public void willCreateASetOfStringProperties() {
         final String key = "a set property";
 
-        final SystemProperty<Set> property = SystemProperty.Builder.ofType(Set.class)
-            .setCollectionType(String.class)
+        final SystemProperty<Set<String>> property = SystemProperty.Builder.ofType(Set.class)
             .setKey(key)
             .setSorted(true)
             .setDefaultValue(Collections.emptySet())
             .setDynamic(true)
-            .build();
+            .buildSet(String.class);
 
         assertThat(property.getValue(), is(Collections.emptySet()));
         property.setValue(new HashSet<>(Arrays.asList("3", "2", "1", "2")));

@@ -447,6 +447,7 @@ public final class SystemProperty<T> {
          * <li>{@link Boolean} - for which a default value must be supplied</li>
          * <li>{@link Duration} - for which a {@link ChronoUnit} must be specified, to indicate how the value will be saved, using {@link #setChronoUnit(ChronoUnit)}</li>
          * <li>{@link Instant}</li>
+         * <li>{@link JID}</li>
          * <li>{@link Class} - for which a base class must be specified from which values must inherit, using {@link #setBaseClass(Class)}</li>
          * <li>any {@link Enum} - for which a default value must be supplied</li>
          * <li>{@link List} - for which a collection type must be specified, using {@link #buildList(Class)}</li>

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Represents a system property - also accessible via {@link JiveGlobals}. The only way to create a SystemProperty object
@@ -41,7 +42,7 @@ public final class SystemProperty<T> {
     private static final Map<Class, BiFunction<String, SystemProperty, Object>> FROM_STRING = new HashMap<>();
     private static final Map<Class, BiFunction<Object, SystemProperty, String>> TO_STRING = new HashMap<>();
     private static final Map<Class, BiFunction<Object, SystemProperty, String>> TO_DISPLAY_STRING = new HashMap<>();
-    private static final Set<Class> NULLABLE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(String.class, Class.class, Duration.class, Instant.class)));
+    private static final Set<Class> NULLABLE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(String.class, Class.class, Duration.class, Instant.class, JID.class)));
 
     static {
         // Populate the map that turns a Duration to a Long based on the ChronoUnit a property should be saved in
@@ -69,6 +70,17 @@ public final class SystemProperty<T> {
         FROM_STRING.put(Boolean.class, (value, systemProperty) -> Boolean.valueOf(value));
         FROM_STRING.put(Duration.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(longValue -> LONG_TO_DURATION.get(systemProperty.chronoUnit).apply(longValue)).orElse(null));
         FROM_STRING.put(Instant.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(Instant::ofEpochMilli).orElse(null));
+        FROM_STRING.put(JID.class, (value, systemProperty) -> {
+            if(value == null) {
+                return null;
+            }
+            try {
+                return new JID(value);
+            } catch(final Exception e) {
+                LOGGER.warn("Configured property {} is not a valid JID", value);
+                return null;
+            }
+        });
         FROM_STRING.put(Class.class, (value, systemProperty) -> {
             if(StringUtils.isBlank(value)) {
                 return null;
@@ -79,11 +91,11 @@ public final class SystemProperty<T> {
                 if (systemProperty.baseClass.isAssignableFrom(clazz)) {
                     return clazz;
                 } else {
-                    LOGGER.warn("Configured property {} is not an instance of {}, using default value instead", value, systemProperty.baseClass.getName());
+                    LOGGER.warn("Configured property {} is not an instance of {}", value, systemProperty.baseClass.getName());
                     return null;
                 }
             } catch (final ClassNotFoundException e) {
-                LOGGER.warn("Class {} was not found, using default value instead", value, e);
+                LOGGER.warn("Class {} was not found", value, e);
                 return null;
             }
         });
@@ -113,6 +125,7 @@ public final class SystemProperty<T> {
         TO_STRING.put(Boolean.class, (value, systemProperty) -> value.toString());
         TO_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : DURATION_TO_LONG.get(systemProperty.chronoUnit).apply((Duration) value).toString());
         TO_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : String.valueOf(((Instant)value).toEpochMilli()));
+        TO_STRING.put(JID.class, (value, systemProperty) -> value == null ? null : value.toString());
         TO_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_STRING.put(List.class, (value, systemProperty) -> {
             final Collection collection = (Collection) value;
@@ -139,6 +152,7 @@ public final class SystemProperty<T> {
         TO_DISPLAY_STRING.put(Boolean.class, (value, systemProperty) -> value.toString());
         TO_DISPLAY_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : org.jivesoftware.util.StringUtils.getFullElapsedTime((Duration)value));
         TO_DISPLAY_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : Date.from((Instant) value).toString());
+        TO_DISPLAY_STRING.put(JID.class, (value, systemProperty) -> value == null ? null : value.toString());
         TO_DISPLAY_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_DISPLAY_STRING.put(List.class, (value, systemProperty) -> {
             final Collection collection = (Collection) value;

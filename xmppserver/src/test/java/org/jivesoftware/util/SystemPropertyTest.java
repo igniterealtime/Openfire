@@ -554,4 +554,29 @@ public class SystemPropertyTest {
         JiveGlobals.setProperty(key, jidString);
         assertThat(property.getValue(),is(nullValue()));
     }
+
+    private enum TestEnum {
+        TEST_1,
+        TEST_2
+    }
+
+    @Test
+    public void willBuildAnEnumProperty() {
+
+        final String key = "an enum property";
+
+        final SystemProperty<TestEnum> property = SystemProperty.Builder.ofType(TestEnum.class)
+            .setKey(key)
+            .setDefaultValue(TestEnum.TEST_1)
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(),is(TestEnum.TEST_1));
+        property.setValue(TestEnum.TEST_2);
+        assertThat(property.getValue(),is(TestEnum.TEST_2));
+        assertThat(property.getDisplayValue(), is("TEST_2"));
+        assertThat(JiveGlobals.getProperty(key), is("TEST_2"));
+    }
+
+
 }

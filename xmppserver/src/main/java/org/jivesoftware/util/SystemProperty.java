@@ -31,7 +31,7 @@ import org.xmpp.packet.JID;
  * Represents a system property - also accessible via {@link JiveGlobals}. The only way to create a SystemProperty object
  * is to use a {@link Builder}.
  *
- * @param <T> The type of system property. Can be a {@link String}, {@link Integer}, {@link Long}, {@link Boolean} or {@link Duration}.
+ * @param <T> The type of system property.
  */
 public final class SystemProperty<T> {
 
@@ -81,6 +81,17 @@ public final class SystemProperty<T> {
                 return null;
             }
         });
+        FROM_STRING.put(Enum.class, (value, systemProperty) -> {
+            if (StringUtils.isBlank(value)) {
+                return null;
+            }
+            for (final Object constant : systemProperty.defaultValue.getClass().getEnumConstants()) {
+                if (((Enum) constant).name().equals(value)) {
+                    return constant;
+                }
+            }
+            return null;
+        });
         FROM_STRING.put(Class.class, (value, systemProperty) -> {
             if(StringUtils.isBlank(value)) {
                 return null;
@@ -126,6 +137,7 @@ public final class SystemProperty<T> {
         TO_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : DURATION_TO_LONG.get(systemProperty.chronoUnit).apply((Duration) value).toString());
         TO_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : String.valueOf(((Instant)value).toEpochMilli()));
         TO_STRING.put(JID.class, (value, systemProperty) -> value == null ? null : value.toString());
+        TO_STRING.put(Enum.class, (value, systemProperty) -> value == null ? null : ((Enum)value).name());
         TO_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_STRING.put(List.class, (value, systemProperty) -> {
             final Collection collection = (Collection) value;
@@ -153,6 +165,7 @@ public final class SystemProperty<T> {
         TO_DISPLAY_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : org.jivesoftware.util.StringUtils.getFullElapsedTime((Duration)value));
         TO_DISPLAY_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : Date.from((Instant) value).toString());
         TO_DISPLAY_STRING.put(JID.class, (value, systemProperty) -> value == null ? null : value.toString());
+        TO_DISPLAY_STRING.put(Enum.class, (value, systemProperty) -> value == null ? null : ((Enum)value).name());
         TO_DISPLAY_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_DISPLAY_STRING.put(List.class, (value, systemProperty) -> {
             final Collection collection = (Collection) value;
@@ -267,13 +280,22 @@ public final class SystemProperty<T> {
         return Optional.ofNullable(PROPERTIES.get(key));
     }
 
+    // Enums are a special case
+    private Class getConverterClass() {
+        if(Enum.class.isAssignableFrom(clazz)) {
+            return Enum.class;
+        } else {
+            return clazz;
+        }
+    }
+
     /**
      * @return the current value of the SystemProperty, or the default value if it is not currently set to within the
      * configured constraints. {@code null} if the property has not been set and there is no default value.
      */
     @SuppressWarnings("unchecked")
     public T getValue() {
-        final T value = (T) FROM_STRING.get(clazz).apply(JiveGlobals.getProperty(key), this);
+        final T value = (T) FROM_STRING.get(getConverterClass()).apply(JiveGlobals.getProperty(key), this);
         if (value == null || (Collection.class.isAssignableFrom(value.getClass()) && ((Collection) value).isEmpty())) {
             return defaultValue;
         }
@@ -294,14 +316,14 @@ public final class SystemProperty<T> {
      * @return the value of this property as saved in the ofProperty table. {@code null} if there is no current value and the default is not set.
      */
     public String getValueAsSaved() {
-        return TO_STRING.get(clazz).apply(getValue(), this);
+        return TO_STRING.get(getConverterClass()).apply(getValue(), this);
     }
 
     /**
      * @return the value a human readable value of this property. {@code null} if there is no current value and the default is not set.
      */
     public String getDisplayValue() {
-        return TO_DISPLAY_STRING.get(clazz).apply(getValue(), this);
+        return TO_DISPLAY_STRING.get(getConverterClass()).apply(getValue(), this);
     }
 
     /**
@@ -315,7 +337,7 @@ public final class SystemProperty<T> {
      * @return the value a human readable value of this property. {@code null} if the default value is not configured.
      */
     public String getDefaultDisplayValue() {
-        return TO_DISPLAY_STRING.get(clazz).apply(defaultValue, this);
+        return TO_DISPLAY_STRING.get(getConverterClass()).apply(defaultValue, this);
     }
 
     /**
@@ -325,7 +347,7 @@ public final class SystemProperty<T> {
      * @param value the new value for the SystemProperty
      */
     public void setValue(final T value) {
-        JiveGlobals.setProperty(key, TO_STRING.get(clazz).apply(value, this), isEncrypted());
+        JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
     }
 
     /**
@@ -425,9 +447,10 @@ public final class SystemProperty<T> {
          * <li>{@link Boolean} - for which a default value must be supplied</li>
          * <li>{@link Duration} - for which a {@link ChronoUnit} must be specified, to indicate how the value will be saved, using {@link #setChronoUnit(ChronoUnit)}</li>
          * <li>{@link Instant}</li>
-         * <li>{@link Class} - for which a base class must be specified from which values must be assignable to, using {@link #setBaseClass(Class)}</li>
-         * <li>{@link List} - for which a collection type must be specified, using {@link #buildList(Class)}}</li>
-         * <li>{@link Set} - for which a collection type must be specified, using {@link #buildSet(Class)}}</li>
+         * <li>{@link Class} - for which a base class must be specified from which values must inherit, using {@link #setBaseClass(Class)}</li>
+         * <li>any {@link Enum} - for which a default value must be supplied</li>
+         * <li>{@link List} - for which a collection type must be specified, using {@link #buildList(Class)}</li>
+         * <li>{@link Set} - for which a collection type must be specified, using {@link #buildSet(Class)}</li>
          * </ul>
          *
          * @param <T>   the type of SystemProperty
@@ -435,7 +458,8 @@ public final class SystemProperty<T> {
          * @return A SystemProperty builder
          */
         public static <T> Builder<T> ofType(final Class<T> clazz) {
-            if (!FROM_STRING.containsKey(clazz) || !TO_STRING.containsKey(clazz) || !TO_DISPLAY_STRING.containsKey(clazz)) {
+            if (!Enum.class.isAssignableFrom(clazz)
+                && (!FROM_STRING.containsKey(clazz) || !TO_STRING.containsKey(clazz) || !TO_DISPLAY_STRING.containsKey(clazz))) {
                 throw new IllegalArgumentException("Cannot create a SystemProperty of type " + clazz.getName());
             }
             return new Builder<>(clazz);

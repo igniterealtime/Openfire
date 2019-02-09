@@ -10,8 +10,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.jivesoftware.Fixtures;
@@ -497,4 +500,27 @@ public class SystemPropertyTest {
         assertThat(property.getDisplayValue(), is("1 hour,0 ms"));
         assertThat(JiveGlobals.getProperty(key), is("1,0"));
     }
+
+    @Test
+    public void willCreateASetOfStringProperties() {
+        final String key = "a set property";
+
+        final SystemProperty<Set> property = SystemProperty.Builder.ofType(Set.class)
+            .setCollectionType(String.class)
+            .setKey(key)
+            .setSorted(true)
+            .setDefaultValue(Collections.emptySet())
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(), is(Collections.emptySet()));
+        property.setValue(new HashSet<>(Arrays.asList("3", "2", "1", "2")));
+        assertThat(property.getValue(), is(new LinkedHashSet<>(Arrays.asList("1", "2", "3"))));
+        assertThat(property.getDisplayValue(), is("1,2,3"));
+        assertThat(JiveGlobals.getProperty(key), is("1,2,3"));
+        JiveGlobals.setProperty(key, "3,2,1,3");
+        assertThat(property.getValue(), is(new LinkedHashSet<>(Arrays.asList("1", "2", "3"))));
+        assertThat(property.getDisplayValue(), is("1,2,3"));
+    }
+
 }

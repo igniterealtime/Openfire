@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.ldap.LdapAuthProvider;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.xmpp.packet.JID;
 
 public class SystemPropertyTest {
 
@@ -519,4 +520,38 @@ public class SystemPropertyTest {
         assertThat(property.getDisplayValue(), is("1,2,3"));
     }
 
+    @Test
+    public void willBuildAJIDProperty() {
+
+        final String jidString = "test-user@test-domain/test-resource";
+        final JID jid = new JID(jidString);
+        final String key = "a jid property";
+
+        final SystemProperty<JID> property = SystemProperty.Builder.ofType(JID.class)
+            .setKey(key)
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(),is(nullValue()));
+        property.setValue(jid);
+        assertThat(property.getValue(),is(jid));
+        assertThat(property.getDisplayValue(), is(jidString));
+        assertThat(JiveGlobals.getProperty(key), is(jidString));
+    }
+
+    @Test
+    public void willReturnNullForInvalidJID() {
+
+        final String jidString = "@test-domain";
+        final String key = "an invalid jid property";
+
+        final SystemProperty<JID> property = SystemProperty.Builder.ofType(JID.class)
+            .setKey(key)
+            .setDynamic(true)
+            .build();
+
+        assertThat(property.getValue(),is(nullValue()));
+        JiveGlobals.setProperty(key, jidString);
+        assertThat(property.getValue(),is(nullValue()));
+    }
 }

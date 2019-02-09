@@ -18,9 +18,7 @@ package org.jivesoftware.openfire.admin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.StringTokenizer;
-import java.util.stream.Collectors;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
@@ -36,13 +34,13 @@ import org.xmpp.packet.JID;
  */
 public class DefaultAdminProvider implements AdminProvider {
 
-    private static final SystemProperty<List<String>> ADMIN_JIDS = SystemProperty.Builder.ofType(List.class)
+    private static final SystemProperty<List<JID>> ADMIN_JIDS = SystemProperty.Builder.ofType(List.class)
         .setKey("admin.authorizedJIDs")
         .setDefaultValue(Collections.emptyList())
         .setSorted(true)
         .setDynamic(true)
         .addListener(jids -> AdminManager.getInstance().refreshAdminAccounts())
-        .buildList(String.class);
+        .buildList(JID.class);
     private static final Logger Log = LoggerFactory.getLogger(DefaultAdminProvider.class);
 
     /**
@@ -63,18 +61,7 @@ public class DefaultAdminProvider implements AdminProvider {
     @Override
     public List<JID> getAdmins() {
         // Add bare JIDs of users that are admins (may include remote users), primarily used to override/add to list of admin users
-        final List<JID> adminList = ADMIN_JIDS.getValue()
-            .stream()
-            .map(jid -> {
-                try {
-                    return new JID(jid);
-                } catch( final Exception e) {
-                    Log.warn("Invalid JID found in {} system property: {}", ADMIN_JIDS.getKey(), jid, e);
-                    return null;
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+        final List<JID> adminList = ADMIN_JIDS.getValue();
         if (adminList.isEmpty()) {
             // Add default admin account when none was specified
             return Collections.singletonList(new JID("admin", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true));
@@ -90,7 +77,7 @@ public class DefaultAdminProvider implements AdminProvider {
      */
     @Override
     public void setAdmins(final List<JID> admins) {
-        ADMIN_JIDS.setValue(admins.stream().map(JID::toBareJID).collect(Collectors.toList()));
+        ADMIN_JIDS.setValue(admins);
     }
 
     /**

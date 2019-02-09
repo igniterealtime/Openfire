@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,18 +87,21 @@ public final class SystemProperty<T> {
                 return null;
             }
         });
-        FROM_STRING.put(List.class, (value, systemProperty) -> {
-            if(StringUtils.isEmpty(value)) {
-                return null;
-            }
-            final List<String> strings = Arrays.asList(value.split(","));
-            Stream<Object> stream = strings.stream()
-                .map(singleValue -> FROM_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
-            if(systemProperty.sorted) {
-                stream = stream.sorted();
-            }
-            return stream.collect(Collectors.toList());
-        });
+        FROM_STRING.put(List.class, (value, systemProperty) -> getObjectStream(value, systemProperty).collect(Collectors.toList()));
+        FROM_STRING.put(Set.class, (value, systemProperty) -> getObjectStream(value, systemProperty).collect(Collectors.toCollection(LinkedHashSet::new)));
+    }
+
+    private static Stream<Object> getObjectStream(final String value, final SystemProperty systemProperty) {
+        if (StringUtils.isEmpty(value)) {
+            return Stream.empty();
+        }
+        final List<String> strings = Arrays.asList(value.split(","));
+        Stream<Object> stream = strings.stream()
+            .map(singleValue -> FROM_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
+        if (systemProperty.sorted) {
+            stream = stream.sorted();
+        }
+        return stream;
     }
 
     static {
@@ -110,18 +114,19 @@ public final class SystemProperty<T> {
         TO_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : String.valueOf(((Instant)value).toEpochMilli()));
         TO_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_STRING.put(List.class, (value, systemProperty) -> {
-            final List listValue = (List) value;
-            if (listValue == null || listValue.isEmpty()) {
+            final Collection collection = (Collection) value;
+            if (collection == null || collection.isEmpty()) {
                 return null;
             }
             // noinspection unchecked
-            Stream<String> stream = listValue.stream()
+            Stream<String> stream = collection.stream()
                 .map(singleValue -> TO_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
             if(systemProperty.sorted) {
                 stream = stream.sorted();
             }
             return stream.collect(Collectors.joining(","));
         });
+        TO_STRING.put(Set.class, TO_STRING.get(List.class));
     }
 
     static {
@@ -134,15 +139,19 @@ public final class SystemProperty<T> {
         TO_DISPLAY_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : Date.from((Instant) value).toString());
         TO_DISPLAY_STRING.put(Class.class, (value, systemProperty) -> value == null ? null : ((Class)value).getName());
         TO_DISPLAY_STRING.put(List.class, (value, systemProperty) -> {
-            final List listValue = (List) value;
-            if (listValue == null || listValue.isEmpty()) {
+            final Collection collection = (Collection) value;
+            if (collection == null || collection.isEmpty()) {
                 return null;
             }
             // noinspection unchecked
-            return ((Stream<String>) listValue.stream()
-                .map(singleValue -> TO_DISPLAY_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty)))
-                .collect(Collectors.joining(","));
+            Stream<String> stream = collection.stream()
+                .map(singleValue -> TO_DISPLAY_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty));
+            if(systemProperty.sorted) {
+                stream = stream.sorted();
+            }
+            return stream.collect(Collectors.joining(","));
         });
+        TO_DISPLAY_STRING.put(Set.class, TO_DISPLAY_STRING.get(List.class));
     }
 
     static {
@@ -248,13 +257,16 @@ public final class SystemProperty<T> {
      */
     @SuppressWarnings("unchecked")
     public T getValue() {
-        final T value = (T) Optional.ofNullable(FROM_STRING.get(clazz).apply(JiveGlobals.getProperty(key), this)).orElse(defaultValue);
-        if (minValue != null && value != null && ((Comparable) minValue).compareTo(value) > 0) {
+        final T value = (T) FROM_STRING.get(clazz).apply(JiveGlobals.getProperty(key), this);
+        if (value == null || (Collection.class.isAssignableFrom(value.getClass()) && ((Collection) value).isEmpty())) {
+            return defaultValue;
+        }
+        if (minValue != null && ((Comparable) minValue).compareTo(value) > 0) {
             LOGGER.warn("Configured value of {} is less than the minimum value of {} for the SystemProperty {} - will use default value of {} instead",
                 value, minValue, key, defaultValue);
             return defaultValue;
         }
-        if (maxValue != null && value != null && ((Comparable) maxValue).compareTo(value) < 0) {
+        if (maxValue != null && ((Comparable) maxValue).compareTo(value) < 0) {
             LOGGER.warn("Configured value of {} is more than the maximum value of {} for the SystemProperty {} - will use default value of {} instead",
                 value, maxValue, key, defaultValue);
             return defaultValue;
@@ -585,11 +597,11 @@ public final class SystemProperty<T> {
             }
 
             if (sorted) {
-                if (!List.class.isAssignableFrom(clazz)) {
-                    throw new IllegalArgumentException("Only List properties can be sorted");
+                if (!Collection.class.isAssignableFrom(clazz)) {
+                    throw new IllegalArgumentException("Only Collection properties can be sorted");
                 }
                 if (!Comparable.class.isAssignableFrom(classToCheck)) {
-                    throw new IllegalArgumentException("Only List properties containing Comparable elements can be sorted");
+                    throw new IllegalArgumentException("Only Collection properties containing Comparable elements can be sorted");
                 }
             }
 

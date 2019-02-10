@@ -14,12 +14,12 @@ import org.jivesoftware.openfire.muc.MUCRoom;
  * 2016-1-14
  */
 public class LocalMUCRoomManager {
-    private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
+    private final Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
      
     public int getNumberChatRooms(){
         return rooms.size();
     }
-    public void addRoom(String roomname,LocalMUCRoom room){
+    public void addRoom(final String roomname, final LocalMUCRoom room){
         rooms.put(roomname, room);
         GroupEventDispatcher.addListener(room);
     }
@@ -28,19 +28,21 @@ public class LocalMUCRoomManager {
         return rooms.values();
     }
     
-    public LocalMUCRoom getRoom(String roomname){
+    public LocalMUCRoom getRoom(final String roomname){
         return rooms.get(roomname);
     }
     
-    public MUCRoom removeRoom(String roomname){
+    public LocalMUCRoom removeRoom(final String roomname){
         //memory leak will happen if we forget remove it from GroupEventDispatcher
-        if(rooms.containsKey(roomname))
-            GroupEventDispatcher.removeListener((LocalMUCRoom) rooms.get(roomname));
-        return	rooms.remove(roomname);
+        final LocalMUCRoom room = rooms.remove(roomname);
+        if (room != null) {
+            GroupEventDispatcher.removeListener(room);
+        }
+        return room;
     }
     
-    public void cleanupRooms(Date cleanUpDate) {
-        for (MUCRoom room : getRooms()) {
+    public void cleanupRooms(final Date cleanUpDate) {
+        for (final MUCRoom room : getRooms()) {
             if (room.getEmptyDate() != null && room.getEmptyDate().before(cleanUpDate)) {
                 removeRoom(room.getName());
             }

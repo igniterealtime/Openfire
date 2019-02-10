@@ -756,19 +756,16 @@ public class GroupManager {
     }
 
     private void evictCachedPaginatedGroupNames() {
-        groupMetaCache.keySet()
-            .removeIf( key -> key.startsWith( GROUP_NAMES_KEY ) );
+        groupMetaCache.keySet().stream()
+            .filter(key -> key.startsWith(GROUP_NAMES_KEY))
+            .forEach(key -> groupMetaCache.remove(key));
     }
 
     private void evictCachedUserSharedGroups() {
         synchronized (USER_SHARED_GROUPS_KEY) {
-            groupMetaCache.keySet()
-                .removeIf( key -> key.startsWith( USER_SHARED_GROUPS_KEY ) );
-            for (Map.Entry<String, Serializable> entry : groupMetaCache.entrySet()) {
-                if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
-                    groupMetaCache.remove(entry.getKey());
-                }
-            }
+            groupMetaCache.keySet().stream()
+                .filter(key -> key.startsWith(USER_SHARED_GROUPS_KEY) || key.startsWith(GROUP_NAMES_KEY))
+                .forEach(key -> groupMetaCache.remove(key));
         }
     }
 

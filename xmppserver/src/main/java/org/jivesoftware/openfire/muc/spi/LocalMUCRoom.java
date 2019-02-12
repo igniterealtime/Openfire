@@ -1183,42 +1183,49 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             jid = frag.element("item").attributeValue("jid");
         }
         for (MUCRole occupant : occupantsByFullJID.values()) {
-            if (!occupant.isLocal()) {
-                continue;
-            }
-            // Don't include the occupant's JID if the room is semi-anon and the new occupant
-            // is not a moderator
-            if (!canAnyoneDiscoverJID()) {
-                if (MUCRole.Role.moderator == occupant.getRole()) {
-                    frag.element("item").addAttribute("jid", jid);
+            try
+            {
+                if (!occupant.isLocal()) {
+                    continue;
                 }
-                else {
-                    frag.element("item").addAttribute("jid", null);
-                }
-            }
-            // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
-            if (occupant.getPresence().getFrom().equals(to)) {
-                Presence selfPresence = presence.createCopy();
-                Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                fragSelfPresence.addElement("status").addAttribute("code", "110");
-
-                // Only in the context of entering the room status code 100, 201 and 210 should be sent.
-                // http://xmpp.org/registrar/mucstatus.html
-                if (presenceRequest.isJoinPresence()) {
-                    boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
-                    if (canAnyoneDiscoverJID()) {
-                        // // XEP-0045: Example 26.
-                        // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
-                        fragSelfPresence.addElement("status").addAttribute("code", "100");
+                // Don't include the occupant's JID if the room is semi-anon and the new occupant
+                // is not a moderator
+                if (!canAnyoneDiscoverJID()) {
+                    if (MUCRole.Role.moderator == occupant.getRole()) {
+                        frag.element("item").addAttribute("jid", jid);
                     }
-                    if (isRoomNew) {
-                        fragSelfPresence.addElement("status").addAttribute("code", "201");
+                    else {
+                        frag.element("item").addAttribute("jid", null);
                     }
                 }
+                // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
+                if (occupant.getPresence().getFrom().equals(to)) {
+                    Presence selfPresence = presence.createCopy();
+                    Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    fragSelfPresence.addElement("status").addAttribute("code", "110");
 
-                occupant.send(selfPresence);
-            } else {
-                occupant.send(presence);
+                    // Only in the context of entering the room status code 100, 201 and 210 should be sent.
+                    // http://xmpp.org/registrar/mucstatus.html
+                    if (presenceRequest.isJoinPresence()) {
+                        boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
+                        if (canAnyoneDiscoverJID()) {
+                            // // XEP-0045: Example 26.
+                            // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+                            fragSelfPresence.addElement("status").addAttribute("code", "100");
+                        }
+                        if (isRoomNew) {
+                            fragSelfPresence.addElement("status").addAttribute("code", "201");
+                        }
+                    }
+
+                    occupant.send(selfPresence);
+                } else {
+                    occupant.send(presence);
+                }
+            }
+            catch ( Exception e )
+            {
+                Log.warn( "An unexpected exception prevented a presence update from {} to be broadcasted to {}.", presence.getFrom(), occupant.getUserAddress(), e );
             }
         }
     }
@@ -1240,10 +1247,18 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         roomHistory.addMessage(message);
         // Send message to occupants connected to this JVM
         for (MUCRole occupant : occupantsByFullJID.values()) {
-            // Do not send broadcast messages to deaf occupants or occupants hosted in
-            // other cluster nodes
-            if (occupant.isLocal() && !occupant.isVoiceOnly()) {
-                occupant.send(message);
+            try
+            {
+                // Do not send broadcast messages to deaf occupants or occupants hosted in
+                // other cluster nodes
+                if ( occupant.isLocal() && !occupant.isVoiceOnly() )
+                {
+                    occupant.send( message );
+                }
+            }
+            catch ( Exception e )
+            {
+                Log.warn( "An unexpected exception prevented a message from {} to be broadcasted to {}.", message.getFrom(), occupant.getUserAddress(), e );
             }
         }
         if (messageRequest.isOriginator() && isLogEnabled()) {

@@ -20,6 +20,8 @@ import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Presence;
 
 import java.io.IOException;
@@ -35,6 +37,8 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
+    private static final Logger Log = LoggerFactory.getLogger( BroadcastPresenceRequest.class );
+
     private Presence presence;
 
     private boolean isJoinPresence;
@@ -67,7 +71,14 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
         execute(new Runnable() {
             @Override
             public void run() {
-                getRoom().broadcast(BroadcastPresenceRequest.this);
+                try
+                {
+                    getRoom().broadcast( BroadcastPresenceRequest.this );
+                }
+                catch ( Exception e )
+                {
+                    Log.warn( "An unexpected exception occurred while trying to broadcast a presence update from {} in the room {}", presence.getFrom(), getRoom().getJID() );
+                }
             }
         });
     }

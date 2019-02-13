@@ -67,7 +67,7 @@ public final class SystemProperty<T> {
         FROM_STRING.put(String.class, (value, systemProperty) -> value);
         FROM_STRING.put(Integer.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseInteger(value).orElse(null));
         FROM_STRING.put(Long.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).orElse(null));
-        FROM_STRING.put(Boolean.class, (value, systemProperty) -> Boolean.valueOf(value));
+        FROM_STRING.put(Boolean.class, (value, systemProperty) -> value == null ? null : Boolean.valueOf(value));
         FROM_STRING.put(Duration.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(longValue -> LONG_TO_DURATION.get(systemProperty.chronoUnit).apply(longValue)).orElse(null));
         FROM_STRING.put(Instant.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(Instant::ofEpochMilli).orElse(null));
         FROM_STRING.put(JID.class, (value, systemProperty) -> {

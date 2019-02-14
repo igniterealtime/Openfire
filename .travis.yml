@@ -21,7 +21,7 @@ script:
 - git clone --depth 1 https://github.com/igniterealtime/Smack.git smack
 - wget https://services.gradle.org/distributions/gradle-5.2.1-bin.zip
 - unzip -d smack gradle-5.2.1-bin.zip
-- (cd smack; ./gradle-5.2.1/bin/gradle integrationTest -Dsinttest.service=localhost -Dsinttest.securityMode=disabled -Dsinttest.adminAccountUsername=admin -Dsinttest.adminAccountPassword=admin -Dsinttest.disabledTests=MultiUserChatIntegrationTest,MoodIntegrationTest,StreamManagementTest,MultiUserChatLowLevelIntegrationTest )
+- (cd smack; ./gradle-5.2.1/bin/gradle integrationTest -Dsinttest.service=localhost -Dsinttest.securityMode=disabled -Dsinttest.replyTimeout=60000 -Dsinttest.adminAccountUsername=admin -Dsinttest.adminAccountPassword=admin -Dsinttest.disabledTests=MultiUserChatIntegrationTest,MoodIntegrationTest,StreamManagementTest,MultiUserChatLowLevelIntegrationTest )
 after_failure:
 - cat distribution/target/distribution-base/logs/all.log
 install: true

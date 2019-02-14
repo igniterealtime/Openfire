@@ -1,6 +1,6 @@
 #!/bin/sh
-set -x
-env
+#set -x
+#env
 #
 #
 

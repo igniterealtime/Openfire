@@ -2,6 +2,8 @@ sudo: false
 language: java
 addons:
   hostname: example.org
+  hosts:
+    - example.org
 jdk:
 - oraclejdk8
 cache:

@@ -1,5 +1,9 @@
 sudo: false
 language: java
+addons:
+  hostname: example.org
+  hosts:
+    - example.org
 jdk:
 - oraclejdk8
 cache:
@@ -10,7 +14,9 @@ before_install:
 - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
 before_script:
 - gem install travis
-script: mvn verify -P ci
+script:
+  - mvn verify -P ci
+  - TERM="dumb" ./runIntegrationTests -g
 install: true
 deploy:
   provider: script

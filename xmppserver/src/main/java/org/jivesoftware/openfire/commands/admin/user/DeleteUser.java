@@ -27,6 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,31 +66,53 @@ public class DeleteUser extends AdHocCommand {
         }
         Map<String, List<String>> data = sessionData.getData();
 
-        // Let's create the jid and check that they are a local user
-        JID account;
-        try {
-            account = new JID(get(data, "accountjid", 0));
+        // Let's create the jids and check that they are a local user
+        boolean requestError = false;
+        final List<User> toDelete = new ArrayList<>();
+        for ( final String accountjid : data.get( "accountjids" ))
+        {
+            JID account;
+            try
+            {
+                account = new JID( accountjid );
+
+                if ( !XMPPServer.getInstance().isLocal( account ) )
+                {
+                    note.addAttribute( "type", "error" );
+                    note.setText( "Cannot delete remote user: " + accountjid );
+                    requestError = true;
+                }
+                else
+                {
+                    User user = UserManager.getInstance().getUser( account.getNode() );
+                    toDelete.add( user );
+                }
+            }
+            catch ( NullPointerException npe )
+            {
+                note.addAttribute( "type", "error" );
+                note.setText( "JID required parameter." );
+                requestError = true;
+            }
+            catch ( UserNotFoundException e )
+            {
+                note.addAttribute( "type", "error" );
+                note.setText( "User not found: " + accountjid );
+                requestError = true;
+            }
         }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("JID required parameter.");
-            return;
-        }
-        if (!XMPPServer.getInstance().isLocal(account)) {
-            note.addAttribute("type", "error");
-            note.setText("Cannot delete remote user.");
+
+        if ( requestError )
+        {
+            // We've collected all errors. Return without deleting anything.
             return;
         }
 
-        try {
-            User user = UserManager.getInstance().getUser(account.getNode());
+        // No errors. Delete all users.
+        for ( final User user : toDelete ) {
             UserManager.getInstance().deleteUser(user);
         }
-        catch (UserNotFoundException e) {
-            note.addAttribute("type", "error");
-            note.setText("User not found.");
-            return;
-        }
+
         // Answer that the operation was successful
         note.addAttribute("type", "info");
         note.setText("Operation finished successfully");
@@ -98,8 +121,8 @@ public class DeleteUser extends AdHocCommand {
     @Override
     protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Deleting a user");
-        form.addInstruction("Fill out this form to delete a user.");
+        form.setTitle("Deleting one or more users");
+        form.addInstruction("Fill out this form to delete users.");
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -107,9 +130,9 @@ public class DeleteUser extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
-        field.setType(FormField.Type.jid_single);
-        field.setLabel("The Jabber ID for the account to be deleted");
-        field.setVariable("accountjid");
+        field.setType(FormField.Type.jid_multi);
+        field.setLabel("The Jabber ID(s) for the account to be deleted");
+        field.setVariable("accountjids");
         field.setRequired(true);
 
         // Add the form to the command

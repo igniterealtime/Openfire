@@ -64,7 +64,7 @@ mkdir "${SMACKDIR}"
 pushd "${SMACKDIR}"
 git init
 git remote add origin git://github.com/igniterealtime/Smack.git
-git fetch origin "${SMACK_COMMIT_ID}"
+git fetch --depth=50 origin "${SMACK_COMMIT_ID}"
 git reset --hard FETCH_HEAD
 popd
 
@@ -91,7 +91,7 @@ echo "Starting Openfire…"
 # Wait 120 seconds for Openfire to open up the web interface and
 # assume Openfire is fully operational once that happens (not sure if
 # this assumption is correct).
-timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 9090
+timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
 
 echo "Starting Integration Tests (using Smack ${SMACK_COMMIT_ID})…"
 

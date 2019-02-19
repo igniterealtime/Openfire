@@ -64,7 +64,7 @@ mkdir "${SMACKDIR}"
 pushd "${SMACKDIR}"
 git init
 git remote add origin git://github.com/igniterealtime/Smack.git
-git fetch --depth=1 origin "${SMACK_COMMIT_ID}"
+git fetch origin "${SMACK_COMMIT_ID}"
 git reset --hard FETCH_HEAD
 popd
 

@@ -4,6 +4,7 @@ set -euo pipefail
 SMACK_COMMIT_ID="ae208d6a2f608a69c54aae7cb2b22dc52524e9ff"
 GRADLE_VERSION="5.2.1"
 FORCE_CUSTOM_GRADLE=false
+CURL_ARGS="--location --silent"
 
 while getopts dgs: OPTION "$@"; do
 	case $OPTION in
@@ -52,7 +53,7 @@ if [[ $GRADLE_IN_PATH == false ]] || $FORCE_CUSTOM_GRADLE; then
 	mkdir "${GRADLEDIR}"
 	pushd "${GRADLEDIR}"
 	declare -r GRADLE_ZIP="gradle-${GRADLE_VERSION}-bin.zip"
-	wget "https://services.gradle.org/distributions/${GRADLE_ZIP}"
+	curl ${CURL_ARGS} --output ${GRADLE_ZIP} "https://services.gradle.org/distributions/${GRADLE_ZIP}"
 	unzip "${GRADLE_ZIP}"
 	GRADLE="${GRADLEDIR}/gradle-${GRADLE_VERSION}/bin/gradle"
 	popd
@@ -86,8 +87,7 @@ rm distribution/target/distribution-base/conf/openfire.xml
 # TODO: This file should probably be part of Openfire's git and be
 # selectable by openfire.sh (.e.g "openfire.sh -c
 # openfire-demoboot.xml").
-curl \
-	-L \
+curl ${CURL_ARGS} \
 	-o distribution/target/distribution-base/conf/openfire.xml \
 	https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
 

@@ -62,10 +62,8 @@ fi
 
 mkdir "${SMACKDIR}"
 pushd "${SMACKDIR}"
-git init
-git remote add origin git://github.com/igniterealtime/Smack.git
-git fetch --depth=50 origin "${SMACK_COMMIT_ID}"
-git reset --hard FETCH_HEAD
+git clone git://github.com/igniterealtime/Smack.git .
+git checkout ${SMACK_COMMIT_ID}
 popd
 
 declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"

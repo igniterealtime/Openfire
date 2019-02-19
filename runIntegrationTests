@@ -62,8 +62,17 @@ fi
 
 mkdir "${SMACKDIR}"
 pushd "${SMACKDIR}"
-git clone git://github.com/igniterealtime/Smack.git .
-git checkout ${SMACK_COMMIT_ID}
+git init
+git remote add origin git://github.com/igniterealtime/Smack.git
+set +e
+git fetch --depth=1 origin "${SMACK_COMMIT_ID}"
+GIT_FETCH_EXIT_CODE=$?
+set -e
+if [[ $GIT_FETCH_EXIT_CODE -ne 0 ]]; then
+	echo "Git shallow fetch failed, falling back to full fetch"
+	git fetch origin
+fi
+git reset --hard "${SMACK_COMMIT_ID}"
 popd
 
 declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"

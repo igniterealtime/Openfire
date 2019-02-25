@@ -485,7 +485,7 @@ public class XMLProperties {
                 childElement.addCDATA(value.substring(9, value.length()-3));
             }
             else {
-                String propValue = StringEscapeUtils.escapeXml10(value);
+                String propValue = value;
                 // check to see if the property is marked as encrypted
                 if (JiveGlobals.isPropertyEncrypted(name)) {
                     propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
@@ -643,7 +643,7 @@ public class XMLProperties {
             }
             element.addCDATA(value.substring(9, value.length() - 3));
         } else {
-            String propValue = StringEscapeUtils.escapeXml10(value);
+            String propValue = value;
             // check to see if the property is marked as encrypted
             if (JiveGlobals.isXMLPropertyEncrypted(name)) {
                 propValue = JiveGlobals.getPropertyEncryptor(true).encrypt(value);

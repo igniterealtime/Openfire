@@ -207,7 +207,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionType.COMPONENT,
                 ConnectionSettings.Component.OLD_SSLPORT,
                 DEFAULT_COMPONENT_SSL_PORT,
-                ConnectionSettings.Component.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Component.ENABLE_OLD_SSLPORT_PROPERTY.getKey(),
                 ConnectionSettings.Component.MAX_THREADS_SSL,
                 null,
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode

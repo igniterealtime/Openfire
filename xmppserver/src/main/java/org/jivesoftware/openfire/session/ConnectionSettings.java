@@ -93,7 +93,16 @@ public final class ConnectionSettings {
         public static final String SOCKET_ACTIVE = "xmpp.component.socket.active";
         public static final String PORT = "xmpp.component.socket.port";
         public static final String OLD_SSLPORT = "xmpp.component.ssl.port";
-        public static final String ENABLE_OLD_SSLPORT = "xmpp.component.ssl.active";
+        public static final SystemProperty<Boolean> ENABLE_OLD_SSLPORT_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.component.ssl.active")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.FALSE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #ENABLE_OLD_SSLPORT_PROPERTY}
+         */
+        @Deprecated
+        public static final String ENABLE_OLD_SSLPORT = ENABLE_OLD_SSLPORT_PROPERTY.getKey();
         public static final String MAX_THREADS = "xmpp.component.processing.threads";
         public static final String MAX_THREADS_SSL = "xmpp.component.ssl.processing.threads";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.component.cert.policy";

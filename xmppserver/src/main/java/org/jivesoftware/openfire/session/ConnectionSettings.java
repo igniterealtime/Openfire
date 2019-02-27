@@ -1,5 +1,7 @@
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.util.SystemProperty;
+
 public final class ConnectionSettings {
 
     private ConnectionSettings() {
@@ -14,7 +16,16 @@ public final class ConnectionSettings {
 
         public static final String TLS_POLICY = "xmpp.client.tls.policy";
         public static final String OLD_SSLPORT = "xmpp.socket.ssl.port";
-        public static final String ENABLE_OLD_SSLPORT = "xmpp.socket.ssl.active";
+        public static final SystemProperty<Boolean> ENABLE_OLD_SSLPORT_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.socket.ssl.active")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.FALSE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #ENABLE_OLD_SSLPORT_PROPERTY}
+         */
+        @Deprecated
+        public static final String ENABLE_OLD_SSLPORT = ENABLE_OLD_SSLPORT_PROPERTY.getKey();
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.client.cert.policy";
 
         public static final String COMPRESSION_SETTINGS = "xmpp.client.compression.policy";

@@ -12,6 +12,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -89,7 +90,7 @@
             Map<String, String> xmppSettings = new HashMap<String, String>();
 
             xmppSettings.put("xmpp.domain", domain);
-            xmppSettings.put("xmpp.socket.ssl.active", "" + sslEnabled);
+            xmppSettings.put(ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "" + sslEnabled);
             xmppSettings.put("xmpp.auth.anonymous", "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
 
@@ -116,7 +117,6 @@
         fqdn = JiveGlobals.getXMLProperty("fqdn");
         embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
-        sslEnabled = JiveGlobals.getXMLProperty("xmpp.socket.ssl.active", true);
 
         // If the fqdn (server name) is still blank, guess:
         if (fqdn == null || fqdn.isEmpty())

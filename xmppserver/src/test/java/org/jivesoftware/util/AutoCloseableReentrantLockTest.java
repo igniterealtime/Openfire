@@ -55,7 +55,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();
@@ -67,7 +67,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread2.start();
@@ -90,7 +90,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();
@@ -102,7 +102,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread2.start();
@@ -126,7 +126,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();
@@ -212,7 +212,7 @@ public class AutoCloseableReentrantLockTest {
                 lockAcquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();
@@ -233,7 +233,7 @@ public class AutoCloseableReentrantLockTest {
                 lockAcquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();
@@ -267,7 +267,7 @@ public class AutoCloseableReentrantLockTest {
                 lock1Acquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                // Do nothing
             }
         });
         thread1.start();

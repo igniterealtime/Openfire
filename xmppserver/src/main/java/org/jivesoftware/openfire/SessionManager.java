@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
@@ -99,9 +100,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
     /**
      * Cache (unlimited, never expire) that holds external component sessions.
-     * Key: component address, Value: nodeID
+     * Key: component address, Value: identifier of each cluster node holding a local session
+     * to the component.
      */
-    private Cache<String, byte[]> componentSessionsCache;
+    private Cache<String, HashSet<NodeID>> componentSessionsCache;
 
     /**
      * Cache (unlimited, never expire) that holds sessions of connection managers. For each
@@ -414,8 +416,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
         // Add to component session.
         localSessionManager.getComponentsSessions().add(session);
+
         // Keep track of the cluster node hosting the new external component
-        componentSessionsCache.put(address.toString(), server.getNodeID().toByteArray());
+        final HashSet<NodeID> nodeIDs = componentSessionsCache.getOrDefault(address.toString(), new HashSet<>());
+        nodeIDs.add( server.getNodeID() );
+        componentSessionsCache.put(address.toString(), nodeIDs); // Explicitly add it back for the change to propagate through Hazelcast.
+
         return session;
     }
 
@@ -1030,9 +1036,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         // Add sessions of external components connected to other cluster nodes
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
-            for (Map.Entry<String, byte[]> entry : componentSessionsCache.entrySet()) {
-                if (!server.getNodeID().equals(entry.getValue())) {
-                    sessions.add(locator.getComponentSession(entry.getValue(), new JID(entry.getKey())));
+            for (Map.Entry<String, HashSet<NodeID>> entry : componentSessionsCache.entrySet()) {
+                for (NodeID nodeID : entry.getValue()) {
+                    if (!server.getNodeID().equals(nodeID)) {
+                        sessions.add(locator.getComponentSession(nodeID.toByteArray(), new JID(entry.getKey())));
+                    }
                 }
             }
         }
@@ -1055,9 +1063,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         // Search in the external components connected to other cluster nodes
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
-            byte[] nodeID = componentSessionsCache.get(domain);
-            if (nodeID != null) {
-                return locator.getComponentSession(nodeID, new JID(domain));
+            Set<NodeID> nodeIDs = componentSessionsCache.get(domain);
+            if (nodeIDs != null) {
+                for (NodeID nodeID : nodeIDs ) {
+                    // TODO Think of a better way to pick a component.
+                    return locator.getComponentSession( nodeID.toByteArray(), new JID(domain) );
+                }
             }
         }
         return null;
@@ -1629,7 +1640,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     private void restoreCacheContent() {
         // Add external component sessions hosted locally to the cache (using new nodeID)
         for (Session session : localSessionManager.getComponentsSessions()) {
-            componentSessionsCache.put(session.getAddress().toString(), server.getNodeID().toByteArray());
+            HashSet<NodeID> nodeIDs = componentSessionsCache.get(session.getAddress().toString());
+            if (nodeIDs == null) {
+                nodeIDs = new HashSet<>();
+            }
+            nodeIDs.add( server.getNodeID() );
+            componentSessionsCache.put(session.getAddress().toString(), nodeIDs);
         }
 
         // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)

@@ -44,6 +44,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -1505,6 +1506,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
         localSessionManager.stop();
         serverName = null;
+
+        try
+        {
+            // Purge our own components from the cache for the benefit of other cluster nodes.
+            CacheUtil.removeValueFromMultiValuedCache( componentSessionsCache, XMPPServer.getInstance().getNodeID() );
+        }
+        catch ( Exception e )
+        {
+            Log.warn( "An exception occurred while trying to remove locally connected external components from the clustered cache. Other cluster nodes might continue to see our external components, even though we this instance is stopping.", e );
+        }
     }
 
     /**
@@ -1629,7 +1640,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
     @Override
     public void leftCluster(byte[] nodeID) {
-        // Do nothing
+        // Remove external component sessions hosted on the node that left from the cache.
+        CacheUtil.removeValueFromMultiValuedCache( componentSessionsCache, NodeID.getInstance( nodeID ) );
     }
 
     @Override

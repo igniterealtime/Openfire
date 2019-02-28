@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
@@ -1034,6 +1035,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void stop() {
         super.stop();
         localRoutingTable.stop();
+
+        try
+        {
+            // Purge our own components from the cache for the benefit of other cluster nodes.
+            CacheUtil.removeValueFromMultiValuedCache( componentsCache, XMPPServer.getInstance().getNodeID() );
+        }
+        catch ( Exception e )
+        {
+            Log.warn( "An exception occurred while trying to remove locally connected external components from the clustered cache. Other cluster nodes might continue to see our external components, even though we this instance is stopping.", e );
+        }
     }
 
     @Override

@@ -419,9 +419,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         localSessionManager.getComponentsSessions().add(session);
 
         // Keep track of the cluster node hosting the new external component
-        final HashSet<NodeID> nodeIDs = componentSessionsCache.getOrDefault(address.toString(), new HashSet<>());
-        nodeIDs.add( server.getNodeID() );
-        componentSessionsCache.put(address.toString(), nodeIDs); // Explicitly add it back for the change to propagate through Hazelcast.
+        CacheUtil.addValueToMultiValuedCache( componentSessionsCache, address.toString(), server.getNodeID(), HashSet::new );
 
         return session;
     }
@@ -1652,12 +1650,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     private void restoreCacheContent() {
         // Add external component sessions hosted locally to the cache (using new nodeID)
         for (Session session : localSessionManager.getComponentsSessions()) {
-            HashSet<NodeID> nodeIDs = componentSessionsCache.get(session.getAddress().toString());
-            if (nodeIDs == null) {
-                nodeIDs = new HashSet<>();
-            }
-            nodeIDs.add( server.getNodeID() );
-            componentSessionsCache.put(session.getAddress().toString(), nodeIDs);
+            CacheUtil.addValueToMultiValuedCache( componentSessionsCache, session.getAddress().toString(), server.getNodeID(), HashSet::new );
         }
 
         // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)

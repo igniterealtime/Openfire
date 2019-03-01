@@ -151,8 +151,8 @@
 
     <servlet-mapping>
         <servlet-name>SystemPropertiesServlet</servlet-name>
-        <!-- NB. .jsp extension is only required so filters are applied -->
-        <url-pattern>/SystemProperties.jsp</url-pattern>
+        <!-- NB. .jsp extension is only required so filters are applied, but also maintain the old address -->
+        <url-pattern>/server-properties.jsp</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

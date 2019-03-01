@@ -16,10 +16,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AutoCloseableReentrantLockTest {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AutoCloseableReentrantLockTest.class);
     @Rule public ExpectedException expectedException = ExpectedException.none();
 
     private Thread thread1;
@@ -55,7 +58,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();
@@ -67,7 +70,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread2.start();
@@ -90,7 +93,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();
@@ -102,7 +105,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread2.start();
@@ -126,7 +129,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();
@@ -138,7 +141,7 @@ public class AutoCloseableReentrantLockTest {
                 callCount.incrementAndGet();
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread2.start();
@@ -212,7 +215,7 @@ public class AutoCloseableReentrantLockTest {
                 lockAcquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();
@@ -233,7 +236,7 @@ public class AutoCloseableReentrantLockTest {
                 lockAcquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();
@@ -267,7 +270,7 @@ public class AutoCloseableReentrantLockTest {
                 lock1Acquired.set(true);
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
-                // Do nothing
+                LOGGER.info("Interrupted whilst sleeping", e);
             }
         });
         thread1.start();

@@ -11,6 +11,7 @@
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.time.Duration" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -71,13 +72,13 @@
         final boolean pingIdleClients = ParamUtils.getBooleanParameter(request, "pingIdleClients");
 
         if (!idleDisco) {
-            JiveGlobals.setProperty( ConnectionSettings.Client.IDLE_TIMEOUT, "-1" );
+            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(-1));
         } else {
-            JiveGlobals.setProperty( ConnectionSettings.Client.IDLE_TIMEOUT, String.valueOf( clientIdle ) );
+            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(clientIdle));
         }
         JiveGlobals.setProperty( ConnectionSettings.Client.KEEP_ALIVE_PING, String.valueOf( pingIdleClients ) );
 
-        webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT, ConnectionSettings.Client.IDLE_TIMEOUT + " = " + clientIdle);
+        webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey(), ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey() + " = " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getDisplayValue());
         webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING, ConnectionSettings.Client.KEEP_ALIVE_PING + " = " + pingIdleClients);
 
         return;
@@ -86,7 +87,7 @@
     pageContext.setAttribute( "errors",                  errors );
     pageContext.setAttribute( "plaintextConfiguration",  plaintextConfiguration );
     pageContext.setAttribute( "legacymodeConfiguration", legacymodeConfiguration );
-    pageContext.setAttribute( "clientIdle",              JiveGlobals.getIntProperty(     ConnectionSettings.Client.IDLE_TIMEOUT,    6*60*1000 ) );
+    pageContext.setAttribute( "clientIdle",              ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
     pageContext.setAttribute( "pingIdleClients",         JiveGlobals.getBooleanProperty( ConnectionSettings.Client.KEEP_ALIVE_PING, true) );
 
 

@@ -1,5 +1,8 @@
 package org.jivesoftware.openfire.session;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
 import org.jivesoftware.util.SystemProperty;
 
 public final class ConnectionSettings {
@@ -11,7 +14,18 @@ public final class ConnectionSettings {
 
         public static final String SOCKET_ACTIVE = "xmpp.socket.plain.active";
         public static final String PORT = "xmpp.socket.plain.port";
-        public static final String IDLE_TIMEOUT = "xmpp.client.idle";
+        public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.client.idle")
+            .setDefaultValue(Duration.ofMinutes(6))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #IDLE_TIMEOUT_PROPERTY}
+         */
+        @Deprecated
+        public static final String IDLE_TIMEOUT = IDLE_TIMEOUT_PROPERTY.getKey();
         public static final String KEEP_ALIVE_PING = "xmpp.client.idle.ping";
 
         public static final String TLS_POLICY = "xmpp.client.tls.policy";

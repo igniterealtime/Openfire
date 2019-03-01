@@ -26,7 +26,16 @@ public final class ConnectionSettings {
          */
         @Deprecated
         public static final String IDLE_TIMEOUT = IDLE_TIMEOUT_PROPERTY.getKey();
-        public static final String KEEP_ALIVE_PING = "xmpp.client.idle.ping";
+        public static final SystemProperty<Boolean> KEEP_ALIVE_PING_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.client.idle.ping")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.TRUE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #KEEP_ALIVE_PING_PROPERTY}
+         */
+        @Deprecated
+        public static final String KEEP_ALIVE_PING = KEEP_ALIVE_PING_PROPERTY.getKey();
 
         public static final String TLS_POLICY = "xmpp.client.tls.policy";
         public static final String OLD_SSLPORT = "xmpp.socket.ssl.port";

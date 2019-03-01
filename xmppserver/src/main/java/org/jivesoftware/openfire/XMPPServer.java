@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -116,11 +117,14 @@ import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import com.google.common.reflect.ClassPath;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -619,6 +623,7 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
+                        scanForSystemPropertyClasses();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -672,12 +677,52 @@ public class XMPPServer {
             for (XMPPServerListener listener : listeners) {
                 listener.serverStarted();
             }
+
+            if (!setupMode) {
+                scanForSystemPropertyClasses();
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage(), e);
             System.out.println(LocaleUtils.getLocalizedString("startup.error"));
             shutdownServer();
+        }
+    }
+
+    // A SystemProperty class will not appear in the System Properties screen until it is referenced. This method
+    // ensures that they are all referenced immediately.
+    // The following class cannot always be loaded as it references a class that's part of the Install4J launcher
+    private static final Set<String> CLASSES_TO_EXCLUDE = Collections.singleton("org.jivesoftware.openfire.launcher.Uninstaller");
+
+    private void scanForSystemPropertyClasses() {
+
+        try {
+            final Set<ClassPath.ClassInfo> classesInPackage = ClassPath.from(getClass().getClassLoader()).getTopLevelClassesRecursive("org.jivesoftware.openfire");
+            for (final ClassPath.ClassInfo classInfo : classesInPackage) {
+                final String className = classInfo.getName();
+                if (!CLASSES_TO_EXCLUDE.contains(className)) {
+                    try {
+                        final Class<?> clazz = classInfo.load();
+                        final Field[] fields = clazz.getDeclaredFields();
+                        for (final Field field : fields) {
+                            if (field.getType().equals(SystemProperty.class)) {
+                                try {
+                                    field.setAccessible(true);
+                                    logger.info("Accessing SystemProperty field {}#{}", className, field.getName());
+                                    field.get(null);
+                                } catch (final Throwable t) {
+                                    logger.warn("Unable to access field {}#{}", className, field.getName(), t);
+                                }
+                            }
+                        }
+                    } catch (final Throwable t) {
+                        logger.warn("Unable to load class {}", className, t);
+                    }
+                }
+            }
+        } catch (final Throwable t) {
+            logger.warn("Unable to scan classpath for SystemProperty classes", t);
         }
     }
 

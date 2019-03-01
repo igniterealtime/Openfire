@@ -61,7 +61,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
     @Override
     int getMaxIdleTime() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.IDLE_TIMEOUT, 6 * 60 * 1000) / 1000;
+        return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().getSeconds();
     }
 
     /**

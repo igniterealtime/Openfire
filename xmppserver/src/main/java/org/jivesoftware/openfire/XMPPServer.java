@@ -554,8 +554,6 @@ public class XMPPServer {
                 JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
             }
         }
-        // Set default SASL SCRAM-SHA-1 iteration count
-        JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
         // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
         CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.

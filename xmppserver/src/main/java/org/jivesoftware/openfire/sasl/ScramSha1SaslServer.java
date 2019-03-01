@@ -35,7 +35,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +45,11 @@ import org.slf4j.LoggerFactory;
  * @author Richard Midwinter
  */
 public class ScramSha1SaslServer implements SaslServer {
+    public static final SystemProperty<Integer> ITERATION_COUNT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("sasl.scram-sha-1.iteration-count")
+        .setDefaultValue(ScramUtils.DEFAULT_ITERATION_COUNT)
+        .setDynamic(Boolean.TRUE)
+        .build();
     private static final Logger Log = LoggerFactory.getLogger(ScramSha1SaslServer.class);
     private static final Pattern
             CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
@@ -332,8 +337,7 @@ public class ScramSha1SaslServer implements SaslServer {
         try {
             return AuthFactory.getIterations(username);
         } catch (UserNotFoundException e) {
-            return JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
-                ScramUtils.DEFAULT_ITERATION_COUNT);
+            return ITERATION_COUNT.getValue();
         }
     }
     

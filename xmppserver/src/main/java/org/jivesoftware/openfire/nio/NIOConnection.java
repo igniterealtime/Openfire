@@ -232,7 +232,7 @@ public class NIOConnection implements Connection {
             }
 
             try {
-                ioSession.close(true);
+                ioSession.closeOnFlush();
             } catch (Exception e) {
                 Log.error("Exception while closing MINA session", e);
             }

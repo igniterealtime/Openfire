@@ -2,17 +2,18 @@
 <%--
 --%>
 
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.net.UnknownHostException" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.sasl.AnonymousSaslServer" %>
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.xmpp.packet.JID" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -31,7 +32,7 @@
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
-    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", false);
+    boolean anonymousAuthentication = JiveGlobals.getXMLProperty(AnonymousSaslServer.ENABLED.getKey(), false);
     String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
     String encryptionKey = ParamUtils.getParameter(request, "encryptionKey");
 
@@ -91,7 +92,7 @@
 
             xmppSettings.put("xmpp.domain", domain);
             xmppSettings.put(ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "" + sslEnabled);
-            xmppSettings.put("xmpp.auth.anonymous", "" + anonymousAuthentication);
+            xmppSettings.put(AnonymousSaslServer.ENABLED.getKey(), "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
 
             Map<String, String> xmlSettings = new HashMap<String, String>();

@@ -1,12 +1,12 @@
 package org.jivesoftware.openfire.sasl;
 
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.util.JiveGlobals;
-
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.SystemProperty;
 
 /**
  * Implementation of the SASL ANONYMOUS mechanism.
@@ -17,6 +17,12 @@ import javax.security.sasl.SaslServer;
  */
 public class AnonymousSaslServer implements SaslServer
 {
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.anonymous")
+        .setDefaultValue(Boolean.FALSE)
+        .setDynamic(Boolean.TRUE)
+        .build();
+
     public static final String NAME = "ANONYMOUS";
 
     private boolean complete = false;
@@ -45,7 +51,7 @@ public class AnonymousSaslServer implements SaslServer
         complete = true;
 
         // Verify server-wide policy.
-        if ( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) )
+        if (!ENABLED.getValue())
         {
             throw new SaslException( "Authentication failed" );
         }

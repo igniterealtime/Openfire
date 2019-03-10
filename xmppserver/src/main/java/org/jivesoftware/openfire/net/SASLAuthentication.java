@@ -296,7 +296,7 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
-                    props.put(Sasl.POLICY_NOANONYMOUS, AnonymousSaslServer.ENABLED.getValue().toString());
+                    props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );

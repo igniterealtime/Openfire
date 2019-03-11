@@ -68,6 +68,7 @@ public class SequenceManager {
         new SequenceManager(JiveConstants.ROSTER, 5);
         new SequenceManager(JiveConstants.OFFLINE, 5);
         new SequenceManager(JiveConstants.MUC_ROOM, 5);
+        new SequenceManager(JiveConstants.MUC_MESSAGE_ID, 50);
     }
 
     /**

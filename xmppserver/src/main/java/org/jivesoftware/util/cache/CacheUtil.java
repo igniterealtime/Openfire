@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 /**
@@ -32,9 +33,19 @@ public class CacheUtil
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void addValueToMultiValuedCache( Cache<K, C> cache, K key, V element, Supplier<C> supplier )
     {
-        final C elements = cache.getOrDefault( key, supplier.get() );
-        elements.add( element );
-        cache.put( key, elements ); // Explicitly adding the value is required for the change to propagate through Hazelcast.
+        final Lock lock = CacheFactory.getLock( key, cache );
+        try
+        {
+            lock.lock();
+
+            final C elements = cache.getOrDefault( key, supplier.get() );
+            elements.add( element );
+            cache.put( key, elements ); // Explicitly adding the value is required for the change to propagate through Hazelcast.
+        }
+        finally
+        {
+            lock.unlock();
+        }
     }
 
     /**
@@ -58,27 +69,39 @@ public class CacheUtil
 
         for ( final Map.Entry<K, C> entry : entries )
         {
-            final C elements = entry.getValue();
+            final K key = entry.getKey();
 
-            // Remove all instances of the element from the entry value.
-            boolean changed = false;
-            while ( elements.remove( element ) )
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
             {
-                changed = true;
+                lock.lock();
+
+                final C elements = entry.getValue();
+
+                // Remove all instances of the element from the entry value.
+                boolean changed = false;
+                while ( elements.remove( element ) )
+                {
+                    changed = true;
+                }
+
+                if ( changed )
+                {
+                    if ( elements.isEmpty() )
+                    {
+                        // When after removal, the value is empty, remove the cache entry completely.
+                        cache.remove( entry.getKey() );
+                    }
+                    else
+                    {
+                        // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                        cache.put( entry.getKey(), elements );
+                    }
+                }
             }
-
-            if ( changed )
+            finally
             {
-                if ( elements.isEmpty() )
-                {
-                    // When after removal, the value is empty, remove the cache entry completely.
-                    cache.remove( entry.getKey() );
-                }
-                else
-                {
-                    // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
-                    cache.put( entry.getKey(), elements );
-                }
+                lock.unlock();
             }
         }
     }
@@ -132,12 +155,12 @@ public class CacheUtil
 
     /**
      * Replaces an element in a cache that has collection-based values.
-     * <p>
+     *
      * Every instance of the old value that is found in a collection-based value is removed, and for each such removal,
      * the new value is added to the cache. Note that no guarantees regarding collection order are given.
-     * <p>
+     *
      * Cache entries for which the value-collection does contain the old value are left unchanged.
-     * <p>
+     *
      * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
      *
      * @param cache    The cache from which to remove the element (cannot be null).
@@ -162,20 +185,32 @@ public class CacheUtil
 
         for ( final Map.Entry<K, C> entry : entries )
         {
-            final C elements = entry.getValue();
+            final K key = entry.getKey();
 
-            // Replace all instances of the element from the entry value.
-            boolean changed = false;
-            while ( elements.remove( oldValue ) )
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
             {
-                elements.add( newValue );
-                changed = true;
+                lock.lock();
+
+                final C elements = entry.getValue();
+
+                // Replace all instances of the element from the entry value.
+                boolean changed = false;
+                while ( elements.remove( oldValue ) )
+                {
+                    elements.add( newValue );
+                    changed = true;
+                }
+
+                if ( changed )
+                {
+                    // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                    cache.put( entry.getKey(), elements );
+                }
             }
-
-            if ( changed )
+            finally
             {
-                // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
-                cache.put( entry.getKey(), elements );
+                lock.unlock();
             }
         }
     }

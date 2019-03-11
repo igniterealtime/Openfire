@@ -111,13 +111,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * socket connection of the CM to the server there is going to be an entry in the cache.
      * Key: full address of the CM that identifies the socket, Value: nodeID
      */
-    private Cache<String, byte[]> multiplexerSessionsCache;
+    private Cache<String, NodeID> multiplexerSessionsCache;
 
     /**
      * Cache (unlimited, never expire) that holds incoming sessions of remote servers.
      * Key: stream ID that identifies the socket/session, Value: nodeID
      */
-    private Cache<StreamID, byte[]> incomingServerSessionsCache;
+    private Cache<StreamID, NodeID> incomingServerSessionsCache;
     /**
      * Cache (unlimited, never expire) that holds list of incoming sessions
      * originated from the same remote server (domain/subdomain). For instance, jabber.org
@@ -227,9 +227,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                 localSessionManager.getConnnectionManagerSessions().get(address.toString());
         if (session == null && server.getRemoteSessionLocator() != null) {
             // Search in the list of CMs connected to other cluster members
-            byte[] nodeID = multiplexerSessionsCache.get(address.toString());
+            final NodeID nodeID = multiplexerSessionsCache.get(address.toString());
             if (nodeID != null) {
-                return server.getRemoteSessionLocator().getConnectionMultiplexerSession(nodeID, address);
+                return server.getRemoteSessionLocator().getConnectionMultiplexerSession(nodeID.toByteArray(), address);
             }
         }
         return null;
@@ -247,9 +247,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         // Add sessions of CMs connected to other cluster nodes
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
-            for (Map.Entry<String, byte[]> entry : multiplexerSessionsCache.entrySet()) {
+            for (Map.Entry<String, NodeID> entry : multiplexerSessionsCache.entrySet()) {
                 if (!server.getNodeID().equals(entry.getValue())) {
-                    sessions.add(locator.getConnectionMultiplexerSession(entry.getValue(), new JID(entry.getKey())));
+                    sessions.add(locator.getConnectionMultiplexerSession(entry.getValue().toByteArray(), new JID(entry.getKey())));
                 }
             }
         }
@@ -277,12 +277,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         // Add sessions of CMs connected to other cluster nodes
         RemoteSessionLocator locator = server.getRemoteSessionLocator();
         if (locator != null) {
-            for (Map.Entry<String, byte[]> entry : multiplexerSessionsCache.entrySet()) {
+            for (Map.Entry<String, NodeID> entry : multiplexerSessionsCache.entrySet()) {
                 if (!server.getNodeID().equals(entry.getValue())) {
                     JID jid = new JID(entry.getKey());
                     if (domain.equals(jid.getDomain())) {
                         sessions.add(
-                                locator.getConnectionMultiplexerSession(entry.getValue(), new JID(entry.getKey())));
+                                locator.getConnectionMultiplexerSession(entry.getValue().toByteArray(), new JID(entry.getKey())));
                     }
                 }
             }
@@ -312,7 +312,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         boolean firstConnection = getConnectionMultiplexerSessions(address.getDomain()).isEmpty();
         localSessionManager.getConnnectionManagerSessions().put(address.toString(), session);
         // Keep track of the cluster node hosting the new CM connection
-        multiplexerSessionsCache.put(address.toString(), server.getNodeID().toByteArray());
+        multiplexerSessionsCache.put(address.toString(), server.getNodeID());
         if (firstConnection) {
             // Notify ConnectionMultiplexerManager that a new connection manager
             // is available
@@ -474,7 +474,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         StreamID streamID = session.getStreamID();
         localSessionManager.addIncomingServerSessions(streamID, session);
         // Keep track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
+        incomingServerSessionsCache.put(streamID, server.getNodeID());
         // Update list of sockets/sessions coming from the same remote hostname
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
@@ -901,9 +901,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                 RemoteSessionLocator locator = server.getRemoteSessionLocator();
                 if (session == null && locator != null) {
                     // Get the node hosting this session
-                    byte[] nodeID = incomingServerSessionsCache.get(streamID);
+                    NodeID nodeID = incomingServerSessionsCache.get(streamID);
                     if (nodeID != null) {
-                        session = locator.getIncomingServerSession(nodeID, streamID);
+                        session = locator.getIncomingServerSession(nodeID.toByteArray(), streamID);
                     }
                 }
                 if (session != null) {
@@ -1621,6 +1621,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         for (ClientSession session : routingTable.getClientsRoutes(true)) {
             sessionInfoCache.put(session.getAddress().toString(), new ClientSessionInfo((LocalClientSession)session));
         }
+
+        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+        final NodeID defaultNodeID = server.getDefaultNodeID();
+        final NodeID nodeID = server.getNodeID();
+
+        CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
+        CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
+        CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
     }
 
     @Override
@@ -1633,6 +1641,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
             restoreCacheContent();
+
+            // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
+            final NodeID defaultNodeID = server.getDefaultNodeID();
+            final NodeID nodeID = server.getNodeID();
+            CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
+            CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
+            CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
         }
     }
 
@@ -1655,13 +1670,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
         // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)
         for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
-            multiplexerSessionsCache.put(address, server.getNodeID().toByteArray());
+            multiplexerSessionsCache.put(address, server.getNodeID());
         }
 
         // Add incoming server sessions hosted locally to the cache (using new nodeID)
         for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
             StreamID streamID = session.getStreamID();
-            incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
+            incomingServerSessionsCache.put(streamID, server.getNodeID());
             for (String hostname : session.getValidatedDomains()) {
                 // Update list of sockets/sessions coming from the same remote hostname
                 Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);

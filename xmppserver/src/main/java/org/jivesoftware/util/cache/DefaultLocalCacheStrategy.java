@@ -16,6 +16,7 @@
 
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
 import java.util.Collection;
@@ -89,7 +90,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     @Override
     public byte[] getClusterMemberID() {
-        return new byte[0];
+        return XMPPServer.getInstance().getNodeID().toByteArray();
     }
 
     @Override

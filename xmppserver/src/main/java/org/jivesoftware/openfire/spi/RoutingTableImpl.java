@@ -73,7 +73,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain pair, Value: nodeID
      */
-    private Cache<DomainPair, byte[]> serversCache;
+    private Cache<DomainPair, NodeID> serversCache;
     /**
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
@@ -121,7 +121,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = CacheFactory.getLock(address, serversCache);
         try {
             lock.lock();
-            serversCache.put(address, server.getNodeID().toByteArray());
+            serversCache.put(address, server.getNodeID());
         }
         finally {
             lock.unlock();
@@ -139,11 +139,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
                 nodes = new HashSet<>();
-            }
-            // Remove an orphan entry (if any) in the routing table; mainly for clustering
-            if (nodes.remove(server.getDefaultNodeID())) {
-                Log.debug("Replacing DEFAULT_NODE_ID with \"{}\" for component {}",
-                    server.getNodeID(), route);
             }
             nodes.add(server.getNodeID());
             componentsCache.put(address, nodes);
@@ -469,7 +464,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         DomainPair pair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
-        byte[] nodeID = serversCache.get(pair);
+        NodeID nodeID = serversCache.get(pair);
         if (nodeID != null) {
             if (server.getNodeID().equals(nodeID)) {
                 // This is a route to a remote server connected from this node
@@ -483,7 +478,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             else {
                 // This is a route to a remote server connected from other node
                 if (remotePacketRouter != null) {
-                    routed = remotePacketRouter.routePacket(nodeID, jid, packet);
+                    routed = remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
                 }
             }
         }
@@ -787,9 +782,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
             if (locator != null) {
                 // Check if the session is hosted by other cluster node
-                byte[] nodeID = serversCache.get(jids);
+                NodeID nodeID = serversCache.get(jids);
                 if (nodeID != null) {
-                    session = locator.getOutgoingServerSession(nodeID, jids);
+                    session = locator.getOutgoingServerSession(nodeID.toByteArray(), jids);
                 }
             }
         }
@@ -1051,6 +1046,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void joinedCluster() {
         restoreCacheContent();
 
+        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+        final NodeID defaultNodeID = server.getDefaultNodeID();
+        final NodeID nodeID = server.getNodeID();
+        CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
+        CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
+
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
         // Probe presences of remote sessions when subscribed to presence of local session
         // Send pending subscription requests to local sessions from remote sessions
@@ -1075,6 +1076,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
             restoreCacheContent();
+
+            // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
+            final NodeID defaultNodeID = server.getDefaultNodeID();
+            final NodeID nodeID = server.getNodeID();
+            CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
+            CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
         }
     }
 
@@ -1113,8 +1120,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         try {
             serverLock.lock();
             List<DomainPair> remoteServerDomains = new ArrayList<>();
-            for (Map.Entry<DomainPair, byte[]> entry : serversCache.entrySet()) {
-                if (Arrays.equals(entry.getValue(), nodeID)) {
+            for (Map.Entry<DomainPair, NodeID> entry : serversCache.entrySet()) {
+                if (entry.getValue().equals(nodeID)) {
                     remoteServerDomains.add(entry.getKey());
                 }
             }

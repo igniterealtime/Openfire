@@ -82,4 +82,101 @@ public class CacheUtil
             }
         }
     }
+
+    /**
+     * Replaces all instances of a particular value in a cache.
+     *
+     * Every instance of the old value that is found in a cache value is replaced by the new value.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * @param cache    The cache from which to remove the element (cannot be null).
+     * @param oldValue The element to be replaced (cannot be null).
+     * @param newValue The replacement element (cannot be null).
+     */
+    public static <K extends Serializable, V extends Serializable> void replaceValueInCache( Cache<K, V> cache, V oldValue, V newValue )
+    {
+        if ( newValue.equals( oldValue ) )
+        {
+            return;
+        }
+
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, V>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        for ( final Map.Entry<K, V> entry : entries )
+        {
+            final K key = entry.getKey();
+
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
+            {
+                lock.lock();
+
+                if ( entry.getValue().equals( oldValue ) )
+                {
+                    // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                    cache.put( entry.getKey(), newValue );
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+    }
+
+    /**
+     * Replaces an element in a cache that has collection-based values.
+     * <p>
+     * Every instance of the old value that is found in a collection-based value is removed, and for each such removal,
+     * the new value is added to the cache. Note that no guarantees regarding collection order are given.
+     * <p>
+     * Cache entries for which the value-collection does contain the old value are left unchanged.
+     * <p>
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * @param cache    The cache from which to remove the element (cannot be null).
+     * @param oldValue The element to be replaced (cannot be null, as Cache does not support null values).
+     * @param newValue The replacement element (cannot be null, as Cache does not support null values).
+     * @param key      The cache entry identifier (cannot be null)
+     * @param supplier A provider of empty instances of the collection used as a value of the cache (in which elements are placed).
+     */
+    public static <K extends Serializable, V, C extends Collection<V> & Serializable> void replaceValueInMultivaluedCache( Cache<K, C> cache, V oldValue, V newValue )
+    {
+        if ( newValue.equals( oldValue ) )
+        {
+            return;
+        }
+
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, C>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        for ( final Map.Entry<K, C> entry : entries )
+        {
+            final C elements = entry.getValue();
+
+            // Replace all instances of the element from the entry value.
+            boolean changed = false;
+            while ( elements.remove( oldValue ) )
+            {
+                elements.add( newValue );
+                changed = true;
+            }
+
+            if ( changed )
+            {
+                // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                cache.put( entry.getKey(), elements );
+            }
+        }
+    }
 }

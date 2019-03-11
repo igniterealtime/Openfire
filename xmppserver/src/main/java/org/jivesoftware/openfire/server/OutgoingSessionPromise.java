@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
@@ -79,7 +80,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain, Value: nodeID
      */
-    private Cache<String, byte[]> serversCache;
+    private Cache<String, NodeID> serversCache;
     /**
      * Flag that indicates if the process that consumed the queued packets should stop.
      */

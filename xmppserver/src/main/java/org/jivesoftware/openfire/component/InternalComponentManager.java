@@ -16,10 +16,7 @@
 
 package org.jivesoftware.openfire.component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -117,6 +114,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     @Override
     public void stop() {
         super.stop();
+        synchronized ( routables ) {
+            // OF-1700: Shut down each connected component properly, which benefits other cluster nodes.
+            final Set<String> subdomains = routables.keySet();
+            subdomains.forEach( this::removeComponent );
+        }
         if (getAddress() != null) {
             // Remove the route to this service
             XMPPServer.getInstance().getRoutingTable().removeComponentRoute(getAddress());

@@ -29,17 +29,7 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Document;
@@ -168,7 +158,7 @@ public class XMPPServer {
     private boolean initialized = false;
     private boolean started = false;
     private NodeID nodeID;
-    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
+    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance( UUID.randomUUID().toString().getBytes() );
 
     public static final String EXIT = "exit";
     private final static Set<String> XML_ONLY_PROPERTIES;

@@ -49,6 +49,60 @@ public class CacheUtil
     }
 
     /**
+     * Removes all instances of the specified element from the collection that is mapped by the provided key.
+     *
+     * When the element removed from the set leaves that set empty, the cache entry is removed completely.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * @param cache   The cache from which to remove the element (cannot be null).
+     * @param key     The cache entry identifier (cannot be null)
+     * @param element The element to be removed (should not be null, as Cache does not support null values).
+     */
+    public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
+    {
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, C>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        final Lock lock = CacheFactory.getLock( key, cache );
+        try
+        {
+            lock.lock();
+
+            final C elements = cache.get( key );
+
+            // Remove all instances of the element from the entry value.
+            boolean changed = false;
+            while ( elements.remove( element ) )
+            {
+                changed = true;
+            }
+
+            if ( changed )
+            {
+                if ( elements.isEmpty() )
+                {
+                    // When after removal, the value is empty, remove the cache entry completely.
+                    cache.remove( key );
+                }
+                else
+                {
+                    // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                    cache.put( key, elements );
+                }
+            }
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Removes all instances the specified element from every collection that is a value of the cache.
      *
      * When the element removed from the set leaves that set empty, the cache entry is removed completely.

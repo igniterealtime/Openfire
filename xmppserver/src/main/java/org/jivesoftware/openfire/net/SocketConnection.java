@@ -526,7 +526,7 @@ public class SocketConnection implements Connection {
                 
             closeConnection();
             notifyCloseListeners();
-            
+            listeners.clear();
         }
     }
 

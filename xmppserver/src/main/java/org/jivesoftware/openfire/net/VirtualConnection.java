@@ -198,6 +198,7 @@ public abstract class VirtualConnection implements Connection {
             // their session was closed. Effectively, the bug prevents the MUC room from getting a
             // presence update to notify it that the user logged off.
             notifyCloseListeners();
+            listeners.clear();
 
             try {
                 closeVirtualConnection();

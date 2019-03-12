@@ -102,12 +102,15 @@ public class ComponentStanzaHandler extends StanzaHandler {
                 else {
                     try {
                         // Get the requested subdomain
-                        String subdomain = extraDomain;
+                        final String subdomain;
                         int index = extraDomain.indexOf( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
                         if (index > -1) {
                             subdomain = extraDomain.substring(0, index -1);
+                        } else {
+                            subdomain = extraDomain;
                         }
                         InternalComponentManager.getInstance().addComponent(subdomain, component);
+                        session.getConnection().registerCloseListener( handback -> InternalComponentManager.getInstance().removeComponent( subdomain, (ComponentSession.ExternalComponent) handback ), component );
                         // Send confirmation that the new domain has been registered
                         connection.deliverRawText("<bind/>");
                     }

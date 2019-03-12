@@ -28,6 +28,10 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -70,7 +74,7 @@ public class NIOConnection implements Connection {
     private LocalSession session;
     private IoSession ioSession;
 
-    private ConnectionCloseListener closeListener;
+    final private Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
@@ -129,23 +133,18 @@ public class NIOConnection implements Connection {
     }
 
     @Override
-    public void registerCloseListener(ConnectionCloseListener listener, Object ignore) {
-        if (closeListener != null) {
-            throw new IllegalStateException("Close listener already configured");
-        }
+    public void registerCloseListener(ConnectionCloseListener listener, Object callback) {
         if (isClosed()) {
             listener.onConnectionClose(session);
         }
         else {
-            closeListener = listener;
+            closeListeners.put( listener, callback );
         }
     }
 
     @Override
     public void removeCloseListener(ConnectionCloseListener listener) {
-        if (closeListener == listener) {
-            closeListener = null;
-        }
+        closeListeners.remove( listener );
     }
 
     @Override
@@ -237,6 +236,7 @@ public class NIOConnection implements Connection {
                 Log.error("Exception while closing MINA session", e);
             }
             notifyCloseListeners(); // clean up session, etc.
+            closeListeners.clear();
         }
     }
 
@@ -252,11 +252,14 @@ public class NIOConnection implements Connection {
      * Used by subclasses to properly finish closing the connection.
      */
     private void notifyCloseListeners() {
-        if (closeListener != null) {
-            try {
-                closeListener.onConnectionClose(session);
-            } catch (Exception e) {
-                Log.error("Error notifying listener: " + closeListener, e);
+        for( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
+        {
+            if (entry.getKey() != null) {
+                try {
+                    entry.getKey().onConnectionClose(entry.getValue());
+                } catch (Exception e) {
+                    Log.error("Error notifying listener: " + entry.getKey(), e);
+                }
             }
         }
     }

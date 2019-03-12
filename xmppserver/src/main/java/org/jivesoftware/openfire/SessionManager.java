@@ -142,7 +142,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     private Cache<StreamID, HashSet<String>> validatedDomainsCache;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
-    private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
     private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
     private OutgoingServerSessionListener outgoingServerListener = new OutgoingServerSessionListener();
     private ConnectionMultiplexerSessionListener multiplexerSessionListener = new ConnectionMultiplexerSessionListener();
@@ -409,9 +408,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         StreamID id = nextStreamID();
         LocalComponentSession session = new LocalComponentSession(serverName, conn, id);
         conn.init(session);
-        // Register to receive close notification on this session so we can
-        // remove the external component from the list of components
-        conn.registerCloseListener(componentSessionListener, session);
+
         // Set the bind address as the address of the session
         session.setAddress(address);
 
@@ -422,6 +419,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         CacheUtil.addValueToMultiValuedCache( componentSessionsCache, address.toString(), server.getNodeID(), HashSet::new );
 
         return session;
+    }
+
+    public void removeComponentSession( LocalComponentSession session )
+    {
+        // Remove the session
+        localSessionManager.getComponentsSessions().remove(session);
+
+        // Remove track of the cluster node hosting the external component.
+        CacheUtil.removeValueFromMultiValuedCache( componentSessionsCache, session.getAddress().toString(), server.getNodeID() );
     }
 
     /**
@@ -1318,39 +1324,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             catch (Exception e) {
                 // Can't do anything about this problem...
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
-            }
-        }
-    }
-
-    private class ComponentSessionListener implements ConnectionCloseListener {
-        /**
-         * Handle a session that just closed.
-         *
-         * @param handback The session that just closed
-         */
-        @Override
-        public void onConnectionClose(Object handback) {
-            LocalComponentSession session = (LocalComponentSession)handback;
-            try {
-                // Unbind registered domains for this external component
-                for (String domain : session.getExternalComponent().getSubdomains()) {
-                    String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
-                    InternalComponentManager.getInstance().removeComponent(subdomain, session.getExternalComponent());
-                }
-            }
-            catch (Exception e) {
-                // Can't do anything about this problem...
-                Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
-            }
-            finally {
-                // Remove the session
-                localSessionManager.getComponentsSessions().remove(session);
-
-                // Remove track of the cluster node hosting the external component
-                // if no more components are handling it.
-                if (!InternalComponentManager.getInstance().hasComponent(session.getAddress())) {
-                    componentSessionsCache.remove(session.getAddress().toString());
-                }
             }
         }
     }

@@ -478,7 +478,9 @@ public class CacheFactory {
     }
 
     /**
-     * Returns an existing {@link java.util.concurrent.locks.Lock} on the specified key or creates a new one
+     * @deprecated in favour of {@link Cache#getLock(K)}. Will be removed in Openfire 5.0.0.
+     *
+     * <p>Returns an existing {@link java.util.concurrent.locks.Lock} on the specified key or creates a new one
      * if none was found. This operation is thread safe. Successive calls with the same key may or may not
      * return the same {@link java.util.concurrent.locks.Lock}. However, different threads asking for the
      * same Lock at the same time will get the same Lock object.<p>
@@ -491,6 +493,7 @@ public class CacheFactory {
      * @param cache the cache used for holding the lock.
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
+    @Deprecated
     public static synchronized Lock getLock(Object key, Cache cache) {
         if (localOnly.contains(cache.getName())) {
             return localCacheFactoryStrategy.getLock(key, cache);

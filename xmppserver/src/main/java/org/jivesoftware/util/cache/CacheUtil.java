@@ -1,10 +1,7 @@
 package org.jivesoftware.util.cache;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
@@ -27,7 +24,7 @@ public class CacheUtil
      * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
      *
      * @param cache    The cache from which to remove the element (cannot be null).
-     * @param element  The element to be added (cannot be null, as Cache does not support null values).
+     * @param element  The element to be added (can be null only if the value-Collection supports null values).
      * @param key      The cache entry identifier (cannot be null)
      * @param supplier A provider of empty instances of the collection used as a value of the cache (in which elements are placed).
      */
@@ -57,17 +54,10 @@ public class CacheUtil
      *
      * @param cache   The cache from which to remove the element (cannot be null).
      * @param key     The cache entry identifier (cannot be null)
-     * @param element The element to be removed (should not be null, as Cache does not support null values).
+     * @param element The element to be removed (can be null only if the value-Collection supports null values).
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
     {
-        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
-        // future changes of this implementation (that would make the implementation incompatible with
-        // these cache implementations), the entry-set that's operated on in this implementation is
-        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
-        // compatible with the 'lowest common denominator'.
-        final Set<Map.Entry<K, C>> entries = Collections.unmodifiableSet( cache.entrySet() );
-
         final Lock lock = CacheFactory.getLock( key, cache );
         try
         {
@@ -103,16 +93,22 @@ public class CacheUtil
     }
 
     /**
-     * Removes all instances the specified element from every collection that is a value of the cache.
+     * Removes all instances of the specified element from every collection that is a value of the cache.
      *
-     * When the element removed from the set leaves that set empty, the cache entry is removed completely.
+     * When the element removed from the collection leaves that collection empty, the cache entry is removed completely.
      *
      * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
      *
+     * The return value is a Map that contains all entries that were affected by the call. The returned has exactly two
+     * keys, that each have a Map for its value.
+     * - the Map that is the value of the 'false' key contains all entries that have been removed from the cache.
+     * - the Map that is the value of the 'true' key contains all entries that have been modified.
+     *
      * @param cache   The cache from which to remove the element (cannot be null).
-     * @param element The element to be removed (should not be null, as Cache does not support null values).
+     * @param element The element to be removed (can be null only if the value-Collection supports null values).
+     * @return a map containing all affected cache entries (never null)
      */
-    public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, V element )
+    public static <K extends Serializable, V, C extends Collection<V> & Serializable> Map<Boolean,Map<K, C>> removeValueFromMultiValuedCache( Cache<K, C> cache, V element )
     {
         // In some cache implementations, the entry-set is unmodifiable. To guard against potential
         // future changes of this implementation (that would make the implementation incompatible with
@@ -120,6 +116,11 @@ public class CacheUtil
         // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
         // compatible with the 'lowest common denominator'.
         final Set<Map.Entry<K, C>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        // contains all entries that were somehow changed.
+        final Map<Boolean, Map<K, C>> result = new HashMap<>();
+        result.put( false, new HashMap<>());
+        result.put( true, new HashMap<>());
 
         for ( final Map.Entry<K, C> entry : entries )
         {
@@ -145,11 +146,13 @@ public class CacheUtil
                     {
                         // When after removal, the value is empty, remove the cache entry completely.
                         cache.remove( entry.getKey() );
+                        result.get(false).put( entry.getKey(), elements );
                     }
                     else
                     {
                         // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
                         cache.put( entry.getKey(), elements );
+                        result.get(true).put( entry.getKey(), elements );
                     }
                 }
             }
@@ -158,6 +161,79 @@ public class CacheUtil
                 lock.unlock();
             }
         }
+        return result;
+    }
+
+    /**
+     * Remove elements from every collection that is a value of the cache, except for the specified element.
+     *
+     * When removal leaves a collection empty, the cache entry is removed completely.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * The return value is a Map that contains all entries that were affected by the call. The returned has exactly two
+     * keys, that each have a Map for its value.
+     * - the Map that is the value of the 'false' key contains all entries that have been removed from the cache.
+     * - the Map that is the value of the 'true' key contains all entries that have been modified.
+     *
+     * @param cache   The cache in which to retain the element (cannot be null).
+     * @param element The element to be retained (can be null only if the value-Collection supports null values).
+     * @return a map containing all affected cache entries (never null)
+     */
+    public static <K extends Serializable, V, C extends Collection<V> & Serializable> Map<Boolean,Map<K, C>> retainValueInMultiValuedCache( Cache<K, C> cache, V element )
+    {
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, C>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        // contains all entries that were somehow changed.
+        final Map<Boolean, Map<K, C>> result = new HashMap<>();
+        result.put( false, new HashMap<>());
+        result.put( true, new HashMap<>());
+
+        for ( final Map.Entry<K, C> entry : entries )
+        {
+            final K key = entry.getKey();
+
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
+            {
+                lock.lock();
+
+                final C elements = entry.getValue();
+
+                // Remove all instances of the element from the entry value.
+                boolean changed = false;
+                while ( elements.retainAll( Collections.singleton( element ) ) )
+                {
+                    changed = true;
+                }
+
+                if ( changed )
+                {
+                    if ( elements.isEmpty() )
+                    {
+                        // When after removal, the value is empty, remove the cache entry completely.
+                        cache.remove( entry.getKey() );
+                        result.get(false).put( entry.getKey(), elements );
+                    }
+                    else
+                    {
+                        // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                        cache.put( entry.getKey(), elements );
+                        result.get(true).put( entry.getKey(), elements );
+                    }
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+        return result;
     }
 
     /**
@@ -218,10 +294,8 @@ public class CacheUtil
      * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
      *
      * @param cache    The cache from which to remove the element (cannot be null).
-     * @param oldValue The element to be replaced (cannot be null, as Cache does not support null values).
-     * @param newValue The replacement element (cannot be null, as Cache does not support null values).
-     * @param key      The cache entry identifier (cannot be null)
-     * @param supplier A provider of empty instances of the collection used as a value of the cache (in which elements are placed).
+     * @param oldValue The element to be replaced (can be null only if the value-Collection supports null values).
+     * @param newValue The replacement element (can be null only if the value-Collection supports null values).
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void replaceValueInMultivaluedCache( Cache<K, C> cache, V oldValue, V newValue )
     {

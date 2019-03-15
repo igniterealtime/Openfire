@@ -72,6 +72,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
     public static final String ISS_CACHE_NAME = "Incoming Server Sessions";
+    public static final String HOSTNAME_SESSIONS_CACHE_NAME = "Sessions by Hostname";
+    public static final String VALIDATED_DOMAINS_CACHE_NAME = "Validated Domains";
     public static final String C2S_INFO_CACHE_NAME = "Client Session Info Cache";
 
     public static final int NEVER_KICK = -1;
@@ -1359,8 +1361,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         componentSessionsCache = CacheFactory.createCache(COMPONENT_SESSION_CACHE_NAME);
         multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
         incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
-        hostnameSessionsCache = CacheFactory.createCache("Sessions by Hostname");
-        validatedDomainsCache = CacheFactory.createCache("Validated Domains");
+        hostnameSessionsCache = CacheFactory.createCache(HOSTNAME_SESSIONS_CACHE_NAME);
+        validatedDomainsCache = CacheFactory.createCache(VALIDATED_DOMAINS_CACHE_NAME);
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
 
         // Listen to cluster events

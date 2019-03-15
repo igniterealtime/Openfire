@@ -1077,6 +1077,17 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             final NodeID nodeID = server.getNodeID();
             CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
             CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
+
+            // The local cluster node left the cluster.
+            //
+            // Determine what routes were available only on other cluster nodes than the local one.
+            // These need to be cleaned up, as they're no longer available to the local cluster node.
+            final Set<DomainPair> removedOutgoingServerSessions = CacheUtil.retainValueInCache( serversCache, defaultNodeID );
+
+            removedOutgoingServerSessions.forEach( removedOutgoingServerSession -> {
+                Log.debug( "The local cluster node left the cluster. The outoing server session for '{}' was living on another cluster nodes, and is no longer available.", removedOutgoingServerSession.getRemote() );
+                localRoutingTable.removeRoute( removedOutgoingServerSession );
+            } );
         }
     }
 
@@ -1111,23 +1122,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         
         // remove routes for server domains that were accessed through the defunct node
-        Lock serverLock = CacheFactory.getLock(nodeID, serversCache);
-        try {
-            serverLock.lock();
-            List<DomainPair> remoteServerDomains = new ArrayList<>();
-            for (Map.Entry<DomainPair, NodeID> entry : serversCache.entrySet()) {
-                if (entry.getValue().equals(nodeID)) {
-                    remoteServerDomains.add(entry.getKey());
-                }
-            }
-            for (DomainPair pair : remoteServerDomains) {
-                removeServerRoute(pair);
-            }
-        }
-        finally {
-            serverLock.unlock();
-        }
-        
+        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, NodeID.getInstance( nodeID ) );
+        removedServers.forEach( removedServer -> {
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route will be removed.", NodeID.getInstance( nodeID ), removedServer.getRemote() );
+            localRoutingTable.removeRoute( removedServer );
+        } );
+
         // remove component routes for the defunct node
         Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
         try {

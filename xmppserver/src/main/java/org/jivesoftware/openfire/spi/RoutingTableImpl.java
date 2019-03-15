@@ -1043,9 +1043,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public void joinedCluster() {
-        restoreCacheContent();
-
+    public void joinedCluster()
+    {
         // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
@@ -1074,9 +1073,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
-            // Add local sessions to caches
-            restoreCacheContent();
-
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
@@ -1157,24 +1153,4 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
-
-    private void restoreCacheContent() {
-        // Add outgoing server sessions hosted locally to the cache (using new nodeID)
-        for (LocalOutgoingServerSession session : localRoutingTable.getServerRoutes()) {
-            for (DomainPair pair : session.getOutgoingDomainPairs()) {
-                addServerRoute(pair, session);
-            }
-        }
-
-        // Add component sessions hosted locally to the cache (using new nodeID) and remove traces to old nodeID
-        for (RoutableChannelHandler route : localRoutingTable.getComponentRoute()) {
-            addComponentRoute(route.getAddress(), route);
-        }
-
-        // Add client sessions hosted locally to the cache (using new nodeID)
-        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
-            addClientRoute(session.getAddress(), session);
-        }
-    }
-
 }

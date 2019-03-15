@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -96,6 +97,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * a resource has been bound). The cache is used by Remote sessions to avoid generating big
      * number of remote calls.
      * Key: full JID, Value: ClientSessionInfo
+     *
+     * Note that, unlike other caches, this cache is populated only when clustering is enabled.
      */
     private Cache<String, ClientSessionInfo> sessionInfoCache;
 
@@ -118,6 +121,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * Key: stream ID that identifies the socket/session, Value: nodeID
      */
     private Cache<StreamID, NodeID> incomingServerSessionsCache;
+
     /**
      * Cache (unlimited, never expire) that holds list of incoming sessions
      * originated from the same remote server (domain/subdomain). For instance, jabber.org
@@ -525,41 +529,36 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         // Remove track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.remove(streamID);
 
-        // Remove from list of sockets/sessions coming from the remote hostname
-        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
-        try {
-            lock.lock();
-            ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
-            if (streamIDs != null) {
-                streamIDs.remove(streamID);
-                if (streamIDs.isEmpty()) {
-                    hostnameSessionsCache.remove(hostname);
-                }
-                else {
-                    hostnameSessionsCache.put(hostname, streamIDs);
-                }
-            }
-        }
-        finally {
-            lock.unlock();
-        }
-        // Remove from clustered cache
-        lock = CacheFactory.getLock(streamID, validatedDomainsCache);
-        try {
-            lock.lock();
-            HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                validatedDomains = new HashSet<>();
-            }
-            validatedDomains.remove(hostname);
-            if (!validatedDomains.isEmpty()) {
-                validatedDomainsCache.put(streamID, validatedDomains);
-            }
-            else {
-                validatedDomainsCache.remove(streamID);
-            }
-        } finally {
-            lock.unlock();
+        unregisterIncomingServerSession( Collections.singleton( streamID ) );
+    }
+
+    /**
+     * One or more incoming server session can become unavailable for a number of reasons:
+     * <ul>
+     *     <li>It's connection got terminated.</li>
+     *     <li>The cluster node on which it is connected become disconnected</li>
+     * </ul>
+     *
+     * When a incoming server session is unavailable, a cleanup of associated
+     * metadata is needed.
+     *
+     * This method removes metadata from the following caches, based on the
+     * stream identifiers of incoming server sessions:
+     * <ul>
+     *     <li>'sockets/sessions coming from the same remote hostname'</li>
+     *     <li>'validated domains'</li>
+     * </ul>
+     *
+     * @param streamIDs References to incoming server sessions that are no longer available (cannot be null, can be empty).
+     */
+    private void unregisterIncomingServerSession( final Collection<StreamID> streamIDs )
+    {
+        // Update the collection of 'sockets/sessions coming from the same remote hostname' as well as the collection of 'validated domains' to reflect the loss of incoming server sessions.
+        for ( final StreamID streamID : streamIDs )
+        {
+            final Map<Boolean, Map<String, ArrayList<StreamID>>> modifiedHostnameSessions = CacheUtil.removeValueFromMultiValuedCache( hostnameSessionsCache, streamID );
+            final Set<String> removedHostnameSessions = modifiedHostnameSessions.get( false ).keySet();
+            removedHostnameSessions.forEach( removedHostname -> CacheUtil.removeValueFromMultiValuedCache( validatedDomainsCache, removedHostname ) );
         }
     }
 
@@ -1197,7 +1196,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             router.route(offline);
         }
 
-        // Stop tracking information about the session and share it with other cluster nodes
+        // Stop tracking information about the session and share it with other cluster nodes.
+        // Note that, unlike other caches, this cache is populated only when clustering is enabled.
         sessionInfoCache.remove(fullJID.toString());
 
         if (removed || preauth_removed) {
@@ -1583,18 +1583,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         return JiveGlobals.getIntProperty("xmpp.session.detach.timeout", 10 * 60 * 1000);
     }
 
+    // Note that, unlike other caches, this cache is populated only when clustering is enabled.
     public Cache<String, ClientSessionInfo> getSessionInfoCache() {
         return sessionInfoCache;
     }
 
     @Override
     public void joinedCluster() {
-        restoreCacheContent();
-        // Track information about local sessions and share it with other cluster nodes
-        for (ClientSession session : routingTable.getClientsRoutes(true)) {
-            sessionInfoCache.put(session.getAddress().toString(), new ClientSessionInfo((LocalClientSession)session));
-        }
-
         // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
@@ -1602,6 +1597,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
         CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
         CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
+
+        // Track information about local sessions and share it with other cluster nodes.
+        // Note that, unlike other caches, this cache is populated only when clustering is enabled.
+        for (ClientSession session : routingTable.getClientsRoutes(true)) {
+            sessionInfoCache.put(session.getAddress().toString(), new ClientSessionInfo((LocalClientSession)session));
+        }
     }
 
     @Override
@@ -1612,78 +1613,66 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
-            // Add local sessions to caches
-            restoreCacheContent();
-
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
             CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
             CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
             CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
+
+            // The local cluster node left the cluster.
+            //
+            // Determine what entities were available only on other cluster nodes than the local one.
+            // These need to be cleaned up, as they're no longer available to the local cluster node.
+
+            // All entities that were connected to other cluster nodes are no longer available.
+            CacheUtil.retainValueInMultiValuedCache( componentSessionsCache, defaultNodeID );
+            CacheUtil.retainValueInCache( multiplexerSessionsCache, defaultNodeID );
+            final Set<StreamID> removedStreamIDs = CacheUtil.retainValueInCache( incomingServerSessionsCache, defaultNodeID );
+
+            // Update the collection of 'sockets/sessions coming from the same remote hostname' as well as the collection of 'validated domains' to reflect the loss of incoming server sessions.
+            if ( !removedStreamIDs.isEmpty() )
+            {
+                Log.debug( "The local cluster node left the cluster. The incoming server sessions with IDs '{}' were living on one (or more) other cluster nodes, and are no longer available.",
+                           String.join( ", ", removedStreamIDs.stream().map( StreamID::getID ).collect( Collectors.toSet() ) ) );
+                unregisterIncomingServerSession( removedStreamIDs );
+            }
         }
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
-        // Remove external component sessions hosted on the node that left from the cache.
+        // Another node left the cluster.
+        //
+        // If the cluster node leaves in an orderly fashion, it might have cleaned up
+        // caches itself. This cannot be depended on, as the cluster node
+        // might have disconnected unexpectedly (as a result of a crash or network issue).
+        //
+        // Determine what entities were available only on that node, and remove them.
+        // If the cluster node exited cleanly, we won't find any entries to work on. If
+        // it did not exit cleanly, all remaining cluster nodes will be in a race to
+        // clean up the same data. The implementation below accounts for that, by
+        // being thread- and cluster safe.
+
+        // All entities that were connected to other cluster nodes are no longer available.
         CacheUtil.removeValueFromMultiValuedCache( componentSessionsCache, NodeID.getInstance( nodeID ) );
+        CacheUtil.removeValueFromCache( multiplexerSessionsCache, NodeID.getInstance( nodeID )  );
+        final Set<StreamID> removedStreamIDs = CacheUtil.removeValueFromCache( incomingServerSessionsCache, NodeID.getInstance( nodeID ) );
+
+        // Update the collection of 'sockets/sessions coming from the same remote hostname' as well as the collection of 'validated domains' to reflect the loss of incoming server sessions.
+        if ( !removedStreamIDs.isEmpty() )
+        {
+            Log.debug( "Cluster node {} just left the cluster, and was the node where incoming server sessions with IDs '{}' were living. They are no longer available.",
+                       NodeID.getInstance( nodeID ),
+                       String.join( ", ", removedStreamIDs.stream().map( StreamID::getID ).collect( Collectors.toSet() ) ) );
+            unregisterIncomingServerSession( removedStreamIDs );
+        }
     }
 
     @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
-
-    private void restoreCacheContent() {
-        // Add external component sessions hosted locally to the cache (using new nodeID)
-        for (Session session : localSessionManager.getComponentsSessions()) {
-            CacheUtil.addValueToMultiValuedCache( componentSessionsCache, session.getAddress().toString(), server.getNodeID(), HashSet::new );
-        }
-
-        // Add connection multiplexer sessions hosted locally to the cache (using new nodeID)
-        for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
-            multiplexerSessionsCache.put(address, server.getNodeID());
-        }
-
-        // Add incoming server sessions hosted locally to the cache (using new nodeID)
-        for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
-            StreamID streamID = session.getStreamID();
-            incomingServerSessionsCache.put(streamID, server.getNodeID());
-            for (String hostname : session.getValidatedDomains()) {
-                // Update list of sockets/sessions coming from the same remote hostname
-                Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
-                try {
-                    lock.lock();
-                    ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
-                    if (streamIDs == null) {
-                        streamIDs = new ArrayList<>();
-                    }
-                    streamIDs.add(streamID);
-                    hostnameSessionsCache.put(hostname, streamIDs);
-                }
-                finally {
-                    lock.unlock();
-                }
-                // Add to clustered cache
-                lock = CacheFactory.getLock(streamID, validatedDomainsCache);
-                try {
-                    lock.lock();
-                    HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
-                    if (validatedDomains == null) {
-                        validatedDomains = new HashSet<>();
-                    }
-                    boolean added = validatedDomains.add(hostname);
-                    if (added) {
-                        validatedDomainsCache.put(streamID, validatedDomains);
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-        }
-    }
-
 
     /**
      * Task that closes detached client sessions.

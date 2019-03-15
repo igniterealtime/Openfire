@@ -671,7 +671,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
         final Map<Boolean, Map<JID, HashSet<NodeID>>> modified = CacheUtil.removeValueFromMultiValuedCache( componentCache, NodeID.getInstance( nodeID ) );
 
         modified.get( false ).keySet().forEach( removedDomain -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which component '{}' was living. Invoking the 'component unregistered' event on all remaining cluster nodes.", nodeID, removedDomain );
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which component '{}' was living. Invoking the 'component unregistered' event on all remaining cluster nodes.", NodeID.getInstance( nodeID ), removedDomain );
             notifyComponentUnregistered( removedDomain );
 
             // As we have removed the disappeared components from the clustered cache, other nodes

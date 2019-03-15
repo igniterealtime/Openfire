@@ -46,6 +46,50 @@ public class CacheUtil
     }
 
     /**
+     * Removes all entries of a cache that map to the provided value.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * @param cache   The cache from which to remove the element (cannot be null).
+     * @param element The element to be removed (can not be null ).
+     * @return a Set containing the keys of all affected cache entries (never null)
+     */
+    public static <K extends Serializable, V extends Serializable> Set<K> removeValueFromCache( Cache<K, V> cache, V element )
+    {
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, V>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        // contains all entries that were somehow changed.
+        final Set<K> result = new HashSet<>();
+
+        for ( final Map.Entry<K, V> entry : entries )
+        {
+            final K key = entry.getKey();
+
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
+            {
+                lock.lock();
+
+                if ( entry.getValue().equals( element ) )
+                {
+                    cache.remove( entry.getKey() );
+                    result.add( entry.getKey() );
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+        return result;
+    }
+
+    /**
      * Removes all instances of the specified element from the collection that is mapped by the provided key.
      *
      * When the element removed from the set leaves that set empty, the cache entry is removed completely.
@@ -226,6 +270,50 @@ public class CacheUtil
                         cache.put( entry.getKey(), elements );
                         result.get(true).put( entry.getKey(), elements );
                     }
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Remove elements from every collection that is a value of the cache, except for the specified element.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     **
+     * @param cache   The cache in which to retain the element (cannot be null).
+     * @param element The element to be retained (cannot be null).
+     * @return a Set containing the keys of all affected cache entries (never null)
+     */
+    public static <K extends Serializable, V extends Serializable> Set<K> retainValueInCache( Cache<K, V> cache, V element )
+    {
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, V>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        // contains all entries that were somehow changed.
+        final Set<K> result = new HashSet<>();
+
+        for ( final Map.Entry<K, V> entry : entries )
+        {
+            final K key = entry.getKey();
+
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
+            {
+                lock.lock();
+
+                if ( !entry.getValue().equals( element ) )
+                {
+                    cache.remove( entry.getKey() );
+                    result.add( entry.getKey() );
                 }
             }
             finally

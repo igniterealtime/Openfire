@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
@@ -60,8 +59,8 @@ import org.xmpp.packet.Presence;
  *
  * @author Derek DeMoro
  */
-public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
-
+public class SessionManager extends BasicModule implements ClusterEventListener
+{
     private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
     private static final SystemProperty<Integer> CONFLICT_LIMIT = SystemProperty.Builder.ofType(Integer.class)
         .setKey("xmpp.session.conflict-limit")
@@ -1238,51 +1237,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         conflictLimit = limit;
         CONFLICT_LIMIT.setValue(limit);
     }
-    /*
-    @Override
-    public Iterator<DiscoServerItem> getItems() {
-        return Arrays.asList(new DiscoServerItem(serverAddress, null, null, null, this, this)).iterator();
-    }
 
-    @Override
-    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        return Collections.emptyIterator();
-    }
-
-    @Override
-    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        return Collections.emptyIterator();
-    }
-
-    @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
-    }
-
-    @Override
-    public boolean hasInfo(String name, String node, JID senderJID) {
-        return false;
-    }
-
-    @Override
-    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
-        try {
-            // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
-            if (name != null && senderJID != null &&
-                server.getUserManager().isRegisteredUser(senderJID) &&
-                (name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
-                Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
-                for (ClientSession clientSession : getSessions(name)) {
-                    discoItems.add(new DiscoItem(clientSession.getAddress(), null, null, null));
-                }
-                return discoItems.iterator();
-            }
-            return Collections.emptyIterator();
-        } catch (UserNotFoundException e) {
-            return Collections.emptyIterator();
-        }
-    }
-    */
     private class ClientSessionListener implements ConnectionCloseListener {
         /**
          * Handle a session that just closed.
@@ -1407,9 +1362,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         hostnameSessionsCache = CacheFactory.createCache("Sessions by Hostname");
         validatedDomainsCache = CacheFactory.createCache("Validated Domains");
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
+
         // Listen to cluster events
         ClusterManager.addListener(this);
-        //server.getIQDiscoItemsHandler().addServerItemsProvider(this);
     }
 
 

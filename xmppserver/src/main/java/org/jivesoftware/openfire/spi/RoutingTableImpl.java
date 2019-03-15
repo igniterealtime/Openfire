@@ -1082,11 +1082,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             //
             // Determine what routes were available only on other cluster nodes than the local one.
             // These need to be cleaned up, as they're no longer available to the local cluster node.
-            final Set<DomainPair> removedOutgoingServerSessions = CacheUtil.retainValueInCache( serversCache, defaultNodeID );
 
+            // Drop outgoing server routes from all other nodes.
+            final Set<DomainPair> removedOutgoingServerSessions = CacheUtil.retainValueInCache( serversCache, defaultNodeID );
             removedOutgoingServerSessions.forEach( removedOutgoingServerSession -> {
                 Log.debug( "The local cluster node left the cluster. The outoing server session for '{}' was living on another cluster nodes, and is no longer available.", removedOutgoingServerSession.getRemote() );
                 localRoutingTable.removeRoute( removedOutgoingServerSession );
+            } );
+
+            // Drop component routes from all other nodes.
+            final Map<Boolean, Map<String, HashSet<NodeID>>> modified = CacheUtil.retainValueInMultiValuedCache( componentsCache, defaultNodeID );
+            modified.get( false ).keySet().forEach( removedComponentDomain -> {
+                Log.debug( "The local cluster node left the cluster. The component session for '{}' was living on one (or more) other cluster nodes, and is no longer available.", removedComponentDomain );
+                localRoutingTable.removeRoute(new DomainPair("", removedComponentDomain ));
             } );
         }
     }
@@ -1129,23 +1137,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         } );
 
         // remove component routes for the defunct node
-        Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
-        try {
-            componentLock.lock();
-            Map<String, NodeID> remoteComponents = new HashMap<>();
-            NodeID nodeIDInstance = NodeID.getInstance( nodeID );
-            for (Map.Entry<String, HashSet<NodeID>> entry : componentsCache.entrySet()) {
-                if (entry.getValue().contains(nodeIDInstance)) {
-                    remoteComponents.put(entry.getKey(), nodeIDInstance);
-                }
-            }
-            for (Map.Entry<String, NodeID> entry : remoteComponents.entrySet()) {
-                removeComponentRoute(new JID(entry.getKey()), entry.getValue());
-            }
-        }
-        finally {
-            componentLock.unlock();
-        }
+        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache( componentsCache, NodeID.getInstance( nodeID ) );
+        modifiedComponents.get( false ).keySet().forEach( removedComponentDomain -> {
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route will be removed", NodeID.getInstance( nodeID ), removedComponentDomain );
+            localRoutingTable.removeRoute(new DomainPair("", removedComponentDomain ));
+        } );
     }
 
     @Override

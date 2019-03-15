@@ -1096,6 +1096,23 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Log.debug( "The local cluster node left the cluster. The component session for '{}' was living on one (or more) other cluster nodes, and is no longer available.", removedComponentDomain );
                 localRoutingTable.removeRoute(new DomainPair("", removedComponentDomain ));
             } );
+
+            // Drop routes for all client sessions connected via other cluster nodes.
+            final List<String> remoteClientRoutes = new ArrayList<>();
+            for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
+                if (!entry.getValue().getNodeID().equals(defaultNodeID)) {
+                    remoteClientRoutes.add(entry.getKey());
+                }
+            }
+            for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
+                if (!entry.getValue().getNodeID().equals(defaultNodeID)) {
+                    remoteClientRoutes.add(entry.getKey());
+                }
+            }
+            Log.debug( "The local cluster node left the cluster. A total of {} client sessions were living on one (or more) other cluster nodes, and are no longer available.", remoteClientRoutes.size() );
+            for (String route : remoteClientRoutes) {
+                removeClientRoute(new JID(route));
+            }
         }
     }
 
@@ -1121,6 +1138,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     remoteClientRoutes.add(entry.getKey());
                 }
             }
+            Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), remoteClientRoutes.size() );
             for (String route : remoteClientRoutes) {
                 removeClientRoute(new JID(route));
             }

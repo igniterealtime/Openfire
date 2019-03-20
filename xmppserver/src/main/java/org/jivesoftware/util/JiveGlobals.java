@@ -1092,12 +1092,11 @@ public class JiveGlobals {
           return;
         }
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        if(StringUtils.isNotEmpty(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
+        if(StringUtils.isNotEmpty(key) && StringUtils.isNotEmpty(oldAlg)) {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
+            securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
         }
-        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(key));
-        currentKey = key;
     }
 
     /**

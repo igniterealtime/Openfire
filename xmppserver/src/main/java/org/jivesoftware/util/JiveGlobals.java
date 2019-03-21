@@ -1063,18 +1063,16 @@ public class JiveGlobals {
     public static void setupPropertyEncryptionAlgorithm(String alg) {
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        if (oldAlg.equals(alg)) {
-          return;
-        }
         String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-        if(StringUtils.isNotEmpty(alg) && StringUtils.isNotEmpty(oldKey)){
+        if(StringUtils.isNotEmpty(alg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
+            oldKey = new AesEncryptor().decrypt(oldKey);
             // update encrypted properties
             updateEncryptionProperties(alg, oldKey);
-        }
-        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
-            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
-        } else {
-            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
+            if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
+                securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
+            } else {
+                securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
+            }
         }
     }
     
@@ -1083,16 +1081,16 @@ public class JiveGlobals {
      * set a custom key for encrypting property values 
      */
     public static void setupPropertyEncryptionKey(String key) {
+        if (key == null) {
+            key = "";
+        }
         // Get the old secret key and encryption type
+        String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
         String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
         if (StringUtils.isNotEmpty(oldKey)) {
-          oldKey = new AesEncryptor().decrypt(oldKey);
+            oldKey = new AesEncryptor().decrypt(oldKey);
         }
-        if (oldKey.equals(key)) {
-          return;
-        }
-        String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        if(StringUtils.isNotEmpty(key) && StringUtils.isNotEmpty(oldAlg)) {
+        if(!key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
             securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));

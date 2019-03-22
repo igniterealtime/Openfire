@@ -68,6 +68,7 @@ import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.handler.IQBindHandler;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
@@ -515,8 +516,8 @@ public class XMPPServer {
                 AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
                 org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
-            JiveGlobals.setProperty("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
-                org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
+            JiveGlobals.setProperty(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
+                GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
                 org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
             JiveGlobals.setProperty("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",

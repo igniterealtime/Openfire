@@ -6,6 +6,7 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
+<%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -41,8 +42,8 @@
                     org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
                 xmppSettings.put("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
                     org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
-                xmppSettings.put("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
-                    org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
+                xmppSettings.put(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
+                    GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
                     org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
                 xmppSettings.put("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",

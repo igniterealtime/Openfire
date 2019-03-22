@@ -99,6 +99,7 @@ import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -522,8 +523,8 @@ public class XMPPServer {
                 org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
             JiveGlobals.setProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
                 LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
-                org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
+            JiveGlobals.setProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),
+                SecurityAuditManager.AUDIT_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
                 AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
 

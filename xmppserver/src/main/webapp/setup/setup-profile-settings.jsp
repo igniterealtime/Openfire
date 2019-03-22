@@ -5,6 +5,7 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -48,8 +49,8 @@
                     org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
                 xmppSettings.put("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
                     org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
-                xmppSettings.put("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
-                    org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+                xmppSettings.put(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
+                    AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
                 if (requestedScramOnly) {
                     JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
                 }

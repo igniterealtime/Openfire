@@ -18,12 +18,13 @@ package org.jivesoftware.openfire.admin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -42,6 +43,14 @@ import org.xmpp.packet.JID;
  * @author Daniel Henninger
  */
 public class AdminManager {
+
+    public static final SystemProperty<Class> ADMIN_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.admin.className")
+        .setBaseClass(AdminProvider.class)
+        .setDefaultValue(DefaultAdminProvider.class)
+        .addListener(AdminManager::initProvider)
+        .setDynamic(true)
+        .build();
 
     private static final Logger Log = LoggerFactory.getLogger(AdminManager.class);
 
@@ -73,60 +82,23 @@ public class AdminManager {
 
     /* Cache of admin accounts */
     private List<JID> adminList;
-    private AdminProvider provider;
+    private static AdminProvider provider;
 
     /**
      * Constructs a AdminManager, propery listener, and setting up the provider.
      */
     private AdminManager() {
         // Load an admin provider.
-        initProvider();
-
-        // Detect when a new admin provider class is set
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map<String, Object> params) {
-                if ("provider.admin.className".equals(property)) {
-                    initProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map<String, Object> params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map<String, Object> params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map<String, Object> params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
+        initProvider(ADMIN_PROVIDER.getValue());
     }
 
-    /**
-     * Initializes the server's admin provider, based on configuration and defaults to
-     * DefaultAdminProvider if the specified provider is not valid or not specified.
-     */
-    private void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.admin.className");
-
-        String className = JiveGlobals.getProperty("provider.admin.className",
-                "org.jivesoftware.openfire.admin.DefaultAdminProvider");
-        // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+    private static void initProvider(final Class clazz) {
+        if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                provider = (AdminProvider) c.newInstance();
+                provider = (AdminProvider) clazz.newInstance();
             }
             catch (Exception e) {
-                Log.error("Error loading admin provider: " + className, e);
+                Log.error("Error loading admin provider: " + clazz.getName(), e);
                 provider = new DefaultAdminProvider();
             }
         }

@@ -512,7 +512,7 @@ public class XMPPServer {
                 "org.jivesoftware.database.DefaultConnectionProvider");
 
             JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
-                org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
+                AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
                 org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
             JiveGlobals.setProperty("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
@@ -523,8 +523,8 @@ public class XMPPServer {
                 org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
             JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
                 org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
-            JiveGlobals.setProperty("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
-                org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+            JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
+                AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
 
             // make configurable?
             JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");

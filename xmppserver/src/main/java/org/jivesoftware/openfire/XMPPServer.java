@@ -515,8 +515,8 @@ public class XMPPServer {
 
             JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
                 AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
-                org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
+            JiveGlobals.setProperty(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
+                UserManager.USER_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
                 GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",

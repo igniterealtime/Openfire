@@ -9,6 +9,9 @@
 <%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
 <%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="org.jivesoftware.openfire.user.UserManager" %>
+<%@ page import="org.jivesoftware.openfire.auth.AuthProvider" %>
+<%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -40,10 +43,10 @@
             if (xmppSettings == null){
                 sessionFailure = true;
             } else {
-                xmppSettings.put("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
-                    org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
-                xmppSettings.put("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
-                    org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
+                xmppSettings.put(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
+                    AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
+                xmppSettings.put(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
+                    UserManager.USER_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
                     GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",

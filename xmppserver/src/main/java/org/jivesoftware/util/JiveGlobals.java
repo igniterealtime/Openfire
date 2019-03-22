@@ -1092,13 +1092,13 @@ public class JiveGlobals {
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
         String oldKey = getCurrentKey();
-        if (!key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
+        if (StringUtils.isNotEmpty(key) && !key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
         }
         // Set the new key
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(key));
-        currentKey = key;
+        currentKey = key == "" ? null : key;
         propertyEncryptorNew = getEncryptor(oldAlg, key);
         propertyEncryptor = propertyEncryptorNew;
     }

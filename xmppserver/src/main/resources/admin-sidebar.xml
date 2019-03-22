@@ -20,7 +20,7 @@
 
             <!-- System Properties -->
             <item id="server-props" name="${sidebar.system-props}"
-                  url="SystemProperties.jsp"
+                  url="server-properties.jsp"
                   description="${sidebar.system-props.descr}"/>
 
             <!-- System Locale -->

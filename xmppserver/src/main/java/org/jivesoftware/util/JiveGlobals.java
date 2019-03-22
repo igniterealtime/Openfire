@@ -1072,7 +1072,7 @@ public class JiveGlobals {
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
         String oldKey = getCurrentKey();
-        if (StringUtils.isNotEmpty(alg) && !oldAlg.equals(alg)) {
+        if (StringUtils.isNotEmpty(alg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)) {
             // update encrypted properties
             updateEncryptionProperties(alg, oldKey);
         }
@@ -1092,7 +1092,7 @@ public class JiveGlobals {
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
         String oldKey = getCurrentKey();
-        if (StringUtils.isNotEmpty(key) && !key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
+        if (StringUtils.isNotEmpty(oldKey) && StringUtils.isNotEmpty(key) && !key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
         }

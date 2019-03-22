@@ -90,6 +90,7 @@ public class JiveGlobals {
     private static DateFormat timeFormat = null;
     
     private static Encryptor propertyEncryptor = null;
+    private static Encryptor propertyEncryptorNew = null;
     private static String currentKey = null;
 
     /**
@@ -1037,23 +1038,30 @@ public class JiveGlobals {
     }
 
     /**
-     * Fetches the current value of the property encryption key.
+     * Fetches the property encryptor.
      * 
-     * @return The property encryption key
+     * @param useNewEncryptor Should use the new encryptor
+     * @return The property encryptor
      */
-    public static Encryptor getPropertyEncryptor() {
+    public static Encryptor getPropertyEncryptor(boolean useNewEncryptor) {
         if (securityProperties == null) {
             loadSecurityProperties();
         }
         if (propertyEncryptor == null) {
             String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-            if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(algorithm)) {
-                propertyEncryptor = new AesEncryptor(currentKey);
-            } else {
-                propertyEncryptor = new Blowfish(currentKey);
-            }
+            propertyEncryptor = getEncryptor(algorithm, currentKey);
+            propertyEncryptorNew = propertyEncryptor;
         }
-        return propertyEncryptor;
+        return useNewEncryptor ? propertyEncryptorNew : propertyEncryptor;
+    }
+
+    /**
+     * Fetches the current property encryptor.
+     *
+     * @return The current property encryptor
+     */
+    public static Encryptor getPropertyEncryptor() {
+        return getPropertyEncryptor(false);
     }
     
     /**
@@ -1063,16 +1071,16 @@ public class JiveGlobals {
     public static void setupPropertyEncryptionAlgorithm(String alg) {
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-        if(StringUtils.isNotEmpty(alg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
-            oldKey = new AesEncryptor().decrypt(oldKey);
+        String oldKey = getCurrentKey();
+        if (StringUtils.isNotEmpty(alg) && !oldAlg.equals(alg)) {
             // update encrypted properties
             updateEncryptionProperties(alg, oldKey);
-            if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
-                securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
-            } else {
-                securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
-            }
+        }
+        // Set the new algorithm
+        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
+            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
+        } else {
+            securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
         }
     }
     
@@ -1081,20 +1089,47 @@ public class JiveGlobals {
      * set a custom key for encrypting property values 
      */
     public static void setupPropertyEncryptionKey(String key) {
-        if (key == null) {
-            key = "";
-        }
         // Get the old secret key and encryption type
         String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-        String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-        if (StringUtils.isNotEmpty(oldKey)) {
-            oldKey = new AesEncryptor().decrypt(oldKey);
-        }
-        if(!key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
+        String oldKey = getCurrentKey();
+        if (!key.equals(oldKey) && StringUtils.isNotEmpty(oldAlg)) {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
-            securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
         }
+        // Set the new key
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(key));
+        currentKey = key;
+        propertyEncryptorNew = getEncryptor(oldAlg, key);
+        propertyEncryptor = propertyEncryptorNew;
+    }
+
+    /**
+     * Get current encryptor key.
+     *
+     */
+    private static String getCurrentKey() {
+        String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+        String key = null;
+        if (StringUtils.isNotEmpty(encryptedKey)) {
+            key = new AesEncryptor().decrypt(encryptedKey);
+        }
+        return key;
+    }
+
+    /**
+     * Get current encryptor according to alg and key.
+     *
+     * @param alg algorithm type
+     * @param key encryptor key
+     */
+    private static Encryptor getEncryptor(String alg, String key) {
+        Encryptor encryptor;
+        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
+            encryptor = new AesEncryptor(key);
+        } else {
+            encryptor = new Blowfish(key);
+        }
+        return encryptor;
     }
 
     /**
@@ -1103,52 +1138,38 @@ public class JiveGlobals {
      * @param newAlg new algorithm type
      * @param newKey new encryptor key
      */
-    private static void updateEncryptionProperties(String newAlg,String newKey) {
-        Encryptor newEncryptor;
-        // create the encryptor
-        if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlg)) {
-            newEncryptor = new AesEncryptor(newKey);
-        } else {
-            newEncryptor = new Blowfish(newKey);
-        }
-        
-        // load properties to decrypt
+    private static void updateEncryptionProperties(String newAlg, String newKey) {
+        // load DB properties using the current key
         if(properties == null) {
             properties = JiveProperties.getInstance();
         }
+        //create the new encryptor
+        currentKey = newKey.isEmpty() ? null : newKey;
+        propertyEncryptorNew = getEncryptor(newAlg, newKey);
         
-        // Update configuration properties
+        // Use new key to update configuration properties
         Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
         Entry<String, String> entry;
         String name;
         while(iterator.hasNext()){
             entry = iterator.next();
             name = entry.getKey();
-            //only need to update the encrypted ones
+            // only need to update the encrypted ones
             if (isPropertyEncrypted(name)) {
                 properties.put(name, entry.getValue());
             }
         }
-        //update xml properties
-        updateXMLEncryptionProperties();
-        // Set the current encryption
-        currentKey = newKey;
-        propertyEncryptor = newEncryptor;
-        
-    }
-    private static void updateXMLEncryptionProperties() {
-        Iterator<String> iterator = openfireProperties.getAllPropertyNames().iterator();
-        String name;
-        while(iterator.hasNext()){
-            name = iterator.next();
-            if(isXMLPropertyEncrypted(name)){
-                // update xml prop
-                String xmlProperty = getXMLProperty(name);
-                if(StringUtils.isNotEmpty(xmlProperty)){
-                    setXMLProperty(name, xmlProperty);
-                }
+        // Update encryption properties to XML, using new encryption key
+        for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
+            String xmlProperty = getXMLProperty(propertyName);
+            // update xml prop
+            if(StringUtils.isNotEmpty(xmlProperty)){
+                Log.info("Updating encrypted value for " + propertyName);
+                setXMLProperty(propertyName, xmlProperty);
             }
         }
+        // Two encryptors are now the same
+        propertyEncryptor = propertyEncryptorNew;
     }
 
    /**
@@ -1289,13 +1310,7 @@ public class JiveGlobals {
     private static void setupPropertyEncryption() {
         
         // get/set the current encryption key
-        Encryptor keyEncryptor = new AesEncryptor();
-        String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-        if (encryptedKey ==  null || encryptedKey.isEmpty()) {
-            currentKey = null;
-        } else {
-            currentKey = keyEncryptor.decrypt(encryptedKey);
-        }
+        currentKey = getCurrentKey();
         
         // check to see if a new key has been defined
         String newKey = securityProperties.getProperty(ENCRYPTION_KEY_NEW, false);
@@ -1318,51 +1333,14 @@ public class JiveGlobals {
                 }
             }
 
-            // load DB properties using the current key
-            if (properties == null) {
-                properties = JiveProperties.getInstance();
-            }
+            String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+            updateEncryptionProperties(oldAlg, newKey);
             
-            // load XML properties using the current key
-            Map<String, String> openfireProps = new HashMap<>();
-            for (String xmlProp : openfireProperties.getAllPropertyNames()) {
-                if (isPropertyEncrypted(xmlProp)) {
-                    openfireProps.put(xmlProp, openfireProperties.getProperty(xmlProp));
-                }
-            }
-            
-            // rewrite existing encrypted properties using new encryption key
-            currentKey = newKey.isEmpty() ? null : newKey;
-            propertyEncryptor = null;
-            for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
-                Log.info("Updating encrypted value for " + propertyName);
-                if (openfireProps.containsKey(propertyName)) {
-                    openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
-                } else if (!resetProperty(propertyName)) {
-                    Log.warn("Failed to reset encrypted property value for " + propertyName);
-                }
-            }
             securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
             securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);
         }
     
         // (re)write the encryption key to the security XML file
-        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, keyEncryptor.encrypt(currentKey));
-    }
-    
-    /**
-     * Read and re-write a given property to reset its encryption status
-     * @param propertyName the name of the property to reset
-     */
-    private static boolean resetProperty(String propertyName) {
-        if (properties != null) {
-            String propertyValue = properties.get(propertyName);
-            if (propertyValue != null) {
-                properties.remove(propertyName);
-                properties.put(propertyName, propertyValue);
-                return true;
-            }
-        }
-        return false;
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
     }
 }

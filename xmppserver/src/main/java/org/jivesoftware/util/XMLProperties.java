@@ -646,7 +646,7 @@ public class XMLProperties {
             String propValue = StringEscapeUtils.escapeXml10(value);
             // check to see if the property is marked as encrypted
             if (JiveGlobals.isXMLPropertyEncrypted(name)) {
-                propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
+                propValue = JiveGlobals.getPropertyEncryptor(true).encrypt(value);
                 element.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
             }
             element.setText(propValue);

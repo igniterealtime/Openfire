@@ -349,7 +349,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void insertProperty(String name, String value, boolean isEncrypted) {
-        Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor(true);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -381,7 +381,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void updateProperty(String name, String value, boolean isEncrypted) {
-        Encryptor encryptor = getEncryptor();
+        Encryptor encryptor = getEncryptor(true);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -478,7 +478,11 @@ public class JiveProperties implements Map<String, String> {
         }
     }
     
+    private Encryptor getEncryptor(boolean useNewEncryptor) {
+        return JiveGlobals.getPropertyEncryptor(useNewEncryptor);
+    }
+    
     private Encryptor getEncryptor() {
-        return JiveGlobals.getPropertyEncryptor();
+        return getEncryptor(false);
     }
 }

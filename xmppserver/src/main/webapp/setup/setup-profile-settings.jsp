@@ -12,6 +12,7 @@
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
 <%@ page import="org.jivesoftware.openfire.auth.AuthProvider" %>
 <%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
+<%@ page import="org.jivesoftware.openfire.vcard.VCardManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -49,8 +50,8 @@
                     UserManager.USER_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
                     GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
-                    org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
+                xmppSettings.put(VCardManager.VCARD_PROVIDER.getKey(), JiveGlobals.getXMLProperty(VCardManager.VCARD_PROVIDER.getKey(),
+                    VCardManager.VCARD_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
                     LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),

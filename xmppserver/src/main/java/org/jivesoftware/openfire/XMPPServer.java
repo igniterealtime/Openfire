@@ -403,7 +403,7 @@ public class XMPPServer {
             logger.error(e.getMessage(), e);
         }
 
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
         JiveGlobals.migrateProperty(Log.DEBUG_ENABLED.getKey());
         Log.setDebugEnabled(Log.DEBUG_ENABLED.getValue());
@@ -495,9 +495,9 @@ public class XMPPServer {
         JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
 
         // steps from setup-host-settings.jsp
-        JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
+        JiveGlobals.setXMLProperty(XMPPServerInfo.XMPP_DOMAIN.getKey(), JiveGlobals.getXMLProperty("autosetup." + XMPPServerInfo.XMPP_DOMAIN.getKey()));
         JiveGlobals.setXMLProperty("fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
         ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "true")));
         AnonymousSaslServer.ENABLED.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + AnonymousSaslServer.ENABLED.getKey(), "false")));

@@ -19,6 +19,7 @@ package org.jivesoftware.database.bugfix;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SchemaManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeAffiliate;
@@ -115,7 +116,7 @@ public class OF1515
         String domain;
         try
         {
-            domain = JiveGlobals.getProperty( "xmpp.domain", JiveGlobals.getXMLProperty( "fqdn", InetAddress.getLocalHost().getCanonicalHostName() ) ).toLowerCase();
+            domain = JiveGlobals.getProperty(XMPPServerInfo.XMPP_DOMAIN.getKey(), JiveGlobals.getXMLProperty( "fqdn", InetAddress.getLocalHost().getCanonicalHostName() ) ).toLowerCase();
         }
         catch ( UnknownHostException e )
         {

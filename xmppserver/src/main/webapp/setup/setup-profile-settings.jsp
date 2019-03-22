@@ -7,6 +7,7 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 <%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
+<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -46,8 +47,8 @@
                     GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
                     org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
-                xmppSettings.put("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
-                    org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
+                xmppSettings.put(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
+                    LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
                 xmppSettings.put("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
                     org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
                 xmppSettings.put(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),

@@ -520,8 +520,8 @@ public class XMPPServer {
                 GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
                 org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
-            JiveGlobals.setProperty("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
-                org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
+            JiveGlobals.setProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
+                LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
                 org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
             JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),

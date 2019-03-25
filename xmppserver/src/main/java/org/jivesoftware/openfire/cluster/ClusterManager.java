@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.cluster;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -403,6 +404,30 @@ public class ClusterManager {
      */
     public static Collection<ClusterNodeInfo> getNodesInfo() {
         return CacheFactory.getClusterNodesInfo();
+    }
+
+    /**
+     * Returns basic information about a specific member of the cluster.
+     *
+     * @since Openfire 4.4
+     * @param nodeID the node whose information is required
+     * @return the node specific information, or {@link Optional#empty()} if the node could not be identified
+     */
+    public static Optional<ClusterNodeInfo> getNodeInfo(final byte[] nodeID) {
+        return getNodeInfo(NodeID.getInstance(nodeID));
+    }
+
+    /**
+     * Returns basic information about a specific member of the cluster.
+     *
+     * @since Openfire 4.4
+     * @param nodeID the node whose information is required
+     * @return the node specific information, or {@link Optional#empty()} if the node could not be identified
+     */
+    public static Optional<ClusterNodeInfo> getNodeInfo(final NodeID nodeID) {
+        return CacheFactory.getClusterNodesInfo().stream()
+            .filter(nodeInfo -> nodeInfo.getNodeID().equals(nodeID))
+            .findAny();
     }
 
     /**

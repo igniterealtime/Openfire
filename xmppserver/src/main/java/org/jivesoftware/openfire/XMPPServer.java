@@ -51,6 +51,7 @@ import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusterMonitor;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -123,6 +124,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import com.google.common.reflect.ClassPath;
 
@@ -783,6 +785,7 @@ public class XMPPServer {
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
+        loadModule(ClusterMonitor.class.getName());
         // Keep a reference to the internal component manager
         componentManager = getComponentManager();
     }
@@ -1753,5 +1756,18 @@ public class XMPPServer {
      */
     public boolean isStarted() {
         return started;
+    }
+
+    public void sendMessageToAdmins(final String message) {
+        final MessageRouter messageRouter = getMessageRouter();
+        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+        final Message notification = new Message();
+        notification.setFrom(getServerInfo().getXMPPDomain());
+        notification.setBody(message);
+        admins.forEach(jid -> {
+            logger.debug("Sending message to admin [jid={}, message={}]", jid, message);
+            notification.setTo(jid);
+            messageRouter.route(notification);
+        });
     }
 }

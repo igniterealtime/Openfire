@@ -41,6 +41,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -112,11 +113,18 @@ import org.xmpp.packet.JID;
  */
 public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
+    public static final SystemProperty<Boolean> STORE_AVATAR_IN_DB = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("ldap.override.avatar")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .addListener(LdapVCardProvider::setDbStorageEnabled)
+        .build();
+
     private static final Logger Log = LoggerFactory.getLogger(LdapVCardProvider.class);
 
     private LdapManager manager;
     private VCardTemplate template;
-    private Boolean dbStorageEnabled = false;
+    private static boolean dbStorageEnabled = false;
 
     /**
      * The default vCard provider is used to handle the vCard in the database. vCard
@@ -137,7 +145,11 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         // DB vcard provider used for loading properties overwritten in the DB
         defaultProvider = new DefaultVCardProvider();
         // Check of avatars can be overwritten (and stored in the database)
-        dbStorageEnabled = JiveGlobals.getBooleanProperty("ldap.override.avatar", false);
+        setDbStorageEnabled(STORE_AVATAR_IN_DB.getValue());
+    }
+
+    private static void setDbStorageEnabled(final boolean value) {
+        dbStorageEnabled = value;
     }
 
     /**
@@ -445,10 +457,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     @Override
     public void propertySet(String property, Map params) {
-        if ("ldap.override.avatar".equals(property)) {
-            dbStorageEnabled = Boolean.parseBoolean((String)params.get("value"));
-        }
-        else if ("ldap.vcard-mapping".equals(property)) {
+        if ("ldap.vcard-mapping".equals(property)) {
             initTemplate();
             // Reset cache of vCards
             VCardManager.getInstance().reset();
@@ -457,9 +466,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     @Override
     public void propertyDeleted(String property, Map params) {
-        if ("ldap.override.avatar".equals(property)) {
-            dbStorageEnabled = false;
-        }
+        //Ignore
     }
 
     @Override

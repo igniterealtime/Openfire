@@ -299,7 +299,7 @@ public class CertificateStoreManager extends BasicModule
      * @return a store type (never null).
      * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
      */
-    static String getKeyStoreType( ConnectionType type )
+    public static String getKeyStoreType( ConnectionType type )
     {
         final String propertyName = type.getPrefix() + "storeType";
         final String defaultValue = "jks";

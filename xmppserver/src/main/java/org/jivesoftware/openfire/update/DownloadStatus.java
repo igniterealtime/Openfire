@@ -23,6 +23,7 @@ public class DownloadStatus {
     private int hashCode;
     private String url;
     private boolean successfull;
+    private String version;
 
     public int getHashCode() {
         return hashCode;
@@ -48,4 +49,11 @@ public class DownloadStatus {
         this.successfull = successfull;
     }
 
+    public void setVersion(final String version) {
+        this.version = version;
+    }
+
+    public String getVersion() {
+        return version;
+    }
 }

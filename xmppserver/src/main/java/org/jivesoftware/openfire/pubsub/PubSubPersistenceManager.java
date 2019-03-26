@@ -78,8 +78,8 @@ public class PubSubPersistenceManager {
 
     private static final String PURGE_FOR_SIZE_SQLSERVER =
             "DELETE from ofPubsubItem where id in " +
-            "(select TOP ? ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
-            "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
+            "(SELECT TOP (?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
             "ORDER BY creationDate DESC) AS noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";

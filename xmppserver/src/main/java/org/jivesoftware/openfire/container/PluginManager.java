@@ -16,6 +16,33 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
@@ -31,18 +58,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.jar.JarFile;
-import java.util.zip.ZipException;
 
 /**
  * Manages plugins.
@@ -351,15 +366,37 @@ public class PluginManager
     }
 
     /**
-     * Returns an loaded plugin by its canonical name or <tt>null</tt> if a plugin with that name does not exist. The
+     * Returns a loaded plugin by its canonical name or <tt>null</tt> if a plugin with that name does not exist. The
      * canonical name is the lowercase-name of the plugin archive, without the file extension. For example: "broadcast".
      *
+     * @deprecated in Openfire 4.4 in favour of {@link #getPluginByName(String)}
      * @param canonicalName the name of the plugin.
      * @return the plugin.
      */
+    // TODO: (2019-03-26) Remove with Openfire 5.0
+    @Deprecated
     public Plugin getPlugin( String canonicalName )
     {
         return pluginsLoaded.get( canonicalName.toLowerCase() );
+    }
+
+    /**
+     * Returns a loaded plugin by the name contained in the plugin.xml &lt;name/&gt; tag, ignoring case.
+     * For example: "broadcast".
+     *
+     * @param pluginName the name of the plugin.
+     * @return the plugin, if found
+     * @since Openfire 4.4
+     */
+    public Optional<Plugin> getPluginByName(final String pluginName) {
+        return pluginMetadata.values().stream()
+            // Find the matching metadata
+            .filter(pluginMetadata -> pluginName.equalsIgnoreCase(pluginMetadata.getName()))
+            .findAny()
+            // Find the canonical name for this plugin
+            .map(PluginMetadata::getCanonicalName)
+            // Finally, find the plugin
+            .flatMap(canonicalName -> Optional.of(pluginsLoaded.get(canonicalName)));
     }
 
     /**

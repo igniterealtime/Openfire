@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Module;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,11 @@ import org.slf4j.LoggerFactory;
 public class ClusterMonitor implements Module, ClusterEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterMonitor.class);
+    private static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("cluster-monitor.service-enabled")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
     private static final String MODULE_NAME = "Cluster monitor";
     private static final String UNKNOWN_NODE_NAME = "<unknown>";
     private final Map<NodeID, String> nodeNames = new ConcurrentHashMap<>();
@@ -66,7 +72,7 @@ public class ClusterMonitor implements Module, ClusterEventListener {
         nodeNames.put(nodeId, nodeName);
         LOGGER.info("Another node ({}/{}) has joined the cluster", nodeId, nodeName);
         if (ClusterManager.isSeniorClusterMember() && nodeHasLeftCluster) {
-            xmppServer.sendMessageToAdmins(nodeName + " has joined the cluster - resilience is restored");
+            sendMessageToAdminsIfEnabled(nodeName + " has joined the cluster - resilience is restored");
         }
     }
 
@@ -74,7 +80,7 @@ public class ClusterMonitor implements Module, ClusterEventListener {
     public void leftCluster() {
         final String nodeName = xmppServer.getServerInfo().getHostname();
         LOGGER.info("This node ({}/{}) has left the cluster", xmppServer.getNodeID(), nodeName);
-        xmppServer.sendMessageToAdmins("The local node ('" + nodeName + "') has left the cluster - this node no longer has any resilience");
+        sendMessageToAdminsIfEnabled("The local node ('" + nodeName + "') has left the cluster - this node no longer has any resilience");
     }
 
     @Override
@@ -94,7 +100,7 @@ public class ClusterMonitor implements Module, ClusterEventListener {
                 conjunction = "are";
                 plural = "s";
             }
-            xmppServer.sendMessageToAdmins(nodeName + " has left the cluster - there " + conjunction + " now only " + clusterSize + " node" + plural + " in the cluster");
+            sendMessageToAdminsIfEnabled(nodeName + " has left the cluster - there " + conjunction + " now only " + clusterSize + " node" + plural + " in the cluster");
         }
     }
 
@@ -106,6 +112,14 @@ public class ClusterMonitor implements Module, ClusterEventListener {
     private String getNodeName(final byte[] nodeID) {
         final Optional<ClusterNodeInfo> nodeInfo = ClusterManager.getNodeInfo(nodeID);
         return nodeInfo.map(ClusterNodeInfo::getHostName).orElse(UNKNOWN_NODE_NAME);
+    }
+
+    private void sendMessageToAdminsIfEnabled(final String message) {
+        final Boolean enabled = ENABLED.getValue();
+        LOGGER.info("Sending message to admins: {} (enabled={})", message, enabled);
+        if (enabled) {
+            xmppServer.sendMessageToAdmins(message);
+        }
     }
 
 }

@@ -71,7 +71,7 @@
             errors.put("password", "password");
         }
         try {
-            AuthFactory.authenticate("admin", "admin");
+            AuthFactory.authenticate("admin", password);
         } catch (UnauthorizedException e) {
             errors.put("password", "password");
         }

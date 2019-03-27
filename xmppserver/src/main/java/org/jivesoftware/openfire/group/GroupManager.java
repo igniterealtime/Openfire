@@ -291,6 +291,8 @@ public class GroupManager {
                 // The group doesn't already exist so we can create a new group
                 newGroup = provider.createGroup(name);
                 // Update caches.
+                clearGroupNameCache();
+                clearGroupCountCache();
                 groupCache.put(name, newGroup);
 
                 // Fire event.
@@ -367,6 +369,8 @@ public class GroupManager {
 
         // Expire cache.
         groupCache.remove(group.getName());
+        clearGroupNameCache();
+        clearGroupCountCache();
     }
 
     /**

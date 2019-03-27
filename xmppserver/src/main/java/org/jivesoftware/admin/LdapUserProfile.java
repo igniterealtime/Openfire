@@ -20,6 +20,7 @@ import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.jivesoftware.openfire.ldap.LdapVCardProvider;
+import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
@@ -508,7 +509,7 @@ public class LdapUserProfile {
         JiveGlobals.setProperty("ldap.vcard-mapping", sb.toString());
 
         // Set that the vcard provider is LdapVCardProvider
-        JiveGlobals.setProperty("provider.vcard.className", LdapVCardProvider.class.getName());
+        VCardManager.VCARD_PROVIDER.setValue(LdapVCardProvider.class);
 
         // Save duplicated fields in LdapManager (should be removed in the future)
         LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));

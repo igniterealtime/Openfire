@@ -29,6 +29,9 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.security.DefaultSecurityAuditProvider;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.openfire.security.SecurityAuditProvider;
 import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
 import org.jivesoftware.openfire.user.property.UserPropertyProvider;
 import org.jivesoftware.util.ClassUtils;
@@ -37,6 +40,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -52,6 +56,15 @@ import org.xmpp.packet.JID;
  * @see User
  */
 public class UserManager implements IQResultListener {
+
+    public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.user.className")
+        .setBaseClass(UserProvider.class)
+        .setDefaultValue(DefaultUserProvider.class)
+        .addListener(UserManager::initProvider)
+        .setDynamic(true)
+        .build();
+
 
     private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
@@ -102,7 +115,7 @@ public class UserManager implements IQResultListener {
     private Cache<String, User> userCache;
     /** Cache if a local or remote user exists. */
     private Cache<String, Boolean> remoteUsersCache;
-    private UserProvider provider;
+    private static UserProvider provider;
     private UserPropertyProvider propertyProvider;
 
     private UserManager() {
@@ -111,16 +124,13 @@ public class UserManager implements IQResultListener {
         remoteUsersCache = CacheFactory.createCache("Remote Users Existence");
 
         // Load a user & property provider.
-        initProvider();
+        initProvider(USER_PROVIDER.getValue());
         initPropertyProvider();
 
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
             @Override
             public void propertySet(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
                 if ("provider.userproperty.className".equals(property)) {
                     initPropertyProvider();
                 }
@@ -128,9 +138,6 @@ public class UserManager implements IQResultListener {
 
             @Override
             public void propertyDeleted(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
                 if ("provider.userproperty.className".equals(property)) {
                     initPropertyProvider();
                 }
@@ -506,20 +513,13 @@ public class UserManager implements IQResultListener {
         Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
 
-    private void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.user.className");
-
-        String className = JiveGlobals.getProperty("provider.user.className",
-                "org.jivesoftware.openfire.user.DefaultUserProvider");
-        // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+    private static void initProvider(final Class clazz) {
+        if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                provider = (UserProvider) c.newInstance();
+                provider = (UserProvider) clazz.newInstance();
             }
             catch (Exception e) {
-                Log.error("Error loading user provider: " + className, e);
+                Log.error("Error loading user provider: " + clazz.getName(), e);
                 provider = new DefaultUserProvider();
             }
         }

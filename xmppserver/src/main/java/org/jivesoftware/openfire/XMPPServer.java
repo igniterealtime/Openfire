@@ -440,6 +440,10 @@ public class XMPPServer {
     }
 
     void runAutoSetup() {
+        // Setup property encryptor as early as possible so that database related properties can use it
+        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
+        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
+
         // steps from setup-datasource-standard.jsp
         // do this first so that other changes persist
         if ("standard".equals(JiveGlobals.getXMLProperty("autosetup.database.mode"))) {
@@ -454,21 +458,21 @@ public class XMPPServer {
 
             try {
                 minConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.minConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.minConnections"));
             }
             catch (Exception e) {
                 minConnections = 5;
             }
             try {
                 maxConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.maxConnections"));
             }
             catch (Exception e) {
                 maxConnections = 25;
             }
             try {
                 connectionTimeout = Double.parseDouble(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.connectionTimeout"));
             }
             catch (Exception e) {
                 connectionTimeout = 1.0;
@@ -497,9 +501,6 @@ public class XMPPServer {
 
         ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "true")));
         AnonymousSaslServer.ENABLED.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + AnonymousSaslServer.ENABLED.getKey(), "false")));
-
-        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
-        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
 
 
         // steps from setup-profile-settings.jsp

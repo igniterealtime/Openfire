@@ -23,8 +23,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -50,7 +53,7 @@ import gnu.inet.encoding.StringprepException;
  * @see User
  */
 @SuppressWarnings({"WeakerAccess", "unused", "JavadocReference"})
-public final class UserManager implements IQResultListener {
+public final class UserManager {
 
     public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.user.className")
@@ -72,7 +75,6 @@ public final class UserManager implements IQResultListener {
         .addListener(UserManager::initPropertyProvider)
         .setDynamic(true)
         .build();
-
 
     private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
@@ -121,6 +123,7 @@ public final class UserManager implements IQResultListener {
         return UserManagerContainer.instance;
     }
 
+    private final XMPPServer xmppServer;
     /** Cache of local users. */
     private final Cache<String, User> userCache;
     /** Cache if a local or remote user exists. */
@@ -129,6 +132,12 @@ public final class UserManager implements IQResultListener {
     private static UserPropertyProvider propertyProvider;
 
     private UserManager() {
+        this(XMPPServer.getInstance());
+    }
+
+    /* Exposed for test use only */
+    UserManager(final XMPPServer xmppServer) {
+        this.xmppServer = xmppServer;
         // Initialize caches.
         userCache = CacheFactory.createCache("User");
         remoteUsersCache = CacheFactory.createCache("Remote Users Existence");
@@ -411,8 +420,7 @@ public final class UserManager implements IQResultListener {
      * @return true if the specified JID belongs to a local or remote registered user.
      */
     public boolean isRegisteredUser(final JID user) {
-        final XMPPServer server = XMPPServer.getInstance();
-        if (server.isLocal(user)) {
+        if (xmppServer.isLocal(user)) {
             try {
                 getUser(user.getNode());
                 return true;
@@ -432,67 +440,57 @@ public final class UserManager implements IQResultListener {
                     // A disco#info is going to be sent to the bare JID of the user. This packet
                     // is going to be handled by the remote server.
                     final IQ iq = new IQ(IQ.Type.get);
-                    iq.setFrom(server.getServerInfo().getXMPPDomain());
+                    iq.setFrom(xmppServer.getServerInfo().getXMPPDomain());
                     iq.setTo(user.toBareJID());
                     iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
-                    // Send the disco#info request to the remote server. The reply will be
-                    // processed by the IQResultListener (interface that this class implements)
-                    server.getIQRouter().addIQResultListener(iq.getID(), this);
-                    synchronized ((user.toBareJID() + MUTEX_SUFFIX).intern()) {
-                        server.getIQRouter().route(iq);
-                        // Wait for the reply to be processed. Time out in 1 minute by default
-                        try {
-                            user.toBareJID().intern().wait(REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis());
+                    final Semaphore completionSemaphore = new Semaphore(0);
+                    // Send the disco#info request to the remote server.
+                    final IQRouter iqRouter = xmppServer.getIQRouter();
+                    iqRouter.addIQResultListener(iq.getID(), new IQResultListener() {
+                        @Override
+                        public void receivedAnswer(final IQ packet) {
+                            final JID from = packet.getFrom();
+                            // Assume that the user is not a registered user
+                            Boolean isRegistered = Boolean.FALSE;
+                            // Analyze the disco result packet
+                            if (IQ.Type.result == packet.getType()) {
+                                final Element child = packet.getChildElement();
+                                if (child != null) {
+                                    for (final Iterator it = child.elementIterator("identity"); it.hasNext();) {
+                                        final Element identity = (Element) it.next();
+                                        final String accountType = identity.attributeValue("type");
+                                        if ("registered".equals(accountType) || "admin".equals(accountType)) {
+                                            isRegistered = Boolean.TRUE;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            // Update cache of remote registered users
+                            remoteUsersCache.put(from.toBareJID(), isRegistered);
+                            completionSemaphore.release();
                         }
-                        catch (final InterruptedException e) {
-                            // Do nothing
+
+                        @Override
+                        public void answerTimeout(final String packetId) {
+                            Log.warn("The result from the disco#info request was never received. request: {}", iq);
+                            completionSemaphore.release();
                         }
+                    });
+                    // Send the request
+                    iqRouter.route(iq);
+                    // Wait for the response
+                    try {
+                        completionSemaphore.tryAcquire(REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        Log.warn("Interrupted whilst waiting for response from remote server", e);
                     }
-                    // Get the discovered result
-                    isRegistered = remoteUsersCache.get(user.toBareJID());
-                    if (isRegistered == null) {
-                        // Disco failed for some reason (i.e. we timed out before getting a result)
-                        // so assume that user is not anonymous and cache result
-                        isRegistered = Boolean.FALSE;
-                        remoteUsersCache.put(user.toString(), isRegistered);
-                    }
+                    isRegistered = remoteUsersCache.computeIfAbsent(user.toBareJID(), ignored -> Boolean.FALSE);
                 }
             }
             return isRegistered;
         }
-    }
-
-    @Override
-    public void receivedAnswer(final IQ packet) {
-        final JID from = packet.getFrom();
-        // Assume that the user is not a registered user
-        Boolean isRegistered = Boolean.FALSE;
-        // Analyze the disco result packet
-        if (IQ.Type.result == packet.getType()) {
-            final Element child = packet.getChildElement();
-            if (child != null) {
-                for (final Iterator it = child.elementIterator("identity"); it.hasNext();) {
-                    final Element identity = (Element) it.next();
-                    final String accountType = identity.attributeValue("type");
-                    if ("registered".equals(accountType) || "admin".equals(accountType)) {
-                        isRegistered = Boolean.TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        // Update cache of remote registered users
-        remoteUsersCache.put(from.toBareJID(), isRegistered);
-
-        // Wake up waiting thread
-        synchronized ((from.toBareJID() + MUTEX_SUFFIX).intern()) {
-            from.toBareJID().intern().notifyAll();
-        }
-    }
-
-    @Override
-    public void answerTimeout(final String packetId) {
-        Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
 
     private static void initProvider(final Class clazz) {

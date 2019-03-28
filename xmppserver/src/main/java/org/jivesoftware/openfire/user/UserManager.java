@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.user;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -29,7 +31,6 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
 import org.jivesoftware.openfire.user.property.UserPropertyProvider;
 import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -60,6 +61,12 @@ public final class UserManager implements IQResultListener {
         .setBaseClass(UserProvider.class)
         .setDefaultValue(DefaultUserProvider.class)
         .addListener(UserManager::initProvider)
+        .setDynamic(true)
+        .build();
+    private static final SystemProperty<Duration> REMOTE_DISCO_INFO_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("usermanager.remote-disco-info-timeout-seconds")
+        .setDefaultValue(Duration.ofMinutes(1))
+        .setChronoUnit(ChronoUnit.SECONDS)
         .setDynamic(true)
         .build();
 
@@ -459,7 +466,7 @@ public final class UserManager implements IQResultListener {
                         server.getIQRouter().route(iq);
                         // Wait for the reply to be processed. Time out in 1 minute by default
                         try {
-                            user.toBareJID().intern().wait(JiveGlobals.getLongProperty("usermanager.remote-disco-info-timeout-seconds", 60) * JiveConstants.SECOND);
+                            user.toBareJID().intern().wait(REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis());
                         }
                         catch (final InterruptedException e) {
                             // Do nothing

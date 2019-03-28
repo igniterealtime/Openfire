@@ -30,10 +30,6 @@ import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
 import org.jivesoftware.openfire.user.property.UserPropertyProvider;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
@@ -67,6 +63,13 @@ public final class UserManager implements IQResultListener {
         .setKey("usermanager.remote-disco-info-timeout-seconds")
         .setDefaultValue(Duration.ofMinutes(1))
         .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .build();
+    public static final SystemProperty<Class> USER_PROPERTY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.userproperty.className")
+        .setBaseClass(UserPropertyProvider.class)
+        .setDefaultValue(DefaultUserPropertyProvider.class)
+        .addListener(UserManager::initPropertyProvider)
         .setDynamic(true)
         .build();
 
@@ -104,6 +107,7 @@ public final class UserManager implements IQResultListener {
      * @return the current UserPropertyProvider.
      * @see User#getProperties
      */
+    @SuppressWarnings("AccessStaticViaInstance")
     public static UserPropertyProvider getUserPropertyProvider() {
         return UserManagerContainer.instance.propertyProvider;
     }
@@ -122,7 +126,7 @@ public final class UserManager implements IQResultListener {
     /** Cache if a local or remote user exists. */
     private final Cache<String, Boolean> remoteUsersCache;
     private static UserProvider provider;
-    private UserPropertyProvider propertyProvider;
+    private static UserPropertyProvider propertyProvider;
 
     private UserManager() {
         // Initialize caches.
@@ -131,35 +135,7 @@ public final class UserManager implements IQResultListener {
 
         // Load a user & property provider.
         initProvider(USER_PROVIDER.getValue());
-        initPropertyProvider();
-
-        // Detect when a new auth provider class is set
-        final PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(final String property, final Map params) {
-                if ("provider.userproperty.className".equals(property)) {
-                    initPropertyProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(final String property, final Map params) {
-                if ("provider.userproperty.className".equals(property)) {
-                    initPropertyProvider();
-                }
-            }
-
-            @Override
-            public void xmlPropertySet(final String property, final Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(final String property, final Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
+        initPropertyProvider(USER_PROPERTY_PROVIDER.getValue());
 
         final UserEventListener userListener = new UserEventListener() {
             @Override
@@ -531,20 +507,14 @@ public final class UserManager implements IQResultListener {
         }
     }
 
-    private void initPropertyProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.userproperty.className");
-
-        final String className = JiveGlobals.getProperty("provider.userproperty.className",
-                                                   "org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider");
+    private static void initPropertyProvider(final Class clazz) {
         // Check if we need to reset the provider class
-        if (propertyProvider == null || !className.equals(propertyProvider.getClass().getName())) {
+        if (propertyProvider == null || !clazz.equals(propertyProvider.getClass())) {
             try {
-                final Class c = ClassUtils.forName(className);
-                propertyProvider = (UserPropertyProvider) c.newInstance();
+                propertyProvider = (UserPropertyProvider) clazz.newInstance();
             }
             catch (final Exception e) {
-                Log.error("Error loading user property provider: " + className, e);
+                Log.error("Error loading user property provider: " + clazz.getName(), e);
                 propertyProvider = new DefaultUserPropertyProvider();
             }
         }

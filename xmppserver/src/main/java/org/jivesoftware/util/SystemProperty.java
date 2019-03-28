@@ -231,6 +231,8 @@ public final class SystemProperty<T> {
     private final boolean sorted;
 
     private SystemProperty(final Builder<T> builder) {
+        // Before we do anything, convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty(builder.key);
         this.clazz = builder.clazz;
         this.key = builder.key;
         this.description = LocaleUtils.getLocalizedString("system_property." + key);

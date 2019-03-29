@@ -2679,6 +2679,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (!savedToDB) {
             // Set that the room is now in the DB
             savedToDB = true;
+            // Notify other cluster nodes that the room is now in DB
+            CacheFactory.doClusterTask(new RoomUpdatedEvent(this)); 
             // Save the existing room owners to the DB
             for (JID owner : owners) {
                 MUCPersistenceManager.saveAffiliationToDB(

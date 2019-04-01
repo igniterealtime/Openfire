@@ -52,7 +52,7 @@ import gnu.inet.encoding.StringprepException;
  * @author Matt Tucker
  * @see User
  */
-@SuppressWarnings({"WeakerAccess", "unused", "JavadocReference"})
+@SuppressWarnings({"WeakerAccess", "unused"})
 public final class UserManager {
 
     public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
@@ -446,6 +446,7 @@ public final class UserManager {
                     final Semaphore completionSemaphore = new Semaphore(0);
                     // Send the disco#info request to the remote server.
                     final IQRouter iqRouter = xmppServer.getIQRouter();
+                    final long timeoutInMillis = REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis();
                     iqRouter.addIQResultListener(iq.getID(), new IQResultListener() {
                         @Override
                         public void receivedAnswer(final IQ packet) {
@@ -476,12 +477,12 @@ public final class UserManager {
                             Log.warn("The result from the disco#info request was never received. request: {}", iq);
                             completionSemaphore.release();
                         }
-                    });
+                    }, timeoutInMillis);
                     // Send the request
                     iqRouter.route(iq);
                     // Wait for the response
                     try {
-                        completionSemaphore.tryAcquire(REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+                        completionSemaphore.tryAcquire(timeoutInMillis, TimeUnit.MILLISECONDS);
                     } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         Log.warn("Interrupted whilst waiting for response from remote server", e);

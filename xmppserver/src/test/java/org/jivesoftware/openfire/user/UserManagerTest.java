@@ -4,6 +4,7 @@ package org.jivesoftware.openfire.user;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
@@ -90,7 +91,7 @@ public class UserManagerTest {
             final IQResultListener listener = invocationOnMock.getArgument(1);
             iqListener.set(listener);
             return null;
-        }).when(iqRouter).addIQResultListener(any(), any());
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
 
         doAnswer(invocationOnMock -> {
             iqListener.get().receivedAnswer(Fixtures.iqFrom(USER_FOUND_RESULT));
@@ -111,7 +112,7 @@ public class UserManagerTest {
             final IQResultListener listener = invocationOnMock.getArgument(1);
             iqListener.set(listener);
             return null;
-        }).when(iqRouter).addIQResultListener(any(), any());
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
 
         doAnswer(invocationOnMock -> {
             final IQ iq = invocationOnMock.getArgument(0);
@@ -137,7 +138,7 @@ public class UserManagerTest {
             final IQResultListener listener = invocationOnMock.getArgument(1);
             iqListener.set(listener);
             return null;
-        }).when(iqRouter).addIQResultListener(any(), any());
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
 
         doAnswer(invocationOnMock -> {
             final IQ iq = invocationOnMock.getArgument(0);

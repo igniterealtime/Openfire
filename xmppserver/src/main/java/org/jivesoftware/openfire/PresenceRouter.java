@@ -208,7 +208,7 @@ public class PresenceRouter extends BasicModule {
         presenceManager = server.getPresenceManager();
         multicastRouter = server.getMulticastRouter();
         sessionManager = server.getSessionManager();
-        entityCapsManager = EntityCapabilitiesManager.getInstance();
+        entityCapsManager = server.getEntityCapabilitiesManager();
     }
 
     /**

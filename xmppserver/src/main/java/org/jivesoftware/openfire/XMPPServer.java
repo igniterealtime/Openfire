@@ -56,6 +56,7 @@ import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.disco.UserFeaturesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
@@ -774,6 +775,7 @@ public class XMPPServer {
         loadModule(MultiUserChatManager.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
         loadModule(CertificateStoreManager.class.getName());
+        loadModule(EntityCapabilitiesManager.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
@@ -1501,6 +1503,17 @@ public class XMPPServer {
      */
     public AuditManager getAuditManager() {
         return (AuditManager) modules.get(AuditManagerImpl.class);
+    }
+
+    /**
+     * Returns the <code>EntityCapabilitiesManager</code> registered with this server. The
+     * <code>EntityCapabilitiesManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>EntityCapabilitiesManager</code> registered with this server.
+     */
+    public EntityCapabilitiesManager getEntityCapabilitiesManager() {
+        return (EntityCapabilitiesManager) modules.get(EntityCapabilitiesManager.class);
     }
 
     /**

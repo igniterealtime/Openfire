@@ -266,6 +266,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             if (!addedToCache) {
                 return;
             }
+            Log.debug( "Recording 'last activity' for user '{}'.", username);
             lastActivityCache.put(username, offlinePresenceDate.getTime());
 
             writeToDatabase(username, offlinePresence, offlinePresenceDate);
@@ -502,6 +503,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete user information
         deleteOfflinePresenceFromDB(user.getUsername());
+        offlinePresenceCache.remove(user.getUsername());
+        lastActivityCache.remove(user.getUsername());
     }
 
     @Override
@@ -509,7 +512,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         // Do nothing
     }
 
-// #####################################################################
+    // #####################################################################
     // Module management
     // #####################################################################
 

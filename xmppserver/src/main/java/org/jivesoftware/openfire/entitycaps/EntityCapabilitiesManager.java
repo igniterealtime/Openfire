@@ -16,17 +16,15 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.StringUtils;
@@ -55,9 +53,7 @@ import org.xmpp.packet.Presence;
  * @author Armando Jagucki
  *
  */
-public class EntityCapabilitiesManager implements IQResultListener, UserEventListener {
-
-    private static final EntityCapabilitiesManager instance = new EntityCapabilitiesManager();
+public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener {
 
     /**
      * A XEP-0115 described identifier for the Openfire server software,
@@ -110,19 +106,35 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      */
     private Map<String, EntityCapabilities> verAttributes;
 
-    private EntityCapabilitiesManager() {
+    public EntityCapabilitiesManager() {
+        super( "Entity Capabilities Manager" );
+    }
+
+    @Override
+    public void initialize( final XMPPServer server )
+    {
+        super.initialize( server );
         entityCapabilitiesMap = CacheFactory.createLocalCache("Entity Capabilities");
         entityCapabilitiesUserMap = CacheFactory.createLocalCache("Entity Capabilities Users");
         verAttributes = new HashMap<>();
+        UserEventDispatcher.addListener( this );
+    }
+
+    @Override
+    public void destroy()
+    {
+        UserEventDispatcher.removeListener( this );
     }
 
     /**
      * Returns the unique instance of this class.
      *
      * @return the unique instance of this class.
+     * @deprecated Replaced by {@link XMPPServer.getInstance().getEntityCapabilitiesManager}
      */
+    @Deprecated
     public static EntityCapabilitiesManager getInstance() {
-        return instance;
+        return XMPPServer.getInstance().getEntityCapabilitiesManager();
     }
 
     public void process(Presence packet) {
@@ -160,7 +172,13 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             // The 'ver' hash is in the cache already, so let's update the
             // entityCapabilitiesUserMap for the user that sent the caps
             // packet.
-            entityCapabilitiesUserMap.put(packet.getFrom(), newVerAttribute);
+            final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), newVerAttribute );
+
+            // If this replaced another 'ver' hash, purge the capabilities if needed.
+            if ( oldVerAttribute != null && !oldVerAttribute.equals( newVerAttribute ) )
+            {
+                checkObsolete( oldVerAttribute );
+            }
         }
         else {
             // The 'ver' hash is not in the cache so send out a disco#info query
@@ -312,7 +330,13 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
             }
 
             entityCapabilitiesMap.put(caps.getVerAttribute(), caps);
-            entityCapabilitiesUserMap.put(packet.getFrom(), caps.getVerAttribute());
+            final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), caps.getVerAttribute() );
+
+            // If this replaced another 'ver' hash, purge the capabilities if needed.
+            if ( oldVerAttribute != null && !oldVerAttribute.equals( caps.getVerAttribute() ) )
+            {
+                checkObsolete( oldVerAttribute );
+            }
         }
 
         // Remove cached 'ver' attribute.
@@ -461,21 +485,39 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
-        JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
-        String verHashOfUser = entityCapabilitiesUserMap.remove(jid);
+        final JID bareJid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
+
+        // Remember: Cache's are not regular maps. The EntrySet is immutable.
+        // We'll first find the keys, then remove them in a separate call.
+        final Set<JID> jidsToRemove = entityCapabilitiesUserMap.keySet().stream()
+            .filter( jid -> jid.asBareJID().equals( bareJid ) )
+            .collect( Collectors.toSet() );
+
+        final Set<String> deletedUserVerHashes = new HashSet<>();
+        for ( final JID jidToRemove : jidsToRemove )
+        {
+            deletedUserVerHashes.add( entityCapabilitiesUserMap.remove( jidToRemove ) );
+        }
 
         // If there are no other references to the deleted user's 'ver' hash,
         // it is safe to remove that 'ver' hash's associated entity
         // capabilities from the entityCapabilitiesMap cache.
-        for (String verHash : entityCapabilitiesUserMap.values()) {
-            if (verHash.equals(verHashOfUser)) {
-                // A different user is making use of the deleted user's same
-                // 'ver' hash, so let's not remove the associated entity
-                // capabilities from the entityCapabilitiesMap.
-                return;
-            }
+        deletedUserVerHashes.forEach( this::checkObsolete );
+    }
+
+    /**
+     * Verifies if the provided 'ver' hash is used for any user. If not, the cache entry
+     * containing the entity capabilities are removed from the cache.
+     *
+     * @param verHash an 'ver' hash (cannot be null).
+     */
+    protected void checkObsolete( String verHash ) {
+        if ( entityCapabilitiesUserMap.containsValue( verHash ) )
+        {
+            return;
         }
-        entityCapabilitiesMap.remove(verHashOfUser);
+
+        entityCapabilitiesMap.remove( verHash );
     }
 
     @Override

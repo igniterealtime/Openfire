@@ -131,7 +131,7 @@
         <dependency>
             <groupId>org.igniterealtime.openfire.plugins</groupId>
             <artifactId>search</artifactId>
-            <version>1.7.1</version>
+            <version>1.7.2</version>
             <classifier>openfire-plugin-assembly</classifier>
             <scope>provided</scope>
         </dependency>

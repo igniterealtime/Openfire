@@ -7,7 +7,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,17 +46,24 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(cacheName)));
         }
 
-        final List<AbstractMap.SimpleEntry<String, String>> cacheEntries = optionalCache.map(Cache::entrySet)
+        final List<Map.Entry<String, String>> cacheEntries = optionalCache.map(Cache::entrySet)
             .map(Collection::stream)
             .orElseGet(Stream::empty)
             .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().toString(), entry.getValue().toString()))
-            .sorted(Comparator.comparing(AbstractMap.SimpleEntry::getKey))
+            .sorted(Comparator.comparing(Map.Entry::getKey))
             .collect(Collectors.toList());
 
         // Find what we're searching for
         final Search search = new Search(request);
+        Predicate<Map.Entry<String, String>> predicate = entry -> true;
+        if (!search.key.isEmpty()) {
+            predicate = predicate.and(entry -> StringUtils.containsIgnoringCase(entry.getKey(), search.key));
+        }
+        if (!search.value.isEmpty()) {
+            predicate = predicate.and(entry -> StringUtils.containsIgnoringCase(entry.getValue(), search.value));
+        }
 
-        final ListPager<AbstractMap.SimpleEntry<String, String>> listPager = new ListPager<>(request, response, cacheEntries, SEARCH_FIELDS);
+        final ListPager<Map.Entry<String, String>> listPager = new ListPager<>(request, response, cacheEntries, predicate, SEARCH_FIELDS);
 
         final String csrf = StringUtils.randomString(16);
         CookieUtils.setCookie(request, response, "csrf", csrf, -1);

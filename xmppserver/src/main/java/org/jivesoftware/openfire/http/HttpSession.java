@@ -572,7 +572,9 @@ public class HttpSession extends LocalClientSession {
         HttpConnection connection = this.createConnection(body.getRid(), body.isPoll(), context);
         if (!body.isEmpty()) {
             // creates the runnable to forward the packets
-            packetsToSend.add( body.getStanzaElements() );
+            synchronized (packetsToSend) {
+                packetsToSend.add(body.getStanzaElements());
+            }
             new HttpPacketSender(this).init();
         }
 
@@ -617,14 +619,17 @@ public class HttpSession extends LocalClientSession {
                 router = new SessionPacketRouter(this);
             }
 
-            for (Element packet : packetsToSend.remove()) {
-                try {
-                    router.route(packet);
-                }
-                catch (UnknownStanzaException e) {
-                    Log.error("Client provided unknown packet type", e);
+            do {
+                Collection<Element> packets = packetsToSend.remove();
+                for (Element packet : packets) {
+                    try {
+                        router.route(packet);
+                    } catch (UnknownStanzaException e) {
+                        Log.error("Client provided unknown packet type", e);
+                    }
                 }
             }
+            while( !packetsToSend.isEmpty() );
         }
     }
 
@@ -673,7 +678,7 @@ public class HttpSession extends LocalClientSession {
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
-                    connection.deliverBody(createEmptyBody(false), false);
+                    deliverOnTimeout(connection);
                     setLastResponseEmpty(true);
 
                     // This connection timed out we need to increment the request count
@@ -893,16 +898,17 @@ public class HttpSession extends LocalClientSession {
         }
         else if(isPoll) {
             long time = System.currentTimeMillis();
-            if (time - lastPoll < maxPollingInterval * JiveConstants.SECOND) {
-                if(isPollingSession()) {
+            long deltaFromLastPoll = time - lastPoll;
+            boolean localIsPollingSession = isPollingSession();
+            if (deltaFromLastPoll < maxPollingInterval * JiveConstants.SECOND) {
+                if (localIsPollingSession) {
                     overactivity = lastResponseEmpty;
-                }
-                else {
-                    overactivity = (pendingConnections >= maxRequests - 1);
+                } else {
+                    overactivity = (pendingConnections >= maxRequests);
                 }
             }
             errorMessage += ", minimum polling interval is "
-                + maxPollingInterval + ", current interval " + ((time - lastPoll) / 1000);
+                + maxPollingInterval + ", current interval " + (deltaFromLastPoll / 1000);
             lastPoll = time;
         }
         setLastResponseEmpty(false);
@@ -921,6 +927,21 @@ public class HttpSession extends LocalClientSession {
             return;
         }
         deliver(new Deliverable(text));
+    }
+
+    private void deliverOnTimeout(HttpConnection connection) throws HttpConnectionClosedException, IOException {
+        final Deliverable td = new Deliverable("");
+        final Collection<Deliverable> deliverable = Arrays.asList(td);
+
+        // Not async - we're closing it afterwards
+        connection.deliverBody(createDeliverable(deliverable), false);
+
+        final Delivered delivered = new Delivered(deliverable);
+        delivered.setRequestID(connection.getRequestId());
+        while (sentElements.size() > maxRequests) {
+            final Delivered d = sentElements.remove(0);
+        }
+        sentElements.add(delivered);
     }
 
     @Override

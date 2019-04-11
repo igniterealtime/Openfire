@@ -134,7 +134,7 @@ ${listPager.jumpToPageForm}
     function doDelete(imgObject) {
         var key = imgObject.parentNode.parentNode.childNodes[1].childNodes[1].textContent;
         var action;
-        if (confirm('<fmt:message key="system.cache-details.delete_confirm"/>')) {
+        if (confirm('<fmt:message key="system.cache-details.delete_confirm"/>'.replace('{0}', key))) {
             action = 'delete'
         } else {
             action = 'cancel'

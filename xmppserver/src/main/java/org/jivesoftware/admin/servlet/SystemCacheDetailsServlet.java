@@ -87,7 +87,7 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             final String action = ParamUtils.getStringParameter(request, "action", "");
             switch (action) {
                 case "delete":
-                    deleteProperty(request, session);
+                    deleteProperty(request, response, session);
                     break;
                 case "cancel":
                     session.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cancelled"));
@@ -98,10 +98,9 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             }
         }
         response.sendRedirect(request.getRequestURI() + ListPager.getQueryString(request, '?', SEARCH_FIELDS));
-
     }
 
-    private void deleteProperty(final HttpServletRequest request, final HttpSession session) {
+    private void deleteProperty(final HttpServletRequest request, final HttpServletResponse response, final HttpSession session) {
         final String cacheName = ParamUtils.getStringParameter(request, "cacheName", "").trim();
         final String key = ParamUtils.getStringParameter(request, "key", "");
         final Optional<Cache<?, ?>> optionalCache = Arrays.stream(CacheFactory.getAllCaches())
@@ -111,6 +110,9 @@ public class SystemCacheDetailsServlet extends HttpServlet {
         if(optionalCache.isPresent()) {
             if(optionalCache.get().remove(key) != null ) {
                 session.setAttribute("successMessage", LocaleUtils.getLocalizedString("system.cache-details.deleted", Collections.singletonList(key)) );
+                final WebManager webManager = new WebManager();
+                webManager.init(request, response, session, session.getServletContext());
+                webManager.logEvent(String.format("Key '%s' deleted from cache '%s'", key, cacheName), null);
             } else {
                 session.setAttribute("errorMessage", LocaleUtils.getLocalizedString("system.cache-details.key_not_found", Collections.singletonList(key)) );
             }

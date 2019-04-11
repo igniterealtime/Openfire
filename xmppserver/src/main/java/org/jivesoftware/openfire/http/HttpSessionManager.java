@@ -100,6 +100,7 @@ public class HttpSessionManager {
         final int maxClientPoolSize = JiveGlobals.getIntProperty( "xmpp.client.processing.threads", 8 );
         final int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", maxClientPoolSize );
         final int keepAlive = JiveGlobals.getIntProperty( "xmpp.httpbind.worker.timeout", 60 );
+        final int sessionCleanupCheck = JiveGlobals.getIntProperty("xmpp.httpbind.worker.cleanupcheck", 30);
 
         sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(), // unbounded task queue
@@ -110,7 +111,7 @@ public class HttpSessionManager {
 
         // Periodically check for Sessions that need a cleanup.
         inactivityTask = new HttpSessionReaper();
-        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, 30 * JiveConstants.SECOND );
+        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, sessionCleanupCheck * JiveConstants.SECOND);
     }
 
     /**

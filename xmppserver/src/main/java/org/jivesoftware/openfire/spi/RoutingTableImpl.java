@@ -1111,7 +1111,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             Log.debug( "The local cluster node left the cluster. A total of {} client sessions were living on one (or more) other cluster nodes, and are no longer available.", remoteClientRoutes.size() );
             for (String route : remoteClientRoutes) {
-                removeClientRoute(new JID(route));
+                // This call takes responsibility for cleaning up the state in RoutingTableImpl as well as SessionManager.
+                // The detour is needed, as SessionManager does not keep track what client is associated to what cluster node.
+                SessionManager.getInstance().removeRemoteClientSession( new JID(route) );
             }
         }
     }
@@ -1140,7 +1142,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), remoteClientRoutes.size() );
             for (String route : remoteClientRoutes) {
-                removeClientRoute(new JID(route));
+                // This call takes responsibility for cleaning up the state in RoutingTableImpl as well as SessionManager.
+                // The detour is needed, as SessionManager does not keep track what client is associated to what cluster node.
+                SessionManager.getInstance().removeRemoteClientSession( new JID(route) );
             }
         }
         finally {

@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 /**
  * Plugin available at igniterealtime.org. The plugin may or may not be locally installed.
@@ -34,6 +37,8 @@ import java.net.URL;
 public class AvailablePlugin extends PluginMetadata
 {
     private static final Logger Log = LoggerFactory.getLogger( AvailablePlugin.class );
+    private static final DateFormat RELEASE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateFormat RELEASE_DATE_DISPLAY_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
 
     /**
      * URL from where the latest version of the plugin can be downloaded.
@@ -44,6 +49,7 @@ public class AvailablePlugin extends PluginMetadata
      * Size in bytes of the plugin jar file.
      */
     private final long fileSize;
+    private final String releaseDate;
 
     public static AvailablePlugin getInstance( Element plugin )
     {
@@ -135,6 +141,16 @@ public class AvailablePlugin extends PluginMetadata
             minJavaVersion = new JavaSpecVersion( minJavaVersionValue );
         }
 
+        String releaseDate = null;
+        final String releaseDateString = plugin.attributeValue("releaseDate");
+        if( releaseDateString!= null) {
+            try {
+                releaseDate = RELEASE_DATE_DISPLAY_FORMAT.format(RELEASE_DATE_FORMAT.parse(releaseDateString));
+            } catch (final ParseException e) {
+                Log.warn("Unexpected exception parsing release date: " + releaseDateString, e);
+            }
+        }
+
         long fileSize = -1;
         String fileSizeValue = plugin.attributeValue("fileSize");
         if ( fileSizeValue != null && !fileSizeValue.isEmpty() )
@@ -158,14 +174,15 @@ public class AvailablePlugin extends PluginMetadata
                 priorToServerVersion,
                 minJavaVersion,
                 downloadUrl,
-                fileSize
+                fileSize,
+                releaseDate
         );
 
     }
-    public AvailablePlugin( String name, String canonicalName, String description, Version latestVersion, String author,
-                            URL icon, URL changelog, URL readme, String license,
-                            Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion,
-                            URL downloadUrl, long fileSize ) {
+    public AvailablePlugin(String name, String canonicalName, String description, Version latestVersion, String author,
+                           URL icon, URL changelog, URL readme, String license,
+                           Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion,
+                           URL downloadUrl, long fileSize, final String releaseDate) {
         super(
                 name,
                 canonicalName,
@@ -182,6 +199,7 @@ public class AvailablePlugin extends PluginMetadata
         );
         this.downloadURL = downloadUrl;
         this.fileSize = fileSize;
+        this.releaseDate = releaseDate;
     }
 
     /**
@@ -199,5 +217,12 @@ public class AvailablePlugin extends PluginMetadata
      */
     public long getFileSize() {
         return fileSize;
+    }
+
+    /**
+     * @return the date the plugin was released
+     */
+    public String getReleaseDate() {
+        return releaseDate;
     }
 }

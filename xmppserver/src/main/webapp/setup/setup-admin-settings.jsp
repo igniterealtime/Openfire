@@ -15,6 +15,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -53,7 +54,7 @@
 
     @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
-    String domain = xmppSettings.get("xmpp.domain");
+    String domain = xmppSettings.get(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
     // Handle a skip request
     if (doSkip) {
@@ -71,7 +72,7 @@
             errors.put("password", "password");
         }
         try {
-            AuthFactory.authenticate("admin", "admin");
+            AuthFactory.authenticate("admin", password);
         } catch (UnauthorizedException e) {
             errors.put("password", "password");
         }

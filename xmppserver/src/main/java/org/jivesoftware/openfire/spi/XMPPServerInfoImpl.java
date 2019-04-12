@@ -16,15 +16,16 @@
 
 package org.jivesoftware.openfire.spi;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.Optional;
+
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Date;
 
 /**
  * Implements the server info for a basic server. Optimization opportunities
@@ -91,7 +92,7 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     @Override
     public String getXMPPDomain()
     {
-        return JiveGlobals.getProperty("xmpp.domain", getHostname() ).toLowerCase();
+        return Optional.ofNullable(XMPP_DOMAIN.getValue()).orElse(getHostname()).toLowerCase();
     }
 
     @Override

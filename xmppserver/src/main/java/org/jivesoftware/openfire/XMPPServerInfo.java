@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.Version;
 
 import java.util.Date;
@@ -27,6 +28,11 @@ import java.util.Date;
  * @author Iain Shigeoka
  */
 public interface XMPPServerInfo {
+
+    SystemProperty<String> XMPP_DOMAIN = SystemProperty.Builder.ofType(String.class)
+        .setKey("xmpp.domain")
+        .setDynamic(false)
+        .build();
 
     /**
      * Obtain the server's version information. Typically used for iq:version

@@ -16,10 +16,10 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.admin.AdminConsole,
+<%@ page import="org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.openfire.cluster.ClusterManager,
                  org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.openfire.cluster.ClusterManager"
+                 org.jivesoftware.util.StringUtils"
     errorPage="../error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
 
@@ -101,7 +101,11 @@
                 <% if (ClusterManager.isClusteringEnabled()) { %>
                     <% if (ClusterManager.isClusteringStarted()) { %>
                         <% if (ClusterManager.isSeniorClusterMember()) { %>
+                                <% if(ClusterManager.getNodesInfo().size() == 1) { %>
+                                <fmt:message key="admin.clustering.only"/>
+                                <% } else { %>
                                 <fmt:message key="admin.clustering.senior"/>
+                                <% }%>
                         <% } else { %>
                                 <fmt:message key="admin.clustering.junior"/>
                         <% }  %>

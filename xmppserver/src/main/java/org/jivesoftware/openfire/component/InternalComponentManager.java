@@ -168,7 +168,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
             }
             Log.debug("InternalComponentManager: Registering component for domain: " + subdomain);
             JID componentJID = new JID(subdomain + "." + serverDomain);
-            boolean notifyListeners = false;
+            boolean isNewComponentRoute = false; // A subdomain can be served by more than one Component instance (mainly for load distribution).
             if (routable != null) {
                 routable.addComponent(component);
             }
@@ -177,7 +177,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                 routables.put(subdomain, routable);
 
                 if (!routingTable.hasComponentRoute(componentJID)) {
-                    notifyListeners = true;
+                    isNewComponentRoute = true;
                 }
                 // Add the route to the new service provided by the component
                 routingTable.addComponentRoute(componentJID, routable);
@@ -189,7 +189,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                 component.initialize(componentJID, this);
                 component.start();
 
-                if (notifyListeners) {
+                if (isNewComponentRoute) {
                     // Notify listeners that a new component has been registered
                     notifyComponentRegistered(componentJID);
                     // Alert other nodes of new registered domain event
@@ -198,9 +198,12 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
 
                 // Check for potential interested users.
                 checkPresences();
-                // Send a disco#info request to the new component. If the component provides information
-                // then it will be added to the list of discoverable server items.
-                checkDiscoSupport(component, componentJID);
+
+                if (isNewComponentRoute) {
+                    // Send a disco#info request to the new component. If the component provides information
+                    // then it will be added to the list of discoverable server items.
+                    checkDiscoSupport( component, componentJID );
+                }
                 Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
             }
             catch (Exception e) {

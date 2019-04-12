@@ -16,12 +16,7 @@
 package org.jivesoftware.openfire.lockout;
 
 import java.util.Date;
-import java.util.Map;
-
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -41,6 +36,14 @@ import org.slf4j.LoggerFactory;
  * @author Daniel Henninger
  */
 public class LockOutManager {
+
+    public static final SystemProperty<Class> LOCKOUT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.lockout.className")
+        .setBaseClass(LockOutProvider.class)
+        .setDefaultValue(DefaultLockOutProvider.class)
+        .addListener(LockOutManager::initProvider)
+        .setDynamic(true)
+        .build();
 
     private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
 
@@ -74,7 +77,7 @@ public class LockOutManager {
 
     /* Cache of locked out accounts */
     private Cache<String,LockOutFlag> lockOutCache;
-    private LockOutProvider provider;
+    private static LockOutProvider provider;
 
     /**
      * Constructs a LockOutManager, setting up it's cache, propery listener, and setting up the provider.
@@ -84,53 +87,21 @@ public class LockOutManager {
         lockOutCache = CacheFactory.createCache("Locked Out Accounts");
 
         // Load an lockout provider.
-        initProvider();
+        initProvider(LOCKOUT_PROVIDER.getValue());
 
-        // Detect when a new lockout provider class is set 
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.lockout.className".equals(property)) {
-                    initProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
     }
 
     /**
      * Initializes the server's lock out provider, based on configuration and defaults to
      * DefaultLockOutProvider if the specified provider is not valid or not specified.
      */
-    private void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.lockout.className");
-
-        String className = JiveGlobals.getProperty("provider.lockout.className",
-                "org.jivesoftware.openfire.lockout.DefaultLockOutProvider");
-        // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+    private static void initProvider(final Class clazz) {
+        if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                provider = (LockOutProvider) c.newInstance();
+                provider = (LockOutProvider) clazz.newInstance();
             }
             catch (Exception e) {
-                Log.error("Error loading lockout provider: " + className, e);
+                Log.error("Error loading lockout provider: " + clazz.getName(), e);
                 provider = new DefaultLockOutProvider();
             }
         }

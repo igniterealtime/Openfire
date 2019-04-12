@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +88,7 @@ public class JDBCAdminProvider implements AdminProvider {
         JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcAdminProvider.getAdminsSQL");
 
-        xmppDomain = JiveGlobals.getProperty("xmpp.domain");
+        xmppDomain = XMPPServerInfo.XMPP_DOMAIN.getValue();
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAdminProvider.useConnectionProvider");
 
         // Load database statement for reading admin list

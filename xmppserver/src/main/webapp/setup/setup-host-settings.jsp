@@ -14,6 +14,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -90,7 +91,7 @@
         if (errors.size() == 0) {
             Map<String, String> xmppSettings = new HashMap<String, String>();
 
-            xmppSettings.put("xmpp.domain", domain);
+            xmppSettings.put(XMPPServerInfo.XMPP_DOMAIN.getKey(), domain);
             xmppSettings.put(ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "" + sslEnabled);
             xmppSettings.put(AnonymousSaslServer.ENABLED.getKey(), "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
@@ -114,7 +115,7 @@
 
     // Load the current values:
     if (!doContinue) {
-        domain = JiveGlobals.getXMLProperty("xmpp.domain");
+        domain = JiveGlobals.getXMLProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
         fqdn = JiveGlobals.getXMLProperty("fqdn");
         embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);

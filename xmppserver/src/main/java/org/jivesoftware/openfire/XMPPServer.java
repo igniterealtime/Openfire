@@ -69,6 +69,7 @@ import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.handler.IQBindHandler;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
@@ -99,6 +100,7 @@ import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -405,7 +407,7 @@ public class XMPPServer {
             logger.error(e.getMessage(), e);
         }
 
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
         JiveGlobals.migrateProperty(Log.DEBUG_ENABLED.getKey());
         Log.setDebugEnabled(Log.DEBUG_ENABLED.getValue());
@@ -446,6 +448,10 @@ public class XMPPServer {
     }
 
     void runAutoSetup() {
+        // Setup property encryptor as early as possible so that database related properties can use it
+        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
+        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
+
         // steps from setup-datasource-standard.jsp
         // do this first so that other changes persist
         if ("standard".equals(JiveGlobals.getXMLProperty("autosetup.database.mode"))) {
@@ -460,21 +466,21 @@ public class XMPPServer {
 
             try {
                 minConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.minConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.minConnections"));
             }
             catch (Exception e) {
                 minConnections = 5;
             }
             try {
                 maxConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.maxConnections"));
             }
             catch (Exception e) {
                 maxConnections = 25;
             }
             try {
                 connectionTimeout = Double.parseDouble(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.connectionTimeout"));
             }
             catch (Exception e) {
                 connectionTimeout = 1.0;
@@ -497,15 +503,12 @@ public class XMPPServer {
         JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
 
         // steps from setup-host-settings.jsp
-        JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
+        JiveGlobals.setXMLProperty(XMPPServerInfo.XMPP_DOMAIN.getKey(), JiveGlobals.getXMLProperty("autosetup." + XMPPServerInfo.XMPP_DOMAIN.getKey()));
         JiveGlobals.setXMLProperty("fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
         ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "true")));
         AnonymousSaslServer.ENABLED.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + AnonymousSaslServer.ENABLED.getKey(), "false")));
-
-        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
-        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
 
 
         // steps from setup-profile-settings.jsp
@@ -514,19 +517,19 @@ public class XMPPServer {
                 "org.jivesoftware.database.DefaultConnectionProvider");
 
             JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
-                org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
-            JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
-                org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
-            JiveGlobals.setProperty("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
-                org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
-            JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
-                org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
-            JiveGlobals.setProperty("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
-                org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
-            JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
-                org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
-            JiveGlobals.setProperty("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
-                org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+                AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
+                UserManager.USER_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
+                GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(VCardManager.VCARD_PROVIDER.getKey(), JiveGlobals.getXMLProperty(VCardManager.VCARD_PROVIDER.getKey(),
+                VCardManager.VCARD_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
+                LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),
+                SecurityAuditManager.AUDIT_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
+                AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
 
             // make configurable?
             JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");

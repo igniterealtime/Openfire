@@ -17,12 +17,7 @@ package org.jivesoftware.openfire.security;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +35,15 @@ import org.slf4j.LoggerFactory;
  * @author Daniel Henninger
  */
 public class SecurityAuditManager {
+
+    public static final SystemProperty<Class> AUDIT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.securityAudit.className")
+        .setBaseClass(SecurityAuditProvider.class)
+        .setDefaultValue(DefaultSecurityAuditProvider.class)
+        .addListener(SecurityAuditManager::initProvider)
+        .setDynamic(true)
+        .build();
+
 
     private static final Logger Log = LoggerFactory.getLogger(SecurityAuditManager.class);
 
@@ -69,60 +73,27 @@ public class SecurityAuditManager {
         return SecurityAuditManagerContainer.instance;
     }
 
-    private SecurityAuditProvider provider;
+    private static SecurityAuditProvider provider;
 
     /**
      * Constructs a SecurityAuditManager, setting up the provider, and a listener.
      */
     private SecurityAuditManager() {
         // Load an security audit provider.
-        initProvider();
-
-        // Detect when a new security audit provider class is set
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.securityAudit.className".equals(property)) {
-                    initProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
+        initProvider(AUDIT_PROVIDER.getValue());
     }
 
     /**
      * Initializes the server's security audit provider, based on configuration and defaults to
      * DefaultSecurityAuditProvider if the specified provider is not valid or not specified.
      */
-    private void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.securityAudit.className");
-
-        String className = JiveGlobals.getProperty("provider.securityAudit.className",
-                "org.jivesoftware.openfire.security.DefaultSecurityAuditProvider");
-        // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+    private static void initProvider(final Class clazz) {
+        if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                provider = (SecurityAuditProvider) c.newInstance();
+                provider = (SecurityAuditProvider) clazz.newInstance();
             }
             catch (Exception e) {
-                Log.error("Error loading security audit provider: " + className, e);
+                Log.error("Error loading security audit provider: " + clazz.getName(), e);
                 provider = new DefaultSecurityAuditProvider();
             }
         }

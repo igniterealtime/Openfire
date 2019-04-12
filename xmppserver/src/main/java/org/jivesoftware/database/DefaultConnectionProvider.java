@@ -114,6 +114,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         poolConfig.setTestOnBorrow(testBeforeUse);
         poolConfig.setTestOnReturn(testAfterUse);
         poolConfig.setMinIdle(minConnections);
+        if( minConnections > GenericObjectPoolConfig.DEFAULT_MAX_IDLE )
+        {
+            poolConfig.setMaxIdle(minConnections);
+        }
         poolConfig.setMaxTotal(maxConnections);
         poolConfig.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRuns);
         poolConfig.setSoftMinEvictableIdleTimeMillis(minIdleTime);

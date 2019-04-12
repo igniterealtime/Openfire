@@ -30,11 +30,10 @@ import org.jivesoftware.openfire.event.UserEventAdapter;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -47,9 +46,17 @@ import org.slf4j.LoggerFactory;
  */
 public class VCardManager extends BasicModule implements ServerFeaturesProvider {
 
+    public static final SystemProperty<Class> VCARD_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.vcard.className")
+        .setBaseClass(VCardProvider.class)
+        .setDefaultValue(DefaultVCardProvider.class)
+        .addListener(VCardManager::initProvider)
+        .setDynamic(true)
+        .build();
+
     private static final Logger Log = LoggerFactory.getLogger(VCardManager.class);
 
-    private VCardProvider provider;
+    private static VCardProvider provider;
     private static VCardManager instance;
 
     private EventHandler eventHandler;
@@ -249,18 +256,16 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     public void initialize(XMPPServer server) {
         instance = this;
 
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.vcard.className");
+        initProvider(VCARD_PROVIDER.getValue());
 
-        // Load a VCard provider.
-        String className = JiveGlobals.getProperty("provider.vcard.className",
-                DefaultVCardProvider.class.getName());
+    }
+
+    private static void initProvider(final Class clazz) {
         try {
-            Class c = ClassUtils.forName(className);
-            provider = (VCardProvider) c.newInstance();
+            provider = (VCardProvider) clazz.newInstance();
         }
         catch (Exception e) {
-            Log.error("Error loading vcard provider: " + className, e);
+            Log.error("Error loading vcard provider: " + clazz.getName(), e);
             provider = new DefaultVCardProvider();
         }
     }
@@ -272,32 +277,6 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         if (!provider.isReadOnly()) {
             UserEventDispatcher.addListener(eventHandler);
         }
-
-        // Detect when a new vcard provider class is set
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.vcard.className".equals(property)) {
-                    initialize(XMPPServer.getInstance());
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
     }
 
     @Override

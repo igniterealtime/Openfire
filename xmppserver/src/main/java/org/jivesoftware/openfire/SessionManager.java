@@ -1209,6 +1209,40 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         return false;
     }
 
+    /**
+     * Removes a session that existed on a remote cluster node.
+     *
+     * This method was designed to be used only in case of cluster nodes disappearing.
+     *
+     * This method takes responsibility for cleaning up the state in RoutingTableImpl
+     * as well as SessionManager.
+     *
+     * @param fullJID the address of the session.
+     */
+    public void removeRemoteClientSession( JID fullJID )
+    {
+        // Remove route to the removed session.
+        routingTable.removeClientRoute(fullJID);
+
+        // Existing behavior when this implementation was introduced was to not dispatch SessionEvents
+        // for destroyed remote sessions.
+
+        // Non-local sessions cannot exist in the pre-Authenticated sessions list. No need to clean that up.
+
+        // TODO only sent an unavailable presence if the user was 'available'. Unsure if this can be checked when the remote node is shut down.
+        Presence offline = new Presence();
+        offline.setFrom(fullJID);
+        offline.setTo(new JID(null, serverName, null, true));
+        offline.setType(Presence.Type.unavailable);
+        router.route(offline);
+
+        // Stop tracking information about the session and share it with other cluster nodes.
+        // Note that, unlike other caches, this cache is populated only when clustering is enabled.
+        sessionInfoCache.remove(fullJID.toString());
+
+        // connectionsCounter tracks only local sessions. No need to decrement it here.
+    }
+
     public int getConflictKickLimit() {
         return conflictLimit;
     }
@@ -1594,6 +1628,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                            String.join( ", ", removedStreamIDs.stream().map( StreamID::getID ).collect( Collectors.toSet() ) ) );
                 unregisterIncomingServerSession( removedStreamIDs );
             }
+
+            // Note that the cleanup of client state in this class is triggered by a call from RoutingTableImpl#leftCluster() to SessionManager#removeRemoteClientSession().
         }
     }
 
@@ -1624,6 +1660,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                        String.join( ", ", removedStreamIDs.stream().map( StreamID::getID ).collect( Collectors.toSet() ) ) );
             unregisterIncomingServerSession( removedStreamIDs );
         }
+
+        // Note that the cleanup of client state in this class is triggered by a call from RoutingTableImpl#leftCluster() to SessionManager#removeRemoteClientSession().
     }
 
     @Override

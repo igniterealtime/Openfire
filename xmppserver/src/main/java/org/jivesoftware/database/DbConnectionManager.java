@@ -151,8 +151,11 @@ public class DbConnectionManager {
             if (loopIfNoConnection) {
                 try {
                     Thread.sleep(retryWait);
-                } catch (Exception e) {
-                    // Ignored, the thread was interrupted while waiting, so no need to log either
+                } catch (InterruptedException ex) {
+                    String msg = "Interrupted waiting for DB connection";
+                    Log.info(msg,ex);
+                    Thread.currentThread().interrupt();
+                    throw new SQLException(msg,ex);
                 }
             }
         } while (loopIfNoConnection);

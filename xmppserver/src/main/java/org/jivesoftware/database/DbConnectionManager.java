@@ -124,6 +124,7 @@ public class DbConnectionManager {
         Integer maxRetries = JiveGlobals.getXMLProperty(SETTING_DATABASE_MAX_RETRIES, 10);
         Integer retryWait = JiveGlobals.getXMLProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
         SQLException lastException = null;
+        boolean loopIfNoConnection = false;
         do {
             try {
                 Connection con = connectionProvider.getConnection();
@@ -145,13 +146,16 @@ public class DbConnectionManager {
                         "(attempt " + currentRetryCount + " out of " + maxRetries + ").", e);
             }
             
-            try {
-                Thread.sleep(retryWait);
-            } catch (Exception e) {
-                // Ignored, the thread was interrupted while waiting, so no need to log either
-            }
             currentRetryCount++;
-        } while (currentRetryCount <= maxRetries);
+            loopIfNoConnection = currentRetryCount <= maxRetries;
+            if (loopIfNoConnection) {
+                try {
+                    Thread.sleep(retryWait);
+                } catch (Exception e) {
+                    // Ignored, the thread was interrupted while waiting, so no need to log either
+                }
+            }
+        } while (loopIfNoConnection);
         
         throw new SQLException("ConnectionManager.getConnection() " +
                 "failed to obtain a connection after " + currentRetryCount + " retries. " +

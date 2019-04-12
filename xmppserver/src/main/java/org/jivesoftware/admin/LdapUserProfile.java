@@ -516,7 +516,7 @@ public class LdapUserProfile {
         LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
 
         // Store the DB storage variable in the actual database.
-        JiveGlobals.setProperty("ldap.override.avatar", avatarStoredInDB.toString());
+        LdapVCardProvider.STORE_AVATAR_IN_DB.setValue(avatarStoredInDB);
     }
 
     /**
@@ -642,7 +642,7 @@ public class LdapUserProfile {
                     businessDepartment = element.elementTextTrim("ORGUNIT");
                 }
             }
-            avatarStoredInDB = JiveGlobals.getBooleanProperty("ldap.override.avatar", false);
+            avatarStoredInDB = LdapVCardProvider.STORE_AVATAR_IN_DB.getValue();
         }
         catch (DocumentException e) {
             Log.error("Error loading vcard mappings from property", e);

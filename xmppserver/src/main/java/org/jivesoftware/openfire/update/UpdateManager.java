@@ -57,7 +57,6 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -69,8 +68,6 @@ import org.jivesoftware.util.Version;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
@@ -145,13 +142,6 @@ public class UpdateManager extends BasicModule {
      * Thread that performs the periodic checks for updates.
      */
     private Thread thread;
-
-    /**
-     * Router to use for sending notification messages to admins.
-     */
-    private MessageRouter router;
-    private String serverName;
-
 
     public UpdateManager() {
         super("Update manager");
@@ -245,8 +235,6 @@ public class UpdateManager extends BasicModule {
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        router = server.getMessageRouter();
-        serverName = server.getServerInfo().getXMPPDomain();
 
         JiveGlobals.migrateProperty(ENABLED.getKey());
         JiveGlobals.migrateProperty(NOTIFY_ADMINS.getKey());
@@ -611,15 +599,9 @@ public class UpdateManager extends BasicModule {
         }
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && serverUpdate != null) {
-            Collection<JID> admins = XMPPServer.getInstance().getAdmins();
-            Message notification = new Message();
-            notification.setFrom(serverName);
-            notification.setBody(getNotificationMessage() + " " + serverUpdate.getComponentName() +
-                    " " + serverUpdate.getLatestVersion());
-            for (JID jid : admins) {
-                notification.setTo(jid);
-                router.route(notification);
-            }
+            XMPPServer.getInstance().sendMessageToAdmins(getNotificationMessage() +
+                " " + serverUpdate.getComponentName() +
+                " " + serverUpdate.getLatestVersion());
         }
         // Save response in a file for later retrieval
         saveLatestServerInfo();
@@ -647,16 +629,10 @@ public class UpdateManager extends BasicModule {
 
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && !pluginUpdates.isEmpty()) {
-            Collection<JID> admins = XMPPServer.getInstance().getAdmins();
             for (Update update : pluginUpdates) {
-                Message notification = new Message();
-                notification.setFrom(serverName);
-                notification.setBody(getNotificationMessage() + " " + update.getComponentName() +
-                        " " + update.getLatestVersion());
-                for (JID jid : admins) {
-                    notification.setTo(jid);
-                    router.route(notification);
-                }
+                XMPPServer.getInstance().sendMessageToAdmins(getNotificationMessage() +
+                    " " + update.getComponentName() +
+                    " " + update.getLatestVersion());
             }
         }
 

@@ -55,8 +55,9 @@ public interface MUCEventListener {
      *
      * @param roomJID the JID of the room where the occupant has left.
      * @param user the JID of the user leaving the room.
+     * @param nickname nickname of the user leaving the room.
      */
-    void occupantLeft(JID roomJID, JID user);
+    void occupantLeft(JID roomJID, JID user, String nickname);
 
     /**
      * Event triggered when an occupant changed his nickname in a room.

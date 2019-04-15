@@ -55,9 +55,9 @@ public class MUCEventDispatcher {
         }
     }
 
-    public static void occupantLeft(JID roomJID, JID user) {
+    public static void occupantLeft(JID roomJID, JID user, String nickname) {
         for (MUCEventListener listener : listeners) {
-            listener.occupantLeft(roomJID, user);
+            listener.occupantLeft(roomJID, user, nickname);
         }
     }
 

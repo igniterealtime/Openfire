@@ -564,6 +564,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 if (user.getLastPacketTime() < deadline) {
+                    String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", null);
                     // Kick the user from all the rooms that he/she had previuosly joined
                     MUCRoom room;
                     Presence kickedPresence;
@@ -571,7 +572,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         room = role.getChatRoom();
                         try {
                             kickedPresence =
-                                    room.kickOccupant(user.getAddress(), null, null, null);
+                                    room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
                             // Send the updated presence to the room occupants
                             room.send(kickedPresence);
                         }

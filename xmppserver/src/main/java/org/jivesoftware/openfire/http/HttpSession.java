@@ -67,7 +67,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author Alexander Wenckus
  */
 public class HttpSession extends LocalClientSession {
-    
+
     private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
 
     private static XmlPullParserFactory factory = null;
@@ -136,6 +136,10 @@ public class HttpSession extends LocalClientSession {
         this.lastRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
         this.sslCertificates = connection.getPeerCertificates();
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            Log.info("Session " + getStreamID() + " being opened with initial connection " +
+                    connection.toString());
+        }
     }
 
     /**
@@ -185,6 +189,9 @@ public class HttpSession extends LocalClientSession {
     public void close() {
         if (isClosed) {
             return;
+        }
+        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+            Log.info("Session " + getStreamID() + " being closed");
         }
         conn.close();
     }
@@ -625,7 +632,7 @@ public class HttpSession extends LocalClientSession {
                     try {
                         router.route(packet);
                     } catch (UnknownStanzaException e) {
-                        Log.error("Client provided unknown packet type", e);
+                        Log.error( "On session " + getStreamID() + " client provided unknown packet type", e);
                     }
                 }
             }
@@ -661,12 +668,19 @@ public class HttpSession extends LocalClientSession {
             throws HttpConnectionClosedException, HttpBindException, IOException
     {
         final HttpConnection connection = new HttpConnection(rid, context);
+        final StreamID streamID = getStreamID();
+        boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
+        if (logHttpbindEnabled) {
+            Log.info( "Creating connection for rid: " + rid + " in session " + streamID );
+        }
         connection.setSession(this);
         context.setTimeout(getWait() * JiveConstants.SECOND);
         context.addListener(new AsyncListener() {
             @Override
             public void onComplete(AsyncEvent asyncEvent) throws IOException {
-                Log.debug("complete event " + asyncEvent);
+                if (Log.isDebugEnabled()) {
+                    Log.debug("complete event " + asyncEvent + " for " + rid + " in session " + streamID);
+                }
                 connectionQueue.remove(connection);
                 lastActivity = System.currentTimeMillis();
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
@@ -674,7 +688,9 @@ public class HttpSession extends LocalClientSession {
 
             @Override
             public void onTimeout(AsyncEvent asyncEvent) throws IOException {
-                Log.debug("timeout event " + asyncEvent);
+                if( Log.isDebugEnabled()) {
+                    Log.debug("timeout event " + asyncEvent + " for " + rid + " in session " + streamID);
+                }
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
@@ -683,6 +699,9 @@ public class HttpSession extends LocalClientSession {
 
                     // This connection timed out we need to increment the request count
                     if (connection.getRequestId() != lastRequestID + 1) {
+                        if (logHttpbindEnabled) {
+                            Log.info( "Unexpected RID error " + rid + " for session " + streamID);
+                        }
                         throw new IOException("Unexpected RID error.");
                     }
                     lastRequestID = connection.getRequestId();
@@ -695,8 +714,10 @@ public class HttpSession extends LocalClientSession {
 
             @Override
             public void onError(AsyncEvent asyncEvent) throws IOException {
-                Log.debug("error event " + asyncEvent);
-                Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
+                if (logHttpbindEnabled && Log.isDebugEnabled()) {
+                    Log.debug("error event " + asyncEvent + " for " + rid + " in session " + streamID);
+                }
+                Log.warn("For session " + streamID + " unhandled AsyncListener error: " + asyncEvent.getThrowable());
                 connectionQueue.remove(connection);
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
@@ -708,7 +729,7 @@ public class HttpSession extends LocalClientSession {
         if (rid <= lastRequestID) {
             Delivered deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
-                Log.warn("Deliverable unavailable for " + rid);
+                Log.warn("Deliverable unavailable for " + rid + " in session " + streamID);
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
             }
@@ -717,7 +738,7 @@ public class HttpSession extends LocalClientSession {
             return connection;
         }
         else if (rid > (lastRequestID + maxRequests)) {
-            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session.");
+            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session " + streamID);
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
         }
@@ -744,13 +765,18 @@ public class HttpSession extends LocalClientSession {
         if (connection == null) {
             throw new IllegalArgumentException("Connection cannot be null.");
         }
-        
+
         if (isSecure && !connection.isSecure()) {
             throw new HttpBindException("Session was started from secure connection, all " +
                     "connections on this session must be secured.", BoshBindingError.badRequest);
         }
 
         final long rid = connection.getRequestId();
+        final StreamID streamid = getStreamID();
+        boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
+        if (logHttpbindEnabled) {
+            Log.info( "Adding connection to stream " + streamid + " with rid " + rid );
+        }
 
         /*
          * Search through the connection queue to see if this rid already exists on it. If it does then we
@@ -761,30 +787,35 @@ public class HttpSession extends LocalClientSession {
         synchronized (connectionQueue) {
             for (HttpConnection queuedConnection : connectionQueue) {
                 if (queuedConnection.getRequestId() == rid) {
-                    if(Log.isDebugEnabled()) {
+                    if(logHttpbindEnabled && Log.isDebugEnabled()) {
                         Log.debug("Found previous connection in queue with rid " + rid);
                     }
                     if(queuedConnection.isClosed()) {
-                        if(Log.isDebugEnabled()) {
+                        if(logHttpbindEnabled && Log.isDebugEnabled()) {
                             Log.debug("It's closed - copying deliverables");
                         }
-                        
+
                         Delivered deliverable = retrieveDeliverable(rid);
                         if (deliverable == null) {
-                            Log.warn("Deliverable unavailable for " + rid);
+                            if(logHttpbindEnabled) {
+                                Log.warn("In session " + streamid + " deliverable unavailable for " + rid);
+                            }
                             throw new HttpBindException("Unexpected RID error.",
                                     BoshBindingError.itemNotFound);
                         }
                         connection.deliverBody(createDeliverable(deliverable.deliverables), true);
                     } else {
-                        if(Log.isDebugEnabled()) {
-                            Log.debug("It's still open - calling close()");
+                        if(logHttpbindEnabled && Log.isDebugEnabled()) {
+                            Log.debug("For session " + streamid + " queued connection is still open - calling close()");
                         }
                         deliver(queuedConnection, Collections.singleton(new Deliverable("")));
                         connection.close();
-                        
+
                         if(rid == (lastRequestID + 1)) {
                             lastRequestID = rid;
+                            if( logHttpbindEnabled ) {
+                                Log.info( "Updated session " + streamid + " to rid = " + rid );
+                            }
                         }
                     }
                     break;
@@ -792,7 +823,7 @@ public class HttpSession extends LocalClientSession {
             }
         }
 
-        checkOveractivity(isPoll);
+        checkOveractivity(isPoll,streamid,rid,logHttpbindEnabled);
 
         sslCertificates = connection.getPeerCertificates();
 
@@ -869,6 +900,12 @@ public class HttpSession extends LocalClientSession {
         sentElements.add(delivered);
     }
 
+    private enum OveractivityType {
+        NONE,
+        TOO_MANY_SIM_REQS,
+        POLLING_TOO_QUICK;
+    };
+
     /**
      * Check that the client SHOULD NOT make more simultaneous requests than specified
      * by the 'requests' attribute in the connection manager's Session Creation Response.
@@ -879,44 +916,79 @@ public class HttpSession extends LocalClientSession {
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      *         protocol.
      */
-    private void checkOveractivity(boolean isPoll) throws HttpBindException {
+    private void checkOveractivity(boolean isPoll,
+            StreamID streamID,
+            long originRid,
+            boolean logHttpbindEnabled) throws HttpBindException {
         int pendingConnections = 0;
-        boolean overactivity = false;
-        String errorMessage = "Overactivity detected";
+        OveractivityType overactivity = OveractivityType.NONE;
 
         synchronized (connectionQueue) {
             for (HttpConnection conn : connectionQueue) {
                 if (!conn.isClosed()) {
                     pendingConnections++;
+                    if (logHttpbindEnabled) {
+                        Log.info("For session " + streamID + " and origin rid " + originRid +
+                                " an open connection is pending with rid " + conn.getRequestId());
+                    }
                 }
             }
         }
 
+        long time = System.currentTimeMillis();
+        long deltaFromLastPoll = time - lastPoll;
         if(pendingConnections >= maxRequests) {
-            overactivity = true;
-            errorMessage += ", too many simultaneous requests.";
+            overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
         else if(isPoll) {
-            long time = System.currentTimeMillis();
-            long deltaFromLastPoll = time - lastPoll;
             boolean localIsPollingSession = isPollingSession();
             if (deltaFromLastPoll < maxPollingInterval * JiveConstants.SECOND) {
                 if (localIsPollingSession) {
-                    overactivity = lastResponseEmpty;
+                    overactivity = lastResponseEmpty ? OveractivityType.POLLING_TOO_QUICK : OveractivityType.NONE;
                 } else {
-                    overactivity = (pendingConnections >= maxRequests);
+                    overactivity = pendingConnections >= maxRequests ? OveractivityType.POLLING_TOO_QUICK : OveractivityType.NONE;
                 }
             }
-            errorMessage += ", minimum polling interval is "
-                + maxPollingInterval + ", current interval " + (deltaFromLastPoll / 1000);
             lastPoll = time;
+            if (logHttpbindEnabled && Log.isDebugEnabled()) {
+                Log.debug("Updated session " + streamID +
+                        " lastPoll to " + lastPoll +
+                        " with rid " + originRid +
+                        " lastResponseEmpty = " + lastResponseEmpty  +
+                        " overactivity = " + overactivity +
+                        " deltaFromlastPoll = " + deltaFromLastPoll +
+                        " isPollingSession() = " + localIsPollingSession +
+                        " maxRequests = " + maxRequests +
+                        " pendingConnections = " + pendingConnections);
+            }
         }
         setLastResponseEmpty(false);
 
-        if(overactivity) {
-            Log.debug(errorMessage);
+        if( overactivity != OveractivityType.NONE) {
+            StringBuilder errorMessage = new StringBuilder("Overactivity detected");
+            switch (overactivity) {
+                case TOO_MANY_SIM_REQS: {
+                    errorMessage.append(", too many simultaneous requests.");
+                    break;
+                }
+                case POLLING_TOO_QUICK: {
+                    errorMessage.append(", minimum polling interval is ");
+                    errorMessage.append(maxPollingInterval);
+                    errorMessage.append(", current session ");
+                    errorMessage.append(" interval ");
+                    errorMessage.append(deltaFromLastPoll / 1000);
+                    break;
+                }
+                default: {
+                    throw new HttpBindException("Unhandled overactivity type: " + overactivity, BoshBindingError.internalServerError);
+                }
+            }
+            String errorMessageStr = errorMessage.toString();
+            if (logHttpbindEnabled && Log.isInfoEnabled()) {
+                Log.info(errorMessageStr);
+            }
             if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignoreOveractivity", false)) {
-                throw new HttpBindException(errorMessage, BoshBindingError.policyViolation);
+                throw new HttpBindException(errorMessageStr, BoshBindingError.policyViolation);
             }
         }
     }
@@ -969,16 +1041,22 @@ public class HttpSession extends LocalClientSession {
                 }
                 catch (HttpConnectionClosedException e) {
                     /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
-                    Log.warn("Iterating over a connection that was closed. Openfire will recover from this problem, but it should not occur in the first place.");
+                    StreamID streamID = getStreamID();
+                    Log.warn("Iterating over a connection that was closed for session " + streamID +
+                            ". Openfire will recover from this problem, but it should not occur in the first place.");
                 } catch (IOException e) {
-                    Log.warn("An unexpected exception occurred while iterating over connections. Openfire will attempt to recover by ignoring this connection.", e);
+                    StreamID streamID = getStreamID();
+                    Log.warn("An unexpected exception occurred while iterating over connections for session " + streamID +
+                            ". Openfire will attempt to recover by ignoring this connection.", e);
                 }
             }
         }
 
         if (!delivered) {
             if (pendingConnections > 0) {
-                Log.warn("Unable to deliver a stanza (it is being queued instead), although there are available connections! RID / Connection processing is out of sync!");
+                StreamID streamID = getStreamID();
+                Log.warn("Unable to deliver a stanza on session " + streamID +
+                        "(it is being queued instead), although there are available connections! RID / Connection processing is out of sync!");
             }
             synchronized(pendingElements) {
                 pendingElements.add( stanza );
@@ -1029,7 +1107,7 @@ public class HttpSession extends LocalClientSession {
                     }
                 }
             }
-    
+
             synchronized (pendingElements) {
                 for (Deliverable deliverable : pendingElements) {
                     failDelivery(deliverable.getPackets());
@@ -1055,7 +1133,7 @@ public class HttpSession extends LocalClientSession {
                         backupDeliverer.deliver(packet);
                     }
                     catch (UnauthorizedException e) {
-                        Log.error("Unable to deliver message to backup deliverer", e);
+                        Log.error("On session " + getStreamID() + " unable to deliver message to backup deliverer", e);
                     }
                 }
             }

@@ -323,15 +323,25 @@ public class HttpSessionManager {
 
         @Override
         public void run() {
+            boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
                 try {
                     long lastActive = currentTime - session.getLastActivity();
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("Session was last active {} ms ago: {}", lastActive, session );
+                    if( lastActive >= 1 && logHttpbindEnabled && Log.isInfoEnabled()) {
+                        Log.info("Session {} was last active {} ms ago: {} from IP {} " +
+                                " currently on rid {}",
+                                session.getStreamID(),
+                                lastActive,
+                                session.getAddress(), // JID
+                                session.getConnection().getHostAddress(),
+                                session.getLastAcknowledged()); // RID
                     }
                     if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
-                        Log.info("Closing idle session: {}", session);
+                        Log.info("Closing idle session {}: {} from IP {}",
+                                session.getStreamID(),
+                                session.getAddress(),
+                                session.getConnection().getHostAddress());
                         session.close();
                     }
                 } catch (Exception e) {

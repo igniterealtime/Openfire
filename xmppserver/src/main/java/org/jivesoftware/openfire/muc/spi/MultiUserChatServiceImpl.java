@@ -564,7 +564,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 if (user.getLastPacketTime() < deadline) {
-                    String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", null);
+                    String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason",
+                            "User exceeded idle time limit.");
                     // Kick the user from all the rooms that he/she had previuosly joined
                     MUCRoom room;
                     Presence kickedPresence;
@@ -1641,6 +1642,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Adds an extra Disco feature to the list of features returned for the conference service.
      * @param feature Feature to add.
      */
+    @Override
     public void addExtraFeature(final String feature) {
         extraDiscoFeatures.add(feature);
     }
@@ -1649,6 +1651,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Removes an extra Disco feature from the list of features returned for the conference service.
      * @param feature Feature to remove.
      */
+    @Override
     public void removeExtraFeature(final String feature) {
         extraDiscoFeatures.remove(feature);
     }
@@ -1659,6 +1662,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param name Descriptive name for identity.  e.g. Public Chatrooms
      * @param type Type for identity.  e.g. text
      */
+    @Override
     public void addExtraIdentity(final String category, final String name, final String type) {
         final Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", category);
@@ -1671,6 +1675,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Removes an extra Disco identity from the list of identities returned for the conference service.
      * @param name Name of identity to remove.
      */
+    @Override
     public void removeExtraIdentity(final String name) {
         final Iterator<Element> iter = extraDiscoIdentities.iterator();
         while (iter.hasNext()) {

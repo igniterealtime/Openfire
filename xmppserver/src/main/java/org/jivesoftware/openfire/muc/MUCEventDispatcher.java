@@ -55,8 +55,12 @@ public class MUCEventDispatcher {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public static void occupantLeft(JID roomJID, JID user, String nickname) {
         for (MUCEventListener listener : listeners) {
+            // We call both two and three argument methods to support
+            // older API clients
+            listener.occupantLeft(roomJID, user);
             listener.occupantLeft(roomJID, user, nickname);
         }
     }

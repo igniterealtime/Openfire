@@ -120,7 +120,7 @@
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
         <jetty.version>9.4.12.v20180830</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
-        <mina.version>2.0.20</mina.version>
+        <mina.version>2.1.1</mina.version>
         <bouncycastle.version>1.60</bouncycastle.version>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>2.11.1</log4j.version>
@@ -308,24 +308,17 @@
                 </configuration>
             </plugin>
 
-            <!--<plugin>-->
-            <!--<groupId>org.codehaus.mojo</groupId>-->
-            <!--<artifactId>findbugs-maven-plugin</artifactId>-->
-            <!--<version>3.0.1</version>-->
-            <!--<configuration>-->
-            <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>findbugs</id>-->
-            <!--<phase>test</phase>-->
-            <!--<goals>-->
-            <!--<goal>findbugs</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
-
+            <!--
+            The various MINA dependencies rely on OSGi bundle artifacts rather than standard JAR files.
+            As such, it's necessary to add support for these bundle to Maven using the Apache Felix maven-bundle-plugin.
+            See https://stackoverflow.com/a/5409602 for a good explanation of OSGi bundles, with links to more info.
+            -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>4.2.0</version>
+                <extensions>true</extensions>
+            </plugin>
         </plugins>
     </build>
 

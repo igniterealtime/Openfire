@@ -423,7 +423,7 @@ public class SystemPropertyTest {
             .build();
 
         assertThat(property.getValue(), is(nullValue()));
-        final Instant value = Instant.now();
+        final Instant value = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         property.setValue(value);
         assertThat(property.getValue(), is(value));
     }
@@ -432,7 +432,7 @@ public class SystemPropertyTest {
     public void willCreateAnInstantPropertyWithADefaultValue() {
 
         final String key = "test.instant.property.with.default";
-        final Instant defaultValue = Instant.now();
+        final Instant defaultValue = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         final SystemProperty<Instant> property = SystemProperty.Builder.ofType(Instant.class)
             .setKey(key)

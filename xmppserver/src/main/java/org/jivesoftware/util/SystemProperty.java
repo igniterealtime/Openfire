@@ -488,8 +488,13 @@ public final class SystemProperty<T> {
          * @see #setMinValue(Object)
          * @see #setMaxValue(Object)
          */
+        @SuppressWarnings("unchecked")
         public Builder<T> setDefaultValue(final T defaultValue) {
-            this.defaultValue = defaultValue;
+            if( defaultValue instanceof Instant) {
+                this.defaultValue = (T) ((Instant) defaultValue).truncatedTo(ChronoUnit.MILLIS);
+            } else {
+                this.defaultValue = defaultValue;
+            }
             return this;
         }
 

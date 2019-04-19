@@ -3,6 +3,7 @@ package org.jivesoftware.util.cache;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -362,6 +363,49 @@ public class CacheUtil
                 {
                     // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
                     cache.put( entry.getKey(), newValue );
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+    }
+
+    /**
+     * Applies a mapping function to all values in a cache.
+     *
+     * The provided mapping function is applied to all values in the cache. A cache modification is made only when the
+     * mapping function returns a value that is not equal to the original value.
+     *
+     * The implementation of this method is designed to be compatible with both clustered as well as non-clustered caches.
+     *
+     * @param cache  The cache from which to remove the element (cannot be null).
+     * @param mapper The mapping function (cannot be null).
+     */
+    public static <K extends Serializable, V extends Serializable> void replaceValueInCacheByMapping( Cache<K, V> cache, Function<V, V> mapper )
+    {
+        // In some cache implementations, the entry-set is unmodifiable. To guard against potential
+        // future changes of this implementation (that would make the implementation incompatible with
+        // these cache implementations), the entry-set that's operated on in this implementation is
+        // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
+        // compatible with the 'lowest common denominator'.
+        final Set<Map.Entry<K, V>> entries = Collections.unmodifiableSet( cache.entrySet() );
+
+        for ( final Map.Entry<K, V> entry : entries )
+        {
+            final K key = entry.getKey();
+
+            final Lock lock = CacheFactory.getLock( key, cache );
+            try
+            {
+                lock.lock();
+
+                final V modifiedValue = mapper.apply( entry.getValue() );
+                if ( modifiedValue.equals( entry.getValue() ) )
+                {
+                    // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
+                    cache.put( entry.getKey(), modifiedValue );
                 }
             }
             finally

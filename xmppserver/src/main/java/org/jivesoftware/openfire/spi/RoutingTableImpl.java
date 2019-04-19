@@ -42,6 +42,8 @@ import org.xmpp.packet.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Routing table that stores routes to client sessions, outgoing server sessions
@@ -1049,6 +1051,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final NodeID nodeID = server.getNodeID();
         CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
         CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
+        CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
+        CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
         // Probe presences of remote sessions when subscribed to presence of local session
@@ -1077,6 +1083,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             final NodeID nodeID = server.getNodeID();
             CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
             CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
+            CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
+            CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
 
             // The local cluster node left the cluster.
             //

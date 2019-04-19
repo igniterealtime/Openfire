@@ -402,7 +402,7 @@ public class CacheUtil
                 lock.lock();
 
                 final V modifiedValue = mapper.apply( entry.getValue() );
-                if ( modifiedValue.equals( entry.getValue() ) )
+                if ( !modifiedValue.equals( entry.getValue() ) )
                 {
                     // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
                     cache.put( entry.getKey(), modifiedValue );

@@ -1046,16 +1046,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void joinedCluster()
     {
-        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
-        CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInCacheByMapping( usersCache,
-                                                clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
-        CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
-                                                clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
-
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
+            CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
+        }
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
         // Probe presences of remote sessions when subscribed to presence of local session
         // Send pending subscription requests to local sessions from remote sessions
@@ -1081,13 +1083,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
-            CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInCacheByMapping( usersCache,
-                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
-            CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
-                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
-
+            if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+            {
+                CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
+                CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
+            }
             // The local cluster node left the cluster.
             //
             // Determine what routes were available only on other cluster nodes than the local one.

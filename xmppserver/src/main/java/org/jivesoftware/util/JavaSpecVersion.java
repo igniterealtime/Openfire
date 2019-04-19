@@ -21,13 +21,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Holds version information for Java specification (a major and minor version, eg: 1.8).
+ * Holds version information for Java specification (a major and minor version, eg: 1.8,
+ * or just a number, eg: 11).
+ *
+ * For comparison purposes, only the minor version number is used.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
 
-    private static final Pattern PATTERN = Pattern.compile("(\\d+)\\.(\\d+)");
+    private static final Pattern PATTERN_SINGLE = Pattern.compile( "(\\d+)");
+    private static final Pattern PATTERN_DOUBLE = Pattern.compile( "(\\d+)\\.(\\d+)");
 
     /**
      * The major number (ie 1.x).
@@ -57,10 +61,14 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
      */
     public JavaSpecVersion( CharSequence source ) {
         if (source != null) {
-            Matcher matcher = PATTERN.matcher(source);
-            if (matcher.matches()) {
-                major = Integer.parseInt(matcher.group(1));
-                minor = Integer.parseInt(matcher.group(2));
+            Matcher matcherSingle = PATTERN_SINGLE.matcher( source);
+            Matcher matcherDouble = PATTERN_DOUBLE.matcher( source);
+            if (matcherDouble.matches()) {
+                major = Integer.parseInt(matcherDouble.group(1));
+                minor = Integer.parseInt(matcherDouble.group(2));
+            } else if (matcherSingle.matches()) {
+                major = 0;
+                minor = Integer.parseInt(matcherSingle.group(1));
             } else {
                 this.major = this.minor = 0;
             }
@@ -76,25 +84,11 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
      * @return The version as a string
      */
     public String getVersionString() {
-        return major + "." + minor;
-    }
-
-    /**
-     * Obtain the major release number for this product.
-     *
-     * @return The major release number 1.x.x
-     */
-    public int getMajor() {
-        return major;
-    }
-
-    /**
-     * Obtain the minor release number for this product.
-     *
-     * @return The minor release number x.1.x
-     */
-    public int getMinor() {
-        return minor;
+        if ( major > 0 ) {
+            return major + "." + minor;
+        } else {
+            return String.valueOf( minor );
+        }
     }
 
     /**
@@ -111,11 +105,7 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
         if (that == null) {
             return 1;
         }
-        int result = Integer.compare(getMajor(), that.getMajor());
-        if (result == 0) {
-            result = Integer.compare(getMinor(), that.getMinor());
-        }
-        return result;
+        return Integer.compare(minor, that.minor);
     }
 
     @Override
@@ -128,13 +118,12 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
         }
         JavaSpecVersion other = (JavaSpecVersion) o;
 
-        return Objects.equals(major, other.major)
-                && Objects.equals(minor, other.minor);
+        return Objects.equals(minor, other.minor);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(major, minor);
+        return minor;
     }
 
     @Override

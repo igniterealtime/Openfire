@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.auth;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,8 +63,8 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
             String username = principal.substring(0,principal.lastIndexOf('@'));
 
             if(realm.length() > 0) {
-                if(realm.equals(JiveGlobals.getProperty("xmpp.domain"))) {
-                    Log.debug("DefaultAuthorizationMapping: realm = xmpp.domain");
+                if(realm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
+                    Log.debug("DefaultAuthorizationMapping: realm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                     return username;
                 } else if(realm.equals(JiveGlobals.getProperty("sasl.realm"))) {
                     Log.debug("DefaultAuthorizationMapping: ream = sasl.realm");

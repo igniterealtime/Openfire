@@ -15,15 +15,12 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.time.Duration;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -80,13 +77,13 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * Linked list to maintain order that cache objects are accessed
      * in, most used to least used.
      */
-    protected org.jivesoftware.util.LinkedList<K> lastAccessedList;
+    private org.jivesoftware.util.LinkedList<K> lastAccessedList;
 
     /**
      * Linked list to maintain time that cache objects were initially added
      * to the cache, most recently added to oldest added.
      */
-    protected org.jivesoftware.util.LinkedList<K> ageList;
+    private org.jivesoftware.util.LinkedList<K> ageList;
 
     /**
      * Maximum size in bytes that the cache can grow to.
@@ -101,7 +98,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     /**
      * Maximum length of time objects can exist in cache before expiring.
      */
-    protected long maxLifetime;
+    private long maxLifetime;
 
     /**
      * Maintain the number of cache hits and misses. A cache hit occurs every
@@ -111,7 +108,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * Keeping track of cache hits and misses lets one measure how efficient
      * the cache is; the higher the percentage of hits, the more efficient.
      */
-    protected long cacheHits, cacheMisses = 0L;
+    private long cacheHits, cacheMisses = 0L;
 
     /**
      * The name of the cache.
@@ -128,7 +125,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @param maxLifetime the maximum amount of time objects can exist in
      *      cache before being deleted. -1 means objects never expire.
      */
-    public DefaultCache(String name, long maxSize, long maxLifetime) {
+    DefaultCache(final String name, final long maxSize, final long maxLifetime) {
         this.name = name;
         this.maxCacheSize = maxSize;
         this.maxLifetime = maxLifetime;
@@ -143,17 +140,17 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public synchronized V put(K key, V value) {
+    public synchronized V put(final K key, final V value) {
         checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         checkNotNull(value, NULL_VALUE_IS_NOT_ALLOWED);
         // Delete an old entry if it exists.
-        V answer = remove(key);
+        final V answer = remove(key);
 
         int objectSize = 1;
         try {
              objectSize = CacheSizes.sizeOfAnything(value);
         }
-        catch (CannotCalculateSizeException e) {
+        catch (final CannotCalculateSizeException e) {
              Log.warn(e.getMessage(), e);
         }
 
@@ -164,15 +161,14 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
             return value;
         }
         cacheSize += objectSize;
-        DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<>(value, objectSize);
+        final DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<>(value, objectSize);
         map.put(key, cacheObject);
         // Make an entry into the cache order list.
-        LinkedListNode<K> lastAccessedNode = lastAccessedList.addFirst(key);
         // Store the cache order list entry so that we can get back to it
         // during later lookups.
-        cacheObject.lastAccessedListNode = lastAccessedNode;
+        cacheObject.lastAccessedListNode = lastAccessedList.addFirst(key);
         // Add the object to the age list
-        LinkedListNode<K> ageNode = ageList.addFirst(key);
+        final LinkedListNode<K> ageNode = ageList.addFirst(key);
         // We make an explicit call to currentTimeMillis() so that total accuracy
         // of lifetime calculations is better than one second.
         ageNode.timestamp = System.currentTimeMillis();
@@ -186,13 +182,13 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public synchronized V get(Object key) {
+    public synchronized V get(final Object key) {
         checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
 
-        DefaultCache.CacheObject<V> cacheObject = map.get(key);
+        final DefaultCache.CacheObject<V> cacheObject = map.get(key);
         if (cacheObject == null) {
             // The object didn't exist in cache, so increment cache misses.
             cacheMisses++;
@@ -207,15 +203,17 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // Remove the object from it's current place in the cache order list,
         // and re-insert it at the front of the list.
         cacheObject.lastAccessedListNode.remove();
+        //noinspection unchecked
         lastAccessedList.addFirst((LinkedListNode<K>) cacheObject.lastAccessedListNode);
 
         return cacheObject.object;
     }
 
     @Override
-    public synchronized V remove(Object key) {
+    public synchronized V remove(final Object key) {
         checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
-        DefaultCache.CacheObject<V> cacheObject = map.get(key);
+        @SuppressWarnings("SuspiciousMethodCalls")
+        final DefaultCache.CacheObject<V> cacheObject = map.get(key);
         // If the object is not in cache, stop trying to remove it.
         if (cacheObject == null) {
             return null;
@@ -235,9 +233,9 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
 
     @Override
     public synchronized void clear() {
-        Object[] keys = map.keySet().toArray();
-        for (int i = 0; i < keys.length; i++) {
-            remove(keys[i]);
+        final Object[] keys = map.keySet().toArray();
+        for (final Object key : keys) {
+            remove(key);
         }
 
         // Now, reset all containers.
@@ -275,138 +273,16 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
-        return new DefaultCache.CacheObjectCollection(map.values());
-    }
 
-    /**
-     * Wraps a cached object collection to return a view of its inner objects
-     */
-    private final class CacheObjectCollection<V> implements Collection<V> {
-        private Collection<DefaultCache.CacheObject<V>> cachedObjects;
-
-        private CacheObjectCollection(Collection<DefaultCache.CacheObject<V>> cachedObjects) {
-            this.cachedObjects = new ArrayList<>(cachedObjects);
-        }
-
-        @Override
-        public int size() {
-            return cachedObjects.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return size() == 0;
-        }
-
-        @Override
-        public boolean contains(Object o) {
-            checkNotNull(o, NULL_KEY_IS_NOT_ALLOWED);
-            Iterator<V> it = iterator();
-            while (it.hasNext()) {
-                if (it.next().equals(o)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public Iterator<V> iterator() {
-            return new Iterator<V>() {
-                private final Iterator<DefaultCache.CacheObject<V>> it = cachedObjects.iterator();
-
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
-
-                @Override
-                public V next() {
-                    if(it.hasNext()) {
-                        DefaultCache.CacheObject<V> object = it.next();
-                        if(object == null) {
-                            return null;
-                        } else {
-                            return object.object;
-                        }
-                    }
-                    else {
-                        throw new NoSuchElementException();
-                    }
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
-
-        @Override
-        public Object[] toArray() {
-            Object[] array = new Object[size()];
-            Iterator it = iterator();
-            int i = 0;
-            while (it.hasNext()) {
-                array[i] = it.next();
-            }
-            return array;
-        }
-
-        @Override
-        public <V>V[] toArray(V[] a) {
-            Iterator<V> it = (Iterator<V>) iterator();
-            int i = 0;
-            while (it.hasNext()) {
-                a[i++] = it.next();
-            }
-            return a;
-        }
-
-        @Override
-        public boolean containsAll(Collection<?> c) {
-            Iterator it = c.iterator();
-            while(it.hasNext()) {
-                if(!contains(it.next())) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public boolean add(V o) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(Object o) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean addAll(Collection<? extends V> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean removeAll(Collection<?> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean retainAll(Collection<?> coll) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void clear() {
-            throw new UnsupportedOperationException();
+        synchronized (this) {
+            return map.values().stream()
+                .map(cachedObject -> cachedObject.object)
+                .collect(Collectors.toList());
         }
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public boolean containsKey(final Object key) {
         checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -416,25 +292,23 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> map) {
-        for (Iterator<? extends K> i = map.keySet().iterator(); i.hasNext();) {
-            K key = i.next();
-            V value = map.get(key);
+    public void putAll(final Map<? extends K, ? extends V> map) {
+        for (final K key : map.keySet()) {
+            final V value = map.get(key);
             put(key, value);
         }
     }
 
     @Override
-    public boolean containsValue(Object value) {
+    public boolean containsValue(final Object value) {
         checkNotNull(value, NULL_VALUE_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
 
-        Iterator it = values().iterator();
-        while(it.hasNext()) {
-            if(value.equals(it.next())) {
-                 return true;
+        for (final V v : values()) {
+            if (value.equals(v)) {
+                return true;
             }
         }
         return false;
@@ -445,14 +319,11 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
-        // TODO Make this work right
 
         synchronized (this) {
-            final Map<K, V> result = new HashMap<>();
-            for (final Entry<K, DefaultCache.CacheObject<V>> entry : map.entrySet()) {
-                result.put(entry.getKey(), entry.getValue().object);
-            }
-            return result.entrySet();
+            return map.entrySet().stream()
+                .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().object))
+                .entrySet();
         }
     }
 
@@ -483,7 +354,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @param name the name of this cache.
      */
     @Override
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -550,7 +421,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @param maxCacheSize the maximum size of this cache (-1 indicates unlimited max size).
      */
     @Override
-    public void setMaxCacheSize(int maxCacheSize) {
+    public void setMaxCacheSize(final int maxCacheSize) {
         this.maxCacheSize = maxCacheSize;
         CacheFactory.setMaxSizeProperty(name, maxCacheSize);
         // It's possible that the new max size is smaller than our current cache
@@ -559,12 +430,12 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     /**
-     * Returns the maximum number of milleseconds that any object can live
-     * in cache. Once the specified number of milleseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * Returns the maximum number of milliseconds that any object can live
+     * in cache. Once the specified number of milliseconds passes, the object
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
      *
-     * @return the maximum number of milleseconds before objects are expired.
+     * @return the maximum number of milliseconds before objects are expired.
      */
     @Override
     public long getMaxLifetime() {
@@ -572,15 +443,15 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     /**
-     * Sets the maximum number of milleseconds that any object can live
-     * in cache. Once the specified number of milleseconds passes, the object
-     * will be automatically expried from cache. If the max lifetime is set
+     * Sets the maximum number of milliseconds that any object can live
+     * in cache. Once the specified number of milliseconds passes, the object
+     * will be automatically expired from cache. If the max lifetime is set
      * to -1, then objects never expire.
      *
-     * @param maxLifetime the maximum number of milleseconds before objects are expired.
+     * @param maxLifetime the maximum number of milliseconds before objects are expired.
      */
     @Override
-    public void setMaxLifetime(long maxLifetime) {
+    public void setMaxLifetime(final long maxLifetime) {
         this.maxLifetime = maxLifetime;
         CacheFactory.setMaxLifetimeProperty(name, maxLifetime);
     }
@@ -589,7 +460,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * Clears all entries out of cache where the entries are older than the
      * maximum defined age.
      */
-    protected void deleteExpiredEntries() {
+    private void deleteExpiredEntries() {
         // Check if expiration is turned on.
         if (maxLifetime <= 0) {
             return;
@@ -598,7 +469,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // Remove all old entries. To do this, we remove objects from the end
         // of the linked list until they are no longer too old. We get to avoid
         // any hash lookups or looking at any more objects than is strictly
-        // neccessary.
+        // necessary.
         LinkedListNode<K> node = ageList.getLast();
         // If there are no entries in the age list, return.
         if (node == null) {
@@ -608,7 +479,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         // Determine the expireTime, which is the moment in time that elements
         // should expire from cache. Then, we can do an easy to check to see
         // if the expire time is greater than the expire time.
-        long expireTime = System.currentTimeMillis() - maxLifetime;
+        final long expireTime = System.currentTimeMillis() - maxLifetime;
 
         while (expireTime > node.timestamp) {
             // Remove the object
@@ -629,7 +500,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * is too big, the least frequently used elements are deleted until the
      * cache is at least 10% empty.
      */
-    protected final void cullCache() {
+    private void cullCache() {
         // Check if a max cache size is defined.
         if (maxCacheSize < 0) {
             return;
@@ -650,7 +521,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
                     remove(lastAccessedList.getLast().object);
                 } while (cacheSize > desiredSize);
                 t = System.currentTimeMillis() - t;
-                Log.warn("Cache " + name + " was full, shrinked to 90% in " + t + "ms.");
+                Log.warn("Cache " + name + " was full, shrunk to 90% in " + t + "ms.");
             }
         }
 
@@ -703,19 +574,19 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
          * accessed, the node is removed from its current spot in the list and
          * moved to the front.
          */
-        public LinkedListNode<?> lastAccessedListNode;
+        LinkedListNode<?> lastAccessedListNode;
 
         /**
          * A reference to the node in the age order list. We keep the reference
          * here to avoid linear scans of the list. The reference is used if the
          * object has to be deleted from the list.
          */
-        public LinkedListNode<?> ageListNode;
+        LinkedListNode<?> ageListNode;
 
         /**
          * A count of the number of times the object has been read from cache.
          */
-        public int readCount = 0;
+        int readCount = 0;
 
         /**
          * Creates a new cache object wrapper. The size of the Cacheable object
@@ -723,9 +594,9 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
          * lookup by querying the object itself for its size.<p>
          *
          * @param object the underlying Object to wrap.
-         * @param size   the size of the Cachable object in bytes.
+         * @param size   the size of the Cacheable object in bytes.
          */
-        public CacheObject(V object, int size) {
+        CacheObject(final V object, final int size) {
             this.object = object;
             this.size = size;
         }
@@ -736,7 +607,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
             if (argument == null) {
                 throw new NullPointerException(message);
             }
-        } catch (NullPointerException e) {
+        } catch (final NullPointerException e) {
             if (allowNull) {
                 Log.debug("Allowing storage of null within Cache: ", e); // Gives us a trace for debugging.
             } else {

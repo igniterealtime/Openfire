@@ -16,8 +16,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Collects statistics of an {@link org.apache.mina.common.IoService}. It's polling all the sessions of a given
- * IoService. It's attaching a {@link org.apache.mina.management.IoSessionStat} object to all the sessions polled
+ * Collects statistics of an {@link IoService}. It's polling all the sessions of a given
+ * IoService. It's attaching a {@link IoSessionStat} object to all the sessions polled
  * and filling the throughput values.
  *
  * Usage :
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MINAStatCollector {
     /**
-     * The session attribute key for {@link org.apache.mina.management.IoSessionStat}.
+     * The session attribute key for {@link IoSessionStat}.
      */
     public static final String KEY = MINAStatCollector.class.getName() + ".stat";
 
@@ -66,27 +66,31 @@ public class MINAStatCollector {
     {
 
         @Override
-        public void sessionCreated( IoSession session )
+        public void sessionCreated(final IoSession session )
         {
             addSession( session );
         }
 
         @Override
-        public void sessionDestroyed( IoSession session )
+        public void sessionDestroyed(final IoSession session )
         {
             removeSession( session );
         }
 
         @Override
-        public void serviceActivated(IoService service) throws Exception {
+        public void serviceActivated(final IoService service) {
         }
 
         @Override
-        public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception {
+        public void serviceIdle(final IoService service, final IdleStatus idleStatus) {
         }
 
         @Override
-        public void serviceDeactivated(IoService service) throws Exception {
+        public void serviceDeactivated(final IoService service) {
+        }
+
+        @Override
+        public void sessionClosed(final IoSession ioSession) {
         }
     };
 
@@ -111,7 +115,7 @@ public class MINAStatCollector {
     }
 
     /**
-     * Start collecting stats for the {@link org.apache.mina.common.IoSession} of the service.
+     * Start collecting stats for the {@link IoSession} of the service.
      * New sessions or destroyed will be automaticly added or removed.
      */
     public void start()
@@ -144,7 +148,7 @@ public class MINAStatCollector {
     }
 
     /**
-     * Stop collecting stats. all the {@link org.apache.mina.management.IoSessionStat} object will be removed of the
+     * Stop collecting stats. all the {@link IoSessionStat} object will be removed of the
      * polled session attachements.
      */
     public void stop()
@@ -176,7 +180,7 @@ public class MINAStatCollector {
     }
 
     /**
-     * is the stat collector started and polling the {@link org.apache.mina.common.IoSession} of the {@link org.apache.mina.common.IoService}
+     * is the stat collector started and polling the {@link IoSession} of the {@link IoService}
      * @return true if started
      */
     public boolean isRunning()

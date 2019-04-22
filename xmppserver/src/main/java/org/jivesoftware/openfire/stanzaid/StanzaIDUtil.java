@@ -2,10 +2,10 @@ package org.jivesoftware.openfire.stanzaid;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
+import org.xmpp.packet.*;
 
 import java.util.Iterator;
 import java.util.UUID;
@@ -29,9 +29,44 @@ public class StanzaIDUtil
      */
     public static Packet ensureUniqueAndStableStanzaID( final Packet packet, final JID self )
     {
+        if ( !JiveGlobals.getBooleanProperty( "xmpp.sid.enabled", true ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof IQ && !JiveGlobals.getBooleanProperty( "xmpp.sid.iq.enabled", false ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof Message && !JiveGlobals.getBooleanProperty( "xmpp.sid.message.enabled", true ) )
+        {
+            return packet;
+        }
+
+        if ( packet instanceof Presence && !JiveGlobals.getBooleanProperty( "xmpp.sid.presence.enabled", false ) )
+        {
+            return packet;
+        }
+
+        final Element parentElement;
+        if ( packet instanceof IQ ) {
+            parentElement = ((IQ) packet).getChildElement();
+        } else {
+            parentElement = packet.getElement();
+        }
+
+        // The packet likely is an IQ result or error, which can, but are not required to have a child element.
+        // To have a consistent behavior for these, we'll not add a stanza-ID here.
+        if ( parentElement == null )
+        {
+            Log.debug( "Unable to find appropriate element. Not adding stanza-id to packet: {}", packet );
+            return packet;
+        }
+
         // Stanza ID generating entities, which encounter a <stanza-id/> element where the 'by' attribute matches the 'by'
         // attribute they would otherwise set, MUST delete that element even if they are not adding their own stanza ID.
-        final Iterator<Element> existingElementIterator = packet.getElement().elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        final Iterator<Element> existingElementIterator = parentElement.elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         while (existingElementIterator.hasNext()) {
             final Element element = existingElementIterator.next();
 
@@ -43,7 +78,7 @@ public class StanzaIDUtil
 
         final String id = generateUniqueAndStableStanzaID( packet );
 
-        final Element stanzaIdElement = packet.getElement().addElement( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        final Element stanzaIdElement = parentElement.addElement( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         stanzaIdElement.addAttribute( "id", id );
         stanzaIdElement.addAttribute( "by", self.toString() );
 

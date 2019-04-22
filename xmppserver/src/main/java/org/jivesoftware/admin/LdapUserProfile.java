@@ -20,6 +20,7 @@ import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.jivesoftware.openfire.ldap.LdapVCardProvider;
+import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
@@ -508,14 +509,14 @@ public class LdapUserProfile {
         JiveGlobals.setProperty("ldap.vcard-mapping", sb.toString());
 
         // Set that the vcard provider is LdapVCardProvider
-        JiveGlobals.setProperty("provider.vcard.className", LdapVCardProvider.class.getName());
+        VCardManager.VCARD_PROVIDER.setValue(LdapVCardProvider.class);
 
         // Save duplicated fields in LdapManager (should be removed in the future)
         LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
         LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
 
         // Store the DB storage variable in the actual database.
-        JiveGlobals.setProperty("ldap.override.avatar", avatarStoredInDB.toString());
+        LdapVCardProvider.STORE_AVATAR_IN_DB.setValue(avatarStoredInDB);
     }
 
     /**
@@ -641,7 +642,7 @@ public class LdapUserProfile {
                     businessDepartment = element.elementTextTrim("ORGUNIT");
                 }
             }
-            avatarStoredInDB = JiveGlobals.getBooleanProperty("ldap.override.avatar", false);
+            avatarStoredInDB = LdapVCardProvider.STORE_AVATAR_IN_DB.getValue();
         }
         catch (DocumentException e) {
             Log.error("Error loading vcard mappings from property", e);

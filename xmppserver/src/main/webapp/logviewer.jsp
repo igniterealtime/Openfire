@@ -136,7 +136,7 @@
     // Enable/disable debugging
     if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
+            Log.DEBUG_ENABLED.setValue(debugEnabled);
             // Log the event
             admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
             response.sendRedirect("logviewer.jsp?log=debug");

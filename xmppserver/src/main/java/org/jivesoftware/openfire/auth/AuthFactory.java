@@ -18,17 +18,14 @@ package org.jivesoftware.openfire.auth;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Blowfish;
-import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +42,17 @@ import org.slf4j.LoggerFactory;
 public class AuthFactory {
 
     private static final Logger Log = LoggerFactory.getLogger(AuthFactory.class);
+    private static final SystemProperty<String> PASSWORD_KEY = SystemProperty.Builder.ofType(String.class)
+        .setKey("passwordKey")
+        .setDynamic(true)
+        .build();
+    public static final SystemProperty<Class> AUTH_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.auth.className")
+        .setBaseClass(AuthProvider.class)
+        .setDefaultValue(DefaultAuthProvider.class)
+        .setDynamic(true)
+        .addListener(AuthFactory::initProvider)
+        .build();
 
     private static AuthProvider authProvider = null;
     private static MessageDigest digest;
@@ -60,49 +68,18 @@ public class AuthFactory {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         // Load an auth provider.
-        initProvider();
-
-        // Detect when a new auth provider class is set 
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.auth.className".equals(property)) {
-                    initProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
+        initProvider(AUTH_PROVIDER.getValue());
     }
 
-    private static void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.auth.className");
+    private static void initProvider(final Class clazz) {
 
-        String className = JiveGlobals.getProperty("provider.auth.className",
-                "org.jivesoftware.openfire.auth.DefaultAuthProvider");
-        // Check if we need to reset the auth provider class 
-        if (authProvider == null || !className.equals(authProvider.getClass().getName())) {
+        // Check if we need to reset the auth provider class
+        if (authProvider == null || !clazz.equals(authProvider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                authProvider = (AuthProvider)c.newInstance();
+                authProvider = (AuthProvider)clazz.newInstance();
             }
             catch (Exception e) {
-                Log.error("Error loading auth provider: " + className, e);
+                Log.error("Error loading auth provider: " + clazz.getName(), e);
                 authProvider = new DefaultAuthProvider();
             }
         }
@@ -277,13 +254,13 @@ public class AuthFactory {
         // encryption fully secure.
         String keyString;
         try {
-            keyString = JiveGlobals.getProperty("passwordKey");
+            keyString = PASSWORD_KEY.getValue();
             if (keyString == null) {
                 keyString = StringUtils.randomString(15);
-                JiveGlobals.setProperty("passwordKey", keyString);
+                PASSWORD_KEY.setValue(keyString);
                 // Check to make sure that setting the property worked. It won't work,
                 // for example, when in setup mode.
-                if (!keyString.equals(JiveGlobals.getProperty("passwordKey"))) {
+                if (!keyString.equals(PASSWORD_KEY.getValue())) {
                     return null;
                 }
             }

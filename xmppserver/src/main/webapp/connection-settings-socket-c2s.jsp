@@ -1,16 +1,17 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
+<%@ page import="java.time.Duration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -71,14 +72,14 @@
         final boolean pingIdleClients = ParamUtils.getBooleanParameter(request, "pingIdleClients");
 
         if (!idleDisco) {
-            JiveGlobals.setProperty( ConnectionSettings.Client.IDLE_TIMEOUT, "-1" );
+            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(-1));
         } else {
-            JiveGlobals.setProperty( ConnectionSettings.Client.IDLE_TIMEOUT, String.valueOf( clientIdle ) );
+            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(clientIdle));
         }
-        JiveGlobals.setProperty( ConnectionSettings.Client.KEEP_ALIVE_PING, String.valueOf( pingIdleClients ) );
+        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.setValue(pingIdleClients);
 
-        webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT, ConnectionSettings.Client.IDLE_TIMEOUT + " = " + clientIdle);
-        webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING, ConnectionSettings.Client.KEEP_ALIVE_PING + " = " + pingIdleClients);
+        webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey(), ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey() + " = " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getDisplayValue());
+        webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey(), ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey() + " = " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getDisplayValue());
 
         return;
     }
@@ -86,8 +87,8 @@
     pageContext.setAttribute( "errors",                  errors );
     pageContext.setAttribute( "plaintextConfiguration",  plaintextConfiguration );
     pageContext.setAttribute( "legacymodeConfiguration", legacymodeConfiguration );
-    pageContext.setAttribute( "clientIdle",              JiveGlobals.getIntProperty(     ConnectionSettings.Client.IDLE_TIMEOUT,    6*60*1000 ) );
-    pageContext.setAttribute( "pingIdleClients",         JiveGlobals.getBooleanProperty( ConnectionSettings.Client.KEEP_ALIVE_PING, true) );
+    pageContext.setAttribute( "clientIdle",              ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
+    pageContext.setAttribute( "pingIdleClients",         ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue());
 
 
 %>

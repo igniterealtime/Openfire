@@ -16,11 +16,15 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.openfire.group.*,
-                 java.net.URLEncoder"
+<%@ page import="java.util.ArrayList,
+                 java.util.Comparator,
+                 java.util.List,
+                 java.util.function.Predicate"
 %>
+<%@ page import="org.jivesoftware.openfire.group.Group" %>
+<%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
+<%@ page import="org.jivesoftware.util.ListPager" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -37,210 +41,149 @@
     <body>
 
 <%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("group-summary", 15));
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (request.getParameter("range") != null) {
-        webManager.setRowsPerPage("group-summary", range);
+    Predicate<Group> filter = group -> true;
+    final String searchGroupName = ParamUtils.getStringParameter(request, "searchGroupName", "").trim();
+    pageContext.setAttribute("searchGroupName", searchGroupName);
+    if(!searchGroupName.isEmpty()) {
+        final String searchCriteria = searchGroupName.toLowerCase();
+        filter = filter.and(group -> group.getName().toLowerCase().contains(searchCriteria));
+    }
+    final String searchGroupDescription = ParamUtils.getStringParameter(request, "searchGroupDescription", "").trim();
+    pageContext.setAttribute("searchGroupDescription", searchGroupDescription);
+    if(!searchGroupDescription.isEmpty()) {
+        final String searchCriteria = searchGroupDescription.toLowerCase();
+        filter = filter.and(group -> group.getDescription().toLowerCase().contains(searchCriteria));
     }
 
-    int groupCount = webManager.getGroupManager().getGroupCount();
-    Collection<Group> groups = webManager.getGroupManager().getGroups(start, range);
-
-    String search = null;
-    if (webManager.getGroupManager().isSearchSupported() && request.getParameter("search") != null
-            && !request.getParameter("search").trim().equals(""))
-    {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-
-        } else {
-            search = request.getParameter("search");
-            // Santize variables to prevent vulnerabilities
-            search = StringUtils.escapeForXML(search);
-            // Use the search terms to get the list of groups and group count.
-            groups = webManager.getGroupManager().search(search, start, range);
-            // Get the count as a search for *all* groups. That will let us do pagination even
-            // though it's a bummer to execute the search twice.
-            groupCount = webManager.getGroupManager().search(search).size();
-        }
-    }
-
-    // paginator vars
-    int numPages = (int)Math.ceil((double)groupCount/(double)range);
-    int curPage = (start/range) + 1;
-    csrfParam = StringUtils.randomString(16);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
+    final GroupManager groupManager = webManager.getGroupManager();
+    final List<Group> groups = new ArrayList<>(groupManager.getGroups());
+    groups.sort(Comparator.comparing(Group::getName));
+    final ListPager<Group> listPager = new ListPager<>(request, response, groups, filter, "searchGroupName", "searchGroupDescription");
+    pageContext.setAttribute("listPager", listPager);
+    pageContext.setAttribute("canEdit", !groupManager.isReadOnly());
+    pageContext.setAttribute("deleteSuccess", request.getParameter("deletesuccess") != null);
 
 %>
 
-<%  if (request.getParameter("deletesuccess") != null) { %>
+<c:if test="${deleteSuccess}">
+    <div class="success"><fmt:message key="group.summary.delete_group"/></div>
+</c:if>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="group.summary.delete_group" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+<fmt:message key="group.summary.total_group" /> <b>${listPager.totalItemCount}</b>
+<c:if test="${listPager.filtered}">
+    <fmt:message key="group.summary.filtered_group_count" />: <c:out value="${listPager.filteredItemCount}"/>
+</c:if>
 
-<%  } %>
+<c:if test="${listPager.totalItemCount > 0}">
+<c:if test="${listPager.totalPages > 1}">
+    <fmt:message key="global.showing" /> <c:out value="${listPager.firstItemNumberOnPage}"/>-<c:out value="${listPager.lastItemNumberOnPage}"/>
+</c:if>
+-- <fmt:message key="group.summary.groups_per_page" />: ${listPager.pageSizeSelection}
 
-<% if (webManager.getGroupManager().isSearchSupported()) { %>
-
-<form action="group-summary.jsp" method="get" name="searchForm">
-<table border="0" width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-        <td valign="bottom">
-<fmt:message key="group.summary.total_group" /> <b><%= groupCount %></b>
-<%  if (numPages > 1) { %>
-
-    , <fmt:message key="global.showing" /> <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > groupCount ? groupCount:start+range) %>
-
-<%  } %>
-        </td>
-        <td align="right" valign="bottom">
-   <fmt:message key="group.summary.search" />: <input type="text" size="30" maxlength="150" name="search" value="<%= ((search!=null) ? search : "") %>">
-   <input type="hidden" name="csrf" value="${csrf}">
-        </td>
-    </tr>
-</table>
-</form>
-
-<script language="JavaScript" type="text/javascript">
-document.searchForm.search.focus();
-</script>
-
-<% }
-   // Otherwise, searching is not supported.
-   else {
-%>
-    <p>
-    <fmt:message key="group.summary.total_group" /> <b><%= groupCount %></b>
-    <%  if (numPages > 1) { %>
-
-        , <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
-
-    <%  } %>
-    </p>
-<% } %>
-
-<%  if (numPages > 1) { %>
-
-    <p>
-    <fmt:message key="global.pages" />
-    [
-    <%  for (int i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="group-summary.jsp?start=<%= (i*range) %><%= search!=null? "&search=" + URLEncoder.encode(search, "UTF-8") : ""%>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
-    ]
-    </p>
-
-<%  } %>
+<p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
+</c:if>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<thead>
-    <tr>
-        <th>&nbsp;</th>
-        <th nowrap><fmt:message key="group.summary.page_name" /></th>
-        <th nowrap><fmt:message key="group.summary.page_member" /></th>
-        <th nowrap><fmt:message key="group.summary.page_admin" /></th>
-        <%  // Only show edit and delete options if the groups aren't read-only.
-            if (!webManager.getGroupManager().isReadOnly()) { %>
-        <th nowrap><fmt:message key="group.summary.page_edit" /></th>
-        <th nowrap><fmt:message key="global.delete" /></th>
-        <% } %>
-    </tr>
-</thead>
-<tbody>
-
-<%  // Print the list of groups
-    if (groups.isEmpty()) {
-%>
-    <tr>
-        <td align="center" colspan="6">
-            <fmt:message key="group.summary.no_groups" />
-        </td>
-    </tr>
-
-<%
-    }
-    int i = start;
-    for (Group group : groups) {
-        String groupName = URLEncoder.encode(group.getName(), "UTF-8");
-        i++;
-%>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="1%" valign="top">
-            <%= i %>
-        </td>
-        <td width="60%">
-            <a href="group-edit.jsp?group=<%= groupName %>"><%= StringUtils.escapeHTMLTags(group.getName()) %></a>
-            <% if (group.getDescription() != null) { %>
-            <br>
-                <span class="jive-description">
-                <%= StringUtils.escapeHTMLTags(group.getDescription()) %>
-                </span>
-             <% } %>
-        </td>
-        <td width="10%" align="center">
-            <%= group.getMembers().size() %>
-        </td>
-        <td width="10%" align="center">
-            <%= group.getAdmins().size() %>
-        </td>
-        <%  // Only show edit and delete options if the groups aren't read-only.
-            if (!webManager.getGroupManager().isReadOnly()) { %>
-        <td width="1%" align="center">
-            <a href="group-edit.jsp?group=<%= groupName %>"
-             title=<fmt:message key="global.click_edit" />
-            ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt=""></a>
-        </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="group-delete.jsp?group=<%= groupName %>"
-             title=<fmt:message key="global.click_delete" />
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
-        </td>
-        <% } %>
-    </tr>
-
-<%
-    }
-%>
-</tbody>
-</table>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th nowrap><fmt:message key="group.summary.page_name" /></th>
+            <th nowrap><fmt:message key="group.summary.page_description" /></th>
+            <th nowrap><fmt:message key="group.summary.page_member" /></th>
+            <th nowrap><fmt:message key="group.summary.page_admin" /></th>
+            <th nowrap><fmt:message key="group.summary.page_edit" /></th>
+            <c:if test="${canEdit}">
+                <th nowrap><fmt:message key="global.delete" /></th>
+            </c:if>
+        </tr>
+        <c:if test="${listPager.totalPages > 1}">
+        <tr>
+            <td></td>
+            <td nowrap>
+                <input type="search"
+                       id="searchGroupName"
+                       size="20"
+                       value="<c:out value="${searchGroupName}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
+            <td nowrap>
+                <input type="search"
+                       id="searchGroupDescription"
+                       size="20"
+                       value="<c:out value="${searchGroupDescription}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <c:if test="${canEdit}">
+                <td></td>
+            </c:if>
+        </tr>
+        </c:if>
+        </thead>
+        <tbody>
+        <c:if test="${listPager.totalItemCount < 1}">
+            <tr>
+                <td align="center" colspan="6">
+                    <fmt:message key="group.summary.no_groups" />
+                </td>
+            </tr>
+        </c:if>
+        <%--@elvariable id="group" type="org.jivesoftware.openfire.group.Group"--%>
+        <c:forEach var="group" items="${listPager.itemsOnCurrentPage}" varStatus="loop">
+        <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
+            <td width="1%">
+                <c:out value="${listPager.firstItemNumberOnPage + loop.index}"/>
+            </td>
+            <td width="22%">
+                <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
+                   title='<fmt:message key="global.click_edit"/>'
+                ><c:out value="${group.name}"/></a>
+            </td>
+            <td width="50%"><c:out value="${group.description}"/></td>
+            <td width="10%"><c:out value="${group.members.size()}"/></td>
+            <td width="10%"><c:out value="${group.admins.size()}"/></td>
+            <td width="1%">
+                <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
+                   title='<fmt:message key="global.click_edit"/>'
+                ><img src="images/edit-16x16.gif"
+                      width="16" height="16" border="0" alt='<fmt:message key="global.click_edit"/>'></a>
+            </td>
+            <c:if test="${canEdit}">
+                <td width="1%">
+                    <a href="group-delete.jsp?group=<c:out value="${group.name}"/>"
+                                   title='<fmt:message key="global.click_delete" />'
+                    ><img src="images/delete-16x16.gif"
+                          width="16" height="16" border="0" alt='<fmt:message key="global.click_delete" />'></a>
+                </td>
+            </c:if>
+        </tr>
+        </c:forEach>
+        </tbody>
+    </table>
 </div>
 
-<%  if (numPages > 1) { %>
-    <br>
-    <p>
-    <fmt:message key="global.pages" />
-    [
-    <%  for (i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="group-summary.jsp?start=<%= (i*range) %><%= search!=null? "&search=" + URLEncoder.encode(search, "UTF-8") : ""%>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
+<c:if test="${listPager.totalItemCount > 0}">
+<p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
+</c:if>
 
-    <%  } %>
-    ]
-    </p>
+${listPager.jumpToPageForm}
 
-<%  } %>
+<script type="text/javascript">
+    ${listPager.pageFunctions}
+</script>
 
-    </body>
+</body>
 </html>

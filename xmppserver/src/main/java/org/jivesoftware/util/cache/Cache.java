@@ -17,6 +17,10 @@
 package org.jivesoftware.util.cache;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 /**
  * General purpose cache. It stores objects associated with unique keys in
@@ -137,5 +141,49 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      * @return the number of cache hits.
      */
     long getCacheMisses();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#values()} implementation, the collection returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable collection view of the values contained in this map
+     */
+    Collection<V> values();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#entrySet()} implementation, the set returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable set view of the mappings contained in this map
+     */
+    @Override
+    Set<Entry<K, V>> entrySet();
+
+    /**
+     * <string>IMPORTANT:</string> Unlike the standard {@link Map#keySet()} implementation, the set returned from
+     * this method cannot be modified.
+     *
+     * @return an unmodifiable set view of the keys contained in this map
+     */
+    @Override
+    Set<K> keySet();
+
+    /**
+     * Returns an existing {@link Lock} on the specified key or creates a new one
+     * if none was found. This operation is thread safe. Successive calls with the same key may or may not
+     * return the same {@link Lock}. However, different threads asking for the
+     * same Lock at the same time will get the same Lock object.
+     *
+     * <p>The supplied cache may or may not be used depending whether the server is running on cluster mode
+     * or not. When not running as part of a cluster then the lock will be unrelated to the cache and will
+     * only be visible in this JVM.
+     *
+     * @param key the object that defines the visibility or scope of the lock.
+     * @return an existing lock on the specified key or creates a new one if none was found.
+     */
+    @SuppressWarnings("deprecation")
+    default Lock getLock(final K key) {
+        return CacheFactory.getLock(key, this);
+    }
 
 }

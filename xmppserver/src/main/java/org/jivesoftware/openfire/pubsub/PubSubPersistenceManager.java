@@ -67,9 +67,25 @@ public class PubSubPersistenceManager {
             "ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
             "ofPubsubItem.serviceID = ? AND nodeID = ?";
-    
+
+    private static final String PURGE_FOR_SIZE_ORACLE =
+            "DELETE from ofPubsubItem where id in " +
+            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
+            "(SELECT * from (SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
+            "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
+            "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
+
+    private static final String PURGE_FOR_SIZE_SQLSERVER =
+            "DELETE from ofPubsubItem where id in " +
+            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
+            "(SELECT TOP (?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC) AS noDelete " +
+            "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
+            "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
+
     private static final String PURGE_FOR_SIZE_MYSQL =
-        "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+            "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
             "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
             "ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
@@ -1917,6 +1933,13 @@ public class PubSubPersistenceManager {
             purgeStmt.setString(4, nodeId);
             purgeStmt.setInt(5, maxItems);
             break;
+        case sqlserver:
+            purgeStmt.setInt(1, maxItems);
+            purgeStmt.setString(2, serviceId);
+            purgeStmt.setString(3, nodeId);
+            purgeStmt.setString(4, serviceId);
+            purgeStmt.setString(5, nodeId);
+            break;
 
         default:
             purgeStmt.setString(1, serviceId);
@@ -1938,6 +1961,10 @@ public class PubSubPersistenceManager {
             return PURGE_FOR_SIZE_MYSQL;
         case hsqldb:
             return PURGE_FOR_SIZE_HSQLDB;
+        case oracle:
+            return PURGE_FOR_SIZE_ORACLE;
+        case sqlserver:
+            return PURGE_FOR_SIZE_SQLSERVER;
 
         default:
             return PURGE_FOR_SIZE;

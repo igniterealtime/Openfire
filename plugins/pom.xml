@@ -269,6 +269,17 @@
                     <fail>true</fail>
                 </configuration>
             </plugin>
+            <!--
+            The various MINA dependencies rely on OSGi bundle artifacts rather than standard JAR files.
+            As such, it's necessary to add support for these bundle to Maven using the Apache Felix maven-bundle-plugin.
+            See https://stackoverflow.com/a/5409602 for a good explanation of OSGi bundles, with links to more info.
+            -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>4.2.0</version>
+                <extensions>true</extensions>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>

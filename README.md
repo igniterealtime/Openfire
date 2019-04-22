@@ -13,7 +13,7 @@ About
 Bug Reporting
 -------------
 
-Only a few users have access for for filling bugs in the tracker. New
+Only a few users have access for filling bugs in the tracker. New
 users should:
 
 1. Create a Discourse account

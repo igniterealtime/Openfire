@@ -16,19 +16,27 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.openfire.handler.IQRegisterHandler,
-                 org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.CookieUtils,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.ParamUtils"
+<%@ page import="java.util.ArrayList,
+                 java.util.Enumeration,
+                 java.util.HashSet,
+                 java.util.Iterator,
+                 java.util.List,
+                 java.util.Set"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.SortedSet" %>
+<%@ page import="java.util.StringTokenizer" %>
+<%@ page import="java.util.TreeSet" %>
 <%@ page import="java.util.regex.Pattern" %>
-<%@ page import="java.util.*" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.handler.IQRegisterHandler" %>
 <%@ page import="org.jivesoftware.openfire.net.SASLAuthentication" %>
+<%@ page import="org.jivesoftware.openfire.sasl.AnonymousSaslServer" %>
+<%@ page import="org.jivesoftware.openfire.session.LocalClientSession" %>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -83,7 +91,7 @@
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
-        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonLogin));
+        AnonymousSaslServer.ENABLED.setValue(anonLogin);
 
         // Build a Map with the allowed IP addresses
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
@@ -128,7 +136,7 @@
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" );
+    anonLogin = AnonymousSaslServer.ENABLED.getValue();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
     Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();

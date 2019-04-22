@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.operator.OperatorCreationException;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -614,7 +615,7 @@ public class IdentityStore extends CertificateStore
                 throw new IllegalArgumentException( "Unsupported algorithm '" + algorithm + "'. Use 'RSA' or 'DSA'." );
         }
 
-        final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
+        final String name = XMPPServerInfo.XMPP_DOMAIN.getValue().toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final int validityInDays = JiveGlobals.getIntProperty( "cert.validity-days", 5*365 );
         Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();

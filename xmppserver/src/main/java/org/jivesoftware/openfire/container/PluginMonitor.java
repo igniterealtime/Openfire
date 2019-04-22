@@ -16,21 +16,47 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipFile;
 
 /**
  * A service that monitors the plugin directory for plugins. It periodically checks for new plugin JAR files and
@@ -510,11 +536,21 @@ public class PluginMonitor implements PropertyEventListener
             }
 
             // Return a deque of lists, where each list is parent-child chain of plugins (the parents preceding its children).
+            final Set<PluginToLoad> pluginsToLoad = new HashSet<>();
             final Deque<List<Path>> result = new ArrayDeque<>();
             for ( final Node noParentPlugin : root.children )
             {
                 final List<Path> hierarchy = new ArrayList<>();
                 walkTree( noParentPlugin, hierarchy );
+                // Strip out duplicates
+                final Iterator<Path> iterator = hierarchy.iterator();
+                while (iterator.hasNext()) {
+                    final PluginToLoad pluginToLoad = new PluginToLoad(iterator.next());
+                    if (!pluginsToLoad.add(pluginToLoad)) {
+                        Log.warn("Unable to load plugin at '{}' as a different plugin with the same name is present", pluginToLoad.path);
+                        iterator.remove();
+                    }
+                }
 
                 // The admin plugin should go first
                 if ( noParentPlugin.getName().equals( "admin" ) )
@@ -579,6 +615,57 @@ public class PluginMonitor implements PropertyEventListener
             {
                 return PluginMetadataHelper.getCanonicalName( path );
             }
+        }
+    }
+
+    /**
+     * Two plugins are considered "equal" if they share the same canonical name, <strong>or</strong> the same
+     * name from the plugin.xml file. This class represents a plugin that could be loaded to encapsulate this concept
+     * <p>
+     *     Note: this class has a natural ordering that is inconsistent with equals.
+     * </p>
+     */
+    private static final class PluginToLoad implements Comparable<PluginToLoad> {
+        private final Path path;
+        private final String canonicalName;
+        private final String pluginName;
+
+        private PluginToLoad(final Path path) {
+            this.path = path;
+            this.canonicalName = PluginMetadataHelper.getCanonicalName( path );
+            this.pluginName = PluginMetadataHelper.getName( path );
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            if (!(o instanceof PluginToLoad)) {
+                return false;
+            }
+
+            final PluginToLoad that = (PluginToLoad) o;
+            return this.canonicalName.equalsIgnoreCase(that.canonicalName)
+                || this.pluginName.equalsIgnoreCase(that.pluginName);
+        }
+
+        @Override
+        public int hashCode() {
+            // Note this is sub-optimal, but not an issue for the relatively low number of plugins Openfire will have
+            // installed. It is necessary because of the Java equals/hashCode contract - two equals objects must have
+            // the same hash code - but we don't know if the objects are equal because the share the same canonical name
+            // or the same plugin name.
+            return 0;
+        }
+
+        @Override
+        public int compareTo(final PluginToLoad that) {
+            // NB. This violates the Comparable recommendation. Quote:
+            // <p>It is strongly recommended, but <i>not</i> strictly required that
+            // <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>.
+            return this.pluginName.compareTo(that.pluginName);
         }
     }
 }

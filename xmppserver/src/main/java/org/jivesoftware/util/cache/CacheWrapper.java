@@ -17,6 +17,7 @@ package org.jivesoftware.util.cache;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
 
     private Cache<K, V> cache;
 
-    public CacheWrapper(Cache<K, V> cache) {
+    CacheWrapper(final Cache<K, V> cache) {
         this.cache = cache;
     }
 
@@ -38,7 +39,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
         return cache;
     }
 
-    public void setWrappedCache(Cache<K, V> cache) {
+    void setWrappedCache(final Cache<K, V> cache) {
         this.cache = cache;
     }
 
@@ -48,7 +49,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(final String name) {
         cache.setName(name);
     }
 
@@ -58,7 +59,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public void setMaxCacheSize(int maxSize) {
+    public void setMaxCacheSize(final int maxSize) {
         cache.setMaxCacheSize(maxSize);
     }
 
@@ -68,7 +69,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public void setMaxLifetime(long maxLifetime) {
+    public void setMaxLifetime(final long maxLifetime) {
         cache.setMaxLifetime(maxLifetime);
     }
 
@@ -103,47 +104,47 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public boolean containsKey(Object key) {
+    public boolean containsKey(final Object key) {
         return cache.containsKey(key);
     }
 
     @Override
-    public boolean containsValue(Object value) {
+    public boolean containsValue(final Object value) {
         return cache.containsValue(value);
     }
 
     @Override
     public Collection<V> values() {
-        return cache.values();
+        return Collections.unmodifiableCollection(cache.values());
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> t) {
+    public void putAll(final Map<? extends K, ? extends V> t) {
         cache.putAll(t);
     }
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return cache.entrySet();
+        return Collections.unmodifiableSet(cache.entrySet());
     }
 
     @Override
     public Set<K> keySet() {
-        return cache.keySet();
+        return Collections.unmodifiableSet(cache.keySet());
     }
 
     @Override
-    public V get(Object key) {
+    public V get(final Object key) {
         return cache.get(key);
     }
 
     @Override
-    public V remove(Object key) {
+    public V remove(final Object key) {
         return cache.remove(key);
     }
 
     @Override
-    public V put(K key, V value) {
+    public V put(final K key, final V value) {
         return cache.put(key, value);
     }
 

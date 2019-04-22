@@ -554,7 +554,7 @@ public class LocaleUtils {
             locale = JiveGlobals.getLocale();
         }
 
-        String value;
+        String value = getDefaultLocalizedString(key);
 
         // See if the bundle has a value
         try {
@@ -611,14 +611,12 @@ public class LocaleUtils {
                 catch (IllegalArgumentException e) {
                     Log.error("Unable to format resource string for key: "
                             + key + ", argument type not supported");
-                    value = "";
                 }
             }
         }
         catch (java.util.MissingResourceException mre) {
             Log.warn("Missing resource for key: " + key
                     + " in locale " + locale.toString());
-            value = "";
         }
 
         return value;
@@ -668,5 +666,10 @@ public class LocaleUtils {
      */
     public static String getLocalizedNumber(double number, Locale locale) {
         return NumberFormat.getInstance(locale).format(number);
+    }
+
+    // This is consistent with fmt:message from JSTL
+    private static String getDefaultLocalizedString(final String key) {
+        return "???" + key + "???";
     }
 }

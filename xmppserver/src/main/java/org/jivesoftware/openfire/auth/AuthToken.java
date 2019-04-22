@@ -122,7 +122,7 @@ public class AuthToken {
      */
     @Deprecated
     public String getDomain() {
-        return JiveGlobals.getProperty("xmpp.domain");
+        return XMPPServerInfo.XMPP_DOMAIN.getValue();
     }
 
     /**

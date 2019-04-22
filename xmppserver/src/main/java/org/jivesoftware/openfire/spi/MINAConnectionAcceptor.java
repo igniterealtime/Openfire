@@ -312,7 +312,8 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
                     return new ObjectName( prefix + ":type=IoSession,name=" + session.getRemoteAddress().toString().replace( ':', '/' ) );
                 }
 
-                public void sessionCreated( IoSession session )
+                @Override
+                public void sessionCreated(final IoSession session)
                 {
                     try
                     {
@@ -327,7 +328,8 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
                     }
                 }
 
-                public void sessionDestroyed( IoSession session )
+                @Override
+                public void sessionDestroyed(final IoSession session)
                 {
                     try
                     {
@@ -341,11 +343,17 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
                     }
                 }
 
-                public void serviceActivated( IoService service ) throws Exception {}
+                @Override
+                public void serviceActivated(final IoService service) {}
 
-                public void serviceDeactivated( IoService service ) throws Exception {}
+                @Override
+                public void serviceDeactivated(final IoService service ) {}
 
-                public void serviceIdle( IoService service, IdleStatus idleStatus ) throws Exception {}
+                @Override
+                public void serviceIdle(final IoService service, final IdleStatus idleStatus) {}
+
+                @Override
+                public void sessionClosed(final IoSession ioSession) {}
             } );
         }
     }

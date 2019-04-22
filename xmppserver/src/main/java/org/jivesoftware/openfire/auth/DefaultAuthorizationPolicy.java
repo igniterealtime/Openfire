@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.auth;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -120,8 +121,8 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
         Log.debug("DefaultAuthorizationPolicy: Checking authenID realm");
         // Next up, check if the authenID realm is acceptable. 
         if(authenRealm != null) {
-            if(authenRealm.equals(JiveGlobals.getProperty("xmpp.domain")))  {
-                Log.debug("DefaultAuthorizationPolicy: authenRealm = xmpp.domain");
+            if(authenRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue()))  {
+                Log.debug("DefaultAuthorizationPolicy: authenRealm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                 authorized = true;
             } else if(authenRealm.equals(JiveGlobals.getProperty("sasl.realm")))  {
                 Log.debug("DefaultAuthorizationPolicy: authenRealm = sasl.realm");
@@ -153,8 +154,8 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
         }
         //Next up, check if the username realm is acceptable.
         if(userRealm != null) {
-            if(userRealm.equals(JiveGlobals.getProperty("xmpp.domain"))) {
-                Log.debug("DefaultAuthorizationPolicy: userRealm = xmpp.domain");
+            if(userRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
+                Log.debug("DefaultAuthorizationPolicy: userRealm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                 authorized = true;
             } else {
                 if(authenRealm != null && authenRealm.equals(userRealm)) {

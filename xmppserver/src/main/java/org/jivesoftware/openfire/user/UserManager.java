@@ -16,27 +16,25 @@
 
 package org.jivesoftware.openfire.user;
 
-import gnu.inet.encoding.Stringprep;
-import gnu.inet.encoding.StringprepException;
-
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider;
 import org.jivesoftware.openfire.user.property.UserPropertyProvider;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -45,21 +43,46 @@ import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import gnu.inet.encoding.Stringprep;
+import gnu.inet.encoding.StringprepException;
+
 /**
  * Manages users, including loading, creating and deleting.
  *
  * @author Matt Tucker
  * @see User
  */
-public class UserManager implements IQResultListener {
+@SuppressWarnings({"WeakerAccess", "unused"})
+public final class UserManager {
+
+    public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.user.className")
+        .setBaseClass(UserProvider.class)
+        .setDefaultValue(DefaultUserProvider.class)
+        .addListener(UserManager::initProvider)
+        .setDynamic(true)
+        .build();
+    private static final SystemProperty<Duration> REMOTE_DISCO_INFO_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("usermanager.remote-disco-info-timeout-seconds")
+        .setDefaultValue(Duration.ofMinutes(1))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .build();
+    public static final SystemProperty<Class> USER_PROPERTY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.userproperty.className")
+        .setBaseClass(UserPropertyProvider.class)
+        .setDefaultValue(DefaultUserPropertyProvider.class)
+        .addListener(UserManager::initPropertyProvider)
+        .setDynamic(true)
+        .build();
 
     private static final Logger Log = LoggerFactory.getLogger(UserManager.class);
 
     private static final String MUTEX_SUFFIX = " usr";
     
     // Wrap this guy up so we can mock out the UserManager class.
-    private static class UserManagerContainer {
-        private static UserManager instance = new UserManager();
+    private static final class UserManagerContainer {
+        private static final UserManager instance = new UserManager();
     }
 
     /**
@@ -70,6 +93,7 @@ public class UserManager implements IQResultListener {
      *
      * @return the current UserProvider.
      */
+    @SuppressWarnings("AccessStaticViaInstance")
     public static UserProvider getUserProvider() {
         return UserManagerContainer.instance.provider;
     }
@@ -85,6 +109,7 @@ public class UserManager implements IQResultListener {
      * @return the current UserPropertyProvider.
      * @see User#getProperties
      */
+    @SuppressWarnings("AccessStaticViaInstance")
     public static UserPropertyProvider getUserPropertyProvider() {
         return UserManagerContainer.instance.propertyProvider;
     }
@@ -98,71 +123,44 @@ public class UserManager implements IQResultListener {
         return UserManagerContainer.instance;
     }
 
+    private final XMPPServer xmppServer;
     /** Cache of local users. */
-    private Cache<String, User> userCache;
+    private final Cache<String, User> userCache;
     /** Cache if a local or remote user exists. */
-    private Cache<String, Boolean> remoteUsersCache;
-    private UserProvider provider;
-    private UserPropertyProvider propertyProvider;
+    private final Cache<String, Boolean> remoteUsersCache;
+    private static UserProvider provider;
+    private static UserPropertyProvider propertyProvider;
 
     private UserManager() {
+        this(XMPPServer.getInstance());
+    }
+
+    /* Exposed for test use only */
+    UserManager(final XMPPServer xmppServer) {
+        this.xmppServer = xmppServer;
         // Initialize caches.
         userCache = CacheFactory.createCache("User");
         remoteUsersCache = CacheFactory.createCache("Remote Users Existence");
 
         // Load a user & property provider.
-        initProvider();
-        initPropertyProvider();
+        initProvider(USER_PROVIDER.getValue());
+        initPropertyProvider(USER_PROPERTY_PROVIDER.getValue());
 
-        // Detect when a new auth provider class is set
-        PropertyEventListener propListener = new PropertyEventListener() {
+        final UserEventListener userListener = new UserEventListener() {
             @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
-                if ("provider.userproperty.className".equals(property)) {
-                    initPropertyProvider();
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
-                if ("provider.userproperty.className".equals(property)) {
-                    initPropertyProvider();
-                }
-            }
-
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
-
-        UserEventListener userListener = new UserEventListener() {
-            @Override
-            public void userCreated(User user, Map<String, Object> params) {
+            public void userCreated(final User user, final Map<String, Object> params) {
                 // Since the user could be created by the provider, add it possible again
                 userCache.put(user.getUsername(), user);
             }
 
             @Override
-            public void userDeleting(User user, Map<String, Object> params) {
+            public void userDeleting(final User user, final Map<String, Object> params) {
                 // Since the user could be deleted by the provider, remove it possible again
                 userCache.remove(user.getUsername());
             }
 
             @Override
-            public void userModified(User user, Map<String, Object> params) {
+            public void userModified(final User user, final Map<String, Object> params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the user
                 userCache.put(user.getUsername(), user);
@@ -187,7 +185,7 @@ public class UserManager implements IQResultListener {
      * @throws UnsupportedOperationException if the provider does not support the
      *      operation.
      */
-    public User createUser(String username, String password, String name, String email)
+    public User createUser(String username, final String password, final String name, final String email)
             throws UserAlreadyExistsException
     {
         if (provider.isReadOnly()) {
@@ -203,7 +201,7 @@ public class UserManager implements IQResultListener {
         try {
             username = Stringprep.nodeprep(username);
         }
-        catch (StringprepException se) {
+        catch (final StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
         if (provider.isNameRequired() && (name == null || name.matches("\\s*"))) {
@@ -214,11 +212,11 @@ public class UserManager implements IQResultListener {
             throw new IllegalArgumentException("Invalid or empty email address specified with provider that requires email address. User: "
                                                 + username + " Email: " + email);
         }
-        User user = provider.createUser(username, password, name, email);
+        final User user = provider.createUser(username, password, name, email);
         userCache.put(username, user);
 
         // Fire event.
-        Map<String,Object> params = Collections.emptyMap();
+        final Map<String,Object> params = Collections.emptyMap();
         UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_created, params);
 
         return user;
@@ -229,22 +227,22 @@ public class UserManager implements IQResultListener {
      *
      * @param user the user to delete.
      */
-    public void deleteUser(User user) {
+    public void deleteUser(final User user) {
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
 
-        String username = user.getUsername();
+        final String username = user.getUsername();
         // Make sure that the username is valid.
         try {
             /*username =*/ Stringprep.nodeprep(username);
         }
-        catch (StringprepException se) {
+        catch (final StringprepException se) {
             throw new IllegalArgumentException("Invalid username: " + username,  se);
         }
 
         // Fire event.
-        Map<String,Object> params = Collections.emptyMap();
+        final Map<String,Object> params = Collections.emptyMap();
         UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_deleting, params);
 
         provider.deleteUser(user.getUsername());
@@ -317,7 +315,7 @@ public class UserManager implements IQResultListener {
      * @param numResults the total number of results to return.
      * @return a Collection of users in the specified range.
      */
-    public Collection<User> getUsers(int startIndex, int numResults) {
+    public Collection<User> getUsers(final int startIndex, final int numResults) {
         return provider.getUsers(startIndex, numResults);
     }
 
@@ -354,7 +352,7 @@ public class UserManager implements IQResultListener {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(Set<String> fields, String query)
+    public Collection<User> findUsers(final Set<String> fields, final String query)
             throws UnsupportedOperationException
     {
         return provider.findUsers(fields, query);
@@ -383,8 +381,8 @@ public class UserManager implements IQResultListener {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
-    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
-            int numResults)
+    public Collection<User> findUsers(final Set<String> fields, final String query, final int startIndex,
+                                      final int numResults)
             throws UnsupportedOperationException
     {
         return provider.findUsers(fields, query, startIndex, numResults);
@@ -396,7 +394,7 @@ public class UserManager implements IQResultListener {
      * @param username to username of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local registered user.
      */
-    public boolean isRegisteredUser(String username) {
+    public boolean isRegisteredUser(final String username) {
         if (username == null || "".equals(username)) {
             return false;
         }
@@ -404,7 +402,7 @@ public class UserManager implements IQResultListener {
             getUser(username);
             return true;
         }
-        catch (UserNotFoundException e) {
+        catch (final UserNotFoundException e) {
             return false;
         }
     }
@@ -421,14 +419,13 @@ public class UserManager implements IQResultListener {
      * @param user to JID of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local or remote registered user.
      */
-    public boolean isRegisteredUser(JID user) {
-        XMPPServer server = XMPPServer.getInstance();
-        if (server.isLocal(user)) {
+    public boolean isRegisteredUser(final JID user) {
+        if (xmppServer.isLocal(user)) {
             try {
                 getUser(user.getNode());
                 return true;
             }
-            catch (UserNotFoundException e) {
+            catch (final UserNotFoundException e) {
                 return false;
             }
         }
@@ -442,103 +439,81 @@ public class UserManager implements IQResultListener {
                     // No information is cached so check user identity and cache it
                     // A disco#info is going to be sent to the bare JID of the user. This packet
                     // is going to be handled by the remote server.
-                    IQ iq = new IQ(IQ.Type.get);
-                    iq.setFrom(server.getServerInfo().getXMPPDomain());
+                    final IQ iq = new IQ(IQ.Type.get);
+                    iq.setFrom(xmppServer.getServerInfo().getXMPPDomain());
                     iq.setTo(user.toBareJID());
                     iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
-                    // Send the disco#info request to the remote server. The reply will be
-                    // processed by the IQResultListener (interface that this class implements)
-                    server.getIQRouter().addIQResultListener(iq.getID(), this);
-                    synchronized ((user.toBareJID() + MUTEX_SUFFIX).intern()) {
-                        server.getIQRouter().route(iq);
-                        // Wait for the reply to be processed. Time out in 1 minute by default
-                        try {
-                            user.toBareJID().intern().wait(JiveGlobals.getLongProperty("usermanager.remote-disco-info-timeout-seconds", 60) * JiveConstants.SECOND);
+                    final Semaphore completionSemaphore = new Semaphore(0);
+                    // Send the disco#info request to the remote server.
+                    final IQRouter iqRouter = xmppServer.getIQRouter();
+                    final long timeoutInMillis = REMOTE_DISCO_INFO_TIMEOUT.getValue().toMillis();
+                    iqRouter.addIQResultListener(iq.getID(), new IQResultListener() {
+                        @Override
+                        public void receivedAnswer(final IQ packet) {
+                            final JID from = packet.getFrom();
+                            // Assume that the user is not a registered user
+                            Boolean isRegistered = Boolean.FALSE;
+                            // Analyze the disco result packet
+                            if (IQ.Type.result == packet.getType()) {
+                                final Element child = packet.getChildElement();
+                                if (child != null) {
+                                    for (final Iterator it = child.elementIterator("identity"); it.hasNext();) {
+                                        final Element identity = (Element) it.next();
+                                        final String accountType = identity.attributeValue("type");
+                                        if ("registered".equals(accountType) || "admin".equals(accountType)) {
+                                            isRegistered = Boolean.TRUE;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            // Update cache of remote registered users
+                            remoteUsersCache.put(from.toBareJID(), isRegistered);
+                            completionSemaphore.release();
                         }
-                        catch (InterruptedException e) {
-                            // Do nothing
+
+                        @Override
+                        public void answerTimeout(final String packetId) {
+                            Log.warn("The result from the disco#info request was never received. request: {}", iq);
+                            completionSemaphore.release();
                         }
+                    }, timeoutInMillis);
+                    // Send the request
+                    iqRouter.route(iq);
+                    // Wait for the response
+                    try {
+                        completionSemaphore.tryAcquire(timeoutInMillis, TimeUnit.MILLISECONDS);
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        Log.warn("Interrupted whilst waiting for response from remote server", e);
                     }
-                    // Get the discovered result
-                    isRegistered = remoteUsersCache.get(user.toBareJID());
-                    if (isRegistered == null) {
-                        // Disco failed for some reason (i.e. we timed out before getting a result)
-                        // so assume that user is not anonymous and cache result
-                        isRegistered = Boolean.FALSE;
-                        remoteUsersCache.put(user.toString(), isRegistered);
-                    }
+                    isRegistered = remoteUsersCache.computeIfAbsent(user.toBareJID(), ignored -> Boolean.FALSE);
                 }
             }
             return isRegistered;
         }
     }
 
-    @Override
-    public void receivedAnswer(IQ packet) {
-        JID from = packet.getFrom();
-        // Assume that the user is not a registered user
-        Boolean isRegistered = Boolean.FALSE;
-        // Analyze the disco result packet
-        if (IQ.Type.result == packet.getType()) {
-            Element child = packet.getChildElement();
-            if (child != null) {
-                for (Iterator it=child.elementIterator("identity"); it.hasNext();) {
-                    Element identity = (Element) it.next();
-                    String accountType = identity.attributeValue("type");
-                    if ("registered".equals(accountType) || "admin".equals(accountType)) {
-                        isRegistered = Boolean.TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        // Update cache of remote registered users
-        remoteUsersCache.put(from.toBareJID(), isRegistered);
-
-        // Wake up waiting thread
-        synchronized ((from.toBareJID() + MUTEX_SUFFIX).intern()) {
-            from.toBareJID().intern().notifyAll();
-        }
-    }
-
-    @Override
-    public void answerTimeout(String packetId) {
-        Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
-    }
-
-    private void initProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.user.className");
-
-        String className = JiveGlobals.getProperty("provider.user.className",
-                "org.jivesoftware.openfire.user.DefaultUserProvider");
-        // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+    private static void initProvider(final Class clazz) {
+        if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                provider = (UserProvider) c.newInstance();
+                provider = (UserProvider) clazz.newInstance();
             }
-            catch (Exception e) {
-                Log.error("Error loading user provider: " + className, e);
+            catch (final Exception e) {
+                Log.error("Error loading user provider: " + clazz.getName(), e);
                 provider = new DefaultUserProvider();
             }
         }
     }
 
-    private void initPropertyProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("provider.userproperty.className");
-
-        String className = JiveGlobals.getProperty("provider.userproperty.className",
-                                                   "org.jivesoftware.openfire.user.property.DefaultUserPropertyProvider");
+    private static void initPropertyProvider(final Class clazz) {
         // Check if we need to reset the provider class
-        if (propertyProvider == null || !className.equals(propertyProvider.getClass().getName())) {
+        if (propertyProvider == null || !clazz.equals(propertyProvider.getClass())) {
             try {
-                Class c = ClassUtils.forName(className);
-                propertyProvider = (UserPropertyProvider) c.newInstance();
+                propertyProvider = (UserPropertyProvider) clazz.newInstance();
             }
-            catch (Exception e) {
-                Log.error("Error loading user property provider: " + className, e);
+            catch (final Exception e) {
+                Log.error("Error loading user property provider: " + clazz.getName(), e);
                 propertyProvider = new DefaultUserPropertyProvider();
             }
         }

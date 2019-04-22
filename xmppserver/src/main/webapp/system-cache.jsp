@@ -1,14 +1,14 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="java.text.DecimalFormat"%>
+<%@ page import="java.text.NumberFormat"%>
+<%@ page import="java.time.Duration"%>
 <%@ page import="org.jivesoftware.util.CookieUtils"%>
+<%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.cache.Cache"%>
-<%@ page import="org.jivesoftware.util.cache.CacheWrapper"%>
-<%@ page import="org.jivesoftware.util.cache.DefaultCache"%>
-<%@ page import="java.text.DecimalFormat"%>
-<%@ page import="java.text.NumberFormat" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="java.time.Duration" %>
+<%@ page import="org.jivesoftware.util.cache.Cache" %>
+<%@ page import="org.jivesoftware.util.cache.CacheWrapper" %>
+<%@ page import="org.jivesoftware.util.cache.DefaultCache" %>
 <%--
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
@@ -227,7 +227,7 @@
             <table cellpadding="0" cellspacing="0" border="0">
             <tr>
                 <td class="icon"><img src="images/cache-16x16.gif" width="16" height="16" alt="" border="0"></td>
-                <td><%= StringUtils.escapeHTMLTags(cache.getName()) %></td>
+                <td><a href="SystemCacheDetails.jsp?cacheName=<%=java.net.URLEncoder.encode(cache.getName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(cache.getName()) %></a></td>
             </tr>
             </table>
         </td>

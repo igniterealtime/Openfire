@@ -16,8 +16,9 @@
 
 package org.jivesoftware.openfire.update;
 
+import java.time.Instant;
+
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,16 +56,18 @@ public class PluginDownloadManager {
      * Installs a new plugin into Openfire.
      *
      * @param url the url of the plugin to install.
+     * @paran version the version of the new plugin
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
-    public DownloadStatus installPlugin(String url, int hashCode) {
+    public DownloadStatus installPlugin(String url, String version, int hashCode) {
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
 
         boolean worked = updateManager.downloadPlugin(url);
 
         final DownloadStatus status = new DownloadStatus();
         status.setHashCode(hashCode);
+        status.setVersion(version);
         status.setSuccessfull(worked);
         status.setUrl(url);
 
@@ -85,8 +88,7 @@ public class PluginDownloadManager {
             updateManager.checkForPluginsUpdates(true);
 
             // Keep track of the last time we checked for updates
-            JiveGlobals.setProperty("update.lastCheck",
-                    String.valueOf(System.currentTimeMillis()));
+            UpdateManager.LAST_UPDATE_CHECK.setValue(Instant.now());
 
             return true;
         }

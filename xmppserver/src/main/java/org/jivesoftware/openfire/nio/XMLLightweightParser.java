@@ -94,7 +94,7 @@ class XMLLightweightParser {
     // Flag used to discover tag in the form <tag />.
     protected boolean insideRootTag = false;
     // Object conteining the head tag
-    protected StringBuilder head = new StringBuilder(5);
+    protected StringBuilder head = new StringBuilder(16);
     // List with all finished messages found.
     protected List<String> msgs = new ArrayList<>();
     private int depth = 0;
@@ -331,17 +331,21 @@ class XMLLightweightParser {
                     status = XMLLightweightParser.INSIDE_PARAM_VALUE;
                 } else if (ch == '>') {
                     status = XMLLightweightParser.OUTSIDE;
-                    if (insideRootTag && ("stream:stream>".equals(head.toString()) ||
-                            ("?xml>".equals(head.toString())) || ("flash:stream>".equals(head.toString())))) {
-                        // Found closing stream:stream
-                        int end = buffer.length() - readChar + (i + 1);
-                        // Skip LF, CR and other "weird" characters that could appear
-                        while (startLastMsg < end && '<' != buffer.charAt(startLastMsg)) {
-                            startLastMsg++;
+                    if (insideRootTag && (head.length() == 14 || head.length() == 5 || head.length() == 13)) {
+                        final String headString = head.toString();
+                        if ("stream:stream>".equals(headString)
+                            || "?xml>".equals(headString)
+                            || "flash:stream>".equals(headString)) {
+                            // Found closing stream:stream
+                            int end = buffer.length() - readChar + (i + 1);
+                            // Skip LF, CR and other "weird" characters that could appear
+                            while (startLastMsg < end && '<' != buffer.charAt(startLastMsg)) {
+                                startLastMsg++;
+                            }
+                            String msg = buffer.substring(startLastMsg, end);
+                            foundMsg(msg);
+                            startLastMsg = end;
                         }
-                        String msg = buffer.substring(startLastMsg, end);
-                        foundMsg(msg);
-                        startLastMsg = end;
                     }
                     insideRootTag = false;
                 } else if (ch == '/') {
@@ -381,10 +385,11 @@ class XMLLightweightParser {
                 }
             }
         }
-        if (head.length() > 0 &&
-                ("/stream:stream>".equals(head.toString()) || ("/flash:stream>".equals(head.toString())))) {
-            // Found closing stream:stream
-            foundMsg("</stream:stream>");
+        if (head.length() == 15 || head.length() == 14) {
+            final String headString = head.toString();
+            if ("/stream:stream>".equals(headString) || ("/flash:stream>".equals(headString))) {
+                foundMsg("</stream:stream>");
+            }
         }
     }
 

@@ -120,6 +120,8 @@ done
 SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT::-1}"
 
 pushd "${SMACKDIR}"
+sed -i '/-Werror/d' build.gradle
+sed -i 's/if (config.testPackages == null) {/if (config.testPackages == null || config.testPackages.isEmpty()) {/' smack-integration-test/src/main/java/org/igniterealtime/smack/inttest/SmackIntegrationTestFramework.java
 $GRADLE integrationTest \
 		-Dsinttest.service=example.org \
 		-Dsinttest.securityMode=disabled \

@@ -44,10 +44,10 @@
         </header>
         <p>
             This guide provides detailed information for developers that wish to
-            make changes,compiles and run the Openfire source code by using Visual Studio Code IDE.
+            make changes,compile and run the Openfire source code by using Visual Studio Code IDE.
         </p>
         <p>
-            For additional developer resources, please visit:
+            For additional developer resources please visit:
             <a href="http://www.igniterealtime.org">http://www.igniterealtime.org</a>. 
             The Openfire build process is based on Apache Maven. Visit the
             <a href="https://maven.apache.org/">Maven website</a>
@@ -145,10 +145,10 @@
         <p>
             Select the 'New Terminal' option -- <b>Terminal > New Terminal</b> to open a terminal and run the command bellow to  build the complete project including plugins: 
             <ul>
-                <span class="code"> mvn verify <br></span>
+                <span class="code"> mvn clean verify <br></span>
             </ul> 
-            This will quickly builds Openfire (compile,runs all unit tests) and creates a distributable package 
-            in the <tt>distribution</tt> module in <tt>distribution/target/</tt>  folder. 
+            This will quickly builds Openfire (compile and run all unit tests) and create a distributable package 
+            in the <tt>distribution</tt> module in the <tt>distribution/target/</tt>  folder. 
         </p>
     
         <figure>
@@ -177,7 +177,7 @@
         </figure>
 
         <p>
-            After running Openfire, you can go to your server using the URL shown in console (or http://localhost:9090) and configure it.
+            After running Openfire you can go to your server using the URL shown in console (or http://localhost:9090) and configure it.
         </p>
         <footer>
             <p>You can find more information on Openfire at <a href="https://www.igniterealtime.org/projects/openfire/">https://www.igniterealtime.org/projects/openfire</a></p>

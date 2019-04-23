@@ -1580,15 +1580,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     @Override
-    public void joinedCluster() {
-        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+    public void joinedCluster()
+    {
+        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
-
-        CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
-
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
+        }
         // Track information about local sessions and share it with other cluster nodes.
         // Note that, unlike other caches, this cache is populated only when clustering is enabled.
         for (ClientSession session : routingTable.getClientsRoutes(true)) {
@@ -1607,9 +1609,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
-            CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
+            if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+            {
+                CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
+            }
 
             // The local cluster node left the cluster.
             //

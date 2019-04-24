@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Openfire Source Code in Visual Studio Code IDE</title>
+    <style>
+        body {
+            background-color: #d3d6d9;
+        }
+        header {
+            background-color: #e7eaee;
+            border: 1px solid #cccccc;
+            margin-top: 10px;
+            padding-left: 20px;
+            border-bottom: 20px solid #335588;
+        }
+        header h1 {
+            font-size: 1.7em;
+            font-weight: bold;
+            color: #670e15;
+        }
+        header p {
+            color: black;
+        }
+        article {
+            background-color: #fff;
+            border: 1px solid #999;
+            padding: 40px;
+            margin: 30px;
+        }
+        img {
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+    <article>
+        <header>
+            <h1>Openfire Source Code in Visual Studio Code IDE</h1>
+            <p>
+                This is a short tutorial on how to load the Openfire source code in the Visual Studio Code IDE.
+            </p>
+            
+        </header>
+        <p>
+            This guide provides detailed information for developers that wish to
+            make changes, compile and run the Openfire source code by using Visual Studio Code IDE.
+        </p>
+        <p>
+            For additional developer resources please visit:
+            <a href="http://www.igniterealtime.org">http://www.igniterealtime.org</a>. 
+            The Openfire build process is based on Apache Maven. Visit the
+            <a href="https://maven.apache.org/">Maven website</a>
+            for more information.
+        </p>
+        <p>
+            Visual Studio Code or VS Code is a fast editor and ships with great editing features. It includes support for debugging,
+            embedded Git control, syntax highlighting, intelligent code completion, snippets and code refactoring. 
+            In part thanks to the huge ecosystem of extensions that enhance and enrich the experience in VS Code, 
+            turning it into a super smart text editor, fast and lightweight. This guide focuses on the bare minimum that 
+            is needed to get started Openfire source code with VS Code.
+        </p>
+
+        <h2>Prepare your environment</h2>
+        <p>
+            The rest of this guide will assume you have at least those parts installed:
+            <ul>
+                <li><b>JAVA Development Kit (version 8)</b> </li>
+                <ul>
+                    Java 8 (JDK 1.8) must be installed and setup on your machine. To test the installation,
+                    open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
+                    Java with "java -version" -- it must be version 1.8 or greater.
+                    If Java isn't installed, download a copy from the
+                    <a href="http://www.oracle.com/technetwork/java/javase/overview/index.html">Java website</a>.
+                    <p>
+                        <font color="red">Important!</font> -- the Openfire build tool needs to know
+                        where Java is installed on your system. You must configure the "JAVA_HOME"
+                        environment variable to point to the correct directory. 
+                    <p>
+                 </ul>
+                <li><b>Maven</b></li> 
+                    <ul>
+                        <p>
+                            The Openfire build process uses Maven, so that tool must be installed
+                            and configured on your computer. First download Maven from: 
+                            <a href="https://maven.apache.org/">https://maven.apache.org</a>. Next, follow
+                            the <a href="https://maven.apache.org/users/index.html">usage instructions</a>.
+                        <p>
+                    </ul>
+                <li><b>Copy of the  Openfire source code available locally </b></li>
+                    <ul>
+                        <p>
+                            You can get the Openfire source code by downloading (clonning) a 
+                            source code on the Ignite Realtime GitHub Repository.
+                             <a href="https://github.com/igniterealtime/openfire">Source Code</a>. 
+                        </p>
+                    </ul>
+                <li><b>Visual Studio Code</b></li> 
+                    <ul>
+                        <p>
+                            You just need to head to this <a href="https://code.visualstudio.com/download">webpage</a> 
+                            dedicated to downloads of Visual Studio Code and choose the package that matches your needs 
+                            and requirements.
+                            After downloading it installation will take just a minute.
+                    </ul>    
+            </ul>
+        <p>
+            Start by Adding Java language support to VS Code by installing the popular minimum requirement  Java extensions.
+            There is a Java Extension Pack, which contains the most popular extensions for most Java developers: 
+        </p>
+        <p>
+            Launch your VS Code and bring up extensions view by clicking on the <b>Extensions</b> icon in the Activity Bar
+            on the left side of VS Code or  <b>View > Extensions</b> then write the name of extension <b>Java Extension Pack</b> and 
+            then click on install link to install all extensions for Pack.
+        </p>
+        <figure>
+            <a href="images/VSCode-1.png"><img src="images/VSCode-1.png" alt="Installing Java Extension Pack to VS Code."></a>
+	    <figcaption>Installing Java Extension Pack to VS Code.</figcaption>            
+        </figure>
+
+        <h2>Open the source code folder</h2>
+        <p>
+            The Openfire source code is using an Apache Maven project structure. As VS Code (with Maven Extension) recognizes this structure,
+            opening the source code into an VS Code project is very easy.
+        </p>
+        <p>
+            Select the 'Open' option -- <b>File > Open</b> and choose your Openfire source code folder then click on the open button. 
+            This will quickly import the Openfire source code into  VS Code .
+        </p>
+
+        <figure>
+            <a href="images/VSCode-2.png"><img src="images/VSCode-2.png" alt="Use the 'Open' functionality of VS Code."></a>
+            <a href="images/VSCode-3.png"><img src="images/VSCode-3.png" alt="Select the folder that will open in our VS Code."></a>
+            <a href="images/VSCode-4.png"><img src="images/VSCode-4.png" alt="Overview of project in Visual Studio Code"></a>
+	    <figcaption>Opening Openfire Source folder on VS Code.</figcaption>            
+        </figure>
+
+        <p>
+            VS Code will automatically recognize and process the Maven structure of Openfire (pom.xml file) and it will automatically download all dependencies.
+        </p>
+        <h2>Build Openfire from VS Code</h2>
+        <p>
+            The following instructions will explain how you can build Openfire from the code that is in the VS Code workspace.
+        </p>
+        <p>
+            Select the 'New Terminal' option -- <b>Terminal > New Terminal</b> to open a terminal and run the command bellow to  build the complete project including plugins: 
+            <ul>
+                <span class="code"> mvn clean verify <br></span>
+            </ul> 
+            <ul>
+                <font color="red">Important!</font> -- clean part in mvn command will delete current Openfire configuration. 
+            </ul>
+            This will quickly build Openfire (compile and run all unit tests) and create a distributable package 
+            in the <tt>distribution/target/</tt>  folder. 
+        </p>
+    
+        <figure>
+            <a href="images/VSCode-5.png"><img src="images/VSCode-5.png" alt=""></a>
+            <a href="images/VSCode-6.png"><img src="images/VSCode-6.png" alt=""></a>
+            <a href="images/VSCode-7.png"><img src="images/VSCode-7.png" alt=""></a>
+            <figcaption>Build Openfire from the source code.</figcaption>
+        </figure>
+
+	    
+        <h2>Run Openfire from VS Code</h2>
+        <p>
+            When developing, it is often also useful to run the code straight from your IDE.
+            You can launch Openfire using the scripts in <tt>distribution/target/distribution-base/bin</tt> using the terminal in VS Code.
+        </p>
+        <p>
+            <ul>
+                <span class="code"> sh distribution/target/distribution-base/bin/openfire.sh <br></span>
+            </ul> 
+        </p>
+
+        <figure>
+            <a href="images/VSCode-8.png"><img src="images/VSCode-8.png" alt="Launch Openfire server  using shell script."></a>
+            <a href="images/VSCode-9.png"><img src="images/VSCode-9.png" alt="The Openfire startup screen after launching the server."></a>
+            <figcaption>Run Openfire straight from the source code.</figcaption>
+        </figure>
+
+        <p>
+            After running Openfire you can go to your server using the URL shown in console (or http://localhost:9090) and configure it.
+        </p>
+        <footer>
+            <p>You can find more information on Openfire at <a href="https://www.igniterealtime.org/projects/openfire/">https://www.igniterealtime.org/projects/openfire</a></p>
+        </footer>
+    </article>
+</body>
+</html>

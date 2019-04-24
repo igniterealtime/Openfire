@@ -238,6 +238,17 @@ public class XMPPServer {
     }
 
     /**
+     * TODO: (2019-04-24) Remove and replace with <a href="https://github.com/mockito/mockito/issues/1013">Mockito mocking of static methods</a>, when available
+     *
+     * @param instance the mock/stub/spy XMPPServer to return when {@link #getInstance()} is called.
+     * @deprecated - for test use only
+     */
+    @Deprecated
+    public static void setInstance(final XMPPServer instance) {
+        XMPPServer.instance = instance;
+    }
+
+    /**
      * Creates a server and starts it.
      */
     public XMPPServer() {

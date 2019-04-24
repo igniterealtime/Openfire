@@ -23,6 +23,8 @@ public class ClusterMonitor implements Module, ClusterEventListener {
         .build();
     private static final String MODULE_NAME = "Cluster monitor";
     private static final String UNKNOWN_NODE_NAME = "<unknown>";
+    // This contains a cache of node names - after a node leaves a cluster, it's too late to find out it's name.
+    // So this map contains a cache of node names, populated on cluster joins
     private final Map<NodeID, String> nodeNames = new ConcurrentHashMap<>();
     private boolean nodeHasLeftCluster = false;
     private XMPPServer xmppServer;
@@ -62,7 +64,8 @@ public class ClusterMonitor implements Module, ClusterEventListener {
 
     @Override
     public void joinedCluster() {
-        LOGGER.info("This node ({}/{}) has joined the cluster", xmppServer.getNodeID(), xmppServer.getServerInfo().getHostname());
+        ClusterManager.getNodesInfo().forEach(nodeName -> nodeNames.put(nodeName.getNodeID(), nodeName.getHostName()));
+        LOGGER.info("This node ({}/{}) has joined the cluster [seniorMember={}]", xmppServer.getNodeID(), xmppServer.getServerInfo().getHostname(), getSeniorMember());
     }
 
     @Override
@@ -70,7 +73,7 @@ public class ClusterMonitor implements Module, ClusterEventListener {
         final String nodeName = getNodeName(nodeIdBytes);
         final NodeID nodeId = NodeID.getInstance(nodeIdBytes);
         nodeNames.put(nodeId, nodeName);
-        LOGGER.info("Another node ({}/{}) has joined the cluster", nodeId, nodeName);
+        LOGGER.info("Another node ({}/{}) has joined the cluster [seniorMember={}]", nodeId, nodeName, getSeniorMember());
         if (ClusterManager.isSeniorClusterMember() && nodeHasLeftCluster) {
             sendMessageToAdminsIfEnabled(nodeName + " has joined the cluster - resilience is restored");
         }
@@ -88,7 +91,7 @@ public class ClusterMonitor implements Module, ClusterEventListener {
         nodeHasLeftCluster = true;
         final NodeID nodeID = NodeID.getInstance(nodeIdBytes);
         final String nodeName = Optional.ofNullable(nodeNames.remove(nodeID)).orElse(UNKNOWN_NODE_NAME);
-        LOGGER.info("Another node ({}/{}) has left the cluster", nodeID, nodeName);
+        LOGGER.info("Another node ({}/{}) has left the cluster [seniorMember={}]", nodeID, nodeName, getSeniorMember());
         if (ClusterManager.isSeniorClusterMember()) {
             final int clusterSize = ClusterManager.getNodesInfo().size();
             final String conjunction;
@@ -120,6 +123,10 @@ public class ClusterMonitor implements Module, ClusterEventListener {
         if (enabled) {
             xmppServer.sendMessageToAdmins(message);
         }
+    }
+
+    private String getSeniorMember() {
+        return ClusterManager.getNodeInfo(ClusterManager.getSeniorClusterMember()).map(ClusterNodeInfo::getHostName).orElse(UNKNOWN_NODE_NAME);
     }
 
 }

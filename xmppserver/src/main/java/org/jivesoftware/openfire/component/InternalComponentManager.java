@@ -588,10 +588,13 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
     @Override
     public void joinedCluster()
     {
-        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = XMPPServer.getInstance().getDefaultNodeID();
         final NodeID nodeID = XMPPServer.getInstance().getNodeID();
-        CacheUtil.replaceValueInMultivaluedCache( componentCache, defaultNodeID, nodeID );
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInMultivaluedCache( componentCache, defaultNodeID, nodeID );
+        }
 
         // We joined a cluster. Determine what components run on other nodes,
         // and raise events for those that are not running on this node.
@@ -637,7 +640,10 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
         // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
         final NodeID defaultNodeID = XMPPServer.getInstance().getDefaultNodeID();
         final NodeID nodeID = XMPPServer.getInstance().getNodeID();
-        CacheUtil.replaceValueInMultivaluedCache( componentCache, nodeID, defaultNodeID );
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInMultivaluedCache( componentCache, nodeID, defaultNodeID );
+        }
 
         // The local cluster node left the cluster.
         //

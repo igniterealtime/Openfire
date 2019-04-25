@@ -557,7 +557,7 @@
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.topic" />:</td>
-                    <td><input name="room_topic" value="<%= (roomSubject == null ? "" : StringUtils.escapeForXML(roomSubject)) %>" type="text" maxlength="100" size="40">
+                    <td><input name="room_topic" value="<%= (roomSubject == null ? "" : StringUtils.escapeForXML(roomSubject)) %>" type="text" size="40">
                     </td>
                 </tr>
                  <tr>

@@ -436,7 +436,7 @@
             <% } if (errors.get("room_topic") != null) { %>
                 <fmt:message key="muc.room.edit.form.valid_hint_subject" />
             <% } if (errors.get("room_topic_longer") != null) { %>
-                <fmt:message key="muc.room.edit.form.valid_hint_subject_longer" />
+                <fmt:message key="muc.room.edit.form.valid_hint_subject_too_long" />
             <% } %>
             </td>
         </tr>

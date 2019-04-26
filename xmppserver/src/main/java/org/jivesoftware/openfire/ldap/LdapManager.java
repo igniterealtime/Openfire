@@ -16,15 +16,20 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveInitialLdapContext;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -41,20 +46,16 @@ import javax.naming.ldap.SortControl;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
-import java.io.Serializable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -730,7 +731,8 @@ public class LdapManager {
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
-                    Log.error(ex.getMessage(), ex);
+                    Log.error("Unable to upgrade connection to TLS; failing user authentication", ex);
+                    return false;
                 }
 
                 // make at least one lookup to check authorization
@@ -821,7 +823,8 @@ public class LdapManager {
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {
-                            Log.error(ex.getMessage(), ex);
+                            Log.error("Unable to upgrade connection to TLS; failing user authentication", ex);
+                            return false;
                         }
 
                         // make at least one lookup to check user authorization

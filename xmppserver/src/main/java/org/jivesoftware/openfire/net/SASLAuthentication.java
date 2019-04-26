@@ -59,10 +59,7 @@ import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +82,12 @@ import org.slf4j.LoggerFactory;
 public class SASLAuthentication {
 
     private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
+
+    public static final SystemProperty<Boolean> SKIP_PEER_CERT_REVALIDATION_CLIENT = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.external.client.skip-cert-revalidation")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
 
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
@@ -213,9 +216,15 @@ public class SASLAuthentication {
             if (mech.equals("EXTERNAL")) {
                 boolean trustedCert = false;
                 if (session.isSecure()) {
-                    final Connection connection   = ( (LocalClientSession) session ).getConnection();
-                    final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
-                    trustedCert = trustStore.isTrusted( connection.getPeerCertificates() );
+                    final Connection connection = ( (LocalClientSession) session ).getConnection();
+                    if ( SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
+                        // Trust that the peer certificate has been validated when TLS got established.
+                        trustedCert = connection.getPeerCertificates() != null && connection.getPeerCertificates().length > 0;
+                    } else {
+                        // Re-evaluate the validity of the peer certificate.
+                        final TrustStore trustStore = connection.getConfiguration().getTrustStore();
+                        trustedCert = trustStore.isTrusted( connection.getPeerCertificates() );
+                    }
                 }
                 if ( !trustedCert ) {
                     continue; // Do not offer EXTERNAL.

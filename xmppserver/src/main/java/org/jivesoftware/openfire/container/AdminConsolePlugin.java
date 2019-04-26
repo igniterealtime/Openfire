@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.jasper.servlet.JasperInitializer;
@@ -227,13 +226,18 @@ public class AdminConsolePlugin implements Plugin {
         final int maxAttempts = 10;
         int currentAttempt = 1;
         do {
-            Log.warn("Deleting legacy admin WEB-INF/lib folder. Attempt #{} {}", currentAttempt, libFolder);
+            int backupSuffix = 1;
+            String backupFileName;
+            do {
+                backupFileName = "lib.backup-" + backupSuffix;
+                backupSuffix++;
+            } while (Files.exists(libFolder.resolveSibling(backupFileName)));
+
+            Log.warn("Renaming legacy admin WEB-INF/lib folder to {}. Attempt #{} {}", backupFileName, currentAttempt, libFolder);
+
             currentAttempt++;
             try {
-                Files.walk(libFolder)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+                Files.move(libFolder, libFolder.resolveSibling(backupFileName));
             } catch (final IOException e) {
                Log.warn("Exception attempting to delete folder, will retry shortly", e);
             }
@@ -242,7 +246,7 @@ public class AdminConsolePlugin implements Plugin {
                     Thread.sleep(1000);
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    Log.warn("Interrupted whilst sleeping - aborting attempt to delete lib folder", e);
+                    Log.warn("Interrupted whilst sleeping - aborting attempt to rename lib folder", e);
                 }
             }
         } while (Files.exists(libFolder) && currentAttempt <= maxAttempts && !Thread.currentThread().isInterrupted());
@@ -253,7 +257,7 @@ public class AdminConsolePlugin implements Plugin {
         }
 
         // The old lib folder still exists, will have to be deleted manully
-        final String message = "The folder " + libFolder + " must be manually deleted before Openfire can start. Shutting down.";
+        final String message = "The folder " + libFolder + " must be manually renamed or deleted before Openfire can start. Shutting down.";
         // Log this everywhere so it's impossible (?) to miss
         Log.debug(message);
         Log.info(message);

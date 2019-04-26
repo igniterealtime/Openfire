@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
-<html>
+<html lang="en">
 <head>
 <title>Openfire: Translator Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
@@ -52,7 +52,7 @@ The German resource bundle would contain the same keys, but different values:
 </pre>
 
 Making your own translation involves copying the English resource bundle,
-renaming the file, then translating its contents.</p>
+renaming the file, then translating its contents.
 
 <h2>Construct a Resource Bundle</h2>
 
@@ -80,33 +80,6 @@ be found at:
 
 <p>Next, use your favorite text editor to translate the English values into
 your language. The key names must not be changed.</p>
-
-<p>When translating from English, you may need to use special characters
-for your language (for example, Germans use characters like &auml;,
-&uuml;, or &szlig;). Unfortunately, all resource bundle files must be saved
-in ASCII format which doesn't allow for international characters. We
-recommend working on your translation in a text editor
-that supports all characters in your language. After finishing your translation,
-use the "native2ascii" tool (bundled with Java) to convert international
-characters to the ASCII format. To use the native2ascii tool:</p>
-
-<pre>
-    native2ascii -encoding XXX my_translation.properties openfire_i18n_YY.properties
-                               ^                         ^
-                               input file                output file
-</pre>
-
-<p>The "-encoding XXX" parameter is optional. If you don't specify it, Java will
-use the default encoding value, taken from System property "file.encoding".
-If you do specify an encoding (XXX), it must be taken from the first column of
-the table of supported encodings in the
-<a href="http://java.sun.com/j2se/1.3/docs/guide/intl/encoding.doc.html" target="_new">Supported Encodings</a>
-document. For example, if you created your translation using UTF-8 as your encoding and
-you are making a Simplified Chinese translation:</p>
-
-<pre>
-    native2ascii -encoding UTF8 my_translation.properties openfire_i18n_zh_CN.properties
- </pre>
 
 <h2>Testing Your Translation</h2>
 

@@ -232,17 +232,15 @@
                   -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>native2ascii-maven-plugin</artifactId>
-                <version>1.0-beta-1</version>
+                <version>2.0.1</version>
                 <executions>
                     <execution>
-                        <id>native2ascii</id>
-                        <phase>process-resources</phase>
+                        <id>utf8-to-latin1</id>
                         <goals>
-                            <goal>native2ascii</goal>
+                            <goal>inplace</goal>
                         </goals>
                         <configuration>
-                            <encoding>UTF-8</encoding>
-                            <workDir>${project.build.directory}/i18n/</workDir>
+                            <dir>${project.build.directory}/i18n/</dir>
                         </configuration>
                     </execution>
                 </executions>

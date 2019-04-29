@@ -671,7 +671,11 @@ public class XMPPServer {
             
             // Notify server listeners that the server has been started
             for (XMPPServerListener listener : listeners) {
-                listener.serverStarted();
+                try {
+                    listener.serverStarted();
+                } catch (Exception e) {
+                    logger.warn("An exception occurred while dispatching a 'serverStarted' event!", e);
+                }
             }
 
             if (!setupMode) {

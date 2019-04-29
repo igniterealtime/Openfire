@@ -19,6 +19,9 @@ package org.jivesoftware.openfire.roster;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches roster events. The following events are supported:
  * <ul>
@@ -33,7 +36,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class RosterEventDispatcher {
-
+    private static final Logger Log = LoggerFactory.getLogger(RosterEventDispatcher.class);
+    
     private static List<RosterEventListener> listeners =
             new CopyOnWriteArrayList<>();
 
@@ -66,7 +70,11 @@ public class RosterEventDispatcher {
     public static void rosterLoaded(Roster roster) {
         if (!listeners.isEmpty()) {
             for (RosterEventListener listener : listeners) {
-                listener.rosterLoaded(roster);
+                try {
+                    listener.rosterLoaded(roster);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'rosterLoaded' event!", e);
+                }   
             }
         }
     }
@@ -86,8 +94,12 @@ public class RosterEventDispatcher {
         boolean answer = persistent;
         if (!listeners.isEmpty()) {
             for (RosterEventListener listener : listeners) {
-                if (!listener.addingContact(roster, item, persistent)) {
-                    answer = false;
+                try {
+                    if (!listener.addingContact(roster, item, persistent)) {
+                        answer = false;
+                    }
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'addingContact' event!", e);
                 }
             }
         }
@@ -103,7 +115,11 @@ public class RosterEventDispatcher {
     public static void contactAdded(Roster roster, RosterItem item) {
         if (!listeners.isEmpty()) {
             for (RosterEventListener listener : listeners) {
-                listener.contactAdded(roster, item);
+                try {
+                    listener.contactAdded(roster, item);  
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'contactAdded' event!", e);
+                }
             }
         }
     }
@@ -117,7 +133,11 @@ public class RosterEventDispatcher {
     public static void contactUpdated(Roster roster, RosterItem item) {
         if (!listeners.isEmpty()) {
             for (RosterEventListener listener : listeners) {
-                listener.contactUpdated(roster, item);
+                try {
+                    listener.contactUpdated(roster, item);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'contactUpdated' event!", e);
+                }
             }
         }
     }
@@ -131,7 +151,11 @@ public class RosterEventDispatcher {
     public static void contactDeleted(Roster roster, RosterItem item) {
         if (!listeners.isEmpty()) {
             for (RosterEventListener listener : listeners) {
-                listener.contactDeleted(roster, item);
+                try {
+                    listener.contactDeleted(roster, item);   
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'contactDeleted' event!", e);
+                }
             }
         }
     }

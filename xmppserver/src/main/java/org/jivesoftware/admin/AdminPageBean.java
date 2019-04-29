@@ -38,6 +38,7 @@ public class AdminPageBean {
 
     /**
      * Returns the title of the page with HTML escaped.
+     * @return the page title
      */
     public String getTitle() {
         if (title != null) {
@@ -50,6 +51,7 @@ public class AdminPageBean {
 
     /**
      * Sets the title of the admin console page.
+     * @param title the name of the page
      */
     public void setTitle(String title) {
         this.title = title;
@@ -57,6 +59,7 @@ public class AdminPageBean {
 
     /**
      * Returns a collection of breadcrumbs. Use the Collection API to get/set/remove crumbs.
+     * @return the collection of breadcrumbs
      */
     public Collection getBreadcrumbs() {
         if (breadcrumbs == null) {
@@ -67,6 +70,7 @@ public class AdminPageBean {
 
     /**
      * Returns the page ID (corresponds to sidebar ID's).
+     * @return the page id
      */
     public String getPageID() {
         return pageID;
@@ -74,7 +78,7 @@ public class AdminPageBean {
 
     /**
      * Sets the ID of the page (corresponds to sidebar ID's).
-     * @param pageID
+     * @param pageID the id of page
      */
     public void setPageID(String pageID) {
         this.pageID = pageID;
@@ -82,6 +86,7 @@ public class AdminPageBean {
 
     /**
      * Returns the subpage ID (corresponds to sidebar ID's).
+     * @return the sub page id
      */
     public String getSubPageID() {
         return subPageID;
@@ -89,7 +94,7 @@ public class AdminPageBean {
 
     /**
      * Sets the subpage ID (corresponds to sidebar ID's).
-     * @param subPageID
+     * @param subPageID the sub page id
      */
     public void setSubPageID(String subPageID) {
         this.subPageID = subPageID;
@@ -97,6 +102,7 @@ public class AdminPageBean {
 
     /**
      * Returns a string of extra parameters for the URLs - these might be specific IDs for resources.
+     * @return the extra URL parameters
      */
     public String getExtraParams() {
         return extraParams;
@@ -104,6 +110,7 @@ public class AdminPageBean {
 
     /**
      * Sets the string of extra parameters for the URLs.
+     * @param extraParams the extra parameters
      */
     public void setExtraParams(String extraParams) {
         this.extraParams = extraParams;
@@ -111,6 +118,7 @@ public class AdminPageBean {
 
     /**
      * Returns a collection of scripts. Use the Collection API to get/set/remove scripts.
+     * @return the collection of scripts
      */
     public Collection getScripts() {
         if (scripts == null) {
@@ -128,6 +136,8 @@ public class AdminPageBean {
 
         /**
          * Creates a crumb given a name an URL.
+         * @param name the breadcrumb name
+         * @param url the url for the breadcrumb
          */
         public Breadcrumb(String name, String url) {
             this.name = name;
@@ -136,6 +146,7 @@ public class AdminPageBean {
 
         /**
          * Returns the name, with HTML escaped.
+         * @return the HTML escaped breadcrumb name
          */
         public String getName() {
             if (name != null) {
@@ -148,6 +159,7 @@ public class AdminPageBean {
 
         /**
          * Returns the URL.
+         * @return the URL of the breadcrumb
          */
         public String getUrl() {
             return url;

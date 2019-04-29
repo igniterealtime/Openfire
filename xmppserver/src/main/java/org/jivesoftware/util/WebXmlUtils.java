@@ -39,14 +39,14 @@ public class WebXmlUtils
      * Retrieves the names of all servlets from a web.xml document.
      *
      * Returns a list that contains 'sessioncreate' and 'sessiondestroy' from this web.xml document:
-     * <servlet>
-     *   <servlet-name>sessioncreate</servlet-name>
-     *   <servlet-class>SessionCreateServlet</servlet-class>
-     * </servlet>
-     * <servlet>
-     *   <servlet-name>sessiondestroy</servlet-name>
-     *   <servlet-class>SessionDestroyServlet</servlet-class>
-     * </servlet>
+     * &lt;servlet&gt;
+     *   &lt;servlet-name&gt;sessioncreate&lt;/servlet-name&gt;
+     *   &lt;servlet-class&gt;SessionCreateServlet&lt;/servlet-class&gt;
+     * &lt;/servlet&gt;
+     * &lt;servlet&gt;
+     *   &lt;servlet-name&gt;sessiondestroy&lt;/servlet-name&gt;
+     *   &lt;servlet-class&gt;SessionDestroyServlet&lt;/servlet-class&gt;
+     * &lt;/servlet&gt;
      *
      * @param webXml web.xml document, parsed as XML (cannot be null)
      * @return The name of the filter class, or null when no such class was defined.
@@ -60,10 +60,10 @@ public class WebXmlUtils
      * Retrieves the names of all filters from a web.xml document.
      *
      * Returns a list that contains 'message' from this web.xml document:
-     * <filter>
-     *   <filter-name>message</filter-name>
-     *   <filter-class>com.acme.filter.MessageFilter</filter-class>
-     * </filter>
+     * &lt;filter&gt;
+     *   &lt;filter-name&gt;message&lt;/filter-name&gt;
+     *   &lt;filter-class&gt;com.acme.filter.MessageFilter&lt;/filter-class&gt;
+     * &lt;/filter&gt;
      *
      * @param webXml web.xml document, parsed as XML (cannot be null)
      * @return The name of the filter class, or null when no such class was defined.
@@ -93,14 +93,14 @@ public class WebXmlUtils
      * Retrieves the class name for a particular servlet from a web.xml document.
      *
      * Returns 'SessionCreateServlet' for 'sessioncreate' of this web.xml document:
-     * <servlet>
-     *   <servlet-name>sessioncreate</servlet-name>
-     *   <servlet-class>SessionCreateServlet</servlet-class>
-     * </servlet>
-     * <servlet>
-     *   <servlet-name>sessiondestroy</servlet-name>
-     *   <servlet-class>SessionDestroyServlet</servlet-class>
-     * </servlet>
+     * &lt;servlet&gt;
+     *   &lt;servlet-name&gt;sessioncreate&lt;/servlet-name&gt;
+     *   &lt;servlet-class&gt;SessionCreateServlet&lt;/servlet-class&gt;
+     * &lt;/servlet&gt;
+     * &lt;servlet&gt;
+     *   &lt;servlet-name&gt;sessiondestroy&lt;/servlet-name&gt;
+     *   &lt;servlet-class&gt;SessionDestroyServlet&lt;/servlet-class&gt;
+     * &lt;/servlet&gt;
      *
      * @param webXml web.xml document, parsed as XML (cannot be null)
      * @param servletName The name of the servlet (cannot be null or empty).
@@ -115,10 +115,10 @@ public class WebXmlUtils
      * Retrieves the class name for a particular filter from a web.xml document.
      *
      * Returns 'com.acme.filter.MessageFilter' for 'message' of this web.xml document:
-     * <filter>
-     *   <filter-name>message</filter-name>
-     *   <filter-class>com.acme.filter.MessageFilter</filter-class>
-     * </filter>
+     * &lt;filter&gt;
+     *   &lt;filter-name&gt;message&lt;/filter-name&gt;
+     *   &lt;filter-class&gt;com.acme.filter.MessageFilter&lt;/filter-class&gt;
+     * &lt;/filter&gt;
      *
      * @param webXml web.xml document, parsed as XML (cannot be null)
      * @param filterName The name of the filter (cannot be null or empty).
@@ -154,19 +154,19 @@ public class WebXmlUtils
     /**
      * Retrieves a map of init param/values for a particular servlet from a web.xml document.
      *
-     * For filter 'message' of this web.xml document, returns a map with two entries: foo-> bar, test->value.
-     * <servlet>
-     *   <servlet-name>sessioncreate</servlet-name>
-     *   <servlet-class>SessionCreateServlet</servlet-class>
-     *   <init-param>
-     *     <param-name>foo</param-name>
-     *     <param-value>bar</param-value>
-     *   </init-param>
-     *   <init-param>
-     *     <param-name>test</param-name>
-     *     <param-value>value</param-value>
-     *   </init-param>
-     * </servlet>
+     * For filter 'message' of this web.xml document, returns a map with two entries: foo-&gt; bar, test-&gt;value.
+     * &lt;servlet&gt;
+     *   &lt;servlet-name&gt;sessioncreate&lt;/servlet-name&gt;
+     *   &lt;servlet-class&gt;SessionCreateServlet&lt;/servlet-class&gt;
+     *   &lt;init-param&gt;
+     *     &lt;param-name&gt;foo&lt;/param-name&gt;
+     *     &lt;param-value&gt;bar&lt;/param-value&gt;
+     *   &lt;/init-param&gt;
+     *   &lt;init-param&gt;
+     *     &lt;param-name&gt;test&lt;/param-name&gt;
+     *     &lt;param-value&gt;value&lt;/param-value&gt;
+     *   &lt;/init-param&gt;
+     * &lt;/servlet&gt;
      *
      * Parameters with no or empty name are ignored. When multiple parameters have the same name, only one of them is
      * returned.
@@ -183,19 +183,19 @@ public class WebXmlUtils
     /**
      * Retrieves a map of init param/values for a particular filter from a web.xml document.
      *
-     * For filter 'message' of this web.xml document, returns a map with two entries: foo-> bar, test->value.
-     * <filter>
-     *   <filter-name>message</filter-name>
-     *   <filter-class>com.acme.filter.MessageFilter</filter-class>
-     *   <init-param>
-     *     <param-name>foo</param-name>
-     *     <param-value>bar</param-value>
-     *   </init-param>
-     *   <init-param>
-     *     <param-name>test</param-name>
-     *     <param-value>value</param-value>
-     *   </init-param>
-     * </filter>
+     * For filter 'message' of this web.xml document, returns a map with two entries: foo-&gt; bar, test-&gt;value.
+     * &lt;filter&gt;
+     *   &lt;filter-name&gt;message&lt;/filter-name&gt;
+     *   &lt;filter-class&gt;com.acme.filter.MessageFilter&lt;/filter-class&gt;
+     *   &lt;init-param&gt;
+     *     &lt;param-name&gt;foo&lt;/param-name&gt;
+     *     &lt;param-value&gt;bar&lt;/param-value&gt;
+     *   &lt;/init-param&gt;
+     *   &lt;init-param&gt;
+     *     &lt;param-name&gt;test&lt;/param-name&gt;
+     *     &lt;param-value&gt;value&lt;/param-value&gt;
+     *   &lt;/init-param&gt;
+     * &lt;/filter&gt;
      *
      * Parameters with no or empty name are ignored. When multiple parameters have the same name, only one of them is
      * returned.

@@ -87,7 +87,7 @@ public class HybridUserProvider extends UserMultiProvider
      * @param name     the user's name, which can be <tt>null</tt>, unless isNameRequired is set to true.
      * @param email    the user's email address, which can be <tt>null</tt>, unless isEmailRequired is set to true.
      * @return The user that was created.
-     * @throws UserAlreadyExistsException
+     * @throws UserAlreadyExistsException if the user already exists
      */
     @Override
     public User createUser( String username, String password, String name, String email ) throws UserAlreadyExistsException

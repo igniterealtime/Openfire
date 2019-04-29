@@ -340,6 +340,7 @@ public class PluginServlet extends HttpServlet {
      * @param servlet the servlet.
      * @param relativeUrl the relative url where the servlet should be bound
      * @return the effective url that can be used to initialize the servlet
+     * @throws ServletException if the servlet is null
      */
     public static String registerServlet(PluginManager pluginManager,
             Plugin plugin, GenericServlet servlet, String relativeUrl)
@@ -363,6 +364,7 @@ public class PluginServlet extends HttpServlet {
      * @param plugin the owner of the servlet
      * @param url the relative url where servlet has been bound
      * @return the unregistered servlet, so that it can be destroyed
+     * @throws ServletException if the URL is missing
      */
     public static GenericServlet unregisterServlet(Plugin plugin, String url)
             throws ServletException {

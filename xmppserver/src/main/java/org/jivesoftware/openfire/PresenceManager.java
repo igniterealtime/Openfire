@@ -87,6 +87,7 @@ public interface PresenceManager {
      * Otherwise, answer the presence of the local user sessions or the last unavailable presence.
      *
      * @param packet the received probe presence from a remote server.
+     * @throws UnauthorizedException if the user is not authorised
      */
     void handleProbe( Presence packet ) throws UnauthorizedException;
 

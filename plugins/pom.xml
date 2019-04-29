@@ -126,17 +126,6 @@
     </properties>
 
     <profiles>
-        <!-- Disable Javadoc linting (which is very error prone) in versions of Java that have it enabled by default. -->
-        <profile>
-            <id>java8-doclint-disabled</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
-
         <profile>
             <id>release</id>
             <build>

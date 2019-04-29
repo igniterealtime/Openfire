@@ -67,7 +67,9 @@ public class ExternalComponentManager {
             new CopyOnWriteArrayList<>();
 
     /**
+     * @param enabled enables or disables the service
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @throws ModificationNotAllowedException if the status of the service cannot be changed
      */
     @Deprecated
     public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
@@ -81,6 +83,7 @@ public class ExternalComponentManager {
 
     /**
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @return {@code true} if the service is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isServiceEnabled() {
@@ -89,7 +92,9 @@ public class ExternalComponentManager {
     }
 
     /**
+     * @param port The port to use
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @throws ModificationNotAllowedException if the server cannot be modified
      */
     @Deprecated
     public static void setServicePort(int port) throws ModificationNotAllowedException {
@@ -103,6 +108,7 @@ public class ExternalComponentManager {
 
     /**
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @return the port number
      */
     @Deprecated
     public static int getServicePort() {

@@ -613,6 +613,9 @@ public abstract class StanzaHandler {
      * If the connection remains open, the XPP will be set to be ready for the
      * first packet. A call to next() should result in an START_TAG state with
      * the first packet in the stream.
+     * @param xpp the pull parser
+     * @throws XmlPullParserException if an exception occurs reading from the pull parser
+     * @throws IOException if an IO exception occurs reading from the pull parser
      */
     protected void createSession(XmlPullParser xpp) throws XmlPullParserException, IOException {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {

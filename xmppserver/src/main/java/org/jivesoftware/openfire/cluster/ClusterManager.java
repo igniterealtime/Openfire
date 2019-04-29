@@ -175,7 +175,7 @@ public class ClusterManager {
     /**
      * Triggers event indicating that this JVM is now part of a cluster. At this point the
      * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value and
-     * the old nodeID value is passed in case the listener needs it.<p>
+     * the old nodeID value is passed in case the listener needs it.
      * <p>
      * When joining the cluster as the senior cluster member the {@link #fireMarkedAsSeniorClusterMember()}
      * event will be sent right after this event.
@@ -292,7 +292,7 @@ public class ClusterManager {
 
     /**
      * Starts the cluster service if clustering is enabled. The process of starting clustering
-     * will recreate caches as distributed caches.<p>
+     * will recreate caches as distributed caches.
      */
     public static synchronized void startup() {
         if (isClusteringEnabled() && !isClusteringStarted()) {

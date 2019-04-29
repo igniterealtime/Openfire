@@ -87,6 +87,12 @@ public class TLSStreamHandler {
 
     /**
      * @deprecated Use the other constructor.
+     * @param connection the configuration for the connection
+     * @param socket the plain socket connection to secure
+     * @param clientMode unused parameter
+     * @param remoteServer unused parameter
+     * @param needClientAuth unused parameter
+     * @throws IOException if an exception occurs
      */
     @Deprecated
     public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
@@ -106,8 +112,9 @@ public class TLSStreamHandler {
      * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
      * @param socket the plain socket connection to secure
+     * @param configuration the configuration for the connection
      * @param clientMode boolean indicating if this entity is a client or a server.
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an exception occurs
      */
     public TLSStreamHandler(Socket socket, ConnectionConfiguration configuration, boolean clientMode) throws IOException {
         wrapper = new TLSWrapper(configuration, clientMode);

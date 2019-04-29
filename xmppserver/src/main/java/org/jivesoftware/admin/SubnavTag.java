@@ -67,6 +67,7 @@ public class SubnavTag extends BodyTagSupport {
 
     /**
      * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
+     * @return the CSS for the tab
      */
     public String getCss() {
         return clean(css);
@@ -74,6 +75,7 @@ public class SubnavTag extends BodyTagSupport {
 
     /**
      * Sets the CSS used for tab decoration.
+     * @param css The CSS for the tab
      */
     public void setCss(String css) {
         this.css = css;
@@ -82,6 +84,7 @@ public class SubnavTag extends BodyTagSupport {
     /**
      * Returns the value of the CSS class to be used for the currently selected LI (tab). If not set will
      * return a blank string.
+     * @return the CSS class
      */
     public String getCurrentcss() {
         return clean(currentcss);
@@ -89,6 +92,7 @@ public class SubnavTag extends BodyTagSupport {
 
     /**
      * Sets the CSS class value for the currently selected tab.
+     * @param currentcss the CSS class
      */
     public void setCurrentcss(String currentcss) {
         this.currentcss = currentcss;

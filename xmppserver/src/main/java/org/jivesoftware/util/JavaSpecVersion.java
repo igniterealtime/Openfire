@@ -94,7 +94,8 @@ public final class JavaSpecVersion implements Comparable<JavaSpecVersion> {
     /**
      * Convenience method for comparing versions
      * 
-     * @param otherVersion a verion to comapr against
+     * @param otherVersion a version to compare against
+     * @return {@code true} if this version is newer, otherwise {@code false}
      */
     public boolean isNewerThan(JavaSpecVersion otherVersion) {
         return this.compareTo(otherVersion) > 0;

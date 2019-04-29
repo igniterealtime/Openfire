@@ -48,8 +48,8 @@ public interface OutgoingServerSession extends ServerSession {
     /**
      * Checks to see if a pair of domains has previously been authenticated.
      *
-     * Since domains are authenticated as pairs, authenticating A->B does
-     *  not imply anything about A-->C or D->B.
+     * Since domains are authenticated as pairs, authenticating A-&gt;B does
+     *  not imply anything about A--&gt;C or D-&gt;B.
      *
      * @param local the local domain (previously: authenticated domain)
      * @param remote the remote domain (previous: hostname)

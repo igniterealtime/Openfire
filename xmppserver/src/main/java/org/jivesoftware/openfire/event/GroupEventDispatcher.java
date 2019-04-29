@@ -26,10 +26,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Dispatches group events. Each event has a {@link EventType type}
- * and optional parameters, as follows:<p>
+ * and optional parameters, as follows:
  *
  * <table border="1">
- * <caption></caption>
+ * <caption>The params for each event type</caption>
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
  * <tr><td>{@link EventType#group_created group_created}</td><td><i>None</i></td></tr>
  * <tr><td>{@link EventType#group_deleting group_deleting}</td><td><i>None</i></td></tr>
@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  *      as a payload</td></tr>
  * <tr valign="top"><td>{@link EventType#group_modified group_modified}</td><td>
  * <table>
- *     <caption></caption>
+ *     <caption>The params for a group modified event</caption>
  * <tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>
  *      <tr><td colspan="3">Name modified</td></tr>
  *      <tr><td>&nbsp;</td><td>type</td><td>nameModified</td></tr>

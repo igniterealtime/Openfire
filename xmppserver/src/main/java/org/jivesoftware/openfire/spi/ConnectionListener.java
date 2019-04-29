@@ -88,11 +88,18 @@ public class ConnectionListener
     /**
      * Instantiates a new connection listener.
      *
+     * @param type the connection type
+     * @param tcpPortPropertyName the name of the system property holding the TCP port
+     * @param defaultPort the default port number if the property is not set
      * @param isEnabledPropertyName Property name (of a boolean) that toggles availability. Null to indicate that this listener is 'always on'
      * @param maxPoolSizePropertyName Property name (of an int) that defines maximum IO processing threads. Null causes an unconfigurable default amount to be used.
      * @param maxReadBufferPropertyName Property name (of an int) that defines maximum amount (in bytes) of IO data can be cached, pending processing. Null to indicate boundless caches.
      * @param tlsPolicyPropertyName Property name (of a string) that defines the applicable TLS Policy. Or, the value {@link org.jivesoftware.openfire.Connection.TLSPolicy} to indicate unconfigurable TLS Policy. Cannot be null.
      * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurabel value of 'wanted' to be used.
+     * @param bindAddress the address to bind to
+     * @param identityStoreConfiguration the certificates the server identify as
+     * @param trustStoreConfiguration the certificates the server trusts
+     * @param compressionPolicyPropertyName the name of the system property indicating if compression is enabled or not
      */
     public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, String compressionPolicyPropertyName )
     {
@@ -134,6 +141,7 @@ public class ConnectionListener
     /**
      * Activates or deactivates the listener, and changes the configuration accordingly. This configuration change is
      * persisted. An invocation of this method has no effect if the listener is already in the provided state.
+     * @param enable to enable or disable the listener
      */
     public synchronized void enable( boolean enable )
     {

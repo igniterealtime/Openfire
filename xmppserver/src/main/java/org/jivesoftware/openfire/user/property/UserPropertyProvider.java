@@ -53,6 +53,7 @@ public interface UserPropertyProvider
      *
      * @param username The identifier of the user (cannot be null or empty).
      * @return A collection, possibly empty, but never null.
+     * @throws UserNotFoundException if the user cannot be found
      */
     Map<String, String> loadProperties( String username ) throws UserNotFoundException;
 
@@ -65,6 +66,7 @@ public interface UserPropertyProvider
      * @param username The identifier of the user (cannot be null or empty).
      * @param propName The property name (cannot be null or empty).
      * @return The property value (possibly null).
+     * @throws UserNotFoundException if the user cannot be found
      */
     String loadProperty( String username, String propName ) throws UserNotFoundException;
 
@@ -76,6 +78,8 @@ public interface UserPropertyProvider
      * @param username  The identifier of the user (cannot be null or empty).
      * @param propName  The property name (cannot be null or empty).
      * @param propValue The property value (cannot be null).
+     * @throws UserNotFoundException if the user cannot be found
+     * @throws UnsupportedOperationException if the property cannot be added
      */
     void insertProperty( String username, String propName, String propValue ) throws UserNotFoundException, UnsupportedOperationException;
 
@@ -87,6 +91,8 @@ public interface UserPropertyProvider
      * @param username  The identifier of the user (cannot be null or empty).
      * @param propName  The property name (cannot be null or empty).
      * @param propValue The property value (cannot be null).
+     * @throws UserNotFoundException if the user cannot be found
+     * @throws UnsupportedOperationException if the property cannot be updated
      */
     void updateProperty( String username, String propName, String propValue ) throws UserNotFoundException, UnsupportedOperationException;
 
@@ -97,6 +103,8 @@ public interface UserPropertyProvider
      *
      * @param username The identifier of the user (cannot be null or empty).
      * @param propName The property name (cannot be null or empty).
+     * @throws UserNotFoundException if the user cannot be found
+     * @throws UnsupportedOperationException if the property cannot be deleted
      */
     void deleteProperty( String username, String propName ) throws UserNotFoundException, UnsupportedOperationException;
 }

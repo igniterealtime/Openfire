@@ -241,6 +241,7 @@ public class XMLProperties {
      * {"some value", "other value", "last value"}.
      *
      * @param name the name of the property to retrieve
+     * @param ignored unused parameter
      * @return all child property values for the given node name.
      */
     public List<String> getProperties(String name, boolean ignored) {

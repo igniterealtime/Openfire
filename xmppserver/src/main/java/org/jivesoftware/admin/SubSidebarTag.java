@@ -41,6 +41,7 @@ public class SubSidebarTag extends SidebarTag {
 
     /**
      * Returns the body content of this tag.
+     * @return the body of the tag
      */
     public String getBody() {
         return body;
@@ -48,6 +49,7 @@ public class SubSidebarTag extends SidebarTag {
 
     /**
      * Sets the body content of this tag.
+     * @param body the body of this tag
      */
     public void setBody(String body) {
         this.body = body;

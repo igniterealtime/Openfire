@@ -60,6 +60,7 @@ public class ElementUtil {
      * Returns the value of the specified property. A <tt>null</tt> answer does not necessarily mean
      * that the property does not exist.
      *
+     * @param element the element from which the property should be retrieved
      * @param name the name of the property to get.
      * @return the value of the specified property.
      */
@@ -100,6 +101,7 @@ public class ElementUtil {
      * Returns true if the specified property is included in the XML hierarchy. A property could
      * have a value associated or not. If the property has an associated value then
      *
+     * @param element the element to check
      * @param name the name of the property to find out.
      * @return true if the specified property is included in the XML hierarchy.
      */
@@ -158,6 +160,7 @@ public class ElementUtil {
      * If you call getProperties("foo.bar.prop") will return a string array containing
      * {"some value", "other value", "last value"}.
      *
+     * @param element the element to get the properties for
      * @param name the name of the property to retrieve
      * @return all child property values for the given node name.
      */
@@ -201,6 +204,7 @@ public class ElementUtil {
      * &lt;/foo&gt;
      * </pre>
      *
+     * @param element the element to set the properties on
      * @param name   the name of the property.
      * @param values The array of values for the property (can be empty but not null)
      */
@@ -239,6 +243,7 @@ public class ElementUtil {
      * the child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
      * <tt>C</tt>.
      *
+     * @param element the element to get the properties from
      * @param parent the name of the parent property.
      * @return all child property values for the given parent.
      */
@@ -270,6 +275,7 @@ public class ElementUtil {
      * if no children exist. The list of children is depth-first so the array is optimized
      * for easy displaying.
      *
+     * @param element the element to get the properties from
      * @param parent the parent property.
      * @return all recursive children of the given property in depth-first order or an empty
      *         string array if no children exist.
@@ -294,6 +300,7 @@ public class ElementUtil {
      * Sets the value of the specified property. If the property doesn't
      * currently exist, it will be automatically created.
      *
+     * @param element the element to set the property on
      * @param name  the name of the property to set.
      * @param value the new value for the property.
      */
@@ -343,6 +350,7 @@ public class ElementUtil {
      * deleteProperty() removes both the containing text, and the element itself along with
      * any attributes associated with that element.</p>
      *
+     * @param element the element to delete the property from
      * @param name the property to delete.
      */
     public static void deleteProperty(Element element, String name) {

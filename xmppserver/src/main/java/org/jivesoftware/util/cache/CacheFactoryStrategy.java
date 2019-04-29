@@ -140,6 +140,7 @@ public interface CacheFactoryStrategy {
      *
      * @param task               the ClusterTask object to be invoked on all other cluster members.
      * @param includeLocalMember true to run the task on the local member, false otherwise
+     * @param <T>         the return type of the cluster task
      * @return collection with the result of the execution.
      */
     <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember);
@@ -150,6 +151,7 @@ public interface CacheFactoryStrategy {
      *
      * @param task        the ClusterTask object to be invoked on a given cluster member.
      * @param nodeID      the byte array that identifies the target cluster member.
+     * @param <T>         the return type of the cluster task
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found.
      */

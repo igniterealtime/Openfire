@@ -327,6 +327,7 @@ public class PluginManager
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
      * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
      *
+     * @param canonicalName the canonical name (lower case JAR/WAR file without exception) of the plugin
      * @return A collection of metadata (possibly empty, never null).
      */
     public PluginMetadata getMetadata( String canonicalName )
@@ -401,6 +402,8 @@ public class PluginManager
 
     /**
      * @deprecated Use #getPluginPath() instead.
+     * @param plugin the plugin to get the directory for
+     * @return the plugin's directory
      */
     @Deprecated
     public File getPluginDirectory( Plugin plugin )
@@ -413,6 +416,7 @@ public class PluginManager
      *
      * @param plugin the plugin.
      * @return the plugin's directory.
+     * @since Openfire 4.1
      */
     public Path getPluginPath( Plugin plugin )
     {
@@ -769,6 +773,7 @@ public class PluginManager
 
     /**
      * Delete a plugin, which removes the plugin.jar/war file after which the plugin is unloaded.
+     * @param pluginName the plugin to delete
      */
     public void deletePlugin( final String pluginName )
     {
@@ -1018,6 +1023,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getName(Plugin)}.
+     * @param plugin the plugin to get the name for
+     * @return the name of the plugin, as defined in the plugin.xml
      */
     @Deprecated
     public String getName( Plugin plugin )
@@ -1027,6 +1034,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getDescription(Plugin)}.
+     * @param plugin the plugin to get the description for
+     * @return the description of the plugin
      */
     @Deprecated
     public String getDescription( Plugin plugin )
@@ -1036,6 +1045,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getAuthor(Plugin)}.
+     * @param plugin the plugin to get the author for
+     * @return the author of the plugin
      */
     @Deprecated
     public String getAuthor( Plugin plugin )
@@ -1045,6 +1056,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getVersion(Plugin)}.
+     * @param plugin the plugin to get the version for
+     * @return the version of the plugin
      */
     @Deprecated
     public String getVersion( Plugin plugin )
@@ -1054,6 +1067,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getMinServerVersion(Plugin)}.
+     * @param plugin the plugin to get the minimum server version for
+     * @return the minimum server version for the plugin
      */
     @Deprecated
     public String getMinServerVersion( Plugin plugin )
@@ -1063,6 +1078,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseKey(Plugin)}.
+     * @param plugin the plugin to get the database key for
+     * @return the database key for the plugin
      */
     @Deprecated
     public String getDatabaseKey( Plugin plugin )
@@ -1072,6 +1089,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseVersion(Plugin)}.
+     * @param plugin the plugin to get the database version for
+     * @return the database version for the plugin
      */
     @Deprecated
     public int getDatabaseVersion( Plugin plugin )
@@ -1081,6 +1100,8 @@ public class PluginManager
 
     /**
      * @deprecated Moved to {@link PluginMetadataHelper#getLicense(Plugin)}.
+     * @param plugin the plugin to get the licence for
+     * @return the licence for the plugin
      */
     @Deprecated
     public String getLicense( Plugin plugin )

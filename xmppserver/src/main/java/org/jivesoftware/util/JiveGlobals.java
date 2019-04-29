@@ -1067,6 +1067,7 @@ public class JiveGlobals {
     /**
      * This method is called early during the setup process to
      * set the algorithm for encrypting property values 
+     * @param alg the algorithm used to encrypt properties
      */
     public static void setupPropertyEncryptionAlgorithm(String alg) {
         // Get the old secret key and encryption type
@@ -1086,7 +1087,8 @@ public class JiveGlobals {
     
     /**
      * This method is called early during the setup process to
-     * set a custom key for encrypting property values 
+     * set a custom key for encrypting property values
+     * @param key the key used to encrypt properties
      */
     public static void setupPropertyEncryptionKey(String key) {
         // Get the old secret key and encryption type

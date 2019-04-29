@@ -154,6 +154,8 @@ public class AuthFactory {
      * @throws UserNotFoundException if the given user could not be loaded.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
+     * @throws ConnectionException if there is a problem connecting to user and group system
+     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
     public static void setPassword(String username, String password) throws UserNotFoundException, 
             UnsupportedOperationException, ConnectionException, InternalUnauthenticatedException {
@@ -170,6 +172,8 @@ public class AuthFactory {
      * @return an AuthToken token if the username and password are correct.
      * @throws UnauthorizedException if the username and password do not match any existing user
      *      or the account is locked out.
+     * @throws ConnectionException if there is a problem connecting to user and group system
+     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
     public static AuthToken authenticate(String username, String password)
             throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {

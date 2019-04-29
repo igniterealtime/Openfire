@@ -1279,8 +1279,8 @@ public class PubSubEngine {
      * - Node does not already exist
      * - New node configuration is valid
      *
-     * <br/>NOTE 1: This method should not reply to the client
-     * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
+     * <br>NOTE 1: This method should not reply to the client
+     * <br>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
      * do not call this method in the same thread in which a response might arrive
      *
      * @param service The service instance that's responsible for processing (cannot be null)

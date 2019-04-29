@@ -315,6 +315,7 @@ public class DbConnectionManager {
      *      }
      * } </pre>
      *
+     * @param rs the result set to close
      * @param stmt the statement.
      */
     public static void closeStatement(ResultSet rs, Statement stmt) {
@@ -342,6 +343,7 @@ public class DbConnectionManager {
      * } </pre>
      *
      * @param pstmt the statement to close.
+     * @throws SQLException if an exception occurs closing the statement
      */
     public static void fastcloseStmt(PreparedStatement pstmt) throws SQLException
     {
@@ -368,7 +370,9 @@ public class DbConnectionManager {
      *      ...
      * } </pre>
      *
+     * @param rs The result set to close
      * @param pstmt the statement to close.
+     * @throws SQLException if an exception occurs closing the result set or statement
      */
     public static void fastcloseStmt(ResultSet rs, PreparedStatement pstmt) throws SQLException
     {

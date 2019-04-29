@@ -156,6 +156,7 @@ public class PluginMonitor implements PropertyEventListener
 
     /**
      * Immediately run a check of the plugin directory.
+     * @param blockUntilDone {code true} to wait until the check is complete, otherwise {@code false}
      */
     public void runNow( boolean blockUntilDone )
     {

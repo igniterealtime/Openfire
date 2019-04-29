@@ -63,6 +63,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * The name of the request attribute which holds a {@link AdminPageBean} instance.
+     * @return the name of the bean
      */
     public String getBean() {
         return bean;
@@ -70,6 +71,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the name of the request attribute to hold a {@link AdminPageBean} instance.
+     * @param bean the name of the bean
      */
     public void setBean(String bean) {
         this.bean = bean;
@@ -77,6 +79,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
+     * @return the CSS
      */
     public String getCss() {
         return clean(css);
@@ -84,6 +87,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the CSS used for tab decoration.
+     * @param css the CSS
      */
     public void setCss(String css) {
         this.css = css;
@@ -92,6 +96,7 @@ public class TabsTag extends BodyTagSupport {
     /**
      * Returns the value of the CSS class to be used for the currently selected LI (tab). If not set will
      * return a blank string.
+     * @return the CSS class
      */
     public String getCurrentcss() {
         return clean(currentcss);
@@ -99,6 +104,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the CSS class value for the currently selected tab.
+     * @param currentcss the CSS class
      */
     public void setCurrentcss(String currentcss) {
         this.currentcss = currentcss;
@@ -106,6 +112,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Returns whether we are in just links mode.
+     * @return {@code true} if just displaying links, otherwise {@code false}
      */
     public Boolean getJustlinks() {
         return justlinks;
@@ -113,6 +120,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets whether we are just to display links, no list.
+     * @param justlinks {@code true} to just display links, otherwise {@code false}
      */
     public void setJustlinks(Boolean justlinks) {
         this.justlinks = justlinks;

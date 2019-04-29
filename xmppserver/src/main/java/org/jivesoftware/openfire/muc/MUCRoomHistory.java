@@ -149,6 +149,7 @@ public final class MUCRoomHistory {
      * @param sentDate the date when the message was sent to the room.
      * @param subject the subject included in the message.
      * @param body the body of the message.
+     * @param stanza the stanza to add
      */
     public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
             String body, String stanza)
@@ -234,7 +235,8 @@ public final class MUCRoomHistory {
 
     /**
      * Returns true if the given message qualifies as a subject change request, per XEP-0045.
-     * 
+     *
+     * @param message the message to check
      * @return true if the given packet is a subject change request
      */
     public boolean isSubjectChangeRequest(Message message) {

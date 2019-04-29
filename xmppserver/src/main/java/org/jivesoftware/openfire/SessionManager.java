@@ -388,7 +388,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.
+     * @param language The language to use for the session
      * @return a newly created session.
+     * @throws UnauthorizedException if the server has not been initialised
+     * @throws UnknownHostException if no IP address for the peer could be found,
      */
     public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language)
         throws UnauthorizedException, UnknownHostException
@@ -441,6 +444,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * @param conn the connection to the remote server.
      * @param id the stream ID used in the stream element when authenticating the server.
+     * @param fromDomain The originating domain
      * @return the newly created {@link IncomingServerSession}.
      * @throws UnauthorizedException if the local server has not been initialized yet.
      */
@@ -674,6 +678,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * @param originatingResource The JID broadcasting the presence
+     * @param presence The presence to broadcast
      * @deprecated Use {@link #broadcastPresenceToResources(JID, Presence)} instead.
      */
     @Deprecated

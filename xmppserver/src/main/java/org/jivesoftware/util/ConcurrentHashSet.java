@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap;
  * This class implements the <tt>Set</tt> interface, backed by a ConcurrentHashMap instance.
  *
  * @author Matt Tucker
- * @deprecated Use {@code Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>())} instead.
+ * @deprecated Use {@link ConcurrentHashMap#newKeySet()} instead.
  */
 @Deprecated
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
@@ -145,6 +145,9 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     /**
      * Reconstitute the <tt>HashSet</tt> instance from a stream (that is,
      * deserialize it).
+     * @param s the input stream
+     * @throws java.io.IOException if an error occurs reading from the input stream
+     * @throws ClassNotFoundException if the class on the input stream cannot be found
      */
     private void readObject(java.io.ObjectInputStream s)
             throws java.io.IOException, ClassNotFoundException

@@ -2306,6 +2306,7 @@ public class LdapManager {
      * a search filter assertion value, with the exception of the '*' wildcard sign
      *
      * @param value The input string.
+     * @param acceptWildcard {@code true} to accept wildcards, otherwise {@code false}
      *
      * @return A assertion value string ready for insertion into a 
      *         search filter string.

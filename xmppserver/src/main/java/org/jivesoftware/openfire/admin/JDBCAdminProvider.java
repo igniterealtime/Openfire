@@ -33,18 +33,17 @@ import org.xmpp.packet.JID;
 
 /**
  * The JDBC admin provider allows you to use an external database to define the administrators
- * users. It is best used with the JDBCAuthProvider & JDBCGroupProvider to provide integration
+ * users. It is best used with the JDBCAuthProvider &amp; JDBCGroupProvider to provide integration
  * between your external system and Openfire. All data is treated as read-only so any
- * set operations will result in an exception.<p/>
+ * set operations will result in an exception.<p>
  *
- * To enable this provider, set the following in the system properties:<p/>
+ * To enable this provider, set the following in the system properties:
  *
  * <ul>
  * <li><tt>provider.admin.className = org.jivesoftware.openfire.admin.JDBCAdminProvider</tt></li>
  * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
- * <p/>
  * <ul>
  * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>

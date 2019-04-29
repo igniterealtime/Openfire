@@ -70,6 +70,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
+     * @return the CSS
      */
     public String getCss() {
         return clean(css);
@@ -77,6 +78,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Sets the CSS used for tab decoration.
+     * @param css the CSS
      */
     public void setCss(String css) {
         this.css = css;
@@ -85,6 +87,7 @@ public class SidebarTag extends BodyTagSupport {
     /**
      * Returns the value of the CSS class to be used for the currently selected LI (tab). If not set will
      * return a blank string.
+     * @return the CSS class
      */
     public String getCurrentcss() {
         return clean(currentcss);
@@ -92,6 +95,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Sets the CSS class value for the currently selected tab.
+     * @param currentcss the CSS class
      */
     public void setCurrentcss(String currentcss) {
         this.currentcss = currentcss;
@@ -99,6 +103,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Returns the value of the CSS class to be used for sidebar header sections.
+     * @return the CSS
      */
     public String getHeadercss() {
         return headercss;
@@ -106,6 +111,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Sets the CSS value used for the sidebar header sections.
+     * @param headercss the CSS
      */
     public void setHeadercss(String headercss) {
         this.headercss = headercss;
@@ -113,6 +119,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Returns the subsidebar tag - should be declared in the body of this tag (see class description).
+     * @return the sidebar tag
      */
     public SubSidebarTag getSubsidebarTag() {
         return subsidebarTag;
@@ -120,6 +127,7 @@ public class SidebarTag extends BodyTagSupport {
 
     /**
      * Sets the subsidebar tag - used by the container.
+     * @param subsidebarTag the sidebar tag
      */
     public void setSubSidebar(SubSidebarTag subsidebarTag) {
         this.subsidebarTag = subsidebarTag;

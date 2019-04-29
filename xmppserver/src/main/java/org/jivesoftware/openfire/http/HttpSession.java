@@ -565,6 +565,7 @@ public class HttpSession extends LocalClientSession {
      * @throws org.jivesoftware.openfire.http.HttpBindException for several reasons: if the encoding inside of an auth packet is
      * not recognized by the server, or if the packet type is not recognized.
      * @throws org.jivesoftware.openfire.http.HttpConnectionClosedException if the session is no longer available.
+     * @throws IOException if an input or output exception occurred
      */
     public void forwardRequest(HttpBindBody body, AsyncContext context)
             throws HttpBindException, HttpConnectionClosedException, IOException

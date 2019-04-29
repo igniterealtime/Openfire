@@ -182,8 +182,6 @@
                         <configuration>
                             <source>1.8</source>
                             <quiet>true</quiet>
-                            <!-- TODO: Clean up the Javadoc so the build no longer fails if doclint is enabled -->
-                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                 </plugins>

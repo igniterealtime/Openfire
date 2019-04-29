@@ -75,6 +75,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
      *             Functionality of this method is delegated there.
+     * @return {@code true} if logging is enabed, otherwise {@code false}
      */
     @Deprecated
     public static boolean isErrorEnabled() {
@@ -84,6 +85,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
      *             Functionality of this method is delegated there.
+     * @return {@code true} if logging is enabed, otherwise {@code false}
      */
     @Deprecated
     public static boolean isDebugEnabled() {
@@ -120,6 +122,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
      *             Functionality of this method is delegated there.
+     * @return {@code true} if logging is enabed, otherwise {@code false}
      */
     @Deprecated
     public static boolean isInfoEnabled() {
@@ -129,6 +132,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
      *             Functionality of this method is delegated there.
+     * @return {@code true} if logging is enabed, otherwise {@code false}
      */
     @Deprecated
     public static boolean isWarnEnabled() {
@@ -138,6 +142,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#debug(String)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
      */
     @Deprecated
     public static void debug(String s) {
@@ -149,6 +154,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void debug(Throwable throwable) {
@@ -160,6 +166,8 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void debug(String s, Throwable throwable) {
@@ -182,6 +190,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
      */
     @Deprecated
     public static void info(String s) {
@@ -193,6 +202,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void info(Throwable throwable) {
@@ -204,6 +214,8 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void info(String s, Throwable throwable) {
@@ -226,6 +238,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#warn(String)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
      */
     @Deprecated
     public static void warn(String s) {
@@ -237,6 +250,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#warn(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void warn(Throwable throwable) {
@@ -248,6 +262,8 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void warn(String s, Throwable throwable) {
@@ -270,6 +286,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#error(String)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
      */
     @Deprecated
     public static void error(String s) {
@@ -284,6 +301,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void error(Throwable throwable) {
@@ -298,6 +316,8 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
      *             Functionality of this method is delegated there.
+     * @param s the string to log
+     * @param throwable the throwable to log
      */
     @Deprecated
     public static void error(String s, Throwable throwable) {

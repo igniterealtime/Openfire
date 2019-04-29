@@ -17,8 +17,8 @@ import java.util.Map;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
- * that are performed.<p>
- * <p/>
+ * that are performed.
+ * <p>
  * Statistics of the profiled Connections can be obtained from the static
  * methods of this class. Instances of this class are the actual wrappers that
  * perform profiling.

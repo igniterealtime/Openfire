@@ -130,7 +130,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * Returns the unique instance of this class.
      *
      * @return the unique instance of this class.
-     * @deprecated Replaced by {@link XMPPServer.getInstance().getEntityCapabilitiesManager}
+     * @deprecated Replaced by {@link XMPPServer#getEntityCapabilitiesManager}
      */
     @Deprecated
     public static EntityCapabilitiesManager getInstance() {

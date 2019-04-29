@@ -156,6 +156,7 @@ public class SequenceManager {
     /**
      * Returns the next available unique ID. Essentially this provides for the functionality of an
      * auto-increment database field.
+     * @return the next sequence number
      */
     public synchronized long nextUniqueID() {
         if (!(currentID < maxID)) {

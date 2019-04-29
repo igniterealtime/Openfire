@@ -116,6 +116,7 @@ public class CacheSizes {
      *
      * @param map the Map object to determine the size of.
      * @return the size of the Map object.
+     * @throws CannotCalculateSizeException if the size cannot be calculated
      */
     public static int sizeOfMap(Map<?,?> map)
         throws CannotCalculateSizeException {
@@ -140,6 +141,7 @@ public class CacheSizes {
      *
      * @param list the Collection object to determine the size of.
      * @return the size of the Collection object.
+     * @throws CannotCalculateSizeException if the size cannot be calculated
      */
     public static int sizeOfCollection(Collection list) 
             throws CannotCalculateSizeException {
@@ -160,7 +162,9 @@ public class CacheSizes {
      * Returns the size of an object in bytes. Determining size by serialization
      * is only used as a last resort.
      *
+     * @param object the object to calculate the size of
      * @return the size of an object in bytes.
+     * @throws CannotCalculateSizeException if the size cannot be calculated
      */
     public static int sizeOfAnything(Object object) 
         throws CannotCalculateSizeException {

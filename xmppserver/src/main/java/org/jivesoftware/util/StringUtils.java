@@ -115,6 +115,7 @@ public final class StringUtils {
      * @param line the String to search to perform replacements on.
      * @param oldString the String that should be replaced by newString.
      * @param newString the String that will replace all instances of oldString.
+     * @param count a single element array that, after running, will contain the number of matching items
      * @return a String will all instances of oldString replaced by newString.
      */
     public static String replace(String line, String oldString,
@@ -625,6 +626,7 @@ public final class StringUtils {
      *
      * @param input the String to reformat.
      * @param width the maximum length of any one line.
+     * @param locale the local
      * @return a new String with reformatted as needed.
      */
     public static String wordWrap(String input, int width, Locale locale) {
@@ -836,7 +838,7 @@ public final class StringUtils {
     /**
      * Formats a Date as a fifteen character long String made up of the Date's
      * padded millisecond value.
-     *
+     * @param date the date to encode
      * @return a Date encoded as a String.
      */
     public static String dateToMillis(Date date) {
@@ -996,7 +998,7 @@ public final class StringUtils {
 
     /**
      * Returns a collection of Strings as a comma-delimitted list of strings.
-     *
+     * @param collection the collection of strings
      * @return a String representing the Collection.
      */
     public static String collectionToString(Collection<String> collection) {
@@ -1015,7 +1017,7 @@ public final class StringUtils {
 
     /**
      * Returns a comma-delimitted list of Strings as a Collection.
-     *
+     * @param string the string to split
      * @return a Collection representing the String.
      */
     public static Collection<String> stringToCollection(String string) {
@@ -1033,8 +1035,8 @@ public final class StringUtils {
     /**
      * Returns true if the given string is in the given array.
      * 
-     * @param array
-     * @param item
+     * @param array an array of Strings to check
+     * @param item the item to look for
      * @return true if the array contains the item
      */
     public static boolean contains(String[] array, String item) {

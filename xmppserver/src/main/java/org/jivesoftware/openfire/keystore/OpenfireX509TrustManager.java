@@ -151,9 +151,9 @@ public class OpenfireX509TrustManager implements X509TrustManager
      * @param chain The certificate chain that is to be verified (cannot be null or empty).
      * @return A trusted certificate path (never null).
      *
-     * @throws InvalidAlgorithmParameterException
-     * @throws NoSuchAlgorithmException
-     * @throws CertPathBuilderException
+     * @throws InvalidAlgorithmParameterException if the algorithm is invalid
+     * @throws NoSuchAlgorithmException if the algorithm could not be found
+     * @throws CertPathBuilderException if there was a problem with the certificate path
      */
     protected CertPath checkChainTrusted( CertSelector selector, X509Certificate... chain ) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, CertPathBuilderException
     {

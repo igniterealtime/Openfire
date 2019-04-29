@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  *
  * This class has a few factory methods you can use to return message objects
  * or to add messages into a queue to be sent. Using these methods, you can
- * send emails in the following couple of ways:<p>
+ * send emails in the following couple of ways:
  * <pre>
  *   EmailService.sendMessage(
  *     "Joe Bloe", "jbloe@place.org",

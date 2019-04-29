@@ -262,10 +262,10 @@ public class SessionResultFilter {
     /**
      * Rounds the given date down to the nearest specified second. The following
      * table shows sample input and expected output values: (Note, only
-     * the time portion of the date is shown for brevity) <p>
+     * the time portion of the date is shown for brevity)
      *
      * <table border="1">
-     * <caption></caption>
+     * <caption>Rounding examples</caption>
      * <tr><th>Date</th><th>Seconds</th><th>Result</th></tr>
      * <tr><td>1:37.48</td><td>5</td><td>1:37.45</td></tr>
      * <tr><td>1:37.48</td><td>10</td><td>1:37.40</td></tr>

@@ -364,32 +364,6 @@ public class Base64
 
 
     /**
-     * Encodes or decodes two files from the command line;
-     * <strong>feel free to delete this method (in fact you probably should)
-     * if you're embedding this code into a larger program.</strong>
-     */
-    public final static void main( String[] args )
-    {
-        if( args.length < 3 ){
-            usage("Not enough arguments.");
-        }   // end if: args.length < 3
-        else {
-            String flag = args[0];
-            String infile = args[1];
-            String outfile = args[2];
-            if( flag.equals( "-e" ) ){
-                Base64.encodeFileToFile( infile, outfile );
-            }   // end if: encode
-            else if( flag.equals( "-d" ) ) {
-                Base64.decodeFileToFile( infile, outfile );
-            }   // end else if: decode
-            else {
-                usage( "Unknown flag: " + flag );
-            }   // end else
-        }   // end else
-    }   // end main
-
-    /**
      * Prints command line usage.
      *
      * @param msg A message to include with usage info.
@@ -602,6 +576,7 @@ public class Base64
      * Does not GZip-compress data.
      *
      * @param source The data to convert
+     * @return the encoded string
      * @since 1.4
      */
     public static String encodeBytes( byte[] source )
@@ -627,6 +602,7 @@ public class Base64
      *
      * @param source The data to convert
      * @param options Specified options
+     * @return the encoded string
      * @see Base64#GZIP
      * @see Base64#DONT_BREAK_LINES
      * @since 2.0
@@ -644,6 +620,7 @@ public class Base64
      * @param source The data to convert
      * @param off Offset in array where conversion should begin
      * @param len Length of data to convert
+     * @return the encoded string
      * @since 1.4
      */
     public static String encodeBytes( byte[] source, int off, int len )
@@ -671,6 +648,7 @@ public class Base64
      * @param off Offset in array where conversion should begin
      * @param len Length of data to convert
      * @param options Specified options; alphabet type is pulled from this (standard, url-safe, ordered)
+     * @return the encoded string
      * @see Base64#GZIP
      * @see Base64#DONT_BREAK_LINES
      * @since 2.0
@@ -876,6 +854,7 @@ public class Base64
      * @param source The Base64 encoded data
      * @param off    The offset of where to begin decoding
      * @param len    The length of characters to decode
+     * @param options alphabet type is pulled from this (standard, url-safe, ordered)
      * @return decoded data
      * @since 1.3
      */
@@ -1697,6 +1676,7 @@ public class Base64
         /**
          * Method added by PHIL. [Thanks, PHIL. -Rob]
          * This pads the buffer without closing the stream.
+         * @throws java.io.IOException if there was an error flushing the stream
          */
         public void flushBase64() throws java.io.IOException
         {
@@ -1742,6 +1722,7 @@ public class Base64
          * May be helpful if you need to embed a piece of
          * base640-encoded data in a stream.
          *
+         * @throws java.io.IOException if there was an error flushing the stream
          * @since 1.5.1
          */
         public void suspendEncoding() throws java.io.IOException

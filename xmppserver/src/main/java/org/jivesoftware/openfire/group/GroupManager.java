@@ -468,6 +468,7 @@ public class GroupManager {
     /**
      * Returns an unmodifiable Collection of all shared groups in the system for a given userName.
      *
+     * @param userName the user to check
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getSharedGroups(String userName) {
@@ -489,6 +490,7 @@ public class GroupManager {
     /**
      * Returns an unmodifiable Collection of all shared groups in the system for a given userName.
      *
+     * @param groupToCheck The group to check
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getVisibleGroups(Group groupToCheck) {
@@ -531,6 +533,8 @@ public class GroupManager {
      * Returns an unmodifiable Collection of all groups in the system that
      * match given propValue for the specified propName.
      *
+     * @param propName the property name to search for
+     * @param propValue the property value to search for
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> search(String propName, String propValue) {
@@ -639,6 +643,8 @@ public class GroupManager {
      * to ensure that searching is supported.
      *
      * @param query the search string for group names.
+     * @param startIndex the start index to retrieve the group list from
+     * @param numResults the maximum number of results to return
      * @return all groups that match the search.
      */
     public Collection<Group> search(String query, int startIndex, int numResults) {

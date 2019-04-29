@@ -121,7 +121,7 @@
         <jetty.version>9.4.12.v20180830</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <mina.version>2.1.2</mina.version>
-        <bouncycastle.version>1.60</bouncycastle.version>
+        <bouncycastle.version>1.61</bouncycastle.version>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>2.11.1</log4j.version>
     </properties>

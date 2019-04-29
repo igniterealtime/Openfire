@@ -192,7 +192,11 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
         // Inform listeners that an offline message was stored
         if (!listeners.isEmpty()) {
             for (OfflineMessageListener listener : listeners) {
-                listener.messageStored(message);
+                try {
+                    listener.messageStored(message);    
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'messageStored' event!", e);
+                }
             }
         }
     }
@@ -214,7 +218,11 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
             // Inform listeners that an offline message was bounced
             if (!listeners.isEmpty()) {
                 for (OfflineMessageListener listener : listeners) {
-                    listener.messageBounced(message);
+                    try {
+                        listener.messageBounced(message);
+                    } catch (Exception e) {
+                        Log.warn("An exception occurred while dispatching a 'messageBounced' event!", e);
+                    }
                 }
             }
         }

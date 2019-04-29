@@ -19,6 +19,9 @@ package org.jivesoftware.openfire.lockout;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches lockout events. The following events are supported:
  * <ul>
@@ -32,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Daniel Henninger
  */
 public class LockOutEventDispatcher {
+    private static final Logger Log = LoggerFactory.getLogger(LockOutEventDispatcher.class);
 
     private static List<LockOutEventListener> listeners =
             new CopyOnWriteArrayList<>();
@@ -65,7 +69,11 @@ public class LockOutEventDispatcher {
     public static void accountLocked(LockOutFlag flag) {
         if (!listeners.isEmpty()) {
             for (LockOutEventListener listener : listeners) {
-                listener.accountLocked(flag);
+                try {
+                    listener.accountLocked(flag);     
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'accountLocked' event!", e);
+                }
             }
         }
     }
@@ -78,7 +86,11 @@ public class LockOutEventDispatcher {
     public static void accountUnlocked(String username) {
         if (!listeners.isEmpty()) {
             for (LockOutEventListener listener : listeners) {
-                listener.accountUnlocked(username);
+                try {
+                    listener.accountUnlocked(username);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'accountUnlocked' event!", e);
+                }
             }
         }
     }
@@ -91,7 +103,11 @@ public class LockOutEventDispatcher {
     public static void lockedAccountDenied(String username) {
         if (!listeners.isEmpty()) {
             for (LockOutEventListener listener : listeners) {
-                listener.lockedAccountDenied(username);
+                try {
+                    listener.lockedAccountDenied(username);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'lockedAccountDenied' event!", e);
+                }
             }
         }
     }

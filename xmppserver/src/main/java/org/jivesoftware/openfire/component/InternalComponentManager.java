@@ -231,7 +231,11 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
 
     void notifyComponentRegistered(JID componentJID) {
         for (ComponentEventListener listener : listeners) {
-            listener.componentRegistered(componentJID);
+            try {
+                listener.componentRegistered(componentJID);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentRegistered' event!", e);
+            }
         }
     }
 
@@ -305,7 +309,11 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
 
     void notifyComponentUnregistered(JID componentJID) {
         for (ComponentEventListener listener : listeners) {
-            listener.componentUnregistered(componentJID);
+            try {
+                listener.componentUnregistered(componentJID);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentUnregistered' event!", e);
+            }
         }
     }
 
@@ -577,7 +585,11 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
 
     void notifyComponentInfo(IQ iq) {
         for (ComponentEventListener listener : listeners) {
-            listener.componentInfoReceived(iq);
+            try {
+                listener.componentInfoReceived(iq);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentInfoReceived' event!", e);
+            }
         }
     }
 

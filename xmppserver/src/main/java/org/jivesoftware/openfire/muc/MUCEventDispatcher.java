@@ -58,7 +58,7 @@ public class MUCEventDispatcher {
             try {
                 listener.occupantJoined(roomJID, user, nickname);  
             } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'occupantJoined' event!", e);
+                Log.warn("An exception occurred while dispatching a 'occupantLeft' event!", e);
             }
         }
     }

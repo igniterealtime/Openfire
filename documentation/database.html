@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
-<html>
+<html lang="en">
 <head>
 <title>Openfire: Database Installation Guide</title>
 <link href="style.css" rel="stylesheet" type="text/css">
@@ -107,12 +107,11 @@ Choose your database from the list below for setup details:
 
     <b>JDBC Drivers</b><p>
 
-    The Oracle 11g "thin" drivers are recommended and can be downloaded from 
-    <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html
-     ">Oracle's website</a>. 
+    The Oracle JDBC drivers cannot readily be distributed with Openfire, so must be manually downloaded from
+    <a href="https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html">Oracle's website</a>.
      
-    Various versions of the thin drivers are avaialble, but the most recent (11.2.0.1.0 or newer) driver is recommended for use with Openfire. Use "ojdbc5.jar" if you are using Java 1.5 or "ojdbc5.jar" if you are using Java 1.6.
-    Copy the JDBC driver to the <tt>lib/</tt> directory of your Openfire installation.
+    Various versions of the drivers are available, but the most recent driver compatible with your version of Oracle is
+    recommended for use with Openfire. Copy the JDBC driver to the <tt>lib/</tt> directory of your Openfire installation.
     
     <p>
     In the Openfire web-based setup tool, use the following values:<p>

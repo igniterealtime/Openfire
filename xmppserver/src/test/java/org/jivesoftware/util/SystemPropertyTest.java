@@ -32,16 +32,11 @@ public class SystemPropertyTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
-        // The following allows JiveGlobals to persist
-        JiveGlobals.setXMLProperty("setup", "true");
-        // The following speeds up tests by avoiding DB retries
-        JiveGlobals.setXMLProperty("database.maxRetries", "0");
-        JiveGlobals.setXMLProperty("database.retryDelay", "0");
     }
 
     @Before
     public void setUp() {
-        JiveGlobals.getPropertyNames().forEach(JiveGlobals::deleteProperty);
+        Fixtures.clearExistingProperties();
     }
 
     @Test

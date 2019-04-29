@@ -52,6 +52,8 @@ public class UserManagerTest {
     @Before
     public void setUp() throws Exception {
 
+        Fixtures.clearExistingProperties();
+
         // Ensure the cache's are cleared
         CacheFactory.createCache("User").clear();
         CacheFactory.createCache("Remote Users Existence").clear();

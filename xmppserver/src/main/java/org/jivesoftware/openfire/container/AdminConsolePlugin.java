@@ -17,6 +17,10 @@
 package org.jivesoftware.openfire.container;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,6 +95,9 @@ public class AdminConsolePlugin implements Plugin {
      * Starts the Jetty instance.
      */
     protected void startup() {
+
+        deleteLegacyWebInfLibFolder();
+
         restartNeeded = false;
 
         // Add listener for certificate events
@@ -202,6 +209,63 @@ public class AdminConsolePlugin implements Plugin {
         catch (Exception e) {
             Log.error("Could not start admin console server", e);
         }
+    }
+
+    private void deleteLegacyWebInfLibFolder() {
+        /*
+        See https://issues.igniterealtime.org/projects/OF/issues/OF-1647 - with the migration from Ant to Maven, Openfire
+        needs less JAR files scattered around the file system. When upgrading from before 4.3.0, the old file are not
+        removed by the installer, so this method attempts to remove them.
+         */
+        final Path libFolder = Paths.get(pluginDir.getAbsoluteFile().toString(), "webapp", "WEB-INF", "lib");
+        if (!Files.exists(libFolder) || !Files.isDirectory(libFolder)) {
+            // Nothing to do
+            return;
+        }
+
+        final int maxAttempts = 10;
+        int currentAttempt = 1;
+        do {
+            int backupSuffix = 1;
+            String backupFileName;
+            do {
+                backupFileName = "lib.backup-" + backupSuffix;
+                backupSuffix++;
+            } while (Files.exists(libFolder.resolveSibling(backupFileName)));
+
+            Log.warn("Renaming legacy admin WEB-INF/lib folder to {}. Attempt #{} {}", backupFileName, currentAttempt, libFolder);
+
+            currentAttempt++;
+            try {
+                Files.move(libFolder, libFolder.resolveSibling(backupFileName));
+            } catch (final IOException e) {
+               Log.warn("Exception attempting to delete folder, will retry shortly", e);
+            }
+            if(Files.exists(libFolder)) {
+                try {
+                    Thread.sleep(1000);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted whilst sleeping - aborting attempt to rename lib folder", e);
+                }
+            }
+        } while (Files.exists(libFolder) && currentAttempt <= maxAttempts && !Thread.currentThread().isInterrupted());
+
+        if (!Files.exists(libFolder)) {
+            // We succeeded, so continue
+            return;
+        }
+
+        // The old lib folder still exists, will have to be deleted manully
+        final String message = "The folder " + libFolder + " must be manually renamed or deleted before Openfire can start. Shutting down.";
+        // Log this everywhere so it's impossible (?) to miss
+        Log.debug(message);
+        Log.info(message);
+        Log.warn(message);
+        Log.error(message);
+        System.out.println(message);
+        XMPPServer.getInstance().stop();
+        throw new IllegalStateException(message);
     }
 
     /**

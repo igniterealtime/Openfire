@@ -35,7 +35,7 @@ import java.util.Enumeration;
  * look like the following:
  *
  * <ul>
- * <li><tt>ldap.authorizeField = k5login</tt></li>
+ * <li>{@code ldap.authorizeField = k5login}</li>
  * </ul>
  *
  * This implementation requires that LDAP be configured, obviously.

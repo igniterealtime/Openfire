@@ -71,6 +71,7 @@ abstract class Channel implements Runnable {
 
     /**
      * Set the host that the packet will be sent to.
+     * @param host the host to send the packet to
      */
     protected void setHost(InetAddress host) {
         this.host = host;
@@ -88,7 +89,7 @@ abstract class Channel implements Runnable {
     /**
      * Set the port that the packet will be sent to.
      *
-     * @param port
+     * @param port the port to send the packet to
      */
     protected void setPort(int port) {
         this.port = port;
@@ -97,7 +98,7 @@ abstract class Channel implements Runnable {
     /**
      * Adds a DatagramListener to the Channel
      *
-     * @param datagramListener
+     * @param datagramListener the listener to add
      */
     public void addListener(DatagramListener datagramListener) {
         listeners.add(datagramListener);
@@ -106,7 +107,7 @@ abstract class Channel implements Runnable {
     /**
      * Remove a DatagramListener from the Channel
      *
-     * @param datagramListener
+     * @param datagramListener the listener to remove
      */
     public void removeListener(DatagramListener datagramListener) {
         listeners.remove(datagramListener);

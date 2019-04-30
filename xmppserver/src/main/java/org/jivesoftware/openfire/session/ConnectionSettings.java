@@ -1,5 +1,10 @@
 package org.jivesoftware.openfire.session;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
+import org.jivesoftware.util.SystemProperty;
+
 public final class ConnectionSettings {
 
     private ConnectionSettings() {
@@ -9,12 +14,41 @@ public final class ConnectionSettings {
 
         public static final String SOCKET_ACTIVE = "xmpp.socket.plain.active";
         public static final String PORT = "xmpp.socket.plain.port";
-        public static final String IDLE_TIMEOUT = "xmpp.client.idle";
-        public static final String KEEP_ALIVE_PING = "xmpp.client.idle.ping";
+        public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.client.idle")
+            .setDefaultValue(Duration.ofMinutes(6))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #IDLE_TIMEOUT_PROPERTY}
+         */
+        @Deprecated
+        public static final String IDLE_TIMEOUT = IDLE_TIMEOUT_PROPERTY.getKey();
+        public static final SystemProperty<Boolean> KEEP_ALIVE_PING_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.client.idle.ping")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.TRUE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #KEEP_ALIVE_PING_PROPERTY}
+         */
+        @Deprecated
+        public static final String KEEP_ALIVE_PING = KEEP_ALIVE_PING_PROPERTY.getKey();
 
         public static final String TLS_POLICY = "xmpp.client.tls.policy";
         public static final String OLD_SSLPORT = "xmpp.socket.ssl.port";
-        public static final String ENABLE_OLD_SSLPORT = "xmpp.socket.ssl.active";
+        public static final SystemProperty<Boolean> ENABLE_OLD_SSLPORT_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.socket.ssl.active")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.FALSE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #ENABLE_OLD_SSLPORT_PROPERTY}
+         */
+        @Deprecated
+        public static final String ENABLE_OLD_SSLPORT = ENABLE_OLD_SSLPORT_PROPERTY.getKey();
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.client.cert.policy";
 
         public static final String COMPRESSION_SETTINGS = "xmpp.client.compression.policy";
@@ -82,7 +116,16 @@ public final class ConnectionSettings {
         public static final String SOCKET_ACTIVE = "xmpp.component.socket.active";
         public static final String PORT = "xmpp.component.socket.port";
         public static final String OLD_SSLPORT = "xmpp.component.ssl.port";
-        public static final String ENABLE_OLD_SSLPORT = "xmpp.component.ssl.active";
+        public static final SystemProperty<Boolean> ENABLE_OLD_SSLPORT_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.component.ssl.active")
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.FALSE)
+            .build();
+        /**
+         * @deprecated in favour of {@link #ENABLE_OLD_SSLPORT_PROPERTY}
+         */
+        @Deprecated
+        public static final String ENABLE_OLD_SSLPORT = ENABLE_OLD_SSLPORT_PROPERTY.getKey();
         public static final String MAX_THREADS = "xmpp.component.processing.threads";
         public static final String MAX_THREADS_SSL = "xmpp.component.ssl.processing.threads";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.component.cert.policy";

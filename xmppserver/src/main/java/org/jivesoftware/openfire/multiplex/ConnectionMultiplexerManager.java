@@ -249,7 +249,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
 
     /**
      * Returns a {@link ConnectionMultiplexerSession} for the specified connection manager
-     * domain or <tt>null</tt> if none was found. If a StreamID is passed in, the same connection
+     * domain or {@code null} if none was found. If a StreamID is passed in, the same connection
      * will always be used for that StreamID. Otherwise, if the connection manager has many
      * connections established with the server then one of them will be selected randomly.
      *
@@ -278,7 +278,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
 
     /**
      * Returns a {@link ConnectionMultiplexerSession} for the specified connection manager
-     * domain or <tt>null</tt> if none was found. In case the connection manager has many
+     * domain or {@code null} if none was found. In case the connection manager has many
      * connections established with the server then one of them will be selected randomly.
      *
      * @param connectionManagerDomain the domain of the connection manager to get a session.

@@ -138,7 +138,7 @@ public interface MUCRole {
     JID getRoleAddress();
 
     /**
-     * Obtain the XMPPAddress of the user that joined the room. A <tt>null</tt> null value
+     * Obtain the XMPPAddress of the user that joined the room. A {@code null} null value
      * represents the room's role.
      *
      * @return The address of the user that joined the room or null if this role belongs to the room itself.

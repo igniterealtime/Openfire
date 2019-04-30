@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 public class CookieUtils {
 
     /**
-     * Returns the specified cookie, or <tt>null</tt> if the cookie
+     * Returns the specified cookie, or {@code null} if the cookie
      * does not exist. Note: because of the way that cookies are implemented
      * it's possible for multiple cookies with the same name to exist (but with
      * different domain values). This method will return the first cookie that
@@ -31,7 +31,7 @@ public class CookieUtils {
      *
      * @param request the servlet request.
      * @param name the name of the cookie.
-     * @return the Cookie object if it exists, otherwise <tt>null</tt>.
+     * @return the Cookie object if it exists, otherwise {@code null}.
      */
     public static Cookie getCookie(HttpServletRequest request, String name) {
         Cookie cookies[] = request.getCookies();
@@ -98,7 +98,7 @@ public class CookieUtils {
 
     /**
      * Stores a value in a cookie. This cookie will persist for the amount
-     * specified in the <tt>saveTime</tt> parameter.
+     * specified in the {@code saveTime} parameter.
      *
      * @see #setCookie(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,String,String)
      * @param request the servlet request.

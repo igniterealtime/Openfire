@@ -21,6 +21,9 @@ import org.xmpp.packet.Message;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches MUC events. The following events are supported:
  * <ul>
@@ -37,6 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Daniel Henninger
  */
 public class MUCEventDispatcher {
+    private static final Logger Log = LoggerFactory.getLogger(MUCEventDispatcher.class);
 
     private static Collection<MUCEventListener> listeners =
             new ConcurrentLinkedQueue<>();
@@ -51,49 +55,81 @@ public class MUCEventDispatcher {
 
     public static void occupantJoined(JID roomJID, JID user, String nickname) {
         for (MUCEventListener listener : listeners) {
-            listener.occupantJoined(roomJID, user, nickname);
+            try {
+                listener.occupantJoined(roomJID, user, nickname);  
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'occupantJoined' event!", e);
+            }
         }
     }
 
     public static void occupantLeft(JID roomJID, JID user) {
         for (MUCEventListener listener : listeners) {
-            listener.occupantLeft(roomJID, user);
+            try {
+                listener.occupantLeft(roomJID, user);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'occupantLeft' event!", e);
+            } 
         }
     }
 
     public static void nicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname) {
         for (MUCEventListener listener : listeners) {
-            listener.nicknameChanged(roomJID, user, oldNickname, newNickname);
+            try {
+                listener.nicknameChanged(roomJID, user, oldNickname, newNickname);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'nicknameChanged' event!", e);
+            }
         }
     }
 
     public static void messageReceived(JID roomJID, JID user, String nickname, Message message) {
         for (MUCEventListener listener : listeners) {
-            listener.messageReceived(roomJID, user, nickname, message);
+            try {
+                listener.messageReceived(roomJID, user, nickname, message); 
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'messageReceived' event!", e);
+            }
         }
     }
 
     public static void privateMessageRecieved(JID toJID, JID fromJID, Message message) {
         for (MUCEventListener listener : listeners) {
-            listener.privateMessageRecieved(toJID, fromJID, message);
+            try {
+                listener.privateMessageRecieved(toJID, fromJID, message);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'privateMessageRecieved' event!", e);
+            }  
         }
     }
 
     public static void roomCreated(JID roomJID) {
         for (MUCEventListener listener : listeners) {
-            listener.roomCreated(roomJID);
+            try {
+                listener.roomCreated(roomJID);   
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'roomCreated' event!", e);
+            }
         }
     }
 
     public static void roomDestroyed(JID roomJID) {
         for (MUCEventListener listener : listeners) {
-            listener.roomDestroyed(roomJID);
+            try {
+                listener.roomDestroyed(roomJID);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'roomDestroyed' event!", e);
+            }
         }
     }
 
     public static void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
         for (MUCEventListener listener : listeners) {
-            listener.roomSubjectChanged(roomJID, user, newSubject);
+            try {
+                listener.roomSubjectChanged(roomJID, user, newSubject); 
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'roomSubjectChanged' event!", e);
+            }
         }
     }
 

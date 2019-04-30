@@ -541,6 +541,7 @@ public class LocalMUCUser implements MUCUser {
                     if (Presence.Type.unavailable == packet.getType()) {
                         try {
                             // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
+                            role.setPresence(packet);
                             removeRole(group);
                             role.getChatRoom().leaveRoom(role);
                         }

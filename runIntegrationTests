@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SMACK_COMMIT_ID="ae208d6a2f608a69c54aae7cb2b22dc52524e9ff"
+GRADLE_VERSION="5.2.1"
+FORCE_CUSTOM_GRADLE=false
+CURL_ARGS="--location --silent"
+
+while getopts dgs: OPTION "$@"; do
+	case $OPTION in
+		d)
+			set -x
+			;;
+		g)
+			FORCE_CUSTOM_GRADLE=true
+			;;
+		s)
+			SMACK_COMMIT_ID="${OPTARG}"
+			;;
+	esac
+done
+
+# Pretty fancy method to get reliable the absolute path of a shell
+# script, *even if it is sourced*. Credits go to GreenFox on
+# stackoverflow: http://stackoverflow.com/a/12197518/194894
+pushd . > /dev/null
+SCRIPTDIR="${BASH_SOURCE[0]}";
+while([ -h "${SCRIPTDIR}" ]); do
+    cd "`dirname "${SCRIPTDIR}"`"
+    SCRIPTDIR="$(readlink "`basename "${SCRIPTDIR}"`")";
+done
+cd "`dirname "${SCRIPTDIR}"`" > /dev/null
+SCRIPTDIR="`pwd`";
+popd  > /dev/null
+
+declare -r BASEDIR="${SCRIPTDIR}"
+
+cd "${BASEDIR}"
+
+TMPDIR=$(mktemp -d)
+trap "rm -rf ${TMPDIR}" EXIT
+
+SMACKDIR="${TMPDIR}/smack"
+GRADLEDIR="${TMPDIR}/gradle"
+
+if command -v gradle &> /dev/null; then
+	GRADLE_IN_PATH=true
+else
+	GRADLE_IN_PATH=false
+fi
+
+if [[ $GRADLE_IN_PATH == false ]] || $FORCE_CUSTOM_GRADLE; then
+	mkdir "${GRADLEDIR}"
+	pushd "${GRADLEDIR}"
+	declare -r GRADLE_ZIP="gradle-${GRADLE_VERSION}-bin.zip"
+	curl ${CURL_ARGS} --output ${GRADLE_ZIP} "https://services.gradle.org/distributions/${GRADLE_ZIP}"
+	unzip "${GRADLE_ZIP}"
+	GRADLE="${GRADLEDIR}/gradle-${GRADLE_VERSION}/bin/gradle"
+	popd
+else
+	GRADLE="gradle"
+fi
+
+mkdir "${SMACKDIR}"
+pushd "${SMACKDIR}"
+git init
+git remote add origin git://github.com/igniterealtime/Smack.git
+set +e
+git fetch --depth=1 origin "${SMACK_COMMIT_ID}"
+GIT_FETCH_EXIT_CODE=$?
+set -e
+if [[ $GIT_FETCH_EXIT_CODE -ne 0 ]]; then
+	echo "Git shallow fetch failed, falling back to full fetch"
+	git fetch origin
+fi
+git reset --hard "${SMACK_COMMIT_ID}"
+popd
+
+declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
+
+if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
+	mvn verify -P ci
+fi
+
+rm distribution/target/distribution-base/conf/openfire.xml
+
+# TODO: This file should probably be part of Openfire's git and be
+# selectable by openfire.sh (.e.g "openfire.sh -c
+# openfire-demoboot.xml").
+curl ${CURL_ARGS} \
+	-o distribution/target/distribution-base/conf/openfire.xml \
+	https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
+
+echo "Starting Openfire…"
+
+"${OPENFIRE_SHELL_SCRIPT}" &
+
+# Wait 120 seconds for Openfire to open up the web interface and
+# assume Openfire is fully operational once that happens (not sure if
+# this assumption is correct).
+timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
+
+echo "Starting Integration Tests (using Smack ${SMACK_COMMIT_ID})…"
+
+DISABLED_INTEGRATION_TESTS=()
+DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
+DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
+# Flaps sometimes (possibly a Openfire issue)
+DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
+# Does sometimes not succeed (possibly a Smack issue)
+DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
+# EntityCapsTest#testEntityCaps fails regularly. Reason unknown.
+DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+
+SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
+for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
+	SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
+done
+# Remove last ',' from the argument.
+SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT::-1}"
+
+pushd "${SMACKDIR}"
+sed -i '/-Werror/d' build.gradle
+sed -i 's/if (config.testPackages == null) {/if (config.testPackages == null || config.testPackages.isEmpty()) {/' smack-integration-test/src/main/java/org/igniterealtime/smack/inttest/SmackIntegrationTestFramework.java
+$GRADLE integrationTest \
+		-Dsinttest.service=example.org \
+		-Dsinttest.securityMode=disabled \
+		-Dsinttest.replyTimeout=60000 \
+		-Dsinttest.adminAccountUsername=admin \
+		-Dsinttest.adminAccountPassword=admin \
+		${SINTTEST_DISABLED_TESTS_ARGUMENT}

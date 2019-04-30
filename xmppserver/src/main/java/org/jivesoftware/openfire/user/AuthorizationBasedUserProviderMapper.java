@@ -35,8 +35,8 @@ import java.util.Set;
  * must reference the classname of an {@link UserProvider}.
  *
  * <ul>
- * <li><tt>authorizationBasedUserMapper.adminProvider.className = org.jivesoftware.openfire.auth.DefaultUserProvider</tt></li>
- * <li><tt>authorizationBasedUserMapper.userProvider.className = org.jivesoftware.openfire.auth.NativeUserProvider</tt></li>
+ * <li>{@code authorizationBasedUserMapper.adminProvider.className = org.jivesoftware.openfire.auth.DefaultUserProvider}</li>
+ * <li>{@code authorizationBasedUserMapper.userProvider.className = org.jivesoftware.openfire.auth.NativeUserProvider}</li>
  * </ul>
  *
  * @author Guus der Kinderen, guus@goodbytes.nl

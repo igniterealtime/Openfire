@@ -20,7 +20,7 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
     /**
      * Maps certificate CommonName as identity credentials
      * 
-     * @param certificate
+     * @param certificate the certificates to map
      * @return A List of names.
      */
     @Override

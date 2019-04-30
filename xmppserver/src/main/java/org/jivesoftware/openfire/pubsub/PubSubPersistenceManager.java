@@ -67,9 +67,25 @@ public class PubSubPersistenceManager {
             "ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
             "ofPubsubItem.serviceID = ? AND nodeID = ?";
-    
+
+    private static final String PURGE_FOR_SIZE_ORACLE =
+            "DELETE from ofPubsubItem where id in " +
+            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
+            "(SELECT * from (SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
+            "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
+            "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
+
+    private static final String PURGE_FOR_SIZE_SQLSERVER =
+            "DELETE from ofPubsubItem where id in " +
+            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
+            "(SELECT TOP (?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC) AS noDelete " +
+            "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
+            "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
+
     private static final String PURGE_FOR_SIZE_MYSQL =
-        "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+            "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
             "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
             "ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
@@ -659,10 +675,11 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Loads all nodes from the database and adds them to the PubSub service.
+     * Loads a node from the database and adds them to the PubSub service.
      *
      * @param service
      *            the pubsub service that is hosting the nodes.
+     * @param nodeId the specific node to load
      */
     public static void loadNode(PubSubService service, String nodeId)
     {
@@ -1418,7 +1435,7 @@ public class PubSubPersistenceManager {
      * @param service the default node configuration used by this pubsub service.
      * @param isLeafType true if loading default configuration for leaf nodes.
      * @return the loaded default node configuration for the specified node type and service
-     *         or <tt>null</tt> if none was found.
+     *         or {@code null} if none was found.
      */
     public static DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service,
             boolean isLeafType) {
@@ -1563,6 +1580,7 @@ public class PubSubPersistenceManager {
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
      *
      * @param node the leaf node to load its published items.
+     * @return the list of published items
      */
     public static List<PublishedItem> getPublishedItems(LeafNode node) {
         return getPublishedItems(node, node.getMaxPublishedItems());
@@ -1572,6 +1590,8 @@ public class PubSubPersistenceManager {
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
      *
      * @param node the leaf node to load its published items.
+     * @param maxRows the maximum number of items to return
+     * @return the list of published items
      */
     public static List<PublishedItem> getPublishedItems(LeafNode node, int maxRows) {
         Lock itemLock = CacheFactory.getLock(ITEM_CACHE, itemCache);
@@ -1642,6 +1662,7 @@ public class PubSubPersistenceManager {
      * Fetches the last published item for the specified node.
      *
      * @param node the leaf node to load its last published items.
+     * @return the published item
      */
     public static PublishedItem getLastPublishedItem(LeafNode node) {
         Lock itemLock = CacheFactory.getLock(ITEM_CACHE, itemCache);
@@ -1917,6 +1938,13 @@ public class PubSubPersistenceManager {
             purgeStmt.setString(4, nodeId);
             purgeStmt.setInt(5, maxItems);
             break;
+        case sqlserver:
+            purgeStmt.setInt(1, maxItems);
+            purgeStmt.setString(2, serviceId);
+            purgeStmt.setString(3, nodeId);
+            purgeStmt.setString(4, serviceId);
+            purgeStmt.setString(5, nodeId);
+            break;
 
         default:
             purgeStmt.setString(1, serviceId);
@@ -1938,6 +1966,10 @@ public class PubSubPersistenceManager {
             return PURGE_FOR_SIZE_MYSQL;
         case hsqldb:
             return PURGE_FOR_SIZE_HSQLDB;
+        case oracle:
+            return PURGE_FOR_SIZE_ORACLE;
+        case sqlserver:
+            return PURGE_FOR_SIZE_SQLSERVER;
 
         default:
             return PURGE_FOR_SIZE;

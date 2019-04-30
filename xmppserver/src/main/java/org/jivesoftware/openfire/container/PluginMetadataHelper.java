@@ -46,7 +46,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the name of the directory of the parent for this plugin. The value is retrieved from the plugin.xml file
-     * of the plugin (which is casted down to lower-case). If the value could not be found, <tt>null</tt> will be returned.
+     * of the plugin (which is casted down to lower-case). If the value could not be found, {@code null} will be returned.
      *
      * @param plugin The plugin (cannot be null)
      * @return the parent plugin's directory name
@@ -58,7 +58,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the name of the directory of the parent for this plugin. The value is retrieved from the plugin.xml file
-     * of the plugin (which is casted down to lower-case). If the value could not be found, <tt>null</tt> will be returned.
+     * of the plugin (which is casted down to lower-case). If the value could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the parent plugin's directory name
@@ -117,7 +117,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the name of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value could not
-     * be found, <tt>null</tt> will be returned. Note that this value is a 'human readable' name, which can be distinct
+     * be found, {@code null} will be returned. Note that this value is a 'human readable' name, which can be distinct
      * from the name of the plugin directory as returned by {@link #getCanonicalName(Path)}.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
@@ -134,7 +134,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the name of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value could not
-     * be found, <tt>null</tt> will be returned. Note that this value is a 'human readable' name, which can be distinct
+     * be found, {@code null} will be returned. Note that this value is a 'human readable' name, which can be distinct
      * from the name of the plugin directory as returned by {@link #getCanonicalName(Path)}.
      *
      * @param pluginDir the path of the plugin directory.
@@ -158,7 +158,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the description of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value
-     * could not be found, <tt>null</tt> will be returned.
+     * could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -174,7 +174,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the description of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value
-     * could not be found, <tt>null</tt> will be returned.
+     * could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's description.
@@ -188,7 +188,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the author of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value could
-     * not be found, <tt>null</tt> will be returned.
+     * not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -204,7 +204,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the author of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value could
-     * not be found, <tt>null</tt> will be returned.
+     * not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's author.
@@ -216,7 +216,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the version of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value
-     * could not be found, <tt>null</tt> will be returned.
+     * could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -232,7 +232,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the version of a plugin. The value is retrieved from the plugin.xml file of the plugin. If the value
-     * could not be found, <tt>null</tt> will be returned.
+     * could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's version.
@@ -251,7 +251,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the minimum server version this plugin can run within. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -267,7 +267,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the minimum server version this plugin can run within. The value is retrieved from the plugin.xml file
-     * of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's minimum server version (possibly null).
@@ -286,7 +286,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the server version up, but not including, in which this plugin can run within. The value is retrieved from
-     * the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * the plugin.xml file of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -302,7 +302,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the server version up, but not including, in which this plugin can run within. The value is retrieved from
-     * the plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * the plugin.xml file of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's maximum server version (possibly null).
@@ -320,7 +320,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the minimum Java specification version this plugin needs to run. The value is retrieved from the
-     * plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * plugin.xml file of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
@@ -336,7 +336,7 @@ public class PluginMetadataHelper
 
     /**
      * Returns the minimum Java specification version this plugin needs to run. The value is retrieved from the
-     * plugin.xml file of the plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * plugin.xml file of the plugin. If the value could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
      * @return the plugin's minimum Java version (possibly null).
@@ -355,14 +355,14 @@ public class PluginMetadataHelper
 
     /**
      * Returns the database schema key of a plugin, if it exists. The value is retrieved from the plugin.xml file of the
-     * plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * plugin. If the value could not be found, {@code null} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
      * argument.
      *
      * @param plugin The plugin (cannot be null)
-     * @return the plugin's database schema key or <tt>null</tt> if it doesn't exist.
+     * @return the plugin's database schema key or {@code null} if it doesn't exist.
      */
     public static String getDatabaseKey( Plugin plugin )
     {
@@ -371,10 +371,10 @@ public class PluginMetadataHelper
 
     /**
      * Returns the database schema key of a plugin, if it exists. The value is retrieved from the plugin.xml file of the
-     * plugin. If the value could not be found, <tt>null</tt> will be returned.
+     * plugin. If the value could not be found, {@code null} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
-     * @return the plugin's database schema key or <tt>null</tt> if it doesn't exist.
+     * @return the plugin's database schema key or {@code null} if it doesn't exist.
      */
     public static String getDatabaseKey( Path pluginDir )
     {
@@ -383,14 +383,14 @@ public class PluginMetadataHelper
 
     /**
      * Returns the database schema version of a plugin, if it exists. The value is retrieved from the plugin.xml file of
-     * the plugin. If the value could not be found, <tt>-1</tt> will be returned.
+     * the plugin. If the value could not be found, {@code -1} will be returned.
      *
      * Note that this method will return data only for plugins that have successfully been installed. To obtain data
      * from plugin (directories) that have not (yet) been  installed, refer to the overloaded method that takes a Path
      * argument.
      *
      * @param plugin The plugin (cannot be null)
-     * @return the plugin's database schema version or <tt>-1</tt> if it doesn't exist.
+     * @return the plugin's database schema version or {@code -1} if it doesn't exist.
      */
     public static int getDatabaseVersion( Plugin plugin )
     {
@@ -399,10 +399,10 @@ public class PluginMetadataHelper
 
     /**
      * Returns the database schema version of a plugin, if it exists. The value is retrieved from the plugin.xml file of
-     * the plugin. If the value could not be found, <tt>-1</tt> will be returned.
+     * the plugin. If the value could not be found, {@code -1} will be returned.
      *
      * @param pluginDir the path of the plugin directory.
-     * @return the plugin's database schema version or <tt>-1</tt> if it doesn't exist.
+     * @return the plugin's database schema version or {@code -1} if it doesn't exist.
      */
     public static int getDatabaseVersion( Path pluginDir )
     {

@@ -102,7 +102,7 @@ public class NodeSubscription {
     private int digestFrequency = 86400000;
     /**
      * The Date at which a leased subscription will end or has ended. A value of
-     * <tt>null</tt> means that the subscription will never expire.
+     * {@code null} means that the subscription will never expire.
      */
     private Date expire = null;
     /**
@@ -126,7 +126,7 @@ public class NodeSubscription {
      */
     private int depth = 1;
     /**
-     * Keyword that the event needs to match. When <tt>null</tt> all event are going to
+     * Keyword that the event needs to match. When {@code null} all event are going to
      * be notified to the subscriber.
      */
     private String keyword = null;
@@ -264,10 +264,10 @@ public class NodeSubscription {
 
     /**
      * Returns the Date at which a leased subscription will end or has ended. A value of
-     * <tt>null</tt> means that the subscription will never expire.
+     * {@code null} means that the subscription will never expire.
      *
      * @return the Date at which a leased subscription will end or has ended. A value of
-     *         <tt>null</tt> means that the subscription will never expire.
+     *         {@code null} means that the subscription will never expire.
      */
     public Date getExpire() {
         return expire;
@@ -297,7 +297,7 @@ public class NodeSubscription {
 
     /**
      * Returns if the owner has subscribed to receive notification of new items only
-     * or of new nodes only. When subscribed to a Leaf Node then only <tt>items</tt>
+     * or of new nodes only. When subscribed to a Leaf Node then only {@code items}
      * is available.
      *
      * @return whether the owner has subscribed to receive notification of new items only
@@ -320,10 +320,10 @@ public class NodeSubscription {
     }
 
     /**
-     * Returns the keyword that the event needs to match. When <tt>null</tt> all event
+     * Returns the keyword that the event needs to match. When {@code null} all event
      * are going to be notified to the subscriber.
      *
-     * @return the keyword that the event needs to match. When <tt>null</tt> all event
+     * @return the keyword that the event needs to match. When {@code null} all event
      *         are going to be notified to the subscriber.
      */
     public String getKeyword() {
@@ -375,7 +375,7 @@ public class NodeSubscription {
      * packet sent by the subscriber. If the subscription was pending of configuration
      * then the last published item is going to be sent to the subscriber.<p>
      *
-     * The originalIQ parameter may be <tt>null</tt> when using this API internally. When no
+     * The originalIQ parameter may be {@code null} when using this API internally. When no
      * IQ packet was sent then no IQ result will be sent to the sender. The rest of the
      * functionality is the same.
      *
@@ -782,7 +782,7 @@ public class NodeSubscription {
      * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
      *
      * <p>Sending the last published item can also be entirely disabled by setting
-     * <tt>xmpp.pubsub.disable-delayed-delivery</tt> to <tt><true</tt>.</p>
+     * {@code xmpp.pubsub.disable-delayed-delivery} to {@code <true}.</p>
      *
      * @param publishedItem the last item that was published to the node.
      */
@@ -835,7 +835,7 @@ public class NodeSubscription {
     /**
      * Returns the {@link NodeAffiliate} that owns this subscription. Users that have a
      * subscription with the node will ALWAYS have an affiliation even if the
-     * affiliation is of type <tt>none</tt>.
+     * affiliation is of type {@code none}.
      *
      * @return the NodeAffiliate that owns this subscription.
      */

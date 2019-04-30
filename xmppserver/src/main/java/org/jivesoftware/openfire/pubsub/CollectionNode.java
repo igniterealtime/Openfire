@@ -51,7 +51,7 @@ public class CollectionNode extends Node {
     private LeafNodeAssociationPolicy associationPolicy = LeafNodeAssociationPolicy.all;
     /**
      * Users that are allowed to associate leaf nodes with this collection node. This collection
-     * is going to be used only when the associationPolicy is <tt>whitelist</tt>.
+     * is going to be used only when the associationPolicy is {@code whitelist}.
      */
     private Collection<JID> associationTrusted = new ArrayList<>();
     /**
@@ -367,7 +367,7 @@ public class CollectionNode extends Node {
 
     /**
      * Returns the users that are allowed to associate leaf nodes with this collection node.
-     * This collection is going to be used only when the associationPolicy is <tt>whitelist</tt>.
+     * This collection is going to be used only when the associationPolicy is {@code whitelist}.
      *
      * @return the users that are allowed to associate leaf nodes with this collection node.
      */
@@ -408,7 +408,7 @@ public class CollectionNode extends Node {
 
     /**
      * Sets the users that are allowed to associate leaf nodes with this collection node.
-     * This collection is going to be used only when the associationPolicy is <tt>whitelist</tt>.
+     * This collection is going to be used only when the associationPolicy is {@code whitelist}.
      *
      * @param associationTrusted the users that are allowed to associate leaf nodes with this
      *        collection node.

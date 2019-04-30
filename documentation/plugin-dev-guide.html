@@ -28,33 +28,43 @@
 Plugins enhance the functionality of Openfire. This document is a
 developer's guide for creating plugins.
 </p>
+<p>The plugin development is now based on <a href="https://maven.apache.org/index.html">Maven</a>(instead of Ant)</p>
+
+<h2>What is Maven</h2>
+<p>
+Maven is a project management tool which can manage the complete building life cycle.
+Maven simplifies and standardizes the project build process. by handling compilation, testing, library dependency, distribution, documentation and team collaboration.
+The Maven developers claim that Maven is more than just a build tool. We can think of Maven as a build tool with more features.
+Maven provides developers ways to manage project(Builds,Test,Documentation,Reporting,Dependencies,Releases,Distribution,Mailing List).
+</p>
 
 <h2>Structure of a Plugin</h2>
-
 <p>
 Plugins live in the <tt>plugins</tt> directory of <tt>openfireHome</tt>. When a plugin
 is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
 plugin directory are as follows:
-
 </p>
 
 <fieldset>
     <legend>Plugin Structure</legend>
 <pre>myplugin/
+ |- pom.xml         &lt;- Plugin description/configuration file of the Maven project (allows you to define the POM (Project Object Model) used by Maven).
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin, which will be displayed to end users
  |- changelog.html  &lt;- Optional changelog file for plugin, which will be displayed to end users
  |- logo_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
  |- logo_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
- |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
- |- database/       &lt;- Optional database schema files that your plugin needs
- |- i18n/           &lt;- Optional i18n files to allow for internationalization of plugins.
- |- lib/            &lt;- Libraries (JAR files) your plugin needs
- |- web             &lt;- Resources for Admin Console integration, if any
-     |- WEB-INF/
-         |- web.xml           &lt;- Generated web.xml containing compiled JSP entries
-         |- web-custom.xml    &lt;- Optional user-defined web.xml for custom servlets
-     |- images/
+ |- src   
+    |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
+    |- database/       &lt;- Optional database schema files that your plugin needs
+    |- i18n/           &lt;- Optional i18n files to allow for internationalization of plugins.
+    |- lib/            &lt;- Libraries (JAR files) your plugin needs
+    |- java/           &lt;- This is the directory containing the sources of the plugin application(.java files) and located in the package
+    |- web             &lt;- Resources for Admin Console integration, if any
+        |- WEB-INF/
+            |- web.xml           &lt;- Generated web.xml containing compiled JSP entries
+            |- web-custom.xml    &lt;- Optional user-defined web.xml for custom servlets
+        |- images/
 
 </pre>
 </fieldset>

@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.WebManager;
@@ -208,7 +209,10 @@ public class AuthCheckFilter implements Filter {
         if (!doExclude) {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
-            if (!(manager.getAuthToken() instanceof AuthToken.OneTimeAuthToken) && manager.getUser() == null && !authUserFromRequest(request)) {
+            boolean haveOneTimeToken = manager.getAuthToken() instanceof AuthToken.OneTimeAuthToken;
+            User loggedUser = manager.getUser();
+            boolean loggedAdmin = loggedUser == null ? false : adminManager.isUserAdmin(loggedUser.getUsername(), true);
+            if (!haveOneTimeToken && !loggedAdmin && !authUserFromRequest(request)) {
                 response.sendRedirect(getRedirectURL(request, loginPage, null));
                 return;
             }

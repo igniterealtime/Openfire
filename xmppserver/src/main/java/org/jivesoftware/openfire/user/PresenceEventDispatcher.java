@@ -23,6 +23,9 @@ import org.xmpp.packet.Presence;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches presence events. The following events are supported:
  * <ul>
@@ -37,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class PresenceEventDispatcher {
+    private static final Logger Log = LoggerFactory.getLogger(PresenceEventDispatcher.class);
 
     private static List<PresenceEventListener> listeners =
             new CopyOnWriteArrayList<>();
@@ -74,7 +78,11 @@ public class PresenceEventDispatcher {
     public static void availableSession(ClientSession session, Presence presence) {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
-                listener.availableSession(session, presence);
+                try {
+                    listener.availableSession(session, presence);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'availableSession' event!", e);
+                }
             }
         }
     }
@@ -91,7 +99,11 @@ public class PresenceEventDispatcher {
     public static void unavailableSession(ClientSession session, Presence presence) {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
-                listener.unavailableSession(session, presence);
+                try {
+                    listener.unavailableSession(session, presence);
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'unavailableSession' event!", e);
+                }
             }
         }
     }
@@ -108,7 +120,11 @@ public class PresenceEventDispatcher {
     public static void presenceChanged(ClientSession session, Presence presence) {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
-                listener.presenceChanged(session, presence);
+                try {
+                    listener.presenceChanged(session, presence); 
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'presenceChanged' event!", e);
+                }
             }
         }
     }
@@ -123,7 +139,11 @@ public class PresenceEventDispatcher {
     public static void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
-                listener.subscribedToPresence(subscriberJID, authorizerJID);
+                try {
+                    listener.subscribedToPresence(subscriberJID, authorizerJID);   
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'subscribedToPresence' event!", e);
+                }
             }
         }
     }
@@ -138,7 +158,11 @@ public class PresenceEventDispatcher {
     public static void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
         if (!listeners.isEmpty()) {
             for (PresenceEventListener listener : listeners) {
-                listener.unsubscribedToPresence(unsubscriberJID, recipientJID);
+                try {
+                    listener.unsubscribedToPresence(unsubscriberJID, recipientJID); 
+                } catch (Exception e) {
+                    Log.warn("An exception occurred while dispatching a 'unsubscribedToPresence' event!", e);
+                }
             }
         }
     }

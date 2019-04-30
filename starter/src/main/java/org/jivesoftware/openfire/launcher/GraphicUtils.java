@@ -185,6 +185,8 @@ public final class GraphicUtils {
     /**
      * Centers the window over a component (usually another window).
      * The window must already have been sized.
+     * @param window the window to center
+     * @param over the component over which to center it
      */
     public static void centerWindowOnComponent(Window window, Component over) {
         if ((over == null) || !over.isShowing()) {
@@ -222,6 +224,7 @@ public final class GraphicUtils {
     }
 
     /**
+     * @param c the component
      * @return returns true if the component of one of its child has the focus
      */
     public static boolean isAncestorOfFocusedComponent(Component c) {
@@ -249,6 +252,7 @@ public final class GraphicUtils {
      * @param deepest if <code>deepest</code> is true the method will return the first and deepest component that can accept the
      *                focus.  For example, if both a child and its parent are focusable and <code>deepest</code> is true, the child is
      *                returned.
+     * @return the first component that can accept focus
      * @see #focusComponentOrChild
      */
     public static Component getFocusableComponentOrChild(Component c, boolean deepest) {
@@ -293,7 +297,8 @@ public final class GraphicUtils {
     /**
      * Puts the focus on the first component in the tree of <code>c</code> that
      * can accept the focus.
-     *
+     * @param c the component
+     * @return the first component that can accept focus
      * @see #getFocusableComponentOrChild
      */
     public static Component focusComponentOrChild(Component c) {
@@ -308,6 +313,7 @@ public final class GraphicUtils {
      * @param deepest if <code>deepest</code> is true the method will focus the first and deepest component that can
      *                accept the focus.
      *                For example, if both a child and its parent are focusable and <code>deepest</code> is true, the child is focused.
+     * @return the component which has focus
      * @see #getFocusableComponentOrChild
      */
     public static Component focusComponentOrChild(Component c, boolean deepest) {
@@ -326,6 +332,10 @@ public final class GraphicUtils {
      * their location.
      * <p>
      * <em>This method replaces legacy code from JDeveloper 3.x and earlier.</em></p>
+     *
+     * @param imageName the name of the image
+     * @param cls the class relative to the which the image resource should be obtained
+     * @return the image
      *
      * @see Class#getResource(String)
      * @see Toolkit#createImage(URL)
@@ -386,7 +396,7 @@ public final class GraphicUtils {
     /**
      * Return the hexidecimal color from a java.awt.Color
      *
-     * @param c
+     * @param c the colour
      * @return hexadecimal string
      */
     public static final String toHTMLColor(Color c) {

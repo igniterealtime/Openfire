@@ -22,23 +22,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Document;
@@ -48,8 +39,9 @@ import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
-import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusterMonitor;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -64,9 +56,11 @@ import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.disco.UserFeaturesProvider;
 import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
 import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.handler.IQBindHandler;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
@@ -96,6 +90,9 @@ import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -114,11 +111,15 @@ import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
+import com.google.common.reflect.ClassPath;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -158,7 +159,7 @@ public class XMPPServer {
     private boolean initialized = false;
     private boolean started = false;
     private NodeID nodeID;
-    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
+    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance( UUID.randomUUID().toString().getBytes() );
 
     public static final String EXIT = "exit";
     private final static Set<String> XML_ONLY_PROPERTIES;
@@ -397,11 +398,11 @@ public class XMPPServer {
             logger.error(e.getMessage(), e);
         }
 
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
-        JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
-        Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
-        Log.setTraceEnabled(JiveGlobals.getBooleanProperty(Log.LOG_TRACE_ENABLED, false));
+        JiveGlobals.migrateProperty(Log.DEBUG_ENABLED.getKey());
+        Log.setDebugEnabled(Log.DEBUG_ENABLED.getValue());
+        Log.setTraceEnabled(Log.TRACE_ENABLED.getValue());
 
         // Update server info
         xmppServerInfo = new XMPPServerInfoImpl(new Date());
@@ -438,6 +439,10 @@ public class XMPPServer {
     }
 
     void runAutoSetup() {
+        // Setup property encryptor as early as possible so that database related properties can use it
+        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
+        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
+
         // steps from setup-datasource-standard.jsp
         // do this first so that other changes persist
         if ("standard".equals(JiveGlobals.getXMLProperty("autosetup.database.mode"))) {
@@ -452,21 +457,21 @@ public class XMPPServer {
 
             try {
                 minConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.minConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.minConnections"));
             }
             catch (Exception e) {
                 minConnections = 5;
             }
             try {
                 maxConnections = Integer.parseInt(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.maxConnections"));
             }
             catch (Exception e) {
                 maxConnections = 25;
             }
             try {
                 connectionTimeout = Double.parseDouble(
-                    JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout"));
+                    JiveGlobals.getXMLProperty("autosetup.database.defaultProvider.connectionTimeout"));
             }
             catch (Exception e) {
                 connectionTimeout = 1.0;
@@ -489,15 +494,12 @@ public class XMPPServer {
         JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
 
         // steps from setup-host-settings.jsp
-        JiveGlobals.setXMLProperty("xmpp.domain", JiveGlobals.getXMLProperty("autosetup.xmpp.domain"));
+        JiveGlobals.setXMLProperty(XMPPServerInfo.XMPP_DOMAIN.getKey(), JiveGlobals.getXMLProperty("autosetup." + XMPPServerInfo.XMPP_DOMAIN.getKey()));
         JiveGlobals.setXMLProperty("fqdn", JiveGlobals.getXMLProperty("autosetup.xmpp.fqdn"));
-        JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
-        JiveGlobals.setProperty("xmpp.socket.ssl.active", JiveGlobals.getXMLProperty("autosetup.xmpp.socket.ssl.active", "true"));
-        JiveGlobals.setProperty("xmpp.auth.anonymous", JiveGlobals.getXMLProperty("autosetup.xmpp.auth.anonymous", "false"));
-
-        JiveGlobals.setupPropertyEncryptionAlgorithm(JiveGlobals.getXMLProperty("autosetup.encryption.algorithm", "Blowfish")); // or AES
-        JiveGlobals.setupPropertyEncryptionKey(JiveGlobals.getXMLProperty("autosetup.encryption.key", null));
+        ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "true")));
+        AnonymousSaslServer.ENABLED.setValue(Boolean.valueOf(JiveGlobals.getXMLProperty("autosetup." + AnonymousSaslServer.ENABLED.getKey(), "false")));
 
 
         // steps from setup-profile-settings.jsp
@@ -505,20 +507,20 @@ public class XMPPServer {
             JiveGlobals.setXMLProperty("connectionProvider.className",
                 "org.jivesoftware.database.DefaultConnectionProvider");
 
-            JiveGlobals.setProperty("provider.auth.className", JiveGlobals.getXMLProperty("provider.auth.className",
-                org.jivesoftware.openfire.auth.DefaultAuthProvider.class.getName()));
-            JiveGlobals.setProperty("provider.user.className", JiveGlobals.getXMLProperty("provider.user.className",
-                org.jivesoftware.openfire.user.DefaultUserProvider.class.getName()));
-            JiveGlobals.setProperty("provider.group.className", JiveGlobals.getXMLProperty("provider.group.className",
-                org.jivesoftware.openfire.group.DefaultGroupProvider.class.getName()));
-            JiveGlobals.setProperty("provider.vcard.className", JiveGlobals.getXMLProperty("provider.vcard.className",
-                org.jivesoftware.openfire.vcard.DefaultVCardProvider.class.getName()));
-            JiveGlobals.setProperty("provider.lockout.className", JiveGlobals.getXMLProperty("provider.lockout.className",
-                org.jivesoftware.openfire.lockout.DefaultLockOutProvider.class.getName()));
-            JiveGlobals.setProperty("provider.securityAudit.className", JiveGlobals.getXMLProperty("provider.securityAudit.className",
-                org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
-            JiveGlobals.setProperty("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
-                org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+            JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
+                AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
+                UserManager.USER_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
+                GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(VCardManager.VCARD_PROVIDER.getKey(), JiveGlobals.getXMLProperty(VCardManager.VCARD_PROVIDER.getKey(),
+                VCardManager.VCARD_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
+                LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),
+                SecurityAuditManager.AUDIT_PROVIDER.getDefaultValue().getName()));
+            JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
+                AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
 
             // make configurable?
             JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
@@ -553,8 +555,6 @@ public class XMPPServer {
                 JiveGlobals.setPropertyEncrypted(propName, JiveGlobals.isXMLPropertyEncrypted(propName));
             }
         }
-        // Set default SASL SCRAM-SHA-1 iteration count
-        JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
         // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
         CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
@@ -619,6 +619,7 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
+                        scanForSystemPropertyClasses();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -670,7 +671,15 @@ public class XMPPServer {
             
             // Notify server listeners that the server has been started
             for (XMPPServerListener listener : listeners) {
-                listener.serverStarted();
+                try {
+                    listener.serverStarted();
+                } catch (Exception e) {
+                    logger.warn("An exception occurred while dispatching a 'serverStarted' event!", e);
+                }
+            }
+
+            if (!setupMode) {
+                scanForSystemPropertyClasses();
             }
         }
         catch (Exception e) {
@@ -678,6 +687,42 @@ public class XMPPServer {
             logger.error(e.getMessage(), e);
             System.out.println(LocaleUtils.getLocalizedString("startup.error"));
             shutdownServer();
+        }
+    }
+
+    // A SystemProperty class will not appear in the System Properties screen until it is referenced. This method
+    // ensures that they are all referenced immediately.
+    // The following class cannot always be loaded as it references a class that's part of the Install4J launcher
+    private static final Set<String> CLASSES_TO_EXCLUDE = Collections.singleton("org.jivesoftware.openfire.launcher.Uninstaller");
+
+    private void scanForSystemPropertyClasses() {
+
+        try {
+            final Set<ClassPath.ClassInfo> classesInPackage = ClassPath.from(getClass().getClassLoader()).getTopLevelClassesRecursive("org.jivesoftware.openfire");
+            for (final ClassPath.ClassInfo classInfo : classesInPackage) {
+                final String className = classInfo.getName();
+                if (!CLASSES_TO_EXCLUDE.contains(className)) {
+                    try {
+                        final Class<?> clazz = classInfo.load();
+                        final Field[] fields = clazz.getDeclaredFields();
+                        for (final Field field : fields) {
+                            if (field.getType().equals(SystemProperty.class)) {
+                                try {
+                                    field.setAccessible(true);
+                                    logger.info("Accessing SystemProperty field {}#{}", className, field.getName());
+                                    field.get(null);
+                                } catch (final Throwable t) {
+                                    logger.warn("Unable to access field {}#{}", className, field.getName(), t);
+                                }
+                            }
+                        }
+                    } catch (final Throwable t) {
+                        logger.warn("Unable to load class {}", className, t);
+                    }
+                }
+            }
+        } catch (final Throwable t) {
+            logger.warn("Unable to scan classpath for SystemProperty classes", t);
         }
     }
 
@@ -734,10 +779,12 @@ public class XMPPServer {
         loadModule(MultiUserChatManager.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
         loadModule(CertificateStoreManager.class.getName());
+        loadModule(EntityCapabilitiesManager.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
+        loadModule(ClusterMonitor.class.getName());
         // Keep a reference to the internal component manager
         componentManager = getComponentManager();
     }
@@ -1463,6 +1510,17 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>EntityCapabilitiesManager</code> registered with this server. The
+     * <code>EntityCapabilitiesManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>EntityCapabilitiesManager</code> registered with this server.
+     */
+    public EntityCapabilitiesManager getEntityCapabilitiesManager() {
+        return (EntityCapabilitiesManager) modules.get(EntityCapabilitiesManager.class);
+    }
+
+    /**
      * Returns a list with all the modules that provide "discoverable" features.
      *
      * @return a list with all the modules that provide "discoverable" features.
@@ -1683,7 +1741,7 @@ public class XMPPServer {
     }
     /**
      * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
-     * in a cluster a <tt>null</tt> value is returned.
+     * in a cluster a {@code null} value is returned.
      *
      * @return the locator to use to find sessions hosted in other cluster nodes.
      */
@@ -1693,7 +1751,7 @@ public class XMPPServer {
 
     /**
      * Sets the locator to use to find sessions hosted in other cluster nodes. When not running
-     * in a cluster set a <tt>null</tt> value.
+     * in a cluster set a {@code null} value.
      *
      * @param remoteSessionLocator the locator to use to find sessions hosted in other cluster nodes.
      */
@@ -1708,5 +1766,18 @@ public class XMPPServer {
      */
     public boolean isStarted() {
         return started;
+    }
+
+    public void sendMessageToAdmins(final String message) {
+        final MessageRouter messageRouter = getMessageRouter();
+        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+        final Message notification = new Message();
+        notification.setFrom(getServerInfo().getXMPPDomain());
+        notification.setBody(message);
+        admins.forEach(jid -> {
+            logger.debug("Sending message to admin [jid={}, message={}]", jid, message);
+            notification.setTo(jid);
+            messageRouter.route(notification);
+        });
     }
 }

@@ -425,6 +425,7 @@ public class CacheFactory {
      * Returns the named cache, creating it as necessary.
      *
      * @param name         the name of the cache to create.
+     * @param <T> the type cache being created
      * @return the named cache, creating it as necessary.
      */
     @SuppressWarnings("unchecked")
@@ -444,6 +445,7 @@ public class CacheFactory {
      * Returns the named local cache, creating it as necessary.
      *
      * @param name         the name of the cache to create.
+     * @param <T> the type cache being created
      * @return the named cache, creating it as necessary.
      */
     @SuppressWarnings("unchecked")
@@ -478,7 +480,9 @@ public class CacheFactory {
     }
 
     /**
-     * Returns an existing {@link java.util.concurrent.locks.Lock} on the specified key or creates a new one
+     * @deprecated in favour of {@link Cache#getLock}. Will be removed in Openfire 5.0.0.
+     *
+     * <p>Returns an existing {@link java.util.concurrent.locks.Lock} on the specified key or creates a new one
      * if none was found. This operation is thread safe. Successive calls with the same key may or may not
      * return the same {@link java.util.concurrent.locks.Lock}. However, different threads asking for the
      * same Lock at the same time will get the same Lock object.<p>
@@ -491,6 +495,7 @@ public class CacheFactory {
      * @param cache the cache used for holding the lock.
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
+    @Deprecated
     public static synchronized Lock getLock(Object key, Cache cache) {
         if (localOnly.contains(cache.getName())) {
             return localCacheFactoryStrategy.getLock(key, cache);
@@ -555,7 +560,7 @@ public class CacheFactory {
     }
 
     /**
-     * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
+     * Returns a byte[] that uniquely identifies this member within the cluster or {@code null}
      * when not in a cluster.
      *
      * @return a byte[] that uniquely identifies this member within the cluster or null when not in a cluster.
@@ -572,7 +577,7 @@ public class CacheFactory {
     }
 
     /**
-     * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>
+     * Returns a byte[] that uniquely identifies this senior cluster member or {@code null}
      * when not in a cluster.
      *
      * @return a byte[] that uniquely identifies this senior cluster member or null when not in a cluster.
@@ -660,6 +665,7 @@ public class CacheFactory {
      *
      * @param task               the ClusterTask object to be invoked on all other cluster members.
      * @param includeLocalMember true to run the task on the local member, false otherwise
+     * @param <T> the return type of the cluster task
      * @return collection with the result of the execution.
      */
     public static <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember) {
@@ -672,6 +678,7 @@ public class CacheFactory {
      *
      * @param task        the ClusterTask object to be invoked on a given cluster member.
      * @param nodeID      the byte array that identifies the target cluster member.
+     * @param <T> the return type of the cluster task
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */

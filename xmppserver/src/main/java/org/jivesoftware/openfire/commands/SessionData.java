@@ -25,8 +25,8 @@ import java.util.Map;
 
 /**
  * A SessionData instance is responsible for keeping information gathered during the many stages
- * of the command being executed. Each session data is associated with the <tt>sessionid</tt>
- * attribute included in the <tt>command</tt> child element of the IQ packet.
+ * of the command being executed. Each session data is associated with the {@code sessionid}
+ * attribute included in the {@code command} child element of the IQ packet.
  *
  * @author Gaston Dombiak
  */

@@ -167,6 +167,10 @@
         if ( allowpm == null || !( allowpm.equals( "anyone" ) || allowpm.equals( "moderators" ) || allowpm.equals( "participants" ) || allowpm.equals( "none" )) ) {
             errors.put("roomconfig_allowpm","romconfig_allowpm");
         }
+        if (roomSubject != null && roomSubject.length() > 100) {
+            errors.put("room_topic_longer","room_topic_longer");
+        }
+
         if (create && errors.size() == 0) {
             if (roomName == null || roomName.contains("@")) {
                 errors.put("roomName","roomName");
@@ -431,6 +435,8 @@
                 <fmt:message key="muc.room.edit.form.error_created_privileges" />
             <% } if (errors.get("room_topic") != null) { %>
                 <fmt:message key="muc.room.edit.form.valid_hint_subject" />
+            <% } if (errors.get("room_topic_longer") != null) { %>
+                <fmt:message key="muc.room.edit.form.valid_hint_subject_too_long" />
             <% } %>
             </td>
         </tr>

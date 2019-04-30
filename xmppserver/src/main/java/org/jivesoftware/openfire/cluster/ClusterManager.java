@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.cluster;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -174,7 +175,7 @@ public class ClusterManager {
     /**
      * Triggers event indicating that this JVM is now part of a cluster. At this point the
      * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value and
-     * the old nodeID value is passed in case the listener needs it.<p>
+     * the old nodeID value is passed in case the listener needs it.
      * <p>
      * When joining the cluster as the senior cluster member the {@link #fireMarkedAsSeniorClusterMember()}
      * event will be sent right after this event.
@@ -232,7 +233,7 @@ public class ClusterManager {
      *
      * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
      * island were this JVM belonged was marked as "old" then all nodes of that island will
-     * get the <tt>left cluster event</tt> and <tt>joined cluster events</tt>. That means that
+     * get the {@code left cluster event} and {@code joined cluster events}. That means that
      * caches will be reset and thus will need to be repopulated again with fresh data from this JVM.
      * This also includes the case where this JVM was the senior cluster member and when the islands
      * met again then this JVM stopped being the senior member.
@@ -291,7 +292,7 @@ public class ClusterManager {
 
     /**
      * Starts the cluster service if clustering is enabled. The process of starting clustering
-     * will recreate caches as distributed caches.<p>
+     * will recreate caches as distributed caches.
      */
     public static synchronized void startup() {
         if (isClusteringEnabled() && !isClusteringStarted()) {
@@ -403,6 +404,30 @@ public class ClusterManager {
      */
     public static Collection<ClusterNodeInfo> getNodesInfo() {
         return CacheFactory.getClusterNodesInfo();
+    }
+
+    /**
+     * Returns basic information about a specific member of the cluster.
+     *
+     * @since Openfire 4.4
+     * @param nodeID the node whose information is required
+     * @return the node specific information, or {@link Optional#empty()} if the node could not be identified
+     */
+    public static Optional<ClusterNodeInfo> getNodeInfo(final byte[] nodeID) {
+        return getNodeInfo(NodeID.getInstance(nodeID));
+    }
+
+    /**
+     * Returns basic information about a specific member of the cluster.
+     *
+     * @since Openfire 4.4
+     * @param nodeID the node whose information is required
+     * @return the node specific information, or {@link Optional#empty()} if the node could not be identified
+     */
+    public static Optional<ClusterNodeInfo> getNodeInfo(final NodeID nodeID) {
+        return CacheFactory.getClusterNodesInfo().stream()
+            .filter(nodeInfo -> nodeInfo.getNodeID().equals(nodeID))
+            .findAny();
     }
 
     /**

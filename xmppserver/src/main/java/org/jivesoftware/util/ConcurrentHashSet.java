@@ -21,10 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * This class implements the <tt>Set</tt> interface, backed by a ConcurrentHashMap instance.
+ * This class implements the {@code Set} interface, backed by a ConcurrentHashMap instance.
  *
  * @author Matt Tucker
- * @deprecated Use {@code Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>())} instead.
+ * @deprecated Use {@link ConcurrentHashMap#newKeySet()} instead.
  */
 @Deprecated
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
@@ -37,7 +37,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     private static final Object PRESENT = new Object();
 
     /**
-     * Constructs a new, empty set; the backing <tt>ConcurrentHashMap</tt> instance has
+     * Constructs a new, empty set; the backing {@code ConcurrentHashMap} instance has
      * default initial capacity (16) and load factor (0.75).
      */
     public ConcurrentHashSet() {
@@ -46,7 +46,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
 
     /**
      * Constructs a new set containing the elements in the specified
-     * collection.  The <tt>ConcurrentHashMap</tt> is created with default load factor
+     * collection.  The {@code ConcurrentHashMap} is created with default load factor
      * (0.75) and an initial capacity sufficient to contain the elements in
      * the specified collection.
      *
@@ -59,7 +59,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     }
 
     /**
-     * Constructs a new, empty set; the backing <tt>ConcurrentHashMap</tt> instance has
+     * Constructs a new, empty set; the backing {@code ConcurrentHashMap} instance has
      * the specified initial capacity and the specified load factor.
      *
      * @param initialCapacity the initial capacity of the hash map.
@@ -72,9 +72,9 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     }
 
     /**
-     * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
+     * Constructs a new, empty set; the backing {@code HashMap} instance has
      * the specified initial capacity and default load factor, which is
-     * <tt>0.75</tt>.
+     * {@code 0.75}.
      *
      * @param      initialCapacity   the initial capacity of the hash table.
      * @throws     IllegalArgumentException if the initial capacity is less
@@ -143,8 +143,11 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
         }
 
     /**
-     * Reconstitute the <tt>HashSet</tt> instance from a stream (that is,
+     * Reconstitute the {@code HashSet} instance from a stream (that is,
      * deserialize it).
+     * @param s the input stream
+     * @throws java.io.IOException if an error occurs reading from the input stream
+     * @throws ClassNotFoundException if the class on the input stream cannot be found
      */
     private void readObject(java.io.ObjectInputStream s)
             throws java.io.IOException, ClassNotFoundException

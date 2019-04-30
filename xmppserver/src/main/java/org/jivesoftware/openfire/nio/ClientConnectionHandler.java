@@ -61,7 +61,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
     @Override
     int getMaxIdleTime() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.IDLE_TIMEOUT, 6 * 60 * 1000) / 1000;
+        return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().getSeconds();
     }
 
     /**
@@ -88,7 +88,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
         super.sessionIdle(session, status);
         
-        final boolean doPing = JiveGlobals.getBooleanProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, true);
+        final boolean doPing = ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue();
         if (doPing && session.getIdleCount(status) == 1) {
             final ClientStanzaHandler handler = (ClientStanzaHandler) session.getAttribute(HANDLER);
             final JID entity = handler.getAddress();

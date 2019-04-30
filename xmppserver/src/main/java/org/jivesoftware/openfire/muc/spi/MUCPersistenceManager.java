@@ -1108,7 +1108,7 @@ public class MUCPersistenceManager {
 
     /**
      * Returns a Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param name the name of the property to return.
@@ -1126,13 +1126,13 @@ public class MUCPersistenceManager {
 
     /**
      * Returns an integer value Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static int getIntProperty(String subdomain, String name, int defaultValue) {
         String value = getProperty(subdomain, name);
@@ -1149,13 +1149,13 @@ public class MUCPersistenceManager {
 
     /**
      * Returns a long value Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static long getLongProperty(String subdomain, String name, long defaultValue) {
         String value = getProperty(subdomain, name);
@@ -1175,25 +1175,25 @@ public class MUCPersistenceManager {
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param name the name of the property to return.
-     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
-     *      Otherwise <tt>false</tt> is returned.
+     * @return true if the property value exists and is set to {@code "true"} (ignoring case).
+     *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String subdomain, String name) {
         return Boolean.valueOf(getProperty(subdomain, name));
     }
 
     /**
-     * Returns a boolean value Jive property. If the property doesn't exist, the <tt>defaultValue</tt>
+     * Returns a boolean value Jive property. If the property doesn't exist, the {@code defaultValue}
      * will be returned.
      *
      * If the specified property can't be found, or if the value is not a number, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist.
-     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
-     *      Otherwise <tt>false</tt> is returned.
+     * @return true if the property value exists and is set to {@code "true"} (ignoring case).
+     *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String subdomain, String name, boolean defaultValue) {
         String value = getProperty(subdomain, name);
@@ -1208,9 +1208,9 @@ public class MUCPersistenceManager {
     /**
      * Return all immediate children property names of a parent Jive property as a list of strings,
      * or an empty list if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
-     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt> (<tt>C.D</tt> would not be returned using this method).<p>
+     * the properties {@code X.Y.A}, {@code X.Y.B}, {@code X.Y.C} and {@code X.Y.C.D}, then
+     * the immediate child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C} ({@code C.D} would not be returned using this method).<p>
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param parent the root "node" of the properties to retrieve
@@ -1228,9 +1228,9 @@ public class MUCPersistenceManager {
     /**
      * Return all immediate children property values of a parent Jive property as a list of strings,
      * or an empty list if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
-     * the immediate child properties of <tt>X.Y</tt> are <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and
-     * <tt>X.Y.C</tt> (the value of <tt>X.Y.C.D</tt> would not be returned using this method).<p>
+     * the properties {@code X.Y.A}, {@code X.Y.B}, {@code X.Y.C} and {@code X.Y.C.D}, then
+     * the immediate child properties of {@code X.Y} are {@code X.Y.A}, {@code X.Y.B}, and
+     * {@code X.Y.C} (the value of {@code X.Y.C.D} would not be returned using this method).<p>
      *
      * @param subdomain the subdomain of the service to retrieve a property from
      * @param parent the name of the parent property to return the children for.

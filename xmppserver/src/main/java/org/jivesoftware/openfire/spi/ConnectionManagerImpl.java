@@ -68,6 +68,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     /**
      * Instantiates a new connection manager.
+     * @throws IOException if the identity or trust stores could not be loaded
      */
     public ConnectionManagerImpl() throws IOException
     {
@@ -119,7 +120,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionType.SOCKET_C2S,
                 ConnectionSettings.Client.OLD_SSLPORT,
                 DEFAULT_SSL_PORT,
-                ConnectionSettings.Client.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(),
                 ConnectionSettings.Client.MAX_THREADS_SSL,
                 ConnectionSettings.Client.MAX_READ_BUFFER_SSL,
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode
@@ -207,7 +208,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionType.COMPONENT,
                 ConnectionSettings.Component.OLD_SSLPORT,
                 DEFAULT_COMPONENT_SSL_PORT,
-                ConnectionSettings.Component.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Component.ENABLE_OLD_SSLPORT_PROPERTY.getKey(),
                 ConnectionSettings.Component.MAX_THREADS_SSL,
                 null,
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode
@@ -889,6 +890,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     /**
      * @deprecated Replaced by #getConnectionManagerSocketAcceptor
+     * @return the socket acceptor
      */
     @Deprecated
     public NioSocketAcceptor getMultiplexerSocketAcceptor()

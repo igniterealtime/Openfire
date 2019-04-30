@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * Task requested by each cluster node when a new node joins the cluster. Each existing cluster
- * node will request the list of rooms with occupants <tt>hosted by</tt> the new cluster node.
+ * node will request the list of rooms with occupants {@code hosted by} the new cluster node.
  *
  * @author Gaston Dombiak
  */

@@ -73,7 +73,7 @@ public class TaskEngine {
      *
      * @param task the task to submit.
      * @return a Future representing pending completion of the task,
-     *      and whose <tt>get()</tt> method will return <tt>null</tt>
+     *      and whose {@code get()} method will return {@code null}
      *      upon completion.
      */
     public Future<?> submit(Runnable task) {
@@ -92,8 +92,8 @@ public class TaskEngine {
      *
      * @param task  task to be scheduled.
      * @param delay delay in milliseconds before task is to be executed.
-     * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
-     *         <tt>delay + System.currentTimeMillis()</tt> is negative.
+     * @throws IllegalArgumentException if {@code delay} is negative, or
+     *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, or timer was cancelled.
      */
@@ -107,7 +107,7 @@ public class TaskEngine {
      *
      * @param task task to be scheduled.
      * @param time time at which task is to be executed.
-     * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
+     * @throws IllegalArgumentException if {@code time.getTime()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
@@ -126,7 +126,7 @@ public class TaskEngine {
      * background activity), subsequent executions will be delayed as well.
      * In the long run, the frequency of execution will generally be slightly
      * lower than the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).
+     * clock underlying {@code Object.wait(long)} is accurate).
      *
      * <p>Fixed-delay execution is appropriate for recurring activities
      * that require "smoothness."  In other words, it is appropriate for
@@ -140,8 +140,8 @@ public class TaskEngine {
      * @param task task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
-     *         <tt>delay + System.currentTimeMillis()</tt> is negative.
+     * @throws IllegalArgumentException if {@code delay} is negative, or
+     *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
@@ -162,7 +162,7 @@ public class TaskEngine {
      * background activity), subsequent executions will be delayed as well.
      * In the long run, the frequency of execution will generally be slightly
      * lower than the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).
+     * clock underlying {@code Object.wait(long)} is accurate).
      *
      * <p>Fixed-delay execution is appropriate for recurring activities
      * that require "smoothness."  In other words, it is appropriate for
@@ -176,7 +176,7 @@ public class TaskEngine {
      * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
+     * @throws IllegalArgumentException if {@code time.getTime()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
@@ -197,7 +197,7 @@ public class TaskEngine {
      * activity), two or more executions will occur in rapid succession to
      * "catch up."  In the long run, the frequency of execution will be
      * exactly the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).
+     * clock underlying {@code Object.wait(long)} is accurate).
      *
      * <p>Fixed-rate execution is appropriate for recurring activities that
      * are sensitive to <i>absolute</i> time, such as ringing a chime every
@@ -212,8 +212,8 @@ public class TaskEngine {
      * @param task task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
-     *         <tt>delay + System.currentTimeMillis()</tt> is negative.
+     * @throws IllegalArgumentException if {@code delay} is negative, or
+     *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
@@ -234,7 +234,7 @@ public class TaskEngine {
      * activity), two or more executions will occur in rapid succession to
      * "catch up."  In the long run, the frequency of execution will be
      * exactly the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).
+     * clock underlying {@code Object.wait(long)} is accurate).
      *
      * <p>Fixed-rate execution is appropriate for recurring activities that
      * are sensitive to <i>absolute</i> time, such as ringing a chime every
@@ -249,7 +249,7 @@ public class TaskEngine {
      * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
+     * @throws IllegalArgumentException if {@code time.getTime()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */

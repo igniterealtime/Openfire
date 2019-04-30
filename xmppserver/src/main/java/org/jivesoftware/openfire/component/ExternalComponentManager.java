@@ -67,13 +67,19 @@ public class ExternalComponentManager {
             new CopyOnWriteArrayList<>();
 
     /**
+     * @param enabled enables or disables the service
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @throws ModificationNotAllowedException if the status of the service cannot be changed
      */
     @Deprecated
     public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.serviceEnabled(enabled);
+            try {
+                listener.serviceEnabled(enabled);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'serviceEnabled' event!", e);
+            }
         }
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         connectionManager.enableComponentListener(enabled);
@@ -81,6 +87,7 @@ public class ExternalComponentManager {
 
     /**
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @return {@code true} if the service is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isServiceEnabled() {
@@ -89,13 +96,19 @@ public class ExternalComponentManager {
     }
 
     /**
+     * @param port The port to use
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @throws ModificationNotAllowedException if the server cannot be modified
      */
     @Deprecated
     public static void setServicePort(int port) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.portChanged(port);
+            try {
+                listener.portChanged(port);  
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'portChanged' event!", e);
+            }
         }
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         connectionManager.setComponentListenerPort(port);
@@ -103,6 +116,7 @@ public class ExternalComponentManager {
 
     /**
      * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     * @return the port number
      */
     @Deprecated
     public static int getServicePort() {
@@ -119,7 +133,11 @@ public class ExternalComponentManager {
     public static void allowAccess(ExternalComponentConfiguration configuration) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.componentAllowed(configuration.getSubdomain(), configuration);
+            try {
+                listener.componentAllowed(configuration.getSubdomain(), configuration); 
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentAllowed' event!", e);
+            }
         }
         // Remove any previous configuration for this external component
         deleteConfigurationFromDB(configuration);
@@ -138,7 +156,11 @@ public class ExternalComponentManager {
     public static void blockAccess(String subdomain) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.componentBlocked(subdomain);
+            try {
+                listener.componentBlocked(subdomain);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentBlocked' event!", e);
+            }
         }
         // Remove any previous configuration for this external component
         deleteConfigurationFromDB(getConfiguration(subdomain, false));
@@ -218,7 +240,11 @@ public class ExternalComponentManager {
     public static void updateComponentSecret(String subdomain, String secret) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.componentSecretUpdated(subdomain, secret);
+            try {
+                listener.componentSecretUpdated(subdomain, secret);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentSecretUpdated' event!", e);
+            }
         }
         ExternalComponentConfiguration configuration = getConfiguration(subdomain, false);
         if (configuration != null) {
@@ -243,7 +269,11 @@ public class ExternalComponentManager {
     public static void deleteConfiguration(String subdomain) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.componentConfigurationDeleted(subdomain);
+            try {
+                listener.componentConfigurationDeleted(subdomain);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'componentConfigurationDeleted' event!", e);
+            }
         }
 
         // Proceed to delete the configuration of the component
@@ -416,7 +446,11 @@ public class ExternalComponentManager {
     public static void setDefaultSecret(String defaultSecret) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.defaultSecretChanged(defaultSecret);
+            try {
+                listener.defaultSecretChanged(defaultSecret);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'defaultSecretChanged' event!", e);
+            }
         }
         JiveGlobals.setProperty("xmpp.component.defaultSecret", defaultSecret);
     }
@@ -480,7 +514,11 @@ public class ExternalComponentManager {
     public static void setPermissionPolicy(PermissionPolicy policy) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
-            listener.permissionPolicyChanged(policy);
+            try {
+                listener.permissionPolicyChanged(policy);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'permissionPolicyChanged' event!", e);
+            }
         }
         JiveGlobals.setProperty("xmpp.component.permission", policy.toString());
         // Check if connected components can remain connected to the server

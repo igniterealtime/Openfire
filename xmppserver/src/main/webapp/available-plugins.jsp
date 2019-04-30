@@ -305,6 +305,9 @@
                                             <c:if test="${not empty notInstalledPlugin.version}">
                                                 <c:out value="${notInstalledPlugin.version}"/>
                                             </c:if>
+                                            <c:if test="${not empty notInstalledPlugin.releaseDate}">
+                                                <br><c:out value="${notInstalledPlugin.releaseDate}"/>
+                                            </c:if>
                                         </td>
                                         <td width="15%" nowrap valign="top" class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.author}">

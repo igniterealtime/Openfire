@@ -100,6 +100,7 @@ public class HttpSessionManager {
         final int maxClientPoolSize = JiveGlobals.getIntProperty( "xmpp.client.processing.threads", 8 );
         final int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", maxClientPoolSize );
         final int keepAlive = JiveGlobals.getIntProperty( "xmpp.httpbind.worker.timeout", 60 );
+        final int sessionCleanupCheck = JiveGlobals.getIntProperty("xmpp.httpbind.worker.cleanupcheck", 30);
 
         sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(), // unbounded task queue
@@ -110,7 +111,7 @@ public class HttpSessionManager {
 
         // Periodically check for Sessions that need a cleanup.
         inactivityTask = new HttpSessionReaper();
-        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, 30 * JiveConstants.SECOND );
+        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, sessionCleanupCheck * JiveConstants.SECOND);
     }
 
     /**
@@ -150,6 +151,7 @@ public class HttpSessionManager {
      * Either shutting down or starting up.
      * @throws HttpBindException when there is an internal server error related to the creation of
      * the initial session creation response.
+     * @throws UnknownHostException if no IP address for the peer could be found
      */
     public HttpSession createSession(HttpBindBody body, HttpConnection connection)
         throws UnauthorizedException, HttpBindException, UnknownHostException
@@ -322,15 +324,25 @@ public class HttpSessionManager {
 
         @Override
         public void run() {
+            boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
                 try {
                     long lastActive = currentTime - session.getLastActivity();
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("Session was last active {} ms ago: {}", lastActive, session );
+                    if( lastActive >= 1 && logHttpbindEnabled && Log.isInfoEnabled()) {
+                        Log.info("Session {} was last active {} ms ago: {} from IP {} " +
+                                " currently on rid {}",
+                                session.getStreamID(),
+                                lastActive,
+                                session.getAddress(), // JID
+                                session.getConnection().getHostAddress(),
+                                session.getLastAcknowledged()); // RID
                     }
                     if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
-                        Log.info("Closing idle session: {}", session);
+                        Log.info("Closing idle session {}: {} from IP {}",
+                                session.getStreamID(),
+                                session.getAddress(),
+                                session.getConnection().getHostAddress());
                         session.close();
                     }
                 } catch (Exception e) {

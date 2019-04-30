@@ -197,7 +197,7 @@ public class CertificateManager {
 
     /**
      * Returns true if the specified certificate is a self-signed certificate.
-     *
+     * @param certificate  the certificate to check
      * @return true if the specified certificate is a self-signed certificate.
      */
     public static boolean isSelfSignedCertificate(X509Certificate certificate) {
@@ -214,6 +214,7 @@ public class CertificateManager {
      * certificates need to get their issuer information entered to be able to generate a Certificate
      * Signing Request (CSR).
      *
+     * @param certificate the certificate to check
      * @return true if the specified certificate is ready to be signed by a Certificate Authority.
      */
     public static boolean isSigningRequestPending(X509Certificate certificate) {
@@ -236,6 +237,9 @@ public class CertificateManager {
      * @param cert the certificate to create a signing request.
      * @param privKey the private key of the certificate.
      * @return the content of a new singing request for the specified certificate.
+     * @throws OperatorCreationException if there was a problem creating the CSR
+     * @throws IOException if there was a problem creating the CSR
+     * @throws CertificateParsingException if there was a problem creating the CSR
      */
     public static String createSigningRequest(X509Certificate cert, PrivateKey privKey) throws OperatorCreationException, IOException, CertificateParsingException
     {
@@ -367,6 +371,7 @@ public class CertificateManager {
      * @param pemRepresentation a PEM representation of a private key (cannot be null or empty)
      * @param passPhrase optional pass phrase (must be present if the private key is encrypted).
      * @return a PrivateKey instance (never null)
+     * @throws IOException if there was a problem parsing the key
      */
     public static PrivateKey parsePrivateKey(InputStream pemRepresentation, String passPhrase) throws IOException {
 
@@ -432,6 +437,8 @@ public class CertificateManager {
      *
      * @param pemRepresentation a PEM representation of a certificate or certificate chain (cannot be null or empty)
      * @return A collection of certificates (possibly empty, but never null).
+     * @throws IOException never
+     * @throws CertificateException if there was a problem parsing certificates
      */
     @SuppressWarnings("unchecked")
     public static Collection<X509Certificate> parseCertificates(InputStream pemRepresentation) throws IOException,
@@ -469,6 +476,7 @@ public class CertificateManager {
 
     /**
      * Notify listeners that a certificate store has been changed.
+     * @param store the store that has changed
      */
     public static void fireCertificateStoreChanged( CertificateStore store )
     {
@@ -496,6 +504,7 @@ public class CertificateManager {
      * @param certificates an unordered collection of certificates (cannot be null).
      * @return An ordered list of certificates (possibly empty, but never null).
      * @deprecated Moved to CertificateUtils
+     * @throws CertificateException if there was a problem accessing the certificates
      */
     @Deprecated
     public static List<X509Certificate> order( Collection<X509Certificate> certificates ) throws CertificateException
@@ -513,8 +522,8 @@ public class CertificateManager {
      * @param domain       Domain of the server.
      * @param signAlgoritm Signature algorithm. This can be either a name or an OID.
      * @return X509 V3 Certificate
-     * @throws GeneralSecurityException
-     * @throws IOException
+     * @throws GeneralSecurityException if there was a problem creating the certificate
+     * @throws IOException if there was a problem creating the certificate
      */
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerCommonName,
                                                                         String subjectCommonName, String domain,
@@ -549,8 +558,8 @@ public class CertificateManager {
      * @param domain       Domain of the server.
      * @param signAlgoritm Signature algorithm. This can be either a name or an OID.
      * @return X509 V3 Certificate
-     * @throws GeneralSecurityException
-     * @throws IOException
+     * @throws GeneralSecurityException if there was a problem creating the certificate
+     * @throws IOException if there was a problem creating the certificate
      */
     public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, X500NameBuilder issuerBuilder,
             X500NameBuilder subjectBuilder, String domain, String signAlgoritm ) throws GeneralSecurityException, IOException

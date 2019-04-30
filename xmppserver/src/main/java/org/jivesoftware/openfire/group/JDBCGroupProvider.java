@@ -40,27 +40,27 @@ import org.xmpp.packet.JID;
  * To enable this provider, set the following in the system properties:
  *
  * <ul>
- * <li><tt>provider.group.className = org.jivesoftware.openfire.group.JDBCGroupProvider</tt></li>
+ * <li>{@code provider.group.className = org.jivesoftware.openfire.group.JDBCGroupProvider}</li>
  * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
  *
  * <ul>
- * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
- * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
- * <li><tt>jdbcGroupProvider.groupCountSQL = SELECT count(*) FROM myGroups</tt></li>
- * <li><tt>jdbcGroupProvider.allGroupsSQL = SELECT groupName FROM myGroups</tt></li>
- * <li><tt>jdbcGroupProvider.userGroupsSQL = SELECT groupName FORM myGroupUsers WHERE username=?</tt></li>
- * <li><tt>jdbcGroupProvider.descriptionSQL = SELECT groupDescription FROM myGroups WHERE groupName=?</tt></li>
- * <li><tt>jdbcGroupProvider.loadMembersSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'</tt></li>
- * <li><tt>jdbcGroupProvider.loadAdminsSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='Y'</tt></li>
+ * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcGroupProvider.groupCountSQL = SELECT count(*) FROM myGroups}</li>
+ * <li>{@code jdbcGroupProvider.allGroupsSQL = SELECT groupName FROM myGroups}</li>
+ * <li>{@code jdbcGroupProvider.userGroupsSQL = SELECT groupName FORM myGroupUsers WHERE username=?}</li>
+ * <li>{@code jdbcGroupProvider.descriptionSQL = SELECT groupDescription FROM myGroups WHERE groupName=?}</li>
+ * <li>{@code jdbcGroupProvider.loadMembersSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'}</li>
+ * <li>{@code jdbcGroupProvider.loadAdminsSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='Y'}</li>
  * </ul>
  *
  * In order to use the configured JDBC connection provider do not use a JDBC
  * connection string, set the following property
  *
  * <ul>
- * <li><tt>jdbcGroupProvider.useConnectionProvider = true</tt></li>
+ * <li>{@code jdbcGroupProvider.useConnectionProvider = true}</li>
  * </ul>
  *
  * @author David Snopek

@@ -436,7 +436,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Implement DatagramListener to timestamp last packet arrived
      *
-     * @param datagramPacket
+     * @param datagramPacket the datagram packet
      */
     @Override
     public boolean datagramReceived(DatagramPacket datagramPacket) {
@@ -490,7 +490,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Adds a listener for Session events
      *
-     * @param sessionListener
+     * @param sessionListener the sessionj listener to add
      */
     public void addAgentListener(SessionListener sessionListener) {
         sessionListeners.add(sessionListener);
@@ -499,7 +499,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
     /**
      * Removes an Session events listener
      *
-     * @param sessionListener
+     * @param sessionListener the session listener to remove
      */
     public void removeAgentListener(SessionListener sessionListener) {
         sessionListeners.remove(sessionListener);

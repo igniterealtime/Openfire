@@ -22,20 +22,20 @@ import java.util.*;
  * This class is configured with a set of Jive properties. Note that each service provider can require a different set
  * of properties to be set.
  * <ul>
- * <li><tt>sms.smpp.connections.maxAmount</tt> -- the maximum amount of connections. The default value is one.
- * <li><tt>sms.smpp.connections.idleMillis</tt> -- time (in ms) after which idle connections are allowed to be evicted. Defaults to two minutes.
- * <li><tt>sms.smpp.host</tt> -- the host name of your SMPP Server or SMSC, i.e. smsc.example.org. The default value is "localhost".
- * <li><tt>sms.smpp.port</tt> -- the port on which the SMSC is listening. Defaults to 2775.
- * <li><tt>sms.smpp.systemId</tt> -- the 'user name' to use when connecting to the SMSC.
- * <li><tt>sms.smpp.password</tt> -- the password that authenticates the systemId value when connecting to the SMSC.
- * <li><tt>sms.smpp.systemType</tt> -- an optional system type, which, if defined, will be used when connecting to the SMSC.
- * <li><tt>sms.smpp.receive.ton</tt> -- The type-of-number value for 'receiving' SMS messages. Defaults to 'UNKNOWN'.
- * <li><tt>sms.smpp.receive.npi</tt> -- The number-plan-indicator value for 'receiving' SMS messages. Defaults to 'UNKNOWN'.
- * <li><tt>sms.smpp.source.ton</tt> -- The type-of-number value for the source of SMS messages. Defaults to 'UNKNOWN'.
- * <li><tt>sms.smpp.source.npi</tt> -- The number-plan-indicator value for the source of SMS messages. Defaults to 'UNKNOWN'.
- * <li><tt>sms.smpp.source.address</tt> -- The source address of SMS messages.
- * <li><tt>sms.smpp.destination.ton</tt> -- The type-of-number value for the destination of SMS messages. Defaults to 'UNKNOWN'.
- * <li><tt>sms.smpp.destination.npi</tt> -- The number-plan-indicator value for the destination of SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.connections.maxAmount} -- the maximum amount of connections. The default value is one.
+ * <li>{@code sms.smpp.connections.idleMillis} -- time (in ms) after which idle connections are allowed to be evicted. Defaults to two minutes.
+ * <li>{@code sms.smpp.host} -- the host name of your SMPP Server or SMSC, i.e. smsc.example.org. The default value is "localhost".
+ * <li>{@code sms.smpp.port} -- the port on which the SMSC is listening. Defaults to 2775.
+ * <li>{@code sms.smpp.systemId} -- the 'user name' to use when connecting to the SMSC.
+ * <li>{@code sms.smpp.password} -- the password that authenticates the systemId value when connecting to the SMSC.
+ * <li>{@code sms.smpp.systemType} -- an optional system type, which, if defined, will be used when connecting to the SMSC.
+ * <li>{@code sms.smpp.receive.ton} -- The type-of-number value for 'receiving' SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.receive.npi} -- The number-plan-indicator value for 'receiving' SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.source.ton} -- The type-of-number value for the source of SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.source.npi} -- The number-plan-indicator value for the source of SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.source.address} -- The source address of SMS messages.
+ * <li>{@code sms.smpp.destination.ton} -- The type-of-number value for the destination of SMS messages. Defaults to 'UNKNOWN'.
+ * <li>{@code sms.smpp.destination.npi} -- The number-plan-indicator value for the destination of SMS messages. Defaults to 'UNKNOWN'.
  * </ul>
  *
  * @author Guus der Kinderen, guus@goodbytes.nl

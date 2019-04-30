@@ -53,7 +53,7 @@ public interface PresenceManager {
     boolean isAvailable( User user );
 
     /**
-     * Returns the user's current presence, or <tt>null</tt> if the user is unavailable.
+     * Returns the user's current presence, or {@code null} if the user is unavailable.
      * If the user is connected with more than one session, the user's "most available"
      * presence status is returned.
      *
@@ -63,7 +63,7 @@ public interface PresenceManager {
     Presence getPresence( User user );
 
     /**
-     * Returns all presences for the user, or <tt>null</tt> if the user is unavailable.
+     * Returns all presences for the user, or {@code null} if the user is unavailable.
      *
      * @param username the name of the user.
      * @return the Presence packets for all the users's connected sessions.
@@ -87,6 +87,7 @@ public interface PresenceManager {
      * Otherwise, answer the presence of the local user sessions or the last unavailable presence.
      *
      * @param packet the received probe presence from a remote server.
+     * @throws UnauthorizedException if the user is not authorised
      */
     void handleProbe( Presence packet ) throws UnauthorizedException;
 
@@ -128,11 +129,11 @@ public interface PresenceManager {
     void userUnavailable( Presence presence );
 
     /**
-     * Returns the status sent by the user in his last unavailable presence or <tt>null</tt> if the
+     * Returns the status sent by the user in his last unavailable presence or {@code null} if the
      * user is online or never set such information.
      *
      * @param user the user to return his last status information
-     * @return the status sent by the user in his last unavailable presence or <tt>null</tt> if the
+     * @return the status sent by the user in his last unavailable presence or {@code null} if the
      *         user is online or never set such information.
      */
     String getLastPresenceStatus( User user );

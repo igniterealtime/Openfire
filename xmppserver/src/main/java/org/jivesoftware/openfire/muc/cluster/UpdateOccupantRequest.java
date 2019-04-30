@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
 /**
  * Task that requests the cluster node hosting a room occupant to change his
  * role and/or affiliation. If the occupant was not found or the change is
- * not allowed then a <tt>null</tt> value is returned. Otherwise the DOM
+ * not allowed then a {@code null} value is returned. Otherwise the DOM
  * object representing the new presence of the room occupant is returned.
  *
  * @author Gaston Dombiak

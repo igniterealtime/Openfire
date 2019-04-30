@@ -27,7 +27,7 @@ import java.util.Arrays;
  * A simple classloader to extend the classpath to
  * include all jars in a lib directory.<p>
  *
- * The new classpath includes all <tt>*.jar</tt> and <tt>*.zip</tt>
+ * The new classpath includes all {@code *.jar} and {@code *.zip}
  * archives (zip is commonly used in packaging JDBC drivers). The extended
  * classpath is used for both the initial server startup, as well as loading
  * plug-in support jars.

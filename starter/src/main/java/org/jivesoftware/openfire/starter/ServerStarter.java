@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property <tt>openfire.lib.dir</tt> is specified
+ * Note: if the enviroment property {@code openfire.lib.dir} is specified
  * ServerStarter will attempt to use this value as the value for openfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *

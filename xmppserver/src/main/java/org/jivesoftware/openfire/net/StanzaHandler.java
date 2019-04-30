@@ -613,6 +613,9 @@ public abstract class StanzaHandler {
      * If the connection remains open, the XPP will be set to be ready for the
      * first packet. A call to next() should result in an START_TAG state with
      * the first packet in the stream.
+     * @param xpp the pull parser
+     * @throws XmlPullParserException if an exception occurs reading from the pull parser
+     * @throws IOException if an IO exception occurs reading from the pull parser
      */
     protected void createSession(XmlPullParser xpp) throws XmlPullParserException, IOException {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
@@ -694,7 +697,7 @@ public abstract class StanzaHandler {
      *
      * Note that the value that is returned for this method can
      * change over time. For example, if no session has been established yet,
-     * this method will return <tt>null</tt>, or, if resource binding occurs,
+     * this method will return {@code null}, or, if resource binding occurs,
      * the returned value might change. Values obtained from this method are
      * therefore best <em>not</em> cached.
      *

@@ -30,13 +30,14 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default AuthProvider implementation. It authenticates against the <tt>ofUser</tt>
+ * Default AuthProvider implementation. It authenticates against the {@code ofUser}
  * database table and supports plain text and digest authentication.
  *
  * Because each call to authenticate() makes a database connection, the
@@ -323,8 +324,7 @@ public class DefaultAuthProvider implements AuthProvider {
         String salt = DatatypeConverter.printBase64Binary(saltShaker);
 
         
-        int iterations = JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
-                        ScramUtils.DEFAULT_ITERATION_COUNT);
+        final int iterations = ScramSha1SaslServer.ITERATION_COUNT.getValue();
         byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
     try {
            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);

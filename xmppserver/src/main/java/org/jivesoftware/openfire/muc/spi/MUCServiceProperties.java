@@ -125,9 +125,9 @@ public class MUCServiceProperties implements Map<String, String> {
 
     /**
      * Return all children property names of a parent property as a Collection
-     * of String objects. For example, given the properties <tt>X.Y.A</tt>,
-     * <tt>X.Y.B</tt>, and <tt>X.Y.C</tt>, then the child properties of
-     * <tt>X.Y</tt> are <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and <tt>X.Y.C</tt>. The method
+     * of String objects. For example, given the properties {@code X.Y.A},
+     * {@code X.Y.B}, and {@code X.Y.C}, then the child properties of
+     * {@code X.Y} are {@code X.Y.A}, {@code X.Y.B}, and {@code X.Y.C}. The method
      * is not recursive; ie, it does not return children of children.
      *
      * @param parentKey the name of the parent property.

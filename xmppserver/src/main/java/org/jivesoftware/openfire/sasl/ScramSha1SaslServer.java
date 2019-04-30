@@ -35,7 +35,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +45,11 @@ import org.slf4j.LoggerFactory;
  * @author Richard Midwinter
  */
 public class ScramSha1SaslServer implements SaslServer {
+    public static final SystemProperty<Integer> ITERATION_COUNT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("sasl.scram-sha-1.iteration-count")
+        .setDefaultValue(ScramUtils.DEFAULT_ITERATION_COUNT)
+        .setDynamic(Boolean.TRUE)
+        .build();
     private static final Logger Log = LoggerFactory.getLogger(ScramSha1SaslServer.class);
     private static final Pattern
             CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
@@ -86,8 +91,8 @@ public class ScramSha1SaslServer implements SaslServer {
      * to the client. It is non-null if the authentication must be continued
      * by sending a challenge to the client, or if the authentication has
      * succeeded but challenge data needs to be processed by the client.
-     * <tt>isComplete()</tt> should be called
-     * after each call to <tt>evaluateResponse()</tt>,to determine if any further
+     * {@code isComplete()} should be called
+     * after each call to {@code evaluateResponse()},to determine if any further
      * response is needed from the client.
      *
      * @param response The non-null (but possibly empty) response sent
@@ -207,7 +212,7 @@ public class ScramSha1SaslServer implements SaslServer {
    /**
       * Determines whether the authentication exchange has completed.
       * This method is typically called after each invocation of
-      * <tt>evaluateResponse()</tt> to determine whether the
+      * {@code evaluateResponse()} to determine whether the
       * authentication has completed successfully or should be continued.
       * @return true if the authentication exchange has completed; false otherwise.
       */
@@ -265,8 +270,8 @@ public class ScramSha1SaslServer implements SaslServer {
     /**
      * Retrieves the negotiated property.
      * This method can be called only after the authentication exchange has
-     * completed (i.e., when <tt>isComplete()</tt> returns true); otherwise, an
-     * <tt>IllegalStateException</tt> is thrown.
+     * completed (i.e., when {@code isComplete()} returns true); otherwise, an
+     * {@code IllegalStateException} is thrown.
      *
      * @param propName the property
      * @return The value of the negotiated property. If null, the property was
@@ -332,8 +337,7 @@ public class ScramSha1SaslServer implements SaslServer {
         try {
             return AuthFactory.getIterations(username);
         } catch (UserNotFoundException e) {
-            return JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
-                ScramUtils.DEFAULT_ITERATION_COUNT);
+            return ITERATION_COUNT.getValue();
         }
     }
     

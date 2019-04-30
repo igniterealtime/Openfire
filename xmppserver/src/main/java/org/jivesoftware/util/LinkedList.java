@@ -23,7 +23,7 @@ package org.jivesoftware.util;
  * reference to the node that is to be deleted.<p>
  *
  * @author Jive Software
- * @param <E>
+ * @param <E> the type of linked list
  */
 public class LinkedList<E> {
 
@@ -70,6 +70,7 @@ public class LinkedList<E> {
      * Adds a node to the beginning of the list.
      *
      * @param node the node to add to the beginning of the list.
+     * @return the node created to wrap the object.
      */
     public LinkedListNode<E> addFirst(LinkedListNode<E> node) {
         return node.insert(head.next, head);
@@ -90,6 +91,7 @@ public class LinkedList<E> {
      * Adds a node to the end of the list.
      *
      * @param node the node to add to the beginning of the list.
+     * @return the node created to wrap the object.
      */
     public LinkedListNode<E> addLast(LinkedListNode<E> node) {
         return node.insert(head, head.previous);

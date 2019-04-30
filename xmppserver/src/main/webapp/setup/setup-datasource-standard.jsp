@@ -238,21 +238,23 @@
 
 
 <%  // DB preset data
-    List<String[]> presets = new ArrayList<String []>();
-    presets.add(new String[]{"MySQL","com.mysql.jdbc.Driver","jdbc:mysql://HOSTNAME:3306/DATABASENAME?rewriteBatchedStatements=true"});
+    final List<String[]> presets = new ArrayList<String []>();
+    presets.add(new String[]{"MySQL","com.mysql.cj.jdbc.Driver","jdbc:mysql://HOSTNAME:3306/DATABASENAME?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8"});
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID"});
     presets.add(new String[]{"Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire"});
     presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME"});
     presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"});
     presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"});
+    pageContext.setAttribute("presets", presets );
 %>
 <script language="JavaScript" type="text/javascript">
-var data = new Array();
-<%  for (int i=0; i<presets.size(); i++) {
-        String[] data = presets.get(i);
-%>
-    data[<%= i %>] = new Array('<%= data[0] %>','<%= data[1] %>','<%= data[2] %>');
-<%  } %>
+var data = [];
+<c:set var="i" value="0"/>
+<c:forEach items="${presets}" var="preset">
+data[${i}] = ['${preset[0]}','${preset[1]}','${preset[2]}'];
+<c:set var="i" value="${i+1}"/>
+</c:forEach>
+
 function populate(i) {
     document.dbform.driver.value=data[i][1];
     document.dbform.serverURL.value=data[i][2];

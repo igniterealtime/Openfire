@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * servlet as the image source to let the page load quickly and get the favicon images
  * as they are available.<p>
  *
- * This servlet expects the web application to have the <tt>images/server_16x16.gif</tt>
+ * This servlet expects the web application to have the {@code images/server_16x16.gif}
  * file that is used when no favicon is found.
  *
  * @author Gaston Dombiak

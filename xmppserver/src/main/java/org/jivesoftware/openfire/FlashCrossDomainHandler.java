@@ -148,7 +148,8 @@ public class FlashCrossDomainHandler extends BasicModule {
      * Safely read a string from the reader until a zero character or a newline
      * is received, more then 100 invalid code points where read or the 200
      * character is reached.
-     * 
+     *
+     * @param in the read to read the string from
      * @return the string read from the reader.
      */
     protected String read(BufferedReader in) {

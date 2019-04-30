@@ -50,6 +50,9 @@ public class ServerTrustManager implements X509TrustManager {
 
     /**
      * @deprecated Use ServerTrustManager(KeyStore trustStore) instead (there's no functional difference).
+     * @param server unused parameter
+     * @param trustStore the trust store to manage
+     * @param connection unused parameter
      */
     @Deprecated
     public ServerTrustManager(String server, KeyStore trustStore, Connection connection) {

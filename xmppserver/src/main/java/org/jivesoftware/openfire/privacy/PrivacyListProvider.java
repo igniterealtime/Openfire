@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Provider for the privacy lists system. Privacy lists are read and written
- * from the <tt>ofPrivacyList</tt> database table.
+ * from the {@code ofPrivacyList} database table.
  *
  * @author Gaston Dombiak
  */
@@ -133,12 +133,12 @@ public class PrivacyListProvider {
     }
 
     /**
-     * Loads the requested privacy list from the database. Returns <tt>null</tt> if a list
+     * Loads the requested privacy list from the database. Returns {@code null} if a list
      * with the specified name does not exist.
      *
      * @param username the username of the user to get his privacy list.
      * @param listName name of the list to load.
-     * @return the privacy list with the specified name or <tt>null</tt> if a list
+     * @return the privacy list with the specified name or {@code null} if a list
      *         with the specified name does not exist.
      */
     public PrivacyList loadPrivacyList(String username, String listName) {
@@ -199,11 +199,11 @@ public class PrivacyListProvider {
     }
 
     /**
-     * Loads the default privacy list of a given user from the database. Returns <tt>null</tt>
+     * Loads the default privacy list of a given user from the database. Returns {@code null}
      * if no list was found.
      *
      * @param username the username of the user to get his default privacy list.
-     * @return the default privacy list or <tt>null</tt> if no list was found.
+     * @return the default privacy list or {@code null} if no list was found.
      */
     public PrivacyList loadDefaultPrivacyList(String username) {
         // If there are no privacy lists stored, this method is a no-op.

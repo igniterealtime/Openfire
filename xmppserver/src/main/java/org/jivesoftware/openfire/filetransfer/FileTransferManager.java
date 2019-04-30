@@ -48,6 +48,7 @@ public interface FileTransferManager extends Module {
      *
      * @param transfer the transfer to test for acceptance
      * @return true if it should be accepted false if it should not.
+     * @throws FileTransferRejectedException if the request was rejected (can this ever happen?)
      */
     boolean acceptIncomingFileTransferRequest(FileTransfer transfer) throws FileTransferRejectedException;
 
@@ -96,7 +97,6 @@ public interface FileTransferManager extends Module {
      *
      * @param sid The session id of the file transfer that is being intercepted (cannot be null).
      * @param wasSuccessful false when an exception was thrown during file transfer, otherwise true.
-     * @throws FileTransferRejectedException When at least one of the listeners aborts the file transfer.
      */
     void fireFileTransferCompleted( String sid, boolean wasSuccessful );
 }

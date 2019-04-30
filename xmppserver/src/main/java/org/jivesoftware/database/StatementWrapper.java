@@ -24,7 +24,7 @@ public abstract class StatementWrapper implements Statement {
     protected Statement stmt;
 
     /**
-     * Creates a new StatementWrapper that wraps <tt>stmt</tt>.
+     * Creates a new StatementWrapper that wraps {@code stmt}.
      *
      * @param stmt The to-be-wrapped statement.
      */

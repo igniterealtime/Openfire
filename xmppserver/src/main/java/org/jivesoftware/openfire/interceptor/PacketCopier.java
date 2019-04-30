@@ -46,8 +46,8 @@ import org.xmpp.packet.Presence;
  * Packet interceptor that notifies of packets activity to components that previously
  * subscribed to the notificator. Notifications to components will be made using
  * a Message sent to the component itself. The Message will include an extension that will
- * contain the intercepted packet as well as extra information such us <tt>incoming</tt>
- * and <tt>processed</tt>.
+ * contain the intercepted packet as well as extra information such us {@code incoming}
+ * and {@code processed}.
  *
  * @author Gaston Dombiak
  */

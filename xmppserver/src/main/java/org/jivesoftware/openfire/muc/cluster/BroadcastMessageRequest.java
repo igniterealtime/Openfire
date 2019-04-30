@@ -20,6 +20,8 @@ import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class BroadcastMessageRequest extends MUCRoomTask<Void> {
+    private static final Logger Log = LoggerFactory.getLogger( BroadcastMessageRequest.class );
     private int occupants;
     private Message message;
 
@@ -65,7 +68,14 @@ public class BroadcastMessageRequest extends MUCRoomTask<Void> {
         execute(new Runnable() {
             @Override
             public void run() {
-                getRoom().broadcast(BroadcastMessageRequest.this);
+                try
+                {
+                    getRoom().broadcast( BroadcastMessageRequest.this );
+                }
+                catch ( Exception e )
+                {
+                    Log.warn( "An unexpected exception occurred while trying to broadcast a message from {} in the room {}", message.getFrom(), getRoom().getJID() );
+                }
             }
         });
     }

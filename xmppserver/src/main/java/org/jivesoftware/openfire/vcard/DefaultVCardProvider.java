@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of the VCardProvider interface, which reads and writes data
- * from the <tt>ofVCard</tt> database table.
+ * from the {@code ofVCard} database table.
  *
  * @author Gaston Dombiak
  */

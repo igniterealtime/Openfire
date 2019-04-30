@@ -56,11 +56,11 @@ public class OutgoingServerSocketReader {
     }
 
     /**
-     * Returns the OutgoingServerSession for which this reader is working for or <tt>null</tt> if
+     * Returns the OutgoingServerSession for which this reader is working for or {@code null} if
      * a OutgoingServerSession was not created yet. While the OutgoingServerSession is being
      * created it is possible to have a reader with no session.
      *
-     * @return the OutgoingServerSession for which this reader is working for or <tt>null</tt> if
+     * @return the OutgoingServerSession for which this reader is working for or {@code null} if
      *         a OutgoingServerSession was not created yet.
      */
     public OutgoingServerSession getSession() {
@@ -80,9 +80,9 @@ public class OutgoingServerSocketReader {
      * Retrieves and removes the first received element that was stored in the queue, waiting
      * if necessary up to the specified wait time if no elements are present on this queue.
      *
-     * @param timeout how long to wait before giving up, in units of <tt>unit</tt>.
-     * @param unit a <tt>TimeUnit</tt> determining how to interpret the <tt>timeout</tt> parameter.
-     * @return the head of this queue, or <tt>null</tt> if the specified waiting time elapses
+     * @param timeout how long to wait before giving up, in units of {@code unit}.
+     * @param unit a {@code TimeUnit} determining how to interpret the {@code timeout} parameter.
+     * @return the head of this queue, or {@code null} if the specified waiting time elapses
      *         before an element is present.
      * @throws InterruptedException if interrupted while waiting.
      */

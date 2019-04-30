@@ -32,11 +32,11 @@ import java.util.*;
  * A model for admin tab and sidebar info. This class loads in XML definitions of the
  * data and produces an in-memory model.<p>
  *
- * This class loads its data from the <tt>admin-sidebar.xml</tt> file which is assumed
+ * This class loads its data from the {@code admin-sidebar.xml} file which is assumed
  * to be in the main application jar file. In addition, it will load files from
- * <tt>META-INF/admin-sidebar.xml</tt> if they're found. This allows developers to
+ * {@code META-INF/admin-sidebar.xml} if they're found. This allows developers to
  * extend the functionality of the admin console to provide more options. See the main
- * <tt>admin-sidebar.xml</tt> file for documentation of its format.
+ * {@code admin-sidebar.xml} file for documentation of its format.
  */
 public class AdminConsole {
 
@@ -171,7 +171,7 @@ public class AdminConsole {
 
     /**
      * Convenience method to select an element from the model by its ID. If an
-     * element with a matching ID is not found, <tt>null</tt> will be returned.
+     * element with a matching ID is not found, {@code null} will be returned.
      *
      * @param id the ID.
      * @return the element.
@@ -184,12 +184,12 @@ public class AdminConsole {
      * Returns a text element for the admin console, applying the appropriate locale.
      * Internationalization logic will only be applied if the String is specially encoded
      * in the format "${key.name}". If it is, the String is pulled from the resource bundle.
-     * If the pluginName is not <tt>null</tt>, the plugin's resource bundle will be used
+     * If the pluginName is not {@code null}, the plugin's resource bundle will be used
      * to look up the key.
      *
      * @param string the String.
      * @param pluginName the name of the plugin that the i18n String can be found in,
-     *      or <tt>null</tt> if the standard Openfire resource bundle should be used.
+     *      or {@code null} if the standard Openfire resource bundle should be used.
      * @return the string, or if the string is encoded as an i18n key, the value from
      *      the appropriate resource bundle.
      */

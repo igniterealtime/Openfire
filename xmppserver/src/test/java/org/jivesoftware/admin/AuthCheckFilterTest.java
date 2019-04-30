@@ -1,20 +1,5 @@
 package org.jivesoftware.admin;
 
-import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.openfire.auth.AuthToken;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -24,6 +9,22 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
+import javax.servlet.FilterChain;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthCheckFilterTest {
@@ -39,10 +40,15 @@ public class AuthCheckFilterTest {
     @Mock private AdminManager adminManager;
     @Mock private LoginLimitManager loginLimitManager;
 
-    @Before
-    public void setUp() throws Exception {
-
+    @BeforeClass
+    public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+    }
+
+    @Before
+    public void setUp() {
+
+        Fixtures.clearExistingProperties();
 
         doReturn("/uri/to/page").when(request).getRequestURI();
         doReturn(httpSession).when(request).getSession();
@@ -130,7 +136,7 @@ public class AuthCheckFilterTest {
     }
 
     @Test
-    public void willReturnTrueIfTheCorrectServletRequestAuthenticatorIsConfigured() throws Exception {
+    public void willReturnTrueIfTheCorrectServletRequestAuthenticatorIsConfigured() {
 
         new AuthCheckFilter(adminManager, loginLimitManager, NormalUserServletAuthenticatorClass.class.getName());
 
@@ -138,7 +144,7 @@ public class AuthCheckFilterTest {
     }
 
     @Test
-    public void willReturnFalseIfTheWrongServletRequestAuthenticatorIsConfigured() throws Exception {
+    public void willReturnFalseIfTheWrongServletRequestAuthenticatorIsConfigured() {
 
         new AuthCheckFilter(adminManager, loginLimitManager, NormalUserServletAuthenticatorClass.class.getName());
 
@@ -146,7 +152,7 @@ public class AuthCheckFilterTest {
     }
 
     @Test
-    public void willReturnFalseIfNoServletRequestAuthenticatorIsConfigured() throws Exception {
+    public void willReturnFalseIfNoServletRequestAuthenticatorIsConfigured() {
 
         new AuthCheckFilter(adminManager, loginLimitManager, "");
 

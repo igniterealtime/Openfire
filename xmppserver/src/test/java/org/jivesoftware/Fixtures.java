@@ -40,8 +40,9 @@ public final class Fixtures {
     }
 
     /**
-     * Reconfigures the Openfire home directory to the blank test one. This allows JiveGlobals.getProperty() etc.
-     * to work in test classes without errors being displayed to stderr.
+     * Reconfigures the Openfire home directory to the blank test one. This allows {@link JiveGlobals#setProperty(String, String)} etc.
+     * to work (and persist) in test classes without errors being displayed to stderr. Ideally should be called in a
+     * {@link org.junit.BeforeClass} method.
      */
     public static void reconfigureOpenfireHome() throws Exception {
         final URL configFile = ClassLoader.getSystemResource("conf/openfire.xml");
@@ -55,6 +56,21 @@ public final class Fixtures {
         // The following speeds up tests by avoiding DB retries
         JiveGlobals.setXMLProperty("database.maxRetries", "0");
         JiveGlobals.setXMLProperty("database.retryDelay", "0");
+        clearExistingProperties();
+    }
+
+    /**
+     * As {@link #reconfigureOpenfireHome()} allows properties to persist, this method clears all existing properties
+     * (both XML and 'database') to ensure clean test output. Ideally should be called in a {@link org.junit.Before} method.
+     */
+    public static void clearExistingProperties() {
+        JiveGlobals.getXMLPropertyNames().stream()
+            .filter(name -> !"setup".equals(name))
+            .filter(name -> !"database.maxRetries".equals(name))
+            .filter(name -> !"database.retryDelay".equals(name))
+            .forEach(JiveGlobals::deleteXMLProperty);
+        JiveGlobals.getPropertyNames()
+            .forEach(JiveGlobals::deleteProperty);
     }
 
     public static XMPPServer mockXMPPServer() {

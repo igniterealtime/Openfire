@@ -34,6 +34,8 @@ public class ClusterMonitorTest {
     @Before
     public void setUp() {
 
+        Fixtures.clearExistingProperties();
+
         doReturn(xmppServerInfo).when(xmppServer).getServerInfo();
 
         doReturn(THIS_HOST_NAME).when(xmppServerInfo).getHostname();

@@ -955,7 +955,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         occupantsByFullJID.remove(userAddress);
         if (originator) {
             // Fire event that occupant left the room
-            MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress);
+            MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
         }
     }
 

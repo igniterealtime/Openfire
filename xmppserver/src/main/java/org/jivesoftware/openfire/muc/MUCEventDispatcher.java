@@ -63,10 +63,14 @@ public class MUCEventDispatcher {
         }
     }
 
-    public static void occupantLeft(JID roomJID, JID user) {
+    @SuppressWarnings("deprecation")
+    public static void occupantLeft(JID roomJID, JID user, String nickname) {
         for (MUCEventListener listener : listeners) {
             try {
+                // We call both two and three argument methods to support
+                // older API clients
                 listener.occupantLeft(roomJID, user);
+                listener.occupantLeft(roomJID, user, nickname);
             } catch (Exception e) {
                 Log.warn("An exception occurred while dispatching a 'occupantLeft' event!", e);
             } 

@@ -37,14 +37,21 @@ public class ConnectionConfiguration
     private final TrustStore trustStore;
 
     /**
-     * @param type
-     * @param enabled
+     * @param type the connection type
+     * @param enabled is the connection enabled or disabled
      * @param maxThreadPoolSize The maximum number of threads that are to be used to processing network activity. Must be equal to or larger than one.
      * @param maxBufferSize The maximum amount of bytes of the read buffer that I/O processor allocates per each read, or a non-positive value to configure no maximum.
      * @param clientAuth specification if peers should be authenticated ('mutual authentication') (cannot be null).
      * @param bindAddress The network address on which connections are accepted, or null when any local address can be used.
      * @param port The TCP port number on which connections are accepted (must be a valid TCP port number).
      * @param tlsPolicy The TLS policy that is applied to connections (cannot be null).
+     * @param identityStoreConfiguration the certificates the server identify as
+     * @param trustStoreConfiguration the certificates the server trusts
+     * @param acceptSelfSignedCertificates {@code true} to accept self-signed certificates, otherwise {@code false}
+     * @param verifyCertificateValidity {@code true} to accept self-signed certificates, otherwise {@code false}
+     * @param encryptionProtocols the set of protocols supported
+     * @param encryptionCipherSuites the set of ciphers supported
+     * @param compressionPolicy the compression policy
      */
     // TODO input validation
     public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy )

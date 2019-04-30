@@ -406,7 +406,7 @@ public abstract class Node {
 
     /**
      * Returns all subscriptions to the node. If multiple subscriptions are enabled,
-     * this method returns the subscriptions by <tt>subId</tt>, otherwise it returns
+     * this method returns the subscriptions by {@code subId}, otherwise it returns
      * the subscriptions by {@link JID}.
      *
      * @return All subscriptions to the node.
@@ -430,12 +430,12 @@ public abstract class Node {
     }
 
     /**
-     * Returns the {@link NodeAffiliate} of the specified {@link JID} or <tt>null</tt>
+     * Returns the {@link NodeAffiliate} of the specified {@link JID} or {@code null}
      * if none was found. Users that have a subscription with the node will ALWAYS
-     * have an affiliation even if the affiliation is of type <tt>none</tt>.
+     * have an affiliation even if the affiliation is of type {@code none}.
      *
      * @param jid the JID of the user to look his affiliation with this node.
-     * @return the NodeAffiliate of the specified JID or <tt>null</tt> if none was found.
+     * @return the NodeAffiliate of the specified JID or {@code null} if none was found.
      */
     public NodeAffiliate getAffiliate(JID jid) {
         for (NodeAffiliate affiliate : affiliates) {
@@ -1107,7 +1107,7 @@ public abstract class Node {
     /**
      * Returns true if a user may have more than one subscription with the node. When
      * multiple subscriptions is enabled each subscription request, event notification and
-     * unsubscription request should include a <tt>subid</tt> attribute. By default multiple
+     * unsubscription request should include a {@code subid} attribute. By default multiple
      * subscriptions is enabled.
      *
      * @return true if a user may have more than one subscription with the node.
@@ -1778,14 +1778,14 @@ public abstract class Node {
     }
 
     /**
-     * Returns the subscription whose subscription JID matches the specified JID or <tt>null</tt>
+     * Returns the subscription whose subscription JID matches the specified JID or {@code null}
      * if none was found. Accessing subscriptions by subscription JID and not by subscription ID
      * is only possible when the node does not allow multiple subscriptions from the same entity.
      * If the node allows multiple subscriptions and this message is sent then an
      * IllegalStateException exception is going to be thrown.
      *
      * @param subscriberJID the JID of the entity that receives event notifications.
-     * @return the subscription whose subscription JID matches the specified JID or <tt>null</tt>
+     * @return the subscription whose subscription JID matches the specified JID or {@code null}
      *         if none was found.
      * @throws IllegalStateException If this message was used when the node supports multiple
      *         subscriptions.
@@ -1800,14 +1800,14 @@ public abstract class Node {
     }
 
     /**
-     * Returns the subscription whose subscription ID matches the specified ID or <tt>null</tt>
+     * Returns the subscription whose subscription ID matches the specified ID or {@code null}
      * if none was found. Accessing subscriptions by subscription ID is always possible no matter
      * if the node allows one or multiple subscriptions for the same entity. Even when users can
      * only subscribe once to the node a subscription ID is going to be internally created though
      * never returned to the user.
      *
      * @param subscriptionID the ID of the subscription.
-     * @return the subscription whose subscription ID matches the specified ID or <tt>null</tt>
+     * @return the subscription whose subscription ID matches the specified ID or {@code null}
      *         if none was found.
      */
     public NodeSubscription getSubscription(String subscriptionID) {
@@ -2045,7 +2045,7 @@ public abstract class Node {
      * to be authorized by a node owner to be active. If new subscriptions are required to be
      * configured before being active then the subscription state would be "unconfigured".<p>
      *
-     * The originalIQ parameter may be <tt>null</tt> when using this API internally. When no
+     * The originalIQ parameter may be {@code null} when using this API internally. When no
      * IQ packet was sent then no IQ result will be sent to the sender. The rest of the
      * functionality is the same.
      *
@@ -2125,7 +2125,7 @@ public abstract class Node {
 
     /**
      * Cancels an existing subscription to the node. If the subscriber does not have any
-     * other subscription to the node and his affiliation was of type <tt>none</tt> then
+     * other subscription to the node and his affiliation was of type {@code none} then
      * remove the existing affiliation too.
      *
      * @param subscription the subscription to cancel.
@@ -2158,7 +2158,7 @@ public abstract class Node {
 
     /**
      * Cancels an existing subscription to the node. If the subscriber does not have any
-     * other subscription to the node and his affiliation was of type <tt>none</tt> then
+     * other subscription to the node and his affiliation was of type {@code none} then
      * remove the existing affiliation too.
      *
      * @param subscription the subscription to cancel.
@@ -2168,10 +2168,10 @@ public abstract class Node {
     }
 
     /**
-     * Returns the {@link PublishedItem} whose ID matches the specified item ID or <tt>null</tt>
+     * Returns the {@link PublishedItem} whose ID matches the specified item ID or {@code null}
      * if none was found. Item ID may or may not exist and it depends on the node's configuration.
      * When the node is configured to not include payloads in event notifications and
-     * published items are not persistent then item ID is not used. In this case a <tt>null</tt>
+     * published items are not persistent then item ID is not used. In this case a {@code null}
      * value will always be returned.
      *
      * @param itemID the ID of the item to retrieve.
@@ -2233,11 +2233,11 @@ public abstract class Node {
     }
 
     /**
-     * Returns the last {@link PublishedItem} that was published to the node or <tt>null</tt> if
+     * Returns the last {@link PublishedItem} that was published to the node or {@code null} if
      * the node does not have published items. Collection nodes does not support publishing
-     * of items so a <tt>null</tt> will be returned in that case.
+     * of items so a {@code null} will be returned in that case.
      *
-     * @return the PublishedItem that was published to the node or <tt>null</tt> if
+     * @return the PublishedItem that was published to the node or {@code null} if
      *         the node does not have published items.
      */
     public PublishedItem getLastPublishedItem() {

@@ -101,6 +101,7 @@ public class HttpConnection {
      *
      * @throws HttpConnectionClosedException when this connection to the client has already received
      * a deliverable to forward to the client
+     * @throws IOException if an input or output exception occurred
      */
     public void deliverBody(String body, boolean async) throws HttpConnectionClosedException, IOException {
         // We only want to use this function once so we will close it when the body is delivered.

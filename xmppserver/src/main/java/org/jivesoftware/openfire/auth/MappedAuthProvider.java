@@ -30,10 +30,10 @@ import org.jivesoftware.util.JiveGlobals;
  * To use this provider, use the following system property definition:
  *
  * <ul>
- * <li><tt>provider.auth.className = org.jivesoftware.openfire.user.MappedAuthProvider</tt></li>
+ * <li>{@code provider.auth.className = org.jivesoftware.openfire.user.MappedAuthProvider}</li>
  * </ul>
  *
- * To be usable, a {@link AuthProviderMapper} must be configured using the <tt>mappedAuthProvider.mapper.className</tt>
+ * To be usable, a {@link AuthProviderMapper} must be configured using the {@code mappedAuthProvider.mapper.className}
  * system property. It is of importance to note that most AuthProviderMapper implementations will require additional
  * configuration.
  *

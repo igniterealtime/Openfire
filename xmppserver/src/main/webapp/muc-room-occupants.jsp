@@ -21,6 +21,7 @@
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.JiveGlobals,
                  java.net.URLEncoder,
                  java.text.DateFormat"
     errorPage="error.jsp"
@@ -61,10 +62,11 @@
 
     // Kick nick specified
     if (kick != null) {
+        String consoleKickReason = JiveGlobals.getProperty("admin.mucRoom.consoleKickReason", null);
         MUCRole role = room.getOccupant(nickName);
         if (role != null) {
             try {
-                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, "");
+                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, consoleKickReason);
                 // Log the event
                 webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect

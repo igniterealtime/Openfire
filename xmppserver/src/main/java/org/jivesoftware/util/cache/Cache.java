@@ -143,7 +143,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     long getCacheMisses();
 
     /**
-     * <string>IMPORTANT:</string> Unlike the standard {@link Map#values()} implementation, the collection returned from
+     * <strong>IMPORTANT:</strong> Unlike the standard {@link Map#values()} implementation, the collection returned from
      * this method cannot be modified.
      *
      * @return an unmodifiable collection view of the values contained in this map
@@ -151,7 +151,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     Collection<V> values();
 
     /**
-     * <string>IMPORTANT:</string> Unlike the standard {@link Map#entrySet()} implementation, the set returned from
+     * <strong>IMPORTANT:</strong> Unlike the standard {@link Map#entrySet()} implementation, the set returned from
      * this method cannot be modified.
      *
      * @return an unmodifiable set view of the mappings contained in this map
@@ -160,7 +160,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     Set<Entry<K, V>> entrySet();
 
     /**
-     * <string>IMPORTANT:</string> Unlike the standard {@link Map#keySet()} implementation, the set returned from
+     * <strong>IMPORTANT:</strong> Unlike the standard {@link Map#keySet()} implementation, the set returned from
      * this method cannot be modified.
      *
      * @return an unmodifiable set view of the keys contained in this map

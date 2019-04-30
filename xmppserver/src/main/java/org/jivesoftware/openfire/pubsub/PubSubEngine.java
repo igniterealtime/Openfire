@@ -1279,8 +1279,8 @@ public class PubSubEngine {
      * - Node does not already exist
      * - New node configuration is valid
      *
-     * <br/>NOTE 1: This method should not reply to the client
-     * <br/>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
+     * <br>NOTE 1: This method should not reply to the client
+     * <br>NOTE 2: This method calls UserManager::isRegisteredUser(JID) which can block waiting for a response - so
      * do not call this method in the same thread in which a response might arrive
      *
      * @param service The service instance that's responsible for processing (cannot be null)
@@ -1854,7 +1854,7 @@ public class PubSubEngine {
 
     /**
      * Returns the data form included in the configure element sent by the node owner or
-     * <tt>null</tt> if none was included or access model was defined. If the
+     * {@code null} if none was included or access model was defined. If the
      * owner just wants to set the access model to use for the node and optionally set the
      * list of roster groups (i.e. contacts present in the node owner roster in the
      * specified groups are allowed to access the node) allowed to access the node then
@@ -1865,7 +1865,7 @@ public class PubSubEngine {
      *
      * @param configureElement the configure element sent by the owner.
      * @return the data form included in the configure element sent by the node owner or
-     *         <tt>null</tt> if none was included or access model was defined.
+     *         {@code null} if none was included or access model was defined.
      */
     private static DataForm getSentConfigurationForm(Element configureElement) {
         DataForm completedForm = null;
@@ -1968,7 +1968,7 @@ public class PubSubEngine {
      * specified subscriber. When the subscriber JID is a bare JID then the answered collection
      * will have many entries one for each connected resource. Moreover, if the user
      * is offline then an empty collectin is returned. Available show status is represented
-     * by a <tt>online</tt> value. The rest of the possible show values as defined in RFC 3921.
+     * by a {@code online} value. The rest of the possible show values as defined in RFC 3921.
      *
      * @param service the PubSub service this action is to be performed for.
      * @param subscriber the JID of the subscriber. This is not the JID of the affiliate.
@@ -2050,7 +2050,7 @@ public class PubSubEngine {
      * table. Similar to {@link InternalComponentManager#hasComponent(JID)}.
      * 
      * @param jid
-     * @return <tt>true</tt> if the JID is a component, <tt>false<.tt> if not.
+     * @return {@code true} if the JID is a component, {@code false<.tt> if not.
      */
     private static boolean isComponent(JID jid) {
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();

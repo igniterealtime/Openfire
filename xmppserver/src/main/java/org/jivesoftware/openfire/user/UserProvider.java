@@ -43,8 +43,8 @@ public interface UserProvider {
      *
      * @param username the username.
      * @param password the plain-text password.
-     * @param name the user's name, which can be <tt>null</tt>, unless isNameRequired is set to true.
-     * @param email the user's email address, which can be <tt>null</tt>, unless isEmailRequired is set to true.
+     * @param name the user's name, which can be {@code null}, unless isNameRequired is set to true.
+     * @param email the user's email address, which can be {@code null}, unless isEmailRequired is set to true.
      * @return a new User.
      * @throws UserAlreadyExistsException if the username is already in use.
      */
@@ -93,7 +93,7 @@ public interface UserProvider {
      * {@link UserManager#getUser(String)}.<p>
      *
      * It is possible that the number of results returned will be less than that
-     * specified by <tt>numResults</tt> if <tt>numResults</tt> is greater than the
+     * specified by {@code numResults} if {@code numResults} is greater than the
      * number of records left to display.
      *
      * @param startIndex the beginning index to start the results at.

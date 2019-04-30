@@ -20,6 +20,9 @@ import org.dom4j.Element;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dispatches vCard events. The following events are supported:
  * <ul>
@@ -33,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gabriel Guardincerri
  */
 public class VCardEventDispatcher {
+    private static final Logger Log = LoggerFactory.getLogger(VCardEventDispatcher.class);
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
@@ -67,7 +71,11 @@ public class VCardEventDispatcher {
      */
     public static void dispatchVCardUpdated(String user, Element vCard) {
         for (VCardListener listener : listeners) {
-            listener.vCardUpdated(user, vCard);
+            try {
+                listener.vCardUpdated(user, vCard); 
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'vCardUpdated' event!", e);
+            }
         }
     }
 
@@ -79,7 +87,11 @@ public class VCardEventDispatcher {
      */
     public static void dispatchVCardCreated(String user, Element vCard) {
         for (VCardListener listener : listeners) {
-            listener.vCardCreated(user, vCard);
+            try {
+                listener.vCardCreated(user, vCard);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'vCardCreated' event!", e);
+            }
         }
     }
 
@@ -91,7 +103,11 @@ public class VCardEventDispatcher {
      */
     public static void dispatchVCardDeleted(String user, Element vCard) {
         for (VCardListener listener : listeners) {
-            listener.vCardDeleted(user, vCard);
+            try {
+                listener.vCardDeleted(user, vCard);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'vCardDeleted' event!", e);
+            }
         }
     }
 

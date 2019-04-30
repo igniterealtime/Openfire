@@ -262,6 +262,8 @@ public class CertificateStoreManager extends BasicModule
      * Each certificate store can be configured to use a distinct file, as well as use a distinct backup location.
      * In practise, there will be a lot of overlap. This implementation creates a backup (by copying the file) for
      * each unique file/backup-location combination in the collection of all certificate stores.
+     * @return the paths the store was backed up to
+     * @throws IOException if the store could not be backed up
      */
     public Collection<Path> backup() throws IOException
     {
@@ -296,6 +298,7 @@ public class CertificateStoreManager extends BasicModule
      * The KeyStore type (jks, jceks, pkcs12, etc) for the identity and trust store for connections created by this
      * listener.
      *
+     * @param type the connection type
      * @return a store type (never null).
      * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
      */
@@ -422,6 +425,7 @@ public class CertificateStoreManager extends BasicModule
     /**
      * The location (relative to OPENFIRE_HOME) of the directory that holds backups for identity stores.
      *
+     * @param type the connection type
      * @return a path (never null).
      */
     public static String getIdentityStoreBackupDirectory( ConnectionType type )
@@ -442,6 +446,7 @@ public class CertificateStoreManager extends BasicModule
     /**
      * The location (relative to OPENFIRE_HOME) of the directory that holds backups for trust stores.
      *
+     * @param type the connection type
      * @return a path (never null).
      */
     public static String getTrustStoreBackupDirectory( ConnectionType type )
@@ -485,7 +490,7 @@ public class CertificateStoreManager extends BasicModule
      * changes are made to use different keystores for at least one connection type, this method returns 'true'.
      *
      * @return true if Openfire is using different keystores based on the type of connection, false when running with the default store configuration.
-     * @throws IOException
+     * @throws IOException if there was an IO error
      */
     public boolean usesDistinctConfigurationForEachType() throws IOException
     {

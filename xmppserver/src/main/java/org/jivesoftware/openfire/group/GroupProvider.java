@@ -25,7 +25,7 @@ import org.xmpp.packet.JID;
 /**
  * Provider interface for groups. Users that wish to integrate with
  * their own group system must implement this class and then register
- * the implementation with Openfire in the <tt>openfire.xml</tt>
+ * the implementation with Openfire in the {@code openfire.xml}
  * file. An entry in that file would look like the following:
  *
  * <pre>
@@ -156,7 +156,7 @@ public interface GroupProvider {
      * @param startIndex start index in results.
      * @param numResults number of results to return.
      * @return the Collection of all group names given the
-     *      <tt>startIndex</tt> and <tt>numResults</tt>.
+     *      {@code startIndex} and {@code numResults}.
      */
     Collection<String> getGroupNames(int startIndex, int numResults);
 

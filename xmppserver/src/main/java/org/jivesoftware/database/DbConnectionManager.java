@@ -315,6 +315,7 @@ public class DbConnectionManager {
      *      }
      * } </pre>
      *
+     * @param rs the result set to close
      * @param stmt the statement.
      */
     public static void closeStatement(ResultSet rs, Statement stmt) {
@@ -342,6 +343,7 @@ public class DbConnectionManager {
      * } </pre>
      *
      * @param pstmt the statement to close.
+     * @throws SQLException if an exception occurs closing the statement
      */
     public static void fastcloseStmt(PreparedStatement pstmt) throws SQLException
     {
@@ -368,7 +370,9 @@ public class DbConnectionManager {
      *      ...
      * } </pre>
      *
+     * @param rs The result set to close
      * @param pstmt the statement to close.
+     * @throws SQLException if an exception occurs closing the result set or statement
      */
     public static void fastcloseStmt(ResultSet rs, PreparedStatement pstmt) throws SQLException
     {
@@ -489,7 +493,7 @@ public class DbConnectionManager {
     /**
      * Scrolls forward in a result set the specified number of rows. If the JDBC driver
      * supports the feature, the cursor will be moved directly. Otherwise, we scroll
-     * through results one by one manually by calling <tt>rs.next()</tt>.
+     * through results one by one manually by calling {@code rs.next()}.
      *
      * @param rs the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
@@ -628,7 +632,7 @@ public class DbConnectionManager {
 
     /**
      * Destroys the currennt connection provider. Future calls to
-     * {@link #getConnectionProvider()} will return <tt>null</tt> until a new
+     * {@link #getConnectionProvider()} will return {@code null} until a new
      * ConnectionProvider is set, or one is automatically loaded by a call to
      * {@link #getConnection()}.
      */

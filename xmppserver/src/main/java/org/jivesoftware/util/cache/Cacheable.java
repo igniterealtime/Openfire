@@ -37,6 +37,7 @@ public interface Cacheable extends java.io.Serializable {
      * and may be based on empirical trials or dynamic calculations.<p>
      *
      * @return the size of the Object in bytes.
+     * @throws CannotCalculateSizeException if the size cannot be calculated
      */
     int getCachedSize() throws CannotCalculateSizeException;
 }

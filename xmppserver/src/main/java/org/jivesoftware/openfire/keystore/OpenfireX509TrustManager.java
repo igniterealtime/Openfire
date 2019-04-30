@@ -140,7 +140,7 @@ public class OpenfireX509TrustManager implements X509TrustManager
      *
      * Depending on the configuration of this class, other verification is done:
      * <ul>
-     *     <li>{@link #acceptSelfSigned}: when <tt>true</tt>, any chain that has a length of one and is self-signed is
+     *     <li>{@link #acceptSelfSigned}: when {@code true}, any chain that has a length of one and is self-signed is
      *                                    considered as a 'trust anchor' (but is still subject to other checks, such as
      *                                    expiration checks).</li>
      * </ul>
@@ -151,9 +151,9 @@ public class OpenfireX509TrustManager implements X509TrustManager
      * @param chain The certificate chain that is to be verified (cannot be null or empty).
      * @return A trusted certificate path (never null).
      *
-     * @throws InvalidAlgorithmParameterException
-     * @throws NoSuchAlgorithmException
-     * @throws CertPathBuilderException
+     * @throws InvalidAlgorithmParameterException if the algorithm is invalid
+     * @throws NoSuchAlgorithmException if the algorithm could not be found
+     * @throws CertPathBuilderException if there was a problem with the certificate path
      */
     protected CertPath checkChainTrusted( CertSelector selector, X509Certificate... chain ) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, CertPathBuilderException
     {

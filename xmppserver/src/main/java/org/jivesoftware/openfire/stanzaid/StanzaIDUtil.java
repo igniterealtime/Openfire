@@ -13,7 +13,7 @@ import java.util.UUID;
 /**
  * Utility methods that implement XEP-0359: Unique and Stable Stanza IDs.
  *
- * @see <a href="https://xmpp.org/extensions/xep-0359.html>XEP-0359</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0359.html">XEP-0359</a>
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class StanzaIDUtil
@@ -25,7 +25,8 @@ public class StanzaIDUtil
      *
      * @param packet The inbound packet (cannot be null).
      * @param self The ID of the 'local' entity that will generate the stanza ID (cannot be null).
-     * @see <a href="https://xmpp.org/extensions/xep-0359.html>XEP-0359</a>
+     * @return the updated packet
+     * @see <a href="https://xmpp.org/extensions/xep-0359.html">XEP-0359</a>
      */
     public static Packet ensureUniqueAndStableStanzaID( final Packet packet, final JID self )
     {

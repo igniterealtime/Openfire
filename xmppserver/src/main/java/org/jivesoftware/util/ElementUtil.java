@@ -57,9 +57,10 @@ public class ElementUtil {
 
 
     /**
-     * Returns the value of the specified property. A <tt>null</tt> answer does not necessarily mean
+     * Returns the value of the specified property. A {@code null} answer does not necessarily mean
      * that the property does not exist.
      *
+     * @param element the element from which the property should be retrieved
      * @param name the name of the property to get.
      * @return the value of the specified property.
      */
@@ -100,6 +101,7 @@ public class ElementUtil {
      * Returns true if the specified property is included in the XML hierarchy. A property could
      * have a value associated or not. If the property has an associated value then
      *
+     * @param element the element to check
      * @param name the name of the property to find out.
      * @return true if the specified property is included in the XML hierarchy.
      */
@@ -158,6 +160,7 @@ public class ElementUtil {
      * If you call getProperties("foo.bar.prop") will return a string array containing
      * {"some value", "other value", "last value"}.
      *
+     * @param element the element to get the properties for
      * @param name the name of the property to retrieve
      * @return all child property values for the given node name.
      */
@@ -201,6 +204,7 @@ public class ElementUtil {
      * &lt;/foo&gt;
      * </pre>
      *
+     * @param element the element to set the properties on
      * @param name   the name of the property.
      * @param values The array of values for the property (can be empty but not null)
      */
@@ -235,10 +239,11 @@ public class ElementUtil {
      * Return all children property names of a parent property as a String array,
      * or an empty array if the if there are no children. You MAY NOT use the atttribute
      * markup (using a ':' in the last element name) with this call.
-     * For example, given the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and <tt>X.Y.C</tt>, then
-     * the child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt>.
+     * For example, given the properties {@code X.Y.A}, {@code X.Y.B}, and {@code X.Y.C}, then
+     * the child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C}.
      *
+     * @param element the element to get the properties from
      * @param parent the name of the parent property.
      * @return all child property values for the given parent.
      */
@@ -270,6 +275,7 @@ public class ElementUtil {
      * if no children exist. The list of children is depth-first so the array is optimized
      * for easy displaying.
      *
+     * @param element the element to get the properties from
      * @param parent the parent property.
      * @return all recursive children of the given property in depth-first order or an empty
      *         string array if no children exist.
@@ -294,6 +300,7 @@ public class ElementUtil {
      * Sets the value of the specified property. If the property doesn't
      * currently exist, it will be automatically created.
      *
+     * @param element the element to set the property on
      * @param name  the name of the property to set.
      * @param value the new value for the property.
      */
@@ -343,6 +350,7 @@ public class ElementUtil {
      * deleteProperty() removes both the containing text, and the element itself along with
      * any attributes associated with that element.</p>
      *
+     * @param element the element to delete the property from
      * @param name the property to delete.
      */
     public static void deleteProperty(Element element, String name) {

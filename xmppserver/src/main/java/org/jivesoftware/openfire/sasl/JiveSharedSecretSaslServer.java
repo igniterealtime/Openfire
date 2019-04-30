@@ -152,9 +152,9 @@ public class JiveSharedSecretSaslServer implements SaslServer
     }
 
     /**
-     * Returns the shared secret value, or <tt>null</tt> if shared secret authentication is disabled. If this is the
+     * Returns the shared secret value, or {@code null} if shared secret authentication is disabled. If this is the
      * first time the shared secret value has been requested (and  shared secret auth is enabled), the key will be
-     * randomly generated and stored in the property <tt>xmpp.auth.sharedSecret</tt>.
+     * randomly generated and stored in the property {@code xmpp.auth.sharedSecret}.
      *
      * @return the shared secret value.
      */

@@ -23,6 +23,9 @@ import org.jivesoftware.util.cache.CacheFactory;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A Privacy list manager creates, gets, updates and removes privacy lists. Loaded lists
  * are kept in memory using a cache that will keep them at most for 6 hours.
@@ -30,6 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Gaston Dombiak
  */
 public class PrivacyListManager {
+    private static final Logger logger = LoggerFactory.getLogger(PrivacyListManager.class);
 
     private static final PrivacyListManager instance = new PrivacyListManager();
     private static Cache<String, PrivacyList> listsCache;
@@ -94,7 +98,11 @@ public class PrivacyListManager {
         provider.createPrivacyList(username, list);
         // Trigger event that a new privacy list has been created
         for (PrivacyListEventListener listener : listeners) {
-            listener.privacyListCreated(list);
+            try {
+                listener.privacyListCreated(list);   
+            } catch (Exception e) {
+                logger.warn("An exception occurred while dispatching a 'privacyListCreated' event!", e);
+            }
         }
         return list;
     }
@@ -110,7 +118,11 @@ public class PrivacyListManager {
     public void deletePrivacyList(String username, String listName) {
         // Trigger event that a privacy list is being deleted
         for (PrivacyListEventListener listener : listeners) {
-            listener.privacyListDeleting(listName);
+            try {
+                listener.privacyListDeleting(listName);
+            } catch (Exception e) {
+                logger.warn("An exception occurred while dispatching a 'privacyListDeleting' event!", e);
+            }
         }
         // Remove the list from the cache
         listsCache.remove(getCacheKey(username, listName));
@@ -135,7 +147,11 @@ public class PrivacyListManager {
             listsCache.remove(getCacheKey(username, listName));
             // Trigger event that a privacy list is being deleted
             for (PrivacyListEventListener listener : listeners) {
-                listener.privacyListDeleting(listName);
+                try {
+                    listener.privacyListDeleting(listName);
+                } catch (Exception e) {
+                    logger.warn("An exception occurred while dispatching a 'privacyListDeleting' event!", e);
+                }
             }
         }
         // Delete user privacy lists from the DB
@@ -143,11 +159,11 @@ public class PrivacyListManager {
     }
 
     /**
-     * Returns the default privacy list of the specified user or <tt>null</tt> if
+     * Returns the default privacy list of the specified user or {@code null} if
      * none was found.
      *
      * @param username the name of the user to get his default list.
-     * @return the default privacy list of the specified user or <tt>null</tt> if
+     * @return the default privacy list of the specified user or {@code null} if
      *         none was found.
      */
     public PrivacyList getDefaultPrivacyList(String username) {
@@ -170,12 +186,12 @@ public class PrivacyListManager {
     }
 
     /**
-     * Returns a specific privacy list of the specified user or <tt>null</tt> if
+     * Returns a specific privacy list of the specified user or {@code null} if
      * none was found.
      *
      * @param username the name of the user to get his privacy list.
      * @param listName the name of the list to get.
-     * @return a privacy list of the specified user or <tt>null</tt> if
+     * @return a privacy list of the specified user or {@code null} if
      *         none was found.
      */
     public PrivacyList getPrivacyList(String username, String listName) {
@@ -197,7 +213,7 @@ public class PrivacyListManager {
      *
      * @param username the name of the user that is setting a new default list.
      * @param newDefault the new default privacy list.
-     * @param oldDefault the previous privacy list or <tt>null</tt> if no default list existed.
+     * @param oldDefault the previous privacy list or {@code null} if no default list existed.
      */
     public void changeDefaultList(String username, PrivacyList newDefault, PrivacyList oldDefault) {
         // TODO Analyze concurrency issues when other resource may log in while doing this change
@@ -252,7 +268,11 @@ public class PrivacyListManager {
     void dispatchModifiedEvent(PrivacyList privacyList) {
         // Trigger event that a privacy list has been modified
         for (PrivacyListEventListener listener : listeners) {
-            listener.privacyListModified(privacyList);
+            try {
+                listener.privacyListModified(privacyList); 
+            } catch (Exception e) {
+                logger.warn("An exception occurred while dispatching a 'privacyListModified' event!", e);   
+            }
         }
     }
 }

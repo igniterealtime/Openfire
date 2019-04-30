@@ -42,6 +42,8 @@ import org.xmpp.packet.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Routing table that stores routes to client sessions, outgoing server sessions
@@ -283,8 +285,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToLocalDomain(JID jid, Packet packet,
             boolean fromServer) {
@@ -382,8 +384,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToComponent(JID jid, Packet packet,
             boolean routed) {
@@ -447,8 +449,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
     {
@@ -535,8 +537,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * </ol>
      *
      * Admins can override the above logic and just send the message to all connected resources
-     * with highest priority by setting the system property <tt>route.all-resources</tt> to
-     * <tt>true</tt>.
+     * with highest priority by setting the system property {@code route.all-resources} to
+     * {@code true}.
      *
      * @param recipientJID the bare JID of the target local user.
      * @param packet the message to send.
@@ -1044,12 +1046,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void joinedCluster()
     {
-        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
-        CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
-
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
+            CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
+        }
         // Broadcast presence of local sessions to remote sessions when subscribed to presence
         // Probe presences of remote sessions when subscribed to presence of local session
         // Send pending subscription requests to local sessions from remote sessions
@@ -1075,9 +1083,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
-            CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
-
+            if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+            {
+                CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCacheByMapping( usersCache,
+                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
+                CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
+                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
+            }
             // The local cluster node left the cluster.
             //
             // Determine what routes were available only on other cluster nodes than the local one.

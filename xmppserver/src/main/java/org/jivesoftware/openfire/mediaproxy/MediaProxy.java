@@ -161,7 +161,7 @@ public class MediaProxy implements SessionListener {
      * Returns a media proxy session with the specified ID.
      *
      * @param sid the session ID.
-     * @return the session or <tt>null</tt> if the session doesn't exist.
+     * @return the session or {@code null} if the session doesn't exist.
      */
     public MediaProxySession getSession(String sid) {
         MediaProxySession proxySession = sessions.get(sid);

@@ -188,7 +188,7 @@ public class BeanUtils {
      *
      * @param beanClass the Class of the JavaBean.
      * @return the PropertyDescriptor array for the specified Java Bean Class.
-     * @throws java.beans.IntrospectionException
+     * @throws java.beans.IntrospectionException if there were problems accessing the descriptor
      */
     public static PropertyDescriptor[] getPropertyDescriptors(Class beanClass)
             throws IntrospectionException

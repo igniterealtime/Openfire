@@ -118,12 +118,12 @@
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
-        <jetty.version>9.4.12.v20180830</jetty.version>
+        <jetty.version>9.4.18.v20190429</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
-        <mina.version>2.0.20</mina.version>
-        <bouncycastle.version>1.60</bouncycastle.version>
+        <mina.version>2.1.2</mina.version>
+        <bouncycastle.version>1.61</bouncycastle.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <log4j.version>2.11.1</log4j.version>
+        <log4j.version>2.11.2</log4j.version>
     </properties>
 
     <profiles>
@@ -134,7 +134,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -170,7 +170,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -180,9 +180,8 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <source>1.8</source>
                             <quiet>true</quiet>
-                            <!-- TODO: Clean up the Javadoc so the build no longer fails if doclint is enabled -->
-                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -200,7 +199,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.1.1</version>
                     <configuration>
                         <archive>
                             <manifest>
@@ -223,7 +222,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.2.2</version>
                     <configuration>
                         <archive>
                             <manifest>
@@ -245,19 +244,19 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.3</version>
+                    <version>3.8.0</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.1.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.7</version>
+                    <version>3.1.0</version>
                 </plugin>
 
                 <plugin>
@@ -269,7 +268,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>2.7</version>
                 </plugin>
 
             </plugins>
@@ -295,6 +294,13 @@
                         <goals>
                             <goal>enforce</goal>
                         </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.5.0</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
@@ -308,24 +314,17 @@
                 </configuration>
             </plugin>
 
-            <!--<plugin>-->
-            <!--<groupId>org.codehaus.mojo</groupId>-->
-            <!--<artifactId>findbugs-maven-plugin</artifactId>-->
-            <!--<version>3.0.1</version>-->
-            <!--<configuration>-->
-            <!--<findbugsXmlOutput>true</findbugsXmlOutput>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>findbugs</id>-->
-            <!--<phase>test</phase>-->
-            <!--<goals>-->
-            <!--<goal>findbugs</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
-
+            <!--
+            The various MINA dependencies rely on OSGi bundle artifacts rather than standard JAR files.
+            As such, it's necessary to add support for these bundle to Maven using the Apache Felix maven-bundle-plugin.
+            See https://stackoverflow.com/a/5409602 for a good explanation of OSGi bundles, with links to more info.
+            -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>4.2.0</version>
+                <extensions>true</extensions>
+            </plugin>
         </plugins>
     </build>
 

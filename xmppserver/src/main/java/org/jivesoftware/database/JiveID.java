@@ -31,7 +31,7 @@ import java.lang.annotation.ElementType;
 public @interface JiveID {
 
     /**
-     * should return the int type for this object
+     * @return the int type for this object
      */
     int value();
 }

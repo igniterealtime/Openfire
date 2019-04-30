@@ -58,12 +58,12 @@ import org.slf4j.LoggerFactory;
  * than normal Openfire admin console files, it's not possible to have them
  * added to the normal Openfire admin console web app directory.
  * <p>
- * The servlet listens for requests in the form <tt>/plugins/[pluginName]/[JSP File]</tt>
- * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for non JSP requests in the
- * form like <tt>/plugins/[pluginName]/images/*.png|gif</tt>,
- * <tt>/plugins/[pluginName]/scripts/*.js|css</tt> or
- * <tt>/plugins/[pluginName]/styles/*.css</tt> (e.g.
- * <tt>/plugins/foo/images/example.gif</tt>).
+ * The servlet listens for requests in the form {@code /plugins/[pluginName]/[JSP File]}
+ * (e.g. {@code /plugins/foo/example.jsp}). It also listens for non JSP requests in the
+ * form like {@code /plugins/[pluginName]/images/*.png|gif},
+ * {@code /plugins/[pluginName]/scripts/*.js|css} or
+ * {@code /plugins/[pluginName]/styles/*.css} (e.g.
+ * {@code /plugins/foo/images/example.gif}).
  * </p>
  * JSP files must be compiled and available via the plugin's class loader. The mapping
  * between JSP name and servlet class files is defined in [pluginName]/web/web.xml.
@@ -340,6 +340,7 @@ public class PluginServlet extends HttpServlet {
      * @param servlet the servlet.
      * @param relativeUrl the relative url where the servlet should be bound
      * @return the effective url that can be used to initialize the servlet
+     * @throws ServletException if the servlet is null
      */
     public static String registerServlet(PluginManager pluginManager,
             Plugin plugin, GenericServlet servlet, String relativeUrl)
@@ -363,6 +364,7 @@ public class PluginServlet extends HttpServlet {
      * @param plugin the owner of the servlet
      * @param url the relative url where servlet has been bound
      * @return the unregistered servlet, so that it can be destroyed
+     * @throws ServletException if the URL is missing
      */
     public static GenericServlet unregisterServlet(Plugin plugin, String url)
             throws ServletException {

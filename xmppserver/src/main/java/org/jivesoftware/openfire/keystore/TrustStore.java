@@ -37,6 +37,7 @@ public class TrustStore extends CertificateStore
      *
      * @param alias the name (key) under which the certificate is to be stored in the store (cannot be null or empty).
      * @param pemRepresentation The PEM representation of the certificate to add (cannot be null or empty).
+     * @throws CertificateStoreConfigException if a single certificate could not be found
      */
     public void installCertificate( String alias, String pemRepresentation ) throws CertificateStoreConfigException
     {

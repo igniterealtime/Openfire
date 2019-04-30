@@ -71,8 +71,8 @@ public abstract class JiveBeanInfo implements BeanInfo {
     /**
      * Returns the name of the class that the bean info applies to (which
      * corresponds to the resource bundle that will be loaded). For example,
-     * for the class <tt>com.foo.ExampleClass</tt>, the name would be
-     * <tt>ExampleClass</tt>.
+     * for the class {@code com.foo.ExampleClass}, the name would be
+     * {@code ExampleClass}.
      *
      * @return the name of the JavaBean that the BeanInfo is for.
      */

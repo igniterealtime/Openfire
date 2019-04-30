@@ -91,7 +91,7 @@ public class AdHocCommandManager {
     }
 
     /**
-     * Returns the command whose code matches the specified code or <tt>null</tt> if none
+     * Returns the command whose code matches the specified code or {@code null} if none
      * was found.
      *
      * @param code the code of the command to find.

@@ -217,7 +217,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Returns the session originated from the specified address or <tt>null</tt> if none was
+     * Returns the session originated from the specified address or {@code null} if none was
      * found. The specified address MUST contain a resource that uniquely identifies the session.
      *
      * A single connection manager should connect to the same node.
@@ -295,7 +295,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ConnectionMultiplexerSession</tt>.
+     * Creates a new {@code ConnectionMultiplexerSession}.
      *
      * @param conn the connection to create the session from.
      * @param address the JID (may include a resource) of the connection manager's session.
@@ -335,7 +335,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt>. The new Client session will have a newly created
+     * Creates a new {@code ClientSession}. The new Client session will have a newly created
      * stream ID.
      *
      * @param conn the connection to create the session from.
@@ -347,7 +347,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
@@ -358,7 +358,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
@@ -384,11 +384,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.
+     * @param language The language to use for the session
      * @return a newly created session.
+     * @throws UnauthorizedException if the server has not been initialised
+     * @throws UnknownHostException if no IP address for the peer could be found,
      */
     public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language)
         throws UnauthorizedException, UnknownHostException
@@ -441,6 +444,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * @param conn the connection to the remote server.
      * @param id the stream ID used in the stream element when authenticating the server.
+     * @param fromDomain The originating domain
      * @return the newly created {@link IncomingServerSession}.
      * @throws UnauthorizedException if the local server has not been initialized yet.
      */
@@ -674,6 +678,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * @param originatingResource The JID broadcasting the presence
+     * @param presence The presence to broadcast
      * @deprecated Use {@link #broadcastPresenceToResources(JID, Presence)} instead.
      */
     @Deprecated
@@ -1580,15 +1586,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     @Override
-    public void joinedCluster() {
-        // Upon joining a cluster, the server gets a new ID. Here, all old IDs are replaced with the new identity.
+    public void joinedCluster()
+    {
+        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
         final NodeID defaultNodeID = server.getDefaultNodeID();
         final NodeID nodeID = server.getNodeID();
-
-        CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
-        CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
-
+        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+        {
+            CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCache( multiplexerSessionsCache, defaultNodeID, nodeID );
+            CacheUtil.replaceValueInCache( incomingServerSessionsCache, defaultNodeID, nodeID );
+        }
         // Track information about local sessions and share it with other cluster nodes.
         // Note that, unlike other caches, this cache is populated only when clustering is enabled.
         for (ClientSession session : routingTable.getClientsRoutes(true)) {
@@ -1607,9 +1615,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
             final NodeID defaultNodeID = server.getDefaultNodeID();
             final NodeID nodeID = server.getNodeID();
-            CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
-            CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
+            if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
+            {
+                CacheUtil.replaceValueInMultivaluedCache( componentSessionsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCache( multiplexerSessionsCache, nodeID, defaultNodeID );
+                CacheUtil.replaceValueInCache( incomingServerSessionsCache, nodeID, defaultNodeID );
+            }
 
             // The local cluster node left the cluster.
             //

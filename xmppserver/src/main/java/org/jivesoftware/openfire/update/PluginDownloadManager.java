@@ -56,7 +56,7 @@ public class PluginDownloadManager {
      * Installs a new plugin into Openfire.
      *
      * @param url the url of the plugin to install.
-     * @paran version the version of the new plugin
+     * @param version the version of the new plugin
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */

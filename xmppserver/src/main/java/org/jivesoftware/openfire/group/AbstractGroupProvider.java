@@ -52,7 +52,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     // Mutator methods disabled for read-only group providers
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void addMember(String groupName, JID user, boolean administrator)
@@ -61,7 +61,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void updateMember(String groupName, JID user, boolean administrator)
@@ -70,7 +70,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void deleteMember(String groupName, JID user)
@@ -87,7 +87,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public Group createGroup(String name) throws GroupAlreadyExistsException {
@@ -95,7 +95,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void deleteGroup(String name) {
@@ -103,7 +103,8 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws GroupAlreadyExistsException if the group alrady exists
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException {
@@ -111,7 +112,8 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @throws GroupNotFoundException if the group could not be found
+     * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {

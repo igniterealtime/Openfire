@@ -13,7 +13,7 @@ public interface FileTransferEventListener
      * and not ready. The not ready state indicates that this event was fired when the file transfer request was sent by
      * the initiator. The ready state indicates that the file transfer is ready to begin, and the channels can be
      * manipulated by the interceptor.
-     * <p/>
+     * <p>
      * It is recommended for the the sake of user experience that when in the not ready state, any processing done on
      * the file transfer should be quick.
      *
@@ -21,6 +21,7 @@ public interface FileTransferEventListener
      * @param isReady  true if the transfer is ready to commence or false if this is related to the
      *                 initial file transfer request. An exception at this point will cause the transfer to
      *                 not go through.
+     * @throws FileTransferRejectedException if the request was rejected
      */
     void fileTransferStart( FileTransfer transfer, boolean isReady ) throws FileTransferRejectedException;
 

@@ -624,7 +624,7 @@ public class SASLAuthentication {
 
     /**
      * Returns a collection of mechanism names for which the JVM has an implementation available.
-     * <p/>
+     * <p>
      * Note that this need not (and likely will not) correspond with the list of mechanisms that is offered to XMPP
      * peer entities, which is provided by #getSupportedMechanisms.
      *

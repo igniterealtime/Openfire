@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
- * will check every 48 hours for updates. Use the system property <tt>update.frequency</tt>
+ * will check every 48 hours for updates. Use the system property {@code update.frequency}
  * to set new values.
  * <p>
  * New versions of plugins can be downloaded and installed. However, new server releases
@@ -474,7 +474,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the host of the proxy to use to connect to igniterealtime.org or <tt>null</tt>
+     * Returns the host of the proxy to use to connect to igniterealtime.org or {@code null}
      * if no proxy is used.
      *
      * @return the host of the proxy or null if no proxy is used.
@@ -484,7 +484,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Sets the host of the proxy to use to connect to igniterealtime.org or <tt>null</tt>
+     * Sets the host of the proxy to use to connect to igniterealtime.org or {@code null}
      * if no proxy is used.
      *
      * @param host the host of the proxy or null if no proxy is used.
@@ -516,7 +516,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the server update or <tt>null</tt> if the server is up to date.
+     * Returns the server update or {@code null} if the server is up to date.
      *
      * @return the server update or null if the server is up to date.
      */
@@ -525,7 +525,7 @@ public class UpdateManager extends BasicModule {
     }
 
     /**
-     * Returns the plugin update or <tt>null</tt> if the plugin is up to date.
+     * Returns the plugin update or {@code null} if the plugin is up to date.
      *
      * @param pluginName     the name of the plugin (as described in the meta-data).
      * @param currentVersion current version of the plugin that is installed.

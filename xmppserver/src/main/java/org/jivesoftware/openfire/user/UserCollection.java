@@ -33,6 +33,7 @@ public class UserCollection extends AbstractCollection<User> {
 
     /**
      * Constructs a new UserCollection.
+     * @param elements the initial set of users
      */
     public UserCollection(String [] elements) {
         this.elements = elements;

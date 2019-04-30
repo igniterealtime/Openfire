@@ -130,7 +130,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * Returns the unique instance of this class.
      *
      * @return the unique instance of this class.
-     * @deprecated Replaced by {@link XMPPServer.getInstance().getEntityCapabilitiesManager}
+     * @deprecated Replaced by {@link XMPPServer#getEntityCapabilitiesManager}
      */
     @Deprecated
     public static EntityCapabilitiesManager getInstance() {
@@ -367,18 +367,21 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     private static List<String> getIdentitiesFrom(IQ packet) {
         List<String> discoIdentities = new ArrayList<>();
         Element query = packet.getChildElement();
+        if (query == null) {
+            return discoIdentities;
+        }
         Iterator<Element> identitiesIterator = query.elementIterator("identity");
         if (identitiesIterator != null) {
             while (identitiesIterator.hasNext()) {
                 Element identityElement = identitiesIterator.next();
 
                 StringBuilder discoIdentity = new StringBuilder();
-                
+
                 String cat = identityElement.attributeValue("category");
                 String type = identityElement.attributeValue("type");
                 String lang = identityElement.attributeValue("xml:lang");
                 String name = identityElement.attributeValue("name");
-                
+
                 if (cat != null) {
                     discoIdentity.append(cat);
                 }

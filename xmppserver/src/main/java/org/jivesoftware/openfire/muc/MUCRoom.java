@@ -89,7 +89,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Sets the multi user chat service the room is attached to.
      *
-     * @param service The MultiUserChatService that the room is attached to (cannot be <tt>null</tt>).
+     * @param service The MultiUserChatService that the room is attached to (cannot be {@code null}).
      */
     void setMUCService(MultiUserChatService service);
 
@@ -103,7 +103,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Sets the date when the room was created.
      *
-     * @param creationDate the date when the room was created (cannot be <tt>null</tt>).
+     * @param creationDate the date when the room was created (cannot be {@code null}).
      */
     void setCreationDate(Date creationDate);
 
@@ -119,7 +119,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sets the last date when the room's configuration was modified. If the room's configuration
      * was never modified then the initial value will be the same as the creation date.
      *
-     * @param modificationDate the last date when the room's configuration was modified (cannot be <tt>null</tt>).
+     * @param modificationDate the last date when the room's configuration was modified (cannot be {@code null}).
      */
     void setModificationDate(Date modificationDate);
 
@@ -127,7 +127,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sets the date when the last occupant left the room. A null value means that there are
      * occupants in the room at the moment.
      *
-     * @param emptyDate the date when the last occupant left the room or null if there are occupants in the room (can be <tt>null</tt>).
+     * @param emptyDate the date when the last occupant left the room or null if there are occupants in the room (can be {@code null}).
      */
     void setEmptyDate(Date emptyDate);
 
@@ -150,7 +150,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Obtain the first role of a given user by nickname.
      *
-     * @param nickname The nickname of the user you'd like to obtain (cannot be <tt>null</tt>)
+     * @param nickname The nickname of the user you'd like to obtain (cannot be {@code null})
      * @return The user's role in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      * @deprecated Prefer {@link #getOccupantsByNickname(String)} instead (a user may be connected more than once)
@@ -160,7 +160,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Obtain the roles of a given user by nickname. A user can be connected to a room more than once.
      *
-     * @param nickname The nickname of the user you'd like to obtain (cannot be <tt>null</tt>)
+     * @param nickname The nickname of the user you'd like to obtain (cannot be {@code null})
      * @return The user's role in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
@@ -170,17 +170,17 @@ public interface MUCRoom extends Externalizable, Result {
      * Obtain the roles of a given user in the room by his bare JID. A user can have several roles,
      * one for each client resource from which the user has joined the room. 
      *
-     * @param jid The bare jid of the user you'd like to obtain  (cannot be <tt>null</tt>).
+     * @param jid The bare jid of the user you'd like to obtain  (cannot be {@code null}).
      * @return The user's roles in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
     List<MUCRole> getOccupantsByBareJID(JID jid) throws UserNotFoundException;
 
     /**
-     * Returns the role of a given user in the room by his full JID or <tt>null</tt>
+     * Returns the role of a given user in the room by his full JID or {@code null}
      * if no role was found for the specified user.
      *
-     * @param jid The full jid of the user you'd like to obtain  (cannot be <tt>null</tt>).
+     * @param jid The full jid of the user you'd like to obtain  (cannot be {@code null}).
      * @return The user's role in the room or null if not found.
      */
     MUCRole getOccupantByFullJID(JID jid);
@@ -202,7 +202,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Determine if a given nickname is taken.
      *
-     * @param nickname The nickname of the user you'd like to obtain  (cannot be <tt>null</tt>).
+     * @param nickname The nickname of the user you'd like to obtain  (cannot be {@code null}).
      * @return True if a nickname is taken
      */
     boolean hasOccupant(String nickname);
@@ -210,7 +210,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Returns the reserved room nickname for the bare JID or null if none.
      * 
-     * @param jid The bare jid of the user of which you'd like to obtain his reserved nickname (cannot be <tt>null</tt>).
+     * @param jid The bare jid of the user of which you'd like to obtain his reserved nickname (cannot be {@code null}).
      * @return the reserved room nickname for the bare JID or null if none.
      */
     String getReservedNickname(JID jid);
@@ -221,7 +221,7 @@ public interface MUCRoom extends Externalizable, Result {
      * 
      * Note: Prerequisite - A lock must already be obtained before sending this message.
      *  
-     * @param bareJID The bare jid of the user of which you'd like to obtain his affiliation (cannot be <tt>null</tt>).
+     * @param bareJID The bare jid of the user of which you'd like to obtain his affiliation (cannot be {@code null}).
      * @return the affiliation state of the user in the room.
      */
     MUCRole.Affiliation getAffiliation(JID bareJID);
@@ -229,11 +229,11 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Joins the room using the given nickname.
      *
-     * @param nickname       The nickname the user wants to use in the chatroom  (cannot be <tt>null</tt>).
+     * @param nickname       The nickname the user wants to use in the chatroom  (cannot be {@code null}).
      * @param password       The password provided by the user to enter the chatroom or null if none.
      * @param historyRequest The amount of history that the user request or null meaning default.
-     * @param user           The user joining (cannot be <tt>null</tt>).
-     * @param presence       The presence sent by the user to join the room (cannot be <tt>null</tt>).
+     * @param user           The user joining (cannot be {@code null}).
+     * @param presence       The presence sent by the user to join the room (cannot be {@code null}).
      * @return The role created for the user.
      * @throws UnauthorizedException         If the user doesn't have permission to join the room.
      * @throws UserAlreadyExistsException    If the nickname is already taken.
@@ -255,7 +255,7 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Remove a member from the chat room.
      *
-     * @param leaveRole room occupant that left the room  (cannot be <tt>null</tt>).
+     * @param leaveRole room occupant that left the room  (cannot be {@code null}).
      */
     void leaveRoom(MUCRole leaveRole);
 
@@ -264,15 +264,15 @@ public interface MUCRoom extends Externalizable, Result {
      * "unavailable" whose "from" attribute will be the occupant's nickname that the user knows he 
      * or she has been removed from the room.
      * 
-     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be <tt>null</tt>)
-     * @param reason an optional reason why the room was destroyed (can be <tt>null</tt>).
+     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be {@code null})
+     * @param reason an optional reason why the room was destroyed (can be {@code null}).
      */
     void destroyRoom(JID alternateJID, String reason);
 
     /**
      * Create a new presence in this room for the given role.
      *
-     * @param type Type of presence to create (cannot be <tt>null</tt>).
+     * @param type Type of presence to create (cannot be {@code null}).
      * @return The new presence
      * @throws UnauthorizedException If the user doesn't have permission to leave the room
      */
@@ -282,7 +282,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Broadcast a given message to all members of this chat room. The sender is always set to 
      * be the chatroom.
      *
-     * @param msg The message to broadcast (cannot be <tt>null</tt>)
+     * @param msg The message to broadcast (cannot be {@code null})
      */
     void serverBroadcast(String msg);
     
@@ -298,15 +298,15 @@ public interface MUCRoom extends Externalizable, Result {
      * MultiUserChatServer should use this method. Regular owners list maintenance MUST be done
      * through {@link #addOwner(JID jid,MUCRole)}.
      * 
-     * @param bareJID The bare JID of the user to add as owner (cannot be <tt>null</tt>).
+     * @param bareJID The bare JID of the user to add as owner (cannot be {@code null}).
      */
     void addFirstOwner( JID bareJID );
 
     /**
      * Adds a new user to the list of owners.
      * 
-     * @param jid The JID of the user to add as owner (cannot be <tt>null</tt>).
-     * @param senderRole the role of the user that is trying to modify the owners list (cannot be <tt>null</tt>).
+     * @param jid The JID of the user to add as owner (cannot be {@code null}).
+     * @param senderRole the role of the user that is trying to modify the owners list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
@@ -316,8 +316,8 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Adds a list of users to the list of owners.
      *
-     * @param newOwners the list of bare JIDs of the users to add to the list of existing owners (cannot be <tt>null</tt>).
-     * @param senderRole the role of the user that is trying to modify the owners list (cannot be <tt>null</tt>).
+     * @param newOwners the list of bare JIDs of the users to add to the list of existing owners (cannot be {@code null}).
+     * @param senderRole the role of the user that is trying to modify the owners list (cannot be {@code null}).
      * @return the list of updated presences of all the clients resources that the clients used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
@@ -328,8 +328,8 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Adds a list of users to the list of admins.
      *
-     * @param newAdmins the list of bare JIDs of the users to add to the list of existing admins (cannot be <tt>null</tt>).
-     * @param senderRole the role of the user that is trying to modify the admins list (cannot be <tt>null</tt>).
+     * @param newAdmins the list of bare JIDs of the users to add to the list of existing admins (cannot be {@code null}).
+     * @param senderRole the role of the user that is trying to modify the admins list (cannot be {@code null}).
      * @return the list of updated presences of all the clients resources that the clients used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
@@ -341,8 +341,8 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Adds a new user to the list of admins.
      * 
-     * @param jid The JID of the user to add as admin (cannot be <tt>null</tt>).
-     * @param senderRole The role of the user that is trying to modify the admins list (cannot be <tt>null</tt>).
+     * @param jid The JID of the user to add as admin (cannot be {@code null}).
+     * @param senderRole The role of the user that is trying to modify the admins list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
@@ -354,9 +354,9 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Adds a new user to the list of members.
      * 
-     * @param jid The JID of the user to add as a member (cannot be <tt>null</tt>).
+     * @param jid The JID of the user to add as a member (cannot be {@code null}).
      * @param nickname The reserved nickname of the member for the room or null if none.
-     * @param senderRole the role of the user that is trying to modify the members list (cannot be <tt>null</tt>).
+     * @param senderRole the role of the user that is trying to modify the members list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the members list.
@@ -369,9 +369,9 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Adds a new user to the list of outcast users.
      * 
-     * @param jid The JID of the user to add as an outcast (cannot be <tt>null</tt>).
-     * @param reason an optional reason why the user was banned (can be <tt>null</tt>).
-     * @param senderRole The role of the user that initiated the ban (cannot be <tt>null</tt>).
+     * @param jid The JID of the user to add as an outcast (cannot be {@code null}).
+     * @param reason an optional reason why the user was banned (can be {@code null}).
+     * @param senderRole The role of the user that initiated the ban (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
@@ -384,8 +384,8 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Removes the user from all the other affiliation list thus giving the user a NONE affiliation.
      * 
-     * @param jid The JID of the user to keep with a NONE affiliation (cannot be <tt>null</tt>).
-     * @param senderRole The role of the user that set the affiliation to none (cannot be <tt>null</tt>).
+     * @param jid The JID of the user to keep with a NONE affiliation (cannot be {@code null}).
+     * @param senderRole The role of the user that set the affiliation to none (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room or null if none was updated.
      * @throws ForbiddenException If the user is not allowed to modify the none list.
@@ -398,9 +398,9 @@ public interface MUCRoom extends Externalizable, Result {
      * Changes the role of the user within the room to moderator. A moderator is allowed to kick
      * occupants as well as granting/revoking voice from occupants.
      *
-     * @param fullJID The full JID of the occupant to give moderator privileges (cannot be <tt>null</tt>).
-     * @param senderRole The role of the user that is granting moderator privileges to an occupant (cannot be <tt>null</tt>).
-     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     * @param fullJID The full JID of the occupant to give moderator privileges (cannot be {@code null}).
+     * @param senderRole The role of the user that is granting moderator privileges to an occupant (cannot be {@code null}).
+     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
      *         an existing occupant.
      * @throws ForbiddenException If the user is not allowed to grant moderator privileges.
      */
@@ -410,11 +410,11 @@ public interface MUCRoom extends Externalizable, Result {
      * Changes the role of the user within the room to participant. A participant is allowed to send
      * messages to the room (i.e. has voice) and may change the room's subject.
      *
-     * @param fullJID The full JID of the occupant to give participant privileges (cannot be <tt>null</tt>).
-     * @param reason The reason why participant privileges were gave to the user or <tt>null</tt>
+     * @param fullJID The full JID of the occupant to give participant privileges (cannot be {@code null}).
+     * @param reason The reason why participant privileges were gave to the user or {@code null}
      *        if none.
-     * @param senderRole The role of the user that is granting participant privileges to an occupant (cannot be <tt>null</tt>).
-     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     * @param senderRole The role of the user that is granting participant privileges to an occupant (cannot be {@code null}).
+     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
      *         an existing occupant.
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
@@ -427,9 +427,9 @@ public interface MUCRoom extends Externalizable, Result {
      * is not allowed to send messages to the room (i.e. does not has voice) and may invite others
      * to the room.
      *
-     * @param jid the full JID of the occupant to change to visitor (cannot be <tt>null</tt>).
-     * @param senderRole the role of the user that is changing the role to visitor (cannot be <tt>null</tt>).
-     * @return the updated presence of the occupant or <tt>null</tt> if the JID does not belong to
+     * @param jid the full JID of the occupant to change to visitor (cannot be {@code null}).
+     * @param senderRole the role of the user that is changing the role to visitor (cannot be {@code null}).
+     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
      *         an existing occupant.
      * @throws NotAllowedException if trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException if the user is not a moderator.
@@ -458,18 +458,18 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * An event callback fired whenever an occupant updated his presence in the chatroom.
      *
-     * @param occupantRole occupant that changed his presence in the room (cannot be <tt>null</tt>).
-     * @param newPresence presence sent by the occupant (cannot be <tt>null</tt>).
+     * @param occupantRole occupant that changed his presence in the room (cannot be {@code null}).
+     * @param newPresence presence sent by the occupant (cannot be {@code null}).
      */
     void presenceUpdated( MUCRole occupantRole, Presence newPresence );
 
     /**
      * An event callback fired whenever an occupant changes his nickname within the chatroom.
      *
-     * @param occupantRole occupant that changed his nickname in the room (cannot be <tt>null</tt>).
-     * @param newPresence presence sent by the occupant with the new nickname (cannot be <tt>null</tt>).
-     * @param oldNick old nickname within the room (cannot be <tt>null</tt>).
-     * @param newNick new nickname within the room (cannot be <tt>null</tt>).
+     * @param occupantRole occupant that changed his nickname in the room (cannot be {@code null}).
+     * @param newPresence presence sent by the occupant with the new nickname (cannot be {@code null}).
+     * @param oldNick old nickname within the room (cannot be {@code null}).
+     * @param newNick new nickname within the room (cannot be {@code null}).
      */
     void nicknameChanged( MUCRole occupantRole, Presence newPresence, String oldNick, String newNick );
     
@@ -480,8 +480,8 @@ public interface MUCRoom extends Externalizable, Result {
      * 
      * The new subject will be added to the history of the room.
      *  
-     * @param packet the sent packet to change the room's subject (cannot be <tt>null</tt>).
-     * @param role the role of the user that is trying to change the subject (cannot be <tt>null</tt>).
+     * @param packet the sent packet to change the room's subject (cannot be {@code null}).
+     * @param role the role of the user that is trying to change the subject (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to change the subject.
      */
     void changeSubject( Message packet, MUCRole role ) throws ForbiddenException;
@@ -497,7 +497,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sets the last subject that some occupant set to the room. This message will only be used
      * when loading a room from the database. 
      * 
-     * @param subject the last known subject of the room (cannot be <tt>null</tt>).
+     * @param subject the last known subject of the room (cannot be {@code null}).
      */
     void setSubject( String subject );
 
@@ -506,8 +506,8 @@ public interface MUCRoom extends Externalizable, Result {
      * to occupants with a role of participant or higher. In an unmoderated room, any occupant can
      * send a message to all other occupants.
      * 
-     * @param message The message to send (cannot be <tt>null</tt>).
-     * @param senderRole the role of the user that is trying to send a public message (cannot be <tt>null</tt>).
+     * @param message The message to send (cannot be {@code null}).
+     * @param senderRole the role of the user that is trying to send a public message (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to send a public message (i.e. does not
      *             have voice in the room).
      */
@@ -529,10 +529,10 @@ public interface MUCRoom extends Externalizable, Result {
      * Kicks a user from the room. If the user was in the room, the returned updated presence will
      * be sent to the remaining occupants.
      *
-     * @param fullJID       The full JID of the kicked user  (cannot be <tt>null</tt>).
-     * @param actorJID      The JID of the actor that initiated the kick (cannot be <tt>null</tt>).
+     * @param fullJID       The full JID of the kicked user  (cannot be {@code null}).
+     * @param actorJID      The JID of the actor that initiated the kick (cannot be {@code null}).
      * @param actorNickname The actor nickname.
-     * @param reason        An optional reason why the user was kicked (can be <tt>null</tt>).
+     * @param reason        An optional reason why the user was kicked (can be {@code null}).
      * @return the updated presence of the kicked user or null if the user was not in the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */

@@ -49,7 +49,7 @@ public class ClassUtils {
      * Loads the given resource as a stream.
      *
      * @param name the name of the resource that exists in the classpath.
-     * @return the resource as an input stream or <tt>null</tt> if the resource was not found.
+     * @return the resource as an input stream or {@code null} if the resource was not found.
      */
     public static InputStream getResourceAsStream(String name) {
         return instance.loadResource(name);

@@ -8,7 +8,7 @@ package org.jivesoftware.openfire.spi;
  * <ul>
  *     <li>Property-name definition</li>
  *     <li>Applicable encryption policies</li>
- *     <li>Identity & trust store configuration</li>
+ *     <li>Identity &amp; trust store configuration</li>
  * </ul>
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com

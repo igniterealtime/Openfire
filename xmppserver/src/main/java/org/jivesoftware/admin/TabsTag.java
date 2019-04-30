@@ -31,28 +31,28 @@ import java.util.List;
  * {@link SidebarTag} is similiar to this one.</p>
  *
  * <p>Attributes:</p> <ul>
- *      <li><tt>bean</tt> (required) - the id of the request attribute which is a
+ *      <li>{@code bean} (required) - the id of the request attribute which is a
  *      {@link AdminPageBean} instance. This class holds information
  *      needed to properly render the admin console tabs.</li>
- *      <li><tt>css</tt> (optional) - the CSS class name used to decorate the LI of the tab.</li>
- *      <li><tt>currentcss</tt> (optional) - the CSS class name used to decorate the LI of the
+ *      <li>{@code css} (optional) - the CSS class name used to decorate the LI of the tab.</li>
+ *      <li>{@code currentcss} (optional) - the CSS class name used to decorate the LI of the
  *      currently selected tab.</li></ul>
  *
  * <p>This class assumes there is a request attribute with the name specified by the bean attribute.</p>
  *
  * <p>This tag prints out minimal HTML. It basically prints an unordered list (UL element) with each
  * LI containing an "A" tag specfied by the body content of this tag. For example, the body should contain
- * a template A tag which will have its values replaced at runtime:</p> <pre><tt>
+ * a template A tag which will have its values replaced at runtime:</p> <pre>{@code
  *
  *      &lt;jive:tabs bean="jivepageinfo"&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;a href="[url]" title="[description]"&gt;[name]&lt;/a&gt; <br>
- *      &lt;/jive:tabs&gt;</tt></pre>
+ *      &lt;/jive:tabs&gt;}</pre>
  *
  * Available token are: <ul>
- *      <li><tt>[id]</tt> - the ID of the tab, usually not needed.</li>
- *      <li><tt>[name]</tt> - the name of the tab, should be thought of as the display name.</li>
- *      <li><tt>[url]</tt> - the URL of the tab.</li>
- *      <li><tt>[description]</tt> - the description of the tab, good for mouse rollovers.</li></ul>
+ *      <li>{@code [id]} - the ID of the tab, usually not needed.</li>
+ *      <li>{@code [name]} - the name of the tab, should be thought of as the display name.</li>
+ *      <li>{@code [url]} - the URL of the tab.</li>
+ *      <li>{@code [description]} - the description of the tab, good for mouse rollovers.</li></ul>
  */
 public class TabsTag extends BodyTagSupport {
 
@@ -63,6 +63,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * The name of the request attribute which holds a {@link AdminPageBean} instance.
+     * @return the name of the bean
      */
     public String getBean() {
         return bean;
@@ -70,6 +71,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the name of the request attribute to hold a {@link AdminPageBean} instance.
+     * @param bean the name of the bean
      */
     public void setBean(String bean) {
         this.bean = bean;
@@ -77,6 +79,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Returns the value of the CSS class to be used for tab decoration. If not set will return a blank string.
+     * @return the CSS
      */
     public String getCss() {
         return clean(css);
@@ -84,6 +87,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the CSS used for tab decoration.
+     * @param css the CSS
      */
     public void setCss(String css) {
         this.css = css;
@@ -92,6 +96,7 @@ public class TabsTag extends BodyTagSupport {
     /**
      * Returns the value of the CSS class to be used for the currently selected LI (tab). If not set will
      * return a blank string.
+     * @return the CSS class
      */
     public String getCurrentcss() {
         return clean(currentcss);
@@ -99,6 +104,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets the CSS class value for the currently selected tab.
+     * @param currentcss the CSS class
      */
     public void setCurrentcss(String currentcss) {
         this.currentcss = currentcss;
@@ -106,6 +112,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Returns whether we are in just links mode.
+     * @return {@code true} if just displaying links, otherwise {@code false}
      */
     public Boolean getJustlinks() {
         return justlinks;
@@ -113,6 +120,7 @@ public class TabsTag extends BodyTagSupport {
 
     /**
      * Sets whether we are just to display links, no list.
+     * @param justlinks {@code true} to just display links, otherwise {@code false}
      */
     public void setJustlinks(Boolean justlinks) {
         this.justlinks = justlinks;

@@ -32,16 +32,11 @@ public class SystemPropertyTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
-        // The following allows JiveGlobals to persist
-        JiveGlobals.setXMLProperty("setup", "true");
-        // The following speeds up tests by avoiding DB retries
-        JiveGlobals.setXMLProperty("database.maxRetries", "0");
-        JiveGlobals.setXMLProperty("database.retryDelay", "0");
     }
 
     @Before
     public void setUp() {
-        JiveGlobals.getPropertyNames().forEach(JiveGlobals::deleteProperty);
+        Fixtures.clearExistingProperties();
     }
 
     @Test
@@ -423,7 +418,7 @@ public class SystemPropertyTest {
             .build();
 
         assertThat(property.getValue(), is(nullValue()));
-        final Instant value = Instant.now();
+        final Instant value = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         property.setValue(value);
         assertThat(property.getValue(), is(value));
     }
@@ -432,7 +427,7 @@ public class SystemPropertyTest {
     public void willCreateAnInstantPropertyWithADefaultValue() {
 
         final String key = "test.instant.property.with.default";
-        final Instant defaultValue = Instant.now();
+        final Instant defaultValue = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         final SystemProperty<Instant> property = SystemProperty.Builder.ofType(Instant.class)
             .setKey(key)

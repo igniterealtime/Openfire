@@ -40,15 +40,15 @@ import org.slf4j.LoggerFactory;
  * over providers, operating on the first applicable instance. The Mapped variant, however, maps each user to exactly
  * one provider.
  *
- * To enable this provider, set the <tt>provider.auth.className</tt> system property to
- * <tt>org.jivesoftware.openfire.auth.HybridAuthProvider</tt>.
+ * To enable this provider, set the {@code provider.auth.className} system property to
+ * {@code org.jivesoftware.openfire.auth.HybridAuthProvider}.
  *
  * The primary, secondary, and tertiary providers are configured be setting system properties similar to
  * the following:
  *
  * <ul>
- * <li><tt>hybridAuthProvider.primaryProvider = org.jivesoftware.openfire.auth.DefaultAuthProvider</tt></li>
- * <li><tt>hybridAuthProvider.secondaryProvider = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
+ * <li>{@code hybridAuthProvider.primaryProvider = org.jivesoftware.openfire.auth.DefaultAuthProvider}</li>
+ * <li>{@code hybridAuthProvider.secondaryProvider = org.jivesoftware.openfire.auth.NativeAuthProvider}</li>
  * </ul>
  *
  * Each of the chained providers can have a list of override users. If a user is in
@@ -57,17 +57,17 @@ import org.slf4j.LoggerFactory;
  *
  * The full list of properties:
  * <ul>
- *      <li><tt>hybridAuthProvider.primaryProvider.className</tt> (required) -- the class name
+ *      <li>{@code hybridAuthProvider.primaryProvider.className} (required) -- the class name
  *          of the auth provider.
- *      <li><tt>hybridAuthProvider.primaryProvider.overrideList</tt> -- a comma-delimitted list
+ *      <li>{@code hybridAuthProvider.primaryProvider.overrideList} -- a comma-delimitted list
  *          of usernames for which authentication will only be tried with this provider.
- *      <li><tt>hybridAuthProvider.secondaryProvider.className</tt> -- the class name
+ *      <li>{@code hybridAuthProvider.secondaryProvider.className} -- the class name
  *          of the auth provider.
- *      <li><tt>hybridAuthProvider.secondaryProvider.overrideList</tt> -- a comma-delimitted list
+ *      <li>{@code hybridAuthProvider.secondaryProvider.overrideList} -- a comma-delimitted list
  *          of usernames for which authentication will only be tried with this provider.
- *      <li><tt>hybridAuthProvider.tertiaryProvider.className</tt> -- the class name
+ *      <li>{@code hybridAuthProvider.tertiaryProvider.className} -- the class name
  *          of the auth provider.
- *      <li><tt>hybridAuthProvider.tertiaryProvider.overrideList</tt> -- a comma-delimitted list
+ *      <li>{@code hybridAuthProvider.tertiaryProvider.overrideList} -- a comma-delimitted list
  *          of usernames for which authentication will only be tried with this provider.
  * </ul>
  *

@@ -68,6 +68,7 @@ public final class Version implements Comparable<Version> {
      * @param minor the minor release number.
      * @param micro the micro release number.
      * @param status the status of the release.
+     * @param statusVersion status release number or -1 to indicate none.
      */
     public Version(int major, int minor, int micro, ReleaseStatus status, int statusVersion) {
         this.major = major;
@@ -235,7 +236,8 @@ public final class Version implements Comparable<Version> {
     /**
      * Convenience method for comparing versions
      * 
-     * @param otherVersion a verion to comapr against
+     * @param otherVersion a version to compare against
+     * @return {@code true} if this version is newer, otherwise {@code false}
      */
     public boolean isNewerThan(Version otherVersion) {
         return this.compareTo(otherVersion) > 0;

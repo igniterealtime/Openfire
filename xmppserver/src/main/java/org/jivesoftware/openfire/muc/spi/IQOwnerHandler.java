@@ -90,8 +90,9 @@ public class IQOwnerHandler {
      * @param role the role of the user that sent the packet.
      * @throws ForbiddenException if the user does not have enough permissions (ie. is not an owner).
      * @throws ConflictException If the room was going to lose all of its owners.
+     * @throws CannotBeInvitedException never
+     * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    @SuppressWarnings("unchecked")
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
     {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
@@ -154,6 +155,7 @@ public class IQOwnerHandler {
      * @param formElement the element that contains the data form specification.
      * @throws ForbiddenException    if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
+     * @throws NotAcceptableException if the room requires a password that was not supplied
      */
     private void handleDataFormElement(MUCRole senderRole, Element formElement)
             throws ForbiddenException, ConflictException, NotAcceptableException {
@@ -202,6 +204,7 @@ public class IQOwnerHandler {
      * @param senderRole the role of the user that sent the completed form.
      * @throws ForbiddenException if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
+     * @throws NotAcceptableException if the room requires a password that was not supplied
      */
     private void processConfigurationForm(DataForm completedForm, MUCRole senderRole)
             throws ForbiddenException, ConflictException, NotAcceptableException
@@ -701,7 +704,7 @@ public class IQOwnerHandler {
      * @param defaultValue Returned if first value is null or empty.
      * @return true if the provided input equals '1' or 'true', false if the input equals '0' or 'false'.
      * @throws IllegalArgumentException when the input cannot be parsed as a boolean.
-     * @Deprecated Use {@link FormField#parseFirstValueAsBoolean(String)} provided by Tinder version 1.3.1 or newer.
+     * @deprecated Use FormField#parseFirstValueAsBoolean(String) provided by Tinder version 1.3.1 or newer.
      */
     @Deprecated
     public static boolean parseFirstValueAsBoolean( FormField field, boolean defaultValue )

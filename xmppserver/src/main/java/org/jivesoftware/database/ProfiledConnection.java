@@ -17,8 +17,8 @@ import java.util.Map;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
- * that are performed.<p>
- * <p/>
+ * that are performed.
+ * <p>
  * Statistics of the profiled Connections can be obtained from the static
  * methods of this class. Instances of this class are the actual wrappers that
  * perform profiling.
@@ -101,7 +101,7 @@ public class ProfiledConnection extends AbstractConnection {
      * ProfiledConnection.INSERT, and ProfiledConnection.DELETE.
      *
      * @param type the type of query to get the count for.
-     * @return the number queries of type <tt>type</tt> performed.
+     * @return the number queries of type {@code type} performed.
      */
     public static long getQueryCount(Type type) {
         switch (type) {
@@ -637,7 +637,7 @@ public class ProfiledConnection extends AbstractConnection {
         private Statement stmt;
 
         /**
-         * Creates a new TimedStatement that wraps <tt>stmt</tt>.
+         * Creates a new TimedStatement that wraps {@code stmt}.
          *
          * @param stmt the statement.
          */

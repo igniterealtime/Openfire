@@ -96,6 +96,7 @@ public class Launcher {
 
     /**
      * Creates a new Launcher object.
+     * @throws AWTException if there is a problem with AWT
      */
     public Launcher() throws AWTException {
         // Initialize the SystemTray now (to avoid a bug!)
@@ -405,6 +406,8 @@ public class Launcher {
 
     /**
      * Creates a new GUI launcher instance.
+     * @param args The command line arguments
+     * @throws AWTException if AWT cannot be initialised
      */
     public static void main(String[] args) throws AWTException {
         new Launcher();

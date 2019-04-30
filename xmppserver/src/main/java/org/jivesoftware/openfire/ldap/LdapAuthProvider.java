@@ -39,10 +39,10 @@ import org.xmpp.packet.JID;
  * This can decrease load on the directory and preserve some level of service even
  * when the directory becomes unavailable for a period of time.<ul>
  *
- *  <li><tt>ldap.authCache.enabled</tt> -- true to enable the auth cache.</li>
- *  <li><tt>ldap.authCache.size</tt> -- size in bytes of the auth cache. If property is
+ *  <li>{@code ldap.authCache.enabled} -- true to enable the auth cache.</li>
+ *  <li>{@code ldap.authCache.size} -- size in bytes of the auth cache. If property is
  *      not set, the default value is 524288 (512 K).</li>
- *  <li><tt>ldap.authCache.maxLifetime</tt> -- maximum amount of time a hashed password
+ *  <li>{@code ldap.authCache.maxLifetime} -- maximum amount of time a hashed password
  *      can be cached in milleseconds. If property is not set, the default value is
  *      7200000 (2 hours).</li>
  * </ul>

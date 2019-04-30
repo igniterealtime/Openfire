@@ -16,15 +16,20 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveInitialLdapContext;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -41,20 +46,16 @@ import javax.naming.ldap.SortControl;
 import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
-import java.io.Serializable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -471,7 +472,7 @@ public class LdapManager {
      * Returns a DirContext for the LDAP server that can be used to perform
      * lookups and searches using the default base DN. The alternate DN will be used
      * in case there is a {@link NamingException} using base DN. The context uses the
-     * admin login that is defined by <tt>adminDN</tt> and <tt>adminPassword</tt>.
+     * admin login that is defined by {@code adminDN} and {@code adminPassword}.
      *
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
@@ -492,7 +493,7 @@ public class LdapManager {
     /**
      * Returns a DirContext for the LDAP server that can be used to perform
      * lookups and searches using the specified base DN. The context uses the
-     * admin login that is defined by <tt>adminDN</tt> and <tt>adminPassword</tt>.
+     * admin login that is defined by {@code adminDN} and {@code adminPassword}.
      *
      * @param baseDN the base DN to use for the context.
      * @return a connection to the LDAP server.
@@ -636,7 +637,7 @@ public class LdapManager {
      * Returns true if the user is able to successfully authenticate against
      * the LDAP server. The "simple" authentication protocol is used.
      *
-     * @param userDN the user's dn to authenticate (relative to <tt>baseDN</tt>).
+     * @param userDN the user's dn to authenticate (relative to {@code baseDN}).
      * @param password the user's password.
      * @return true if the user successfully authenticates.
      */
@@ -730,7 +731,8 @@ public class LdapManager {
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
-                    Log.error(ex.getMessage(), ex);
+                    Log.error("Unable to upgrade connection to TLS; failing user authentication", ex);
+                    return false;
                 }
 
                 // make at least one lookup to check authorization
@@ -821,7 +823,8 @@ public class LdapManager {
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {
-                            Log.error(ex.getMessage(), ex);
+                            Log.error("Unable to upgrade connection to TLS; failing user authentication", ex);
+                            return false;
                         }
 
                         // make at least one lookup to check user authorization
@@ -859,7 +862,7 @@ public class LdapManager {
     }
 
     /**
-     * Looks up an LDAP object by its DN and returns <tt>true</tt> if
+     * Looks up an LDAP object by its DN and returns {@code true} if
      * the search was successful.
      *
      * @param ctx the Context to use for the lookup.
@@ -910,25 +913,25 @@ public class LdapManager {
     /**
      * Finds a user's dn using their username. Normally, this search will
      * be performed using the field "uid", but this can be changed by setting
-     * the <tt>usernameField</tt> property.<p>
+     * the {@code usernameField} property.<p>
      *
-     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
-     * If the search fails in the <tt>baseDN</tt> then another search will be
-     * performed in the <tt>alternateBaseDN</tt>. For example, if the <tt>baseDN</tt>
+     * Searches are performed over all subtrees relative to the {@code baseDN}.
+     * If the search fails in the {@code baseDN} then another search will be
+     * performed in the {@code alternateBaseDN}. For example, if the {@code baseDN}
      * is "o=jivesoftware, o=com" and we do a search for "mtucker", then we might
      * find a userDN of "uid=mtucker,ou=People". This kind of searching is a good
      * thing since it doesn't make the assumption that all user records are stored
      * in a flat structure. However, it does add the requirement that "uid" field
      * (or the other field specified) must be unique over the entire subtree from
-     * the <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * the {@code baseDN}. For example, it's entirely possible to create two dn's
      * in your LDAP directory with the same uid: "uid=mtucker,ou=People" and
      * "uid=mtucker,ou=Administrators". In such a case, it's not possible to
      * uniquely identify a user, so this method will throw an error.<p>
      *
-     * The dn that's returned is relative to the default <tt>baseDN</tt>.
+     * The dn that's returned is relative to the default {@code baseDN}.
      *
      * @param username the username to lookup the dn for.
-     * @return the dn associated with <tt>username</tt>.
+     * @return the dn associated with {@code username}.
      * @throws Exception if the search for the dn fails.
      */
     public String findUserDN( String username ) throws Exception
@@ -974,25 +977,25 @@ public class LdapManager {
     /**
      * Finds a user's dn using their username in the specified baseDN. Normally, this search
      * will be performed using the field "uid", but this can be changed by setting
-     * the <tt>usernameField</tt> property.<p>
+     * the {@code usernameField} property.<p>
      *
-     * Searches are performed over all sub-trees relative to the <tt>baseDN</tt> unless
-     * sub-tree searching has been disabled. For example, if the <tt>baseDN</tt> is
+     * Searches are performed over all sub-trees relative to the {@code baseDN} unless
+     * sub-tree searching has been disabled. For example, if the {@code baseDN} is
      * "o=jivesoftware, o=com" and we do a search for "mtucker", then we might find a userDN of
      * "uid=mtucker,ou=People". This kind of searching is a good thing since
      * it doesn't make the assumption that all user records are stored in a flat
      * structure. However, it does add the requirement that "uid" field (or the
      * other field specified) must be unique over the entire subtree from the
-     * <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * {@code baseDN}. For example, it's entirely possible to create two dn's
      * in your LDAP directory with the same uid: "uid=mtucker,ou=People" and
      * "uid=mtucker,ou=Administrators". In such a case, it's not possible to
      * uniquely identify a user, so this method will throw an error.<p>
      *
-     * The DN that's returned is relative to the <tt>baseDN</tt>.
+     * The DN that's returned is relative to the {@code baseDN}.
      *
      * @param username the username to lookup the dn for.
      * @param baseDN the base DN to use for this search.
-     * @return the dn associated with <tt>username</tt>.
+     * @return the dn associated with {@code username}.
      * @throws Exception if the search for the dn fails.
      * @see #findUserDN(String) to search using the default baseDN and alternateBaseDN.
      */
@@ -1083,25 +1086,25 @@ public class LdapManager {
     /**
      * Finds a groups's dn using it's group name. Normally, this search will
      * be performed using the field "cn", but this can be changed by setting
-     * the <tt>groupNameField</tt> property.<p>
+     * the {@code groupNameField} property.<p>
      *
-     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
-     * If the search fails in the <tt>baseDN</tt> then another search will be
-     * performed in the <tt>alternateBaseDN</tt>. For example, if the <tt>baseDN</tt>
+     * Searches are performed over all subtrees relative to the {@code baseDN}.
+     * If the search fails in the {@code baseDN} then another search will be
+     * performed in the {@code alternateBaseDN}. For example, if the {@code baseDN}
      * is "o=jivesoftware, o=com" and we do a search for "managers", then we might
      * find a groupDN of "uid=managers,ou=Groups". This kind of searching is a good
      * thing since it doesn't make the assumption that all user records are stored
      * in a flat structure. However, it does add the requirement that "cn" field
      * (or the other field specified) must be unique over the entire subtree from
-     * the <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * the {@code baseDN}. For example, it's entirely possible to create two dn's
      * in your LDAP directory with the same cn: "cn=managers,ou=Financial" and
      * "cn=managers,ou=Engineers". In such a case, it's not possible to
      * uniquely identify a group, so this method will throw an error.<p>
      *
-     * The dn that's returned is relative to the default <tt>baseDN</tt>.
+     * The dn that's returned is relative to the default {@code baseDN}.
      *
      * @param groupname the groupname to lookup the dn for.
-     * @return the dn associated with <tt>groupname</tt>.
+     * @return the dn associated with {@code groupname}.
      * @throws Exception if the search for the dn fails.
      */
     public String findGroupDN(String groupname) throws Exception {
@@ -1121,26 +1124,26 @@ public class LdapManager {
     /**
      * Finds a groups's dn using it's group name. Normally, this search will
      * be performed using the field "cn", but this can be changed by setting
-     * the <tt>groupNameField</tt> property.<p>
+     * the {@code groupNameField} property.<p>
      *
-     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
-     * If the search fails in the <tt>baseDN</tt> then another search will be
-     * performed in the <tt>alternateBaseDN</tt>. For example, if the <tt>baseDN</tt>
+     * Searches are performed over all subtrees relative to the {@code baseDN}.
+     * If the search fails in the {@code baseDN} then another search will be
+     * performed in the {@code alternateBaseDN}. For example, if the {@code baseDN}
      * is "o=jivesoftware, o=com" and we do a search for "managers", then we might
      * find a groupDN of "uid=managers,ou=Groups". This kind of searching is a good
      * thing since it doesn't make the assumption that all user records are stored
      * in a flat structure. However, it does add the requirement that "cn" field
      * (or the other field specified) must be unique over the entire subtree from
-     * the <tt>baseDN</tt>. For example, it's entirely possible to create two dn's
+     * the {@code baseDN}. For example, it's entirely possible to create two dn's
      * in your LDAP directory with the same cn: "cn=managers,ou=Financial" and
      * "cn=managers,ou=Engineers". In such a case, it's not possible to
      * uniquely identify a group, so this method will throw an error.<p>
      *
-     * The dn that's returned is relative to the default <tt>baseDN</tt>.
+     * The dn that's returned is relative to the default {@code baseDN}.
      *
      * @param groupname the groupname to lookup the dn for.
      * @param baseDN the base DN to use for this search.
-     * @return the dn associated with <tt>groupname</tt>.
+     * @return the dn associated with {@code groupname}.
      * @throws Exception if the search for the dn fails.
      * @see #findGroupDN(String) to search using the default baseDN and alternateBaseDN.
      */
@@ -1255,9 +1258,9 @@ public class LdapManager {
     }
 
     /**
-     * Returns the LDAP servers hosts; e.g. <tt>localhost</tt> or
-     * <tt>machine.example.com</tt>, etc. This value is stored as the Jive
-     * Property <tt>ldap.host</tt>.
+     * Returns the LDAP servers hosts; e.g. {@code localhost} or
+     * {@code machine.example.com}, etc. This value is stored as the Jive
+     * Property {@code ldap.host}.
      *
      * @return the LDAP server host name.
      */
@@ -1266,9 +1269,9 @@ public class LdapManager {
     }
 
     /**
-     * Sets the list of LDAP servers host; e.g., <tt>localhost</tt> or
-     * <tt>machine.example.com</tt>, etc. This value is store as the Jive
-     * Property <tt>ldap.host</tt> using a comma as a delimiter for each host.<p>
+     * Sets the list of LDAP servers host; e.g., {@code localhost} or
+     * {@code machine.example.com}, etc. This value is store as the Jive
+     * Property {@code ldap.host} using a comma as a delimiter for each host.<p>
      *
      * Note that all LDAP servers have to share the same configuration.
      *
@@ -1289,7 +1292,7 @@ public class LdapManager {
 
     /**
      * Returns the LDAP server port number. The default is 389. This value is
-     * stored as the Jive Property <tt>ldap.port</tt>.
+     * stored as the Jive Property {@code ldap.port}.
      *
      * @return the LDAP server port number.
      */
@@ -1299,7 +1302,7 @@ public class LdapManager {
 
     /**
      * Sets the LDAP server port number. The default is 389. This value is
-     * stored as the Jive property <tt>ldap.port</tt>.
+     * stored as the Jive property {@code ldap.port}.
      *
      * @param port the LDAP server port number.
      */
@@ -1509,7 +1512,7 @@ public class LdapManager {
      * they are performed on the main base DN.
      *
      * @return the alternate starting DN used for performing searches. If no alternate
-     *      DN is set, this method will return <tt>null</tt>.
+     *      DN is set, this method will return {@code null}.
      */
     public String getAlternateBaseDN() {
         return getEnclosedDN(alternateBaseDN);
@@ -1537,7 +1540,7 @@ public class LdapManager {
      *
      * @param username username to return its base DN.
      * @return the BaseDN for the given username. If no baseDN is found,
-     *         this method will return <tt>null</tt>.
+     *         this method will return {@code null}.
      */
     public String getUsersBaseDN( String username )
     {
@@ -1589,7 +1592,7 @@ public class LdapManager {
      *
      * @param groupname groupname to return its base DN.
      * @return the BaseDN for the given groupname. If no baseDN is found,
-     *         this method will return <tt>null</tt>.
+     *         this method will return {@code null}.
      */
     public String getGroupsBaseDN(String groupname) {
         try {
@@ -1707,7 +1710,7 @@ public class LdapManager {
     /**
      * Returns true if the entire tree under the base DN will be searched (recursive search)
      * when doing LDAP queries (finding users, groups, etc). When false, only a single level
-     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * under the base DN will be searched. The default is {@code true} which is the best
      * option for most LDAP setups. In only a few cases will the directory be setup in such
      * a way that it's better to do single level searching.
      *
@@ -1720,7 +1723,7 @@ public class LdapManager {
     /**
      * Sets whether the entire tree under the base DN will be searched (recursive search)
      * when doing LDAP queries (finding users, groups, etc). When false, only a single level
-     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * under the base DN will be searched. The default is {@code true} which is the best
      * option for most LDAP setups. In only a few cases will the directory be setup in such
      * a way that it's better to do single level searching.
      *
@@ -2303,6 +2306,7 @@ public class LdapManager {
      * a search filter assertion value, with the exception of the '*' wildcard sign
      *
      * @param value The input string.
+     * @param acceptWildcard {@code true} to accept wildcards, otherwise {@code false}
      *
      * @return A assertion value string ready for insertion into a 
      *         search filter string.

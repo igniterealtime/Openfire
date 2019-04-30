@@ -40,14 +40,14 @@ import org.xmpp.packet.JID;
 
 /**
  * Default implementation of the UserProvider interface, which reads and writes data
- * from the <tt>ofUser</tt> database table.<p>
+ * from the {@code ofUser} database table.<p>
  *
  * Passwords can be stored as plain text, or encrypted using Blowfish. The
- * encryption/decryption key is stored as the Openfire property <tt>passwordKey</tt>,
+ * encryption/decryption key is stored as the Openfire property {@code passwordKey},
  * which is automatically created on first-time use. It's critical that the password key
  * not be changed once created, or existing passwords will be lost. By default
  * passwords will be stored encrypted. Plain-text password storage can be enabled
- * by setting the Openfire property <tt>user.usePlainPassword</tt> to <tt>true</tt>.
+ * by setting the Openfire property {@code user.usePlainPassword} to {@code true}.
  *
  * @author Matt Tucker
  */

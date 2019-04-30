@@ -171,15 +171,15 @@ public final class UserManager {
 
     /**
      * Creates a new User. Required values are username and password. The email address
-     * and name can optionally be <tt>null</tt>, unless the UserProvider deems that
+     * and name can optionally be {@code null}, unless the UserProvider deems that
      * either of them are required.
      *
      * @param username the new and unique username for the account.
      * @param password the password for the account (plain text).
-     * @param name the name of the user, which can be <tt>null</tt> unless the UserProvider
+     * @param name the name of the user, which can be {@code null} unless the UserProvider
      *      deems that it's required.
      * @param email the email address to associate with the new account, which can
-     *      be <tt>null</tt>, unless the UserProvider deems that it's required.
+     *      be {@code null}, unless the UserProvider deems that it's required.
      * @return a new User.
      * @throws UserAlreadyExistsException if the username already exists in the system.
      * @throws UnsupportedOperationException if the provider does not support the
@@ -254,7 +254,7 @@ public final class UserManager {
      * Returns the User specified by username.
      *
      * @param username the username of the user.
-     * @return the User that matches <tt>username</tt>.
+     * @return the User that matches {@code username}.
      * @throws UserNotFoundException if the user does not exist.
      */
     public User getUser(String username) throws UserNotFoundException {
@@ -304,11 +304,11 @@ public final class UserManager {
     }
 
     /**
-     * Returns an unmodifiable Collection of all users starting at <tt>startIndex</tt>
+     * Returns an unmodifiable Collection of all users starting at {@code startIndex}
      * with the given number of results. This is useful to support pagination in a GUI
      * where you may only want to display a certain number of results per page. It is
      * possible that the number of results returned will be less than that specified
-     * by <tt>numResults</tt> if <tt>numResults</tt> is greater than the number of
+     * by {@code numResults} if {@code numResults} is greater than the number of
      * records left to display.
      *
      * @param startIndex the beginning index to start the results at.

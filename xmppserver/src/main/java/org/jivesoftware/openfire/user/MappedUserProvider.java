@@ -32,10 +32,10 @@ import java.util.Date;
  * To use this provider, use the following system property definition:
  *
  * <ul>
- * <li><tt>provider.user.className = org.jivesoftware.openfire.user.MappedUserProvider</tt></li>
+ * <li>{@code provider.user.className = org.jivesoftware.openfire.user.MappedUserProvider}</li>
  * </ul>
  *
- * To be usable, a {@link UserProviderMapper} must be configured using the <tt>mappedUserProvider.mapper.className</tt>
+ * To be usable, a {@link UserProviderMapper} must be configured using the {@code mappedUserProvider.mapper.className}
  * system property. It is of importance to note that most UserProviderMapper implementations will require additional
  * configuration.
  *

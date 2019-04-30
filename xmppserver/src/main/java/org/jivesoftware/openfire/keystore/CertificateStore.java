@@ -87,6 +87,7 @@ public abstract class CertificateStore
     /**
      * Reloads the content of the store from disk. Useful when the store content has been modified outside of the
      * Openfire process, or when changes that have not been persisted need to be undone.
+     * @throws CertificateStoreConfigException if the store could not be reloaded
      */
     public void reload() throws CertificateStoreConfigException
     {
@@ -104,6 +105,7 @@ public abstract class CertificateStore
     /**
      * Saves the current state of the store to disk. Useful when certificates have been added or removed from the
      * store.
+     * @throws CertificateStoreConfigException of the configuration could not be persisted
      */
     public void persist() throws CertificateStoreConfigException
     {
@@ -120,7 +122,6 @@ public abstract class CertificateStore
     /**
      * Copies the file that is the persistent storage for this store to a new file in the backup location.
      *
-     * @throws IOException On any file IO issue.
      * @return The path in which the backup was created, or null if the creation of the backup failed.
      */
     public Path backup()
@@ -147,6 +148,7 @@ public abstract class CertificateStore
      * state (eg: invalid, on a revocation list, etc).
      *
      * @return A collection (possibly empty, never null) of all certificates in this store, mapped by their alias.
+     * @throws KeyStoreException if a keystore has not been initialized
      */
     public Map<String, X509Certificate> getAllCertificates() throws KeyStoreException
     {
@@ -173,6 +175,7 @@ public abstract class CertificateStore
      * When the store does not contain an entry that matches the provided alias, this method does nothing.
      *
      * @param alias The alias for which to delete an entry (cannot be null or empty).
+     * @throws CertificateStoreConfigException if the entry could not be deleted
      */
     public void delete( String alias ) throws CertificateStoreConfigException
     {
@@ -196,7 +199,7 @@ public abstract class CertificateStore
         catch ( CertificateStoreConfigException | KeyStoreException e )
         {
             reload(); // reset state of the store.
-            throw new CertificateStoreConfigException( "Unable to install a certificate into an identity store.", e );
+            throw new CertificateStoreConfigException( "Unable to delete the certificate from the identity store.", e );
 
         }
     }

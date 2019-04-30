@@ -30,7 +30,7 @@ import org.jivesoftware.util.JiveGlobals;
  * 
  * XEP-0198 allows either party (client or server) to send unsolicited ack/answer
  * stanzas on a periodic basis. This implementation approximates BOSH ack behavior
- * by sending unsolicited <a /> stanzas from the server to the client after a
+ * by sending unsolicited &lt;a /&gt; stanzas from the server to the client after a
  * configurable number of stanzas have been received from the client. 
  * 
  * Setting the system property to "1" would indicate that each client packet should 

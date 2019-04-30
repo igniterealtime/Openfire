@@ -64,7 +64,7 @@ public class LocaleUtils {
      *
      * @param localeCode the locale code for a Java locale. See the {@link java.util.Locale}
      *                   class for more details.
-     * @return The Java Locale that matches the locale code, or <tt>null</tt>.                  
+     * @return The Java Locale that matches the locale code, or {@code null}.
      */
     public static Locale localeCodeToLocale(String localeCode) {
         Locale locale = null;
@@ -412,7 +412,7 @@ public class LocaleUtils {
 
     /**
      * Returns an internationalized string loaded from a resource bundle from the passed
-     * in plugin. If the plugin name is <tt>null</tt>, the key will be looked up using
+     * in plugin. If the plugin name is {@code null}, the key will be looked up using
      * the standard resource bundle.
      *
      * @param key the key to use for retrieving the string from the
@@ -426,7 +426,7 @@ public class LocaleUtils {
 
     /**
      * Returns an internationalized string loaded from a resource bundle from the passed
-     * in plugin. If the plugin name is <tt>null</tt>, the key will be looked up using
+     * in plugin. If the plugin name is {@code null}, the key will be looked up using
      * the standard resource bundle.
      *
      * @param key the key to use for retrieving the string from the
@@ -444,10 +444,10 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle from
      * the passed in plugin, using the passed in Locale.
      * 
-     * If the plugin name is <tt>null</tt>, the key will be looked up using the
+     * If the plugin name is {@code null}, the key will be looked up using the
      * standard resource bundle.
      * 
-     * If the locale is <tt>null</tt>, the Jive Global locale will be used.
+     * If the locale is {@code null}, the Jive Global locale will be used.
      * 
      * @param key
      *            the key to use for retrieving the string from the appropriate
@@ -462,7 +462,7 @@ public class LocaleUtils {
      *            the locale to use for retrieving the appropriate
      *            locale-specific string.
      * @param fallback
-     *            if <tt>true</tt>, the global locale used by Openfire will be
+     *            if {@code true}, the global locale used by Openfire will be
      *            used if the requested locale is not available)
      * @return the localized string.
      */

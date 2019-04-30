@@ -320,7 +320,8 @@ public class HistoryStrategy {
      * may be loaded from history or processed "live" during a user's session.
      * 
      * Refer to http://xmpp.org/extensions/xep-0045.html#subject-mod for details.
-     * 
+     *
+     * @param message the message to check
      * @return true if the given packet is a subject change request
      */
     public boolean isSubjectChangeRequest(Message message) {

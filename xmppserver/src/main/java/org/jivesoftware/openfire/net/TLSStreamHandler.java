@@ -107,9 +107,9 @@ public class TLSStreamHandler {
 
     /**
      * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
-     * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
-     * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
-     * will be <code>false</code> and  <tt>remoteServer</tt> null.
+     * to a remote server then {@code clientMode} will be <code>true</code> and
+     * {@code remoteServer} is the server name of the remote server. Otherwise {@code clientMode}
+     * will be <code>false</code> and  {@code remoteServer} null.
      *
      * @param socket the plain socket connection to secure
      * @param configuration the configuration for the connection

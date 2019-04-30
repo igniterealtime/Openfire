@@ -89,9 +89,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     private Pattern pattern = Pattern.compile("&\\#[\\d]+;");
 
     /**
-     * Returns the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
+     * Returns the instance of {@code OfflineMessageStore} being used by the XMPPServer.
      *
-     * @return the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
+     * @return the instance of {@code OfflineMessageStore} being used by the XMPPServer.
      */
     public static OfflineMessageStore getInstance() {
         return XMPPServer.getInstance().getOfflineMessageStore();

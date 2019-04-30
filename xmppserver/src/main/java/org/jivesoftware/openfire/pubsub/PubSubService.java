@@ -109,19 +109,19 @@ public interface PubSubService {
     /**
      * Returns the {@link CollectionNode} that acts as the root node of the entire
      * node hierarchy. The returned node does not have a node identifier. If collection
-     * nodes is not supported then return <tt>null</tt>.
+     * nodes is not supported then return {@code null}.
      *
      * @return the CollectionNode that acts as the root node of the entire node hierarchy
-     *         or <tt>null</tt> if collection nodes is not supported.
+     *         or {@code null} if collection nodes is not supported.
      */
     CollectionNode getRootCollectionNode();
 
     /**
-     * Returns the {@link Node} that matches the specified node ID or <tt>null</tt> if
+     * Returns the {@link Node} that matches the specified node ID or {@code null} if
      * none was found.
      *
      * @param nodeID the ID that uniquely identifies the node in the pubsub service.
-     * @return the Node that matches the specified node ID or <tt>null</tt> if none was found.
+     * @return the Node that matches the specified node ID or {@code null} if none was found.
      */
     Node getNode(String nodeID);
 
@@ -183,11 +183,11 @@ public interface PubSubService {
     void sendNotification(Node node, Message message, JID jid);
 
     /**
-     * Returns the default node configuration for the specified node type or <tt>null</tt>
+     * Returns the default node configuration for the specified node type or {@code null}
      * if the specified node type is not supported by the service.
      *
      * @param leafType true when requesting default configuration of leaf nodes
-     * @return the default node configuration for the specified node type or <tt>null</tt>
+     * @return the default node configuration for the specified node type or {@code null}
      *         if the specified node type is not supported by the service.
      */
     DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType);
@@ -197,7 +197,7 @@ public interface PubSubService {
      * specified subscriber. When the subscriber JID is a bare JID then the answered collection
      * will have many entries one for each connected resource. Moreover, if the user
      * is offline then an empty collectin is returned. Available show status is represented
-     * by a <tt>online</tt> value. The rest of the possible show values as defined in RFC 3921.
+     * by a {@code online} value. The rest of the possible show values as defined in RFC 3921.
      *
      * @param subscriber the JID of the subscriber. This is not the JID of the affiliate.
      * @return an empty collection when offline. Otherwise, a collection with the show value
@@ -227,7 +227,7 @@ public interface PubSubService {
     /**
      * Returns true if a user may have more than one subscription with the node. When
      * multiple subscriptions is enabled each subscription request, event notification and
-     * unsubscription request should include a <tt>subid</tt> attribute.
+     * unsubscription request should include a {@code subid} attribute.
      *
      * @return true if a user may have more than one subscription with the node.
      */

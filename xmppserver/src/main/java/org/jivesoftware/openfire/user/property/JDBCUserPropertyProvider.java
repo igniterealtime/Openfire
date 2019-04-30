@@ -35,22 +35,22 @@ import java.util.Map;
  * To enable this provider, set the following in the system properties:
  *
  * <ul>
- * <li><tt>provider.userproperty.className = org.jivesoftware.openfire.user.property.JDBCUserPropertyProvider</tt></li>
+ * <li>{@code provider.userproperty.className = org.jivesoftware.openfire.user.property.JDBCUserPropertyProvider}</li>
  * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
  *
  * <ul>
- * <li><tt>jdbcUserPropertyProvider.driver = com.mysql.jdbc.Driver</tt></li>
- * <li><tt>jdbcUserPropertyProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
- * <li><tt>jdbcUserPropertyProvider.loadPropertySQL = SELECT propName, propValue FROM myUser WHERE user = ? AND propName = ?</tt></li>
- * <li><tt>jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propValue FROM myUser WHERE user = ?</tt></li>
+ * <li>{@code jdbcUserPropertyProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcUserPropertyProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcUserPropertyProvider.loadPropertySQL = SELECT propName, propValue FROM myUser WHERE user = ? AND propName = ?}</li>
+ * <li>{@code jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propValue FROM myUser WHERE user = ?}</li>
  * </ul>
  *
  * In order to use the configured JDBC connection provider do not use a JDBCconnection string, set the following
  * property:
  *
- * <tt>jdbcUserPropertyProvider.useConnectionProvider = true</tt>
+ * {@code jdbcUserPropertyProvider.useConnectionProvider = true}
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */

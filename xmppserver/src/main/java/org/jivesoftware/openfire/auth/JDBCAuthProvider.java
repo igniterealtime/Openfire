@@ -55,19 +55,19 @@ import org.slf4j.LoggerFactory;
  *
  * To enable this provider, set the following in the system properties:
  * <ul>
- * <li><tt>provider.auth.className = org.jivesoftware.openfire.auth.JDBCAuthProvider</tt></li>
+ * <li>{@code provider.auth.className = org.jivesoftware.openfire.auth.JDBCAuthProvider}</li>
  * </ul>
  *
  * You'll also need to set your JDBC driver, connection string, and SQL statements:
  *
  * <ul>
- * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
- * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
- * <li><tt>jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?</tt></li>
- * <li><tt>jdbcAuthProvider.passwordType = plain</tt></li>
- * <li><tt>jdbcAuthProvider.allowUpdate = true</tt></li>
- * <li><tt>jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?</tt></li>
- * <li><tt>jdbcAuthProvider.bcrypt.cost = 12</tt></li>
+ * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?}</li>
+ * <li>{@code jdbcAuthProvider.passwordType = plain}</li>
+ * <li>{@code jdbcAuthProvider.allowUpdate = true}</li>
+ * <li>{@code jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?}</li>
+ * <li>{@code jdbcAuthProvider.bcrypt.cost = 12}</li>
  * </ul>
  * 
  * <p>jdbcAuthProvider.passwordType can accept a comma separated string of password types.  This can be useful in 
@@ -89,7 +89,7 @@ import org.slf4j.LoggerFactory;
  * connection string, set the following property
  *
  * <ul>
- * <li><tt>jdbcAuthProvider.useConnectionProvider = true</tt></li>
+ * <li>{@code jdbcAuthProvider.useConnectionProvider = true}</li>
  * </ul>
  *
  * The passwordType setting tells Openfire how the password is stored. Setting the value

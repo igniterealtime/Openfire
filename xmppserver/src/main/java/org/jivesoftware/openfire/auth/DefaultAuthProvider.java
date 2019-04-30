@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default AuthProvider implementation. It authenticates against the <tt>ofUser</tt>
+ * Default AuthProvider implementation. It authenticates against the {@code ofUser}
  * database table and supports plain text and digest authentication.
  *
  * Because each call to authenticate() makes a database connection, the

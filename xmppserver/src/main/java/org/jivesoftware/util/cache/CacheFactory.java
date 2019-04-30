@@ -560,7 +560,7 @@ public class CacheFactory {
     }
 
     /**
-     * Returns a byte[] that uniquely identifies this member within the cluster or <tt>null</tt>
+     * Returns a byte[] that uniquely identifies this member within the cluster or {@code null}
      * when not in a cluster.
      *
      * @return a byte[] that uniquely identifies this member within the cluster or null when not in a cluster.
@@ -577,7 +577,7 @@ public class CacheFactory {
     }
 
     /**
-     * Returns a byte[] that uniquely identifies this senior cluster member or <tt>null</tt>
+     * Returns a byte[] that uniquely identifies this senior cluster member or {@code null}
      * when not in a cluster.
      *
      * @return a byte[] that uniquely identifies this senior cluster member or null when not in a cluster.

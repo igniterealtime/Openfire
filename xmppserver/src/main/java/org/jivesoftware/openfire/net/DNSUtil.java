@@ -244,8 +244,8 @@ public class DNSUtil {
 
     /**
      * Checks if the provided DNS pattern matches the provided name. For example, this method will:
-     * return <em>true</em>  for name: <tt>xmpp.example.org</tt>, pattern: <tt>*.example.org</tt>
-     * return <em>false</em> for name: <tt>xmpp.example.org</tt>, pattern: <tt>example.org</tt>
+     * return <em>true</em>  for name: {@code xmpp.example.org}, pattern: {@code *.example.org}
+     * return <em>false</em> for name: {@code xmpp.example.org}, pattern: {@code example.org}
      *
      * This method is not case sensitive.
      *

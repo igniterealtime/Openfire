@@ -33,13 +33,13 @@ import org.slf4j.LoggerFactory;
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
  * <tr><td>{@link EventType#group_created group_created}</td><td><i>None</i></td></tr>
  * <tr><td>{@link EventType#group_deleting group_deleting}</td><td><i>None</i></td></tr>
- * <tr><td>{@link EventType#member_added member_added}</td><td>A param named <tt>member</tt> with a String username as a
+ * <tr><td>{@link EventType#member_added member_added}</td><td>A param named {@code member} with a String username as a
  *      payload</td></tr>
- * <tr><td>{@link EventType#member_removed member_removed}</td><td>A param named <tt>member</tt> with a String username as a
+ * <tr><td>{@link EventType#member_removed member_removed}</td><td>A param named {@code member} with a String username as a
  *      payload</td></tr>
- * <tr><td>{@link EventType#admin_added admin_added}</td><td>A param named <tt>admin</tt> with a String username
+ * <tr><td>{@link EventType#admin_added admin_added}</td><td>A param named {@code admin} with a String username
  *      as a payload</td></tr>
- * <tr><td>{@link EventType#admin_removed admin_removed}</td><td>A param named <tt>admin</tt> with a String username
+ * <tr><td>{@link EventType#admin_removed admin_removed}</td><td>A param named {@code admin} with a String username
  *      as a payload</td></tr>
  * <tr valign="top"><td>{@link EventType#group_modified group_modified}</td><td>
  * <table>

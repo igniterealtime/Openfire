@@ -78,7 +78,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a Map of String key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param stringMap the Map of String key/value pairs.
@@ -90,7 +90,7 @@ public class ExternalizableUtil {
 
     /**
      * Reads a Map of String key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of String key/value pairs.
@@ -102,7 +102,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a Map of Long key and Integer value pairs. This method handles
-     * the case when the Map is <tt>null</tt>.
+     * the case when the Map is {@code null}.
      *
      * @param out the output stream.
      * @param map the Map of Long key/Integer value pairs.
@@ -114,7 +114,7 @@ public class ExternalizableUtil {
 
     /**
      * Reads a Map of Long key and Integer value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of Long key/Integer value pairs.
@@ -126,7 +126,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a List of Strings. This method handles the case when the List is
-     * <tt>null</tt>.
+     * {@code null}.
      *
      * @param out        the output stream.
      * @param stringList the List of Strings.
@@ -137,8 +137,8 @@ public class ExternalizableUtil {
     }
 
     /**
-     * Reads a List of Strings. This method will return <tt>null</tt> if the List
-     * written to the stream was <tt>null</tt>.
+     * Reads a List of Strings. This method will return {@code null} if the List
+     * written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a List of Strings.
@@ -150,7 +150,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes an array of long values. This method handles the case when the
-     * array is <tt>null</tt>.
+     * array is {@code null}.
      *
      * @param out   the output stream.
      * @param array the array of long values.
@@ -161,8 +161,8 @@ public class ExternalizableUtil {
     }
 
     /**
-     * Reads an array of long values. This method will return <tt>null</tt> if
-     * the array written to the stream was <tt>null</tt>.
+     * Reads an array of long values. This method will return {@code null} if
+     * the array written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return an array of long values.
@@ -222,7 +222,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a collection of Externalizable objects. The collection passed as a parameter
-     * must be a collection and not a <tt>null</tt> value.
+     * must be a collection and not a {@code null} value.
      *
      * @param out   the output stream.
      * @param value the collection of Externalizable objects. This value must not be null.
@@ -234,7 +234,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a collection of Serializable objects. The collection passed as a parameter
-     * must be a collection and not a <tt>null</tt> value.
+     * must be a collection and not a {@code null} value.
      *
      * @param out   the output stream.
      * @param value the collection of Serializable objects. This value must not be null.
@@ -246,7 +246,7 @@ public class ExternalizableUtil {
     
     /**
      * Reads a collection of Externalizable objects and adds them to the collection passed as a parameter. The
-     * collection passed as a parameter must be a collection and not a <tt>null</tt> value.
+     * collection passed as a parameter must be a collection and not a {@code null} value.
      *
      * @param in the input stream.
      * @param value the collection of Externalizable objects. This value must not be null.
@@ -261,7 +261,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a Map of String key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of String key and Externalizable value pairs.
@@ -273,7 +273,7 @@ public class ExternalizableUtil {
 
     /**
      * Reads a collection of Serializable objects and adds them to the collection passed as a parameter. The
-     * collection passed as a parameter must be a collection and not a <tt>null</tt> value.
+     * collection passed as a parameter must be a collection and not a {@code null} value.
      *
      * @param in the input stream.
      * @param value the collection of Serializable objects. This value must not be null.
@@ -288,7 +288,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a Map of Serializable key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of Serializable key and value pairs.
@@ -300,7 +300,7 @@ public class ExternalizableUtil {
     
     /**
      * Reads a Map of String key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @param map a Map of String key and Externalizable value pairs.
@@ -314,7 +314,7 @@ public class ExternalizableUtil {
 
     /**
      * Reads a Map of Serializable key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @param map a Map of Serializable key and value pairs.
@@ -328,7 +328,7 @@ public class ExternalizableUtil {
 
     /**
      * Writes a Map of String key and Set of Strings value pairs. This method DOES NOT handle the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of String key and Set of Strings value pairs.

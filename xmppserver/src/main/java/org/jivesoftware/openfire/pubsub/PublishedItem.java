@@ -180,7 +180,7 @@ public class PublishedItem implements Serializable {
      * have a payload. Transient nodes that are configured to not broadcast payloads may allow
      * published items to have no payload.
      *
-     * @return the payload included when publishing the item or <tt>null</tt> if none was found.
+     * @return the payload included when publishing the item or {@code null} if none was found.
      */
     public Element getPayload() {
         if (payload == null && payloadXML != null) {
@@ -205,7 +205,7 @@ public class PublishedItem implements Serializable {
     }
 
     /**
-     * Returns a textual representation of the payload or <tt>null</tt> if no payload
+     * Returns a textual representation of the payload or {@code null} if no payload
      * was specified with the item.
      *
      * @return a textual representation of the payload or null if no payload was specified
@@ -220,7 +220,7 @@ public class PublishedItem implements Serializable {
      * have a payload. Transient nodes that are configured to not broadcast payloads may allow
      * published items to have no payload.
      *
-     * @param payloadXML the payload included when publishing the item or <tt>null</tt>
+     * @param payloadXML the payload included when publishing the item or {@code null}
      *        if none was found.
      */
     void setPayloadXML(String payloadXML) {
@@ -233,7 +233,7 @@ public class PublishedItem implements Serializable {
      * have a payload. Transient nodes that are configured to not broadcast payloads may allow
      * published items to have no payload.
      *
-     * @param payload the payload included when publishing the item or <tt>null</tt>
+     * @param payload the payload included when publishing the item or {@code null}
      *        if none was found.
      */
     void setPayload(Element payload) {
@@ -248,7 +248,7 @@ public class PublishedItem implements Serializable {
 
     /**
      * Returns true if payload contains the specified keyword. If the item has no payload
-     * or keyword is <tt>null</tt> then return true.
+     * or keyword is {@code null} then return true.
      *
      * @param keyword the keyword to look for in the payload.
      * @return true if payload contains the specified keyword.

@@ -80,7 +80,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * @return <tt>true</tt> if the Openfire container is in setup mode, <tt>false</tt> otherwise.
+     * @return {@code true} if the Openfire container is in setup mode, {@code false} otherwise.
      */
     public boolean isSetupMode() {
         return getXMPPServer().isSetupMode();
@@ -154,7 +154,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * @return the page user or <tt>null</tt> if one is not found.
+     * @return the page user or {@code null} if one is not found.
      */
     public User getUser() {
         User pageUser = null;
@@ -183,7 +183,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * @return <tt>true</tt> if the server is in embedded mode, <tt>false</tt> otherwise.
+     * @return {@code true} if the server is in embedded mode, {@code false} otherwise.
      */
     public boolean isEmbedded() {
         try {

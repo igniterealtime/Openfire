@@ -57,7 +57,7 @@ public class ElementUtil {
 
 
     /**
-     * Returns the value of the specified property. A <tt>null</tt> answer does not necessarily mean
+     * Returns the value of the specified property. A {@code null} answer does not necessarily mean
      * that the property does not exist.
      *
      * @param element the element from which the property should be retrieved
@@ -239,9 +239,9 @@ public class ElementUtil {
      * Return all children property names of a parent property as a String array,
      * or an empty array if the if there are no children. You MAY NOT use the atttribute
      * markup (using a ':' in the last element name) with this call.
-     * For example, given the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and <tt>X.Y.C</tt>, then
-     * the child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt>.
+     * For example, given the properties {@code X.Y.A}, {@code X.Y.B}, and {@code X.Y.C}, then
+     * the child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C}.
      *
      * @param element the element to get the properties from
      * @param parent the name of the parent property.

@@ -23,14 +23,14 @@ import javax.servlet.jsp.JspTagException;
  * <p>A simple tag to gather its body content and pass it to the parent tag. This tag must be used
  * as a child of the {@link SidebarTag}.</p>
  *
- * <p>Sample usage:</p><pre><tt>
+ * <p>Sample usage:</p><pre>{@code
  *
  *      &lt;jive:sidebar bean="jivepageinfo"&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;a href="[url]" title="[description]"&gt;[name]&lt;/a&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;jive:subsidebar&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;a href="[url]"&gt;[name]&lt;/a&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;/jive:subsidebar&gt; <br>
- *      &lt;/jive:sidebar&gt;</tt></pre>
+ *      &lt;/jive:sidebar&gt;}</pre>
  *
  * <p>Note, this class has no attributes.</p>
  */

@@ -110,7 +110,7 @@ public interface Connection extends Closeable {
      * 
      * @return an ordered array of certificates, with the local certificate
      *         first followed by any certificate authorities. If no certificates
-     *         is present for the connection, then <tt>null</tt> is returned.
+     *         is present for the connection, then {@code null} is returned.
      */
     Certificate[] getLocalCertificates();
 
@@ -335,11 +335,11 @@ public interface Connection extends Closeable {
      * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
      * connection the server requesting the TLS negotiation will be the client and the other server
      * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
-     * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
-     * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.<p>
+     * negotiation must pass <code>true</code> in the {@code clientMode} parameter and the server
+     * receiving the TLS request must pass <code>false</code> in the {@code clientMode} parameter.<p>
      *
      * In the case of client-2-server the XMPP server must pass <code>false</code> in the
-     * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation.
+     * {@code clientMode} parameter since it will behave as the server in the TLS negotiation.
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
      * @param directTLS boolean indicating if the negotiation is directTLS (true) or startTLS (false).

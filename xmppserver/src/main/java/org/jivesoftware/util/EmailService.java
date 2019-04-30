@@ -67,17 +67,17 @@ import org.slf4j.LoggerFactory;
  * </pre><p>
  *
  * This class is configured with a set of Jive properties:<ul>
- *      <li><tt>mail.smtp.host</tt> -- the host name of your mail server, i.e.
+ *      <li>{@code mail.smtp.host} -- the host name of your mail server, i.e.
  *          mail.yourhost.com. The default value is "localhost".
- *      <li><tt>mail.smtp.port</tt> -- an optional property to change the smtp
+ *      <li>{@code mail.smtp.port} -- an optional property to change the smtp
  *          port used from the default of 25.
- *      <li><tt>mail.smtp.username</tt> -- an optional property to change the
+ *      <li>{@code mail.smtp.username} -- an optional property to change the
  *          username used to connect to the smtp server. Default is no username.
- *      <li><tt>mail.smtp.password</tt> -- an optional property to change the
+ *      <li>{@code mail.smtp.password} -- an optional property to change the
  *          password used to connect to the smtp server. Default is no password.
- *      <li><tt>mail.smtp.ssl</tt> -- an optional property to set whether to use
+ *      <li>{@code mail.smtp.ssl} -- an optional property to set whether to use
  *          SSL to connect to the smtp server or not. Default is false.
- *      <li><tt>mail.debugEnabled</tt> -- true if debug information should written out.
+ *      <li>{@code mail.debugEnabled} -- true if debug information should written out.
  *          Default is false.
  * </ul>
  */
@@ -173,9 +173,9 @@ public class EmailService {
      * @param fromName the name of the sender of this email.
      * @param fromEmail the email address of the sender of this email.
      * @param subject the subject of the email.
-     * @param textBody plain text body of the email, which can be <tt>null</tt> if the
+     * @param textBody plain text body of the email, which can be {@code null} if the
      *      html body is not null.
-     * @param htmlBody html body of the email, which can be <tt>null</tt> if the text body
+     * @param htmlBody html body of the email, which can be {@code null} if the text body
      *      is not null.
      */
     public void sendMessage(String toName, String toEmail, String fromName,
@@ -334,9 +334,9 @@ public class EmailService {
 
     /**
      * Returns the username used to connect to the SMTP server. If the username
-     * is <tt>null</tt>, no username will be used when connecting to the server.
+     * is {@code null}, no username will be used when connecting to the server.
      *
-     * @return the username used to connect to the SMTP server, or <tt>null</tt> if
+     * @return the username used to connect to the SMTP server, or {@code null} if
      *      there is no username.
      */
     public String getUsername() {
@@ -345,7 +345,7 @@ public class EmailService {
 
     /**
      * Sets the username that will be used when connecting to the SMTP
-     * server. The default is <tt>null</tt>, or no username.
+     * server. The default is {@code null}, or no username.
      *
      * @param username the SMTP username.
      */
@@ -362,9 +362,9 @@ public class EmailService {
 
     /**
      * Returns the password used to connect to the SMTP server. If the password
-     * is <tt>null</tt>, no password will be used when connecting to the server.
+     * is {@code null}, no password will be used when connecting to the server.
      *
-     * @return the password used to connect to the SMTP server, or <tt>null</tt> if
+     * @return the password used to connect to the SMTP server, or {@code null} if
      *      there is no password.
      */
     public String getPassword() {
@@ -373,7 +373,7 @@ public class EmailService {
 
     /**
      * Sets the password that will be used when connecting to the SMTP
-     * server. The default is <tt>null</tt>, or no password.
+     * server. The default is {@code null}, or no password.
      *
      * @param password the SMTP password.
      */
@@ -390,7 +390,7 @@ public class EmailService {
 
     /**
      * Returns true if SMTP debugging is enabled. Debug information is
-     * written to <tt>System.out</tt> by the underlying JavaMail provider.
+     * written to {@code System.out} by the underlying JavaMail provider.
      *
      * @return true if SMTP debugging is enabled.
      */
@@ -400,7 +400,7 @@ public class EmailService {
 
     /**
      * Enables or disables SMTP transport layer debugging. Debug information is
-     * written to <tt>System.out</tt> by the underlying JavaMail provider.
+     * written to {@code System.out} by the underlying JavaMail provider.
      *
      * @param debugEnabled true if SMTP debugging should be enabled.
      */

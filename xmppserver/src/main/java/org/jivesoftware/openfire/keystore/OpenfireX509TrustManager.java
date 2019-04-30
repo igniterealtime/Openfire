@@ -140,7 +140,7 @@ public class OpenfireX509TrustManager implements X509TrustManager
      *
      * Depending on the configuration of this class, other verification is done:
      * <ul>
-     *     <li>{@link #acceptSelfSigned}: when <tt>true</tt>, any chain that has a length of one and is self-signed is
+     *     <li>{@link #acceptSelfSigned}: when {@code true}, any chain that has a length of one and is self-signed is
      *                                    considered as a 'trust anchor' (but is still subject to other checks, such as
      *                                    expiration checks).</li>
      * </ul>

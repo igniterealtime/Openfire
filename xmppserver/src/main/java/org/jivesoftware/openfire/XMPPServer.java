@@ -1737,7 +1737,7 @@ public class XMPPServer {
     }
     /**
      * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
-     * in a cluster a <tt>null</tt> value is returned.
+     * in a cluster a {@code null} value is returned.
      *
      * @return the locator to use to find sessions hosted in other cluster nodes.
      */
@@ -1747,7 +1747,7 @@ public class XMPPServer {
 
     /**
      * Sets the locator to use to find sessions hosted in other cluster nodes. When not running
-     * in a cluster set a <tt>null</tt> value.
+     * in a cluster set a {@code null} value.
      *
      * @param remoteSessionLocator the locator to use to find sessions hosted in other cluster nodes.
      */

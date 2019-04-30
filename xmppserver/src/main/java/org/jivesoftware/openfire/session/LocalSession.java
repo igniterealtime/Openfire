@@ -425,7 +425,7 @@ public abstract class LocalSession implements Session {
      * Returns a text with the available stream features. Each subclass may return different
      * values depending whether the session has been authenticated or not.
      *
-     * @return a text with the available stream features or <tt>null</tt> to add nothing.
+     * @return a text with the available stream features or {@code null} to add nothing.
      */
     public abstract String getAvailableStreamFeatures();
 

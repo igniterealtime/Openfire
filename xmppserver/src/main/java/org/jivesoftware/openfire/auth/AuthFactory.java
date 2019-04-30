@@ -246,7 +246,7 @@ public class AuthFactory {
      * The encryption key is stored as the Jive property "passwordKey". If it's not present,
      * it will be automatically generated.
      *
-     * @return the Blowfish cipher, or <tt>null</tt> if Openfire is not able to create a Cipher;
+     * @return the Blowfish cipher, or {@code null} if Openfire is not able to create a Cipher;
      *      for example, during setup mode.
      */
     private static synchronized Blowfish getCipher() {

@@ -233,7 +233,7 @@ public class ClusterManager {
      *
      * Moreover, if we were in a "split brain" scenario (ie. separated cluster islands) and the
      * island were this JVM belonged was marked as "old" then all nodes of that island will
-     * get the <tt>left cluster event</tt> and <tt>joined cluster events</tt>. That means that
+     * get the {@code left cluster event} and {@code joined cluster events}. That means that
      * caches will be reset and thus will need to be repopulated again with fresh data from this JVM.
      * This also includes the case where this JVM was the senior cluster member and when the islands
      * met again then this JVM stopped being the senior member.

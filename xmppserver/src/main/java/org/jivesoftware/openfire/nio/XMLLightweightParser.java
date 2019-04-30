@@ -400,7 +400,7 @@ class XMLLightweightParser {
      * 
      * @param string
      *            The input string
-     * @return <tt>true</tt> if the input string contains an invalid numeric character reference, <tt>false</tt>
+     * @return {@code true} if the input string contains an invalid numeric character reference, {@code false}
      *         otherwise.
      * @see http://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref
      */
@@ -444,7 +444,7 @@ class XMLLightweightParser {
      * 
      * @param value
      *            the codepoint
-     * @return <tt>true</tt> if the codepoint is a valid charater per XML 1.0 definition, <tt>false</tt> otherwise.
+     * @return {@code true} if the codepoint is a valid charater per XML 1.0 definition, {@code false} otherwise.
      * @see http://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char
      */
     public static boolean isLegalXmlCharacter(int value) {

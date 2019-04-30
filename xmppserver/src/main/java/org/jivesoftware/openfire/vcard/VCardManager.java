@@ -109,7 +109,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     /**
      * Returns the user's vCard information for a given vcard property name. If the property
      * has no defined text then an empty string will be returned. However, if the property
-     * does not exist then a <tt>null</tt> value will be answered. Advanced user systems can
+     * does not exist then a {@code null} value will be answered. Advanced user systems can
      * use vCard information to link to user directory information or store other relevant
      * user information.
      * <p>

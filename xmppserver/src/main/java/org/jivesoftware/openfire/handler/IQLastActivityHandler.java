@@ -34,7 +34,7 @@ import java.util.Iterator;
 /**
  * Implements the TYPE_IQ jabber:iq:last protocol (last activity). Allows users to find out
  * the number of seconds another user has been offline. This information is only available to
- * those users that already subscribed to the users presence. Otherwhise, a <tt>forbidden</tt>
+ * those users that already subscribed to the users presence. Otherwhise, a {@code forbidden}
  * error will be returned.
  *
  * @author Gaston Dombiak

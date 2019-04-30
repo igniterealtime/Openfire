@@ -62,20 +62,20 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages plugins.
  *
- * The <tt>plugins</tt> directory is monitored for any new plugins, and they are dynamically loaded.
+ * The {@code plugins} directory is monitored for any new plugins, and they are dynamically loaded.
  *
- * An instance of this class can be obtained using: <tt>XMPPServer.getInstance().getPluginManager()</tt>
+ * An instance of this class can be obtained using: {@code XMPPServer.getInstance().getPluginManager()}
  *
  * These states are defined for plugin management:
  * <ul>
- *     <li><em>installed</em> - the plugin archive file is present in the <tt>plugins</tt> directory.</li>
+ *     <li><em>installed</em> - the plugin archive file is present in the {@code plugins} directory.</li>
  *     <li><em>extracted</em> - the plugin archive file has been extracted.</li>
  *     <li><em>loaded</em> - the plugin has (successfully) been initialized.</li>
  * </ul>
  *
  * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
  * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
- * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+ * load, due to restrictions imposed by its {@code minServerVersion} definition.
  *
  * @author Matt Tucker
  * @see Plugin
@@ -101,7 +101,7 @@ public class PluginManager
      * The directory in which a plugin is extracted, mapped by canonical name. This collection contains loaded plugins,
      * as well as extracted (but not loaded) plugins.
      *
-     * Note that typically these directories are subdirectories of <tt>plugins</tt>, but a 'dev-plugin' could live
+     * Note that typically these directories are subdirectories of {@code plugins}, but a 'dev-plugin' could live
      * elsewhere.
      */
     private final Map<String, Path> pluginDirs = new HashMap<>();
@@ -233,11 +233,11 @@ public class PluginManager
 
     /**
      * Returns true if the plugin by the specified name is installed. Specifically, this checks if the plugin
-     * archive file is present in the <tt>plugins</tt> directory.
+     * archive file is present in the {@code plugins} directory.
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
-     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     * load, due to restrictions imposed by its {@code minServerVersion} definition.
      *
      * @param canonicalName the canonical filename of the plugin (cannot be null).
      * @return true if the plugin is installed, otherwise false.
@@ -268,12 +268,12 @@ public class PluginManager
     }
 
     /**
-     * Returns true if the plugin by the specified name is extracted. Specifically, this checks if the <tt>plugins</tt>
+     * Returns true if the plugin by the specified name is extracted. Specifically, this checks if the {@code plugins}
      * directory contains a subdirectory that matches the canonical name of the plugin.
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
-     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     * load, due to restrictions imposed by its {@code minServerVersion} definition.
      *
      * @param canonicalName the canonical filename of the plugin (cannot be null).
      * @return true if the plugin is extracted, otherwise false.
@@ -289,7 +289,7 @@ public class PluginManager
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
-     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     * load, due to restrictions imposed by its {@code minServerVersion} definition.
      *
      * @param canonicalName the canonical filename of the plugin (cannot be null).
      * @return true if the plugin is extracted, otherwise false.
@@ -306,7 +306,7 @@ public class PluginManager
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
-     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     * load, due to restrictions imposed by its {@code minServerVersion} definition.
      *
      * @return A collection of metadata (possibly empty, never null).
      */
@@ -325,7 +325,7 @@ public class PluginManager
      *
      * Note that an <em>installed</em> plugin is not per definition an <em>extracted</em> plugin, and an extracted
      * plugin is not per definition a <em>loaded</em> plugin.  A plugin that's extracted might, for instance, fail to
-     * load, due to restrictions imposed by its <tt>minServerVersion</tt> definition.
+     * load, due to restrictions imposed by its {@code minServerVersion} definition.
      *
      * @param canonicalName the canonical name (lower case JAR/WAR file without exception) of the plugin
      * @return A collection of metadata (possibly empty, never null).
@@ -367,7 +367,7 @@ public class PluginManager
     }
 
     /**
-     * Returns a loaded plugin by its canonical name or <tt>null</tt> if a plugin with that name does not exist. The
+     * Returns a loaded plugin by its canonical name or {@code null} if a plugin with that name does not exist. The
      * canonical name is the lowercase-name of the plugin archive, without the file extension. For example: "broadcast".
      *
      * @deprecated in Openfire 4.4 in favour of {@link #getPluginByName(String)}
@@ -1013,7 +1013,7 @@ public class PluginManager
      * the plugin.
      *
      * @param plugin the plugin.
-     * @return the plugin dev environment, or <tt>null</tt> if development
+     * @return the plugin dev environment, or {@code null} if development
      *         mode is not enabled for the plugin.
      */
     public PluginDevEnvironment getDevEnvironment( Plugin plugin )

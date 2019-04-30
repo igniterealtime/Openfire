@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * The provider can be specified in system properties by adding:
  *
  * <ul>
- * <li><tt>provider.securityAudit.className = my.security.audit.provider</tt></li>
+ * <li>{@code provider.securityAudit.className = my.security.audit.provider}</li>
  * </ul>
  *
  * @author Daniel Henninger

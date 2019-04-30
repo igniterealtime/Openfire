@@ -40,27 +40,27 @@ import org.xmpp.packet.JID;
  * To enable this provider, set the following in the system properties:
  *
  * <ul>
- * <li><tt>provider.admin.className = org.jivesoftware.openfire.admin.JDBCAdminProvider</tt></li>
+ * <li>{@code provider.admin.className = org.jivesoftware.openfire.admin.JDBCAdminProvider}</li>
  * </ul>
  *
  * Then you need to set your driver, connection string and SQL statements:
  * <ul>
- * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
- * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
- * <li><tt>jdbcAdminProvider.getAdminsSQL = SELECT user FROM myAdmins</tt></li>
+ * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcAdminProvider.getAdminsSQL = SELECT user FROM myAdmins}</li>
  * </ul>
  * <p>
  * If you want to be able to update the admin users via the UI, add the following properties:
  * <ul>
- * <li><tt>jdbcAdminProvider.insertAdminsSQL = INSERT INTO myAdmins (user) VALUES (?)</tt></li>
- * <li><tt>jdbcAdminProvider.deleteAdminsSQL = DELETE FROM myAdmins WHERE user = ?</tt></li>
+ * <li>{@code jdbcAdminProvider.insertAdminsSQL = INSERT INTO myAdmins (user) VALUES (?)}</li>
+ * <li>{@code jdbcAdminProvider.deleteAdminsSQL = DELETE FROM myAdmins WHERE user = ?}</li>
  * </ul>
  * <p>
  * In order to use the configured JDBC connection provider do not use a JDBC
  * connection string, set the following property
  *
  * <ul>
- * <li><tt>jdbcAdminProvider.useConnectionProvider = true</tt></li>
+ * <li>{@code jdbcAdminProvider.useConnectionProvider = true}</li>
  * </ul>
  *
  *

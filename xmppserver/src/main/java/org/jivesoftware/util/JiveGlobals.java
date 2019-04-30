@@ -299,7 +299,7 @@ public class JiveGlobals {
 
     /**
      * Returns a local property. Local properties are stored in the file defined in
-     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
+     * {@code JIVE_CONFIG_FILENAME} that exists in the {@code home} directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -322,7 +322,7 @@ public class JiveGlobals {
 
     /**
      * Returns a local property. Local properties are stored in the file defined in
-     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
+     * {@code JIVE_CONFIG_FILENAME} that exists in the {@code home} directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -333,7 +333,7 @@ public class JiveGlobals {
      * &lt;/foo&gt;
      * </pre>
      *
-     * If the specified property can't be found, the <tt>defaultValue</tt> will be returned.
+     * If the specified property can't be found, the {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue the default value for the property.
@@ -353,7 +353,7 @@ public class JiveGlobals {
 
     /**
      * Returns an integer value local property. Local properties are stored in the file defined in
-     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
+     * {@code JIVE_CONFIG_FILENAME} that exists in the {@code home} directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -365,12 +365,12 @@ public class JiveGlobals {
      * </pre>
      *
      * If the specified property can't be found, or if the value is not a number, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property could not be loaded or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static int getXMLProperty(String name, int defaultValue) {
         String value = getXMLProperty(name);
@@ -387,7 +387,7 @@ public class JiveGlobals {
 
     /**
      * Returns a boolean value local property. Local properties are stored in the
-     * file defined in <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt>
+     * file defined in {@code JIVE_CONFIG_FILENAME} that exists in the {@code home}
      * directory. Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -398,13 +398,13 @@ public class JiveGlobals {
      * &lt;/foo&gt;
      * </pre>
      *
-     * If the specified property can't be found, the <tt>defaultValue</tt> will be returned.
+     * If the specified property can't be found, the {@code defaultValue} will be returned.
      * If the property is found, it will be parsed using {@link Boolean#valueOf(String)}.  
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property could not be loaded or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static boolean getXMLProperty(String name, boolean defaultValue) {
         String value = getXMLProperty(name);
@@ -417,7 +417,7 @@ public class JiveGlobals {
     /**
      * Sets a local property. If the property doesn't already exists, a new
      * one will be created. Local properties are stored in the file defined in
-     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
+     * {@code JIVE_CONFIG_FILENAME} that exists in the {@code home} directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -442,7 +442,7 @@ public class JiveGlobals {
     /**
      * Sets multiple local properties at once. If a property doesn't already exists, a new
      * one will be created. Local properties are stored in the file defined in
-     * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
+     * {@code JIVE_CONFIG_FILENAME} that exists in the {@code home} directory.
      * Properties are always specified as "foo.bar.prop", which would map to
      * the following entry in the XML file:
      * <pre>
@@ -465,12 +465,12 @@ public class JiveGlobals {
     /**
      * Return all immediate children property values of a parent local property as a list of strings,
      * or an empty list if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
-     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt> (the value of <tt>C.D</tt> would not be returned using this method).<p>
+     * the properties {@code X.Y.A}, {@code X.Y.B}, {@code X.Y.C} and {@code X.Y.C.D}, then
+     * the immediate child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C} (the value of {@code C.D} would not be returned using this method).<p>
      *
-     * Local properties are stored in the file defined in <tt>JIVE_CONFIG_FILENAME</tt> that exists
-     * in the <tt>home</tt> directory. Properties are always specified as "foo.bar.prop",
+     * Local properties are stored in the file defined in {@code JIVE_CONFIG_FILENAME} that exists
+     * in the {@code home} directory. Properties are always specified as "foo.bar.prop",
      * which would map to the following entry in the XML file:
      * <pre>
      * &lt;foo&gt;
@@ -543,7 +543,7 @@ public class JiveGlobals {
 
     /**
      * Returns a Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist.
@@ -567,13 +567,13 @@ public class JiveGlobals {
 
     /**
      * Returns an enum constant Jive property. If the specified property doesn't exist, or if it's value cannot be parsed
-     * as an enum constant, the <tt>defaultValue</tt> will be returned.
+     * as an enum constant, the {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param enumType the {@code Class} object of the enum type from which to return a constant.
      * @param defaultValue value returned if the property doesn't exist or it's value could not be parsed.
      * @param <E> The enum type whose constant is to be returned.
-     * @return the property value (as an enum constant) or <tt>defaultValue</tt>.
+     * @return the property value (as an enum constant) or {@code defaultValue}.
      */
     public static <E extends Enum<E>> E getEnumProperty( String name, Class<E> enumType, E defaultValue )
     {
@@ -594,12 +594,12 @@ public class JiveGlobals {
 
     /**
      * Returns an integer value Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static int getIntProperty(String name, int defaultValue) {
         String value = getProperty(name);
@@ -616,12 +616,12 @@ public class JiveGlobals {
 
     /**
      * Returns a long value Jive property. If the specified property doesn't exist, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist or was not
      *      a number.
-     * @return the property value specified by name or <tt>defaultValue</tt>.
+     * @return the property value specified by name or {@code defaultValue}.
      */
     public static long getLongProperty(String name, long defaultValue) {
         String value = getProperty(name);
@@ -640,24 +640,24 @@ public class JiveGlobals {
      * Returns a boolean value Jive property.
      *
      * @param name the name of the property to return.
-     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
-     *      Otherwise <tt>false</tt> is returned.
+     * @return true if the property value exists and is set to {@code "true"} (ignoring case).
+     *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String name) {
         return Boolean.valueOf(getProperty(name));
     }
 
     /**
-     * Returns a boolean value Jive property. If the property doesn't exist, the <tt>defaultValue</tt>
+     * Returns a boolean value Jive property. If the property doesn't exist, the {@code defaultValue}
      * will be returned.
      *
      * If the specified property can't be found, or if the value is not a number, the
-     * <tt>defaultValue</tt> will be returned.
+     * {@code defaultValue} will be returned.
      *
      * @param name the name of the property to return.
      * @param defaultValue value returned if the property doesn't exist.
-     * @return true if the property value exists and is set to <tt>"true"</tt> (ignoring case).
-     *      Otherwise <tt>false</tt> is returned.
+     * @return true if the property value exists and is set to {@code "true"} (ignoring case).
+     *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = getProperty(name);
@@ -672,9 +672,9 @@ public class JiveGlobals {
     /**
      * Return all immediate children property names of a parent Jive property as a list of strings,
      * or an empty list if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
-     * the immediate child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt> (<tt>C.D</tt> would not be returned using this method).<p>
+     * the properties {@code X.Y.A}, {@code X.Y.B}, {@code X.Y.C} and {@code X.Y.C.D}, then
+     * the immediate child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C} ({@code C.D} would not be returned using this method).<p>
      *
      * @param parent Parent "node" to find the children of.
      * @return a List of all immediate children property names (Strings).
@@ -692,9 +692,9 @@ public class JiveGlobals {
     /**
      * Return all immediate children property values of a parent Jive property as a list of strings,
      * or an empty list if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, <tt>X.Y.C</tt> and <tt>X.Y.C.D</tt>, then
-     * the immediate child properties of <tt>X.Y</tt> are <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and
-     * <tt>X.Y.C</tt> (the value of <tt>X.Y.C.D</tt> would not be returned using this method).<p>
+     * the properties {@code X.Y.A}, {@code X.Y.B}, {@code X.Y.C} and {@code X.Y.C.D}, then
+     * the immediate child properties of {@code X.Y} are {@code X.Y.A}, {@code X.Y.B}, and
+     * {@code X.Y.C} (the value of {@code X.Y.C.D} would not be returned using this method).<p>
      *
      * @param parent the name of the parent property to return the children for.
      * @return all child property values for the given parent.
@@ -1229,7 +1229,7 @@ public class JiveGlobals {
 
     /**
      * Loads Openfire properties if necessary. Property loading must be done lazily so
-     * that we give outside classes a chance to set <tt>home</tt>.
+     * that we give outside classes a chance to set {@code home}.
      */
     private synchronized static void loadOpenfireProperties() {
         if (openfireProperties == null) {

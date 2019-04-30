@@ -1435,7 +1435,7 @@ public class PubSubPersistenceManager {
      * @param service the default node configuration used by this pubsub service.
      * @param isLeafType true if loading default configuration for leaf nodes.
      * @return the loaded default node configuration for the specified node type and service
-     *         or <tt>null</tt> if none was found.
+     *         or {@code null} if none was found.
      */
     public static DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service,
             boolean isLeafType) {

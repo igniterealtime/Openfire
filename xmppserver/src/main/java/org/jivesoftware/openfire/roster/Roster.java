@@ -224,7 +224,7 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Returns a roster item if the specified user has a subscription of type FROM to this
      * user and the susbcription only exists due to some shared groups or otherwise
-     * <tt>null</tt>. This method assumes that this user does not have a subscription to
+     * {@code null}. This method assumes that this user does not have a subscription to
      * the contact. In other words, this method will not check if there should be a subscription
      * of type TO ot BOTH.
      *

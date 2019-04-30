@@ -55,7 +55,7 @@ public class DefaultAdminProvider implements AdminProvider {
 
     /**
      * The default provider retrieves the comma separated list from the system property
-     * <tt>admin.authorizedJIDs</tt>
+     * {@code admin.authorizedJIDs}
      * @see org.jivesoftware.openfire.admin.AdminProvider#getAdmins()
      */
     @Override
@@ -78,7 +78,7 @@ public class DefaultAdminProvider implements AdminProvider {
 
     /**
      * The default provider sets a comma separated list as the system property
-     * <tt>admin.authorizedJIDs</tt>
+     * {@code admin.authorizedJIDs}
      * @see org.jivesoftware.openfire.admin.AdminProvider#setAdmins(java.util.List)
      */
     @Override

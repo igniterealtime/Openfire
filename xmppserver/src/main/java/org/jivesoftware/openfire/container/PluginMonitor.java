@@ -665,7 +665,7 @@ public class PluginMonitor implements PropertyEventListener
         public int compareTo(final PluginToLoad that) {
             // NB. This violates the Comparable recommendation. Quote:
             // <p>It is strongly recommended, but <i>not</i> strictly required that
-            // <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>.
+            // {@code (x.compareTo(y)==0) == (x.equals(y))}.
             return this.pluginName.compareTo(that.pluginName);
         }
     }

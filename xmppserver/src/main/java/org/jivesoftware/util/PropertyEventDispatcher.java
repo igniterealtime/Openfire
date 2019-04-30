@@ -30,10 +30,10 @@ import org.slf4j.LoggerFactory;
  * <table border="1">
  * <caption>The params for each event type</caption>
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
- * <tr><td>{@link EventType#property_set property_set}</td><td>A param named <tt>value</tt> that
+ * <tr><td>{@link EventType#property_set property_set}</td><td>A param named {@code value} that
  *      has the value of the property set.</td></tr>
  * <tr><td>{@link EventType#property_deleted property_deleted}</td><td><i>None</i></td></tr>
- * <tr><td>{@link EventType#xml_property_set xml_property_set}</td><td>A param named <tt>value</tt> that
+ * <tr><td>{@link EventType#xml_property_set xml_property_set}</td><td>A param named {@code value} that
  *      has the value of the property set.</td></tr>
  * <tr><td>{@link EventType#xml_property_deleted xml_property_deleted}</td><td><i>None</i></td></tr>
  * </table>

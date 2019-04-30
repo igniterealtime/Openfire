@@ -285,8 +285,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToLocalDomain(JID jid, Packet packet,
             boolean fromServer) {
@@ -384,8 +384,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToComponent(JID jid, Packet packet,
             boolean routed) {
@@ -449,8 +449,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
-     * @return <tt>true</tt> if the packet was routed successfully,
-     *         <tt>false</tt> otherwise.
+     * @return {@code true} if the packet was routed successfully,
+     *         {@code false} otherwise.
      */
     private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
     {
@@ -537,8 +537,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * </ol>
      *
      * Admins can override the above logic and just send the message to all connected resources
-     * with highest priority by setting the system property <tt>route.all-resources</tt> to
-     * <tt>true</tt>.
+     * with highest priority by setting the system property {@code route.all-resources} to
+     * {@code true}.
      *
      * @param recipientJID the bare JID of the target local user.
      * @param packet the message to send.

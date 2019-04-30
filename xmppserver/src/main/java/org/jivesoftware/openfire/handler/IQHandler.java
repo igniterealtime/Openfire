@@ -105,7 +105,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     /**
      * Returns the handler information to help generically handle IQ packets.
      * IQHandlers that aren't local server iq handlers (e.g. chatbots, transports, etc)
-     * return <tt>null</tt>.
+     * return {@code null}.
      *
      * @return The IQHandlerInfo for this handler
      */

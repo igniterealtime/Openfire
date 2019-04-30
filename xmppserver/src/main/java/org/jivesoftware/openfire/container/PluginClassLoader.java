@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * and JAR files, then constructs a class loader for the resources found.
  * Resources are loaded as follows:
  * <ul>
- * <li>Any JAR files in the <tt>lib</tt> will be added to the classpath.</li>
+ * <li>Any JAR files in the {@code lib} will be added to the classpath.</li>
  * <li>Any files in the classes directory will be added to the classpath.</li>
  * </ul>
  *

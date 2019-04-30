@@ -33,7 +33,7 @@ import java.util.Enumeration;
  * is binded to all network interfaces this task will try to find a valid IP
  * address that will work for the remote node.<p>
  *
- * A <tt>null</tt> bindInterface in the result of this task means that the task
+ * A {@code null} bindInterface in the result of this task means that the task
  * failed to find a valid IP address where the admin console is listening.
  *
  * @author Gaston Dombiak

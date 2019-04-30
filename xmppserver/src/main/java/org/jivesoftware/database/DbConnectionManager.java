@@ -493,7 +493,7 @@ public class DbConnectionManager {
     /**
      * Scrolls forward in a result set the specified number of rows. If the JDBC driver
      * supports the feature, the cursor will be moved directly. Otherwise, we scroll
-     * through results one by one manually by calling <tt>rs.next()</tt>.
+     * through results one by one manually by calling {@code rs.next()}.
      *
      * @param rs the ResultSet object to scroll.
      * @param rowNumber the row number to scroll forward to.
@@ -632,7 +632,7 @@ public class DbConnectionManager {
 
     /**
      * Destroys the currennt connection provider. Future calls to
-     * {@link #getConnectionProvider()} will return <tt>null</tt> until a new
+     * {@link #getConnectionProvider()} will return {@code null} until a new
      * ConnectionProvider is set, or one is automatically loaded by a call to
      * {@link #getConnection()}.
      */

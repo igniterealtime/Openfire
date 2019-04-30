@@ -109,7 +109,7 @@ public class AuthToken {
     }
 
     /**
-     * Returns the username associated with this AuthToken. A <tt>null</tt> value
+     * Returns the username associated with this AuthToken. A {@code null} value
      * means that the authenticated user is anonymous.
      *
      * @return the username associated with this AuthToken or null when using an anonymous user.

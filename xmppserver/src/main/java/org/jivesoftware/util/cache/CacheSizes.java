@@ -137,7 +137,7 @@ public class CacheSizes {
 
     /**
      * Returns the size in bytes of a Collection object. Elements are assumed to be
-     * <tt>String</tt>s, <tt>Long</tt>s or <tt>Cacheable</tt> objects.
+     * {@code String}s, {@code Long}s or {@code Cacheable} objects.
      *
      * @param list the Collection object to determine the size of.
      * @return the size of the Collection object.

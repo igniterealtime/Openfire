@@ -70,7 +70,6 @@ public class ParamUtils {
      * @param name the name of the parameter you want to get
      * @return an array of non-null, non-blank strings of the same name. This
      *         method will return an empty array if no parameters were found.
-     * @return an array of Strings
      */
     public static String[] getParameters(HttpServletRequest request, String name) {
         if (name == null) {

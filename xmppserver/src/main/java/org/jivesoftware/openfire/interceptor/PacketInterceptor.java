@@ -42,13 +42,13 @@ public interface PacketInterceptor {
      * the packet, or throw a PacketRejectedException to block it from being sent or processed
      * (when read).<p>
      *
-     * An exception can only be thrown when <tt>processed</tt> is false which means that the read
+     * An exception can only be thrown when {@code processed} is false which means that the read
      * packet has not been processed yet or the packet was not sent yet. If the exception is thrown
      * with a "read" packet then the sender of the packet will receive an answer with an error. But
      * if the exception is thrown with a "sent" packet then nothing will happen.<p>
      *
      * Note that for each packet, every interceptor will be called twice: once before processing
-     * is complete (<tt>processing==true</tt>) and once after processing is complete. Typically,
+     * is complete ({@code processing==true}) and once after processing is complete. Typically,
      * an interceptor will want to ignore one or the other case.
      *
      * @param packet the packet to take action on.

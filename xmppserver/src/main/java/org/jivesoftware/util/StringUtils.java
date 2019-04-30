@@ -616,7 +616,7 @@ public final class StringUtils {
     }
 
     /**
-     * Reformats a string where lines that are longer than <tt>width</tt>
+     * Reformats a string where lines that are longer than {@code width}
      * are split apart at the earliest wordbreak or at maxLength, whichever is
      * sooner. If the width specified is less than 5 or greater than the input
      * Strings length the string will be returned as is.
@@ -819,7 +819,7 @@ public final class StringUtils {
      * "9999" and the desired length is 8, the result would be "00009999".
      * This type of padding is useful for creating numerical values that need
      * to be stored and sorted as character data. Note: the current
-     * implementation of this method allows for a maximum <tt>length</tt> of
+     * implementation of this method allows for a maximum {@code length} of
      * 64.
      *
      * @param string the original String to pad.
@@ -1063,7 +1063,7 @@ public final class StringUtils {
      * </pre>
      * @param str the String to abbreviate.
      * @param maxWidth the maximum size of the string, minus the ellipsis.
-     * @return the abbreviated String, or <tt>null</tt> if the string was <tt>null</tt>.
+     * @return the abbreviated String, or {@code null} if the string was {@code null}.
      */
     public static String abbreviate(String str, int maxWidth) {
         if (null == str) {

@@ -79,11 +79,11 @@ public class FileTransferRejectedException extends Exception {
 
     /**
      * Returns the text to include in a message that will be sent to the intitiator and target
-     * of the file transfer that got rejected or <tt>null</tt> if none was defined. If no text was
+     * of the file transfer that got rejected or {@code null} if none was defined. If no text was
      * specified then no message will be sent to the parties of the rejected file transfer.
      *
      * @return the text to include in a message that will be sent to the parties of the file
-     * transfer that got rejected or <tt>null</tt> if none was defined.
+     * transfer that got rejected or {@code null} if none was defined.
      */
     public String getRejectionMessage() {
         return rejectionMessage;
@@ -91,7 +91,7 @@ public class FileTransferRejectedException extends Exception {
 
     /**
      * Sets the text to include in a message that will be sent to the intiator and target of the
-     * file transfer that got rejected or <tt>null</tt> if no message will be sent to the parties
+     * file transfer that got rejected or {@code null} if no message will be sent to the parties
      * of the rejected file transfer. Bt default, no message will be sent.
      *
      * @param rejectionMessage the text to include in the notification message for the rejection.

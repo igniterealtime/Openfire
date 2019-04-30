@@ -91,8 +91,8 @@ public class ScramSha1SaslServer implements SaslServer {
      * to the client. It is non-null if the authentication must be continued
      * by sending a challenge to the client, or if the authentication has
      * succeeded but challenge data needs to be processed by the client.
-     * <tt>isComplete()</tt> should be called
-     * after each call to <tt>evaluateResponse()</tt>,to determine if any further
+     * {@code isComplete()} should be called
+     * after each call to {@code evaluateResponse()},to determine if any further
      * response is needed from the client.
      *
      * @param response The non-null (but possibly empty) response sent
@@ -212,7 +212,7 @@ public class ScramSha1SaslServer implements SaslServer {
    /**
       * Determines whether the authentication exchange has completed.
       * This method is typically called after each invocation of
-      * <tt>evaluateResponse()</tt> to determine whether the
+      * {@code evaluateResponse()} to determine whether the
       * authentication has completed successfully or should be continued.
       * @return true if the authentication exchange has completed; false otherwise.
       */
@@ -270,8 +270,8 @@ public class ScramSha1SaslServer implements SaslServer {
     /**
      * Retrieves the negotiated property.
      * This method can be called only after the authentication exchange has
-     * completed (i.e., when <tt>isComplete()</tt> returns true); otherwise, an
-     * <tt>IllegalStateException</tt> is thrown.
+     * completed (i.e., when {@code isComplete()} returns true); otherwise, an
+     * {@code IllegalStateException} is thrown.
      *
      * @param propName the property
      * @return The value of the negotiated property. If null, the property was

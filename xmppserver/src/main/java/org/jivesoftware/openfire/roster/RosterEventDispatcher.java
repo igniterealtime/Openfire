@@ -75,7 +75,7 @@ public class RosterEventDispatcher {
      * Notifies listeners that a contact is about to be added to a roster. New contacts
      * may be persisted to the database or not. Listeners may indicate that contact about
      * to be persisted should not be persisted. Only one listener is needed to return
-     * <tt>false</tt> so that the contact is not persisted.
+     * {@code false} so that the contact is not persisted.
      *
      * @param roster the roster that was updated.
      * @param item the new roster item.

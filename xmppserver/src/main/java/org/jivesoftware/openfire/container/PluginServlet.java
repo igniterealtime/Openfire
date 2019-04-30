@@ -58,12 +58,12 @@ import org.slf4j.LoggerFactory;
  * than normal Openfire admin console files, it's not possible to have them
  * added to the normal Openfire admin console web app directory.
  * <p>
- * The servlet listens for requests in the form <tt>/plugins/[pluginName]/[JSP File]</tt>
- * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for non JSP requests in the
- * form like <tt>/plugins/[pluginName]/images/*.png|gif</tt>,
- * <tt>/plugins/[pluginName]/scripts/*.js|css</tt> or
- * <tt>/plugins/[pluginName]/styles/*.css</tt> (e.g.
- * <tt>/plugins/foo/images/example.gif</tt>).
+ * The servlet listens for requests in the form {@code /plugins/[pluginName]/[JSP File]}
+ * (e.g. {@code /plugins/foo/example.jsp}). It also listens for non JSP requests in the
+ * form like {@code /plugins/[pluginName]/images/*.png|gif},
+ * {@code /plugins/[pluginName]/scripts/*.js|css} or
+ * {@code /plugins/[pluginName]/styles/*.css} (e.g.
+ * {@code /plugins/foo/images/example.gif}).
  * </p>
  * JSP files must be compiled and available via the plugin's class loader. The mapping
  * between JSP name and servlet class files is defined in [pluginName]/web/web.xml.

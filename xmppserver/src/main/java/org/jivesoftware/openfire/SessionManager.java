@@ -217,7 +217,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Returns the session originated from the specified address or <tt>null</tt> if none was
+     * Returns the session originated from the specified address or {@code null} if none was
      * found. The specified address MUST contain a resource that uniquely identifies the session.
      *
      * A single connection manager should connect to the same node.
@@ -295,7 +295,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ConnectionMultiplexerSession</tt>.
+     * Creates a new {@code ConnectionMultiplexerSession}.
      *
      * @param conn the connection to create the session from.
      * @param address the JID (may include a resource) of the connection manager's session.
@@ -335,7 +335,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt>. The new Client session will have a newly created
+     * Creates a new {@code ClientSession}. The new Client session will have a newly created
      * stream ID.
      *
      * @param conn the connection to create the session from.
@@ -347,7 +347,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
@@ -358,7 +358,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param conn the connection to create the session from.
      * @param id the streamID to use for the new session.
@@ -384,7 +384,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     * Creates a new {@code ClientSession} with the specified streamID.
      *
      * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.

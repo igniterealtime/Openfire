@@ -49,7 +49,7 @@ import org.xmpp.packet.JID;
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:
  * <p>
- * <tt>provider.vcard.className = org.jivesoftware.openfire.ldap.LdapVCardProvider</tt>
+ * {@code provider.vcard.className = org.jivesoftware.openfire.ldap.LdapVCardProvider}
  * </p>
  * <p>and an xml vcard-mapping in the system properties.</p>
  * <p>
@@ -66,7 +66,7 @@ import org.xmpp.packet.JID;
  * and populating the placeholders with the data retrieved from LDAP. This system should
  * be flexible enough to handle any client's vCard format. An example mapping follows.<br>
  * </p>
- * <tt>ldap.vcard-mapping =
+ * {@code ldap.vcard-mapping =
  *        &lt;![CDATA[
  *    		&lt;vCard xmlns='vcard-temp'&gt;
  *    			&lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;
@@ -102,7 +102,7 @@ import org.xmpp.packet.JID;
  *    			&lt;/DESC&gt;
  *    		&lt;/vCard&gt;
  *        ]]&gt;
- * </tt>
+ * }
  * <p>
  * An easy way to get the vcard format your client needs, assuming you've been
  * using the database store, is to do a <code>SELECT value FROM ofVCard WHERE

@@ -46,8 +46,8 @@ import com.cenqua.shaj.Shaj;
  * To enable this provider, set the following in the system properties:
  *
  * <ul>
- * <li><tt>provider.auth.className = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
- * <li><tt>provider.user.className = org.jivesoftware.openfire.user.NativeUserProvider</tt></li>
+ * <li>{@code provider.auth.className = org.jivesoftware.openfire.auth.NativeAuthProvider}</li>
+ * <li>{@code provider.user.className = org.jivesoftware.openfire.user.NativeUserProvider}</li>
  * </ul>
  *
  * The properties to configure the provider are as follows:

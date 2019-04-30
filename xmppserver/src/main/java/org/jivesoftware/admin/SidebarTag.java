@@ -32,34 +32,34 @@ import java.io.IOException;
  * {@link TabsTag} is similiar to this one.</p>
  *
  * <p>Attributes: <ul>
- *      <li><tt>bean</tt> (required) - the id of the request attribute which is a
+ *      <li>{@code bean} (required) - the id of the request attribute which is a
  *      {@link AdminPageBean} instance. This class holds information
  *      needed to properly render the admin console sidebar.</li>
- *      <li><tt>css</tt> (optional) - the CSS class name used to decorate the LI of the sidebar items.</li>
- *      <li><tt>currentcss</tt> (optional) - the CSS class name used to decorate the LI of the
+ *      <li>{@code css} (optional) - the CSS class name used to decorate the LI of the sidebar items.</li>
+ *      <li>{@code currentcss} (optional) - the CSS class name used to decorate the LI of the
  *      currently selected sidebar item.</li>
- *      <li><tt>heaadercss</tt> (optional) - the CSS class name used to decorate the LI of the header
+ *      <li>{@code heaadercss} (optional) - the CSS class name used to decorate the LI of the header
  *      section.</li></ul>
  *
  * <p>This class assumes there is a request attribute with the name specified by the bean attribute.</p>
  *
  * <p>This tag prints out minimal HTML. It basically prints an unordered list (UL element) with each
  * LI containing an "A" tag specfied by the body content of this tag. For example, the body should contain
- * a template A tag which will have its values replaced at runtime: <pre><tt>
+ * a template A tag which will have its values replaced at runtime: <pre>{@code
  *
  *      &lt;jive:sidebar bean="jivepageinfo"&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;a href="[url]" title="[description]"&gt;[name]&lt;/a&gt; <br>
  *          &nbsp;&nbsp;&nbsp;&lt;jive:subsidebar&gt; ... &lt;/jive:subsidebar&gt; <br>
- *      &lt;/jive:sidebar&gt;</tt></pre>
+ *      &lt;/jive:sidebar&gt;}</pre>
  *
  * There is a subsidebar tag for rendering the sub-sidebars. For more info, see the
  * {@link SubSidebarTag} class.
  *
  * <p>Available tokens for the "A" tag are:</p> <ul>
- *      <li><tt>[id]</tt> - the ID of the sidebar item, usually not needed.</li>
- *      <li><tt>[name]</tt> - the name of the sidebar item, should be thought of as the display name.</li>
- *      <li><tt>[url]</tt> - the URL of the sidebar item.</li>
- *      <li><tt>[description]</tt> - the description of the sidebar item, good for mouse rollovers.</li></ul>
+ *      <li>{@code [id]} - the ID of the sidebar item, usually not needed.</li>
+ *      <li>{@code [name]} - the name of the sidebar item, should be thought of as the display name.</li>
+ *      <li>{@code [url]} - the URL of the sidebar item.</li>
+ *      <li>{@code [description]} - the description of the sidebar item, good for mouse rollovers.</li></ul>
  */
 public class SidebarTag extends BodyTagSupport {
 

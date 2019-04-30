@@ -38,14 +38,14 @@ import java.util.Map;
  * To use this provider, use the following system property definition:
  *
  * <ul>
- * <li><tt>provider.userproperty.className = org.jivesoftware.openfire.user.HybridUserPropertyProvider</tt></li>
+ * <li>{@code provider.userproperty.className = org.jivesoftware.openfire.user.HybridUserPropertyProvider}</li>
  * </ul>
  *
  * Next, configure up to three providers, by setting these properties:
  * <ol>
- * <li><tt>hybridUserPropertyProvider.primaryProvider.className = fully.qualified.ClassUserPropertyProvider</tt></li>
- * <li><tt>hybridUserPropertyProvider.secondaryProvider.className = fully.qualified.ClassUserPropertyProvider</tt></li>
- * <li><tt>hybridUserPropertyProvider.tertiaryProvider.className = fully.qualified.ClassUserPropertyProvider</tt></li>
+ * <li>{@code hybridUserPropertyProvider.primaryProvider.className = fully.qualified.ClassUserPropertyProvider}</li>
+ * <li>{@code hybridUserPropertyProvider.secondaryProvider.className = fully.qualified.ClassUserPropertyProvider}</li>
+ * <li>{@code hybridUserPropertyProvider.tertiaryProvider.className = fully.qualified.ClassUserPropertyProvider}</li>
  * </ol>
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com

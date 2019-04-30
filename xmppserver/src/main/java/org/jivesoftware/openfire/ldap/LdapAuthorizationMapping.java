@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
  * look like the following:
  *
  * <ul>
- * <li><tt>ldap.princField = k5login</tt></li>
- * <li><tt>ldap.princSearchFilter = princField={0}</tt></li>
+ * <li>{@code ldap.princField = k5login}</li>
+ * <li>{@code ldap.princSearchFilter = princField={0}}</li>
  * </ul>
  * <p>
  * Each ldap object that represents a user is expcted to have exactly one of

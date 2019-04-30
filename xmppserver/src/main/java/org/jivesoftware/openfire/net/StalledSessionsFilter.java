@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * MINA filter that will close sessions that are failing to read outgoing traffic
- * and whose outgoing queue is around 5MB. Use the system property <tt>session.stalled.cap</tt>
+ * and whose outgoing queue is around 5MB. Use the system property {@code session.stalled.cap}
  * to set the max number of bytes allowed in the outgoing queue of a session before considering
  * it stalled.
  *

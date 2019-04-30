@@ -290,7 +290,7 @@ public class SessionResultFilter {
      * ForumMessage lastPost = (ForumMessage)messages.next();
      * </pre>
      *
-     * @param date the <tt>Date</tt> we want to round.
+     * @param date the {@code Date} we want to round.
      * @param seconds the number of seconds we want to round the date to.
      * @return the given date, rounded down to the nearest specified number of seconds.
      */
@@ -352,8 +352,8 @@ public class SessionResultFilter {
 
     /**
      * Returns true if two objects are equal. This is a helper method
-     * to assist with the case that one or both objects are <tt>null</tt>;
-     * if both objects are <tt>null</tt> then they're considered equal.
+     * to assist with the case that one or both objects are {@code null};
+     * if both objects are {@code null} then they're considered equal.
      *
      * @param one the first object.
      * @param two the second object.

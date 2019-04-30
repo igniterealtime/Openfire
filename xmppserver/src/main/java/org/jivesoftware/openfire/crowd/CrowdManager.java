@@ -156,9 +156,9 @@ public class CrowdManager {
     
     /**
      * Authenticates a user with crowd. If authentication failed, raises a <code>RemoteException</code>
-     * @param username
-     * @param password
-     * @throws RemoteException
+     * @param username the username
+     * @param password the password
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public void authenticate(String username, String password) throws RemoteException {
         username = JID.unescapeNode(username);
@@ -192,7 +192,7 @@ public class CrowdManager {
     /**
      * Get all the users from Crowd
      * @return a List of User containing all the users stored in Crowd
-     * @throws RemoteException
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public List<User> getAllUsers() throws RemoteException {
         LOG.debug("fetching all crowd users");
@@ -245,7 +245,7 @@ public class CrowdManager {
     /**
      * Get all the crowd groups
      * @return a List of group names
-     * @throws RemoteException
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public List<String> getAllGroupNames() throws RemoteException {
         LOG.debug("fetch all crowd groups");
@@ -296,9 +296,9 @@ public class CrowdManager {
     
     /**
      * Get all the groups of a given username
-     * @param username
+     * @param username the user
      * @return a List of groups name
-     * @throws RemoteException
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public List<String> getUserGroups(String username) throws RemoteException {
         username = JID.unescapeNode(username);
@@ -351,9 +351,9 @@ public class CrowdManager {
     
     /**
      * Get the description of a group from crowd
-     * @param groupName
+     * @param groupName the name of the group
      * @return a Group object
-     * @throws RemoteException
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public Group getGroup(String groupName) throws RemoteException {
         LOG.debug("Get group:" + groupName + " from crowd");
@@ -380,9 +380,9 @@ public class CrowdManager {
     
     /**
      * Get the members of the given group
-     * @param groupName
+     * @param groupName the name of the group
      * @return a List of String with the usernames members of the given group
-     * @throws RemoteException
+     * @throws RemoteException if an exception occurred communicating with the crowd server
      */
     public List<String> getGroupMembers(String groupName) throws RemoteException {
         LOG.debug("Get all members for group:" + groupName);

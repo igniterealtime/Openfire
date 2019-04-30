@@ -159,11 +159,11 @@ public class PrivacyListManager {
     }
 
     /**
-     * Returns the default privacy list of the specified user or <tt>null</tt> if
+     * Returns the default privacy list of the specified user or {@code null} if
      * none was found.
      *
      * @param username the name of the user to get his default list.
-     * @return the default privacy list of the specified user or <tt>null</tt> if
+     * @return the default privacy list of the specified user or {@code null} if
      *         none was found.
      */
     public PrivacyList getDefaultPrivacyList(String username) {
@@ -186,12 +186,12 @@ public class PrivacyListManager {
     }
 
     /**
-     * Returns a specific privacy list of the specified user or <tt>null</tt> if
+     * Returns a specific privacy list of the specified user or {@code null} if
      * none was found.
      *
      * @param username the name of the user to get his privacy list.
      * @param listName the name of the list to get.
-     * @return a privacy list of the specified user or <tt>null</tt> if
+     * @return a privacy list of the specified user or {@code null} if
      *         none was found.
      */
     public PrivacyList getPrivacyList(String username, String listName) {
@@ -213,7 +213,7 @@ public class PrivacyListManager {
      *
      * @param username the name of the user that is setting a new default list.
      * @param newDefault the new default privacy list.
-     * @param oldDefault the previous privacy list or <tt>null</tt> if no default list existed.
+     * @param oldDefault the previous privacy list or {@code null} if no default list existed.
      */
     public void changeDefaultList(String username, PrivacyList newDefault, PrivacyList oldDefault) {
         // TODO Analyze concurrency issues when other resource may log in while doing this change

@@ -64,7 +64,8 @@ public interface MultiUserChatService extends Component {
     
     /**
      * Validates the given JID as a MUC service administrator. 
-     * 
+     *
+     * @param bareJID the bare JID of the user
      * @return true if the given JID is a MUC service administrator
      */
     boolean isSysadmin(JID bareJID);
@@ -440,6 +441,7 @@ public interface MultiUserChatService extends Component {
     /**
      * Add a IQHandler to MUC rooms and services. If the IQHandler only supports one or
      * other, it should quietly ignore it.
+     * @param handler the IQ handler to add
      */
     void addIQHandler(IQHandler handler);
     void removeIQHandler(IQHandler handler);

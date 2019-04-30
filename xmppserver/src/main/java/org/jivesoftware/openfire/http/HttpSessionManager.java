@@ -151,6 +151,7 @@ public class HttpSessionManager {
      * Either shutting down or starting up.
      * @throws HttpBindException when there is an internal server error related to the creation of
      * the initial session creation response.
+     * @throws UnknownHostException if no IP address for the peer could be found
      */
     public HttpSession createSession(HttpBindBody body, HttpConnection connection)
         throws UnauthorizedException, HttpBindException, UnknownHostException

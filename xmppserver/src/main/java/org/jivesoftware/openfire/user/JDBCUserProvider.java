@@ -47,28 +47,28 @@ import org.xmpp.packet.JID;
  * <i>emailField</i>.</p>
  * <p>To enable this provider, set the following in the system properties:</p>
  * <ul>
- * <li><tt>provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider</tt></li>
+ * <li>{@code provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider}</li>
  * </ul>
  * <p>
  * Then you need to set your driver, connection string and SQL statements:
  * </p>
  * <ul>
- * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
- * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
- * <li><tt>jdbcUserProvider.loadUserSQL = SELECT name,email FROM myUser WHERE user = ?</tt></li>
- * <li><tt>jdbcUserProvider.userCountSQL = SELECT COUNT(*) FROM myUser</tt></li>
- * <li><tt>jdbcUserProvider.allUsersSQL = SELECT user FROM myUser</tt></li>
- * <li><tt>jdbcUserProvider.searchSQL = SELECT user FROM myUser WHERE</tt></li>
- * <li><tt>jdbcUserProvider.usernameField = myUsernameField</tt></li>
- * <li><tt>jdbcUserProvider.nameField = myNameField</tt></li>
- * <li><tt>jdbcUserProvider.emailField = mymailField</tt></li>
+ * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcUserProvider.loadUserSQL = SELECT name,email FROM myUser WHERE user = ?}</li>
+ * <li>{@code jdbcUserProvider.userCountSQL = SELECT COUNT(*) FROM myUser}</li>
+ * <li>{@code jdbcUserProvider.allUsersSQL = SELECT user FROM myUser}</li>
+ * <li>{@code jdbcUserProvider.searchSQL = SELECT user FROM myUser WHERE}</li>
+ * <li>{@code jdbcUserProvider.usernameField = myUsernameField}</li>
+ * <li>{@code jdbcUserProvider.nameField = myNameField}</li>
+ * <li>{@code jdbcUserProvider.emailField = mymailField}</li>
  * </ul>
  *
  * In order to use the configured JDBC connection provider do not use a JDBC
  * connection string, set the following property
  *
  * <ul>
- * <li><tt>jdbcUserProvider.useConnectionProvider = true</tt></li>
+ * <li>{@code jdbcUserProvider.useConnectionProvider = true}</li>
  * </ul>
  *
  *

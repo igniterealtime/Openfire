@@ -141,7 +141,7 @@ public class LdapGroupTester {
         private String description;
         /**
          * Elements that the group contains. This includes admins, members or anything listed
-         * in the <tt>member field</tt>. At this point JIDs are not validated.
+         * in the {@code member field}. At this point JIDs are not validated.
          */
         private int members;
 

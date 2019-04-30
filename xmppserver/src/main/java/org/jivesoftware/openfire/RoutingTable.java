@@ -81,7 +81,7 @@ public interface RoutingTable {
 
     /**
      * Adds a route to the routing table for the specified outoing server session. When running
-     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * inside of a cluster this message {@code must} be sent from the cluster node that is
      * actually holding the physical connectoin to the remote server.
      *
      * @param route the address associated to the route.
@@ -92,7 +92,7 @@ public interface RoutingTable {
     /**
      * Adds a route to the routing table for the specified internal or external component. <p>
      *
-     * When running inside of a cluster this message <tt>must</tt> be sent from the cluster
+     * When running inside of a cluster this message {@code must} be sent from the cluster
      * node that is actually hosting the component. The component may be available in all
      * or some of cluster nodes. The routing table will keep track of all nodes hosting
      * the component. 
@@ -106,7 +106,7 @@ public interface RoutingTable {
      * Adds a route to the routing table for the specified client session. The client
      * session will be added as soon as the user has finished authenticating with the server.
      * Moreover, when the user becomes available or unavailable then the routing table will
-     * get updated again. When running inside of a cluster this message <tt>must</tt> be sent
+     * get updated again. When running inside of a cluster this message {@code must} be sent
      * from the cluster node that is actually holding the client session.
      *
      * @param route the address associated to the route.
@@ -213,7 +213,7 @@ public interface RoutingTable {
     boolean hasComponentRoute(JID jid);
 
     /**
-     * Returns the client session associated to the specified XMPP address or <tt>null</tt>
+     * Returns the client session associated to the specified XMPP address or {@code null}
      * if none was found. When running inside of a cluster and a remote node is hosting
      * the client session then a session surrage will be returned.
      *
@@ -236,7 +236,7 @@ public interface RoutingTable {
     Collection<ClientSession> getClientsRoutes(boolean onlyLocal);
 
     /**
-     * Returns the outgoing server session associated to the specified XMPP address or <tt>null</tt>
+     * Returns the outgoing server session associated to the specified XMPP address or {@code null}
      * if none was found. When running inside of a cluster and a remote node is hosting
      * the session then a session surrage will be returned.
      *
@@ -283,10 +283,10 @@ public interface RoutingTable {
      * included in the answer in case the specified full JID exists or an empty collection
      * if the full JID does not exist. Moreover, when passing a bare JID a list of full
      * JIDs will be returned for each available resource associated to the bare JID. In
-     * any case, only JIDs of <tt>available</tt> client sessions are returned. However,
+     * any case, only JIDs of {@code available} client sessions are returned. However,
      * there is an exception with directed presences. Unavailable routes may be returned
      * if and only if the owner of the route sent a directed presence to the requester
-     * thus becoming available to the requester. If requester is <tt>null</tt> then only
+     * thus becoming available to the requester. If requester is {@code null} then only
      * available resources are considered.<p>
      *
      * When asking for routes to components a single element will be returned in the answer
@@ -302,7 +302,7 @@ public interface RoutingTable {
 
     /**
      * Returns true if a route of a client session has been successfully removed. When running
-     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * inside of a cluster this message {@code must} be sent from the cluster node that is
      * actually hosting the client session.
      *
      * @param route the route to remove.
@@ -312,7 +312,7 @@ public interface RoutingTable {
 
     /**
      * Returns true if a route to an outoing server has been successfully removed. When running
-     * inside of a cluster this message <tt>must</tt> be sent from the cluster node that is
+     * inside of a cluster this message {@code must} be sent from the cluster node that is
      * actually holding the physical connectoin to the remote server. 
      *
      * @param route the route to remove.
@@ -323,7 +323,7 @@ public interface RoutingTable {
     /**
      * Returns true if a route of a component has been successfully removed. Both internal
      * and external components have a route in the table. When running inside of a cluster
-     * this message <tt>must</tt> be sent from the cluster node that is actually hosting the
+     * this message {@code must} be sent from the cluster node that is actually hosting the
      * component.
      *
      * @param route the route to remove.
@@ -342,7 +342,7 @@ public interface RoutingTable {
 
     /**
      * Returns the {@link RemotePacketRouter} to use for deliverying packets to entities hosted
-     * in remote nodes of the cluster or <tt>null</tt> if none was set.
+     * in remote nodes of the cluster or {@code null} if none was set.
      *
      * @return the RemotePacketRouter to use for deliverying packets to entities hosted
      *        in remote nodes of the cluster.

@@ -68,6 +68,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     /**
      * Instantiates a new connection manager.
+     * @throws IOException if the identity or trust stores could not be loaded
      */
     public ConnectionManagerImpl() throws IOException
     {
@@ -889,6 +890,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     /**
      * @deprecated Replaced by #getConnectionManagerSocketAcceptor
+     * @return the socket acceptor
      */
     @Deprecated
     public NioSocketAcceptor getMultiplexerSocketAcceptor()

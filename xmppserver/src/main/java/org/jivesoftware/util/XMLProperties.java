@@ -241,6 +241,7 @@ public class XMLProperties {
      * {"some value", "other value", "last value"}.
      *
      * @param name the name of the property to retrieve
+     * @param ignored unused parameter
      * @return all child property values for the given node name.
      */
     public List<String> getProperties(String name, boolean ignored) {
@@ -366,12 +367,12 @@ public class XMLProperties {
     }
 
     /**
-     * Returns the value of the attribute of the given property name or <tt>null</tt>
+     * Returns the value of the attribute of the given property name or {@code null}
      * if it doesn't exist.
      *
      * @param name the property name to lookup - ie, "foo.bar"
      * @param attribute the name of the attribute, ie "id"
-     * @return the value of the attribute of the given property or <tt>null</tt> if
+     * @return the value of the attribute of the given property or {@code null} if
      *      it doesn't exist.
      */
     public String getAttribute(String name, String attribute) {
@@ -401,7 +402,7 @@ public class XMLProperties {
      *
      * @param name the property name to lookup - ie, "foo.bar"
      * @param attribute the name of the attribute, ie "id"
-     * @return the value of the attribute of the given property or <tt>null</tt> if
+     * @return the value of the attribute of the given property or {@code null} if
      *      it did not exist.
      */
     public String removeAttribute(String name, String attribute) {
@@ -569,9 +570,9 @@ public class XMLProperties {
     /**
      * Return all children property names of a parent property as a String array,
      * or an empty array if the if there are no children. For example, given
-     * the properties <tt>X.Y.A</tt>, <tt>X.Y.B</tt>, and <tt>X.Y.C</tt>, then
-     * the child properties of <tt>X.Y</tt> are <tt>A</tt>, <tt>B</tt>, and
-     * <tt>C</tt>.
+     * the properties {@code X.Y.A}, {@code X.Y.B}, and {@code X.Y.C}, then
+     * the child properties of {@code X.Y} are {@code A}, {@code B}, and
+     * {@code C}.
      *
      * @param parent the name of the parent property.
      * @return all child property values for the given parent.

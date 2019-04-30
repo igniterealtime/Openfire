@@ -47,7 +47,11 @@ public class AesEncryptor implements Encryptor {
     /** Default constructor */
     public AesEncryptor() { initialize(); }
 
-    /** Custom key constructor */
+    /**
+     * Custom key constructor
+     *
+     * @param key the custom key
+     */
     public AesEncryptor(String key) { 
         initialize();
         setKey(key);

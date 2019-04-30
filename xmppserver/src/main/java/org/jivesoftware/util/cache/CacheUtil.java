@@ -27,6 +27,9 @@ public class CacheUtil
      * @param cache    The cache from which to remove the element (cannot be null).
      * @param element  The element to be added (can be null only if the value-Collection supports null values).
      * @param key      The cache entry identifier (cannot be null)
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
+     * @param <C> the type of collection contained by the cache
      * @param supplier A provider of empty instances of the collection used as a value of the cache (in which elements are placed).
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void addValueToMultiValuedCache( Cache<K, C> cache, K key, V element, Supplier<C> supplier )
@@ -53,6 +56,8 @@ public class CacheUtil
      *
      * @param cache   The cache from which to remove the element (cannot be null).
      * @param element The element to be removed (can not be null ).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
      * @return a Set containing the keys of all affected cache entries (never null)
      */
     public static <K extends Serializable, V extends Serializable> Set<K> removeValueFromCache( Cache<K, V> cache, V element )
@@ -99,6 +104,9 @@ public class CacheUtil
      *
      * @param cache   The cache from which to remove the element (cannot be null).
      * @param key     The cache entry identifier (cannot be null)
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
+     * @param <C> the type of collection contained by the cache
      * @param element The element to be removed (can be null only if the value-Collection supports null values).
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
@@ -151,6 +159,9 @@ public class CacheUtil
      *
      * @param cache   The cache from which to remove the element (cannot be null).
      * @param element The element to be removed (can be null only if the value-Collection supports null values).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
+     * @param <C> the type of collection contained by the cache
      * @return a map containing all affected cache entries (never null)
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> Map<Boolean,Map<K, C>> removeValueFromMultiValuedCache( Cache<K, C> cache, V element )
@@ -223,6 +234,9 @@ public class CacheUtil
      *
      * @param cache   The cache in which to retain the element (cannot be null).
      * @param element The element to be retained (can be null only if the value-Collection supports null values).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
+     * @param <C> the type of collection contained by the cache
      * @return a map containing all affected cache entries (never null)
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> Map<Boolean,Map<K, C>> retainValueInMultiValuedCache( Cache<K, C> cache, V element )
@@ -288,6 +302,8 @@ public class CacheUtil
      **
      * @param cache   The cache in which to retain the element (cannot be null).
      * @param element The element to be retained (cannot be null).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
      * @return a Set containing the keys of all affected cache entries (never null)
      */
     public static <K extends Serializable, V extends Serializable> Set<K> retainValueInCache( Cache<K, V> cache, V element )
@@ -335,6 +351,8 @@ public class CacheUtil
      * @param cache    The cache from which to remove the element (cannot be null).
      * @param oldValue The element to be replaced (cannot be null).
      * @param newValue The replacement element (cannot be null).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
      */
     public static <K extends Serializable, V extends Serializable> void replaceValueInCache( Cache<K, V> cache, V oldValue, V newValue )
     {
@@ -382,6 +400,8 @@ public class CacheUtil
      *
      * @param cache  The cache from which to remove the element (cannot be null).
      * @param mapper The mapping function (cannot be null).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
      */
     public static <K extends Serializable, V extends Serializable> void replaceValueInCacheByMapping( Cache<K, V> cache, Function<V, V> mapper )
     {
@@ -428,6 +448,9 @@ public class CacheUtil
      * @param cache    The cache from which to remove the element (cannot be null).
      * @param oldValue The element to be replaced (can be null only if the value-Collection supports null values).
      * @param newValue The replacement element (can be null only if the value-Collection supports null values).
+     * @param <K> the type of key contained by the cache
+     * @param <V> the type of value contained by the cache
+     * @param <C> the type of collection contained by the cache
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void replaceValueInMultivaluedCache( Cache<K, C> cache, V oldValue, V newValue )
     {

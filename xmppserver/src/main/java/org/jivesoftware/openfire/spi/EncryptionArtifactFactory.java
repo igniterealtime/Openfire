@@ -46,6 +46,9 @@ public class EncryptionArtifactFactory
      * Generates KeyManager instances suitable for connections that are created based on a particular configuration.
      *
      * @return KeyManagers applicable to a connection that is established using the provided configuration.
+     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @throws NoSuchAlgorithmException if the algorithm was unrecognised
+     * @throws KeyStoreException if there was a problem loading the keystore
      */
     public synchronized KeyManager[] getKeyManagers() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
     {
@@ -83,6 +86,8 @@ public class EncryptionArtifactFactory
      * Generates KeyManager instances suitable for connections that are created based on a particular configuration.
      *
      * @return TrustManagers applicable to a connection that is established using the provided configuration.
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
      */
     public synchronized TrustManager[] getTrustManagers() throws KeyStoreException, NoSuchAlgorithmException
     {
@@ -96,6 +101,10 @@ public class EncryptionArtifactFactory
      * particular configuration.
      *
      * @return TrustManagers applicable to a connection that is established using the provided configuration.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyManagementException if there was problem manging the ket
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws UnrecoverableKeyException if the key could not be recovered
      */
     public synchronized SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException
     {
@@ -144,6 +153,10 @@ public class EncryptionArtifactFactory
      * For Openfire, an engine is of this mode used for most purposes (as Openfire is a server by nature).
      *
      * @return A new, initialized SSLEngine instance (never null).
+     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public SSLEngine createServerModeSSLEngine() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
@@ -176,6 +189,10 @@ public class EncryptionArtifactFactory
      * These SSLEngines never send SSLV2 ClientHello messages.
      *
      * @return An initialized SSLEngine instance (never null).
+     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public SSLEngine createClientModeSSLEngine() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
@@ -255,6 +272,10 @@ public class EncryptionArtifactFactory
      * create both SSLContext/SSLEngine as well as SslFilter instances.
      *
      * @return An initialized SslFilter instance (never null)
+     * @throws KeyManagementException if there was problem manging the ket
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws UnrecoverableKeyException if the key could not be recovered
      */
     public SslFilter createServerModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
     {
@@ -273,6 +294,10 @@ public class EncryptionArtifactFactory
      * create both SSLContext/SSLEngine as well as SslFilter instances.
      *
      * @return An initialized SslFilter instance (never null)
+     * @throws KeyManagementException if there was problem manging the ket
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyStoreException if there was a problem accessing the keystore
+     * @throws UnrecoverableKeyException if the key could not be recovered
      */
     public SslFilter createClientModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
     {
@@ -317,6 +342,8 @@ public class EncryptionArtifactFactory
      * Returns the names of all encryption protocols that are supported (but not necessarily enabled).
      *
      * @return An array of protocol names. Not expected to be empty.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public static List<String> getSupportedProtocols() throws NoSuchAlgorithmException, KeyManagementException
     {
@@ -330,6 +357,8 @@ public class EncryptionArtifactFactory
      * Returns the names of all encryption protocols that are enabled by default.
      *
      * @return An array of protocol names. Not expected to be empty.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public static List<String> getDefaultProtocols() throws NoSuchAlgorithmException, KeyManagementException
     {
@@ -343,6 +372,8 @@ public class EncryptionArtifactFactory
      * Returns the names of all encryption cipher suites that are supported (but not necessarily enabled).
      *
      * @return An array of cipher suite names. Not expected to be empty.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public static List<String> getSupportedCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
     {
@@ -356,6 +387,8 @@ public class EncryptionArtifactFactory
      * Returns the names of all encryption cipher suites that are enabled by default.
      *
      * @return An array of cipher suite names. Not expected to be empty.
+     * @throws NoSuchAlgorithmException if the algorithm is not supported
+     * @throws KeyManagementException if there was problem manging the ket
      */
     public static List<String> getDefaultCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
     {

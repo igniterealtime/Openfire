@@ -80,7 +80,8 @@ public class XMPPPacketReader {
      * @param file is the <code>File</code> to read from.
      * @return the newly created Document instance
      * @throws DocumentException              if an error occurs during parsing.
-     * @throws java.net.MalformedURLException if a URL could not be made for the given File
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(File file) throws DocumentException, IOException, XmlPullParserException {
         String systemID = file.getAbsolutePath();
@@ -93,6 +94,8 @@ public class XMPPPacketReader {
      * @param url <code>URL</code> to read from.
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(URL url) throws DocumentException, IOException, XmlPullParserException {
         String systemID = url.toExternalForm();
@@ -112,7 +115,8 @@ public class XMPPPacketReader {
      * @param systemID is a URL for a document or a file name.
      * @return the newly created Document instance
      * @throws DocumentException              if an error occurs during parsing.
-     * @throws java.net.MalformedURLException if a URL could not be made for the given File
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(String systemID) throws DocumentException, IOException, XmlPullParserException {
         if (systemID.indexOf(':') >= 0) {
@@ -131,6 +135,8 @@ public class XMPPPacketReader {
      * @param in <code>InputStream</code> to read from.
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(InputStream in) throws DocumentException, IOException, XmlPullParserException {
         return read(createReader(in));
@@ -143,6 +149,8 @@ public class XMPPPacketReader {
      * @param in <code>InputStream</code> to read from.
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(String charSet, InputStream in)
             throws DocumentException, IOException, XmlPullParserException
@@ -156,6 +164,8 @@ public class XMPPPacketReader {
      * @param reader is the reader for the input
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(Reader reader) throws DocumentException, IOException, XmlPullParserException {
         getXPPParser().setInput(reader);
@@ -168,6 +178,8 @@ public class XMPPPacketReader {
      * @param text is the text to parse
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(char[] text) throws DocumentException, IOException, XmlPullParserException {
         getXPPParser().setInput(new CharArrayReader(text));
@@ -181,6 +193,8 @@ public class XMPPPacketReader {
      * @param systemID is the URI for the input
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(InputStream in, String systemID) throws DocumentException, IOException, XmlPullParserException {
         return read(createReader(in), systemID);
@@ -193,6 +207,8 @@ public class XMPPPacketReader {
      * @param systemID is the URI for the input
      * @return the newly created Document instance
      * @throws DocumentException if an error occurs during parsing.
+     * @throws IOException if an error occurs during reading
+     * @throws XmlPullParserException if an error occurs creating a pull parser
      */
     public Document read(Reader reader, String systemID) throws DocumentException, IOException, XmlPullParserException {
         Document document = read(reader);
@@ -478,6 +494,9 @@ public class XMPPPacketReader {
 
     /**
      * Factory method to create a Reader from the given InputStream.
+     * @param in the input stream
+     * @return the reader
+     * @throws IOException never
      */
     protected Reader createReader(InputStream in) throws IOException {
         return new BufferedReader(new InputStreamReader(in));

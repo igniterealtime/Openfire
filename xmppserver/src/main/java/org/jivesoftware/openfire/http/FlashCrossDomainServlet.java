@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * access http-binding using flash.
  * 
  * This implementation will first try to serve
- * <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>. If this file is
+ * {@code &lt;OpenfireHome&gt;/conf/crossdomain.xml}. If this file is
  * unavailable, a crossdomain file will be generated dynamically, based on the
  * current settings of the Openfire BOSH functionality.
  * 
@@ -67,11 +67,11 @@ public class FlashCrossDomainServlet extends HttpServlet {
     }
     
     /**
-     * Returns the content for <tt>crossdomain.xml</tt>, either by generating
+     * Returns the content for {@code crossdomain.xml}, either by generating
      * content, or by passing the provided file in
-     * <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
+     * {@code &lt;OpenfireHome&gt;/conf/crossdomain.xml}
      * 
-     * @return content for the <tt>crossdomain.xml</tt> that should be served
+     * @return content for the {@code crossdomain.xml} that should be served
      *         for this service.
      */
     public static String getCrossDomainContent() {
@@ -84,10 +84,10 @@ public class FlashCrossDomainServlet extends HttpServlet {
     }
     
     /**
-     * Returns <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt> as a File
+     * Returns {@code &lt;OpenfireHome&gt;/conf/crossdomain.xml} as a File
      * object (even if the file does not exist on the file system).
      * 
-     * @return <tt>&lt;OpenfireHome&gt;/conf/crossdomain.xml</tt>
+     * @return {@code &lt;OpenfireHome&gt;/conf/crossdomain.xml}
      */
     private static File getOverride() {
         final StringBuilder sb = new StringBuilder();
@@ -127,7 +127,7 @@ public class FlashCrossDomainServlet extends HttpServlet {
     }
     
     /**
-     * Dynamically generates content for a non-restrictive <tt>crossdomain.xml</tt> file. 
+     * Dynamically generates content for a non-restrictive {@code crossdomain.xml} file.
      */
     private static String generateOutput() {
         final StringBuilder builder = new StringBuilder();

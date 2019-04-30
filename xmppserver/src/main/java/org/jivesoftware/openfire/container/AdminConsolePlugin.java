@@ -257,7 +257,7 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     /**
-     * Returns <tt>null</tt> if the admin console will be available in all network interfaces of this machine
+     * Returns {@code null} if the admin console will be available in all network interfaces of this machine
      * or a String representing the only interface where the admin console will be available.
      *
      * @return String representing the only interface where the admin console will be available or null if it

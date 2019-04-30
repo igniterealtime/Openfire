@@ -36,9 +36,9 @@ import java.sql.SQLException;
 
 /**
  * A connection provider for the embedded hsqlDB database. The database file is stored at
- * <tt>home/database</tt>. The log file for this connection provider is stored at
- * <tt>[home]/logs/EmbeddedConnectionProvider.log</tt>, so you should ensure
- * that the <tt>[home]/logs</tt> directory exists.
+ * {@code home/database}. The log file for this connection provider is stored at
+ * {@code [home]/logs/EmbeddedConnectionProvider.log}, so you should ensure
+ * that the {@code [home]/logs} directory exists.
  *
  * @author Matt Tucker
  */

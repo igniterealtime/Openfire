@@ -271,7 +271,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param isSending True if the request is being sent by the owner
      * @param type      The subscription change type (subscribe, unsubscribe, etc.)
      * @param roster    The Roster that is updated.
-     * @return <tt>true</tt> if the subscription state has changed.
+     * @return {@code true} if the subscription state has changed.
      */
     private boolean manageSub(JID target, boolean isSending, Presence.Type type, Roster roster)
             throws UserAlreadyExistsException, SharedGroupException
@@ -497,7 +497,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * Determine the changes to apply to the item, according to its subscription state.
      * The method also turns the action and sending status into an integer code
      * for easier processing (switch statements).
-     * <p/>
+     * <p>
      * Code relies on states being in numerical order without skipping.
      * In addition, the receive states must parallel the send states
      * so that (send state X) + STATE_RECV_SUBSCRIBE == (receive state X)

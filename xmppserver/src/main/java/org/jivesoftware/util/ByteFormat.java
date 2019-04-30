@@ -31,6 +31,8 @@ public class ByteFormat extends Format {
 
     /**
      * Formats a long which represent a number of bytes.
+     * @param bytes the number of bytes to format
+     * @return the formatted string
      */
     public String format(long bytes) {
         return super.format(bytes);
@@ -38,6 +40,8 @@ public class ByteFormat extends Format {
 
     /**
      * Formats a long which represent a number of kilobytes.
+     * @param kilobytes the number of kilobytes to format
+     * @return the formatted string
      */
     public String formatKB(long kilobytes) {
         return format(kilobytes * 1024);
@@ -48,7 +52,7 @@ public class ByteFormat extends Format {
      *
      * @param obj assumed to be the number of bytes as a Long.
      * @param buf the StringBuffer to append to.
-     * @param pos
+     * @param pos the field position
      * @return A formatted string representing the given bytes in more human-readable form.
      */
     @Override
@@ -70,8 +74,8 @@ public class ByteFormat extends Format {
     /**
      * In this implementation, returns null always.
      *
-     * @param source
-     * @param pos
+     * @param source unused parameter
+     * @param pos unused parameter
      * @return returns null in this implementation.
      */
     @Override

@@ -34,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * The original, now deprecated, filter logic that each plugin can register was fairly limited; instead of having full
  * control over the filter chain, each instance of {@link SimpleFilter} only has the ability to use the ServletRequest
- * and ServletResponse objects and then return <tt>true</tt> if further filters in the chain should be run.
+ * and ServletResponse objects and then return {@code true} if further filters in the chain should be run.
  *
  * The new, non-deprecated functionality allows for regular {@link Filter} instances to be registered with this class,
  * which removes much of the limitations that was present in the SimpleFilter approach.
@@ -248,8 +248,8 @@ public class PluginFilter implements Filter {
         /**
          * The doFilter method of the Filter is called by the PluginFilter each time a
          * request/response pair is passed through the chain due to a client request
-         * for a resource at the end of the chain. This method should return <tt>true</tt> if
-         * the additional filters in the chain should be processed or <tt>false</tt>
+         * for a resource at the end of the chain. This method should return {@code true} if
+         * the additional filters in the chain should be processed or {@code false}
          * if no additional filters should be run.<p>
          *
          * Note that the filter will apply to all requests for JSP pages in the admin console

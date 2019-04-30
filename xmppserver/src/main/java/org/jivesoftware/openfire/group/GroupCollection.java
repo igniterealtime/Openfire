@@ -34,6 +34,7 @@ public class GroupCollection extends AbstractCollection<Group> {
 
     /**
      * Constructs a new GroupCollection.
+     * @param collection the initial groups in the collection
      */
     public GroupCollection(Collection<String> collection) {
         this.elements = collection.toArray(new String[collection.size()]);
@@ -41,6 +42,7 @@ public class GroupCollection extends AbstractCollection<Group> {
 
     /**
      * Constructs a new GroupCollection.
+     * @param elements the initial groups in the collection
      */
     public GroupCollection(String [] elements) {
         this.elements = elements;

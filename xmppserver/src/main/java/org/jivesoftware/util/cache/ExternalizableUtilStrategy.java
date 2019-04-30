@@ -32,7 +32,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of String key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param stringMap the Map of String key/value pairs.
@@ -42,7 +42,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of String key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of String key/value pairs.
@@ -52,7 +52,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of Long key and Integer value pairs. This method handles
-     * the case when the Map is <tt>null</tt>.
+     * the case when the Map is {@code null}.
      *
      * @param out the output stream.
      * @param map the Map of Long key/Integer value pairs.
@@ -62,7 +62,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of Long key and Integer value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of Long key/Integer value pairs.
@@ -72,7 +72,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Writes a List of Strings. This method handles the case when the List is
-     * <tt>null</tt>.
+     * {@code null}.
      *
      * @param out        the output stream.
      * @param stringList the List of Strings.
@@ -81,8 +81,8 @@ public interface ExternalizableUtilStrategy {
     void writeStringList(DataOutput out, List<String> stringList) throws IOException;
 
     /**
-     * Reads a List of Strings. This method will return <tt>null</tt> if the List
-     * written to the stream was <tt>null</tt>.
+     * Reads a List of Strings. This method will return {@code null} if the List
+     * written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a List of Strings.
@@ -92,7 +92,7 @@ public interface ExternalizableUtilStrategy {
 
     /**
      * Writes an array of long values. This method handles the case when the
-     * array is <tt>null</tt>.
+     * array is {@code null}.
      *
      * @param out   the output stream.
      * @param array the array of long values.
@@ -101,8 +101,8 @@ public interface ExternalizableUtilStrategy {
     void writeLongArray(DataOutput out, long[] array) throws IOException;
 
     /**
-     * Reads an array of long values. This method will return <tt>null</tt> if
-     * the array written to the stream was <tt>null</tt>.
+     * Reads an array of long values. This method will return {@code null} if
+     * the array written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return an array of long values.

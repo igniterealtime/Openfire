@@ -138,6 +138,7 @@ public class CertificateUtils
      *
      * @param certificates an unordered collection of certificates (cannot be null).
      * @return An ordered list of certificates (possibly empty, but never null).
+     * @throws CertificateException if there were multiple CA root certs
      */
     public static List<X509Certificate> order( Collection<X509Certificate> certificates ) throws CertificateException
     {

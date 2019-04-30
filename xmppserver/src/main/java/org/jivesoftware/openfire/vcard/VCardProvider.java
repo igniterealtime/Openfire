@@ -28,11 +28,11 @@ import org.jivesoftware.util.NotFoundException;
 public interface VCardProvider {
 
     /**
-     * Loads the specified user vcard by username. Returns <tt>null</tt> if no
+     * Loads the specified user vcard by username. Returns {@code null} if no
      * vCard was found for the specified username.
      *
      * @param username the username
-     * @return the vCard as an DOM element or <tt>null</tt> if none was found.
+     * @return the vCard as an DOM element or {@code null} if none was found.
      */
     Element loadVCard(String username);
 

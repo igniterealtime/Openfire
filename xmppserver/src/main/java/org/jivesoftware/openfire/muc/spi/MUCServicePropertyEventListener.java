@@ -28,8 +28,8 @@ import java.util.Map;
 public interface MUCServicePropertyEventListener {
 
     /**
-     * A property was set. The parameter map <tt>params</tt> will contain the
-     * the value of the property under the key <tt>value</tt>.
+     * A property was set. The parameter map {@code params} will contain the
+     * the value of the property under the key {@code value}.
      *
      * @param service the subdomain of the service the property was set on.
      * @param property the name of the property.

@@ -31,6 +31,7 @@ package org.jivesoftware.util;
  * most applications, it is more suitable to use the linked list that is part
  * of the Java Collections package.</p>
  *
+ * @param <E> the type of node
  * @author Jive Software
  * @see org.jivesoftware.util.LinkedList
  */
@@ -88,6 +89,8 @@ public class LinkedListNode<E> {
     
     /**
      * Inserts this node into the linked list that it will be a part of.
+     * @param next     a reference to the next LinkedListNode in the list.
+     * @param previous a reference to the previous LinkedListNode in the list.
      * @return This node, updated to reflect previous/next changes
      */
     public LinkedListNode<E> insert(LinkedListNode<E> next, LinkedListNode<E> previous) {

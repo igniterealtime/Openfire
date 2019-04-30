@@ -148,6 +148,8 @@ public abstract class LocalSession implements Session {
      * Reattach the session to a new connection. The connection must already be
      * initialized as a running XML Stream, normally by having run through XEP-0198
      * resumption.
+     * @param connection The connection to attach the session to
+     * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
         Connection temp = this.conn;
@@ -423,7 +425,7 @@ public abstract class LocalSession implements Session {
      * Returns a text with the available stream features. Each subclass may return different
      * values depending whether the session has been authenticated or not.
      *
-     * @return a text with the available stream features or <tt>null</tt> to add nothing.
+     * @return a text with the available stream features or {@code null} to add nothing.
      */
     public abstract String getAvailableStreamFeatures();
 

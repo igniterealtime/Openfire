@@ -193,7 +193,7 @@ public class ServerDialback {
      * @param localDomain domain of the Originating Server to authenticate with the Receiving Server.
      * @param remoteDomain IP address or hostname of the Receiving Server.
      * @param port port of the Receiving Server.
-     * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
+     * @return an OutgoingServerSession if the domain was authenticated or {@code null} if none.
      */
     public LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Create Outgoing Session from: " + localDomain + " to RS at: " + remoteDomain + " (port: " + port+ ")]" );

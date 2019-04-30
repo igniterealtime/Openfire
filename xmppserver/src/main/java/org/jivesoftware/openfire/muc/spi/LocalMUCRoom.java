@@ -2325,7 +2325,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * from the occupants lists.
      *
      * @param kickPresence the presence of the occupant to kick from the room.
-     * @param actorJID The JID of the actor that initiated the kick or <tt>null</tt> if the info
+     * @param actorJID The JID of the actor that initiated the kick or {@code null} if the info
      * @param nick The actor nickname.
      * was not provided.
      */

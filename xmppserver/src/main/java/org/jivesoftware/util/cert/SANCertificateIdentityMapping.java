@@ -32,7 +32,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
     /**
      * id-on-xmppAddr Object Identifier.
      *
-     * @see <a href="http://tools.ietf.org/html/rfc6120>RFC 6120</a>
+     * @see <a href="http://tools.ietf.org/html/rfc6120">RFC 6120</a>
      */
     public static final String OTHERNAME_XMPP_OID = "1.3.6.1.5.5.7.8.5";
 
@@ -122,7 +122,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
 
     /**
      * Parses the byte-array representation of a subjectAltName 'otherName' entry.
-     * <p/>
+     * <p>
      * The provided 'OtherName' is expected to have this format:
      * <pre>{@code
      * OtherName ::= SEQUENCE {

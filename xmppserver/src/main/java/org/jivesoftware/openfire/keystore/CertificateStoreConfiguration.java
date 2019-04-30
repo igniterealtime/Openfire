@@ -24,6 +24,7 @@ public class CertificateStoreConfiguration
      * @param type The store type (jks, jceks, pkcs12, etc). Cannot be null or an empty string.
      * @param file  The file-system based representation of the store (cannot be null).
      * @param password the password used to check the integrity of the store, the password used to unlock the store, or null.
+     * @param backupDirectory the directory in which the backup of the original keystore should be saved
      */
     public CertificateStoreConfiguration( String type, File file, char[] password, File backupDirectory )
     {

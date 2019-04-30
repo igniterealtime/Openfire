@@ -156,6 +156,7 @@ public class PluginMonitor implements PropertyEventListener
 
     /**
      * Immediately run a check of the plugin directory.
+     * @param blockUntilDone {code true} to wait until the check is complete, otherwise {@code false}
      */
     public void runNow( boolean blockUntilDone )
     {
@@ -664,7 +665,7 @@ public class PluginMonitor implements PropertyEventListener
         public int compareTo(final PluginToLoad that) {
             // NB. This violates the Comparable recommendation. Quote:
             // <p>It is strongly recommended, but <i>not</i> strictly required that
-            // <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>.
+            // {@code (x.compareTo(y)==0) == (x.equals(y))}.
             return this.pluginName.compareTo(that.pluginName);
         }
     }

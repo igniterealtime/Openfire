@@ -69,7 +69,6 @@ import org.xmpp.packet.Presence;
  * related packets are seen having a variety of different namespaces. Thus,
  * classes like {@link IQPEPOwnerHandler} are used to forward packets having these other
  * namespaces to {@link IQPEPHandler#handleIQ(IQ)}.
- * <p>
  *
  * <p>
  * This handler is used for the following namespaces:</p>

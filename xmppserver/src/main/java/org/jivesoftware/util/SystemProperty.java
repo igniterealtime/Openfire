@@ -264,7 +264,9 @@ public final class SystemProperty<T> {
     /**
      * Removes all the properties for a specific plugin. This should be called by a plugin when it is unloaded to
      * allow it to be added again without a server restart
+     * @param plugin The plugin for which properties should be removed
      */
+    @SuppressWarnings("WeakerAccess")
     public static void removePropertiesForPlugin(final String plugin) {
         getProperties().stream()
             .filter(systemProperty -> systemProperty.plugin.equals(plugin))

@@ -630,6 +630,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param serverName name of the server.
      * @param connection The connection we are proxying.
      * @param streamID unique identifier of this session.
+     * @param language the language
      */
     public LocalClientSession(String serverName, Connection connection, StreamID streamID, Locale language) {
         super(serverName, connection, streamID, language);
@@ -697,7 +698,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     /**
      * Initialize the session as an anonymous login. This automatically upgrades the session's
      * status to authenticated and enables many features that are not available until
-     * authenticated (obtaining managers for example).<p>
+     * authenticated (obtaining managers for example).
      */
     public void setAnonymousAuth() {
         // Anonymous users have a full JID. Use the random resource as the JID's node

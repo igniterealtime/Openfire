@@ -37,10 +37,10 @@ import java.util.Map;
  * To use this provider, use the following system property definition:
  *
  * <ul>
- * <li><tt>provider.userproperty.className = org.jivesoftware.openfire.user.MappedUserPropertyProvider</tt></li>
+ * <li>{@code provider.userproperty.className = org.jivesoftware.openfire.user.MappedUserPropertyProvider}</li>
  * </ul>
  *
- * To be usable, a {@link UserPropertyProviderMapper} must be configured using the <tt>mappedUserPropertyProvider.mapper.className</tt>
+ * To be usable, a {@link UserPropertyProviderMapper} must be configured using the {@code mappedUserPropertyProvider.mapper.className}
  * system property. It is of importance to note that most UserPropertyProviderMapper implementations will require additional
  * configuration.
  *

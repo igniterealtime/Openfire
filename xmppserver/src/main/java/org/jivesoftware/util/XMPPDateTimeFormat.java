@@ -87,7 +87,7 @@ public class XMPPDateTimeFormat {
      * 
      * @param dateString the String that should be parsed
      * @return the parsed date or null if the String could not be parsed
-     * @throws ParseException
+     * @throws ParseException if the date could not be parsed
      */
     public Date parseString(String dateString) throws ParseException {
         Matcher xep82WoMillisMatcher = xep80DateTimeWoMillisPattern.matcher(dateString);
@@ -130,8 +130,8 @@ public class XMPPDateTimeFormat {
      * The resulting String will have the timezone set to UTC ('Z') and includes milliseconds: 
      * CCYY-MM-DDThh:mm:ss.sssZ
      * 
-     * @param date
-     * @return String
+     * @param date the date to format
+     * @return the formatted date
      */
     public static String format(Date date) {
         return FAST_FORMAT.format(date);

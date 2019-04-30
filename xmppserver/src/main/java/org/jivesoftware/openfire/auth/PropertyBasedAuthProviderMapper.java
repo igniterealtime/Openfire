@@ -28,9 +28,9 @@ import java.util.*;
  * any set, a fallback provider is used.
  *
  * Each set of usernames is defined by two properties. Use the following property to define the classname of an
- * {@link AuthProvider} to be used for this set: <tt>propertyBasedAuthMapper.set.SET_NAME.provider.className</tt>
+ * {@link AuthProvider} to be used for this set: {@code propertyBasedAuthMapper.set.SET_NAME.provider.className}
  *
- * Use the following property to identify a set of usernames: <tt>propertyBasedAuthMapper.set.SET_NAME.members</tt>. The
+ * Use the following property to identify a set of usernames: {@code propertyBasedAuthMapper.set.SET_NAME.members}. The
  * value for this property must be the name of another property, which is a listing of usernames (such a property is
  * likely re-used in a corresponding {@link org.jivesoftware.openfire.user.PropertyBasedUserProviderMapper}
  * configuration).
@@ -38,20 +38,20 @@ import java.util.*;
  * There is no upper bound on the amount of sets that can be configured.
  *
  * Users that are not in any set will use the fallback provider. This provider is defined by its class name in the
- * property <tt>propertyBasedAuthMapper.fallbackProvider.className</tt>.
+ * property {@code propertyBasedAuthMapper.fallbackProvider.className}.
  *
  * The following example defines two sets. Set "A" serves users john, jane and jack, and uses a DefaultAuthProvider.
  * Set "B" serves users dave and doris, and uses A JDBCAuthProvider. All other users are served by the fallback provider
  * that is a NativeAuthProvider.
  *
  * <ul>
- * <li><tt>members.set.A = List( "john", "jane", "jack" )</tt></li>
- * <li><tt>members.set.B = List( "dave", "doris" )</tt></li>
- * <li><tt>propertyBasedAuthMapper.set.A.provider.className = org.jivesoftware.openfire.auth.DefaultAuthProvider</tt></li>
- * <li><tt>propertyBasedAuthMapper.set.A.members.propertyName = members.set.A</tt></li>
- * <li><tt>propertyBasedAuthMapper.set.B.provider.className = org.jivesoftware.openfire.auth.JDBCAuthProvider</tt></li>
- * <li><tt>propertyBasedAuthMapper.set.B.members.propertyName = members.set.B</tt></li>
- * <li><tt>propertyBasedAuthMapper.fallbackProvider.className = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
+ * <li>{@code members.set.A = List( "john", "jane", "jack" )}</li>
+ * <li>{@code members.set.B = List( "dave", "doris" )}</li>
+ * <li>{@code propertyBasedAuthMapper.set.A.provider.className = org.jivesoftware.openfire.auth.DefaultAuthProvider}</li>
+ * <li>{@code propertyBasedAuthMapper.set.A.members.propertyName = members.set.A}</li>
+ * <li>{@code propertyBasedAuthMapper.set.B.provider.className = org.jivesoftware.openfire.auth.JDBCAuthProvider}</li>
+ * <li>{@code propertyBasedAuthMapper.set.B.members.propertyName = members.set.B}</li>
+ * <li>{@code propertyBasedAuthMapper.fallbackProvider.className = org.jivesoftware.openfire.auth.NativeAuthProvider}</li>
  * </ul>
  *
  * @author Guus der Kinderen, guus@goodbytes.nl

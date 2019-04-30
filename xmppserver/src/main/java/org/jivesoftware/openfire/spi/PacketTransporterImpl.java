@@ -79,6 +79,7 @@ public class PacketTransporterImpl extends BasicModule  {
      * @param packet The packet to route
      * @throws NullPointerException If the packet is null or the
      *                              packet could not be routed
+     * @throws UnauthorizedException if the user is not authorised
      */
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (packet == null) {

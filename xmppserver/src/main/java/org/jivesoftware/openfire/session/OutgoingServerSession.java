@@ -21,7 +21,7 @@ import java.util.Collection;
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
  * connection is used for sending packets while the other connection is used for receiving packets.
- * The <tt>OutgoingServerSession</tt> represents the connection to a remote server that will only
+ * The {@code OutgoingServerSession} represents the connection to a remote server that will only
  * be used for sending packets.<p>
  *
  * Once the connection has been established with the remote server and at least a domain has been
@@ -48,8 +48,8 @@ public interface OutgoingServerSession extends ServerSession {
     /**
      * Checks to see if a pair of domains has previously been authenticated.
      *
-     * Since domains are authenticated as pairs, authenticating A->B does
-     *  not imply anything about A-->C or D->B.
+     * Since domains are authenticated as pairs, authenticating A-&gt;B does
+     *  not imply anything about A--&gt;C or D-&gt;B.
      *
      * @param local the local domain (previously: authenticated domain)
      * @param remote the remote domain (previous: hostname)

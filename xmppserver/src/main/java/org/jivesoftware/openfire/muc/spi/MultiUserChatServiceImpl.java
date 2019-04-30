@@ -267,7 +267,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *            conference for conference.example.org)
      * @param description
      *            Short description of service for disco and such. If
-     *            <tt>null</tt> or empty, a default value will be used.
+     *            {@code null} or empty, a default value will be used.
      * @param isHidden
      *            True if this service should be hidden from services views.
      * @throws IllegalArgumentException

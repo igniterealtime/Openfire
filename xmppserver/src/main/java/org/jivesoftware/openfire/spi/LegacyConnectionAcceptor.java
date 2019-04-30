@@ -20,10 +20,10 @@ public class LegacyConnectionAcceptor extends ConnectionAcceptor
 
     /**
      * Constructs a new instance which will accept new connections based on the provided configuration.
-     * <p/>
+     * <p>
      * The provided configuration is expected to be immutable. ConnectionAcceptor instances are not expected to handle
      * changes in configuration. When such changes are to be applied, an instance is expected to be replaced.
-     * <p/>
+     * <p>
      * Newly instantiated ConnectionAcceptors will not accept any connections before {@link #start()} is invoked.
      *
      * @param configuration The configuration for connections to be accepted (cannot be null).

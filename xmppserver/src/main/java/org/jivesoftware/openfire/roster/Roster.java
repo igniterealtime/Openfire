@@ -224,7 +224,7 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Returns a roster item if the specified user has a subscription of type FROM to this
      * user and the susbcription only exists due to some shared groups or otherwise
-     * <tt>null</tt>. This method assumes that this user does not have a subscription to
+     * {@code null}. This method assumes that this user does not have a subscription to
      * the contact. In other words, this method will not check if there should be a subscription
      * of type TO ot BOTH.
      *
@@ -250,6 +250,9 @@ public class Roster implements Cacheable, Externalizable {
      * @param user       The item to add to the roster.
      * @param push       True if the new item must be pushed to the user.
      * @param persistent True if the new roster item should be persisted to the DB.
+     * @return the roster item
+     * @throws UserAlreadyExistsException if the user is already in the roster
+     * @throws SharedGroupException if the group is a shared group
      */
     public RosterItem createRosterItem(JID user, boolean push, boolean persistent)
             throws UserAlreadyExistsException, SharedGroupException {
@@ -265,6 +268,9 @@ public class Roster implements Cacheable, Externalizable {
      * @param push       True if the new item must be push to the user.
      * @param persistent True if the new roster item should be persisted to the DB.
      * @param groups     The list of groups to assign this roster item to (can be null)
+     * @return the roster item
+     * @throws UserAlreadyExistsException if the user is already in the roster
+     * @throws SharedGroupException if the group is a shared group
      */
     public RosterItem createRosterItem(JID user, String nickname, List<String> groups, boolean push,
                                        boolean persistent)
@@ -278,6 +284,8 @@ public class Roster implements Cacheable, Externalizable {
      * as an existing item in the roster.
      *
      * @param item the item to copy and add to the roster.
+     * @throws UserAlreadyExistsException if the user is already in the roster
+     * @throws SharedGroupException if the group is a shared group
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, SharedGroupException {
@@ -293,6 +301,8 @@ public class Roster implements Cacheable, Externalizable {
      * @param push       True if the new item must be push to the user.
      * @param persistent True if the new roster item should be persisted to the DB.
      * @return The newly created roster items ready to be stored by the Roster item's hash table
+     * @throws UserAlreadyExistsException if the user is already in the roster
+     * @throws SharedGroupException if the group is a shared group
      */
     protected RosterItem provideRosterItem(JID user, String nickname, List<String> groups,
                                            boolean push, boolean persistent)

@@ -91,9 +91,9 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     /**
-     * Constructs a new user. Normally, all arguments can be <tt>null</tt> except the username.
+     * Constructs a new user. Normally, all arguments can be {@code null} except the username.
      * However, a UserProvider -may- require a name or email address.  In those cases, the
-     * isNameRequired or isEmailRequired UserProvider tests indicate whether <tt>null</tt> is allowed.
+     * isNameRequired or isEmailRequired UserProvider tests indicate whether {@code null} is allowed.
      * Typically, User objects should not be constructed by end-users of the API.
      * Instead, user objects should be retrieved using {@link UserManager#getUser(String)}.
      *
@@ -242,7 +242,7 @@ public class User implements Cacheable, Externalizable, Result {
     }
 
     /**
-     * Returns the email address of the user or <tt>null</tt> if none is defined.
+     * Returns the email address of the user or {@code null} if none is defined.
      *
      * @return the email address of the user or null if none is defined.
      */

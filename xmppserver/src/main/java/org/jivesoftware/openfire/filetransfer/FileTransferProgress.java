@@ -31,7 +31,7 @@ public interface FileTransferProgress {
      * Returns the number of bytes that has been transferred.
      *
      * @return the number of bytes that has been transferred.
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException if this information cannot be retrieved
      */
     long getAmountTransferred() throws UnsupportedOperationException;
 

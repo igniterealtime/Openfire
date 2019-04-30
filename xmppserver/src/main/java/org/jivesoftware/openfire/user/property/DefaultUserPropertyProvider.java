@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of the UserPropertyProvider interface, which reads and writes data from the
- * <tt>ofUserProp</tt> database table.
+ * {@code ofUserProp} database table.
  *
  * This implementation will not explicitly verify if a user exists, when operating on its properties. The methods of
  * this implementation will <em>not</em> throw {@link org.jivesoftware.openfire.user.UserNotFoundException}.

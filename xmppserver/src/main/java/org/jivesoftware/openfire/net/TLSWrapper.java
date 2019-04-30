@@ -57,6 +57,10 @@ public class TLSWrapper {
 
     /**
      * @deprecated Use the other constructor.
+     * @param connection the connection to wrap
+     * @param clientMode {@code true} to use client mode, {@code false} to use server mode
+     * @param needClientAuth unused parameter
+     * @param remoteServer unused parameter
      */
     @Deprecated
     public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
@@ -177,7 +181,7 @@ public class TLSWrapper {
     /**
      * Signals that no more outbound application data will be sent on this TLSHandler.
      *
-     * @throws SSLException
+     * @throws SSLException never
      */
     public void close() throws SSLException {
         // Indicate that application is done with engine

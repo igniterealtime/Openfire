@@ -160,7 +160,7 @@ public class RemoteServerManager {
     /**
      * Returns the number of milliseconds to wait to connect to a remote server or read
      * data from a remote server. Default timeout value is 120 seconds. Configure the
-     * <tt>xmpp.server.read.timeout</tt> global property to override the default value.
+     * {@code xmpp.server.read.timeout} global property to override the default value.
      *
      * @return the number of milliseconds to wait to connect to a remote server or read
      *         data from a remote server.
@@ -223,10 +223,10 @@ public class RemoteServerManager {
     }
 
     /**
-     * Returns the configuration for a remote server or <tt>null</tt> if none was found.
+     * Returns the configuration for a remote server or {@code null} if none was found.
      *
      * @param domain the domain of the remote server.
-     * @return the configuration for a remote server or <tt>null</tt> if none was found.
+     * @return the configuration for a remote server or {@code null} if none was found.
      */
     public static RemoteServerConfiguration getConfiguration(String domain) {
         Object value = configurationsCache.get(domain);

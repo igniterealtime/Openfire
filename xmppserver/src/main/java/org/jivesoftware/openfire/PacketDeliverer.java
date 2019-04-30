@@ -36,6 +36,7 @@ public interface PacketDeliverer {
      *
      * @param packet the packet to route
      * @throws PacketException if the packet is null or the packet could not be routed.
+     * @throws UnauthorizedException if the user is not authorised
      */
     void deliver( Packet packet ) throws UnauthorizedException, PacketException;
 }

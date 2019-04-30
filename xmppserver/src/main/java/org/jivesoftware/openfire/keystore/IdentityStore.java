@@ -81,6 +81,7 @@ public class IdentityStore extends CertificateStore
      *
      * @param alias An identifier for a private key / certificate in this store (cannot be null).
      * @return A PEM-encoded Certificate Signing Request (never null).
+     * @throws CertificateStoreConfigException if there was a problem generating the CSR
      */
     public String generateCSR( String alias ) throws CertificateStoreConfigException
     {
@@ -131,7 +132,9 @@ public class IdentityStore extends CertificateStore
      * This method will also fail when a corresponding private key is not already in this store (it is assumed that the
      * CA reply follows a signing request based on a private key that was added to the store earlier).
      *
+     * @param alias the certificate alias
      * @param pemCertificates a PEM representation of the certificate or certificate chain (cannot be null or empty).
+     * @throws CertificateStoreConfigException if there was a problem installing the certificate
      */
     public void installCSRReply( String alias, String pemCertificates ) throws CertificateStoreConfigException
     {
@@ -228,6 +231,7 @@ public class IdentityStore extends CertificateStore
      * @param pemPrivateKey   a PEM representation of the private key (cannot be null or empty).
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
      * @return The alias that was used (never null).
+     * @throws CertificateStoreConfigException if there was a problem replacing the certificate
      */
     public String replaceCertificate( String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
@@ -294,6 +298,7 @@ public class IdentityStore extends CertificateStore
      * @param pemPrivateKey   a PEM representation of the private key (cannot be null or empty).
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
      * @return The alias that was used (never null).
+     * @throws CertificateStoreConfigException if there was a problem installing the certificate
      */
     public String installCertificate( String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
@@ -315,6 +320,7 @@ public class IdentityStore extends CertificateStore
      * @param pemCertificates a PEM representation of the certificate or certificate chain (cannot be null or empty).
      * @param pemPrivateKey   a PEM representation of the private key (cannot be null or empty).
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
+     * @throws CertificateStoreConfigException if there was a problem installing the certificate
      */
     public void installCertificate( String alias, String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
@@ -380,6 +386,7 @@ public class IdentityStore extends CertificateStore
 
     /**
      * Adds a self-signed certificate for the domain of this XMPP service when no certificate for the domain was found.
+     * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
     public synchronized void ensureDomainCertificate() throws CertificateStoreConfigException
     {
@@ -406,6 +413,7 @@ public class IdentityStore extends CertificateStore
      *
      * @param algorithms The algorithms for which to verify / add a domain certificate.
      * @deprecated Unused as of Openfire 4.3.0. Use 'ensureDomainCertificate' instead. See OF-1599.
+     * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
     @Deprecated
     public synchronized void ensureDomainCertificates( String... algorithms ) throws CertificateStoreConfigException
@@ -424,7 +432,10 @@ public class IdentityStore extends CertificateStore
     /**
      * Checks if the store contains a certificate of a particular algorithm that matches the domain of this
      * XMPP service. This method will not distinguish between self-signed and non-self-signed certificates.
+     * @return {@code true}  if the store contains a certificate of a particular algorithm that matches the domain of this XMPP service, otherwise {@code false}
+     * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
+    @SuppressWarnings("deprecation")
     public synchronized boolean containsDomainCertificate() throws CertificateStoreConfigException
     {
         return containsDomainCertificate( null );
@@ -438,7 +449,9 @@ public class IdentityStore extends CertificateStore
      * certificate.
      *
      * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
+     * @return {@code true} if the store contains a certificate of a particular algorithm that matches the domain of this XMPP service, otherwise {@code false}
      * @deprecated Unused as of Openfire 4.3.0. Use 'containsDomainCertificate' instead. See OF-1599.
+     * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
     @Deprecated
     public synchronized boolean containsDomainCertificate( String algorithm ) throws CertificateStoreConfigException
@@ -488,7 +501,10 @@ public class IdentityStore extends CertificateStore
      * that are currently being hosted).
      *
      * This method will not distinguish between self-signed and non-self-signed certificates.
+     * @return {@code true} if the store contains a certificate of a particular algorithm that contains at least all of the identities of this server, otherwise {@code false}
+     * @throws CertificateStoreConfigException if there was a problem accessing the certificates
      */
+    @SuppressWarnings("deprecation")
     public synchronized boolean containsAllIdentityCertificate() throws CertificateStoreConfigException
     {
         return containsAllIdentityCertificate( null );
@@ -506,6 +522,8 @@ public class IdentityStore extends CertificateStore
      *
      * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
      * @deprecated Unused as of Openfire 4.3.0. Use 'containsAllIdentityCertificate' instead. See OF-1599.
+     * @throws CertificateStoreConfigException if a self-signed certificate could not be created
+     * @return {{@code true} if a certiicate contains all identities for this server, otherwise {@code false}}
      */
     @Deprecated
     public synchronized boolean containsAllIdentityCertificate( String algorithm ) throws CertificateStoreConfigException
@@ -570,7 +588,9 @@ public class IdentityStore extends CertificateStore
 
     /**
      * Populates the key store with a self-signed certificate for the domain of this XMPP service.
+     * @throws CertificateStoreConfigException if a self-signed certificate could not be created
      */
+    @SuppressWarnings("deprecation")
     public synchronized void addSelfSignedDomainCertificate() throws CertificateStoreConfigException
     {
         addSelfSignedDomainCertificate( null );
@@ -584,6 +604,7 @@ public class IdentityStore extends CertificateStore
      *
      * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
      * @deprecated Unused as of Openfire 4.3.0. Use 'addSelfSignedDomainCertificate' instead. See OF-1599.
+     * @throws CertificateStoreConfigException if a self-signed certificate could not be created
      */
     @Deprecated
     public synchronized void addSelfSignedDomainCertificate( String algorithm ) throws CertificateStoreConfigException
@@ -661,11 +682,12 @@ public class IdentityStore extends CertificateStore
     }
 
     /**
-     * Returns a new public & private key with the specified algorithm (e.g. DSA, RSA, etc.).
+     * Returns a new public &amp; private key with the specified algorithm (e.g. DSA, RSA, etc.).
      *
      * @param algorithm DSA, RSA, etc.
      * @param keySize the desired key size. This is an algorithm-specific metric, such as modulus length, specified in number of bits.
-     * @return a new public & private key with the specified algorithm (e.g. DSA, RSA, etc.).
+     * @return a new public &amp; private key with the specified algorithm (e.g. DSA, RSA, etc.).
+     * @throws GeneralSecurityException if the supplied algorithm does not have a key-pair generator
      */
     protected static synchronized KeyPair generateKeyPair( String algorithm, int keySize ) throws GeneralSecurityException
     {
@@ -709,6 +731,7 @@ public class IdentityStore extends CertificateStore
      * Generates an alias that is currently unused in this store.
      *
      * @return An alias (never null).
+     * @throws CertificateStoreConfigException if a unique alias could not be generated
      */
     protected synchronized String generateUniqueAlias() throws CertificateStoreConfigException
     {
@@ -736,6 +759,7 @@ public class IdentityStore extends CertificateStore
      * This method iterates over all entries, and removes those that match the domain of this server.
      *
      * Note that the changes are not persisted by this method (as it is expected to be used in tandem with an insert.
+     * @throws KeyStoreException if the key store could not be updated
      */
     protected synchronized void removeAllDomainEntries() throws KeyStoreException
     {

@@ -100,6 +100,7 @@ public class FastDateFormat {
 
     /**
      * @param pattern {@link java.text.SimpleDateFormat} compatible pattern
+     * @return the fast date format
      */
     public static FastDateFormat getInstance(String pattern)
         throws IllegalArgumentException
@@ -111,6 +112,7 @@ public class FastDateFormat {
      * @param pattern {@link java.text.SimpleDateFormat} compatible pattern
      * @param timeZone optional time zone, overrides time zone of formatted
      * date
+     * @return the fast date format
      */
     public static FastDateFormat getInstance
         (String pattern, TimeZone timeZone) throws IllegalArgumentException
@@ -121,6 +123,7 @@ public class FastDateFormat {
     /**
      * @param pattern {@link java.text.SimpleDateFormat} compatible pattern
      * @param locale optional locale, overrides system locale
+     * @return the fast date format
      */
     public static FastDateFormat getInstance
         (String pattern, Locale locale) throws IllegalArgumentException
@@ -132,6 +135,7 @@ public class FastDateFormat {
      * @param pattern {@link java.text.SimpleDateFormat} compatible pattern
      * @param symbols optional date format symbols, overrides symbols for
      * system locale
+     * @return the fast date format
      */
     public static FastDateFormat getInstance
         (String pattern, DateFormatSymbols symbols)
@@ -145,6 +149,7 @@ public class FastDateFormat {
      * @param timeZone optional time zone, overrides time zone of formatted
      * date
      * @param locale optional locale, overrides system locale
+     * @return the fast date format
      */
     public static FastDateFormat getInstance
         (String pattern, TimeZone timeZone, Locale locale)
@@ -160,6 +165,7 @@ public class FastDateFormat {
      * @param locale optional locale, overrides system locale
      * @param symbols optional date format symbols, overrides symbols for
      * provided locale
+     * @return the fast date format
      */
     public static synchronized FastDateFormat getInstance
         (String pattern, TimeZone timeZone, Locale locale,
@@ -197,6 +203,7 @@ public class FastDateFormat {
      * @param timeZone optional time zone, overrides time zone of formatted
      * date
      * @param locale optional locale, overrides system locale
+     * @return the fast date format
      */
     public static synchronized FastDateFormat getDateInstance
         (Object style, TimeZone timeZone, Locale locale)
@@ -246,6 +253,7 @@ public class FastDateFormat {
      * @param timeZone optional time zone, overrides time zone of formatted
      * date
      * @param locale optional locale, overrides system locale
+     * @return the fast date format
      */
     public static synchronized FastDateFormat getTimeInstance
         (Object style, TimeZone timeZone, Locale locale)
@@ -296,6 +304,7 @@ public class FastDateFormat {
      * @param timeZone optional time zone, overrides time zone of formatted
      * date
      * @param locale optional locale, overrides system locale
+     * @return the fast date format
      */
     public static synchronized FastDateFormat getDateTimeInstance
         (Object dateStyle, Object timeStyle, TimeZone timeZone, Locale locale)
@@ -712,6 +721,7 @@ public class FastDateFormat {
     /**
      * Returns the time zone used by this formatter, or null if time zone of
      * formatted dates is used instead.
+     * @return the time zone
      */
     public TimeZone getTimeZone() {
         return mTimeZone;
@@ -725,6 +735,7 @@ public class FastDateFormat {
      * Returns an estimate for the maximum length date that this date
      * formatter will produce. The actual formatted length will almost always
      * be less than or equal to this amount.
+     * @return an estimate of the maximum length
      */
     public int getMaxLengthEstimate() {
         return mMaxLengthEstimate;

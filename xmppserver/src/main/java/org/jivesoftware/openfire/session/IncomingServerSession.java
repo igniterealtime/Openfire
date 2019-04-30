@@ -21,7 +21,7 @@ import java.util.Collection;
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
  * connection is used for sending packets while the other connection is used for receiving packets.
- * The <tt>IncomingServerSession</tt> represents the connection to a remote server that will only
+ * The {@code IncomingServerSession} represents the connection to a remote server that will only
  * be used for receiving packets.<p>
  *
  * Currently only the Server Dialback method is being used for authenticating the remote server.

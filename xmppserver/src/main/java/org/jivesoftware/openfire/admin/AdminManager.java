@@ -32,7 +32,7 @@ import org.xmpp.packet.JID;
  * The provider can be specified using the system property:
  *
  * <ul>
- * <li><tt>provider.admin.className = my.admin.provider</tt></li>
+ * <li>{@code provider.admin.className = my.admin.provider}</li>
  * </ul>
  *
  * @author Daniel Henninger

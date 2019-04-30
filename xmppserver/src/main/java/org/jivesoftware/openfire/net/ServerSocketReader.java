@@ -44,7 +44,7 @@ import org.xmpp.packet.StreamError;
  *
  * The received packets will be routed using another thread to ensure that many received packets
  * could be routed at the same time. To avoid creating new threads every time a packet is received
- * each <tt>ServerSocketReader</tt> instance uses a {@link ThreadPoolExecutor}. By default the
+ * each {@code ServerSocketReader} instance uses a {@link ThreadPoolExecutor}. By default the
  * maximum number of threads that the executor may have is 50. However, this value may be modified
  * by changing the property <b>xmpp.server.processing.max.threads</b>.
  *

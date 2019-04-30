@@ -21,7 +21,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 /**
  * Provider interface for authentication. Users that wish to integrate with
  * their own authentication system must implement this class and then register
- * the implementation with Openfire in the <tt>openfire.xml</tt>
+ * the implementation with Openfire in the {@code openfire.xml}
  * file. An entry in that file would look like the following:
  *
  * <pre>

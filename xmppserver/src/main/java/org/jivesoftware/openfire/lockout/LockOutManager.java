@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * The provider can be specified in system properties by adding:
  *
  * <ul>
- * <li><tt>provider.lockout.className = my.lock.out.provider</tt></li>
+ * <li>{@code provider.lockout.className = my.lock.out.provider}</li>
  * </ul>
  *
  * @author Daniel Henninger

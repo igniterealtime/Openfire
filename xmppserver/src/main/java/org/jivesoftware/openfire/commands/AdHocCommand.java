@@ -27,7 +27,7 @@ import java.util.Map;
  * An ad-hoc command is a stateless object responsbile for executing the provided service. Each
  * subclass will only have one instance that will be shared across all users sessions. Therefore,
  * it is important to not keep any information related to executions as permanent data
- * (i.e. as instance or static variables). Each command has a <tt>code</tt> that should be
+ * (i.e. as instance or static variables). Each command has a {@code code} that should be
  * unique within a given JID.<p>
  *
  * Commands may have zero or more stages. Each stage is usually used for gathering information
@@ -97,7 +97,7 @@ public abstract class AdHocCommand {
      * parameter. When the max number of stages has been reached then the command is ready to
      * be executed.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages or the requester is requesting the execution for the
      *        first time.
      * @return the max number of stages for this command.
@@ -107,7 +107,7 @@ public abstract class AdHocCommand {
     /**
      * Executes the command with the specified session data.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages.
      * @param command the command element to be sent to the command requester with a reported
      *        data result or note element with the answer of the execution.
@@ -119,7 +119,7 @@ public abstract class AdHocCommand {
      * current stage is specified in the SessionData. This method will never be invoked for
      * commands that have no stages.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages or the requester is requesting the execution for the
      *        first time.
      * @param command the command element to be sent to the command requester.
@@ -128,10 +128,10 @@ public abstract class AdHocCommand {
 
     /**
      * Returns a collection with the allowed actions based on the current stage as defined
-     * in the SessionData. Possible actions are: <tt>prev</tt>, <tt>next</tt> and <tt>complete</tt>.
+     * in the SessionData. Possible actions are: {@code prev}, {@code next} and {@code complete}.
      * This method will never be invoked for commands that have no stages.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages or the requester is requesting the execution for the
      *        first time.
      * @return a collection with the allowed actions based on the current stage as defined
@@ -145,7 +145,7 @@ public abstract class AdHocCommand {
      * then the action will be assumed "execute" thus assuming the action returned by this
      * method. This method will never be invoked for commands that have no stages.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages or the requester is requesting the execution for the
      *        first time.
      * @return which of the actions available for the current stage is considered the equivalent
@@ -191,9 +191,9 @@ public abstract class AdHocCommand {
 
     /**
      * Adds the allowed actions to follow from the current stage. Possible actions are:
-     * <tt>prev</tt>, <tt>next</tt> and <tt>complete</tt>.
+     * {@code prev}, {@code next} and {@code complete}.
      *
-     * @param data the gathered data through the command stages or <tt>null</tt> if the
+     * @param data the gathered data through the command stages or {@code null} if the
      *        command does not have stages or the requester is requesting the execution for the
      *        first time.
      * @param command the command element to be sent to the command requester.

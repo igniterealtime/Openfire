@@ -27,7 +27,7 @@ import java.io.File;
  *      <li>Use the Openfire API to add new functionality to the server.
  * </ul>
  *
- * Plugins live in the <tt>plugins</tt> directory of <tt>home</tt>. Plugins
+ * Plugins live in the {@code plugins} directory of {@code home}. Plugins
  * that are packaged as JAR files will be automatically expanded into directories. A
  * plugin directory should have the following structure:
  *
@@ -36,9 +36,9 @@ import java.io.File;
  *    |-- classes/
  *    |-- lib/</pre>
  *
- * The <tt>classes</tt> and <tt>lib</tt> directory are optional. Any files in the
- * <tt>classes</tt> directory will be added to the classpath of the plugin, as well
- * as any JAR files in the <tt>lib</tt> directory. The <tt>plugin.xml</tt> file is
+ * The {@code classes} and {@code lib} directory are optional. Any files in the
+ * {@code classes} directory will be added to the classpath of the plugin, as well
+ * as any JAR files in the {@code lib} directory. The {@code plugin.xml} file is
  * required, and specifies the className of the Plugin implementation. The XML file
  * should resemble the following XML:
  *

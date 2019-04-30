@@ -25,7 +25,7 @@ package org.jivesoftware.openfire.auth;
  * encouraged to extend either the AbstractAuthoriationPolicy
  * or the AbstractAuthorizationProvider classes which allow
  * the admin console manage the classes more effectively.
- * Register the class with Openfire in the <tt>openfire.xml</tt>
+ * Register the class with Openfire in the {@code openfire.xml}
  * file.  An entry in that file would look like the following:
  * </p>
  * <pre>

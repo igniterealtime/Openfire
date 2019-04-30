@@ -28,8 +28,8 @@ import java.util.Map;
 public interface PropertyEventListener {
 
     /**
-     * A property was set. The parameter map <tt>params</tt> will contain the
-     * the value of the property under the key <tt>value</tt>.
+     * A property was set. The parameter map {@code params} will contain the
+     * the value of the property under the key {@code value}.
      *
      * @param property the name of the property.
      * @param params event parameters.
@@ -45,8 +45,8 @@ public interface PropertyEventListener {
     void propertyDeleted( String property, Map<String, Object> params );
 
     /**
-     * An XML property was set. The parameter map <tt>params</tt> will contain the
-     * the value of the property under the key <tt>value</tt>. 
+     * An XML property was set. The parameter map {@code params} will contain the
+     * the value of the property under the key {@code value}.
      *
      * @param property the name of the property.
      * @param params event parameters.

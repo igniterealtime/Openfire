@@ -133,7 +133,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -146,7 +146,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -159,7 +159,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -181,7 +181,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.8.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -221,17 +221,15 @@
                   -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>native2ascii-maven-plugin</artifactId>
-                <version>1.0-beta-1</version>
+                <version>2.0.1</version>
                 <executions>
                     <execution>
-                        <id>native2ascii</id>
-                        <phase>process-resources</phase>
+                        <id>utf8-to-latin1</id>
                         <goals>
-                            <goal>native2ascii</goal>
+                            <goal>inplace</goal>
                         </goals>
                         <configuration>
-                            <encoding>UTF-8</encoding>
-                            <workDir>${project.build.directory}/i18n/</workDir>
+                            <dir>${project.build.directory}/i18n/</dir>
                         </configuration>
                     </execution>
                 </executions>
@@ -246,6 +244,13 @@
                         <goals>
                             <goal>enforce</goal>
                         </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.5.0</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
                 <configuration>
@@ -275,6 +280,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.1.1</version>
                     <configuration>
                         <excludes>
                             <exclude>**/*_jsp.java</exclude>
@@ -284,7 +290,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.6</version>
+                    <version>3.1.1</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.igniterealtime.openfire.plugins</groupId>
@@ -348,7 +354,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>2.7</version>
                 </plugin>
 
             </plugins>

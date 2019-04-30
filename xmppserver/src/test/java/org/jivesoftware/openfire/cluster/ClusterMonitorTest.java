@@ -36,6 +36,9 @@ public class ClusterMonitorTest {
 
         Fixtures.clearExistingProperties();
 
+        //noinspection deprecation
+        XMPPServer.setInstance(xmppServer);
+
         doReturn(xmppServerInfo).when(xmppServer).getServerInfo();
 
         doReturn(THIS_HOST_NAME).when(xmppServerInfo).getHostname();

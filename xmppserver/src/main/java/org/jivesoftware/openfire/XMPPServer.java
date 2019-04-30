@@ -29,8 +29,20 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
@@ -223,6 +235,17 @@ public class XMPPServer {
      */
     public static XMPPServer getInstance() {
         return instance;
+    }
+
+    /**
+     * TODO: (2019-04-24) Remove and replace with <a href="https://github.com/mockito/mockito/issues/1013">Mockito mocking of static methods</a>, when available
+     *
+     * @param instance the mock/stub/spy XMPPServer to return when {@link #getInstance()} is called.
+     * @deprecated - for test use only
+     */
+    @Deprecated
+    public static void setInstance(final XMPPServer instance) {
+        XMPPServer.instance = instance;
     }
 
     /**
@@ -1768,16 +1791,24 @@ public class XMPPServer {
         return started;
     }
 
-    public void sendMessageToAdmins(final String message) {
-        final MessageRouter messageRouter = getMessageRouter();
-        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
-        final Message notification = new Message();
-        notification.setFrom(getServerInfo().getXMPPDomain());
-        notification.setBody(message);
-        admins.forEach(jid -> {
-            logger.debug("Sending message to admin [jid={}, message={}]", jid, message);
-            notification.setTo(jid);
-            messageRouter.route(notification);
+    /**
+     * Asynchronously send a message to every administrator on the system.
+     *
+     * @param message The message to send
+     * @return the future result of sending the message.
+     */
+    public Future<?> sendMessageToAdmins(final String message) {
+        return TaskEngine.getInstance().submit(() -> {
+            final MessageRouter messageRouter = getMessageRouter();
+            final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
+            final Message notification = new Message();
+            notification.setFrom(getServerInfo().getXMPPDomain());
+            notification.setBody(message);
+            admins.forEach(jid -> {
+                logger.debug("Sending message to admin [jid={}, message={}]", jid, message);
+                notification.setTo(jid);
+                messageRouter.route(notification);
+            });
         });
     }
 }

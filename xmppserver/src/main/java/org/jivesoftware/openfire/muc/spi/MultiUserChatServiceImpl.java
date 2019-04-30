@@ -1310,10 +1310,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         logConversationTask = new LogConversationTask();
         TaskEngine.getInstance().schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
-        cleanupTask = new CleanupTask();
         long cleanupFreq = JiveGlobals.getLongProperty(
             "xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
-        TaskEngine.getInstance().schedule(cleanupTask, cleanupFreq, cleanupFreq);
+        TaskEngine.getInstance().schedule(new CleanupTask(), cleanupFreq, cleanupFreq);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);

@@ -221,7 +221,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The time to elapse between each rooms cleanup. Default frequency is 60 minutes.
      */
-    private static final long CLEANUP_FREQUENCY = 60 * 60 * 1000;
+    private static final long CLEANUP_FREQUENCY = 60;
 
     /**
      * Total number of received messages in all rooms since the last reset. The counter
@@ -644,7 +644,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return;
             }
             try {
-                localMUCRoomManager.cleanupRooms(getCleanupDate());
+                Date cleanUpDate = getCleanupDate();
+                Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
+                while (it.hasNext()) {
+                    LocalMUCRoom room = it.next();
+                    Date emptyDate = room.getEmptyDate();
+                    if (emptyDate != null && emptyDate.before(cleanUpDate)) {
+                        removeChatRoom(room.getName());
+                    }
+                }
             }
             catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -1302,7 +1310,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         logConversationTask = new LogConversationTask();
         TaskEngine.getInstance().schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
-        TaskEngine.getInstance().schedule(new CleanupTask(), CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
+        long cleanupFreq = JiveGlobals.getLongProperty(
+            "xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
+        TaskEngine.getInstance().schedule(new CleanupTask(), cleanupFreq, cleanupFreq);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);

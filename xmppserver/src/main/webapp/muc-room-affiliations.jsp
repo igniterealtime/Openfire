@@ -48,8 +48,10 @@
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String affiliation = ParamUtils.getParameter(request,"affiliation");
     String userJID = ParamUtils.getParameter(request,"userJID");
+    String nickName = ParamUtils.getParameter(request,"nickName");
     String roomName = roomJID.getNode();
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
+    final String affName = ParamUtils.getStringParameter(request, "affName", "");
 
     boolean add = request.getParameter("add") != null;
     boolean addsuccess = request.getParameter("addsuccess") != null;
@@ -115,6 +117,15 @@
                     Element item = frag.addElement("item");
                     item.addAttribute("affiliation", affiliation);
                     item.addAttribute("jid", memberJID);
+                    if(nickName != null){
+                        item.addAttribute("nick", nickName);
+                    }else{
+                        //set the name of the user as the nickname of the member
+                        if(userJID != null){
+                            String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                            item.addAttribute("nick", username);
+                        }
+                    }
                 }
                 // Send the IQ packet that will modify the room's configuration
                 room.getIQAdminHandler().handleIQ(iq, room.getRole());
@@ -243,15 +254,25 @@
     </select>
     </p>
     <p>
-    <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
-    <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
-    <select name="affiliation">
-        <option value="owner"><fmt:message key="muc.room.affiliations.owner" /></option>
-        <option value="admin"><fmt:message key="muc.room.affiliations.admin" /></option>
-        <option value="member"><fmt:message key="muc.room.affiliations.member" /></option>
-        <option value="outcast"><fmt:message key="muc.room.affiliations.outcast" /></option>
-    </select>
-    <input type="submit" value="<fmt:message key="global.add" />">
+        <select name="affiliation"  onchange='location.href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&affName="+ this.options[this.selectedIndex].value;'>
+            <option value="owner"<%= affName.equals("owner") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.owner" /></option>
+            <option value="admin"<%= affName.equals("admin") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.admin" /></option>
+            <option value="member"<%= affName.equals("member") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.member" /></option>
+            <option value="outcast"<%= affName.equals("outcast") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.outcast" /></option>
+        </select>
+    </p>
+    <p>
+        <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
+        <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
+    </p>
+    <% if(!affName.isEmpty() && affName.equals("member")) {%>
+        <p>
+            <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid_nickname" /></label>
+            <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? nickName : "") %>" id="memberJID">
+        </p>
+    <%  } %>
+    <p>
+        <input type="submit" value="<fmt:message key="global.add" />">
     </p>
 
     <div class="jive-table" style="width:400px;">

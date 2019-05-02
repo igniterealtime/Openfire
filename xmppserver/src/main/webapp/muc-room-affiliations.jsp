@@ -122,8 +122,8 @@
                     }else{
                         //set the name of the user as the nickname of the member
                         if(userJID != null){
-                            String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
-                            item.addAttribute("nick", username);
+                            JID jid = new JID(userJID);
+                            item.addAttribute("nick",jid.getNode());
                         }
                     }
                 }

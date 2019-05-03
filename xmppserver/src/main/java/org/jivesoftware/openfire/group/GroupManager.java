@@ -336,24 +336,25 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name, boolean forceLookup) throws GroupNotFoundException {
-        Group group = null;
+        CacheableOptional<Group> coGroup = null;
         if (forceLookup) {
             groupCache.remove(name);
         } else {
-            group = groupCache.get(name).get();
+            coGroup = groupCache.get(name);
         }
 
-        if (group == null) {
+        if (coGroup == null) {
             synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
-                group = groupCache.get(name).get();
-                if (group == null) {
+                coGroup = groupCache.get(name);
+                if (coGroup == null || coGroup.isAbsent()) {
                     if (groupCache.containsKey(name) && !forceLookup) {
                         throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
                     }
                     try
                     {
-                        group = provider.getGroup( name );
-                        groupCache.put(name, CacheableOptional.of(group));
+                        final Group group = provider.getGroup( name );
+                        coGroup = CacheableOptional.of(group);
+                        groupCache.put(name, coGroup);
                     }
                     catch (GroupNotFoundException e)
                     {
@@ -363,7 +364,7 @@ public class GroupManager {
                 }
             }
         }
-        return group;
+        return coGroup.get();
     }
 
     /**

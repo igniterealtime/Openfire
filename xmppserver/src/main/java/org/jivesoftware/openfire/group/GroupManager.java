@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -79,7 +80,7 @@ public class GroupManager {
         return GroupManagerContainer.instance;
     }
 
-    private Cache<String, Group> groupCache;
+    private Cache<String, CacheableOptional<Group>> groupCache;
     private Cache<String, Serializable> groupMetaCache;
     private static GroupProvider provider;
 
@@ -106,7 +107,7 @@ public class GroupManager {
                 }
                 
                 // Since the group could be created by the provider, add it possible again
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
 
                 // Evict only the information related to Groups.
                 // Do not evict groups with 'user' as keys.
@@ -124,8 +125,8 @@ public class GroupManager {
             @Override
             public void groupDeleting(Group group, Map params) {
                 // Since the group could be deleted by the provider, remove it possible again
-                groupCache.remove(group.getName());
-                
+                groupCache.put(group.getName(), CacheableOptional.of( null ));
+
                 // Evict only the information related to Groups.
                 // Do not evict groups with 'user' as keys.
                 clearGroupCountCache();
@@ -194,14 +195,14 @@ public class GroupManager {
                 }
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
             }
 
             @Override
             public void memberAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
@@ -212,7 +213,7 @@ public class GroupManager {
             public void memberRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
@@ -223,7 +224,7 @@ public class GroupManager {
             public void adminAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
@@ -234,7 +235,7 @@ public class GroupManager {
             public void adminRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
-                groupCache.put(group.getName(), group);
+                groupCache.put(group.getName(), CacheableOptional.of(group));
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
@@ -293,7 +294,7 @@ public class GroupManager {
                 // Update caches.
                 clearGroupNameCache();
                 clearGroupCountCache();
-                groupCache.put(name, newGroup);
+                groupCache.put(name, CacheableOptional.of(newGroup));
 
                 // Fire event.
                 GroupEventDispatcher.dispatchEvent(newGroup,
@@ -335,23 +336,35 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name, boolean forceLookup) throws GroupNotFoundException {
-        Group group = null;
+        CacheableOptional<Group> coGroup = null;
         if (forceLookup) {
             groupCache.remove(name);
         } else {
-            group = groupCache.get(name);
+            coGroup = groupCache.get(name);
         }
-        // If ID wan't found in cache, load it up and put it there.
-        if (group == null) {
+
+        if (coGroup == null) {
             synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
-                group = groupCache.get(name);
-                if (group == null) {
-                    group = provider.getGroup(name);
-                    groupCache.put(name, group);
+                coGroup = groupCache.get(name);
+                if (coGroup == null || coGroup.isAbsent()) {
+                    if (groupCache.containsKey(name) && !forceLookup) {
+                        throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
+                    }
+                    try
+                    {
+                        final Group group = provider.getGroup( name );
+                        coGroup = CacheableOptional.of(group);
+                        groupCache.put(name, coGroup);
+                    }
+                    catch (GroupNotFoundException e)
+                    {
+                        groupCache.put( name, CacheableOptional.of(null));
+                        throw e;
+                    }
                 }
             }
         }
-        return group;
+        return coGroup.get();
     }
 
     /**
@@ -367,8 +380,8 @@ public class GroupManager {
         // Delete the group.
         provider.deleteGroup(group.getName());
 
-        // Expire cache.
-        groupCache.remove(group.getName());
+        // Add a no-hit to the cache.
+        groupCache.put(group.getName(), CacheableOptional.of(null));
         clearGroupNameCache();
         clearGroupCountCache();
     }

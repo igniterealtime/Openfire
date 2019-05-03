@@ -3,10 +3,12 @@ package org.jivesoftware.openfire.spi;
 import org.apache.mina.filter.ssl.SslFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.keystore.OpenfireX509TrustManager;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
+import java.lang.reflect.Constructor;
 import java.security.*;
 import java.util.*;
 
@@ -22,6 +24,13 @@ import java.util.*;
 public class EncryptionArtifactFactory
 {
     private final Logger Log = LoggerFactory.getLogger( EncryptionArtifactFactory.class );
+
+    public static final SystemProperty<Class> TRUST_MANAGER_CLASS = SystemProperty.Builder.ofType( Class.class )
+        .setKey( "xmpp.auth.ssl.default-trustmanager-impl" )
+        .setBaseClass( TrustManager.class )
+        .setDefaultValue( OpenfireX509TrustManager.class )
+        .setDynamic( false )
+        .build();
 
     private final ConnectionConfiguration configuration;
 
@@ -91,9 +100,33 @@ public class EncryptionArtifactFactory
      */
     public synchronized TrustManager[] getTrustManagers() throws KeyStoreException, NoSuchAlgorithmException
     {
-        return new TrustManager[] {
-                new OpenfireX509TrustManager( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity() )
-        };
+        final Class<TrustManager> trustManagerClass = (Class<TrustManager>) TRUST_MANAGER_CLASS.getValue();
+        Log.debug( "Configured TrustManager class: {}", trustManagerClass.getCanonicalName() );
+
+        try
+        {
+            Log.debug( "Attempting to instantiate '{}' using the three-argument constructor that is properietary to Openfire.", trustManagerClass );
+            final Constructor<TrustManager> constructor = trustManagerClass.getConstructor( KeyStore.class, Boolean.TYPE, Boolean.TYPE);
+            final TrustManager trustManager = constructor.newInstance( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity() );
+            Log.debug( "Successfully instantiated '{}'.", trustManagerClass );
+            return new TrustManager[] { trustManager };
+        }
+        catch ( Exception e )
+        {
+            Log.debug( "Unable to instantiate '{}' using the three-argument constructor that is properietary to Openfire. Trying to use a no-arg constructor instead...", trustManagerClass );
+            try
+            {
+                final TrustManager trustManager = trustManagerClass.newInstance();
+                Log.debug( "Successfully instantiated '{}'.", trustManagerClass );
+
+                return new TrustManager[] { trustManager };
+            }
+            catch ( InstantiationException | IllegalAccessException ex )
+            {
+                Log.warn( "Unable to instantiate an instance of the configured Trust Manager implementation '{}'. Using {} instead.", trustManagerClass, OpenfireX509TrustManager.class, ex );
+                return new TrustManager[] { new OpenfireX509TrustManager( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity() )};
+            }
+        }
     }
 
     /**

@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -47,7 +48,7 @@ public interface Session extends RoutableChannelHandler {
     int STATUS_CLOSED = -1;
     int STATUS_CONNECTED = 1;
     int STATUS_AUTHENTICATED = 3;
-
+    
     /**
       * Obtain the address of the user. The address is used by services like the core
       * server packet router to determine if a packet should be sent to the handler.
@@ -216,4 +217,11 @@ public interface Session extends RoutableChannelHandler {
      * @return The language for the session.
      */
     Locale getLanguage();
+    
+    /**
+     * Returns all software version as reported by the peer on this connection,
+     * as obtained through XEP-0092.
+     * @return The Software version information
+     */
+    Map<String,String> getSoftwareVersion();
 }

@@ -109,7 +109,7 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-
+        Log.info("STANZA INCOMMING {}", stanza);
         boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
@@ -325,6 +325,12 @@ public abstract class StanzaHandler {
         Element query = doc.element("query");
         if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
             return new Roster(doc);
+        }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
+            session.setSoftwareVersionData("name", query.element("name").getStringValue());
+            session.setSoftwareVersionData("version", query.element("version").getStringValue());
+            session.setSoftwareVersionData("os", query.element("os").getStringValue());
+            Log.info("LOG SESSION  SOFTWARE VERSION {}", session.getSoftwareVersion().toString());
+            return new IQ(doc, !validateJIDs());
         }
         else {
             return new IQ(doc, !validateJIDs());

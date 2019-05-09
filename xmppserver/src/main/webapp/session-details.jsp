@@ -356,6 +356,21 @@
             Invalid session/connection
                 <% }
             } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.software_version"/>
+        </td>
+        <td>
+                <%
+                try { %>
+                <%= currentSess.getSoftwareVersion().get("name") %> / <%= currentSess.getSoftwareVersion().get("version") %> / <%= currentSess.getSoftwareVersion().get("os") %>
+                <% } catch (java.net.UnknownHostException e) { %>
+            Invalid session/connection
+                <% }
+             %>
+        </td>
     </tr>
 </tbody>
 </table>

@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.openfire.Connection;
@@ -64,7 +63,7 @@ public abstract class LocalSession implements Session {
      * The Address this session is authenticated as.
      */
     private JID address;
-
+   
     /**
      * The stream id for this session (random and unique).
      */
@@ -95,6 +94,12 @@ public abstract class LocalSession implements Session {
      * finishes.
      */
     private final Map<String, Object> sessionData = new HashMap<>();
+
+    /**
+     * SoftwareVersion (XEP-0092) temporary data. All data stored in this <code>Map</code> disapear when session
+     * finishes.
+     */
+    private final Map<String, String> softwareVersionData = new HashMap<>();
 
     /**
      * XEP-0198 Stream Manager
@@ -519,4 +524,35 @@ public abstract class LocalSession implements Session {
     public final Locale getLanguage() {
         return language;
     }
+
+    /**
+     * Retrieves SoftwareVersion data. This method gives access to temporary Software Version data only. You can
+     * Please see
+     * {@link #setSoftwareVersionData(String, String)}  description for more details.
+     *
+     * @param key a <code>String</code> value of stored data ID.
+     * @return a <code>Map<String,String></code> value of data for given key.
+     * @see #setSoftwareVersionData(String, String)
+     */
+    @Override
+    public Map<String, String> getSoftwareVersion() {
+        synchronized (softwareVersionData) {
+            return softwareVersionData;
+        }
+    }
+
+    /**
+     * Saves given session data. Data are saved to temporary storage only and are accessible during
+     * this session life only and only from this session instance.
+     *
+     * @param key a <code>String</code> value of stored data key ID.
+     * @param value a <code>Object</code> value of data stored in session.
+     * @see #getSoftwareVersionData(String)
+     */
+    public void setSoftwareVersionData(String key, String value) {
+        synchronized (softwareVersionData) {
+            softwareVersionData.put(key, value);
+        }
+    }
+
 }

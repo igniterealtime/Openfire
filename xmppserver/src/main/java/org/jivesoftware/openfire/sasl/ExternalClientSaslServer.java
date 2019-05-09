@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.CertificateManager;
 import org.slf4j.Logger;
@@ -64,8 +65,16 @@ public class ExternalClientSaslServer implements SaslServer
             throw new SaslException( "No peer certificates." );
         }
 
-        final TrustStore trustStore = connection.getConfiguration().getTrustStore();
-        final X509Certificate trusted = trustStore.getEndEntityCertificate( peerCertificates );
+        final X509Certificate trusted;
+        if ( SASLAuthentication.SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
+            // Trust that the peer certificate has been validated when TLS got established.
+            trusted = (X509Certificate) peerCertificates[0];
+        } else {
+            // Re-evaluate the validity of the peer certificate.
+            final TrustStore trustStore = connection.getConfiguration().getTrustStore();
+            trusted = trustStore.getEndEntityCertificate( peerCertificates );
+        }
+
         if ( trusted == null )
         {
             throw new SaslException( "Certificate chain of peer is not trusted." );

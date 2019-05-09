@@ -596,7 +596,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         @Override
         public void run() {
             try {
-                logConversation();
+                logConversationBatch();
             }
             catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -604,16 +604,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    private void logConversation() {
+    private void logConversationBatch() {
         ConversationLogEntry entry;
         boolean success;
+
+        final LinkedList<ConversationLogEntry> batchList = new LinkedList<>();
+
         for (int index = 0; index <= log_batch_size && !logQueue.isEmpty(); index++) {
             entry = logQueue.poll();
             if (entry != null) {
-                success = MUCPersistenceManager.saveConversationLogEntry(entry);
-                if (!success) {
-                    logQueue.add(entry);
-                }
+                batchList.add(entry);
+            }
+        }
+
+        success = MUCPersistenceManager.saveConversationLogBatch(batchList);
+
+        if (!success) {
+            // query failed, restore the entries to the logQueue
+            while (!batchList.isEmpty()) {
+                logQueue.add(batchList.poll());
             }
         }
     }
@@ -627,7 +636,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         while (!logQueue.isEmpty()) {
             entry = logQueue.poll();
             if (entry != null) {
-                MUCPersistenceManager.saveConversationLogEntry(entry);
+                final LinkedList<ConversationLogEntry> batchList = new LinkedList<>();
+
+                for (int index = 0; index <= log_batch_size && !logQueue.isEmpty(); index++) {
+                    entry = logQueue.poll();
+                    if (entry != null) {
+                        batchList.add(entry);
+                    }
+                }
+                MUCPersistenceManager.saveConversationLogBatch(batchList);
             }
         }
     }

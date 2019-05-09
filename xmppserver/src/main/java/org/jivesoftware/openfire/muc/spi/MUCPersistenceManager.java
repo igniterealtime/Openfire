@@ -25,22 +25,25 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LinkedList;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
- * A manager responsible for ensuring room persistence. There are different ways to make a room 
+ * A manager responsible for ensuring room persistence. There are different ways to make a room
  * persistent. The first attempt will be to save the room in a relation database. If for some reason
  * the room can't be saved in the database an alternative repository will be used to save the room
  * such as XML files.<p>
- * 
+ *
  * After the problem with the database has been solved, the information saved in the XML files will
  * be moved to the database.
  *
@@ -125,8 +128,7 @@ public class MUCPersistenceManager {
     private static final String DELETE_USER_MUCAFFILIATION =
         "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) " +
-        "SELECT ?,COUNT(*),?,?,?,?,?,? FROM ofMucConversationLog";
+        "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) VALUES (?,?,?,?,?,?,?,?)";
 
     /* Map of subdomains to their associated properties */
     private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
@@ -1045,29 +1047,43 @@ public class MUCPersistenceManager {
     }
 
     /**
-     * Saves the conversation log entry to the database.
-     * 
-     * @param entry the ConversationLogEntry to save to the database.
-     * @return true if the ConversationLogEntry was saved successfully to the database.
+     * Saves the conversation log entry batch to the database.
+     *
+     * @param batch a list of ConversationLogEntry to save to the database.
+     * @return true if the batch was saved successfully to the database.
      */
-    public static boolean saveConversationLogEntry(ConversationLogEntry entry) {
+    public static boolean saveConversationLogBatch(List<ConversationLogEntry> batch) {
         Connection con = null;
         PreparedStatement pstmt = null;
+
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_CONVERSATION_LOG);
-            pstmt.setLong(1, entry.getRoomID());
-            pstmt.setString(2, entry.getSender().toString());
-            pstmt.setString(3, entry.getNickname());
-            pstmt.setString(4, StringUtils.dateToMillis(entry.getDate()));
-            pstmt.setString(5, entry.getSubject());
-            pstmt.setString(6, entry.getBody());
-            pstmt.setString(7, entry.getStanza());
-            pstmt.executeUpdate();
+            con.setAutoCommit(false);
+
+            for(ConversationLogEntry entry : batch) {
+                pstmt.setLong(1, entry.getRoomID());
+                pstmt.setLong(2, SequenceManager.nextID(JiveConstants.MUC_MESSAGE_ID));
+                pstmt.setString(3, entry.getSender().toString());
+                pstmt.setString(4, entry.getNickname());
+                pstmt.setString(5, StringUtils.dateToMillis(entry.getDate()));
+                pstmt.setString(6, entry.getSubject());
+                pstmt.setString(7, entry.getBody());
+                pstmt.setString(8, entry.getStanza());
+                pstmt.addBatch();
+            }
+
+            pstmt.executeBatch();
+            con.commit();
             return true;
         }
         catch (SQLException sqle) {
-            Log.error("Error saving conversation log entry", sqle);
+            Log.error("Error saving conversation log batch", sqle);
+            if (con != null) {
+            	try {
+					con.rollback();
+				} catch (SQLException ignore) {}
+            }
             return false;
         }
         finally {

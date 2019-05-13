@@ -34,7 +34,7 @@
 <%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
-
+<%@ page import="java.util.Map" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -358,20 +358,31 @@
             } %>
         </td>
     </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.software_version"/>
-        </td>
-        <td>
-                <%
-                try { %>
-                <%= currentSess.getSoftwareVersion().get("name") %> / <%= currentSess.getSoftwareVersion().get("version") %> / <%= currentSess.getSoftwareVersion().get("os") %>
-                <% } catch (java.net.UnknownHostException e) { %>
-            Invalid session/connection
-                <% }
-             %>
-        </td>
-    </tr>
+    <% 
+        try { 
+            if(currentSess.getSoftwareVersion()!= null ){ %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.software_version"/>
+                    </td>
+                </tr>
+                <% 
+                for (Map.Entry<String, String> entry : currentSess.getSoftwareVersion().entrySet()){ %>
+                    <tr>
+                        <td class="c1">
+                            <%= entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)%>:
+                        </td>
+                        <td>
+                            <%= entry.getValue()%>
+                        </td>
+                    </tr>
+                <% 
+                }
+            }
+        } catch (java.net.UnknownHostException e) { %>
+                Invalid session/connection
+        <% }
+    %>
 </tbody>
 </table>
 </div>

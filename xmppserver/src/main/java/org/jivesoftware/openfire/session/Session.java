@@ -38,7 +38,7 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public interface Session extends RoutableChannelHandler {
-
+  
     /**
      * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
      */
@@ -48,7 +48,6 @@ public interface Session extends RoutableChannelHandler {
     int STATUS_CLOSED = -1;
     int STATUS_CONNECTED = 1;
     int STATUS_AUTHENTICATED = 3;
-    
     /**
       * Obtain the address of the user. The address is used by services like the core
       * server packet router to determine if a packet should be sent to the handler.
@@ -219,9 +218,9 @@ public interface Session extends RoutableChannelHandler {
     Locale getLanguage();
     
     /**
-     * Returns all software version as reported by the peer on this connection,
+     * Returns all Software Version data as reported by the peer on this connection,
      * as obtained through XEP-0092.
-     * @return The Software version information
+     * @return The Software Version information
      */
     Map<String,String> getSoftwareVersion();
 }

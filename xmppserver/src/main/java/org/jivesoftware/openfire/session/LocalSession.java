@@ -96,10 +96,9 @@ public abstract class LocalSession implements Session {
     private final Map<String, Object> sessionData = new HashMap<>();
 
     /**
-     * SoftwareVersion (XEP-0092) temporary data. All data stored in this <code>Map</code> disapear when session
-     * finishes.
+     * Software Version (XEP-0092) data as obtained from the peer on this connection.
      */
-    private final Map<String, String> softwareVersionData = new HashMap<>();
+    private Map<String, String> softwareVersionData = new HashMap<>();
 
     /**
      * XEP-0198 Stream Manager
@@ -526,33 +525,23 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-     * Retrieves SoftwareVersion data. This method gives access to temporary Software Version data only. You can
-     * Please see
-     * {@link #setSoftwareVersionData(String, String)}  description for more details.
-     *
+     * Retrieves Software Version data. This method gives access to temporary Software Version data only. 
      * @param key a <code>String</code> value of stored data ID.
-     * @return a <code>Map<String,String></code> value of data for given key.
-     * @see #setSoftwareVersionData(String, String)
+     * @return a <code>Map<String,String></code> value of data .
      */
     @Override
     public Map<String, String> getSoftwareVersion() {
-        synchronized (softwareVersionData) {
-            return softwareVersionData;
-        }
+return softwareVersionData; 
     }
 
     /**
-     * Saves given session data. Data are saved to temporary storage only and are accessible during
+     * Saves given session data. Data is saved to temporary storage only and is accessible during
      * this session life only and only from this session instance.
-     *
      * @param key a <code>String</code> value of stored data key ID.
-     * @param value a <code>Object</code> value of data stored in session.
-     * @see #getSoftwareVersionData(String)
+     * @param value a <code>String</code> value of data stored in session.
      */
     public void setSoftwareVersionData(String key, String value) {
-        synchronized (softwareVersionData) {
-            softwareVersionData.put(key, value);
-        }
+        softwareVersionData.put(key, value);
     }
 
 }

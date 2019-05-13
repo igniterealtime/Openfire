@@ -38,6 +38,7 @@ import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -326,10 +327,17 @@ public abstract class StanzaHandler {
         if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
             return new Roster(doc);
         }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
-            session.setSoftwareVersionData("name", query.element("name").getStringValue());
-            session.setSoftwareVersionData("version", query.element("version").getStringValue());
-            session.setSoftwareVersionData("os", query.element("os").getStringValue());
-            Log.info("LOG SESSION  SOFTWARE VERSION {}", session.getSoftwareVersion().toString());
+            try {
+                List<Element> elements =  query.elements();
+                if (elements.size() >0){
+                    for (Element element : elements){
+                        session.setSoftwareVersionData(element.getName(), element.getStringValue());
+                        Log.info("LOG SESSION  SOFTWARE VERSION {}", session.getSoftwareVersion().toString());
+                    }
+                }    
+            } catch (Exception e) {
+                Log.error(e.getMessage(), e);
+            }
             return new IQ(doc, !validateJIDs());
         }
         else {

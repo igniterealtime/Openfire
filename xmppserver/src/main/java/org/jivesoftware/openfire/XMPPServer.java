@@ -106,6 +106,7 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.session.SoftwareVersionManager;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.PacketDelivererImpl;
@@ -769,6 +770,7 @@ public class XMPPServer {
         loadModule(OfflineMessageStrategy.class.getName());
         loadModule(OfflineMessageStore.class.getName());
         loadModule(VCardManager.class.getName());
+        loadModule(SoftwareVersionManager.class.getName());
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());

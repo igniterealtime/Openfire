@@ -38,7 +38,6 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public interface Session extends RoutableChannelHandler {
-  
     /**
      * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
      */

@@ -35,6 +35,7 @@
 <%@ page import="org.jivesoftware.openfire.http.HttpConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.util.TreeMap" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -367,13 +368,14 @@
                     </td>
                 </tr>
                 <% 
-                for (Map.Entry<String, String> entry : currentSess.getSoftwareVersion().entrySet()){ %>
+                Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
+                for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
                     <tr>
                         <td class="c1">
-                            <%= entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)%>:
+                            <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
                         </td>
                         <td>
-                            <%= entry.getValue()%>
+                            <%= StringUtils.escapeHTMLTags(entry.getValue())%>
                         </td>
                     </tr>
                 <% 

@@ -365,7 +365,7 @@
 
 <br>
 <%  // Show Software Version if there is :
-    if (currentSess.getSoftwareVersion().size() >=1) {
+    if (!currentSess.getSoftwareVersion().isEmpty()) {
 %>
     <div class="jive-table">
         <table cellpadding="3" cellspacing="1" border="0" width="100%">
@@ -378,22 +378,18 @@
             </thead>
             <tbody>
                 <% 
-                try { 
-                        Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
-                        for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
-                            <tr>
-                                <td class="c1">
-                                    <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
-                                </td>
-                                <td>
-                                    <%= StringUtils.escapeHTMLTags(entry.getValue())%>
-                                </td>
-                            </tr>
-                        <% 
-                        }
-                } catch (java.net.UnknownHostException e) { %>
-                        Invalid session/connection
-                <% }
+                    Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
+                    for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
+                        <tr>
+                            <td class="c1">
+                                <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
+                            </td>
+                            <td>
+                                <%= StringUtils.escapeHTMLTags(entry.getValue())%>
+                            </td>
+                        </tr>
+                    <% 
+                    }
                 %>
             </tbody>
         </table>

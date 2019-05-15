@@ -525,12 +525,11 @@ public abstract class LocalSession implements Session {
 
     /**
      * Retrieves Software Version data. This method gives access to temporary Software Version data only. 
-     * @param key a <code>String</code> value of stored data ID.
-     * @return a <code>Map<String,String></code> value of data .
+     * @return a Map collection value of data .
      */
     @Override
     public Map<String, String> getSoftwareVersion() {
-return softwareVersionData; 
+        return softwareVersionData; 
     }
 
     /**

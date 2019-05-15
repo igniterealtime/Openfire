@@ -110,7 +110,6 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        Log.info("STANZA INCOMMING {}", stanza);
         boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
@@ -332,7 +331,6 @@ public abstract class StanzaHandler {
                 if (elements.size() >0){
                     for (Element element : elements){
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
-                        Log.info("LOG SESSION  SOFTWARE VERSION {}", session.getSoftwareVersion().toString());
                     }
                 }    
             } catch (Exception e) {

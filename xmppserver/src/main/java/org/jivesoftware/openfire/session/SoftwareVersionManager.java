@@ -18,12 +18,11 @@ package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventListener;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.xmpp.packet.IQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.dom4j.DocumentHelper;
-import org.dom4j.QName;
 
 /**
  * A SoftwareVersionManager is the main responsible for sending query to remote entity and 
@@ -71,16 +70,23 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
 
     @Override
     public void resourceBound(Session session) {
-        try {
-            IQ reply = new IQ(IQ.Type.get);
-            reply.setID(session.getStreamID().getID());
-            reply.setTo(session.getAddress());
-            reply.setFrom(session.getServerName());
-            reply.setChildElement(DocumentHelper.createElement(QName.get("query", "jabber:iq:version")));
-            session.process(reply);
-        } catch (Exception e) {
-            Log.error(e.getMessage(), e);;
-        }
+         // The server should not send requests to the client before the client session
+        // has been established (see IQSessionEstablishmentHandler). Sadly, Openfire
+        // does not provide a hook for this. For now, the resource bound event is
+        // used instead (which should be immediately followed by session establishment).
+        TaskEngine.getInstance().submit( () -> {
+            try {
+                Thread.sleep(5000); // Let time pass for the session establishment to have occurred.
+
+                IQ versionRequest = new IQ(IQ.Type.get);
+                versionRequest.setTo(session.getAddress());
+                versionRequest.setFrom(session.getServerName());
+                versionRequest.setChildElement("query", "jabber:iq:version");
+                session.process(versionRequest);
+            } catch (Exception e) {
+                Log.error("Exception while trying to query a client for its software version.", e);;
+            }
+        } );
         
     }
 

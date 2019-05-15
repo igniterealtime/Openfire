@@ -365,7 +365,7 @@
 
 <br>
 <%  // Show Software Version if there is :
-    if (currentSess.getSoftwareVersion().size() > 1) {
+    if (currentSess.getSoftwareVersion().size() >=1) {
 %>
     <div class="jive-table">
         <table cellpadding="3" cellspacing="1" border="0" width="100%">

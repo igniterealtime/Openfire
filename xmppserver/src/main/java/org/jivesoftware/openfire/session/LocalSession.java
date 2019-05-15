@@ -63,7 +63,6 @@ public abstract class LocalSession implements Session {
      * The Address this session is authenticated as.
      */
     private JID address;
-   
     /**
      * The stream id for this session (random and unique).
      */

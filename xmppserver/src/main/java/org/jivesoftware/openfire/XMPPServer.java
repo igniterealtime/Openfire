@@ -770,7 +770,6 @@ public class XMPPServer {
         loadModule(OfflineMessageStrategy.class.getName());
         loadModule(OfflineMessageStore.class.getName());
         loadModule(VCardManager.class.getName());
-        loadModule(SoftwareVersionManager.class.getName());
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());
@@ -805,6 +804,7 @@ public class XMPPServer {
         loadModule(IQMessageCarbonsHandler.class.getName());
         loadModule(CertificateStoreManager.class.getName());
         loadModule(EntityCapabilitiesManager.class.getName());
+        loadModule(SoftwareVersionManager.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started

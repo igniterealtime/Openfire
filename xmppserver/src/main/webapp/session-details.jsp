@@ -359,14 +359,20 @@
             } %>
         </td>
     </tr>
-    <% 
+</tbody>
+</table>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <thead>
+        <tr>
+            <th colspan="2">
+                <fmt:message key="session.details.software_version"/>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <% 
         try { 
             if(currentSess.getSoftwareVersion()!= null ){ %>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.software_version"/>
-                    </td>
-                </tr>
                 <% 
                 Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
                 for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
@@ -384,8 +390,8 @@
         } catch (java.net.UnknownHostException e) { %>
                 Invalid session/connection
         <% }
-    %>
-</tbody>
+        %>
+    </tbody>
 </table>
 </div>
 

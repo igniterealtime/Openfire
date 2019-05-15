@@ -361,40 +361,46 @@
     </tr>
 </tbody>
 </table>
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <thead>
-        <tr>
-            <th colspan="2">
-                <fmt:message key="session.details.software_version"/>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        <% 
-        try { 
-            if(currentSess.getSoftwareVersion()!= null ){ %>
-                <% 
-                Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
-                for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
-                    <tr>
-                        <td class="c1">
-                            <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
-                        </td>
-                        <td>
-                            <%= StringUtils.escapeHTMLTags(entry.getValue())%>
-                        </td>
-                    </tr>
-                <% 
-                }
-            }
-        } catch (java.net.UnknownHostException e) { %>
-                Invalid session/connection
-        <% }
-        %>
-    </tbody>
-</table>
 </div>
 
+<br>
+<%  // Show Software Version if there is :
+    if (currentSess.getSoftwareVersion().size() > 1) {
+%>
+    <div class="jive-table">
+        <table cellpadding="3" cellspacing="1" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th colspan="2">
+                        <fmt:message key="session.details.software_version"/>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% 
+                try { 
+                        Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
+                        for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
+                            <tr>
+                                <td class="c1">
+                                    <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
+                                </td>
+                                <td>
+                                    <%= StringUtils.escapeHTMLTags(entry.getValue())%>
+                                </td>
+                            </tr>
+                        <% 
+                        }
+                } catch (java.net.UnknownHostException e) { %>
+                        Invalid session/connection
+                <% }
+                %>
+            </tbody>
+        </table>
+    </div>
+<%  } %>
+
+<br>
 <%  // Show a list of multiple user sessions if there is more than 1 session:
     if (sessionCount > 1) {
 %>

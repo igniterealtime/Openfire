@@ -24,6 +24,7 @@ import org.xmpp.packet.Packet;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -215,11 +216,15 @@ public interface Session extends RoutableChannelHandler {
      * @return The language for the session.
      */
     Locale getLanguage();
-    
+
     /**
      * Returns all Software Version data as reported by the peer on this connection,
      * as obtained through XEP-0092.
-     * @return The Software Version information
+     *
+     * @return The Software Version information (never null, possibly empty)
      */
-    Map<String,String> getSoftwareVersion();
+    default Map<String, String> getSoftwareVersion()
+    {
+        return new HashMap<>();
+    }
 }

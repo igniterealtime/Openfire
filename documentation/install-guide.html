@@ -30,24 +30,30 @@ visit the Openfire website: <a href="http://www.igniterealtime.org/projects/open
 <h2>Installation</h2>
 <ul>
 <h3>Windows</h3>
-<p>Run the Openfire installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
+<p>Select Openfire installer that is better suiting you (with or without Java JRE, x86 or x64). Run the installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
 
-<p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder. If Openfire is running via launcher without Run as administrator option from Program files it can't get proper permissions to write changes. It shows errors (in red) when running the launcher and during the setup will require the current password for the administrator account (although this is a new installation and normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to initialize the database and other resources.</p>
- <p><b>Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so one don't need to run it as administrator manually.</b></p>
+<p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder. If Openfire is running via launcher without Run as administrator option from Program files, it can't get proper permissions to write changes. It shows errors (in red) when running the launcher and during the setup will require the current password for the administrator account (although this is a new installation and normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to initialize the database and other resources.</p>
+ <p><b>Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so one don't need to run it as administrator manually. But you shouldn't use the launcher, if the service is running. Because this will create a conflict.</b></p>
     
- <h3>Linux/Unix</h3>
+ <h3>Linux</h3>
  
- Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
+ <p>Choose one of the provided installers (x86 or x64, with or without Java JRE, rpm, deb or tar.gz).</p>
 
- <p><tt>rpm -ivh openfire_X_Y_Z.rpm</tt></p>
+    If using rpm, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
+        <p><tt>rpm -ivh openfire_X_Y_Z.rpm</tt></p>
 
- 
- If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
+ If using deb, run it to install Openfire to <tt>/usr/share/openfire</tt>:
+    <p><tt>dpkg -i openfire_X_Y_Z.deb</tt></p>
 
+ If using the tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
  <p><tt>tar -xzvf openfire_X_Y_Z.tar.gz<br>
  mv openfire /opt</tt></p>
 
- <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE 1.7.0 or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting <a href="http://www.java.com">java.com</a>.</p>
+    <h3>macOS</h3>
+    <p>Install Openfire using dmg installer. This should install Openfire into <tt>/usr/local/openfire</tt>. Then you can run it via cmd or with the launcher.</p>
+
+ <p><b>Note:</b> some Openfire installers do not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE installed on your system. Openfire 4.3 (also 4.2 and older versions) requires Java 8. Starting with 4.4 version Openfire also supports Java 11.
+     You can check your java version by typing "java -version" at the command line. We suggest using OpenJDK, which is usually provided as a package on Linux or you can download it for various platforms from <a href="https://adoptopenjdk.net/">AdoptOpenJDK</a>.</p>
 
   </ul>
 <h2>Setup Overview</h2>

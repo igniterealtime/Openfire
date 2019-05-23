@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,47 +19,25 @@ package org.jivesoftware.openfire.event;
 import org.jivesoftware.openfire.session.Session;
 
 /**
- * Interface to listen for  server session events. Use the
+ * Interface to listen for  server session events (s2s). Use the
  * {@link ServerSessionEventDispatcher#addListener(ServerSessionEventListener)}
  * method to register for events.
  *
- * @author Manasse Ngudia
+ * @author Manasse Ngudia <manasse@mnsuccess.com>
  */
 public interface ServerSessionEventListener {
 
     /**
-     * Notification event indicating that a user has authenticated with the server. The
-     * authenticated user is not an anonymous user.
-     *
-     * @param session the authenticated session of a non anonymous user.
+     * Notification event indicating that a server has connected with the server. 
+     * @param session the connected session of a server
      */
     void sessionCreated( Session session );
 
     /**
-     * An authenticated session of a non anonymous user was destroyed.
+     * A connected session of a server was destroyed.
      *
-     * @param session the authenticated session of a non anonymous user.
+     * @param session the connected session of  a server.
      */
     void sessionDestroyed( Session session );
 
-    /**
-     * Notification event indicating that an anonymous user has authenticated with the server.
-     *
-     * @param session the authenticated session of an anonymous user.
-     */
-    void anonymousSessionCreated( Session session );
-
-    /**
-     * An authenticated session of an anonymous user was destroyed.
-     *
-     * @param session the authenticated session of an anonymous user.
-     */
-    void anonymousSessionDestroyed( Session session );
-
-    /**
-     * A session has finished resource binding.
-     *
-     * @param session the session on which resource binding was performed.
-     */
-    void resourceBound( Session session );
 }

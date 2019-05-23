@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Dispatches session events (s2s). Each event has a {@link EventType type}
  *
- * @author Manasse Ngudia
+ * @author Manasse Ngudia <manasse@mnsuccess.com>
  */
 public class ServerSessionEventDispatcher {
 
@@ -78,18 +78,6 @@ public class ServerSessionEventDispatcher {
                         listener.sessionDestroyed(session);
                         break;
                     }
-                    case anonymous_session_created: {
-                      listener.anonymousSessionCreated(session);
-                      break;
-                    }
-                    case anonymous_session_destroyed: {
-                      listener.anonymousSessionDestroyed(session);
-                      break;
-                    }
-                    case resource_bound: {
-                      listener.resourceBound(session);
-                      break;
-                    }
                     default:
                         break;
                 }
@@ -114,20 +102,5 @@ public class ServerSessionEventDispatcher {
          * A session was destroyed
          */
         session_destroyed,
-        
-        /**
-         * An anonymous session was created.
-         */
-        anonymous_session_created,
-
-        /**
-         * A anonymous session was destroyed
-         */
-        anonymous_session_destroyed,
-
-        /**
-         * A resource was bound to the session.
-         */
-        resource_bound
     }
 }

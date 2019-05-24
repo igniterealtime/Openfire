@@ -155,7 +155,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             final Connection connection = (Connection) session.getAttribute( CONNECTION );
 
             // OF-1784: Don't write an error when the source problem is an issue with writing data.
-            if ( !(cause instanceof WriteException) ) {
+            if ( JiveGlobals.getBooleanProperty( "xmpp.skip-error-delivery-on-write-error.disable", false ) || !(cause instanceof WriteException) ) {
                 connection.deliverRawText( error.toXML() );
             }
         } finally {

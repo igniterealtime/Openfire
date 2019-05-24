@@ -19,12 +19,14 @@ package org.jivesoftware.openfire.nio;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.write.WriteException;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -151,7 +153,11 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             }
 
             final Connection connection = (Connection) session.getAttribute( CONNECTION );
-            connection.deliverRawText( error.toXML() );
+
+            // OF-1784: Don't write an error when the source problem is an issue with writing data.
+            if ( !(cause instanceof WriteException) ) {
+                connection.deliverRawText( error.toXML() );
+            }
         } finally {
             final Connection connection = (Connection) session.getAttribute( CONNECTION );
             if (connection != null) {

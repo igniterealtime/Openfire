@@ -38,6 +38,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
@@ -266,6 +267,8 @@ public class ServerDialback {
                     // Set the hostname as the address of the session
                     session.setAddress(new JID(null, remoteDomain, null));
                     log.debug( "Successfully created new outgoing session!" );
+                    // After the session has been created, inform all listeners as well.
+                    ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                     return session;
                 }
                 else {
@@ -395,7 +398,7 @@ public class ServerDialback {
                 if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     String hostname = doc.attributeValue("from");
                     String recipient = doc.attributeValue("to");
-                    Log.debug("ServerDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
+                    Log.debug("ServeDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
                     if (validateRemoteDomain(doc, streamID)) {
                         Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was successful.", hostname, recipient);
                         // Create a server Session for the remote server

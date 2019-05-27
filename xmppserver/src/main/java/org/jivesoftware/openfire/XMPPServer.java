@@ -107,6 +107,7 @@ import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.SoftwareVersionManager;
+import org.jivesoftware.openfire.session.SoftwareServerVersionManager;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.PacketDelivererImpl;
@@ -807,6 +808,7 @@ public class XMPPServer {
         loadModule(CertificateStoreManager.class.getName());
         loadModule(EntityCapabilitiesManager.class.getName());
         loadModule(SoftwareVersionManager.class.getName());
+        loadModule(SoftwareServerVersionManager.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started

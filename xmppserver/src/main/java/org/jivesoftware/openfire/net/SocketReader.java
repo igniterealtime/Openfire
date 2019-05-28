@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.net;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -366,6 +367,18 @@ public abstract class SocketReader implements Runnable {
         Element query = doc.element("query");
         if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
             return new Roster(doc);
+        }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
+            try {
+                List<Element> elements =  query.elements();
+                if (elements.size() >0){
+                    for (Element element : elements){
+                        session.setSoftwareVersionData(element.getName(), element.getStringValue());
+                    }
+                }    
+            } catch (Exception e) {
+                Log.error(e.getMessage(), e);
+            }
+            return new IQ(doc);
         }
         else {
             return new IQ(doc);

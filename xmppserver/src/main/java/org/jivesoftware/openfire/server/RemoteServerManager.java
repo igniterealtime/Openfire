@@ -25,6 +25,7 @@ import java.util.Collection;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
@@ -360,6 +361,8 @@ public class RemoteServerManager {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 Log.debug( "Closing session as a changed permission policy is taken into effect. Affected session: {}", session );
                 session.close();
+                // After the session has been close, inform all listeners as well.
+                ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_destroyed);
             }
         }
     }

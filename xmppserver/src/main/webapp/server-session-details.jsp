@@ -21,6 +21,7 @@
                  org.jivesoftware.openfire.session.OutgoingServerSession,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.text.NumberFormat"
     errorPage="error.jsp"
 %>
@@ -28,7 +29,10 @@
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Collection" %>
-
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.TreeMap" %>
+<%@ page import="org.slf4j.Logger" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -52,6 +56,7 @@
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
+    final Logger Log = LoggerFactory.getLogger("server-session-details.jsp");
 %>
 
 <html>
@@ -104,7 +109,7 @@
             if (!inSessions.isEmpty()) { %>
                 <%= inSessions.get(0).getHostAddress() %>
                 /
-                <%= inSessions.get(0).getHostName() %>
+                <%= inSessions.get(0).getHostName() %> 
             <% } else if (!outSessions.isEmpty()) { %>
                 <%= outSessions.get(0).getHostAddress() %>
                 /
@@ -117,7 +122,44 @@
     </tr>
 </tbody>
 </table>
+
 </div>
+<br>
+    <%  // Show Software Version if there is :
+       try {
+        if (!inSessions.get(0).getSoftwareVersion().isEmpty()) {
+    %>
+        <div class="jive-table">
+            <table cellpadding="3" cellspacing="1" border="0" width="100%">
+                <thead>
+                    <tr>
+                        <th colspan="2">
+                            <fmt:message key="session.details.software_version"/>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                        Map<String, String> treeMap = new TreeMap<String, String>(inSessions.get(0).getSoftwareVersion());
+                        for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
+                            <tr>
+                                <td class="c1">
+                                    <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
+                                </td>
+                                <td>
+                                    <%= StringUtils.escapeHTMLTags(entry.getValue())%>
+                                </td>
+                            </tr>
+                        <% 
+                        }
+                    %>
+                </tbody>
+            </table>
+        </div>
+    <%  } 
+    } catch (Exception e) { 
+       Log.error(e.getMessage(), e);
+    } %>
 <br>
 
 <%  // Show details of the incoming sessions

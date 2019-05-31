@@ -62,7 +62,9 @@ public abstract class Archiver<E> implements Runnable
     final List<ArchiveCandidate<E>> workQueue = Collections.synchronizedList(new ArrayList<>());
 
     /**
-     * @param queue Reference to the queue in which work is produced.
+     * Instantiates a new archiver.
+     *
+     * @param id A unique identifier for this archiver.
      * @param maxWorkQueueSize Do not add more than this amount of queries in a batch.
      * @param maxPurgeInterval Do not delay longer than this amount before storing data in the database.
      * @param gracePeriod Maximum amount of milliseconds to wait for 'more' work to arrive, before committing the batch.
@@ -157,7 +159,7 @@ public abstract class Archiver<E> implements Runnable
      * content) to a request for archived data. Such response should only be generated after all data that was
      * queued before the request arrived has been written to the database.
      *
-     * This method performs a cluster-wide check, unlike {@link #availabilityETAOnLocalNode(Duration)}.
+     * This method performs a cluster-wide check, unlike {@link #availabilityETAOnLocalNode(Instant)}.
      *
      * @param instant The timestamp of the data that should be available (cannot be null).
      * @return A period of time, zero when the requested data is already available.
@@ -184,9 +186,9 @@ public abstract class Archiver<E> implements Runnable
      * content) to a request for archived data. Such response should only be generated after all data that was
      * queued before the request arrived has been written to the database.
      *
-     * This method performs a check on the local cluster-node only, unlike {@link #logAvailabilityETA(Duration)}.
+     * This method performs a check on the local cluster-node only, unlike {@link #availabilityETA(Instant)}.
      *
-     * @param date A date (cannot be null).
+     * @param instant The timestamp of the data that should be available (cannot be null).
      * @return A period of time, zero when the requested data is already available.
      */
     public Duration availabilityETAOnLocalNode( final Instant instant )

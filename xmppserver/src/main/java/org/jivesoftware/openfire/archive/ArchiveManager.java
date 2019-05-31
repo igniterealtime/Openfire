@@ -106,7 +106,7 @@ public class ArchiveManager extends BasicModule
     /**
      * Stops and removes an exiting task. No-op when the provided task is not managed by this manager.
      *
-     * @param archiver The identifier of task to be added. Cannot be null.
+     * @param id The identifier of task to be added. Cannot be null.
      */
     public synchronized void remove( final String id )
     {

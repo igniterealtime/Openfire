@@ -16,14 +16,16 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.openfire.archive.ArchiveManager;
+import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.database.JiveID;
-import org.jivesoftware.util.JiveConstants;
 
 import java.util.Collection;
 import java.util.List;
@@ -227,8 +229,10 @@ public interface MultiUserChatService extends Component {
      * save on each run can be configured. See {@link #setLogConversationBatchSize(int)}.
      *
      * @param timeout the time to elapse between logging the room conversations.
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    void setLogConversationsTimeout(int timeout);
+    @Deprecated
+    default void setLogConversationsTimeout(int timeout) {}
 
     /**
      * Returns the time to elapse between logging the room conversations. A <code>TimerTask</code>
@@ -237,8 +241,9 @@ public interface MultiUserChatService extends Component {
      * save on each run can be configured. See {@link #getLogConversationBatchSize()}.
      *
      * @return the time to elapse between logging the room conversations.
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    int getLogConversationsTimeout();
+    default int getLogConversationsTimeout() { return 300000; }
 
     /**
      * Sets the number of messages to save to the database on each run of the logging process.
@@ -246,15 +251,21 @@ public interface MultiUserChatService extends Component {
      * recommended specifying a big number.
      *
      * @param size the number of messages to save to the database on each run of the logging process.
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    void setLogConversationBatchSize(int size);
+    @Deprecated
+    default void setLogConversationBatchSize(int size) {};
 
     /**
      * Returns the number of messages to save to the database on each run of the logging process.
      *
      * @return the number of messages to save to the database on each run of the logging process.
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    int getLogConversationBatchSize();
+    @Deprecated
+    default int getLogConversationBatchSize() { return 50; };
+
+    Archiver<?> getArchiver();
 
     /**
      * Obtain the server-wide default message history settings.

@@ -126,6 +126,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -802,6 +803,7 @@ public class XMPPServer {
         loadModule(InternalComponentManager.class.getName());
         loadModule(MultiUserChatManager.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
+        loadModule(ArchiveManager.class.getName());
         loadModule(CertificateStoreManager.class.getName());
         loadModule(EntityCapabilitiesManager.class.getName());
         loadModule(SoftwareVersionManager.class.getName());
@@ -1385,6 +1387,17 @@ public class XMPPServer {
      */
     public PubSubModule getPubSubModule() {
         return (PubSubModule) modules.get(PubSubModule.class);
+    }
+
+    /**
+     * Returns the <code>ArchiveManager</code> registered with this server. The
+     * <code>ArchiveManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>ArchiveManager</code> registered with this server.
+     */
+    public ArchiveManager getArchiveManager() {
+        return (ArchiveManager) modules.get(ArchiveManager.class);
     }
 
     /**

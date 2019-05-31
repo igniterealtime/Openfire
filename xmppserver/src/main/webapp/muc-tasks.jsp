@@ -22,6 +22,8 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.time.temporal.ChronoUnit" %>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -32,8 +34,9 @@
 <%  // Get parameters
     boolean kickEnabled = ParamUtils.getBooleanParameter(request,"kickEnabled");
     String idletime = ParamUtils.getParameter(request,"idletime");
-    String logfreq = ParamUtils.getParameter(request,"logfreq");
-    String logbatchsize = ParamUtils.getParameter(request,"logbatchsize");
+    String maxBatchSize = ParamUtils.getParameter(request,"maxbatchsize");
+    String maxBatchInterval = ParamUtils.getParameter(request,"maxbatchinterval");
+    String batchGrace = ParamUtils.getParameter(request,"batchgrace");
     boolean kickSettings = request.getParameter("kickSettings") != null;
     boolean logSettings = request.getParameter("logSettings") != null;
     boolean kickSettingSuccess = request.getParameter("kickSettingSuccess") != null;
@@ -103,35 +106,50 @@
     // Handle an update of the log conversations task settings
     if (logSettings) {
         // do validation
-        if (logfreq == null) {
-            errors.put("logfreq","logfreq");
+        if (maxBatchSize == null) {
+            errors.put("maxBatchSize","maxBatchSize");
         }
-        if (logbatchsize == null) {
-            errors.put("logbatchsize","logbatchsize");
+        if (maxBatchInterval == null) {
+            errors.put("maxBatchInterval","maxBatchInterval");
         }
-        int frequency = 0;
-        int batchSize = 0;
+        if (batchGrace == null) {
+            errors.put("batchGrace","batchGrace");
+        }
+        int size = mucService.getArchiver().getMaxWorkQueueSize();
+        Duration batchInterval = mucService.getArchiver().getMaxPurgeInterval();
+        Duration batchGracePeriod = mucService.getArchiver().getGracePeriod();
         // Try to obtain an int from the provided strings
         if (errors.size() == 0) {
             try {
-                frequency = Integer.parseInt(logfreq) * 1000;
+                size = Integer.parseInt(maxBatchSize);
             }
             catch (NumberFormatException e) {
-                errors.put("logfreq","logfreq");
+                errors.put("maxBatchSize","maxBatchSize");
             }
             try {
-                batchSize = Integer.parseInt(logbatchsize);
+                batchInterval = Duration.ofMillis( Long.parseLong(maxBatchInterval) );
             }
             catch (NumberFormatException e) {
-                errors.put("logbatchsize","logbatchsize");
+                errors.put("maxBatchInterval","maxBatchInterval");
+            }
+            try {
+                batchGracePeriod = Duration.ofMillis( Long.parseLong(batchGrace) );
+            }
+            catch (NumberFormatException e) {
+                errors.put("batchGrace","batchGrace");
+            }
+
+            if ( batchGracePeriod.compareTo( batchInterval ) > 0 ) {
+                errors.put("batchGrace","largerThanBatchInterval");
             }
         }
 
         if (errors.size() == 0) {
-            mucService.setLogConversationsTimeout(frequency);
-            mucService.setLogConversationBatchSize(batchSize);
+            mucService.getArchiver().setMaxWorkQueueSize( size );
+            mucService.getArchiver().setMaxPurgeInterval( batchInterval );
+            mucService.getArchiver().setGracePeriod( batchGracePeriod );
             // Log the event
-            webManager.logEvent("edited muc conversation log settings for service "+mucname, "timeout = "+frequency+"\nbatchSize = "+batchSize);
+            webManager.logEvent("edited muc conversation log settings for service "+mucname, "maxBatchSize = "+maxBatchSize+"\nmaxBatchInterval = "+maxBatchInterval+"\nbatchGrace = "+batchGrace);
             response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
@@ -177,19 +195,20 @@
 
 <% if (errors.size() != 0) {  %>
 
-   <table class="jive-error-message" cellpadding="3" cellspacing="0" border="0" width="350"> <tr valign="top">
+    <table class="jive-error-message" cellpadding="3" cellspacing="0" border="0" width="350"> <tr valign="top">
     <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
     <td width="99%" class="jive-error-text">
 
         <% if (errors.get("idletime") != null) { %>
-                <fmt:message key="muc.tasks.valid_idel_minutes" />
-        <% }
-           else if (errors.get("logfreq") != null) { %>
-                <fmt:message key="muc.tasks.valid_frequency" />
-        <%  }
-            else if (errors.get("logbatchsize") != null) { %>
-                <fmt:message key="muc.tasks.valid_batch" />
-            <%  } %>
+            <fmt:message key="muc.tasks.valid_idel_minutes" />
+        <% } else if (errors.get("maxBatchSize") != null) { %>
+            <fmt:message key="muc.tasks.valid_batchsize" />
+        <% } else if (errors.get("maxBatchInterval") != null) { %>
+            <fmt:message key="muc.tasks.valid_batchinterval" />
+        <% } else if (errors.get("batchGrace") != null) { %>
+            <fmt:message key="muc.tasks.valid_batchgrace" />
+        <%  } %>
+
     </td>
     </tr>
     </table><br>
@@ -223,7 +242,7 @@
                 </td>
                 <td width="99%">
                         <label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
-                         <input type="text" name="idletime" size="5" maxlength="5"
+                         <input type="number" name="idletime" size="5" maxlength="5"
                              onclick="this.form.kickEnabled[1].checked=true;"
                              value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
                          <fmt:message key="global.minutes" />.
@@ -250,20 +269,29 @@
         <table cellpadding="3" cellspacing="0" border="0" >
         <tr valign="middle">
             <td width="1%" nowrap class="c1">
-                <fmt:message key="muc.tasks.flush" />
+                <fmt:message key="muc.tasks.maxbatchsize" />
             </td>
             <td width="99%">
-                <input type="text" name="logfreq" size="15" maxlength="50"
-                 value="<%= mucService.getLogConversationsTimeout() / 1000 %>">
+                <input type="number" name="maxbatchsize" size="15" maxlength="50" min="1"
+                       value="<%= mucService.getArchiver().getMaxWorkQueueSize() %>">
             </td>
         </tr>
         <tr valign="middle">
             <td width="1%" nowrap class="c1">
-                <fmt:message key="muc.tasks.batch" />
+                <fmt:message key="muc.tasks.maxbatchinterval" />
             </td>
             <td width="99%">
-                <input type="text" name="logbatchsize" size="15" maxlength="50"
-                 value="<%= mucService.getLogConversationBatchSize() %>">
+                <input type="number" name="maxbatchinterval" size="15" maxlength="50" min="0"
+                 value="<%= mucService.getArchiver().getMaxPurgeInterval().toMillis() %>">
+            </td>
+        </tr>
+        <tr valign="middle">
+            <td width="1%" nowrap class="c1">
+                <fmt:message key="muc.tasks.batchgrace" />
+            </td>
+            <td width="99%">
+                <input type="number" name="batchgrace" size="15" maxlength="50" min="0"
+                       value="<%= mucService.getArchiver().getGracePeriod().toMillis() %>">
             </td>
         </tr>
         </table>

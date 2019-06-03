@@ -155,6 +155,11 @@ public abstract class Archiver<E> implements Runnable
      * Returns an estimation on how long it takes for all data that arrived before a certain instant will have become
      * available in the data store. When data is immediately available, 'zero', is returned;
      *
+     * Beware: implementations are free to apply a low-effort mechanism to determine a non-zero estimate. Notably,
+     * an implementation can choose to not obtain ETAs from individual cluster nodes, when the local cluster node
+     * is reporting a non-zero ETA. However, a return value of 'zero' must be true for the entire cluster (and is,
+     * in effect, not an 'estimate', but a matter of fact.
+     *
      * This method is intended to be used to determine if it's safe to construct an answer (based on database
      * content) to a request for archived data. Such response should only be generated after all data that was
      * queued before the request arrived has been written to the database.

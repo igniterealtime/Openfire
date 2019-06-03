@@ -153,7 +153,7 @@ public abstract class SocketReader implements Runnable {
         if (doc == null) {
             return;
         }
-
+       
         String tag = doc.getName();
         if ("message".equals(tag)) {
             Message packet;
@@ -368,17 +368,20 @@ public abstract class SocketReader implements Runnable {
         if (query != null && "jabber:iq:roster".equals(query.getNamespaceURI())) {
             return new Roster(doc);
         }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
-            try {
-                List<Element> elements =  query.elements();
-                if (elements.size() >0){
-                    for (Element element : elements){
-                        session.setSoftwareVersionData(element.getName(), element.getStringValue());
-                    }
-                }    
-            } catch (Exception e) {
-                Log.error(e.getMessage(), e);
+            IQ iq = new IQ(doc);
+            if (iq.getType().equals(IQ.Type.result) && !iq.getFrom().toString().contains("@")){
+                try {
+                    List<Element> elements =  query.elements();
+                    if (elements.size() >0){
+                        for (Element element : elements){
+                            session.setSoftwareVersionData(element.getName(), element.getStringValue());
+                        }
+                    }    
+                } catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }  
             }
-            return new IQ(doc);
+            return iq;
         }
         else {
             return new IQ(doc);

@@ -109,7 +109,7 @@
             if (!inSessions.isEmpty()) { %>
                 <%= inSessions.get(0).getHostAddress() %>
                 /
-                <%= inSessions.get(0).getHostName() %> 
+                <%= inSessions.get(0).getHostName() %>
             <% } else if (!outSessions.isEmpty()) { %>
                 <%= outSessions.get(0).getHostAddress() %>
                 /
@@ -158,8 +158,9 @@
         </div>
     <%  } 
     } catch (Exception e) { 
-       Log.error(e.getMessage(), e);
-    } %>
+       Log.error(e.getMessage(), e);%>
+        Invalid session/connection
+    <%} %>
 <br>
 
 <%  // Show details of the incoming sessions

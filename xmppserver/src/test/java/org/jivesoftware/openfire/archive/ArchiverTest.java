@@ -60,7 +60,7 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, 1 );
 
             assertFalse( archiver.store.isEmpty() );
-            final Duration timeUntilLogged = Duration.between( archiver.started, archiver.store.get( 1 ) );
+            final Duration timeUntilLogged = Duration.between( archiver.getStarted(), archiver.store.get( 1 ) );
             assertTrue( timeUntilLogged.compareTo( gracePeriod ) >= 0 );
             assertTrue( timeUntilLogged.compareTo( maxPurgeInterval ) < 0 ); // this needs not be entirely true (due to garbage collection, etc), but is a fair assumption.
         }
@@ -97,7 +97,7 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, 1 );
 
             assertFalse( archiver.store.isEmpty() );
-            final Duration timeUntilLogged = Duration.between( archiver.started, archiver.store.get( 1 ) );
+            final Duration timeUntilLogged = Duration.between( archiver.getStarted(), archiver.store.get( 1 ) );
             assertTrue( timeUntilLogged.compareTo( gracePeriod ) >= 0 );
         }
         finally
@@ -140,8 +140,8 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, 2 );
 
             assertFalse( archiver.store.isEmpty() );
-            assertEquals( 1, archiver.batches.size() );
-            final List<Integer> firstBatch = archiver.batches.get(0).data;
+            assertEquals( 1, archiver.getBatches().size() );
+            final List<Integer> firstBatch = archiver.getBatches().get(0).data;
             assertEquals( 2, firstBatch.size() );
             assertEquals( 1, (long) firstBatch.get( 0 ) );
             assertEquals( 2, (long) firstBatch.get( 1 ) );
@@ -181,9 +181,9 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, 2 );
 
             assertFalse( archiver.store.isEmpty() );
-            assertEquals( 2, archiver.batches.size() );
-            final List<Integer> firstBatch = archiver.batches.get(0).data;
-            final List<Integer> secondBatch = archiver.batches.get(1).data;
+            assertEquals( 2, archiver.getBatches().size() );
+            final List<Integer> firstBatch = archiver.getBatches().get(0).data;
+            final List<Integer> secondBatch = archiver.getBatches().get(1).data;
             assertEquals( 1, firstBatch.size() );
             assertEquals( 1, (long) firstBatch.get( 0 ) );
             assertEquals( 1, secondBatch.size() );
@@ -228,9 +228,9 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, 2 );
 
             assertFalse( archiver.store.isEmpty() );
-            assertEquals( 2, archiver.batches.size() );
-            final List<Integer> firstBatch = archiver.batches.get(0).data;
-            final List<Integer> secondBatch = archiver.batches.get(1).data;
+            assertEquals( 2, archiver.getBatches().size() );
+            final List<Integer> firstBatch = archiver.getBatches().get(0).data;
+            final List<Integer> secondBatch = archiver.getBatches().get(1).data;
             assertEquals( 1, firstBatch.size() );
             assertEquals( 1, (long) firstBatch.get( 0 ) );
             assertEquals( 1, secondBatch.size() );
@@ -272,9 +272,9 @@ public class ArchiverTest
             waitUntilArchivingIsDone( archiver, i );
 
             assertFalse( archiver.store.isEmpty() );
-            assertTrue(  archiver.batches.size() > 1 );
-            final List<Integer> firstBatch = archiver.batches.get(0).data;
-            final List<Integer> secondBatch = archiver.batches.get(1).data;
+            assertTrue(  archiver.getBatches().size() > 1 );
+            final List<Integer> firstBatch = archiver.getBatches().get(0).data;
+            final List<Integer> secondBatch = archiver.getBatches().get(1).data;
             assertFalse( firstBatch.isEmpty() );
             assertFalse( secondBatch.isEmpty() );
         }
@@ -308,9 +308,9 @@ public class ArchiverTest
      */
     static class DummyArchiver extends Archiver<Integer>
     {
-        final Map<Integer, Instant> store = new HashMap<>();
-        final List<Batch> batches = new ArrayList<>( );
-        Instant started;
+        private final Map<Integer, Instant> store = new HashMap<>();
+        private final List<Batch> batches = new ArrayList<>( );
+        private Instant started;
 
         protected DummyArchiver( final String id, final int maxWorkQueueSize, final Duration maxPurgeInterval, final Duration gracePeriod )
         {
@@ -320,12 +320,23 @@ public class ArchiverTest
         @Override
         public void run()
         {
-            started=Instant.now();
+            synchronized ( this ) {
+                started = Instant.now();
+            }
             super.run();
         }
 
+        public synchronized Instant getStarted() {
+            return started;
+        }
+
+        public synchronized List<Batch> getBatches()
+        {
+            return batches;
+        }
+
         @Override
-        protected void store( final List<Integer> batch )
+        protected synchronized void store( final List<Integer> batch )
         {
             final Instant now = Instant.now();
             batch.forEach( integer -> store.put( integer, now ) );

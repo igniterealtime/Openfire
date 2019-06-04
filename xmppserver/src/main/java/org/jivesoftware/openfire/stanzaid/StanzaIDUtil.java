@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -112,5 +113,47 @@ public class StanzaIDUtil
         }
 
         return result;
+    }
+
+    /**
+     * Returns the first stable and unique stanza-id value from the packet, that is defined
+     * for a particular 'by' value.
+     *
+     * This method does not evaluate 'origin-id' elements in the packet.
+     *
+     * @param packet The stanza (cannot be null).
+     * @param by The 'by' value for which to return the ID (cannot be null or an empty string).
+     * @return The unique and stable ID, or null if no such ID is found.
+     */
+    public static UUID parseUniqueAndStableStanzaID( final Packet packet, final String by )
+    {
+        if ( packet == null )
+        {
+            throw new IllegalArgumentException( "Argument 'packet' cannot be null." );
+        }
+        if ( by == null || by.isEmpty() )
+        {
+            throw new IllegalArgumentException( "Argument 'by' cannot be null or an empty string." );
+        }
+
+        final List<Element> sids = packet.getElement().elements( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        if ( sids == null )
+        {
+            return null;
+        }
+
+        for ( final Element sid : sids )
+        {
+            if ( by.equals( sid.attributeValue( "by" ) ) )
+            {
+                final String result = sid.attributeValue( "id" );
+                if ( result != null && !result.isEmpty() )
+                {
+                    return UUID.fromString( result );
+                }
+            }
+        }
+
+        return null;
     }
 }

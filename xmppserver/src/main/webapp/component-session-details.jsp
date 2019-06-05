@@ -24,7 +24,12 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.text.NumberFormat" %>
-
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Collection" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.TreeMap" %>
+<%@ page import="org.slf4j.Logger" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -49,6 +54,7 @@
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
+    final Logger Log = LoggerFactory.getLogger("component-session-details.jsp");
 %>
 
 <html>
@@ -166,7 +172,43 @@
 </table>
 </div>
 <br>
-
+    <%  // Show Software Version if there is :
+       try {
+        if (!componentSession.getSoftwareVersion().isEmpty()) {
+    %>
+        <div class="jive-table">
+            <table cellpadding="3" cellspacing="1" border="0" width="100%">
+                <thead>
+                    <tr>
+                        <th colspan="2">
+                            <fmt:message key="session.details.software_version"/>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                        Map<String, String> treeMap = new TreeMap<String, String>(componentSession.getSoftwareVersion());
+                        for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
+                            <tr>
+                                <td class="c1">
+                                    <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
+                                </td>
+                                <td>
+                                    <%= StringUtils.escapeHTMLTags(entry.getValue())%>
+                                </td>
+                            </tr>
+                        <% 
+                        }
+                    %>
+                </tbody>
+            </table>
+        </div>
+    <%  } 
+    } catch (Exception e) { 
+       Log.error(e.getMessage(), e);%>
+        Invalid session/connection
+    <%} %>
+<br>
 <form action="component-session-details.jsp">
 <center>
 <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">

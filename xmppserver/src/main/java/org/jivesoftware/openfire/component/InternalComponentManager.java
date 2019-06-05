@@ -209,7 +209,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                 if (isNewComponentRoute) {
                     // Send a SoftwareVersion (xep-0092) request to the new component. If the component provides information
                     // then it will be added to the sesssion for that component.
-                    SendSoftwareVersion( component, componentJID );
+                    sendSoftwareVersion( component, componentJID );
                 }
                 Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
             }
@@ -537,7 +537,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
      * @param component the new component that was added to this manager.
      * @param componentJID the XMPP address of the new component.
      */
-    private void SendSoftwareVersion(Component component, JID componentJID) {
+    private void sendSoftwareVersion(Component component, JID componentJID) {
         // Build a "jabber:iq:version" request that will be sent to the component
         IQ iq = new IQ(IQ.Type.get);
         iq.setFrom(getAddress());

@@ -208,7 +208,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                 }
                 if (isNewComponentRoute) {
                     // Send a SoftwareVersion (xep-0092) request to the new component. If the component provides information
-                    // then it will be added to the list of discoverable server items.
+                    // then it will be added to the sesssion for that component.
                     SendSoftwareVersion( component, componentJID );
                 }
                 Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
@@ -532,7 +532,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
 
     /**
      *  Send a SoftwareVersion request to the new component. If the component provides information
-     *  then it will be added to the list of discoverable server items.
+     *  then it will be added to the  session of current component.
      *
      * @param component the new component that was added to this manager.
      * @param componentJID the XMPP address of the new component.

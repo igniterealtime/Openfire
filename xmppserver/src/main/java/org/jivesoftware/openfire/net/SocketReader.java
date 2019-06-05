@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -369,7 +370,7 @@ public abstract class SocketReader implements Runnable {
             return new Roster(doc);
         }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
             IQ iq = new IQ(doc);
-            if (iq.getType().equals(IQ.Type.result) && !iq.getFrom().toString().contains("@")){
+            if (iq.getType().equals(IQ.Type.result) && !iq.getFrom().toString().contains("@") && !(StringUtils.countMatches(iq.getFrom().toString(),".")>1)){
                 try {
                     List<Element> elements =  query.elements();
                     if (elements.size() >0){

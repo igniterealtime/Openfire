@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.component;
 
 import org.dom4j.Element;
+import org.eclipse.jetty.server.Authentication.SendSuccess;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -24,6 +25,7 @@ import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
+import org.jivesoftware.openfire.session.LocalComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -203,6 +205,11 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                     // Send a disco#info request to the new component. If the component provides information
                     // then it will be added to the list of discoverable server items.
                     checkDiscoSupport( component, componentJID );
+                }
+                if (isNewComponentRoute) {
+                    // Send a SoftwareVersion (xep-0092) request to the new component. If the component provides information
+                    // then it will be added to the list of discoverable server items.
+                    SendSoftwareVersion( component, componentJID );
                 }
                 Log.debug("InternalComponentManager: Component registered for domain: " + subdomain);
             }
@@ -523,6 +530,25 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
         component.processPacket(iq);
     }
 
+    /**
+     *  Send a SoftwareVersion request to the new component. If the component provides information
+     *  then it will be added to the list of discoverable server items.
+     *
+     * @param component the new component that was added to this manager.
+     * @param componentJID the XMPP address of the new component.
+     */
+    private void SendSoftwareVersion(Component component, JID componentJID) {
+        // Build a "jabber:iq:version" request that will be sent to the component
+        IQ iq = new IQ(IQ.Type.get);
+        iq.setFrom(getAddress());
+        iq.setTo(componentJID);
+        iq.setChildElement("query", "jabber:iq:version");
+        // Send the "jabber:iq:version" request to the component. The reply (if any) will be processed in
+        // #process(Packet) or org.jivesoftware.openfire.net.ComponentStanzaHandler#rocessIQ(Packet)
+        //sendPacket(component, iq);
+        component.processPacket(iq);
+    }
+
     @Override
     public JID getAddress() {
         return serviceAddress;
@@ -577,6 +603,27 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                         notifyComponentInfo(iq);
                         // Alert other cluster nodes
                         CacheFactory.doClusterTask(new NotifyComponentInfo(iq));
+                    }else if ("query".equals(childElement.getQName().getName()) && "jabber:iq:version".equals(namespace)) {
+                        try {
+                            List<Element> elements =  childElement.elements();
+                            for (Component component : components) {
+                                if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                    LocalComponentSession.LocalExternalComponent externalComponent =
+                                            ( LocalComponentSession.LocalExternalComponent) component;
+                                    LocalComponentSession session = externalComponent.getSession();
+                                    if(session != null && session.getAddress() == iq.getFrom()){
+                                        if (elements.size() >0){
+                                            for (Element element : elements){
+                                                session.setSoftwareVersionData(element.getName(), element.getStringValue());
+                                            }
+                                        } 
+                                    }    
+
+                                }
+                            }  
+                        } catch (Exception e) {
+                            Log.error(e.getMessage(), e);
+                        }
                     }
                 }
             }

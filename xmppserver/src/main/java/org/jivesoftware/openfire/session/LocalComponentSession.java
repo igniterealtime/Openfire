@@ -425,5 +425,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
                 iqs.put(iq.getID(), this);
             }
         }
+        /**
+         * @return the session
+         */
+        public LocalComponentSession getSession() {
+            return session;
+        }
     }
 }

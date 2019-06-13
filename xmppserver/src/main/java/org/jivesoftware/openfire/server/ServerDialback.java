@@ -398,7 +398,7 @@ public class ServerDialback {
                 if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     String hostname = doc.attributeValue("from");
                     String recipient = doc.attributeValue("to");
-                    Log.debug("ServeDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
+                    Log.debug("ServerDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
                     if (validateRemoteDomain(doc, streamID)) {
                         Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was successful.", hostname, recipient);
                         // Create a server Session for the remote server

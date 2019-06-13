@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A SoftwareServerVersionManager is the main responsible for sending query to remote entity and 
  * Obtain software information from the remote entity server using XEP-0092 .
- * @author Manasse Ngudia <manasse@mnsuccess.com>
+ * @author Manasse Ngudia manasse@mnsuccess.com
  */
 public class SoftwareServerVersionManager extends BasicModule implements ServerSessionEventListener {
     private static final Logger Log = LoggerFactory.getLogger(SoftwareServerVersionManager.class);

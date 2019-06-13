@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Dispatches session events (s2s). Each event has a {@link EventType type}
  *
- * @author Manasse Ngudia <manasse@mnsuccess.com>
+ * @author Manasse Ngudia manasse@mnsuccess.com
  */
 public class ServerSessionEventDispatcher {
 

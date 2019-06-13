@@ -23,7 +23,7 @@ import org.jivesoftware.openfire.session.Session;
  * {@link ServerSessionEventDispatcher#addListener(ServerSessionEventListener)}
  * method to register for events.
  *
- * @author Manasse Ngudia <manasse@mnsuccess.com>
+ * @author Manasse Ngudia manasse@mnsuccess.com
  */
 public interface ServerSessionEventListener {
 

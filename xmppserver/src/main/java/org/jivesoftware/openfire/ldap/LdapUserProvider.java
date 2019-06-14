@@ -61,7 +61,9 @@ public class LdapUserProvider implements UserProvider {
     private LdapManager manager;
     private Map<String, String> searchFields;
     private int userCount = -1;
-    private long expiresStamp = System.currentTimeMillis();
+    private long userCountExpiresStamp = System.currentTimeMillis();
+    private transient List<String> allUsernames = null;
+    private long allUserNamesExpiresStamp = System.currentTimeMillis();
 
     public LdapUserProvider() {
         // Convert XML based provider setup to Database based
@@ -195,20 +197,23 @@ public class LdapUserProvider implements UserProvider {
     @Override
     public int getUserCount() {
         // Cache user count for 5 minutes.
-        if (userCount != -1 && System.currentTimeMillis() < expiresStamp) {
+        if (userCount != -1 && System.currentTimeMillis() < userCountExpiresStamp ) {
             return userCount;
         }
         this.userCount = manager.retrieveListCount(
                 manager.getUsernameField(),
                 MessageFormat.format(manager.getSearchFilter(), "*")
         );
-        this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        this.userCountExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
         return this.userCount;
     }
 
     @Override
     public Collection<String> getUsernames() {
-        return manager.retrieveList(
+        if ( allUsernames != null && System.currentTimeMillis() < allUserNamesExpiresStamp ) {
+            return allUsernames;
+        }
+        this.allUsernames = manager.retrieveList(
                 manager.getUsernameField(),
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 -1,
@@ -216,6 +221,8 @@ public class LdapUserProvider implements UserProvider {
                 null,
                 true
         );
+        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        return this.allUsernames;
     }
     
     @Override

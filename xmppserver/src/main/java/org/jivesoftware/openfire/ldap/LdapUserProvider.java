@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
@@ -210,6 +211,7 @@ public class LdapUserProvider implements UserProvider {
 
     @Override
     public Collection<String> getUsernames() {
+        // Cache usernames for 5 minutes.
         if ( allUsernames != null && System.currentTimeMillis() < allUserNamesExpiresStamp ) {
             return allUsernames;
         }
@@ -221,13 +223,24 @@ public class LdapUserProvider implements UserProvider {
                 null,
                 true
         );
+
+        // When all usernames have been fetched, we can update various other cached values.
+        this.userCount = this.allUsernames.size();
         this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
         return this.allUsernames;
     }
     
     @Override
     public Collection<User> getUsers() {
-        return getUsers(-1, -1);
+        final Collection<User> users = getUsers( -1, -1 );
+
+        // When all user have been fetched, we can update various other cached values.
+        this.allUsernames = users.stream().map( User::getUsername ).collect( Collectors.toList() );
+        this.userCount = this.allUsernames.size();
+        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
+        return users;
     }
 
     @Override

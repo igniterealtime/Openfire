@@ -481,7 +481,7 @@
         <table width="80%" cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td width="1%">
-                    <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""} onClick="toggleReadOnly();">
+                    <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""} onClick="toggleReadOnly();">
                 </td>
                 <td width="99%">
                     <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
@@ -489,7 +489,7 @@
             </tr>
             <tr>
                 <td width="1%" valign="top">
-                    <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"} onClick="toggleReadOnly();"">
+                    <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"} onClick="toggleReadOnly();"">
                 </td>
                 <td width="99%">
                     <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>

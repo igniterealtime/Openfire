@@ -32,6 +32,8 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -74,6 +76,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
              "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
              "WHERE username=? ORDER BY ofRosterGroups.rosterID, %s";
 
+    private final Cache<String, LinkedList<RosterItem>> rosterItemCache = CacheFactory.createCache( "RosterItems" );
+
     /* (non-Javadoc)
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
      */
@@ -84,6 +88,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
+            rosterItemCache.remove( username );
+
             long rosterID = SequenceManager.nextID(JiveConstants.ROSTER);
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(CREATE_ROSTER_ITEM);
@@ -118,6 +124,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
         PreparedStatement pstmt = null;
         long rosterID = item.getID();
         try {
+            rosterItemCache.remove( username );
+
             con = DbConnectionManager.getConnection();
             // Update existing roster item
             pstmt = con.prepareStatement(UPDATE_ROSTER_ITEM);
@@ -154,6 +162,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
+            rosterItemCache.remove( username );
+
             con = DbConnectionManager.getConnection();
             // Remove roster groups
             pstmt = con.prepareStatement(DELETE_ROSTER_ITEM_GROUPS);
@@ -236,6 +246,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
      */
     @Override
     public Iterator<RosterItem> getItems(String username) {
+        final LinkedList<RosterItem> cachedValue = rosterItemCache.get( username );
+        if ( cachedValue != null ) {
+            return cachedValue.iterator();
+        }
         LinkedList<RosterItem> itemList = new LinkedList<>();
         Map<Long, RosterItem> itemsByID = new HashMap<>();
         Connection con = null;
@@ -277,6 +291,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
                     itemsByID.get(rs.getLong(1)).getGroups().add(rs.getString(2));
                 }
             }
+
+            rosterItemCache.put( username, itemList );
         }
         catch (SQLException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

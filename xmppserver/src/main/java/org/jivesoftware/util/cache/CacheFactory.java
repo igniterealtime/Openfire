@@ -102,6 +102,7 @@ public class CacheFactory {
         cacheNames.put("Privacy Lists", "listsCache");
         cacheNames.put("Remote Users Existence", "remoteUsersCache");
         cacheNames.put("Roster", "username2roster");
+        cacheNames.put("RosterItems", "username2rosterItems");
         cacheNames.put("User", "userCache");
         cacheNames.put("Locked Out Accounts", "lockOutCache");
         cacheNames.put("VCard", "vcardCache");
@@ -147,6 +148,8 @@ public class CacheFactory {
         cacheProps.put("cache.groupMeta.maxLifetime", JiveConstants.MINUTE * 15);
         cacheProps.put("cache.username2roster.size", 1024 * 1024l);
         cacheProps.put("cache.username2roster.maxLifetime", JiveConstants.MINUTE * 30);
+        cacheProps.put("cache.username2rosterItems.size", 1024 * 1024l);
+        cacheProps.put("cache.username2rosterItems.maxLifetime", JiveConstants.MINUTE * 10);
         cacheProps.put("cache.javascript.size", 128 * 1024l);
         cacheProps.put("cache.javascript.maxLifetime", 3600 * 24 * 10l);
         cacheProps.put("cache.ldap.size", 512 * 1024l);

@@ -203,19 +203,18 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     }
 
                     if (type == Presence.Type.subscribed) {
-                        // Send the presence of the local user to the remote user. The remote user
-                        // subscribed to the presence of the local user and the local user accepted
+                        // Send the presence of the newly subscribed contact to the subscribee, by doing a presence probe.
                         JID prober = localServer.isLocal(recipientJID) ? recipientJID.asBareJID() : recipientJID;
-                        if (presenceManager.canProbePresence(prober, senderJID.getNode())){
-                            presenceManager.probePresence(prober, senderJID);
-                            PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
-                        }
-                        else {
+                        if (localServer.isLocal(senderJID) && !presenceManager.canProbePresence(prober, senderJID.getNode())){
                             Presence nonProbablePresence = new Presence();
                             nonProbablePresence.setStatus("unavailable");
                             nonProbablePresence.setFrom(senderJID);
                             nonProbablePresence.setTo(recipientJID);
                             presenceManager.handleProbe(nonProbablePresence);
+                        }
+                        else {
+                            presenceManager.probePresence(prober, senderJID);
+                            PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
                         }
                     }
                 }

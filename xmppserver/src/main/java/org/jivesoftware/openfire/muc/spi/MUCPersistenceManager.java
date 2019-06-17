@@ -1113,11 +1113,12 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name) {    	
-        final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
-        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
-        if (oldProps != null) {
-            return oldProps.get(name);
+        final MUCServiceProperties cachedProps = propertyMaps.get(subdomain);
+        if (cachedProps != null) {
+            return cachedProps.get(name);
         } else {
+            final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
+            propertyMaps.putIfAbsent(subdomain, newProps);
             return newProps.get(name);
         }
     }

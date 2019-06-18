@@ -28,6 +28,7 @@ import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.resultsetmanagement.ResultSet;
 import org.xmpp.resultsetmanagement.ResultSetImpl;
 
+import java.text.ParseException;
 import java.util.*;
 
 /**
@@ -205,10 +206,11 @@ public class IQMUCSearchHandler
             final String b = includePasswordProtectedRoomsFF.getFirstValue();
             if (b != null)
             {
-                if (b.equals("0") || b.equalsIgnoreCase("false")
-                        || b.equalsIgnoreCase("no"))
-                {
-                    includePasswordProtectedRooms = false;
+                try {
+                    includePasswordProtectedRooms = DataForm.parseBoolean( b );
+                } catch ( ParseException e ) {
+                    reply.setError(PacketError.Condition.bad_request);
+                    return reply;
                 }
             }
         }

@@ -28,6 +28,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +99,14 @@ public class AddGroupUsers extends AdHocCommand {
         }
 
         String admin = data.getData().get("admin").get(0);
-        boolean isAdmin = "1".equals(admin) || "true".equals(admin);
+        boolean isAdmin;
+        try {
+            isAdmin = DataForm.parseBoolean( admin );
+        } catch ( ParseException e ) {
+            note.addAttribute("type", "error");
+            note.setText("admin has invalid value. Needs to be boolean.");
+            return;
+        }
         Collection<JID> users = (isAdmin ? group.getAdmins() : group.getMembers());
 
         boolean withErrors = false;

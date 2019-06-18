@@ -26,6 +26,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -102,10 +103,34 @@ public class CreateMUCRoom extends AdHocCommand {
             return;
         }
 
-        boolean isPersistent = "1".equals(get(data, "persistent", 0));
+        boolean isPersistent;
+        try {
+            final String value = get( data, "persistent", 0 );
+            if ( value == null ) { // this field is not required.
+                isPersistent = false;
+            } else {
+                isPersistent = DataForm.parseBoolean( value );
+            }
+        } catch ( ParseException e ) {
+            note.addAttribute("type", "error");
+            note.setText("persistent has invalid value. Needs to be boolean.");
+            return;
+        }
         room.setPersistent(isPersistent);
 
-        boolean isPublic = "1".equals(get(data, "public", 0));
+        boolean isPublic;
+        try {
+            final String value = get( data, "public", 0 );
+            if ( value == null ) { // this field is not required.
+                isPublic = false;
+            } else {
+                isPublic = DataForm.parseBoolean( value );
+            }
+        } catch ( ParseException e ) {
+            note.addAttribute("type", "error");
+            note.setText("public has invalid value. Needs to be boolean.");
+            return;
+        }
         room.setPublicRoom(isPublic);
 
         String password = get(data, "password", 0);

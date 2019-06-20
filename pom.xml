@@ -182,6 +182,7 @@
                         <configuration>
                             <source>1.8</source>
                             <quiet>true</quiet>
+                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -89,7 +89,7 @@ public class IQBindHandler extends IQHandler {
             try {
                 resource = JID.resourceprep(resource);
             }
-            catch (StringprepException e) {
+            catch (StringprepException | IllegalArgumentException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.jid_malformed);
                 // Send the error directly since a route does not exist at this point.

@@ -221,7 +221,7 @@
         // OF-1365: Don't allow caches that do not expire to be purged. Many of these caches store data that cannot be recovered again.
         final boolean canPurge = cache.getMaxLifetime() > -1;
 %>
-    <tr class="<%= (lowEffec ? "jive-error" : "") %>">
+    <tr>
         <td class="c1">
             <table cellpadding="0" cellspacing="0" border="0">
             <tr>
@@ -261,7 +261,9 @@
             <%=numberFormatter.format(hits)%>/<%=numberFormatter.format(hits + misses)%>&nbsp;
         </td>
         <td class="c4" style="text-align: left; padding-left:0;">
+            <% if (lowEffec) { %><span style="color: red;"><% } %>
             (<%=hitPercent%>)
+            <% if (lowEffec) { %>*</span><% } %>
         </td>
         <td class="c4" style="text-align: center">
             <% if (culls != null) {%>

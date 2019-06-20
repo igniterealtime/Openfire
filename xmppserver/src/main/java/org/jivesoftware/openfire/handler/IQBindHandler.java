@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import gnu.inet.encoding.StringprepException;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.RoutingTable;
@@ -89,7 +87,7 @@ public class IQBindHandler extends IQHandler {
             try {
                 resource = JID.resourceprep(resource);
             }
-            catch (StringprepException | IllegalArgumentException e) {
+            catch (IllegalArgumentException e) {
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.jid_malformed);
                 // Send the error directly since a route does not exist at this point.

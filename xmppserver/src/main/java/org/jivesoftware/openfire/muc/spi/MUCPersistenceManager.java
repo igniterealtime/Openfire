@@ -1113,13 +1113,8 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name) {    	
-        final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
-        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
-        if (oldProps != null) {
-            return oldProps.get(name);
-        } else {
-            return newProps.get(name);
-        }
+        final MUCServiceProperties props = propertyMaps.computeIfAbsent( subdomain, MUCServiceProperties::new );
+        return props.get(name);
     }
 
     /**
@@ -1233,12 +1228,8 @@ public class MUCPersistenceManager {
      * @return a List of all immediate children property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain, String parent) {
-        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-        if (oldProps != null) {
-            properties = oldProps;
-        } 
-        return new ArrayList<>(properties.getChildrenNames(parent));
+        final MUCServiceProperties props = propertyMaps.computeIfAbsent( subdomain, MUCServiceProperties::new );
+        return new ArrayList<>(props.getChildrenNames(parent));
     }
 
     /**
@@ -1253,13 +1244,8 @@ public class MUCPersistenceManager {
      * @return all child property values for the given parent.
      */
     public static List<String> getProperties(String subdomain, String parent) {
-        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-        if (oldProps != null) {
-            properties = oldProps;
-        } 
-
-        Collection<String> propertyNames = properties.getChildrenNames(parent);
+        final MUCServiceProperties props = propertyMaps.computeIfAbsent( subdomain, MUCServiceProperties::new );
+        Collection<String> propertyNames = props.getChildrenNames(parent);
         List<String> values = new ArrayList<>();
         for (String propertyName : propertyNames) {
             String value = getProperty(subdomain, propertyName);
@@ -1278,12 +1264,8 @@ public class MUCPersistenceManager {
      * @return a List of all property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain) {
-        MUCServiceProperties properties = new MUCServiceProperties(subdomain);
-        final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
-        if (oldProps != null) {
-            properties = oldProps;
-        } 
-        return new ArrayList<>(properties.getPropertyNames());
+        final MUCServiceProperties props = propertyMaps.computeIfAbsent( subdomain, MUCServiceProperties::new );
+        return new ArrayList<>(props.getPropertyNames());
     }
 
     /**

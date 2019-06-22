@@ -1820,43 +1820,38 @@ public abstract class Node {
     /**
      * Deletes this node from memory and the database. Subscribers are going to be notified
      * that the node has been deleted after the node was successfully deleted.
-     *
-     * @return true if the node was successfully deleted.
      */
-    public boolean delete() {
+    public void delete() {
         // Delete node from the database
-        if (PubSubPersistenceManager.removeNode(this)) {
-            // Remove this node from the parent node (if any)
-            if (parent != null) {
-                // Notify the parent that the node has been removed from the parent node
-                if (isNotifiedOfDelete()){
-                    parent.childNodeDeleted(this);
-                }
-                parent.removeChildNode(this);
+        PubSubPersistenceManager.removeNode(this);
+        // Remove this node from the parent node (if any)
+        if (parent != null) {
+            // Notify the parent that the node has been removed from the parent node
+            if (isNotifiedOfDelete()){
+                parent.childNodeDeleted(this);
             }
-            deletingNode();
-            // Broadcast delete notification to subscribers (if enabled)
-            if (isNotifiedOfDelete()) {
-                // Build packet to broadcast to subscribers
-                Message message = new Message();
-                Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-                Element items = event.addElement("delete");
-                items.addAttribute("node", nodeID);
-                // Send notification that the node was deleted
-                broadcastNodeEvent(message, true);
-            }
-            // Remove presence subscription when node was deleted.
-            cancelPresenceSubscriptions();
-            // Remove the node from memory
-            service.removeNode(getNodeID());
-            CacheFactory.doClusterTask(new RemoveNodeTask(this));
-            // Clear collections in memory (clear them after broadcast was sent)
-            affiliates.clear();
-            subscriptionsByID.clear();
-            subscriptionsByJID.clear();
-            return true;
+            parent.removeChildNode(this);
         }
-        return false;
+        deletingNode();
+        // Broadcast delete notification to subscribers (if enabled)
+        if (isNotifiedOfDelete()) {
+            // Build packet to broadcast to subscribers
+            Message message = new Message();
+            Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+            Element items = event.addElement("delete");
+            items.addAttribute("node", nodeID);
+            // Send notification that the node was deleted
+            broadcastNodeEvent(message, true);
+        }
+        // Remove presence subscription when node was deleted.
+        cancelPresenceSubscriptions();
+        // Remove the node from memory
+        service.removeNode(getNodeID());
+        CacheFactory.doClusterTask(new RemoveNodeTask(this));
+        // Clear collections in memory (clear them after broadcast was sent)
+        affiliates.clear();
+        subscriptionsByID.clear();
+        subscriptionsByJID.clear();
     }
 
     /**
@@ -1879,7 +1874,7 @@ public abstract class Node {
         if (parent == newParent) {
             return;
         }
-        
+
         if (parent != null) {
             // Remove this node from the current parent node
             parent.removeChildNode(this);
@@ -2016,7 +2011,7 @@ public abstract class Node {
             }
         }
         
-        // Verify that the subscriber JID is currently available to receive notification 
+        // Verify that the subscriber JID is currently available to receive notification
         // messages. This is required because the message router will deliver packets via 
         // the bare JID if a session for the full JID is not available. The "isActiveRoute"
         // condition below will prevent inadvertent delivery of multiple copies of each
@@ -2302,12 +2297,12 @@ public abstract class Node {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        
+
         if (getClass() != obj.getClass())
             return false;
-        
+
         Node compareNode = (Node) obj;
-        
+
         return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
     }
 

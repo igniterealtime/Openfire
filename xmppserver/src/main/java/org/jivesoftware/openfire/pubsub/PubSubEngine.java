@@ -1553,14 +1553,9 @@ public class PubSubEngine {
         }
 
         // Delete the node
-        if (node.delete()) {
-            // Return that node was deleted successfully
-            router.route(IQ.createResultIQ(iq));
-        }
-        else {
-            // Some error occured while trying to delete the node
-            sendErrorPacket(iq, PacketError.Condition.internal_server_error, null);
-        }
+        node.delete();
+        // Return that node was deleted successfully
+        router.route(IQ.createResultIQ(iq));
     }
 
     private void purgeNode(PubSubService service, IQ iq, Element purgeElement) {

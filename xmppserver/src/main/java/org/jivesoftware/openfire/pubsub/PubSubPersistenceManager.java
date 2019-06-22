@@ -39,8 +39,6 @@ import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LinkedList;
-import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
@@ -48,6 +46,17 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * A manager responsible for ensuring node persistence.
@@ -77,7 +86,7 @@ public class PubSubPersistenceManager {
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
 
     private static final String PURGE_FOR_SIZE_SQLSERVER =
-            "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN " + 
+            "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN " +
             "(SELECT TOP(?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC)";
 
     private static final String PURGE_FOR_SIZE_MYSQL =
@@ -252,20 +261,89 @@ public class PubSubPersistenceManager {
     /**
      * Queue that holds the (wrapped) items that need to be added to the database.
      */
-    private static LinkedList<RetryWrapper> itemsToAdd = new LinkedList<>();
+    private static Deque<RetryWrapper> itemsToAdd = new ConcurrentLinkedDeque<>();
 
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
-    private static LinkedList<PublishedItem> itemsToDelete = new LinkedList<>();
+    private static Deque<PublishedItem> itemsToDelete = new ConcurrentLinkedDeque<>();
 
     /**
-     * Keeps reference to published items that haven't been persisted yet so they 
-     * can be removed before being deleted. Note these items are wrapped via the 
+     * Keeps reference to published items that haven't been persisted yet so they
+     * can be removed before being deleted. Note these items are wrapped via the
      * RetryWrapper to allow multiple persistence attempts when needed.
      */
-    private static final HashMap<String, LinkedListNode<RetryWrapper>> itemsPending = new HashMap<>();
-    
+    private static final HashMap<String, RetryWrapper> itemsPending = new HashMap<>();
+
+    private static ConcurrentMap<String, List<NodeOperation>> nodesToProcess = new ConcurrentHashMap<>();
+
+    static class NodeOperation {
+
+        enum Action {
+            CREATE,
+            UPDATE,
+            REMOVE,
+            CREATE_AFFILIATION,
+            UPDATE_AFFILIATION,
+            REMOVE_AFFILIATION,
+            CREATE_SUBSCRIPTION,
+            UPDATE_SUBSCRIPTION,
+            REMOVE_SUBSCRIPTION
+        }
+
+        final Node node;
+        final Action action;
+        final NodeAffiliate affiliate;
+        final NodeSubscription subscription;
+
+        private NodeOperation( final Node node, final Action action, final NodeAffiliate affiliate, final NodeSubscription subscription ) {
+            if ( node == null ) {
+                throw new IllegalArgumentException( "Argument 'node' cannot be null." );
+            }
+            if ( action == null ) {
+                throw new IllegalArgumentException( "Argument 'action' cannot be null." );
+            }
+            if ( affiliate == null && Arrays.asList( Action.CREATE_AFFILIATION, Action.UPDATE_AFFILIATION, Action.REMOVE_AFFILIATION ).contains( action ) ) {
+                throw new IllegalArgumentException( "Argument 'affiliate' cannot be null when 'action' is " + action );
+            }
+            if ( subscription == null && Arrays.asList( Action.CREATE_SUBSCRIPTION, Action.UPDATE_SUBSCRIPTION, Action.REMOVE_SUBSCRIPTION ).contains( action ) ) {
+                throw new IllegalArgumentException( "Argument 'subscription' cannot be null when 'action' is " + action );
+            }
+            this.node = node;
+            this.action = action;
+            this.affiliate = affiliate;
+            this.subscription = subscription;
+        }
+
+        static NodeOperation create( final Node node ) {
+            return new NodeOperation( node, Action.CREATE, null, null );
+        }
+        static NodeOperation update( final Node node ) {
+            return new NodeOperation( node, Action.UPDATE, null, null );
+        }
+        static NodeOperation remove( final Node node ) {
+            return new NodeOperation( node, Action.REMOVE, null, null );
+        }
+        static NodeOperation createAffiliation( final Node node, final NodeAffiliate affiliate ) {
+            return new NodeOperation( node, Action.CREATE_AFFILIATION, affiliate, null );
+        }
+        static NodeOperation updateAffiliation( final Node node, final NodeAffiliate affiliate ) {
+            return new NodeOperation( node, Action.UPDATE_AFFILIATION, affiliate, null );
+        }
+        static NodeOperation removeAffiliation( final Node node, final NodeAffiliate affiliate ) {
+            return new NodeOperation( node, Action.REMOVE_AFFILIATION, affiliate, null );
+        }
+        static NodeOperation createSubscription( final Node node, final NodeSubscription subscription ) {
+            return new NodeOperation( node, Action.CREATE_SUBSCRIPTION, null, subscription);
+        }
+        static NodeOperation updateSubscription( final Node node, final NodeSubscription subscription ) {
+            return new NodeOperation( node, Action.UPDATE_SUBSCRIPTION, null, subscription );
+        }
+        static NodeOperation removeSubscription( final Node node, final NodeSubscription subscription ) {
+            return new NodeOperation( node, Action.REMOVE_SUBSCRIPTION, null, subscription );
+        }
+    }
+
     /**
      * Cache name for recently accessed published items.
      */
@@ -275,7 +353,17 @@ public class PubSubPersistenceManager {
      * Cache for recently accessed published items.
      */
     private static final Cache<String, PublishedItem> itemCache = CacheFactory.createCache(ITEM_CACHE);
-    
+
+    /**
+     * Cache name for recently accessed published items.
+     */
+    private static final String DEFAULT_CONF_CACHE = "Default Node Configurations";
+
+    /**
+     * Cache for default configurations
+     */
+    private static final Cache<String, DefaultNodeConfiguration> defaultNodeConfigurationCache = CacheFactory.createCache(DEFAULT_CONF_CACHE);
+
     static {
         try {
             if (MAX_ITEMS_FLUSH > 0) {
@@ -294,11 +382,104 @@ public class PubSubPersistenceManager {
                 @Override
                 public void run() { purgeItems(); }
             }, Math.abs(prng.nextLong())%purgeTimerDelay, purgeTimerDelay);
-            
+
         } catch (Exception ex) {
             log.error("Failed to initialize pubsub maintentence tasks", ex);
         }
-        
+
+    }
+
+    private static void flushPendingNodes()
+    {
+        // TODO verify that this is thread-safe.
+        final Iterator<List<NodeOperation>> iterator = nodesToProcess.values().iterator();
+        while (iterator.hasNext()) {
+            final List<NodeOperation> operations = iterator.next();
+            operations.forEach( PubSubPersistenceManager::process );
+            iterator.remove();
+        }
+    }
+
+    private static void flushPendingNodes( String serviceId )
+    {
+        // TODO verify that this is thread-safe (hint: it's not!)
+        final Iterator<List<NodeOperation>> iterator = nodesToProcess.values().iterator();
+        while (iterator.hasNext()) {
+            final List<NodeOperation> operations = iterator.next();
+            if ( serviceId.equals( operations.get( 0 ).node.service.getServiceID() ) )
+            {
+                operations.forEach( PubSubPersistenceManager::process );
+                iterator.remove();
+            }
+        }
+    }
+
+    private static void flushPendingNode( String nodeId )
+    {
+        // TODO verify if this is having the desired effect. - nodes could be in a hierarchy, which could warrant for flushing the entire tree.
+        // TODO verify that this is thread-safe.
+        nodesToProcess.computeIfPresent( nodeId, ( key, operations ) -> {
+            operations.forEach( PubSubPersistenceManager::process );
+            // Returning null causes the mapping to removed from nodesToProcess.
+            return null;
+        } );
+    }
+
+    private static void process( final NodeOperation operation ) {
+        switch ( operation.action )
+        {
+            case CREATE:
+                createNodeInDatabase( operation.node );
+                break;
+
+            case UPDATE:
+                updateNodeInDatabase( operation.node );
+                break;
+
+            case REMOVE:
+                removeNodeInDatabase( operation.node );
+                break;
+
+            case CREATE_AFFILIATION:
+                createAffiliationInDatabase( operation.node, operation.affiliate );
+                break;
+
+            case UPDATE_AFFILIATION:
+                updateAffiliationInDatabase( operation.node, operation.affiliate );
+                break;
+
+            case REMOVE_AFFILIATION:
+                removeAffiliationInDatabase( operation.node, operation.affiliate );
+                break;
+
+            case CREATE_SUBSCRIPTION:
+                createSubscriptionInDatabase( operation.node, operation.subscription );
+                break;
+
+            case UPDATE_SUBSCRIPTION:
+                updateSubscriptionInDatabase( operation.node, operation.subscription );
+                break;
+
+            case REMOVE_SUBSCRIPTION:
+                removeSubscriptionInDatabase( operation.subscription );
+                break;
+
+            default:
+                throw new IllegalStateException(); // This indicates a bug in the implementation of this class.
+        }
+    }
+
+    /**
+     * Schedules the node to be created in the database.
+     *
+     * @param node The newly created node.
+     */
+    public static void createNode(Node node) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        // Don't purge pending operations. It'd be odd for operations to already exist at this stage. It'd be possible for
+        // a node to be recreated, which could mean that there's a DELETE. When there are other operations, the pre-'nodesToProcess'
+        // behavior will kick in (which would presumably lead to database constraint-related exceptions).
+        operations.add( NodeOperation.create( node ) );
     }
 
     /**
@@ -306,7 +487,7 @@ public class PubSubPersistenceManager {
      *
      * @param node The newly created node.
      */
-    public static void createNode(Node node) {
+    private static void createNodeInDatabase(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -376,11 +557,32 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Updates the node configuration in the database.
+     * Schedules the node to be updated in the database.
      *
      * @param node The updated node.
      */
     public static void updateNode(Node node) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+
+        // This update can replace any pending updates (since the last create/delete or affiliation change).
+        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+        while ( iter.hasPrevious() ) {
+            final NodeOperation operation = iter.previous();
+            if ( operation.action.equals( NodeOperation.Action.UPDATE ) ) {
+                iter.remove(); // This is replaced by the update that's being added.
+            } else {
+                break; // Operations that precede anything other than the last operations that are UPDATE shouldn't be replaced.
+            }
+        }
+        operations.add( NodeOperation.update( node ));
+    }
+
+    /**
+     * Updates the node configuration in the database.
+     *
+     * @param node The updated node.
+     */
+    private static void updateNodeInDatabase(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -510,12 +712,23 @@ public class PubSubPersistenceManager {
     }
 
     /**
+     * Schedules the node to be removed in the database.
+     *
+     * @param node The node that is being deleted.
+     */
+    public static void removeNode(Node node) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        operations.clear(); // Any previously recorded, but as of yet unsaved operations, can be skipped.
+        operations.add( NodeOperation.remove( node ));
+    }
+
+    /**
      * Removes the specified node from the DB.
      *
      * @param node The node that is being deleted.
      * @return true If the operation was successful.
      */
-    public static boolean removeNode(Node node) {
+    private static boolean removeNodeInDatabase(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -578,6 +791,10 @@ public class PubSubPersistenceManager {
      * @param service the pubsub service that is hosting the nodes.
      */
     public static void loadNodes(PubSubService service) {
+        // Make sure that all changes to nodes have been written to the database
+        // before the nodes are retrieved.
+        flushPendingNodes( service.getServiceID() );
+
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -605,7 +822,7 @@ public class PubSubPersistenceManager {
             for (Map.Entry<String, String> entry : parentMappings.entrySet()) {
                 Node child = nodes.get(entry.getKey());
                 CollectionNode parent = (CollectionNode) nodes.get(entry.getValue());
-                
+
                 if (parent == null) {
                     log.error("Could not find parent node " + entry.getValue() + " for node " + entry.getKey());
                 }
@@ -679,6 +896,10 @@ public class PubSubPersistenceManager {
      */
     public static void loadNode(PubSubService service, String nodeId)
     {
+        // Make sure that all changes to nodes have been written to the database
+        // before the nodes are retrieved.
+	    flushPendingNode( nodeId );
+
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -693,7 +914,7 @@ public class PubSubPersistenceManager {
             pstmt.setString(2, nodeId);
             rs = pstmt.executeQuery();
             Map<String, String> parentMapping = new HashMap<>();
-            
+
             // Rebuild loaded non-leaf nodes
             if (rs.next())
             {
@@ -701,10 +922,10 @@ public class PubSubPersistenceManager {
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
             String parentId = parentMapping.get(nodeId);
-            
+
             if (parentId != null) {
                 CollectionNode parent = (CollectionNode) service.getNode(parentId);
-                
+
                 if (parent == null) {
                     log.error("Could not find parent node " + parentId + " for node " + nodeId);
                 }
@@ -712,7 +933,7 @@ public class PubSubPersistenceManager {
                     nodes.get(nodeId).changeParent(parent);
                 }
             }
-                
+
             // Get JIDs associated with all nodes
             pstmt = con.prepareStatement(LOAD_NODE_JIDS);
             pstmt.setString(1, service.getServiceID());
@@ -905,6 +1126,8 @@ public class PubSubPersistenceManager {
 
     public static void loadSubscription(PubSubService service, Node node, String subId)
     {
+	    flushPendingNode( node.nodeID );
+
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -984,28 +1207,63 @@ public class PubSubPersistenceManager {
      * @param create    True if this is a new affiliate.
      */
     public static void saveAffiliation(Node node, NodeAffiliate affiliate, boolean create) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        final NodeOperation operation;
+        if (create) {
+            operation = NodeOperation.createAffiliation( node, affiliate );
+        } else {
+
+            // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
+            final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+            while ( iter.hasPrevious() ) {
+                final NodeOperation op = iter.previous();
+                if ( op.action.equals( NodeOperation.Action.UPDATE_AFFILIATION ) ) {
+                    if ( affiliate.getJID().equals( op.affiliate.getJID() ) ) {
+                        iter.remove(); // This is replaced by the update that's being added.
+                    }
+                } else {
+                    break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
+                }
+            }
+
+            operation = NodeOperation.updateAffiliation( node, affiliate );
+        }
+        operations.add( operation );
+    }
+
+    // Add the user to the generic affiliations table
+    private static void createAffiliationInDatabase(Node node, NodeAffiliate affiliate) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            if (create) {
-                // Add the user to the generic affiliations table
-                pstmt = con.prepareStatement(ADD_AFFILIATION);
-                pstmt.setString(1, node.getService().getServiceID());
-                pstmt.setString(2, encodeNodeID(node.getNodeID()));
-                pstmt.setString(3, affiliate.getJID().toString());
-                pstmt.setString(4, affiliate.getAffiliation().name());
-                pstmt.executeUpdate();
-            }
-            else {
-                // Update the affiliate's data in the backend store
-                pstmt = con.prepareStatement(UPDATE_AFFILIATION);
-                pstmt.setString(1, affiliate.getAffiliation().name());
-                pstmt.setString(2, node.getService().getServiceID());
-                pstmt.setString(3, encodeNodeID(node.getNodeID()));
-                pstmt.setString(4, affiliate.getJID().toString());
-                pstmt.executeUpdate();
-            }
+            pstmt = con.prepareStatement(ADD_AFFILIATION);
+            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.setString(3, affiliate.getJID().toString());
+            pstmt.setString(4, affiliate.getAffiliation().name());
+            pstmt.executeUpdate();
+        }
+        catch (SQLException sqle) {
+            log.error(sqle.getMessage(), sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    // Update the affiliate's data in the backend store
+    private static void updateAffiliationInDatabase(Node node, NodeAffiliate affiliate) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_AFFILIATION);
+            pstmt.setString(1, affiliate.getAffiliation().name());
+            pstmt.setString(2, node.getService().getServiceID());
+            pstmt.setString(3, encodeNodeID(node.getNodeID()));
+            pstmt.setString(4, affiliate.getJID().toString());
+            pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
             log.error(sqle.getMessage(), sqle);
@@ -1022,6 +1280,30 @@ public class PubSubPersistenceManager {
      * @param affiliate The existing affiliation and subsription state of the user in the node.
      */
     public static void removeAffiliation(Node node, NodeAffiliate affiliate) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+
+        // This affiliation removal can replace any pending creation, update or delete of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
+        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+        while ( iter.hasPrevious() ) {
+            final NodeOperation operation = iter.previous();
+            if ( Arrays.asList( NodeOperation.Action.CREATE_AFFILIATION, NodeOperation.Action.UPDATE_AFFILIATION, NodeOperation.Action.REMOVE_AFFILIATION ).contains( operation.action ) ) {
+                if ( affiliate.getJID().equals( operation.affiliate.getJID() ) ) {
+                    iter.remove(); // This is replaced by the update that's being added.
+                }
+            } else {
+                break; // Operations that precede anything other than the last operations that are affiliate changes shouldn't be replaced.
+            }
+        }
+        operations.add( NodeOperation.removeAffiliation( node, affiliate ) );
+    }
+
+    /**
+     * Removes the affiliation and subsription state of the user from the DB.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The existing affiliation and subsription state of the user in the node.
+     */
+    private static void removeAffiliationInDatabase(Node node, NodeAffiliate affiliate) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -1042,79 +1324,126 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Updates the DB with the new subsription of the user to the node.
+     * Updates the DB with the new subscription of the user to the node.
      *
      * @param node      The node where the user has subscribed to.
      * @param subscription The new subscription of the user to the node.
      * @param create    True if this is a new affiliate.
      */
     public static void saveSubscription(Node node, NodeSubscription subscription, boolean create) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        final NodeOperation operation;
+        if (create) {
+            operation = NodeOperation.createSubscription( node, subscription );
+        } else {
+
+            // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
+            final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+            while ( iter.hasPrevious() ) {
+                final NodeOperation op = iter.previous();
+                if ( op.action.equals( NodeOperation.Action.UPDATE_SUBSCRIPTION ) ) {
+                    if ( subscription.getID().equals( op.subscription.getID() ) ) {
+                        iter.remove(); // This is replaced by the update that's being added.
+                    }
+                } else {
+                    break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
+                }
+            }
+
+            operation = NodeOperation.updateSubscription( node, subscription );
+        }
+        operations.add( operation );
+    }
+
+    /**
+     * Updates the DB with the new subscription of the user to the node.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    private static void createSubscriptionInDatabase(Node node, NodeSubscription subscription) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            if (create) {
-                // Add the subscription of the user to the database
-                pstmt = con.prepareStatement(ADD_SUBSCRIPTION);
-                pstmt.setString(1, node.getService().getServiceID());
-                pstmt.setString(2, encodeNodeID(node.getNodeID()));
-                pstmt.setString(3, subscription.getID());
-                pstmt.setString(4, subscription.getJID().toString());
-                pstmt.setString(5, subscription.getOwner().toString());
-                pstmt.setString(6, subscription.getState().name());
-                pstmt.setInt(7, (subscription.shouldDeliverNotifications() ? 1 : 0));
-                pstmt.setInt(8, (subscription.isUsingDigest() ? 1 : 0));
-                pstmt.setInt(9, subscription.getDigestFrequency());
-                Date expireDate = subscription.getExpire();
-                if (expireDate == null) {
-                    pstmt.setString(10, null);
-                }
-                else {
-                    pstmt.setString(10, StringUtils.dateToMillis(expireDate));
-                }
-                pstmt.setInt(11, (subscription.isIncludingBody() ? 1 : 0));
-                pstmt.setString(12, encodeWithComma(subscription.getPresenceStates()));
-                pstmt.setString(13, subscription.getType().name());
-                pstmt.setInt(14, subscription.getDepth());
-                pstmt.setString(15, subscription.getKeyword());
-                pstmt.executeUpdate();
-                // Indicate the subscription that is has been saved to the database
-                subscription.setSavedToDB(true);
+            // Add the subscription of the user to the database
+            pstmt = con.prepareStatement(ADD_SUBSCRIPTION);
+            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.setString(3, subscription.getID());
+            pstmt.setString(4, subscription.getJID().toString());
+            pstmt.setString(5, subscription.getOwner().toString());
+            pstmt.setString(6, subscription.getState().name());
+            pstmt.setInt(7, (subscription.shouldDeliverNotifications() ? 1 : 0));
+            pstmt.setInt(8, (subscription.isUsingDigest() ? 1 : 0));
+            pstmt.setInt(9, subscription.getDigestFrequency());
+            Date expireDate = subscription.getExpire();
+            if (expireDate == null) {
+                pstmt.setString(10, null);
             }
             else {
-                if (NodeSubscription.State.none == subscription.getState()) {
-                    // Remove the subscription of the user from the table
-                    pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
-                    pstmt.setString(1, node.getService().getServiceID());
-                    pstmt.setString(2, encodeNodeID(node.getNodeID()));
-                    pstmt.setString(2, subscription.getID());
-                    pstmt.executeUpdate();
+                pstmt.setString(10, StringUtils.dateToMillis(expireDate));
+            }
+            pstmt.setInt(11, (subscription.isIncludingBody() ? 1 : 0));
+            pstmt.setString(12, encodeWithComma(subscription.getPresenceStates()));
+            pstmt.setString(13, subscription.getType().name());
+            pstmt.setInt(14, subscription.getDepth());
+            pstmt.setString(15, subscription.getKeyword());
+            pstmt.executeUpdate();
+            // Indicate the subscription that is has been saved to the database
+            subscription.setSavedToDB(true);
+        }
+        catch (SQLException sqle) {
+            log.error(sqle.getMessage(), sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    /**
+     * Updates the DB with the new subscription of the user to the node.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    private static void updateSubscriptionInDatabase(Node node, NodeSubscription subscription) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            if (NodeSubscription.State.none == subscription.getState()) {
+                // Remove the subscription of the user from the table
+                pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
+                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(2, encodeNodeID(node.getNodeID()));
+                pstmt.setString(2, subscription.getID());
+                pstmt.executeUpdate();
+            }
+            else {
+                // Update the subscription of the user in the backend store
+                pstmt = con.prepareStatement(UPDATE_SUBSCRIPTION);
+                pstmt.setString(1, subscription.getOwner().toString());
+                pstmt.setString(2, subscription.getState().name());
+                pstmt.setInt(3, (subscription.shouldDeliverNotifications() ? 1 : 0));
+                pstmt.setInt(4, (subscription.isUsingDigest() ? 1 : 0));
+                pstmt.setInt(5, subscription.getDigestFrequency());
+                Date expireDate = subscription.getExpire();
+                if (expireDate == null) {
+                    pstmt.setString(6, null);
                 }
                 else {
-                    // Update the subscription of the user in the backend store
-                    pstmt = con.prepareStatement(UPDATE_SUBSCRIPTION);
-                    pstmt.setString(1, subscription.getOwner().toString());
-                    pstmt.setString(2, subscription.getState().name());
-                    pstmt.setInt(3, (subscription.shouldDeliverNotifications() ? 1 : 0));
-                    pstmt.setInt(4, (subscription.isUsingDigest() ? 1 : 0));
-                    pstmt.setInt(5, subscription.getDigestFrequency());
-                    Date expireDate = subscription.getExpire();
-                    if (expireDate == null) {
-                        pstmt.setString(6, null);
-                    }
-                    else {
-                        pstmt.setString(6, StringUtils.dateToMillis(expireDate));
-                    }
-                    pstmt.setInt(7, (subscription.isIncludingBody() ? 1 : 0));
-                    pstmt.setString(8, encodeWithComma(subscription.getPresenceStates()));
-                    pstmt.setString(9, subscription.getType().name());
-                    pstmt.setInt(10, subscription.getDepth());
-                    pstmt.setString(11, subscription.getKeyword());
-                    pstmt.setString(12, node.getService().getServiceID());
-                    pstmt.setString(13, encodeNodeID(node.getNodeID()));
-                    pstmt.setString(14, subscription.getID());
-                    pstmt.executeUpdate();
+                    pstmt.setString(6, StringUtils.dateToMillis(expireDate));
                 }
+                pstmt.setInt(7, (subscription.isIncludingBody() ? 1 : 0));
+                pstmt.setString(8, encodeWithComma(subscription.getPresenceStates()));
+                pstmt.setString(9, subscription.getType().name());
+                pstmt.setInt(10, subscription.getDepth());
+                pstmt.setString(11, subscription.getKeyword());
+                pstmt.setString(12, node.getService().getServiceID());
+                pstmt.setString(13, encodeNodeID(node.getNodeID()));
+                pstmt.setString(14, subscription.getID());
+                pstmt.executeUpdate();
             }
         }
         catch (SQLException sqle) {
@@ -1128,9 +1457,32 @@ public class PubSubPersistenceManager {
     /**
      * Removes the subscription of the user from the DB.
      *
-     * @param subscription The existing subsription of the user to the node.
+     * @param subscription The existing subscription of the user to the node.
      */
     public static void removeSubscription(NodeSubscription subscription) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( subscription.getNode().getNodeID(), nodeId -> new ArrayList<>() );
+
+        // This subscription removal can replace any pending creation, update or delete of the same subscription (since the last create/delete of the node or subscription change of this subscription to the node).
+        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+        while ( iter.hasPrevious() ) {
+            final NodeOperation operation = iter.previous();
+            if ( Arrays.asList( NodeOperation.Action.CREATE_SUBSCRIPTION, NodeOperation.Action.UPDATE_SUBSCRIPTION, NodeOperation.Action.REMOVE_SUBSCRIPTION ).contains( operation.action ) ) {
+                if ( subscription.getID().equals( operation.subscription.getID() ) ) {
+                    iter.remove(); // This is replaced by the update that's being added.
+                }
+            } else {
+                break; // Operations that precede anything other than the last operations that are subscription changes shouldn't be replaced.
+            }
+        }
+        operations.add( NodeOperation.removeSubscription( subscription.getNode(), subscription ) );
+    }
+
+    /**
+     * Removes the subscription of the user from the DB.
+     *
+     * @param subscription The existing subsription of the user to the node.
+     */
+    private static void removeSubscriptionInDatabase(NodeSubscription subscription) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -1176,14 +1528,16 @@ public class PubSubPersistenceManager {
         itemCache.put(itemKey, item);
         log.debug("Added new (inbound) item to cache");
         synchronized (itemsPending) {
-            LinkedListNode<RetryWrapper> itemToReplace = itemsPending.remove(itemKey);
+    		RetryWrapper itemToReplace = itemsPending.remove(itemKey);
             if (itemToReplace != null) {
-                itemToReplace.remove(); // remove duplicate from itemsToAdd linked list
+                itemsToAdd.remove(itemToReplace); // remove duplicate from itemsToAdd linked list
             }
-            LinkedListNode<RetryWrapper> listNode = firstPass ? 
-                                itemsToAdd.addLast(wrapper) : 
+    		if (firstPass) {
+    		    itemsToAdd.addLast(wrapper);
+            } else {
                                 itemsToAdd.addFirst(wrapper);
-            itemsPending.put(itemKey, listNode);
+            }
+    		itemsPending.put(itemKey, wrapper);
         }
         // skip the flush step if this is a retry attempt
         if (firstPass && itemsPending.size() > MAX_ITEMS_FLUSH) {
@@ -1208,12 +1562,84 @@ public class PubSubPersistenceManager {
     }
 
     /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete)
+     * for a specific node.
+     */
+    public static void flushPendingItems( String nodeId )
+    {
+        flushPendingItems(nodeId, ClusterManager.isClusteringEnabled());
+    }
+
+    /**
      * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
      */
     public static void flushPendingItems()
     {
         flushPendingItems(ClusterManager.isClusteringEnabled());
     }
+
+    /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
+     * @param sendToCluster If true, delegate to cluster members, otherwise local only
+     */
+    public static void flushPendingItems(String nodeId, boolean sendToCluster)
+    {
+        // forward to other cluster members and wait for response
+        if (sendToCluster) {
+            CacheFactory.doSynchronousClusterTask(new FlushTask(nodeId), false);
+        }
+
+        // TODO: figure out if it's required to first flush pending nodes, cluster-wide, synchronously, before flushing items.
+        flushPendingNode(nodeId);
+
+        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty()) {
+            return;	 // nothing to do for this cluster member
+        }
+
+        List<RetryWrapper> addList;
+        List<PublishedItem> delList;
+
+        // Swap pending items so we can parse and save the contents from this point in time
+        // while not blocking new entries from being cached.
+        synchronized(itemsPending)
+        {
+            // find items for node.
+
+            // Split the to-do list in two parts: one that contains items for the node of interest, and the rest.
+            final Map<Boolean, List<RetryWrapper>> partsToAdd = itemsToAdd.stream().collect(
+                    Collectors.partitioningBy( retryWrapper -> nodeId.equals( retryWrapper.item.getNodeID() ) )
+            );
+            addList = new ArrayList<>( partsToAdd.get( true ) ); // All elements that match must be processed.
+            itemsToAdd.retainAll( partsToAdd.get(false) ); // Non-matching elements remain on the to-do list.
+
+            // Split the to-do list in two parts: one that contains items for the node of interest, and the rest.
+            final Map<Boolean, List<PublishedItem>> partsToDelete = itemsToDelete.stream().collect(
+                    Collectors.partitioningBy( publishedItem -> nodeId.equals( publishedItem.getNodeID() ) )
+            );
+            delList = new ArrayList<>( partsToDelete.get( true ) ); // All elements that match must be processed.
+            itemsToDelete.retainAll( partsToDelete.get(false) ); // Non-matching elements remain on the to-do list.
+
+            // Ensure pending items are available via the item read cache;
+            // this allows the item(s) to be fetched by other request threads
+            // while being written to the DB from this thread
+            // TODO Determine if this works as intended when items are being queued for adding as well as removal.
+            int copied = 0;
+            for (final RetryWrapper itemToAdd : itemsToAdd) {
+                final String key = itemToAdd.get().getItemKey();
+                if (!itemCache.containsKey(key)) {
+                    itemsPending.remove( key );
+                    itemCache.put(key, itemToAdd.item);
+                    copied++;
+                }
+            }
+            if (log.isDebugEnabled() && copied > 0) {
+                log.debug("Added " + copied + " pending items to published item cache");
+            }
+        }
+
+        flushPendingItemsToDatabase( addList, delList );
+    }
+
 
     /**
      * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
@@ -1226,32 +1652,34 @@ public class PubSubPersistenceManager {
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
 
-        if (itemsToAdd.getFirst() == null && itemsToDelete.getFirst() == null) {
+		// TODO: figure out if it's required to first flush pending nodes, cluster-wide, synchronously, before flushing items.
+		flushPendingNodes();
+
+		if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty() ) {
             return;	 // nothing to do for this cluster member
         }
-        
-        Connection con = null;
-        boolean rollback = false;
-        LinkedList<RetryWrapper> addList = null;
-        LinkedList<PublishedItem> delList = null;
+
+        List<RetryWrapper> addList;
+        List<PublishedItem> delList;
 
         // Swap pending items so we can parse and save the contents from this point in time
         // while not blocking new entries from being cached.
-        synchronized(itemsPending) 
+        synchronized(itemsPending)
         {
-            addList = itemsToAdd;
-            delList = itemsToDelete;
+    		addList = new ArrayList<>( itemsToAdd );
+    		delList = new ArrayList<>( itemsToDelete );
 
-            itemsToAdd = new LinkedList<>();
-            itemsToDelete = new LinkedList<>();
-            
+    		itemsToAdd = new ConcurrentLinkedDeque<>();
+    		itemsToDelete = new ConcurrentLinkedDeque<>();
+
             // Ensure pending items are available via the item read cache;
             // this allows the item(s) to be fetched by other request threads
             // while being written to the DB from this thread
+            // TODO Determine if this works as intended when items are being queued for adding as well as removal.
             int copied = 0;
             for (String key : itemsPending.keySet()) {
                 if (!itemCache.containsKey(key)) {
-                    itemCache.put(key, (((RetryWrapper)itemsPending.get(key).object)).get());
+    				itemCache.put(key, (itemsPending.get(key)).get());
                     copied++;
                 }
             }
@@ -1261,6 +1689,11 @@ public class PubSubPersistenceManager {
             itemsPending.clear();
         }
 
+        flushPendingItemsToDatabase( addList, delList );
+	}
+
+	private static void flushPendingItemsToDatabase( final List<RetryWrapper> addList, final List<PublishedItem> delList )
+    {
         // Note that we now make multiple attempts to write cached items to the DB:
         //   1) insert all pending items in a single batch
         //   2) if the batch insert fails, retry by inserting each item separately
@@ -1269,18 +1702,16 @@ public class PubSubPersistenceManager {
         // (or disabled) using the "xmpp.pubsub.item.retry" property. In the event of
         // a transaction rollback, items that could not be written to the database
         // will be returned to the pending item write cache.
+        Connection con = null;
+        boolean rollback = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
             writePendingItems(con, addList, delList);
         } catch (SQLException se) {
+            // TODO it's suspiscous that the delList isn't rolled back. Determine if this is a bug!
             log.error("Failed to flush pending items; initiating rollback", se);
             // return new items to the write cache
-            LinkedListNode<RetryWrapper> node = addList.getLast();
-            while (node != null) {
-                savePublishedItem(node.object);
-                node.remove();
-                node = addList.getLast();
-            }
+            addList.forEach( PubSubPersistenceManager::savePublishedItem );
             rollback = true;
         } finally {
             DbConnectionManager.closeTransactionConnection(con, rollback);
@@ -1294,45 +1725,30 @@ public class PubSubPersistenceManager {
      * @param delList
      * @throws SQLException
      */
-    private static void writePendingItems(Connection con, LinkedList<RetryWrapper> addList, LinkedList<PublishedItem> delList) throws SQLException
+	private static void writePendingItems(Connection con, List<RetryWrapper> addList, List<PublishedItem> delList) throws SQLException
     {
-        LinkedListNode<RetryWrapper> addItem = addList.getFirst();
-        LinkedListNode<PublishedItem> delItem = delList.getFirst();
-        
         // is there anything to do?
-        if ((addItem == null) && (delItem == null)) { return; }
+        if (addList.isEmpty() && delList.isEmpty() ) { return; }
         
         if (log.isDebugEnabled()) {
-            log.debug("Flush " + itemsPending.size() + " pending items to database");
+    		log.debug("Flush pending items to database");
         }
 
         // ensure there are no duplicates by deleting before adding
-        if (addItem != null) {
-            LinkedListNode<RetryWrapper> addHead = addItem.previous;
-            while (addItem != addHead) {
-                delList.addLast(addItem.object.get());
-                addItem = addItem.next;
-            }
-        }
+    	delList.addAll( addList.stream().map( RetryWrapper::get ).collect( Collectors.toList()) );
 
         // delete first (to remove possible duplicates), then add new items
-        delItem = delList.getFirst();
-        if (delItem != null) {
             PreparedStatement pstmt = null;
             try {
-                LinkedListNode<PublishedItem> delHead = delItem.previous;
                 pstmt = con.prepareStatement(DELETE_ITEM);
-                Boolean hasBatchItems = false;
-                while (delItem != delHead)
-                {
-                    hasBatchItems = true;
-                    PublishedItem item = delItem.object;
-                    pstmt.setString(1, item.getNode().getService().getServiceID());
-                    pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-                    pstmt.setString(3, item.getID());
-                    pstmt.addBatch();
-
-                    delItem = delItem.next;
+            boolean hasBatchItems = false;
+            for ( final PublishedItem item : delList )
+            {
+                hasBatchItems = true;
+                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                pstmt.setString(3, item.getID());
+                pstmt.addBatch();
                 }
                 if (hasBatchItems) pstmt.executeBatch();
             } catch (SQLException ex) {
@@ -1341,39 +1757,34 @@ public class PubSubPersistenceManager {
             } finally {
                 DbConnectionManager.closeStatement(pstmt);
             }
-        }
-        
+
         try { 
             // first try to add the pending items as a batch
-            writePendingItems(con, addList.getFirst(), true);
+        	writePendingItems(con, addList, true);
         } catch (SQLException ex) {
             // retry each item individually rather than rolling back
-            writePendingItems(con, addList.getFirst(), false);       	
+        	writePendingItems(con, addList, false);
         }
     }
-    
+
     /**
      * Execute JDBC calls (optionally via batch) to persist the given published items
      * @param con
-     * @param addItem
+	 * @param addItems
      * @param batch
      * @throws SQLException
      */
-    private static void writePendingItems(Connection con, LinkedListNode<RetryWrapper> addItem, boolean batch)  throws SQLException 
-    {	
-        if (addItem == null) { return; }
-        LinkedListNode<RetryWrapper> addHead = addItem.previous;
+	private static void writePendingItems(Connection con, List<RetryWrapper> addItems, boolean batch)  throws SQLException
+    {
+		if (addItems == null || addItems.isEmpty()) { return; }
         PreparedStatement pstmt = null;
-        RetryWrapper wrappedItem = null;
-        PublishedItem item = null;       
         try {
             pstmt = con.prepareStatement(ADD_ITEM);
-            Boolean hasBatchItems = false;
-            while (addItem != addHead)
+            boolean hasBatchItems = false;
+            for ( final RetryWrapper wrappedItem : addItems)
             {
                 hasBatchItems = true;
-                wrappedItem = addItem.object;
-                item = wrappedItem.get();
+                final PublishedItem item = wrappedItem.get();
                 pstmt.setString(1, item.getNode().getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(item.getNodeID()));
                 pstmt.setString(3, item.getID());
@@ -1395,7 +1806,6 @@ public class PubSubPersistenceManager {
                         }
                     }
                 }
-                addItem = addItem.next;
             }
             if (batch && hasBatchItems) { pstmt.executeBatch(); }			
         } catch (SQLException se) {
@@ -1418,10 +1828,13 @@ public class PubSubPersistenceManager {
         synchronized (itemsPending)
         {
             itemsToDelete.addLast(item);
-            LinkedListNode<RetryWrapper> itemToAdd = itemsPending.remove(itemKey);
-            if (itemToAdd != null)
-                itemToAdd.remove();  // drop from itemsToAdd linked list
+    		itemsPending.remove(itemKey);
         }
+    }
+
+    private static String getDefaultNodeConfigurationCacheKey( PubSubService service, boolean isLeafType )
+    {
+        return service.getServiceID() + "|" + Boolean.toString( isLeafType );
     }
 
     /**
@@ -1435,48 +1848,69 @@ public class PubSubPersistenceManager {
      */
     public static DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service,
             boolean isLeafType) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        DefaultNodeConfiguration config = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            // Get default node configuration for the specified service
-            pstmt = con.prepareStatement(LOAD_DEFAULT_CONF);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setInt(2, (isLeafType ? 1 : 0));
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                config = new DefaultNodeConfiguration(isLeafType);
-                // Rebuild loaded default node configuration
-                config.setDeliverPayloads(rs.getInt(1) == 1);
-                config.setMaxPayloadSize(rs.getInt(2));
-                config.setPersistPublishedItems(rs.getInt(3) == 1);
-                config.setMaxPublishedItems(rs.getInt(4));
-                config.setNotifyConfigChanges(rs.getInt(5) == 1);
-                config.setNotifyDelete(rs.getInt(6) == 1);
-                config.setNotifyRetract(rs.getInt(7) == 1);
-                config.setPresenceBasedDelivery(rs.getInt(8) == 1);
-                config.setSendItemSubscribe(rs.getInt(9) == 1);
-                config.setPublisherModel(PublisherModel.valueOf(rs.getString(10)));
-                config.setSubscriptionEnabled(rs.getInt(11) == 1);
-                config.setAccessModel(AccessModel.valueOf(rs.getString(12)));
-                config.setLanguage(rs.getString(13));
-                if (rs.getString(14) != null) {
-                    config.setReplyPolicy(Node.ItemReplyPolicy.valueOf(rs.getString(14)));
+
+        final String key = getDefaultNodeConfigurationCacheKey( service, isLeafType );
+        DefaultNodeConfiguration result = defaultNodeConfigurationCache.get( key );
+        if ( result == null )
+        {
+            final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+            try
+            {
+                lock.lock();
+                result = defaultNodeConfigurationCache.get( key );
+                if ( result == null )
+                {
+                    Connection con = null;
+                    PreparedStatement pstmt = null;
+                    ResultSet rs = null;
+                    DefaultNodeConfiguration config = null;
+                    try {
+                        con = DbConnectionManager.getConnection();
+                        // Get default node configuration for the specified service
+                        pstmt = con.prepareStatement(LOAD_DEFAULT_CONF);
+                        pstmt.setString(1, service.getServiceID());
+                        pstmt.setInt(2, (isLeafType ? 1 : 0));
+                        rs = pstmt.executeQuery();
+                        if (rs.next()) {
+                            config = new DefaultNodeConfiguration(isLeafType);
+                            // Rebuild loaded default node configuration
+                            config.setDeliverPayloads(rs.getInt(1) == 1);
+                            config.setMaxPayloadSize(rs.getInt(2));
+                            config.setPersistPublishedItems(rs.getInt(3) == 1);
+                            config.setMaxPublishedItems(rs.getInt(4));
+                            config.setNotifyConfigChanges(rs.getInt(5) == 1);
+                            config.setNotifyDelete(rs.getInt(6) == 1);
+                            config.setNotifyRetract(rs.getInt(7) == 1);
+                            config.setPresenceBasedDelivery(rs.getInt(8) == 1);
+                            config.setSendItemSubscribe(rs.getInt(9) == 1);
+                            config.setPublisherModel(PublisherModel.valueOf(rs.getString(10)));
+                            config.setSubscriptionEnabled(rs.getInt(11) == 1);
+                            config.setAccessModel(AccessModel.valueOf(rs.getString(12)));
+                            config.setLanguage(rs.getString(13));
+                            if (rs.getString(14) != null) {
+                                config.setReplyPolicy(Node.ItemReplyPolicy.valueOf(rs.getString(14)));
+                            }
+                            config.setAssociationPolicy(
+                                    CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(15)));
+                            config.setMaxLeafNodes(rs.getInt(16));
+                        }
+                        defaultNodeConfigurationCache.put( key, config );
+                        result = config;
+                    }
+                    catch (Exception sqle) {
+                        log.error(sqle.getMessage(), sqle);
+                    }
+                    finally {
+                        DbConnectionManager.closeConnection(rs, pstmt, con);
+                    }
                 }
-                config.setAssociationPolicy(
-                        CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(15)));
-                config.setMaxLeafNodes(rs.getInt(16));
+            }
+            finally
+            {
+                lock.unlock();
             }
         }
-        catch (Exception sqle) {
-            log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return config;
+        return result;
     }
 
     /**
@@ -1487,41 +1921,56 @@ public class PubSubPersistenceManager {
      */
     public static void createDefaultConfiguration(PubSubService service,
             DefaultNodeConfiguration config) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(ADD_DEFAULT_CONF);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setInt(2, (config.isLeaf() ? 1 : 0));
-            pstmt.setInt(3, (config.isDeliverPayloads() ? 1 : 0));
-            pstmt.setInt(4, config.getMaxPayloadSize());
-            pstmt.setInt(5, (config.isPersistPublishedItems() ? 1 : 0));
-            pstmt.setInt(6, config.getMaxPublishedItems());
-            pstmt.setInt(7, (config.isNotifyConfigChanges() ? 1 : 0));
-            pstmt.setInt(8, (config.isNotifyDelete() ? 1 : 0));
-            pstmt.setInt(9, (config.isNotifyRetract() ? 1 : 0));
-            pstmt.setInt(10, (config.isPresenceBasedDelivery() ? 1 : 0));
-            pstmt.setInt(11, (config.isSendItemSubscribe() ? 1 : 0));
-            pstmt.setString(12, config.getPublisherModel().getName());
-            pstmt.setInt(13, (config.isSubscriptionEnabled() ? 1 : 0));
-            pstmt.setString(14, config.getAccessModel().getName());
-            pstmt.setString(15, config.getLanguage());
-            if (config.getReplyPolicy() != null) {
-                pstmt.setString(16, config.getReplyPolicy().name());
+
+        final String key = getDefaultNodeConfigurationCacheKey( service, config.isLeaf() );
+
+        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+        try
+        {
+            lock.lock();
+
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(ADD_DEFAULT_CONF);
+                pstmt.setString(1, service.getServiceID());
+                pstmt.setInt(2, (config.isLeaf() ? 1 : 0));
+                pstmt.setInt(3, (config.isDeliverPayloads() ? 1 : 0));
+                pstmt.setInt(4, config.getMaxPayloadSize());
+                pstmt.setInt(5, (config.isPersistPublishedItems() ? 1 : 0));
+                pstmt.setInt(6, config.getMaxPublishedItems());
+                pstmt.setInt(7, (config.isNotifyConfigChanges() ? 1 : 0));
+                pstmt.setInt(8, (config.isNotifyDelete() ? 1 : 0));
+                pstmt.setInt(9, (config.isNotifyRetract() ? 1 : 0));
+                pstmt.setInt(10, (config.isPresenceBasedDelivery() ? 1 : 0));
+                pstmt.setInt(11, (config.isSendItemSubscribe() ? 1 : 0));
+                pstmt.setString(12, config.getPublisherModel().getName());
+                pstmt.setInt(13, (config.isSubscriptionEnabled() ? 1 : 0));
+                pstmt.setString(14, config.getAccessModel().getName());
+                pstmt.setString(15, config.getLanguage());
+                if (config.getReplyPolicy() != null) {
+                    pstmt.setString(16, config.getReplyPolicy().name());
+                }
+                else {
+                    pstmt.setString(16, null);
+                }
+                pstmt.setString(17, config.getAssociationPolicy().name());
+                pstmt.setInt(18, config.getMaxLeafNodes());
+                pstmt.executeUpdate();
+
+                defaultNodeConfigurationCache.put( key, config );
             }
-            else {
-                pstmt.setString(16, null);
+            catch (SQLException sqle) {
+                log.error(sqle.getMessage(), sqle);
             }
-            pstmt.setString(17, config.getAssociationPolicy().name());
-            pstmt.setInt(18, config.getMaxLeafNodes());
-            pstmt.executeUpdate();
+            finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
-        catch (SQLException sqle) {
-            log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+        finally
+        {
+            lock.unlock();
         }
     }
 
@@ -1533,41 +1982,56 @@ public class PubSubPersistenceManager {
      */
     public static void updateDefaultConfiguration(PubSubService service,
             DefaultNodeConfiguration config) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
+
+        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
         try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_DEFAULT_CONF);
-            pstmt.setInt(1, (config.isDeliverPayloads() ? 1 : 0));
-            pstmt.setInt(2, config.getMaxPayloadSize());
-            pstmt.setInt(3, (config.isPersistPublishedItems() ? 1 : 0));
-            pstmt.setInt(4, config.getMaxPublishedItems());
-            pstmt.setInt(5, (config.isNotifyConfigChanges() ? 1 : 0));
-            pstmt.setInt(6, (config.isNotifyDelete() ? 1 : 0));
-            pstmt.setInt(7, (config.isNotifyRetract() ? 1 : 0));
-            pstmt.setInt(8, (config.isPresenceBasedDelivery() ? 1 : 0));
-            pstmt.setInt(9, (config.isSendItemSubscribe() ? 1 : 0));
-            pstmt.setString(10, config.getPublisherModel().getName());
-            pstmt.setInt(11, (config.isSubscriptionEnabled() ? 1 : 0));
-            pstmt.setString(12, config.getAccessModel().getName());
-            pstmt.setString(13, config.getLanguage());
-            if (config.getReplyPolicy() != null) {
-                pstmt.setString(14, config.getReplyPolicy().name());
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(UPDATE_DEFAULT_CONF);
+                pstmt.setInt(1, (config.isDeliverPayloads() ? 1 : 0));
+                pstmt.setInt(2, config.getMaxPayloadSize());
+                pstmt.setInt(3, (config.isPersistPublishedItems() ? 1 : 0));
+                pstmt.setInt(4, config.getMaxPublishedItems());
+                pstmt.setInt(5, (config.isNotifyConfigChanges() ? 1 : 0));
+                pstmt.setInt(6, (config.isNotifyDelete() ? 1 : 0));
+                pstmt.setInt(7, (config.isNotifyRetract() ? 1 : 0));
+                pstmt.setInt(8, (config.isPresenceBasedDelivery() ? 1 : 0));
+                pstmt.setInt(9, (config.isSendItemSubscribe() ? 1 : 0));
+                pstmt.setString(10, config.getPublisherModel().getName());
+                pstmt.setInt(11, (config.isSubscriptionEnabled() ? 1 : 0));
+                pstmt.setString(12, config.getAccessModel().getName());
+                pstmt.setString(13, config.getLanguage());
+                if (config.getReplyPolicy() != null) {
+                    pstmt.setString(14, config.getReplyPolicy().name());
+                }
+                else {
+                    pstmt.setString(14, null);
+                }
+                pstmt.setString(15, config.getAssociationPolicy().name());
+                pstmt.setInt(16, config.getMaxLeafNodes());
+                pstmt.setString(17, service.getServiceID());
+                pstmt.setInt(18, (config.isLeaf() ? 1 : 0));
+                pstmt.executeUpdate();
+
+
+                getDefaultNodeConfigurationCacheKey( service, false );
+
+                // Note that 'isLeaf' might have changed.
+                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( service, true ) );
+                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( service, false ) );
+                defaultNodeConfigurationCache.put( getDefaultNodeConfigurationCacheKey( service, config.isLeaf() ), config );
             }
-            else {
-                pstmt.setString(14, null);
+            catch (SQLException sqle) {
+                log.error(sqle.getMessage(), sqle);
             }
-            pstmt.setString(15, config.getAssociationPolicy().name());
-            pstmt.setInt(16, config.getMaxLeafNodes());
-            pstmt.setString(17, service.getServiceID());
-            pstmt.setInt(18, (config.isLeaf() ? 1 : 0));
-            pstmt.executeUpdate();
-        }
-        catch (SQLException sqle) {
-            log.error(sqle.getMessage(), sqle);
+            finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
         finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+            lock.unlock();
         }
     }
 
@@ -1718,8 +2182,8 @@ public class PubSubPersistenceManager {
                 itemLock.lock();
                 result = itemCache.get(itemKey);
                 if (result == null) {
-                    flushPendingItems(); 
-    
+                    flushPendingItems();
+
                     // fetch item from DB
                     Connection con = null;
                     PreparedStatement pstmt = null;
@@ -1731,7 +2195,7 @@ public class PubSubPersistenceManager {
                         pstmt.setString(2, node.getNodeID());
                         pstmt.setString(3, itemID);
                         rs = pstmt.executeQuery();
-    
+
                         // Add to each node the corresponding subscriptions
                         if (rs.next()) {
                             JID publisher = new JID(rs.getString(1));
@@ -1777,15 +2241,14 @@ public class PubSubPersistenceManager {
             // that match this node.
             synchronized (itemsPending)
             {
-                Iterator<Map.Entry<String, LinkedListNode<RetryWrapper>>> pendingIt = itemsPending.entrySet().iterator();
+                Iterator<Map.Entry<String, RetryWrapper>> pendingIt = itemsPending.entrySet().iterator();
 
                 while (pendingIt.hasNext())
                 {
-                    LinkedListNode<RetryWrapper> itemNode = pendingIt.next().getValue();
+					RetryWrapper itemNode = pendingIt.next().getValue();
 
-                    if (itemNode.object.get().getNodeID().equals(leafNode.getNodeID()))
+					if (itemNode.get().getNodeID().equals(leafNode.getNodeID()))
                     {
-                        itemNode.remove();
                         pendingIt.remove();
                     }
                 }
@@ -1882,7 +2345,7 @@ public class PubSubPersistenceManager {
     private static void purgeItems()
     {
         boolean abortTransaction = false;
-        Connection con = null;       
+        Connection con = null;
         PreparedStatement nodeConfig = null;
         ResultSet rs = null;
 
@@ -1967,7 +2430,7 @@ public class PubSubPersistenceManager {
     {
         log.info("Flushing write cache to database");
         flushPendingItems(false); // local member only
-        
+
         // node cleanup (skip when running as a cluster)
         if (!ClusterManager.isClusteringEnabled()) {
             purgeItems();

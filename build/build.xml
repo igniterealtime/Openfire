@@ -28,8 +28,8 @@
     <property name="version.revision" value="5"/>
     <property name="version.extra" value=""/>    <!-- For 'beta' or 'alpha' -->
 
-	<property name="javac.source" value="1.7"/>
-	<property name="javac.target" value="1.7"/>
+	<property name="javac.source" value="1.8"/>
+	<property name="javac.target" value="1.8"/>
     <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>

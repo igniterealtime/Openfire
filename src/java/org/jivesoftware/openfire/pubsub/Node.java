@@ -1826,40 +1826,37 @@ public abstract class Node {
      *
      * @return true if the node was successfully deleted.
      */
-    public boolean delete() {
+    public void delete() {
         // Delete node from the database
-        if (PubSubPersistenceManager.removeNode(this)) {
-            // Remove this node from the parent node (if any)
-            if (parent != null) {
-                parent.removeChildNode(this);
-            }
-            deletingNode();
-            // Broadcast delete notification to subscribers (if enabled)
-            if (isNotifiedOfDelete()) {
-                // Build packet to broadcast to subscribers
-                Message message = new Message();
-                Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-                Element items = event.addElement("delete");
-                items.addAttribute("node", nodeID);
-                // Send notification that the node was deleted
-                broadcastNodeEvent(message, true);
-            }
-            // Notify the parent (if any) that the node has been removed from the parent node
-            if (parent != null) {
-                parent.childNodeDeleted(this);
-            }
-            // Remove presence subscription when node was deleted.
-            cancelPresenceSubscriptions();
-            // Remove the node from memory
-            service.removeNode(getNodeID());
-            CacheFactory.doClusterTask(new RemoveNodeTask(this));
-            // Clear collections in memory (clear them after broadcast was sent)
-            affiliates.clear();
-            subscriptionsByID.clear();
-            subscriptionsByJID.clear();
-            return true;
+        PubSubPersistenceManager.removeNode(this);
+        // Remove this node from the parent node (if any)
+        if (parent != null) {
+            parent.removeChildNode(this);
         }
-        return false;
+        deletingNode();
+        // Broadcast delete notification to subscribers (if enabled)
+        if (isNotifiedOfDelete()) {
+            // Build packet to broadcast to subscribers
+            Message message = new Message();
+            Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+            Element items = event.addElement("delete");
+            items.addAttribute("node", nodeID);
+            // Send notification that the node was deleted
+            broadcastNodeEvent(message, true);
+        }
+        // Notify the parent (if any) that the node has been removed from the parent node
+        if (parent != null) {
+            parent.childNodeDeleted(this);
+        }
+        // Remove presence subscription when node was deleted.
+        cancelPresenceSubscriptions();
+        // Remove the node from memory
+        service.removeNode(getNodeID());
+        CacheFactory.doClusterTask(new RemoveNodeTask(this));
+        // Clear collections in memory (clear them after broadcast was sent)
+        affiliates.clear();
+        subscriptionsByID.clear();
+        subscriptionsByJID.clear();
     }
 
     /**

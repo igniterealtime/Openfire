@@ -4,33 +4,34 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 
 public class FlushTask implements ClusterTask<Void>
 {
-	private String nodeId;
+	private Node.UniqueIdentifier uniqueIdentifier;
 
-	public FlushTask( String nodeId )
+	public FlushTask( Node.UniqueIdentifier uniqueIdentifier )
 	{
-		this.nodeId = nodeId;
+		this.uniqueIdentifier = uniqueIdentifier;
 	}
 
     public FlushTask()
     {
-		this.nodeId = null;
+		this.uniqueIdentifier = null;
     }
 
     @Override
     public void run()
     {
-		if ( nodeId != null ) {
-			PubSubPersistenceManager.flushPendingItems(nodeId, false); // just this member
+		if ( uniqueIdentifier != null ) {
+			PubSubPersistenceProviderManager.getInstance().getProvider().flushPendingItems( uniqueIdentifier, false); // just this member
 		} else {
-        PubSubPersistenceManager.flushPendingItems(false); // just this member
-    }
+			PubSubPersistenceProviderManager.getInstance().getProvider().flushPendingItems(false); // just this member
+        }
 	}
 
     @Override
@@ -42,17 +43,23 @@ public class FlushTask implements ClusterTask<Void>
     @Override
     public void writeExternal(ObjectOutput out) throws IOException
     {
-		ExternalizableUtil.getInstance().writeBoolean( out, nodeId != null);
-		ExternalizableUtil.getInstance().writeSafeUTF( out, nodeId );
+		ExternalizableUtil.getInstance().writeBoolean( out, uniqueIdentifier != null);
+		if ( uniqueIdentifier != null )
+		{
+			ExternalizableUtil.getInstance().writeSafeUTF( out, uniqueIdentifier.getServiceId() );
+			ExternalizableUtil.getInstance().writeSafeUTF( out, uniqueIdentifier.getNodeId() );
+		}
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
     {
 		if ( ExternalizableUtil.getInstance().readBoolean( in ) ) {
-			this.nodeId = ExternalizableUtil.getInstance().readSafeUTF( in );
+			String serviceId = ExternalizableUtil.getInstance().readSafeUTF( in );
+			String nodeId = ExternalizableUtil.getInstance().readSafeUTF( in );
+			uniqueIdentifier = new Node.UniqueIdentifier( serviceId, nodeId );
 		} else {
-			this.nodeId = null;
-    }
+			this.uniqueIdentifier = null;
+        }
 	}
 }

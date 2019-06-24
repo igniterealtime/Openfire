@@ -31,15 +31,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.PendingSubscriptionsCommand;
-import org.jivesoftware.openfire.pubsub.PubSubEngine;
-import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
-import org.jivesoftware.openfire.pubsub.PubSubService;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
+import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.openfire.roster.Roster;
@@ -138,7 +130,7 @@ public class PEPService implements PubSubService, Cacheable {
         adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration( this, true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -156,10 +148,10 @@ public class PEPService implements PubSubService, Cacheable {
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceManager.createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
-        collectionDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, false);
+        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
         if (collectionDefaultConfiguration == null) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -175,11 +167,11 @@ public class PEPService implements PubSubService, Cacheable {
             collectionDefaultConfiguration.setReplyPolicy(null);
             collectionDefaultConfiguration.setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceManager.createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
         }
 
         // Load nodes to memory
-        PubSubPersistenceManager.loadNodes(this);
+        PubSubPersistenceProviderManager.getInstance().getProvider().loadNodes(this);
         // Ensure that we have a root collection node
         if (nodes.isEmpty()) {
             // Create root collection node

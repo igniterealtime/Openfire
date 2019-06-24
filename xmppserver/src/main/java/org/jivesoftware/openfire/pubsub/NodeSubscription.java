@@ -488,7 +488,7 @@ public class NodeSubscription {
         }
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceManager.saveSubscription(node, this, false);
+            PubSubPersistenceManager.updateSubscription(node, this);
         }
         // Check if the service needs to subscribe or unsubscribe from the owner presence
         if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
@@ -861,7 +861,7 @@ public class NodeSubscription {
 
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceManager.saveSubscription(node, this, false);
+            PubSubPersistenceManager.updateSubscription(node, this);
         }
 
         // Send last published item (if node is leaf node and subscription status is ok)

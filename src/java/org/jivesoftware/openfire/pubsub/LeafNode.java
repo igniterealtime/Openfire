@@ -249,7 +249,7 @@ public class LeafNode extends Node {
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
                 if (isPersistPublishedItems()) {
-                	PubSubPersistenceManager.savePublishedItem(newItem);
+                    PubSubPersistenceProviderManager.getInstance().getProvider().savePublishedItem(newItem);
                 }
             }
         }
@@ -286,7 +286,7 @@ public class LeafNode extends Node {
     public void deleteItems(List<PublishedItem> toDelete) {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
-            PubSubPersistenceManager.removePublishedItem(item);
+            PubSubPersistenceProviderManager.getInstance().getProvider().removePublishedItem(item);
             if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
                 lastPublished = null;
             }
@@ -353,7 +353,7 @@ public class LeafNode extends Node {
                 return lastPublished;
             }
         }
-        return PubSubPersistenceManager.getPublishedItem(this, itemID);
+        return PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItem(this, itemID);
     }
 
     @Override
@@ -363,7 +363,7 @@ public class LeafNode extends Node {
 
     @Override
     public synchronized List<PublishedItem> getPublishedItems(int recentItems) {
-        List<PublishedItem> publishedItems = PubSubPersistenceManager.getPublishedItems(this, recentItems);
+        List<PublishedItem> publishedItems = PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItems(this, recentItems);
         if (lastPublished != null) {
             // The persistent items may not contain the last item, if it wasn't persisted anymore (e.g. if node configuration changed).
             // Therefore check, if the last item has been persisted.
@@ -390,7 +390,7 @@ public class LeafNode extends Node {
     @Override
 	public synchronized PublishedItem getLastPublishedItem() {
     	if (lastPublished == null){
-    		lastPublished = PubSubPersistenceManager.getLastPublishedItem(this);
+    		lastPublished = PubSubPersistenceProviderManager.getInstance().getProvider().getLastPublishedItem(this);
     	}
     	return lastPublished;
     }
@@ -427,7 +427,7 @@ public class LeafNode extends Node {
      * published items will be deleted with the exception of the last published item.
      */
     public void purge() {
-        PubSubPersistenceManager.purgeNode(this);
+        PubSubPersistenceProviderManager.getInstance().getProvider().purgeNode(this);
         // Broadcast purge notification to subscribers
         // Build packet to broadcast to subscribers
         Message message = new Message();

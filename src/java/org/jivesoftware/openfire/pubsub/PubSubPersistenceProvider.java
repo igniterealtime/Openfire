@@ -1,0 +1,212 @@
+/*
+ * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jivesoftware.openfire.pubsub;
+
+import org.jivesoftware.openfire.cluster.ClusterManager;
+
+import java.util.List;
+
+/**
+ * Defines an implementation responsible for persisting pubsub-related data
+ * to a backend data store.
+ *
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+ */
+public interface PubSubPersistenceProvider
+{
+    void initialize();
+    void shutdown();
+
+    /**
+     * Schedules the node to be created in the database.
+     *
+     * @param node The newly created node.
+     */
+    void createNode(Node node);
+
+    /**
+     * Schedules the node to be updated in the database.
+     *
+     * @param node The updated node.
+     */
+    void updateNode(Node node);
+
+    /**
+     * Schedules the node to be removed in the database.
+     *
+     * @param node The node that is being deleted.
+     */
+    void removeNode(Node node);
+
+    /**
+     * Loads all nodes from the database and adds them to the PubSub service.
+     *
+     * @param service the pubsub service that is hosting the nodes.
+     */
+    void loadNodes(PubSubService service);
+
+    /**
+     * Loads all nodes from the database and adds them to the PubSub service.
+     *
+     * @param service
+     *            the pubsub service that is hosting the nodes.
+     */
+    void loadNode(PubSubService service, String nodeId);
+
+    void loadSubscription(PubSubService service, Node node, String subId);
+
+    /**
+     * Creates a new affiliation of the user in the node.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The new affiliation of the user in the node.
+     */
+    void createAffiliation(Node node, NodeAffiliate affiliate);
+
+    /**
+     * Updates an affiliation of the user in the node.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The new affiliation of the user in the node.
+     */
+    void updateAffiliation(Node node, NodeAffiliate affiliate);
+
+    /**
+     * Removes the affiliation and subscription state of the user from the DB.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The existing affiliation and subsription state of the user in the node.
+     */
+    void removeAffiliation(Node node, NodeAffiliate affiliate);
+
+    /**
+     * Adds the new subscription of the user to the node to the database.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    void createSubscription(Node node, NodeSubscription subscription);
+
+    /**
+     * Updates the subscription of the user to the node to the database.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    void updateSubscription(Node node, NodeSubscription subscription);
+
+    /**
+     * Removes the subscription of the user from the DB.
+     *
+     * @param subscription The existing subscription of the user to the node.
+     */
+    void removeSubscription(NodeSubscription subscription);
+
+    /**
+     * Creates and stores the published item in the database. Note that the
+     * item will be cached temporarily before being flushed asynchronously
+     * to the database. The write cache can be tuned using the following
+     * two properties:
+     * <pre>
+     *   "xmpp.pubsub.flush.max" - maximum items in the cache (-1 to disable cache)
+     *   "xmpp.pubsub.flush.timer" - number of seconds between cache flushes
+     * </pre>
+     * @param item The published item to save.
+     */
+    void savePublishedItem(PublishedItem item);
+
+    /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete)
+     * for a specific node.
+     */
+    void flushPendingItems( Node.UniqueIdentifier nodeUniqueId );
+
+    /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
+     */
+    void flushPendingItems();
+
+    /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
+     * @param sendToCluster If true, delegate to cluster members, otherwise local only
+     */
+    void flushPendingItems( Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster);
+
+    /**
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
+     * @param sendToCluster If true, delegate to cluster members, otherwise local only
+     */
+    void flushPendingItems(boolean sendToCluster);
+
+    /**
+     * Removes the specified published item from the DB.
+     *
+     * @param item The published item to delete.
+     */
+    void removePublishedItem(PublishedItem item);
+
+    /**
+     * Loads from the database the default node configuration for the specified node type
+     * and pubsub service.
+     *
+     * @param service the default node configuration used by this pubsub service.
+     * @param isLeafType true if loading default configuration for leaf nodes.
+     * @return the loaded default node configuration for the specified node type and service
+     *         or <tt>null</tt> if none was found.
+     */
+    DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType);
+
+    /**
+     * Creates a new default node configuration for the specified service.
+     *
+     * @param service the default node configuration used by this pubsub service.
+     * @param config the default node configuration to create in the database.
+     */
+    void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+
+    /**
+     * Updates the default node configuration for the specified service.
+     *
+     * @param service the default node configuration used by this pubsub service.
+     * @param config the default node configuration to update in the database.
+     */
+    void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+
+    /**
+     * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
+     *
+     * @param node the leaf node to load its published items.
+     */
+    List<PublishedItem> getPublishedItems(LeafNode node);
+
+    /**
+     * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
+     *
+     * @param node the leaf node to load its published items.
+     */
+    List<PublishedItem> getPublishedItems(LeafNode node, int maxRows);
+
+    /**
+     * Fetches the last published item for the specified node.
+     *
+     * @param node the leaf node to load its last published items.
+     */
+    PublishedItem getLastPublishedItem(LeafNode node);
+
+    PublishedItem getPublishedItem(LeafNode node, String itemID);
+
+    void purgeNode(LeafNode leafNode);
+}

@@ -1175,35 +1175,59 @@ public class PubSubPersistenceManager {
     }
 
     /**
+     * Creates a new affiliation of the user in the node.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The new affiliation of the user in the node.
+     */
+    public static void createAffiliation(Node node, NodeAffiliate affiliate)
+    {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        final NodeOperation operation = NodeOperation.createAffiliation( node, affiliate );
+        operations.add( operation );
+    }
+
+    /**
+     * Aupdates an affiliation of the user in the node.
+     *
+     * @param node      The node where the affiliation of the user was updated.
+     * @param affiliate The new affiliation of the user in the node.
+     */
+    public static void updateAffiliation(Node node, NodeAffiliate affiliate)
+    {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
+        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+        while ( iter.hasPrevious() ) {
+            final NodeOperation op = iter.previous();
+            if ( op.action.equals( NodeOperation.Action.UPDATE_AFFILIATION ) ) {
+                if ( affiliate.getJID().equals( op.affiliate.getJID() ) ) {
+                    iter.remove(); // This is replaced by the update that's being added.
+                }
+            } else {
+                break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
+            }
+        }
+
+        final NodeOperation operation = NodeOperation.updateAffiliation( node, affiliate );
+        operations.add( operation );
+    }
+
+    /**
      * Update the DB with the new affiliation of the user in the node.
      *
      * @param node      The node where the affiliation of the user was updated.
      * @param affiliate The new affiliation of the user in the node.
      * @param create    True if this is a new affiliate.
+     * @deprecated replaced by {@link #createAffiliation(Node, NodeAffiliate)} and {@link #updateAffiliation(Node, NodeAffiliate)}
      */
+    @Deprecated
     public static void saveAffiliation(Node node, NodeAffiliate affiliate, boolean create) {
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
-        final NodeOperation operation;
         if (create) {
-            operation = NodeOperation.createAffiliation( node, affiliate );
+            createAffiliation( node, affiliate );
         } else {
-
-            // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
-            final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-            while ( iter.hasPrevious() ) {
-                final NodeOperation op = iter.previous();
-                if ( op.action.equals( NodeOperation.Action.UPDATE_AFFILIATION ) ) {
-                    if ( affiliate.getJID().equals( op.affiliate.getJID() ) ) {
-                        iter.remove(); // This is replaced by the update that's being added.
-                    }
-                } else {
-                    break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
-                }
-            }
-
-            operation = NodeOperation.updateAffiliation( node, affiliate );
+            updateAffiliation( node, affiliate );
         }
-        operations.add( operation );
     }
 
     // Add the user to the generic affiliations table
@@ -1299,35 +1323,58 @@ public class PubSubPersistenceManager {
     }
 
     /**
+     * Adds the new subscription of the user to the node to the database.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    public static void createSubscription(Node node, NodeSubscription subscription) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+        final NodeOperation operation = NodeOperation.createSubscription( node, subscription );
+        operations.add( operation );
+    }
+
+    /**
+     * Updates the subscription of the user to the node to the database.
+     *
+     * @param node      The node where the user has subscribed to.
+     * @param subscription The new subscription of the user to the node.
+     */
+    public static void updateSubscription(Node node, NodeSubscription subscription) {
+        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
+
+        // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
+        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
+        while ( iter.hasPrevious() ) {
+            final NodeOperation op = iter.previous();
+            if ( op.action.equals( NodeOperation.Action.UPDATE_SUBSCRIPTION ) ) {
+                if ( subscription.getID().equals( op.subscription.getID() ) ) {
+                    iter.remove(); // This is replaced by the update that's being added.
+                }
+            } else {
+                break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
+            }
+        }
+
+        final NodeOperation operation = NodeOperation.updateSubscription( node, subscription );
+        operations.add( operation );
+    }
+
+    /**
      * Updates the DB with the new subscription of the user to the node.
      *
      * @param node      The node where the user has subscribed to.
      * @param subscription The new subscription of the user to the node.
      * @param create    True if this is a new affiliate.
+     * @deprecated Replaced by {@link #createSubscription(Node, NodeSubscription)} and {@link #updateSubscription(Node, NodeSubscription)}
      */
+    @Deprecated
     public static void saveSubscription(Node node, NodeSubscription subscription, boolean create) {
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getNodeID(), nodeId -> new ArrayList<>() );
-        final NodeOperation operation;
         if (create) {
-            operation = NodeOperation.createSubscription( node, subscription );
+            createSubscription( node, subscription );
         } else {
-
-            // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
-            final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-            while ( iter.hasPrevious() ) {
-                final NodeOperation op = iter.previous();
-                if ( op.action.equals( NodeOperation.Action.UPDATE_SUBSCRIPTION ) ) {
-                    if ( subscription.getID().equals( op.subscription.getID() ) ) {
-                        iter.remove(); // This is replaced by the update that's being added.
-                    }
-                } else {
-                    break; // Operations that precede anything other than the last operations that are UPDATE_AFFILIATE shouldn't be replaced.
-                }
-            }
-
-            operation = NodeOperation.updateSubscription( node, subscription );
+            updateSubscription( node, subscription );
         }
-        operations.add( operation );
     }
 
     /**

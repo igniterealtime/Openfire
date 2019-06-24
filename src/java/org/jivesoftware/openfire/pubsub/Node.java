@@ -340,7 +340,11 @@ public abstract class Node {
 
         if (savedToDB) {
             // Add or update the affiliate in the database
-            PubSubPersistenceManager.saveAffiliation(this, affiliate, created);
+            if ( created ) {
+                PubSubPersistenceManager.createAffiliation(this, affiliate);
+            } else {
+                PubSubPersistenceManager.updateAffiliation(this, affiliate);
+            }
         }
         
         // Update the other members with the new affiliation
@@ -1753,12 +1757,12 @@ public abstract class Node {
             // Set that the node is now in the DB
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
-            for (NodeAffiliate affialiate : affiliates) {
-                PubSubPersistenceManager.saveAffiliation(this, affialiate, true);
+            for (NodeAffiliate affiliate : affiliates) {
+                PubSubPersistenceManager.createAffiliation(this, affiliate);
             }
             // Add new subscriptions to the database
             for (NodeSubscription subscription : subscriptionsByID.values()) {
-                PubSubPersistenceManager.saveSubscription(this, subscription, true);
+                PubSubPersistenceManager.createSubscription(this, subscription);
             }
             // Add the new node to the list of available nodes
             service.addNode(this);
@@ -2088,7 +2092,7 @@ public abstract class Node {
 
         if (savedToDB) {
             // Add the new subscription to the database
-            PubSubPersistenceManager.saveSubscription(this, subscription, true);
+            PubSubPersistenceManager.createSubscription(this, subscription);
         }
 
         if (originalIQ != null) {

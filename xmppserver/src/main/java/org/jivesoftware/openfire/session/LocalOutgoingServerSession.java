@@ -41,6 +41,7 @@ import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -136,6 +137,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             {
                 // Do nothing since the domain has already been authenticated.
                 log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
+                //inform all listeners as well.
+                ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                 return true;
             }
             if (session != null && !session.isUsingServerDialback() )
@@ -212,6 +215,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     session.addOutgoingDomainPair(localDomain, remoteDomain);
                     sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                     log.debug( "Authentication successful." );
+                    //inform all listeners as well.
+                    ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                     return true;
                 } else {
                     log.warn( "Unable to authenticate: Fail to create new session." );

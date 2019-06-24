@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -200,6 +201,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             // Set the domain or subdomain of the local server targeted by the remote server
             session.setLocalDomain(serverName);
+            // After the session has been created, inform all listeners as well.
+            ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
             return session;
         }
         catch (Exception e) {

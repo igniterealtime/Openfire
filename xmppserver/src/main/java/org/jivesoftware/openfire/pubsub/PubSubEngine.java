@@ -1941,7 +1941,7 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-        PubSubPersistenceManager.shutdown();
+    	PubSubPersistenceProviderManager.getInstance().shutdown();
         if (service != null) {
 
             if (service.getManager() != null) {

@@ -432,7 +432,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine = new PubSubEngine(router);
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -450,11 +450,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceManager.createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
         collectionDefaultConfiguration =
-                PubSubPersistenceManager.loadDefaultConfiguration(this, false);
+                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
         if (collectionDefaultConfiguration == null ) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -471,12 +471,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             collectionDefaultConfiguration
                     .setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceManager
-                    .createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
         }
 
         // Load nodes to memory
-        PubSubPersistenceManager.loadNodes(this);
+        PubSubPersistenceProviderManager.getInstance().getProvider().loadNodes(this);
         // Ensure that we have a root collection node
         String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
         if (nodes.isEmpty()) {

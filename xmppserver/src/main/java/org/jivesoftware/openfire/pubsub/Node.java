@@ -209,6 +209,9 @@ public abstract class Node {
         this.replyPolicy = defaultConfiguration.getReplyPolicy();
     }
 
+    public UniqueIdentifier getUniqueIdentifier() {
+        return new UniqueIdentifier( this.service.getServiceID(), this.nodeID );
+    }
     /**
      * Adds a new affiliation or updates an existing affiliation of the specified entity JID
      * to become a node owner.
@@ -336,9 +339,9 @@ public abstract class Node {
         if (savedToDB) {
             // Add or update the affiliate in the database
             if ( created ) {
-                PubSubPersistenceManager.createAffiliation(this, affiliate);
+                PubSubPersistenceProviderManager.getInstance().getProvider().createAffiliation(this, affiliate);
             } else {
-                PubSubPersistenceManager.updateAffiliation(this, affiliate);
+                PubSubPersistenceProviderManager.getInstance().getProvider().updateAffiliation(this, affiliate);
             }
         }
         
@@ -362,7 +365,7 @@ public abstract class Node {
         affiliates.remove(affiliate);
         if (savedToDB) {
             // Remove the affiliate from the database
-            PubSubPersistenceManager.removeAffiliation(this, affiliate);
+            PubSubPersistenceProviderManager.getInstance().getProvider().removeAffiliation(this, affiliate);
         }
     }
 
@@ -1750,16 +1753,16 @@ public abstract class Node {
     public void saveToDB() {
         // Make the room persistent
         if (!savedToDB) {
-            PubSubPersistenceManager.createNode(this);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createNode(this);
             // Set that the node is now in the DB
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
             for (NodeAffiliate affiliate : affiliates) {
-                PubSubPersistenceManager.createAffiliation(this, affiliate);
+                PubSubPersistenceProviderManager.getInstance().getProvider().createAffiliation(this, affiliate);
             }
             // Add new subscriptions to the database
             for (NodeSubscription subscription : subscriptionsByID.values()) {
-                PubSubPersistenceManager.createSubscription(this, subscription);
+                PubSubPersistenceProviderManager.getInstance().getProvider().createSubscription(this, subscription);
             }
             // Add the new node to the list of available nodes
             service.addNode(this);
@@ -1769,7 +1772,7 @@ public abstract class Node {
             }
         }
         else {
-            PubSubPersistenceManager.updateNode(this);
+            PubSubPersistenceProviderManager.getInstance().getProvider().updateNode(this);
         }
     }
 
@@ -1827,7 +1830,7 @@ public abstract class Node {
      */
     public void delete() {
         // Delete node from the database
-        PubSubPersistenceManager.removeNode(this);
+        PubSubPersistenceProviderManager.getInstance().getProvider().removeNode(this);
         // Remove this node from the parent node (if any)
         if (parent != null) {
             // Notify the parent that the node has been removed from the parent node
@@ -1890,7 +1893,7 @@ public abstract class Node {
             parent.addChildNode(this);
         }
         if (savedToDB) {
-            PubSubPersistenceManager.updateNode(this);
+            PubSubPersistenceProviderManager.getInstance().getProvider().updateNode(this);
         }
     }
 
@@ -2105,7 +2108,7 @@ public abstract class Node {
 
         if (savedToDB) {
             // Add the new subscription to the database
-            PubSubPersistenceManager.createSubscription(this, subscription);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createSubscription(this, subscription);
         }
 
         if (originalIQ != null) {
@@ -2163,7 +2166,7 @@ public abstract class Node {
         }
         if (savedToDB) {
             // Remove the subscription from the database
-            PubSubPersistenceManager.removeSubscription(subscription);
+            PubSubPersistenceProviderManager.getInstance().getProvider().removeSubscription(subscription);
         }
         if (sendToCluster) {
             CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));
@@ -2323,5 +2326,60 @@ public abstract class Node {
          * Dynamically specify a replyto of the item publisher.
          */
         publisher;
+    }
+
+    /**
+     * A unique identifier for a node, in context of all services in the system.
+     */
+    public static class UniqueIdentifier
+    {
+        private final String serviceId;
+        private final String nodeId;
+
+        public UniqueIdentifier( final String serviceId, final String nodeId ) {
+            if ( serviceId == null ) {
+                throw new IllegalArgumentException( "Argument 'serviceId' cannot be null." );
+            }
+            if ( nodeId == null ) {
+                throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
+            }
+            this.serviceId = serviceId;
+            this.nodeId = nodeId;
+        }
+
+        public String getServiceId()
+        {
+            return serviceId;
+        }
+
+        public String getNodeId()
+        {
+            return nodeId;
+        }
+
+        @Override
+        public boolean equals( final Object o )
+        {
+            if ( this == o ) { return true; }
+            if ( o == null || getClass() != o.getClass() ) { return false; }
+            final UniqueIdentifier that = (UniqueIdentifier) o;
+            return serviceId.equals( that.serviceId ) &&
+                    nodeId.equals( that.nodeId );
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash( serviceId, nodeId );
+        }
+
+        @Override
+        public String toString()
+        {
+            return "UniqueIdentifier{" +
+                    "serviceId='" + serviceId + '\'' +
+                    ", nodeId='" + nodeId + '\'' +
+                    '}';
+        }
     }
 }

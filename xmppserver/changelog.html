@@ -162,6 +162,267 @@ hr {
     
     <div id="pageBody">
 
+
+<h2>4.4.0 Beta -- <span style="font-weight: normal;">Jun 24, 2019</span></h2>
+
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-188'>OF-188</a>] -         ofMucRoom table subject length does not match console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1640'>OF-1640</a>] -         NPE in EntityCapabilitiesManager
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1647'>OF-1647</a>] -         Upgrading from 4.2.3 to 4.3.0-beta leaves WEB-INF/lib in place
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1657'>OF-1657</a>] -         PubSubPersistenceManager.purgeItems incompatibility with Oracle DB
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1665'>OF-1665</a>] -         Exception when opening a group with unusual members
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1679'>OF-1679</a>] -         DefaultCache does not honour Map contract
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1682'>OF-1682</a>] -         The &amp; character is escaped twice in database config entry in openfire.xml
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1685'>OF-1685</a>] -         Group sorting is incorrect
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1686'>OF-1686</a>] -         Problems with groups creation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1694'>OF-1694</a>] -         Setup fails with MariaDB because of a different UTF setting
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1700'>OF-1700</a>] -         Cluster teardown not reflected in state of Components
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1701'>OF-1701</a>] -         SessionManager keeps state of last component only
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1707'>OF-1707</a>] -         Component event listeners should fire upon cluster events
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1718'>OF-1718</a>] -         Unable to connect with Mina 2.0.20  and compression enabled
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1721'>OF-1721</a>] -         LocalMUCRoom savedToDb state change not propagated to other nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1723'>OF-1723</a>] -         Allows to login with any password in some scenarios with LDAP
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1725'>OF-1725</a>] -         Unable to confirm existing admin password during setup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1726'>OF-1726</a>] -         Running setup a second time fails to correctly change encryption key
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1729'>OF-1729</a>] -         User-specific cache entries should be cleaned upon user deletion.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1732'>OF-1732</a>] -         Cluster teardown not reflected in client state
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1737'>OF-1737</a>] -         Java specification version comparison fails for single-number versions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1738'>OF-1738</a>] -         Java 11 causes Instant-based unit test to fail
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1774'>OF-1774</a>] -         CleanupTask did not remove empty rooms in clustered environment.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1781'>OF-1781</a>] -         Can&#39;t download plugins on the admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1793'>OF-1793</a>] -         Contact List Sharing for LDAP/AD groups has wrong default setting
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1796'>OF-1796</a>] -         Error when remote user subscribes to local user
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1797'>OF-1797</a>] -         Initial load of MUCRoom service properties is inefficient
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1802'>OF-1802</a>] -         Using an invalid resource during bind returns wrong error
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1728'>OF-1728</a>] -         Inspection of cache content
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1771'>OF-1771</a>] -         Show software version of connection
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1776'>OF-1776</a>] -         Make SSL TrustManager pluggable
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1803'>OF-1803</a>] -         SASL EXTERNAL (client): allow realm that matches XMPP domain to be suppressed
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1323'>OF-1323</a>] -         Minor performance improvement
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1697'>OF-1697</a>] -         Update Apache MINA to 2.0.20
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-258'>OF-258</a>] -         Allow reserving a nickname when adding new room member in Admin Console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1268'>OF-1268</a>] -         If integrated database authentication is used and no database credentials are used, OpenFire fails to start
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1383'>OF-1383</a>] -         Add support for Java 11
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1539'>OF-1539</a>] -         Add negative caching
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1674'>OF-1674</a>] -         Enable MUC logging by default
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1687'>OF-1687</a>] -         Better documentation for system properties
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1695'>OF-1695</a>] -         Plugin&#39;s version should update after plugin is updated
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1699'>OF-1699</a>] -         Warn when running a one-node cluster
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1705'>OF-1705</a>] -         Have more predictable Server ID switch-over 
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1706'>OF-1706</a>] -         Default node ID should be unique
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1709'>OF-1709</a>] -         Easy access to change saving the users Avatar to database setting - ldap.override.avatar
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1710'>OF-1710</a>] -         Add release date to page of available plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1712'>OF-1712</a>] -         Improved  API for locking Cache entries
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1713'>OF-1713</a>] -         Unit tests shouldn&#39;t break because of non English system locale
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1715'>OF-1715</a>] -         Prevent loading the same plugin twice
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1719'>OF-1719</a>] -         PluginManager.getPlugin() is too fragile
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1727'>OF-1727</a>] -         Update Jetty to 9.4.18.v20190429
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1730'>OF-1730</a>] -         Update to Search plugin 1.7.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1731'>OF-1731</a>] -         HTTP-BIND / Bosh improvements
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1733'>OF-1733</a>] -         DB Connection Pool Tweaks
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1734'>OF-1734</a>] -         Ensure admin users with logged in sessions lose their rights on demotion
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1739'>OF-1739</a>] -         Support for generating JavaDoc with JDK11
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1740'>OF-1740</a>] -         Update Apache MINA to 2.1.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1743'>OF-1743</a>] -         Add working with Openfire source in VS Code guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1744'>OF-1744</a>] -         Failing listener should not prevent others from executing.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1746'>OF-1746</a>] -         Allow duplicate peer certification validation to be skipped
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1747'>OF-1747</a>] -         Update to Rome 1.12.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1748'>OF-1748</a>] -         Update to log4j2 2.11.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1749'>OF-1749</a>] -         Update to Guava 27.1
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1750'>OF-1750</a>] -         Update to MS SQL Server JDBC Driver 7.2.2.jre8
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1751'>OF-1751</a>] -         Update to commons-codec 1.12
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1752'>OF-1752</a>] -         Update to commons-file-upload 1.4
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1753'>OF-1753</a>] -         Update to JAXB API 2.3.1
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1754'>OF-1754</a>] -         Update Jaxen to version 1.2.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1757'>OF-1757</a>] -         Update documentation regarding the Oracle database connector
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1758'>OF-1758</a>] -         Update commons-dbcp2 to 2.6.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1759'>OF-1759</a>] -         Update to commons-lang 3.9
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1760'>OF-1760</a>] -         Update to commons-fileupload 1.4
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1761'>OF-1761</a>] -         Update to JavaMail 1.6.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1762'>OF-1762</a>] -         Update to commons-pool 2.6.2
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1763'>OF-1763</a>] -         Update to httpclient 4.5.8
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1764'>OF-1764</a>] -         Update to awaitility 3.1.6
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1765'>OF-1765</a>] -         Update to Bouncy Castle 1.61
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1766'>OF-1766</a>] -         Update to jSMPP 2.3.7
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1767'>OF-1767</a>] -         Update to Mockito 2.27.0
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1768'>OF-1768</a>] -         Fix Javadoc generation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1769'>OF-1769</a>] -         Tests reporting: Critical Error! The home directory has not been configured,  which will prevent the application from working correctly.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1770'>OF-1770</a>] -         Include nickname in MUCEventListener.occupantLeft
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1772'>OF-1772</a>] -         Enable configurable kick reasons for admin console + timeouts
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1782'>OF-1782</a>] -         Update installation guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1784'>OF-1784</a>] -         Don&#39;t write to connection if connection cannot be written to.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1786'>OF-1786</a>] -         Update MINA to 2.1.3 to avoid high CPU usage on Linux
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1790'>OF-1790</a>] -         Improve concurrency and performance of conversation log history.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1794'>OF-1794</a>] -         Cache LDAP &#39;all usernames&#39; call
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1798'>OF-1798</a>] -         Parse data form booleans properly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1799'>OF-1799</a>] -         Allow JID caches to be configured.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1800'>OF-1800</a>] -         Cache low effectivity calculation improvement
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1801'>OF-1801</a>] -         Cache low effectivity should be shown more prominent
+</li>
+</ul>
+
+
+<h2>4.3.2 -- <span style="font-weight: normal;">Jan 31, 2019</span></h2>
+
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1683'>OF-1683</a>] -         Should not have more than one child element in an IQ stanza
+</li>
+</ul>
+                    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1669'>OF-1669</a>] -         Do not specify exact versions of MySQL in the database installation guide
+</li>
+</ul>
+
+
+<h2>4.3.1 -- <span style="font-weight: normal;">Jan 24, 2019</span></h2>
+
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1672'>OF-1672</a>] -         BOSH debug logging should consistently log to one location
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1676'>OF-1676</a>] -         Openfire not logging in the logs on Linux systems
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1667'>OF-1667</a>] -         Allow for Servlet Context interaction pre-session/auth
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1670'>OF-1670</a>] -         Allow (system) administrators to join a password-protected room
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1677'>OF-1677</a>] -         Add support for XEP-0410: MUC Self-Ping (Schrödinger&#39;s Chat)
+</li>
+</ul>
+            
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1285'>OF-1285</a>] -         Create a simple option of resetting admin password
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1671'>OF-1671</a>] -         Openfire should be able to recognize plugins with longer version numbers
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1673'>OF-1673</a>] -         Add support for XEP-0359: Unique and Stable Stanza IDs.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1675'>OF-1675</a>] -         Add a step about removing old files to tar.gz/zip upgrade guide
+</li>
+</ul>
+
+
 <h2>4.3.0 -- <span style="font-weight: normal;">Jan 11, 2019</span></h2>
 
 <p>With this release, the Openfire property <code>xmpp.pubsub.create.anyone</code> was updated to properly reflect its name.  Setting it

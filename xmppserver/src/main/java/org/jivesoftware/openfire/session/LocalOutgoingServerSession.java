@@ -317,6 +317,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             // Everything went fine so return the secured and
                             // authenticated connection
                             log.debug( "Successfully created new session!" );
+                             //inform all listeners as well.
+                            ServerSessionEventDispatcher.dispatchEvent(answer, ServerSessionEventDispatcher.EventType.session_created);
                             return answer;
                         }
                         log.debug( "Unable to authenticate the connection with SASL." );
@@ -331,6 +333,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 // Everything went fine so return the secured and
                                 // authenticated connection
                                 log.debug( "Successfully created new session!" );
+                                 //inform all listeners as well.
+                                ServerSessionEventDispatcher.dispatchEvent(answer, ServerSessionEventDispatcher.EventType.session_created);
                                 return answer;
                             }
                             log.debug( "Unable to secure and authenticate the connection with TLS & SASL." );
@@ -353,6 +357,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 // Set the hostname as the address of the session
                                 session.setAddress(new JID(null, remoteDomain, null));
                                 log.debug( "Successfully created new session!" );
+                                // After the session has been created, inform all listeners as well.
+                                ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                                 return session;
                             }
                             else {
@@ -405,6 +411,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             final LocalOutgoingServerSession outgoingSession = new ServerDialback().createOutgoingSession( localDomain, remoteDomain, port );
             if ( outgoingSession != null) { // TODO this success handler behaves differently from a similar success handler above. Shouldn't those be the same?
                 log.debug( "Successfully created new session (using dialback as a fallback)!" );
+                 //inform all listeners as well.
+                 ServerSessionEventDispatcher.dispatchEvent(outgoingSession, ServerSessionEventDispatcher.EventType.session_created);
                 return outgoingSession;
             } else {
                 log.warn( "Unable to create a new session: Dialback (as a fallback) failed." );

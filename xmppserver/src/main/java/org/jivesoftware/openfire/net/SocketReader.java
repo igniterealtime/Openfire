@@ -369,7 +369,7 @@ public abstract class SocketReader implements Runnable {
             return new Roster(doc);
         }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
             IQ iq = new IQ(doc);
-            if (iq.getType().equals(IQ.Type.result) && !iq.getFrom().toString().contains("@")){
+            if (iq.getType().equals(IQ.Type.result) && !iq.getFrom().equals(session.getAddress())){
                 try {
                     List<Element> elements =  query.elements();
                     if (elements.size() >0){

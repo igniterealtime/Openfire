@@ -37,8 +37,8 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +49,31 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthCheckFilter implements Filter {
 
+    public static final SystemProperty<Class> SERVLET_REQUEST_AUTHENTICATOR = SystemProperty.Builder.ofType(Class.class)
+        .setKey("adminConsole.servlet-request-authenticator")
+        .setBaseClass(ServletRequestAuthenticator.class)
+        .setDefaultValue(null)
+        .setDynamic(true)
+        .addListener(AuthCheckFilter::initAuthenticator)
+        .build();
+
+    private static ServletRequestAuthenticator servletRequestAuthenticator;
+
+    private static void initAuthenticator(final Class clazz) {
+        // Check if we need to reset the auth provider class
+        if(clazz == null && servletRequestAuthenticator != null) {
+            servletRequestAuthenticator = null;
+        } else if (clazz != null && (servletRequestAuthenticator == null || !clazz.equals(servletRequestAuthenticator.getClass()))) {
+            try {
+                servletRequestAuthenticator = (ServletRequestAuthenticator)clazz.newInstance();
+            }
+            catch (final Exception e) {
+                Log.error("Error loading ServletRequestAuthenticator {}", clazz.getName(), e);
+                servletRequestAuthenticator = null;
+            }
+        }
+    }
+
     private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
     private static AuthCheckFilter instance;
 
@@ -56,30 +81,20 @@ public class AuthCheckFilter implements Filter {
 
     private final AdminManager adminManager;
     private final LoginLimitManager loginLimitManager;
-    private final ServletRequestAuthenticator servletRequestAuthenticator;
 
     private ServletContext context;
     private String defaultLoginPage;
 
     public AuthCheckFilter() {
-        this(AdminManager.getInstance(), LoginLimitManager.getInstance(), JiveGlobals.getProperty("adminConsole.servlet-request-authenticator", "").trim());
+        this(AdminManager.getInstance(), LoginLimitManager.getInstance());
     }
 
     /* Exposed for test use only */
-    AuthCheckFilter(final AdminManager adminManager, final LoginLimitManager loginLimitManager, final String servletRequestAuthenticatorClassName) {
+    AuthCheckFilter(final AdminManager adminManager, final LoginLimitManager loginLimitManager) {
         this.adminManager = adminManager;
         this.loginLimitManager = loginLimitManager;
+        initAuthenticator(SERVLET_REQUEST_AUTHENTICATOR.getValue());
         AuthCheckFilter.instance = this;
-        ServletRequestAuthenticator authenticator = null;
-        if (!servletRequestAuthenticatorClassName.isEmpty()) {
-            try {
-                final Class clazz = ClassUtils.forName(servletRequestAuthenticatorClassName);
-                authenticator = (ServletRequestAuthenticator) clazz.newInstance();
-            } catch (final Exception e) {
-                Log.error("Error loading ServletRequestAuthenticator: " + servletRequestAuthenticatorClassName, e);
-            }
-        }
-        this.servletRequestAuthenticator = authenticator;
     }
 
     /**
@@ -103,8 +118,7 @@ public class AuthCheckFilter implements Filter {
             // We've not yet been instantiated
             return false;
         }
-        final ServletRequestAuthenticator authenticator = instance.servletRequestAuthenticator;
-        return authenticator != null && clazz.isAssignableFrom(authenticator.getClass());
+        return servletRequestAuthenticator != null && clazz.isAssignableFrom(servletRequestAuthenticator.getClass());
     }
 
     /**

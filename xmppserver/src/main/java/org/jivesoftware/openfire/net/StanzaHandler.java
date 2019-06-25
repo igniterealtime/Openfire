@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import java.util.*;
 import org.xmpp.packet.*;
 
 import java.io.IOException;
@@ -333,6 +334,36 @@ public abstract class StanzaHandler {
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
                     }
                 }    
+            } catch (Exception e) {
+                Log.error(e.getMessage(), e);
+            }
+            return new IQ(doc, !validateJIDs());
+        }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
+            //XEP-0232 if responses service discovery can include detailed information about the software application
+            try {
+                Element feature = query.element("feature");
+                if(feature != null && "http://jabber.org/protocol/disco".equals(feature.attributeValue("var"))){
+                    Element x = query.element("x");
+                    if (x != null && "jabber:x:data".equals(x.getNamespaceURI()) && "result".equals(x.attributeValue("type"))){
+                        Element fieldFormTypeElement = x.element("field");
+                        if (fieldFormTypeElement.attributeValue("var").equals("FORM_TYPE") 
+                            && fieldFormTypeElement.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) {
+                            Iterator<Element> fieldIterator = x.elementIterator("field");
+                            while (fieldIterator != null && fieldIterator.hasNext()) {
+                                final Element fieldElement = fieldIterator.next();
+                                if(fieldElement.element("value")!= null
+                                     && !"urn:xmpp:dataforms:softwareinfo".equals(fieldElement.element("value").getText())){
+                                    session.setSoftwareVersionData(fieldElement.attributeValue("var"), fieldElement.element("value").getText());
+                                }else if(fieldElement.element("media").element("uri") != null){
+                                    session.setSoftwareVersionData(
+                                        fieldElement.element("media").element("uri").attributeValue("type"), 
+                                        fieldElement.element("media").element("uri").getText());
+                                }
+                            }
+                        } 
+                        
+                    }
+                }   
             } catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }

@@ -624,6 +624,54 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                         } catch (Exception e) {
                             Log.error(e.getMessage(), e);
                         }
+                    }else if("query".equals(childElement.getQName().getName()) && "http://jabber.org/protocol/disco#info".equals(namespace)){
+                        //XEP-0232 if responses service discovery can include detailed information about the software application
+                        try {
+                            Element feature = childElement.element("feature");
+                            if(feature != null && "http://jabber.org/protocol/disco".equals(feature.attributeValue("var"))){
+                                Element x = childElement.element("x");
+                                if (x != null && "jabber:x:data".equals(x.getNamespaceURI()) && "result".equals(x.attributeValue("type"))){
+                                    Element fieldFormTypeElement = x.element("field");
+                                    if (fieldFormTypeElement.attributeValue("var").equals("FORM_TYPE") 
+                                        && fieldFormTypeElement.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) {
+                                        Iterator<Element> fieldIterator = x.elementIterator("field");
+                                        while (fieldIterator != null && fieldIterator.hasNext()) {
+                                            final Element fieldElement = fieldIterator.next();
+                                            if(fieldElement.element("value")!= null
+                                                 && !"urn:xmpp:dataforms:softwareinfo".equals(fieldElement.element("value").getText())){
+                                                    for (Component component : components) {
+                                                        if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                                            LocalComponentSession.LocalExternalComponent externalComponent =
+                                                                    ( LocalComponentSession.LocalExternalComponent) component;
+                                                            LocalComponentSession session = externalComponent.getSession();
+                                                            if(session != null && session.getAddress() == iq.getFrom()){
+                                                                session.setSoftwareVersionData(fieldElement.attributeValue("var"), fieldElement.element("value").getText());
+                                                            }    
+                                                        }
+                                                    }  
+                    
+                                            }else if(fieldElement.element("media").element("uri") != null){
+                                                for (Component component : components) {
+                                                    if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                                        LocalComponentSession.LocalExternalComponent externalComponent =
+                                                                ( LocalComponentSession.LocalExternalComponent) component;
+                                                        LocalComponentSession session = externalComponent.getSession();
+                                                        if(session != null && session.getAddress() == iq.getFrom()){
+                                                            session.setSoftwareVersionData(
+                                                                fieldElement.element("media").element("uri").attributeValue("type"), 
+                                                                fieldElement.element("media").element("uri").getText());
+                                                        }    
+                                                    }
+                                                }  
+                                            }
+                                        }
+                                    } 
+                                    
+                                }
+                            }   
+                        } catch (Exception e) {
+                            Log.error(e.getMessage(), e);
+                        }
                     }
                 }
             }

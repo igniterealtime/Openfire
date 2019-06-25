@@ -19,7 +19,7 @@ package org.jivesoftware.openfire.net;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
-
+import java.util.Iterator;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -382,6 +382,40 @@ public abstract class SocketReader implements Runnable {
                 }  
             }
             return iq;
+        }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
+            //XEP-0232 if responses service discovery can include detailed information about the software application
+            try {
+                IQ iq = new IQ(doc);
+                Element feature = query.element("feature");
+                if(feature != null && "http://jabber.org/protocol/disco".equals(feature.attributeValue("var"))){
+                    Element x = query.element("x");
+                    if (x != null && "jabber:x:data".equals(x.getNamespaceURI()) 
+                            && "result".equals(x.attributeValue("type")) 
+                            && iq.getFrom().equals(session.getAddress())){
+                        Element fieldFormTypeElement = x.element("field");
+                        if (fieldFormTypeElement.attributeValue("var").equals("FORM_TYPE") 
+                            && fieldFormTypeElement.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) {
+                            Iterator<Element> fieldIterator = x.elementIterator("field");
+                            while (fieldIterator != null && fieldIterator.hasNext()) {
+                                final Element fieldElement = fieldIterator.next();
+                                if(fieldElement.element("value")!= null
+                                     && !"urn:xmpp:dataforms:softwareinfo".equals(fieldElement.element("value").getText())){
+                                    session.setSoftwareVersionData(fieldElement.attributeValue("var"), 
+                                        fieldElement.element("value").getText());
+                                }else if(fieldElement.element("media").element("uri") != null){
+                                    session.setSoftwareVersionData(
+                                        fieldElement.element("media").element("uri").attributeValue("type"), 
+                                        fieldElement.element("media").element("uri").getText());
+                                }
+                            }
+                        } 
+                        
+                    }
+                }   
+            } catch (Exception e) {
+                Log.error(e.getMessage(), e);
+            }
+            return new IQ(doc);
         }
         else {
             return new IQ(doc);

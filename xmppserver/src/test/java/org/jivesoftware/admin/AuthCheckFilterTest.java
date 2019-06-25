@@ -83,7 +83,9 @@ public class AuthCheckFilterTest {
     @Test
     public void willNotRedirectARequestFromAnAdminUser() throws Exception {
 
-        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager, AdminUserServletAuthenticatorClass.class.getName());
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
 
         filter.doFilter(request, response, filterChain);
 
@@ -98,7 +100,7 @@ public class AuthCheckFilterTest {
     @Test
     public void willRedirectARequestWithoutAServletRequestAuthenticator() throws Exception {
 
-        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager, "");
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
 
         filter.doFilter(request, response, filterChain);
 
@@ -108,7 +110,8 @@ public class AuthCheckFilterTest {
     @Test
     public void willRedirectARequestWithABrokenServletRequestAuthenticator() throws Exception {
 
-        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager, "this-is-not-a-class-name");
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(BrokenUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
 
         filter.doFilter(request, response, filterChain);
 
@@ -118,7 +121,8 @@ public class AuthCheckFilterTest {
     @Test
     public void willRedirectARequestIfTheServletRequestAuthenticatorReturnsNoUser() throws Exception {
 
-        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager, NoUserServletAuthenticatorClass.class.getName());
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(NoUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
 
         filter.doFilter(request, response, filterChain);
 
@@ -128,7 +132,8 @@ public class AuthCheckFilterTest {
     @Test
     public void willRedirectARequestIfTheServletRequestAuthenticatorReturnsAnUnauthorisedUser() throws Exception {
 
-        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager, NormalUserServletAuthenticatorClass.class.getName());
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(NormalUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
 
         filter.doFilter(request, response, filterChain);
 
@@ -138,7 +143,8 @@ public class AuthCheckFilterTest {
     @Test
     public void willReturnTrueIfTheCorrectServletRequestAuthenticatorIsConfigured() {
 
-        new AuthCheckFilter(adminManager, loginLimitManager, NormalUserServletAuthenticatorClass.class.getName());
+        new AuthCheckFilter(adminManager, loginLimitManager);
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(NormalUserServletAuthenticatorClass.class);
 
         assertThat(AuthCheckFilter.isServletRequestAuthenticatorInstanceOf(NormalUserServletAuthenticatorClass.class), is(true));
     }
@@ -146,7 +152,8 @@ public class AuthCheckFilterTest {
     @Test
     public void willReturnFalseIfTheWrongServletRequestAuthenticatorIsConfigured() {
 
-        new AuthCheckFilter(adminManager, loginLimitManager, NormalUserServletAuthenticatorClass.class.getName());
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(NormalUserServletAuthenticatorClass.class);
+        new AuthCheckFilter(adminManager, loginLimitManager);
 
         assertThat(AuthCheckFilter.isServletRequestAuthenticatorInstanceOf(AdminUserServletAuthenticatorClass.class), is(false));
     }
@@ -154,7 +161,7 @@ public class AuthCheckFilterTest {
     @Test
     public void willReturnFalseIfNoServletRequestAuthenticatorIsConfigured() {
 
-        new AuthCheckFilter(adminManager, loginLimitManager, "");
+        new AuthCheckFilter(adminManager, loginLimitManager);
 
         assertThat(AuthCheckFilter.isServletRequestAuthenticatorInstanceOf(AdminUserServletAuthenticatorClass.class), is(false));
     }
@@ -177,6 +184,18 @@ public class AuthCheckFilterTest {
         @Override
         public String authenticateRequest(final HttpServletRequest request) {
             return null;
+        }
+    }
+
+    public static class BrokenUserServletAuthenticatorClass implements ServletRequestAuthenticator {
+
+        public BrokenUserServletAuthenticatorClass() {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public String authenticateRequest(final HttpServletRequest request) {
+            return adminUser;
         }
     }
 }

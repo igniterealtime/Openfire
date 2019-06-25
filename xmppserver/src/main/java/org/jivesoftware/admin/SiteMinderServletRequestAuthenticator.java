@@ -2,6 +2,8 @@ package org.jivesoftware.admin;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.jivesoftware.util.SystemProperty;
+
 /**
  * <p>
  * Enables CA SiteMinder/Single Sign-On authentication to the admin console - https://www.ca.com/gb/products/ca-single-sign-on.html
@@ -12,6 +14,12 @@ import javax.servlet.http.HttpServletRequest;
  * </p>
  */
 public class SiteMinderServletRequestAuthenticator implements ServletRequestAuthenticator {
+
+    public static final SystemProperty<String> SITE_MINDER_HEADER = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.siteMinderHeader")
+        .setDefaultValue("SM_USER")
+        .setDynamic(true)
+        .build();
 
     /**
      * Indicates if this ServletRequestAuthenticator is enabled or not
@@ -24,7 +32,7 @@ public class SiteMinderServletRequestAuthenticator implements ServletRequestAuth
 
     @Override
     public String authenticateRequest(final HttpServletRequest request) {
-        final String smUser = request.getHeader("SM_USER");
+        final String smUser = request.getHeader(SITE_MINDER_HEADER.getValue());
         if (smUser == null || smUser.trim().isEmpty()) {
             // SiteMinder has not authenticated the user
             return null;

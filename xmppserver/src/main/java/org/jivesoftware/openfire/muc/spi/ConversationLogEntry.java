@@ -59,7 +59,7 @@ class ConversationLogEntry {
         this.date = date;
         this.subject = message.getSubject();
         this.body = message.getBody();
-        this.stanza = message.toString();
+        this.stanza = message.toXML();
         this.sender = sender;
         this.roomID = room.getID();
         this.nickname = message.getFrom().getResource();

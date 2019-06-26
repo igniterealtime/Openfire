@@ -631,42 +631,43 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                             if(feature != null && "http://jabber.org/protocol/disco".equals(feature.attributeValue("var"))){
                                 Element x = childElement.element("x");
                                 if (x != null && "jabber:x:data".equals(x.getNamespaceURI()) && "result".equals(x.attributeValue("type"))){
-                                    Element fieldFormTypeElement = x.element("field");
-                                    if (fieldFormTypeElement.attributeValue("var").equals("FORM_TYPE") 
-                                        && fieldFormTypeElement.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) {
-                                        Iterator<Element> fieldIterator = x.elementIterator("field");
-                                        while (fieldIterator != null && fieldIterator.hasNext()) {
-                                            final Element fieldElement = fieldIterator.next();
-                                            if(fieldElement.element("value")!= null
-                                                 && !"urn:xmpp:dataforms:softwareinfo".equals(fieldElement.element("value").getText())){
-                                                    for (Component component : components) {
-                                                        if (component instanceof LocalComponentSession.LocalExternalComponent) {
-                                                            LocalComponentSession.LocalExternalComponent externalComponent =
-                                                                    ( LocalComponentSession.LocalExternalComponent) component;
-                                                            LocalComponentSession session = externalComponent.getSession();
-                                                            if(session != null && session.getAddress() == iq.getFrom()){
-                                                                session.setSoftwareVersionData(fieldElement.attributeValue("var"), fieldElement.element("value").getText());
-                                                            }    
+                                    List<Element> fields =  x.elements();
+                                    if (fields.size() >0){
+                                        for (Element fieldtype : fields){
+                                            if (fieldtype.attributeValue("var").equals("FORM_TYPE") 
+                                                && fieldtype.element("value")!= null
+                                                && fieldtype.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                                                    for(Element field : fields){
+                                                        if(field.element("value")!= null
+                                                            && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
+                                                                for (Component component : components) {
+                                                                    if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                                                        LocalComponentSession.LocalExternalComponent externalComponent =
+                                                                                ( LocalComponentSession.LocalExternalComponent) component;
+                                                                        LocalComponentSession session = externalComponent.getSession();
+                                                                        if(session != null && session.getAddress() == iq.getFrom()){
+                                                                            session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                                                                        }    
+                                                                    }
+                                                                }  
+                                                        }else if(field.element("media").element("uri") != null){
+                                                            for (Component component : components) {
+                                                                if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                                                    LocalComponentSession.LocalExternalComponent externalComponent =
+                                                                            ( LocalComponentSession.LocalExternalComponent) component;
+                                                                    LocalComponentSession session = externalComponent.getSession();
+                                                                    if(session != null && session.getAddress() == iq.getFrom()){
+                                                                        session.setSoftwareVersionData(
+                                                                            field.element("media").element("uri").attributeValue("type"), 
+                                                                            field.element("media").element("uri").getText());
+                                                                    }    
+                                                                }
+                                                            }  
                                                         }
-                                                    }  
-                    
-                                            }else if(fieldElement.element("media").element("uri") != null){
-                                                for (Component component : components) {
-                                                    if (component instanceof LocalComponentSession.LocalExternalComponent) {
-                                                        LocalComponentSession.LocalExternalComponent externalComponent =
-                                                                ( LocalComponentSession.LocalExternalComponent) component;
-                                                        LocalComponentSession session = externalComponent.getSession();
-                                                        if(session != null && session.getAddress() == iq.getFrom()){
-                                                            session.setSoftwareVersionData(
-                                                                fieldElement.element("media").element("uri").attributeValue("type"), 
-                                                                fieldElement.element("media").element("uri").getText());
-                                                        }    
                                                     }
-                                                }  
                                             }
                                         }
-                                    } 
-                                    
+                                    }     
                                 }
                             }   
                         } catch (Exception e) {

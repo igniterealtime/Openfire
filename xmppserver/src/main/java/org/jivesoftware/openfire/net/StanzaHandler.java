@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import java.util.*;
 import org.xmpp.packet.*;
 
 import java.io.IOException;
@@ -345,23 +344,25 @@ public abstract class StanzaHandler {
                 if(feature != null && "http://jabber.org/protocol/disco".equals(feature.attributeValue("var"))){
                     Element x = query.element("x");
                     if (x != null && "jabber:x:data".equals(x.getNamespaceURI()) && "result".equals(x.attributeValue("type"))){
-                        Element fieldFormTypeElement = x.element("field");
-                        if (fieldFormTypeElement.attributeValue("var").equals("FORM_TYPE") 
-                            && fieldFormTypeElement.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) {
-                            Iterator<Element> fieldIterator = x.elementIterator("field");
-                            while (fieldIterator != null && fieldIterator.hasNext()) {
-                                final Element fieldElement = fieldIterator.next();
-                                if(fieldElement.element("value")!= null
-                                     && !"urn:xmpp:dataforms:softwareinfo".equals(fieldElement.element("value").getText())){
-                                    session.setSoftwareVersionData(fieldElement.attributeValue("var"), fieldElement.element("value").getText());
-                                }else if(fieldElement.element("media").element("uri") != null){
-                                    session.setSoftwareVersionData(
-                                        fieldElement.element("media").element("uri").attributeValue("type"), 
-                                        fieldElement.element("media").element("uri").getText());
+                        List<Element> fields =  x.elements();
+                        if (fields.size() >0){
+                            for (Element fieldtype : fields){
+                                if (fieldtype.attributeValue("var").equals("FORM_TYPE") 
+                                    && fieldtype.element("value")!= null
+                                    && fieldtype.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                                        for(Element field : fields){
+                                            if(field.element("value")!= null
+                                                && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
+                                                session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                                            }else if(field.element("media").element("uri") != null){
+                                                session.setSoftwareVersionData(
+                                                    field.element("media").element("uri").attributeValue("type"), 
+                                                    field.element("media").element("uri").getText());
+                                            }
+                                        }
                                 }
                             }
-                        } 
-                        
+                        }     
                     }
                 }   
             } catch (Exception e) {

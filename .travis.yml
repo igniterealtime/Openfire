@@ -21,7 +21,7 @@ script:
 install: true
 deploy:
   provider: script
-  script: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml  -P ci
+  script: if [ "$TRAVIS_REPO_SLUG" = "igniterealtime/Openfire" ]; then mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml -P ci; else echo "Skip deploy"; fi
   skip_cleanup: true
   on:
     all_branches: true

@@ -378,10 +378,10 @@ public class FileTransferProxy extends BasicModule
         return Arrays.asList(FileTransferManager.NAMESPACE_BYTESTREAMS,
                              "http://jabber.org/protocol/disco#info").iterator();
     }
-
+    
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        return DiscoInfoProvider.super.getExtendedInfos(name, node, senderJID);
     }
 
     @Override
@@ -456,5 +456,10 @@ public class FileTransferProxy extends BasicModule
         @Override
         public void xmlPropertyDeleted(String property, Map params) {
         }
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 }

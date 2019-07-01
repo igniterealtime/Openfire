@@ -1597,7 +1597,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public DataForm getExtendedInfo(final String name, final String node, final JID senderJID) {
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
             final MUCRoom room = getChatRoom(name);
@@ -1633,8 +1633,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 fieldDate.setVariable("x-muc#roominfo_creationdate");
                 fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
                 fieldDate.addValue(XMPPDateTimeFormat.format(room.getCreationDate()));
-
-                return dataForm;
+                final Set<DataForm> dataForms = new HashSet<>();
+                dataForms.add(dataForm);
+                return dataForms;
             }
         }
         return null;
@@ -1810,6 +1811,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public boolean isHidden() {
         return isHidden;
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 
 }

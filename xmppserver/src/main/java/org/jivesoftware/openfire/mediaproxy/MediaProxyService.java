@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
@@ -347,10 +348,10 @@ public class MediaProxyService extends BasicModule
         return Arrays.asList(NAMESPACE,
                 "http://jabber.org/protocol/disco#info").iterator();
     }
-
+    
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        return DiscoInfoProvider.super.getExtendedInfos(name, node, senderJID);
     }
 
     @Override
@@ -487,5 +488,10 @@ public class MediaProxyService extends BasicModule
      */
     public void setEchoPort(int echoPort) {
         this.echoPort = echoPort;
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 }

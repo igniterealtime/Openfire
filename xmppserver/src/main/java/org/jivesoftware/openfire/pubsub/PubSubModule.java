@@ -18,9 +18,11 @@ package org.jivesoftware.openfire.pubsub;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -692,16 +694,22 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
         return features.iterator();
     }
-
+    
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
-            Node pubNode = getNode(node);
-            if (canDiscoverNode(pubNode)) {
-                // Get the metadata data form
-                return pubNode.getMetadataForm();
+            Collection<Node> pubNodes = getNodes();
+            Set<DataForm> dataForms = new HashSet<>();
+            for (Node nod:pubNodes){
+                if(nod.equals(getNode(node))){
+                    if (canDiscoverNode(nod)) {
+                        // Get the metadata data form
+                        dataForms.add(nod.getMetadataForm());
+                    }
+                }
             }
+            return dataForms;
         }
         return null;
     }
@@ -874,5 +882,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 }

@@ -45,8 +45,10 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implements JEP-0013: Flexible Offline Message Retrieval. Allows users to request number of
@@ -155,7 +157,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
 
@@ -169,8 +171,10 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         final FormField field2 = dataForm.addField();
         field2.setVariable("number_of_messages");
         field2.addValue(String.valueOf(messageStore.getMessages(senderJID.getNode(), false).size()));
-
-        return dataForm;
+        
+        final Set<DataForm> dataForms = new HashSet<>();
+        dataForms.add(dataForm);
+        return dataForms;
     }
 
     @Override
@@ -220,5 +224,10 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         if (session != null) {
             session.setOfflineFloodStopped(true);
         }
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 }

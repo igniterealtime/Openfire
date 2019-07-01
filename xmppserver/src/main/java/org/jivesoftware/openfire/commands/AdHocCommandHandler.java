@@ -107,8 +107,8 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        return DiscoInfoProvider.super.getExtendedInfos(name, node, senderJID);
     }
 
     @Override
@@ -240,5 +240,10 @@ public class AdHocCommandHandler extends IQHandler
     private void stopCommand(AdHocCommand command) {
         infoHandler.removeServerNodeInfoProvider(command.getCode());
         itemsHandler.removeServerNodeInfoProvider(command.getCode());
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
     }
 }

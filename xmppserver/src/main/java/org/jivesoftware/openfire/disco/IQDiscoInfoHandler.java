@@ -16,9 +16,12 @@
 
 package org.jivesoftware.openfire.disco;
 
+import org.apache.juli.logging.Log;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -66,6 +69,7 @@ import java.util.concurrent.locks.Lock;
  */
 public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
+    private static final Logger Log = LoggerFactory.getLogger(IQDiscoInfoHandler.class);
     public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
     private Map<String, DiscoInfoProvider> entities = new HashMap<>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
@@ -692,7 +696,19 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
             @Override
             public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-                return null;
+                try {
+                    Set<DataForm> dataForms = getExtendedInfos(name, node, senderJID);
+                    if(dataForms != null && dataForms.size() == 1){
+                        return dataForms.iterator().next();
+                    }else if (dataForms != null && dataForms.size() > 1){
+                        Log.warn("Set Data List contains more than one DataForm");
+                        return dataForms.iterator().next();
+                    } else {
+                        return null;
+                    }    
+                } catch (Exception e) {
+                    return null;
+                } 
             }
         };
     }

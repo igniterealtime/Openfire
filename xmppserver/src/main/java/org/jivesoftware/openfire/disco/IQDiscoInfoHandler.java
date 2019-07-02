@@ -696,17 +696,26 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
             @Override
             public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-                Set<DataForm> dataForms = getExtendedInfos(name, node, senderJID);
-                if(dataForms != null && dataForms.size() == 1){
-                    return dataForms.iterator().next();
-                }else if (dataForms != null && dataForms.size() > 1){
-                    Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
-                    "Only the first one of the DataForms will be returned.");
-                    return dataForms.iterator().next();
-                } else {
-                    return null;
-                }     
+                return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
             }
         };
+    }
+
+    /**
+     * return the first DataForm for a Collections
+     * of Set DataForms
+     * @param dataForms
+     * @return DataForm .
+     */
+    public static DataForm getFirstDataForm(Set<DataForm> dataForms){
+        if(dataForms != null && dataForms.size() == 1){
+            return dataForms.iterator().next();
+        }else if (dataForms != null && dataForms.size() > 1){
+            Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
+            "Only the first one of the DataForms will be returned.");
+            return dataForms.iterator().next();
+        } else {
+            return null;
+        }
     }
 }

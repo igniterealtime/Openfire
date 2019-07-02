@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -460,6 +461,6 @@ public class FileTransferProxy extends BasicModule
 
     @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+        return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
     }
 }

@@ -1815,7 +1815,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+        return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
     }
 
 }

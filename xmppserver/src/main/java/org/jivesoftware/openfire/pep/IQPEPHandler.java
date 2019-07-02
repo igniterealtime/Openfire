@@ -763,6 +763,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
+        return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
     }
 }

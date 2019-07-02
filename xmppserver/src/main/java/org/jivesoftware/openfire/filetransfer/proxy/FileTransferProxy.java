@@ -386,6 +386,11 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
+    }
+    
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;
     }
@@ -457,10 +462,5 @@ public class FileTransferProxy extends BasicModule
         @Override
         public void xmlPropertyDeleted(String property, Map params) {
         }
-    }
-
-    @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
     }
 }

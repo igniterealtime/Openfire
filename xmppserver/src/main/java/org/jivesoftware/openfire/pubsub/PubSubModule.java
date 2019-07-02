@@ -699,17 +699,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
-            Collection<Node> pubNodes = getNodes();
+            Node pubNode = getNode(node);
             Set<DataForm> dataForms = new HashSet<>();
-            for (Node nod:pubNodes){
-                if(nod.equals(getNode(node))){
-                    if (canDiscoverNode(nod)) {
-                        // Get the metadata data form
-                        dataForms.add(nod.getMetadataForm());
-                    }
-                }
+            if (canDiscoverNode(pubNode)) {
+                dataForms.add(pubNode.getMetadataForm());
+                // Get the metadata data form
+                return dataForms;
             }
-            return dataForms;
         }
         return null;
     }

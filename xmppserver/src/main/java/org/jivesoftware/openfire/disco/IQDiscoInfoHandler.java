@@ -709,11 +709,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public static DataForm getFirstDataForm(Set<DataForm> dataForms){
         if(dataForms != null && dataForms.size() == 1){
-            return dataForms.iterator().next();
+            return dataForms.stream().findFirst().get();
         }else if (dataForms != null && dataForms.size() > 1){
             Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
             "Only the first one of the DataForms will be returned.");
-            return dataForms.iterator().next();
+            return dataForms.stream().findFirst().get();
         } else {
             return null;
         }

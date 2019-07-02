@@ -710,14 +710,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
         if (node != null) {
             // Answer the extended info of a given node
-            Collection<Node> pubNodes = pepService.getNodes();
-            final Set<DataForm> dataForms = new HashSet<>();
-            for(Node nod :pubNodes){
-                if(nod.equals(pepService.getNode(node))){
-                   dataForms.add(nod.getMetadataForm());
-                }
-            }
+            Node pubNode = pepService.getNode(node);
             // Get the metadata data form
+            final Set<DataForm> dataForms = new HashSet<>();
+            dataForms.add(pubNode.getMetadataForm());
             return dataForms;
         }
         return null;

@@ -178,6 +178,11 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
+    }
+    
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
@@ -224,10 +229,5 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         if (session != null) {
             session.setOfflineFloodStopped(true);
         }
-    }
-
-    @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return IQDiscoInfoHandler.getFirstDataForm(getExtendedInfos(name, node, senderJID));
     }
 }

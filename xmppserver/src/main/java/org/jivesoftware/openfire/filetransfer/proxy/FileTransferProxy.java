@@ -382,7 +382,7 @@ public class FileTransferProxy extends BasicModule
     
     @Override
     public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
-        return null;
+        return Collections.<DataForm>emptySet();
     }
 
     @Override

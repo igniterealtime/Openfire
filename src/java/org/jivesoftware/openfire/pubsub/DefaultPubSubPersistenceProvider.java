@@ -51,9 +51,9 @@ import java.util.stream.Collectors;
  *
  * @author Matt Tucker
  */
-public class PubSubPersistenceManager implements PubSubPersistenceProvider {
+public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(PubSubPersistenceManager.class);
+    private static final Logger log = LoggerFactory.getLogger( DefaultPubSubPersistenceProvider.class);
 
     private static final String PERSISTENT_NODES = "SELECT serviceID, nodeID, maxItems " +
     		"FROM ofPubsubNode WHERE leaf=1 AND persistItems=1 AND maxItems > 0";

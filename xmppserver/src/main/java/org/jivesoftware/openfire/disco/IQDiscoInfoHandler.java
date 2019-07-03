@@ -196,9 +196,17 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
 
                 // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
-                DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
+                /* DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
                 if (dataForm != null) {
                     queryElement.add(dataForm.getElement());
+                } */
+
+                // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
+                Set<DataForm>  dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
+                for(DataForm dataForm : dataForms){
+                    if (dataForm != null) {
+                        queryElement.add(dataForm.getElement());
+                    }
                 }
             }
             else {

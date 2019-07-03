@@ -21,8 +21,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
@@ -353,6 +355,11 @@ public class MediaProxyService extends BasicModule
         return null;
     }
 
+    @Override
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        return Collections.<DataForm>emptySet();
+    }
+    
     @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;

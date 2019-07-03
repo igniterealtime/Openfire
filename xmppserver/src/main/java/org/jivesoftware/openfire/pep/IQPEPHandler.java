@@ -706,13 +706,20 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
     @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
+    }
+
+    @Override
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
         if (node != null) {
             // Answer the extended info of a given node
             Node pubNode = pepService.getNode(node);
             // Get the metadata data form
-            return pubNode.getMetadataForm();
+            final Set<DataForm> dataForms = new HashSet<>();
+            dataForms.add(pubNode.getMetadataForm());
+            return dataForms;
         }
         return null;
     }

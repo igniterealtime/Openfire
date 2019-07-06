@@ -854,7 +854,9 @@ public class CacheFactory {
         // Loop through local caches and switch them to clustered cache (copy content)
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
-            if (localOnly.contains(cache.getName())) continue;
+            if (isDistributedWrappedCache(cache)) {
+                continue;
+            }
             CacheWrapper cacheWrapper = ((CacheWrapper) cache);
             Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             clusteredCache.putAll(cache);
@@ -876,7 +878,9 @@ public class CacheFactory {
         // Loop through clustered caches and change them to local caches (copy content)
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
-            if (localOnly.contains(cache.getName())) continue;
+            if (isDistributedWrappedCache(cache)) {
+                continue;
+            }
             CacheWrapper cacheWrapper = ((CacheWrapper) cache);
             Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             standaloneCache.putAll(cache);
@@ -884,4 +888,9 @@ public class CacheFactory {
         }
         log.info("Clustering stopped; cache migration complete");
     }
+
+    private static boolean isDistributedWrappedCache(final Cache cache) {
+        return localOnly.contains(cache.getName()) || !(cache instanceof CacheWrapper);
+    }
+
 }

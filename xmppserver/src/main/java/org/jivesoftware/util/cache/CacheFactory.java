@@ -17,6 +17,7 @@ package org.jivesoftware.util.cache;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +35,11 @@ import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.InitializationException;
+import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -852,16 +857,14 @@ public class CacheFactory {
     public static synchronized void joinedCluster() {
         cacheFactoryStrategy = clusteredCacheFactoryStrategy;
         // Loop through local caches and switch them to clustered cache (copy content)
-        for (Cache cache : getAllCaches()) {
-            // skip local-only caches
-            if (isDistributedWrappedCache(cache)) {
-                continue;
-            }
-            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-            clusteredCache.putAll(cache);
-            cacheWrapper.setWrappedCache(clusteredCache);
-        }
+        Arrays.stream(getAllCaches())
+            .filter(CacheFactory::isClusterableCache)
+            .forEach(cache -> {
+                final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+                final Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                clusteredCache.putAll(cache);
+                cacheWrapper.setWrappedCache(clusteredCache);
+            });
         clusteringStarting = false;
         clusteringStarted = true;
         log.info("Clustering started; cache migration complete");
@@ -876,21 +879,32 @@ public class CacheFactory {
         cacheFactoryStrategy = localCacheFactoryStrategy;
 
         // Loop through clustered caches and change them to local caches (copy content)
-        for (Cache cache : getAllCaches()) {
-            // skip local-only caches
-            if (isDistributedWrappedCache(cache)) {
-                continue;
-            }
-            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-            Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-            standaloneCache.putAll(cache);
-            cacheWrapper.setWrappedCache(standaloneCache);
-        }
+        Arrays.stream(getAllCaches())
+            .filter(CacheFactory::isClusterableCache)
+            .forEach(cache -> {
+                final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+                final Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                standaloneCache.putAll(cache);
+                cacheWrapper.setWrappedCache(standaloneCache);
+            });
         log.info("Clustering stopped; cache migration complete");
     }
 
-    private static boolean isDistributedWrappedCache(final Cache cache) {
-        return localOnly.contains(cache.getName()) || !(cache instanceof CacheWrapper);
+    /**
+     * Indicates if the supplied Cache is "clusterable". This is used to determine if a cache should be migrated
+     * between a {@link DefaultCache} and a clustered cache when the node joins/leaves the cluster.
+     * <p>
+     * A cache is considered 'clusterable' if;
+     * <ul>
+     *     <li>the cache is not a 'local' cache - which apply to the local node only so do not need to be clustered, and</li>
+     *     <li>the cache is actually a {@link CacheWrapper} which wraps the underlying default or clustered cache</li>
+     * </ul>
+     *
+     * @param cache the cache to check
+     * @return {@code true} if the cache can be converted to/from a clustered cache, otherwise {@code false}
+     */
+    private static boolean isClusterableCache(final Cache cache) {
+        return cache instanceof CacheWrapper && !localOnly.contains(cache.getName());
     }
 
 }

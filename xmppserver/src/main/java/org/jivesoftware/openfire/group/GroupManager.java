@@ -364,6 +364,10 @@ public class GroupManager {
                 }
             }
         }
+
+        if (coGroup.isAbsent() ) {
+            throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
+        };
         return coGroup.get();
     }
 

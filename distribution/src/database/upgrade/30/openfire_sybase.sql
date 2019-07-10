@@ -1,3 +1,3 @@
-INSERT INTO ofID (idType, id) VALUES (27, (SELECT coalesce(max(messageID), 1) FROM ofMucConversationLog) );
+INSERT INTO ofID (idType, id) (SELECT 27, coalesce(max(messageID), 1) FROM ofMucConversationLog)
 
-UPDATE ofVersion SET version = 30 WHERE name = 'openfire';
+UPDATE ofVersion SET version = 30 WHERE name = 'openfire'

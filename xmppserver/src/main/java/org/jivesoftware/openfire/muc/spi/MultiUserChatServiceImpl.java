@@ -1327,7 +1327,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         routingTable.removeComponentRoute(getAddress());
         broadcastShutdown();
         XMPPServer.getInstance().removeServerListener( this );
-        XMPPServer.getInstance().getArchiveManager().add( archiver );
+        XMPPServer.getInstance().getArchiveManager().remove( archiver );
     }
 
     @Override

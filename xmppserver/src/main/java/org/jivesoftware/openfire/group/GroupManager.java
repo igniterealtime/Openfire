@@ -336,39 +336,40 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name, boolean forceLookup) throws GroupNotFoundException {
-        CacheableOptional<Group> coGroup = null;
+
+        final CacheableOptional<Group> firstCachedGroup;
         if (forceLookup) {
+            firstCachedGroup = null;
             groupCache.remove(name);
         } else {
-            coGroup = groupCache.get(name);
+            firstCachedGroup = groupCache.get(name);
         }
 
-        if (coGroup == null) {
-            synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
-                coGroup = groupCache.get(name);
-                if (coGroup == null || coGroup.isAbsent()) {
-                    if (groupCache.containsKey(name) && !forceLookup) {
-                        throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
-                    }
-                    try
-                    {
-                        final Group group = provider.getGroup( name );
-                        coGroup = CacheableOptional.of(group);
-                        groupCache.put(name, coGroup);
-                    }
-                    catch (GroupNotFoundException e)
-                    {
-                        groupCache.put( name, CacheableOptional.of(null));
-                        throw e;
-                    }
-                }
+        if (firstCachedGroup != null) {
+            return toGroup(name, firstCachedGroup);
+        }
+
+        synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
+            final CacheableOptional<Group> secondCachedGroup = groupCache.get(name);
+            if (secondCachedGroup != null) {
+                return toGroup(name, secondCachedGroup);
+            }
+
+            try {
+                final Group group = provider.getGroup(name);
+                groupCache.put(name, CacheableOptional.of(group));
+                return group;
+            } catch (final GroupNotFoundException e) {
+                groupCache.put(name, CacheableOptional.of(null));
+                throw e;
             }
         }
+    }
 
-        if (coGroup.isAbsent() ) {
-            throw new GroupNotFoundException( "Group with name " + name + " not found (cached)." );
-        };
-        return coGroup.get();
+    private Group toGroup(final String name, final CacheableOptional<Group> coGroup) throws GroupNotFoundException {
+        return coGroup
+            .toOptional()
+            .orElseThrow(() -> new GroupNotFoundException("Group with name " + name + " not found (cached)."));
     }
 
     /**

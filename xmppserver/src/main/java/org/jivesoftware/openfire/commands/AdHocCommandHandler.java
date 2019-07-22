@@ -113,7 +113,7 @@ public class AdHocCommandHandler extends IQHandler
     
     @Override
     public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
-        return Collections.<DataForm>emptySet();
+        return new HashSet<DataForm>();
     }
 
     @Override

@@ -721,7 +721,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             dataForms.add(pubNode.getMetadataForm());
             return dataForms;
         }
-        return null;
+        return new HashSet<DataForm>();
     }
 
     @Override

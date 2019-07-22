@@ -712,7 +712,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 return dataForms;
             }
         }
-        return null;
+        return new HashSet<DataForm>();
     }
 
     @Override

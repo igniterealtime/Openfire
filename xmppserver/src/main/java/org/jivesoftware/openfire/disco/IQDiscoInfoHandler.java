@@ -194,20 +194,14 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
                 }
-
-                // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
-                /* DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
-                if (dataForm != null) {
-                    queryElement.add(dataForm.getElement());
-                } */
-
                 // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
-                Set<DataForm>  dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
-                for(DataForm dataForm : dataForms){
-                    if (dataForm != null) {
-                        queryElement.add(dataForm.getElement());
-                    }
+                Iterator<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom()).iterator();
+                //Log.info("DATAFORM {}",dataForms.toString());
+                while (dataForms.hasNext()) {
+                    final DataForm dataForm = dataForms.next();
+                    queryElement.add(dataForm.getElement());
                 }
+               
             }
             else {
                 // If the DiscoInfoProvider has no information for the requested name and node 
@@ -511,15 +505,16 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      * @return DataForm .
      */
     public static DataForm getFirstDataForm(Set<DataForm> dataForms){
-        if(dataForms != null && dataForms.size() == 1){
-            return dataForms.stream().findFirst().get();
-        }else if (dataForms != null && dataForms.size() > 1){
-            Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
+        Iterator<DataForm> iterator = dataForms.iterator();
+        if (iterator.hasNext()) {
+             Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
             "Only the first one of the DataForms will be returned.");
-            return dataForms.stream().findFirst().get();
-        } else {
-            return null;
         }
+        DataForm dataform = iterator.next();
+        if (!iterator.hasNext()) {
+            return dataform;
+        }            
+        return dataform;
     }
 
     /**

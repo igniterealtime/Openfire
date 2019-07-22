@@ -1643,7 +1643,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return dataForms;
             }
         }
-        return null;
+        return new HashSet<DataForm>();
     }
 
     /**

@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 
 import org.dom4j.Attribute;
 import org.dom4j.DocumentHelper;
@@ -357,7 +358,7 @@ public class MediaProxyService extends BasicModule
 
     @Override
     public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
-        return Collections.<DataForm>emptySet();
+        return new HashSet<DataForm>();
     }
     
     @Override

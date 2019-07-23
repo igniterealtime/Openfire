@@ -196,12 +196,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
                 Iterator<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom()).iterator();
-                //Log.info("DATAFORM {}",dataForms.toString());
                 while (dataForms.hasNext()) {
                     final DataForm dataForm = dataForms.next();
                     queryElement.add(dataForm.getElement());
                 }
-               
             }
             else {
                 // If the DiscoInfoProvider has no information for the requested name and node 
@@ -716,7 +714,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 return null;
             }
-
         };
     }
 }

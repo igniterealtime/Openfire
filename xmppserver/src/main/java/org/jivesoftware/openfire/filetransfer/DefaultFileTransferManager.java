@@ -220,7 +220,6 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                 if(childElement == null) {
                     return;
                 }
-                
                 String namespace = childElement.getNamespaceURI();
                 String profile = childElement.attributeValue("profile");
                 // Check that the SI is about file transfer and try creating a file transfer

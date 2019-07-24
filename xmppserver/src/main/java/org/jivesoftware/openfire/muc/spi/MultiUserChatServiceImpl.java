@@ -150,6 +150,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private IQMUCSearchHandler searchHandler = null;
 
     /**
+     * The handler of search requests ('https://xmlns.zombofant.net/muclumbus/search/1.0' namespace).
+     */
+    private IQMuclumbusSearchHandler muclumbusSearchHandler = null;
+
+    /**
      * Plugin (etc) provided IQ Handlers for MUC:
      */
     private Map<String,IQHandler> iqHandlers = null;
@@ -392,6 +397,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if ("jabber:iq:search".equals(namespace)) {
             final IQ reply = searchHandler.handleIQ(iq);
+            router.route(reply);
+        }
+        else if (IQMuclumbusSearchHandler.NAMESPACE.equals(namespace)) {
+            final IQ reply = muclumbusSearchHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
@@ -1133,8 +1142,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         router = server.getPacketRouter();
         // Configure the handler of iq:register packets
         registerHandler = new IQMUCRegisterHandler(this);
-        // Configure the handler of jabber:iq:search packets
+        // Configure the handlers of search requests
         searchHandler = new IQMUCSearchHandler(this);
+        muclumbusSearchHandler = new IQMuclumbusSearchHandler(this);
     }
 
     public void initializeSettings() {
@@ -1538,7 +1548,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             features.add("http://jabber.org/protocol/muc");
             features.add("http://jabber.org/protocol/disco#info");
             features.add("http://jabber.org/protocol/disco#items");
-            features.add("jabber:iq:search");
+            if ( IQMuclumbusSearchHandler.PROPERTY_ENABLED.getValue() ) {
+                features.add( "jabber:iq:search" );
+            }
+            features.add(IQMuclumbusSearchHandler.NAMESPACE);
             features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
             if (!extraDiscoFeatures.isEmpty()) {
                 features.addAll(extraDiscoFeatures);

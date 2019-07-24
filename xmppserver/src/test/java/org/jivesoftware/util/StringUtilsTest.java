@@ -3,8 +3,10 @@ package org.jivesoftware.util;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import org.junit.Before;
@@ -99,5 +101,54 @@ public class StringUtilsTest {
         assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY), is("1 day"));
         assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY + JiveConstants.HOUR + JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 day, 1 hour, 1 minute, 1 second, 1 ms"));
         assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY * 10 + JiveConstants.HOUR * 10), is("10 days, 10 hours"));
+    }
+
+    // shellSplit tests, from https://gist.github.com/raymyers/8077031
+
+    @Test
+    public void blankYieldsEmptyArgs() {
+        assertTrue(StringUtils.shellSplit("").isEmpty());
+    }
+
+    @Test
+    public void whitespacesOnlyYeildsEmptyArgs() {
+        assertTrue(StringUtils.shellSplit("  \t \n").isEmpty());
+    }
+
+    @Test
+    public void normalTokens() {
+        assertEquals(Arrays.asList("a", "bee", "cee"), StringUtils.shellSplit("a\tbee  cee"));
+    }
+
+    @Test
+    public void doubleQuotes() {
+        assertEquals(Arrays.asList("hello world"), StringUtils.shellSplit("\"hello world\""));
+    }
+
+    @Test
+    public void singleQuotes() {
+        assertEquals(Arrays.asList("hello world"), StringUtils.shellSplit("'hello world'"));
+    }
+
+
+    @Test
+    public void escapedDoubleQuotes() {
+        assertEquals(Arrays.asList("\"hello world\""), StringUtils.shellSplit("\"\\\"hello world\\\""));
+    }
+
+    @Test
+    public void noEscapeWithinSingleQuotes() {
+        assertEquals(Arrays.asList("hello \\\" world"), StringUtils.shellSplit("'hello \\\" world'"));
+    }
+
+    @Test
+    public void backToBackQuotedStringsShouldFormSingleToken() {
+        assertEquals(Arrays.asList("foobarbaz"), StringUtils.shellSplit("\"foo\"'bar'baz"));
+        assertEquals(Arrays.asList("three four"), StringUtils.shellSplit("\"three\"' 'four"));
+    }
+
+    @Test
+    public void escapedSpacesDoNotBreakUpTokens() {
+        assertEquals(Arrays.asList("three four"), StringUtils.shellSplit("three\\ four"));
     }
 }

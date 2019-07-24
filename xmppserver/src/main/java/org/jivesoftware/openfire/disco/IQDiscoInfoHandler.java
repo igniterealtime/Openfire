@@ -499,20 +499,24 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     /**
      * return the first DataForm for a Collections
      * of Set DataForms
-     * @param dataForms
-     * @return DataForm .
+     * @param dataForms collection from which to return the first element (cannot be null, can be an empty collection).
+     * @return first dataform from the collection. Null if the collection was empty.
      */
     public static DataForm getFirstDataForm(Set<DataForm> dataForms){
-        Iterator<DataForm> iterator = dataForms.iterator();
-        if (iterator.hasNext()) {
-             Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
-            "Only the first one of the DataForms will be returned.");
-        }
-        DataForm dataform = iterator.next();
-        if (!iterator.hasNext()) {
+        if(dataForms != null && !dataForms.isEmpty()){
+            Iterator<DataForm> iterator = dataForms.iterator();
+            if (iterator.hasNext()) {
+                Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
+                "Only the first one of the DataForms will be returned.");
+            }
+            DataForm dataform = iterator.next();
+            if (!iterator.hasNext()) {
+                return dataform;
+            }            
             return dataform;
-        }            
-        return dataform;
+        }else{
+            return null;
+        }  
     }
 
     /**

@@ -506,7 +506,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         if (dataForms == null || dataForms.isEmpty() ) {
             return null;
         }
-        if (dataForms.size() > 1) {
+        if (dataForms != null && dataForms.size() > 1) {
             Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
             "Only the first one of the DataForms will be returned.");
         }

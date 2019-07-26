@@ -792,49 +792,55 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     public void occupantAdded(OccupantAddedEvent event) {
-        // Create a proxy for the occupant that joined the room from another cluster node
-        RemoteMUCRole joinRole = new RemoteMUCRole(mucService, event);
-        JID bareJID = event.getUserAddress().asBareJID();
-        String nickname = event.getNickname();
-        List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
-        // Do not add new occupant with one with same nickname already exists
-        if (occupants == null) {
-            occupants = new ArrayList<>();
-            occupantsByNickname.put(nickname.toLowerCase(), occupants);
-        } else {
-            // sanity check; make sure the nickname is owned by the same JID
-            if (occupants.size() > 0) {
-                JID existingJID = occupants.get(0).getUserAddress().asBareJID();
-                if (!bareJID.equals(existingJID)) {
-                    Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
-                    return;
+        lock.writeLock().lock();
+        try {
+            // Create a proxy for the occupant that joined the room from another cluster node
+            RemoteMUCRole joinRole = new RemoteMUCRole(mucService, event);
+            JID bareJID = event.getUserAddress().asBareJID();
+            String nickname = event.getNickname();
+            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
+            // Do not add new occupant with one with same nickname already exists
+            if (occupants == null) {
+                occupants = new ArrayList<>();
+                occupantsByNickname.put(nickname.toLowerCase(), occupants);
+            } else {
+                // sanity check; make sure the nickname is owned by the same JID
+                if (occupants.size() > 0) {
+                    JID existingJID = occupants.get(0).getUserAddress().asBareJID();
+                    if (!bareJID.equals(existingJID)) {
+                        Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
+                        return;
+                    }
                 }
             }
-        }
-        // Add the new user as an occupant of this room
-        occupants.add(joinRole);
-        // Update the tables of occupants based on the bare and full JID
-        List<MUCRole> list = occupantsByBareJID.get(bareJID);
-        if (list == null) {
-            list = new ArrayList<>();
-            occupantsByBareJID.put(bareJID, list);
-        }
-        list.add(joinRole);
-        occupantsByFullJID.put(event.getUserAddress(), joinRole);
+            // Add the new user as an occupant of this room
+            occupants.add(joinRole);
+            // Update the tables of occupants based on the bare and full JID
+            List<MUCRole> list = occupantsByBareJID.get(bareJID);
+            if (list == null) {
+                list = new ArrayList<>();
+                occupantsByBareJID.put(bareJID, list);
+            }
+            list.add(joinRole);
+            occupantsByFullJID.put(event.getUserAddress(), joinRole);
 
-        // Update the date when the last occupant left the room
-        setEmptyDate(null);
-        if (event.isOriginator()) {
-            // Fire event that occupant joined the room
-            MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(), event.getUserAddress(), joinRole.getNickname());
-        }
-        // Check if we need to send presences of the new occupant to occupants hosted by this JVM
-        if (event.isSendPresence()) {
-            for (MUCRole occupant : occupantsByFullJID.values()) {
-                if (occupant.isLocal()) {
-                    occupant.send(event.getPresence().createCopy());
+            // Update the date when the last occupant left the room
+            setEmptyDate(null);
+            if (event.isOriginator()) {
+                // Fire event that occupant joined the room
+                MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(), event.getUserAddress(), joinRole.getNickname());
+            }
+            // Check if we need to send presences of the new occupant to occupants hosted by this JVM
+            if (event.isSendPresence()) {
+                for (MUCRole occupant : occupantsByFullJID.values()) {
+                    if (occupant.isLocal()) {
+                        occupant.send(event.getPresence().createCopy());
+                    }
                 }
             }
+        }
+        finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -931,31 +937,37 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param originator true if this JVM is the one that originated the event.
      */
     private void removeOccupantRole(MUCRole leaveRole, boolean originator) {
-        JID userAddress = leaveRole.getUserAddress();
-        // Notify the user that he/she is no longer in the room
-        leaveRole.destroy();
-        // Update the tables of occupants based on the bare and full JID
-        JID bareJID = userAddress.asBareJID();
+        lock.writeLock().lock();
+        try {
+            JID userAddress = leaveRole.getUserAddress();
+            // Notify the user that he/she is no longer in the room
+            leaveRole.destroy();
+            // Update the tables of occupants based on the bare and full JID
+            JID bareJID = userAddress.asBareJID();
 
-        String nickname = leaveRole.getNickname();
-        List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
-        if (occupants != null) {
-            occupants.remove(leaveRole);
-            if (occupants.isEmpty()) {
-                occupantsByNickname.remove(nickname.toLowerCase());
+            String nickname = leaveRole.getNickname();
+            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
+            if (occupants != null) {
+                occupants.remove(leaveRole);
+                if (occupants.isEmpty()) {
+                    occupantsByNickname.remove(nickname.toLowerCase());
+                }
+            }
+            List<MUCRole> list = occupantsByBareJID.get(bareJID);
+            if (list != null) {
+                list.remove(leaveRole);
+                if (list.isEmpty()) {
+                    occupantsByBareJID.remove(bareJID);
+                }
+            }
+            occupantsByFullJID.remove(userAddress);
+            if (originator) {
+                // Fire event that occupant left the room
+                MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
             }
         }
-        List<MUCRole> list = occupantsByBareJID.get(bareJID);
-        if (list != null) {
-            list.remove(leaveRole);
-            if (list.isEmpty()) {
-                occupantsByBareJID.remove(bareJID);
-            }
-        }
-        occupantsByFullJID.remove(userAddress);
-        if (originator) {
-            // Fire event that occupant left the room
-            MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
+        finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -2055,22 +2067,27 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     public void nicknameChanged(ChangeNickname changeNickname) {
-        List<MUCRole> occupants = occupantsByNickname.get(changeNickname.getOldNick().toLowerCase());
-        if (occupants != null && occupants.size() > 0) {
-            for (MUCRole occupant : occupants) {
-                // Update the role with the new info
-                occupant.setPresence(changeNickname.getPresence());
-                occupant.changeNickname(changeNickname.getNewNick());
-            }
-            if (changeNickname.isOriginator()) {
-                // Fire event that user changed his nickname
-                MUCEventDispatcher.nicknameChanged(getRole().getRoleAddress(), occupants.get(0).getUserAddress(),
+        lock.writeLock().lock();
+        try {
+            List<MUCRole> occupants = occupantsByNickname.get(changeNickname.getOldNick().toLowerCase());
+            if (occupants != null && occupants.size() > 0) {
+                for (MUCRole occupant : occupants) {
+                    // Update the role with the new info
+                    occupant.setPresence(changeNickname.getPresence());
+                    occupant.changeNickname(changeNickname.getNewNick());
+                }
+                if (changeNickname.isOriginator()) {
+                    // Fire event that user changed his nickname
+                    MUCEventDispatcher.nicknameChanged(getRole().getRoleAddress(), occupants.get(0).getUserAddress(),
                         changeNickname.getOldNick(), changeNickname.getNewNick());
+                }
+                // Associate the existing MUCRole with the new nickname
+                occupantsByNickname.put(changeNickname.getNewNick().toLowerCase(), occupants);
+                // Remove the old nickname
+                occupantsByNickname.remove(changeNickname.getOldNick().toLowerCase());
             }
-            // Associate the existing MUCRole with the new nickname
-            occupantsByNickname.put(changeNickname.getNewNick().toLowerCase(), occupants);
-            // Remove the old nickname
-            occupantsByNickname.remove(changeNickname.getOldNick().toLowerCase());
+        }finally {
+            lock.writeLock().unlock();
         }
     }
 

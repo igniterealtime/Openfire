@@ -109,7 +109,9 @@
     try {
         String line;
         int totalNumLines = 0;
-        try(FileInputStream fileInputStream = new FileInputStream(logFile); InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8"); BufferedReader in = new BufferedReader(inputStreamReader);){
+        try(FileInputStream fileInputStream = new FileInputStream(logFile);
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+            BufferedReader in = new BufferedReader(inputStreamReader);){
             while ((line=in.readLine()) != null) {
                 totalNumLines++;
         	}
@@ -119,7 +121,9 @@
             numLines = totalNumLines;
         }
         lines = new String[numLines];
-        try(FileInputStream fileInputStream = new FileInputStream(logFile); InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8"); BufferedReader in = new BufferedReader(inputStreamReader);){
+        try(FileInputStream fileInputStream = new FileInputStream(logFile);
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+            BufferedReader in = new BufferedReader(inputStreamReader);){
             // skip lines
             start = totalNumLines - numLines;
             if (start < 0) { start = 0; }

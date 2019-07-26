@@ -109,36 +109,17 @@
     try {
         String line;
         int totalNumLines = 0;
-        BufferedReader in = null;
-        InputStreamReader inputStreamReader= null;
-        FileInputStream fileInputStream=null;
-        try{
-        	fileInputStream = new FileInputStream(logFile);
-        	inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
-        	in = new BufferedReader(inputStreamReader);
+        try(FileInputStream fileInputStream = new FileInputStream(logFile); InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8"); BufferedReader in = new BufferedReader(inputStreamReader);){
             while ((line=in.readLine()) != null) {
                 totalNumLines++;
         	}
-        }finally{
-            if (in!=null)
-            	in.close();
-            if (inputStreamReader!=null)
-            	inputStreamReader.close();
-            if (fileInputStream!=null)
-            	fileInputStream.close();
         }
         // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
         if ("All".equals(numLinesParam)) {
             numLines = totalNumLines;
         }
         lines = new String[numLines];
-        in = null;
-        inputStreamReader = null;
-        fileInputStream = null;
-        try{
-            fileInputStream=new FileInputStream(logFile);
-            inputStreamReader= new InputStreamReader(fileInputStream, "UTF-8");
-            in=new BufferedReader(inputStreamReader);
+        try(FileInputStream fileInputStream = new FileInputStream(logFile); InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8"); BufferedReader in = new BufferedReader(inputStreamReader);){
             // skip lines
             start = totalNumLines - numLines;
             if (start < 0) { start = 0; }
@@ -166,13 +147,6 @@
                 }
             }
             numLines = start + i;
-        }finally{
-          if (in!=null)
-           	in.close();
-          if (inputStreamReader!=null)
-           	inputStreamReader.close();
-          if (fileInputStream!=null)
-           	fileInputStream.close();
         }
     } catch (FileNotFoundException ex) {
         Log.info("Could not open (log)file.", ex);

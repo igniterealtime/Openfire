@@ -131,7 +131,7 @@ public class HistoryRequest {
      * @param joinRole the user that will receive the history.
      * @param roomHistory the history of the room.
      */
-    public void sendHistory(LocalMUCRole joinRole, MUCRoomHistory roomHistory) {
+    public void sendHistory(MUCRole joinRole, MUCRoomHistory roomHistory) {
         if (!isConfigured()) {
             Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {

@@ -516,7 +516,7 @@ public class XMPPServer {
 
         // steps from index.jsp
         String localeCode = JiveGlobals.getXMLProperty("autosetup.locale");
-        logger.warn("Setting locale to" + localeCode);
+        logger.warn("Setting locale to " + localeCode);
         JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
 
         // steps from setup-host-settings.jsp

@@ -161,7 +161,7 @@ public abstract class LocalSession implements Session {
             temp.close();
         }
         this.conn = connection;
-        this.conn.reinit(this);
+        connection.reinit(this);
         this.status = STATUS_AUTHENTICATED;
         this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
@@ -416,12 +416,13 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
-        if ( conn == null )
+        Connection ret=conn;
+        if ( ret == null )
         {
             Log.debug( "Unable to deliver raw text in session, as its connection is null. Dropping: " + text );
             return;
         }
-        conn.deliverRawText(text);
+        ret.deliverRawText(text);
     }
 
     /**
@@ -434,44 +435,54 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
-        if (conn == null) return;
-        conn.close();
+        Connection ret=conn;
+        if (ret == null) return;
+        ret.close();
     }
 
     @Override
     public boolean validate() {
-        return conn.validate();
+        Connection ret=conn;
+        if (ret == null) return false;
+        return ret.validate();
     }
 
     @Override
     public boolean isSecure() {
-        return conn.isSecure();
+        Connection ret=conn;
+        if (ret == null) return false;
+        return ret.isSecure();
     }
 
     @Override
     public Certificate[] getPeerCertificates() {
-        return conn.getPeerCertificates();
+        Connection ret=conn;
+        return ret==null? new Certificate[0] : ret.getPeerCertificates();
     }
 
     @Override
     public boolean isClosed() {
-        return conn.isClosed();
+        Connection ret=conn;
+        if (ret == null) return true;
+        return ret.isClosed();
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        if (conn == null) {
+        Connection ret=conn;
+        if (ret == null) {
             throw new UnknownHostException("Detached session");
         }
-        return conn.getHostAddress();
+        return ret.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        if (conn == null) {
+        Connection ret=conn;
+        if (ret == null) {
             throw new UnknownHostException("Detached session");
         }
-        return conn.getHostName();
+        return ret.getHostName();
     }
 
     @Override
@@ -524,12 +535,12 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-     * Retrieves Software Version data. This method gives access to temporary Software Version data only. 
+     * Retrieves Software Version data. This method gives access to temporary Software Version data only.
      * @return a Map collection value of data .
      */
     @Override
     public Map<String, String> getSoftwareVersion() {
-        return softwareVersionData; 
+        return softwareVersionData;
     }
 
     /**

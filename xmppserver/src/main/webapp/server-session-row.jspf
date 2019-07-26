@@ -74,25 +74,32 @@
     <% Date creationDate = null;
         Date lastActiveDate = null;
         for (IncomingServerSession inSession : inSessions) {
-            if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+        	Date tmpCreationDate=inSession.getCreationDate();
+            if (creationDate == null || (tmpCreationDate!=null && creationDate.after(tmpCreationDate))) {
                 // Use the creation date of the oldest incoming session
-                creationDate = inSession.getCreationDate();
+                creationDate = tmpCreationDate;
             }
-            if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+            Date tmpLastActiveDate=inSession.getLastActiveDate();
+            if (lastActiveDate == null || (tmpLastActiveDate!=null && lastActiveDate.before(tmpLastActiveDate))){
                 // Use the last active date of the newest incoming session
-                lastActiveDate = inSession.getLastActiveDate();
+                lastActiveDate = tmpLastActiveDate;
             }
         }
         for (OutgoingServerSession outSession : outSessions) {
-            if (creationDate == null || creationDate.after(outSession.getCreationDate())) {
+        	Date tmpCreationDate=outSession.getCreationDate();
+            if (creationDate == null || (tmpCreationDate!=null && creationDate.after(tmpCreationDate))) {
                 // Use the creation date of the oldest outgoing session
-                creationDate = outSession.getCreationDate();
+                creationDate = tmpCreationDate;
             }
-            if (lastActiveDate == null || lastActiveDate.before(outSession.getLastActiveDate())) {
+            Date tmpLastActiveDate=outSession.getLastActiveDate();
+            if (lastActiveDate == null || (tmpLastActiveDate!=null && lastActiveDate.before(tmpLastActiveDate))) {
                 // Use the last active date of the newest outgoing session
-                lastActiveDate = outSession.getLastActiveDate();
+                lastActiveDate = tmpLastActiveDate;
             }
         }
+        creationDate=creationDate!=null?creationDate:new Date(0);
+        lastActiveDate=lastActiveDate!=null?lastActiveDate:new Date(0);
+
         Calendar creationCal = Calendar.getInstance();
         creationCal.setTime(creationDate);
 

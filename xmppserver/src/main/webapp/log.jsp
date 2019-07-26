@@ -107,46 +107,73 @@
     String lines[] = new String[0];
     int start = 0;
     try {
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
         String line;
         int totalNumLines = 0;
-        while ((line=in.readLine()) != null) {
-            totalNumLines++;
+        BufferedReader in = null;
+        InputStreamReader inputStreamReader= null;
+        FileInputStream fileInputStream=null;
+        try{
+        	fileInputStream = new FileInputStream(logFile);
+        	inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+        	in = new BufferedReader(inputStreamReader);
+            while ((line=in.readLine()) != null) {
+                totalNumLines++;
+        	}
+        }finally{
+            if (in!=null)
+            	in.close();
+            if (inputStreamReader!=null)
+            	inputStreamReader.close();
+            if (fileInputStream!=null)
+            	fileInputStream.close();
         }
-        in.close();
         // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
         if ("All".equals(numLinesParam)) {
             numLines = totalNumLines;
         }
         lines = new String[numLines];
-        in = new BufferedReader(new InputStreamReader(new FileInputStream(logFile), "UTF-8"));
-        // skip lines
-        start = totalNumLines - numLines;
-        if (start < 0) { start = 0; }
-        for (int i=0; i<start; i++) {
-            in.readLine();
-        }
-        int i = 0;
-        if ("asc".equals(mode)) {
-            while ((line=in.readLine()) != null && i<numLines) {
-                line = StringUtils.escapeHTMLTags(line);
-                line = parseDate(line);
-                line = hilite(line);
-                lines[i] = line;
-                i++;
+        in = null;
+        inputStreamReader = null;
+        fileInputStream = null;
+        try{
+            fileInputStream=new FileInputStream(logFile);
+            inputStreamReader= new InputStreamReader(fileInputStream, "UTF-8");
+            in=new BufferedReader(inputStreamReader);
+            // skip lines
+            start = totalNumLines - numLines;
+            if (start < 0) { start = 0; }
+            for (int i=0; i<start; i++) {
+                in.readLine();
             }
-        }
-        else {
-            int end = lines.length-1;
-            while ((line=in.readLine()) != null && i<numLines) {
-                line = StringUtils.escapeHTMLTags(line);
-                line = parseDate(line);
-                line = hilite(line);
-                lines[end-i] = line;
-                i++;
+            int i = 0;
+            if ("asc".equals(mode)) {
+                while ((line=in.readLine()) != null && i<numLines) {
+                    line = StringUtils.escapeHTMLTags(line);
+                    line = parseDate(line);
+                    line = hilite(line);
+                    lines[i] = line;
+                    i++;
+                }
             }
+            else {
+                int end = lines.length-1;
+                while ((line=in.readLine()) != null && i<numLines) {
+                    line = StringUtils.escapeHTMLTags(line);
+                    line = parseDate(line);
+                    line = hilite(line);
+                    lines[end-i] = line;
+                    i++;
+                }
+            }
+            numLines = start + i;
+        }finally{
+          if (in!=null)
+           	in.close();
+          if (inputStreamReader!=null)
+           	inputStreamReader.close();
+          if (fileInputStream!=null)
+           	fileInputStream.close();
         }
-        numLines = start + i;
     } catch (FileNotFoundException ex) {
         Log.info("Could not open (log)file.", ex);
     }

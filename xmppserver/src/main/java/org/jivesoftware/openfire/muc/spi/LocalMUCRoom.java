@@ -830,17 +830,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 // Fire event that occupant joined the room
                 MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(), event.getUserAddress(), joinRole.getNickname());
             }
-            // Check if we need to send presences of the new occupant to occupants hosted by this JVM
-            if (event.isSendPresence()) {
-                for (MUCRole occupant : occupantsByFullJID.values()) {
-                    if (occupant.isLocal()) {
-                        occupant.send(event.getPresence().createCopy());
-                    }
-                }
-            }
         }
         finally {
             lock.writeLock().unlock();
+        }
+        // Check if we need to send presences of the new occupant to occupants hosted by this JVM
+        if (event.isSendPresence()) {
+            for (MUCRole occupant : occupantsByFullJID.values()) {
+                if (occupant.isLocal()) {
+                    occupant.send(event.getPresence().createCopy());
+                }
+            }
         }
     }
 
@@ -937,15 +937,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param originator true if this JVM is the one that originated the event.
      */
     private void removeOccupantRole(MUCRole leaveRole, boolean originator) {
+        JID userAddress;
+        String nickname;
         lock.writeLock().lock();
         try {
-            JID userAddress = leaveRole.getUserAddress();
+            userAddress = leaveRole.getUserAddress();
             // Notify the user that he/she is no longer in the room
             leaveRole.destroy();
             // Update the tables of occupants based on the bare and full JID
             JID bareJID = userAddress.asBareJID();
 
-            String nickname = leaveRole.getNickname();
+            nickname = leaveRole.getNickname();
             List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
             if (occupants != null) {
                 occupants.remove(leaveRole);
@@ -961,13 +963,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 }
             }
             occupantsByFullJID.remove(userAddress);
-            if (originator) {
-                // Fire event that occupant left the room
-                MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
-            }
         }
         finally {
             lock.writeLock().unlock();
+        }
+        if (originator) {
+            // Fire event that occupant left the room
+            MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
         }
     }
 

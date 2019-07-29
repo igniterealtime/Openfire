@@ -385,6 +385,11 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        return new HashSet<DataForm>();
+    }
+
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;
     }

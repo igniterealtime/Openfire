@@ -18,9 +18,11 @@ package org.jivesoftware.openfire.pubsub;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -695,15 +697,22 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
+    }
+    
+    @Override
+    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
         if (name == null && node != null) {
             // Answer the extended info of a given node
             Node pubNode = getNode(node);
+            Set<DataForm> dataForms = new HashSet<>();
             if (canDiscoverNode(pubNode)) {
+                dataForms.add(pubNode.getMetadataForm());
                 // Get the metadata data form
-                return pubNode.getMetadataForm();
+                return dataForms;
             }
         }
-        return null;
+        return new HashSet<DataForm>();
     }
 
     @Override

@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -66,6 +68,7 @@ import java.util.concurrent.locks.Lock;
  */
 public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
+    private static final Logger Log = LoggerFactory.getLogger(IQDiscoInfoHandler.class);
     public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
     private Map<String, DiscoInfoProvider> entities = new HashMap<>();
     private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
@@ -191,10 +194,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
                 }
-
-                // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
-                DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
-                if (dataForm != null) {
+                // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
+                Iterator<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom()).iterator();
+                while (dataForms.hasNext()) {
+                    final DataForm dataForm = dataForms.next();
                     queryElement.add(dataForm.getElement());
                 }
             }
@@ -494,6 +497,23 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
+     * return the first DataForm for a Collections
+     * of Set DataForms
+     * @param dataForms collection from which to return the first element (cannot be null, can be an empty collection).
+     * @return first dataform from the collection. Null if the collection was empty.
+     */
+    public static DataForm getFirstDataForm(Set<DataForm> dataForms){
+        if(dataForms == null || dataForms.isEmpty()){
+            return null;
+        }
+        if (dataForms.size() > 1) {
+            Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
+            "Only the first one of the DataForms will be returned.");
+        }
+        return  dataForms.stream().filter(Objects::nonNull).findAny().orElse(null);
+    }
+
+    /**
      * Returns the DiscoInfoProvider responsible for providing information at the server level. This
      * means that this DiscoInfoProvider will provide information whenever a disco request whose
      * recipient JID is the server (e.g. localhost) is made.
@@ -633,9 +653,14 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
             @Override
             public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+                return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
+            }
+
+            @Override
+            public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
-                    return serverNodeProviders.get(node).getExtendedInfo(name, node, senderJID);
+                    return serverNodeProviders.get(node).getExtendedInfos(name, node, senderJID);
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     // Answer extended info of the server itself.
@@ -677,12 +702,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                                 continue;
                             }
                         }
-
-                        return dataForm;
+                        final Set<DataForm> dataForms = new HashSet<>();
+                        dataForms.add(dataForm);
+                        return dataForms;
                     }
                 }
                 if (node != null && name != null) {
-                    return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfo(name, node, senderJID);
+                    return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfos(name, node, senderJID);
                 }
                 return null;
             }

@@ -21,6 +21,8 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A DiscoInfoProvider is responsible for providing information about a JID's name and its node. For
@@ -67,8 +69,30 @@ public interface DiscoInfoProvider {
      * @param node the requested disco node.
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return an XDataForm with the extended information about the entity or null if none.
+     * @deprecated Replaced by {@link #getExtendedInfos(String, String, JID)}
      */
+    @Deprecated
     DataForm getExtendedInfo( String name, String node, JID senderJID );
+
+    /**
+     * Returns a collection of XDataForm with the extended information about the
+     * entity or  an empty collection if none. Each bit of information about the entity must be
+     * included as a value of a field of the form.
+     *
+     * @param name the recipient JID's name.
+     * @param node the requested disco node.
+     * @param senderJID the XMPPAddress of user that sent the disco info request.
+     * @return A collection of XDataForms with the extended information about the entity or an empty collection if none.
+     */
+    default Set<DataForm> getExtendedInfos( String name, String node, JID senderJID ) {
+        final Set<DataForm> forms = new HashSet<DataForm>();
+        if(getExtendedInfo( name, node, senderJID )!= null){
+             forms.add(getExtendedInfo( name, node, senderJID ));
+            return forms;
+        }else{
+            return forms;
+        }   
+    }
 
     /**
      * Returns true if we can provide information related to the requested name and node. For

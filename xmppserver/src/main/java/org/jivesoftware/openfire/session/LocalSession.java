@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.openfire.Connection;
@@ -104,6 +106,11 @@ public abstract class LocalSession implements Session {
      */
     protected final StreamManager streamManager;
 
+    /**
+     * A lock to protect the connection changes.
+     */
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
     private final Locale language;
 
     /**
@@ -135,7 +142,12 @@ public abstract class LocalSession implements Session {
      * @return true if session detached
      */
     public boolean isDetached() {
-        return this.conn == null;
+        lock.readLock().lock();
+        try {
+            return this.conn == null;
+        }finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**
@@ -143,8 +155,13 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
-        this.sessionManager.addDetached(this);
-        this.conn = null;
+        lock.writeLock().lock();
+        try {
+            this.sessionManager.addDetached(this);
+            this.conn = null;
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -155,13 +172,17 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
-        Connection temp = this.conn;
-        this.conn = null;
-        if (temp != null && !temp.isClosed()) {
-            temp.close();
+        lock.writeLock().lock();
+        try {
+            if (this.conn != null && !this.conn.isClosed())
+            {
+                this.conn.close();
+            }
+            this.conn = connection;
+            connection.reinit(this);
+        }finally {
+            lock.writeLock().unlock();
         }
-        this.conn = connection;
-        connection.reinit(this);
         this.status = STATUS_AUTHENTICATED;
         this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
@@ -198,14 +219,20 @@ public abstract class LocalSession implements Session {
      * @return The connection for this session
      */
     public Connection getConnection() {
-        if (conn == null) {
-            try {
-                conn.isClosed(); // This generates an NPE deliberately.
-            } catch (NullPointerException e) {
-                Log.error("Attempt to read connection of detached session: ", e);
+        lock.readLock().lock();
+        try {
+            if (conn == null)
+            {
+                try {
+                    conn.isClosed(); // This generates an NPE deliberately.
+                } catch (NullPointerException e) {
+                    Log.error("Attempt to read connection of detached session: ", e);
+                }
             }
+            return conn;
+        }finally {
+            lock.readLock().unlock();
         }
-        return conn;
     }
 
     /**
@@ -416,13 +443,18 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
-        Connection ret=conn;
-        if ( ret == null )
-        {
-            Log.debug( "Unable to deliver raw text in session, as its connection is null. Dropping: " + text );
-            return;
+        lock.readLock().lock();
+        try {
+            Connection connection = conn;
+            if (connection == null )
+            {
+                Log.debug("Unable to deliver raw text in session, as its connection is null. Dropping: " + text);
+                return;
+            }
+            connection.deliverRawText(text);
+        }finally {
+            lock.readLock().unlock();
         }
-        ret.deliverRawText(text);
     }
 
     /**
@@ -435,54 +467,89 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
-        Connection ret=conn;
-        if (ret == null) return;
-        ret.close();
+        lock.writeLock().lock();
+        try {
+            Connection connection = conn;
+            if (connection == null)
+            {
+                return;
+            }
+            connection.close();
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean validate() {
-        Connection ret=conn;
-        if (ret == null) return false;
-        return ret.validate();
+        lock.writeLock().lock();
+        try {
+            Connection connection = conn;
+            return connection != null && connection.validate();
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
     public boolean isSecure() {
-        Connection ret=conn;
-        if (ret == null) return false;
-        return ret.isSecure();
+        lock.readLock().lock();
+        try {
+            Connection connection = conn;
+            return connection != null && connection.isSecure();
+        }finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public Certificate[] getPeerCertificates() {
-        Connection ret=conn;
-        return ret==null? new Certificate[0] : ret.getPeerCertificates();
+        lock.readLock().lock();
+        try {
+            Connection connection = conn;
+            return connection == null ? new Certificate[0] : connection.getPeerCertificates();
+        }finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public boolean isClosed() {
-        Connection ret=conn;
-        if (ret == null) return true;
-        return ret.isClosed();
+        lock.readLock().lock();
+        try {
+            Connection connection = conn;
+            return connection == null || connection.isClosed();
+        }finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        Connection ret=conn;
-        if (ret == null) {
-            throw new UnknownHostException("Detached session");
+        lock.readLock().lock();
+        try {
+            Connection connection = conn;
+            if (connection == null) {
+                throw new UnknownHostException("Detached session");
+            }
+            return connection.getHostAddress();
+        }finally {
+            lock.readLock().unlock();
         }
-        return ret.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        Connection ret=conn;
-        if (ret == null) {
-            throw new UnknownHostException("Detached session");
+        lock.readLock().lock();
+            try {
+            Connection connection = conn;
+            if (connection == null) {
+                throw new UnknownHostException("Detached session");
+            }
+            return connection.getHostName();
+        }finally {
+            lock.readLock().unlock();
         }
-        return ret.getHostName();
     }
 
     @Override
@@ -507,7 +574,12 @@ public abstract class LocalSession implements Session {
      * @return true if the other peer of this session presented a self-signed certificate.
      */
     public boolean isUsingSelfSignedCertificate() {
-        return conn.isUsingSelfSignedCertificate();
+        lock.readLock().lock();
+        try {
+            return conn!=null && conn.isUsingSelfSignedCertificate();
+        }finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**

@@ -513,6 +513,48 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
+     * Returns all Software Version data Map 
+     * response by the peer for the Software information request Service Discovery (XEP-0232)
+     * @param Element query represented on the response of the peer
+     * @return The Software Version information Map (never null, possibly empty).
+     */
+    public static Map<String, String> getSoftwareVersionDataFromDiscoInfoQuery(Element query){
+        final Map<String, String> softVesrsiobInfos = new HashMap<>();
+        Boolean containDisco = new Boolean("false");
+        Boolean typeformDataSoftwareInfo = new Boolean("false");
+        List<Element> elements = query.elements();
+        if (elements.isEmpty() && elements!= null && elements.size()>0){
+            for (Element element : elements){
+                if (element !=null && "feature".equals(element.getName()) 
+                    && "http://jabber.org/protocol/disco".equals(element.attributeValue("var")) ){
+                    containDisco = true;
+                }
+                if (containDisco && element != null && "x".equals(element.getName()) 
+                    && "jabber:x:data".equals(element.getNamespaceURI())
+                    && "result".equals(element.attributeValue("type"))){
+                    List<Element> fields =  element.elements();
+                    if (fields != null && !fields.isEmpty() && fields.size() >0){
+                        for (Element field : fields){
+                            if (field != null && field.attributeValue("var").equals("FORM_TYPE") 
+                                && field.element("value")!= null
+                                && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                                typeformDataSoftwareInfo = true;     
+                            }
+                            if(typeformDataSoftwareInfo && field.element("value")!= null
+                                && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
+                                softVesrsiobInfos.put(field.attributeValue("var"), field.element("value").getText());
+                            }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
+                                softVesrsiobInfos.put("image", field.element("media").element("uri").getText());
+                            }
+                        }
+                    }    
+                }
+            }
+        }
+        return softVesrsiobInfos;
+    }
+
+    /**
      * Returns the DiscoInfoProvider responsible for providing information at the server level. This
      * means that this DiscoInfoProvider will provide information whenever a disco request whose
      * recipient JID is the server (e.g. localhost) is made.

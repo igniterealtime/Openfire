@@ -142,12 +142,7 @@ public abstract class LocalSession implements Session {
      * @return true if session detached
      */
     public boolean isDetached() {
-        lock.readLock().lock();
-        try {
-            return this.conn == null;
-        }finally {
-            lock.readLock().unlock();
-        }
+        return this.conn == null;
     }
 
     /**
@@ -223,11 +218,7 @@ public abstract class LocalSession implements Session {
         try {
             if (conn == null)
             {
-                try {
-                    conn.isClosed(); // This generates an NPE deliberately.
-                } catch (NullPointerException e) {
-                    Log.error("Attempt to read connection of detached session: ", e);
-                }
+                Log.error("Attempt to read connection of detached session", new IllegalStateException());
             }
             return conn;
         }finally {

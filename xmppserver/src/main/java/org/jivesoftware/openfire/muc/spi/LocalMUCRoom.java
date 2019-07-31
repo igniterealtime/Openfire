@@ -497,11 +497,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public MUCRole getOccupantByFullJID(JID jid) {
-        MUCRole role = occupantsByFullJID.get(jid);
-        if (role != null) {
-            return role;
-        }
-        return null;
+        return occupantsByFullJID.get(jid);
     }
 
     @Override
@@ -560,7 +556,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new UnauthorizedException();
             }
         }
-        LocalMUCRole joinRole = null;
+        LocalMUCRole joinRole;
         lock.writeLock().lock();
         boolean clientOnlyJoin = false;
         // A "client only join" here is one where the client is already joined, but has re-joined.
@@ -598,7 +594,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             if (isPasswordProtected()) {
                 final boolean isCorrectPassword = (password != null && password.equals(getPassword()));
                 final boolean isSysadmin = mucService.isSysadmin(bareJID);
-                final boolean requirePassword = isSysadmin ? mucService.isPasswordRequiredForSysadminsToJoinRoom() : true;
+                final boolean requirePassword = !isSysadmin || mucService.isPasswordRequiredForSysadminsToJoinRoom();
                 if (!isCorrectPassword && requirePassword ) {
                     throw new UnauthorizedException();
                 }
@@ -666,19 +662,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 joinRole = new LocalMUCRole(mucService, this, nickname, role,
                         affiliation, user, presence, router);
                 // Add the new user as an occupant of this room
-                List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
-                if (occupants == null) {
-                    occupants = new ArrayList<>();
-                    occupantsByNickname.put(nickname.toLowerCase(), occupants);
-                }
-                occupants.add(joinRole);
+                occupantsByNickname.compute(nickname.toLowerCase(), (nick, occupants) -> {
+                    List<MUCRole> ret=occupants !=null ? occupants : new ArrayList<>();
+                    ret.add(joinRole);
+                    return ret;
+                });
                 // Update the tables of occupants based on the bare and full JID
-                List<MUCRole> list = occupantsByBareJID.get(bareJID);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    occupantsByBareJID.put(bareJID, list);
-                }
-                list.add(joinRole);
+                occupantsByBareJID.compute(bareJID, (jid, occupants) -> {
+                    List<MUCRole> ret=occupants !=null ? occupants : new ArrayList<>();
+                    ret.add(joinRole);
+                    return ret;
+                });
                 occupantsByFullJID.put(user.getAddress(), joinRole);
             } else {
                 // Grab the existing one.
@@ -792,36 +786,26 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     public void occupantAdded(OccupantAddedEvent event) {
+        // Create a proxy for the occupant that joined the room from another cluster node
+        RemoteMUCRole joinRole = new RemoteMUCRole(mucService, event);
+        JID bareJID = event.getUserAddress().asBareJID();
+        String nickname = event.getNickname();
         lock.writeLock().lock();
         try {
-            // Create a proxy for the occupant that joined the room from another cluster node
-            RemoteMUCRole joinRole = new RemoteMUCRole(mucService, event);
-            JID bareJID = event.getUserAddress().asBareJID();
-            String nickname = event.getNickname();
-            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
+            List<MUCRole> occupants = occupantsByNickname.computeIfAbsent(nickname.toLowerCase(), nick -> new ArrayList<>());
             // Do not add new occupant with one with same nickname already exists
-            if (occupants == null) {
-                occupants = new ArrayList<>();
-                occupantsByNickname.put(nickname.toLowerCase(), occupants);
-            } else {
-                // sanity check; make sure the nickname is owned by the same JID
-                if (occupants.size() > 0) {
-                    JID existingJID = occupants.get(0).getUserAddress().asBareJID();
-                    if (!bareJID.equals(existingJID)) {
-                        Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
-                        return;
-                    }
+            // sanity check; make sure the nickname is owned by the same JID
+            if (occupants.size() > 0) {
+                JID existingJID = occupants.get(0).getUserAddress().asBareJID();
+                if (!bareJID.equals(existingJID)) {
+                    Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
+                    return;
                 }
             }
             // Add the new user as an occupant of this room
             occupants.add(joinRole);
             // Update the tables of occupants based on the bare and full JID
-            List<MUCRole> list = occupantsByBareJID.get(bareJID);
-            if (list == null) {
-                list = new ArrayList<>();
-                occupantsByBareJID.put(bareJID, list);
-            }
-            list.add(joinRole);
+            occupantsByBareJID.computeIfAbsent(bareJID, jid->new ArrayList<>()).add(joinRole);
             occupantsByFullJID.put(event.getUserAddress(), joinRole);
 
             // Update the date when the last occupant left the room
@@ -937,31 +921,25 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param originator true if this JVM is the one that originated the event.
      */
     private void removeOccupantRole(MUCRole leaveRole, boolean originator) {
-        JID userAddress;
-        String nickname;
+        JID userAddress = leaveRole.getUserAddress();
+        // Notify the user that he/she is no longer in the room
+        leaveRole.destroy();
+        // Update the tables of occupants based on the bare and full JID
+        JID bareJID = userAddress.asBareJID();
+
+        String nickname = leaveRole.getNickname();
         lock.writeLock().lock();
         try {
-            userAddress = leaveRole.getUserAddress();
-            // Notify the user that he/she is no longer in the room
-            leaveRole.destroy();
-            // Update the tables of occupants based on the bare and full JID
-            JID bareJID = userAddress.asBareJID();
-
-            nickname = leaveRole.getNickname();
-            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
-            if (occupants != null) {
+            occupantsByNickname.computeIfPresent(nickname.toLowerCase(), (n, occupants) -> {
                 occupants.remove(leaveRole);
-                if (occupants.isEmpty()) {
-                    occupantsByNickname.remove(nickname.toLowerCase());
-                }
-            }
-            List<MUCRole> list = occupantsByBareJID.get(bareJID);
-            if (list != null) {
-                list.remove(leaveRole);
-                if (list.isEmpty()) {
-                    occupantsByBareJID.remove(bareJID);
-                }
-            }
+                return occupants.isEmpty() ? null : occupants;
+            });
+
+            occupantsByBareJID.computeIfPresent(bareJID,(jid, occupants) -> {
+                occupants.remove(leaveRole);
+                return occupants.isEmpty() ? null : occupants;
+            });
+
             occupantsByFullJID.remove(userAddress);
         }
         finally {
@@ -1480,7 +1458,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             else {
                 // Ask the cluster node hosting the occupant to make the changes. Note that if the change
                 // is not allowed a NotAllowedException will be thrown
-                Element element = (Element) CacheFactory.doSynchronousClusterTask(
+                Element element = CacheFactory.doSynchronousClusterTask(
                         new UpdateOccupantRequest(this, role.getNickname(), null, newRole),
                         role.getNodeID().toByteArray());
                 if (element != null) {
@@ -2350,28 +2328,30 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      */
     private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
-        List<MUCRole> occupants = new ArrayList<>(occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase()));
-        for (MUCRole kickedRole : occupants) {
-            // Add the actor's JID that kicked this user from the room
-            if (actorJID != null && actorJID.toString().length() > 0) {
-                Element frag = kickPresence.getChildElement(
-                        "x", "http://jabber.org/protocol/muc#user");
-                Element actor = frag.element("item").addElement("actor");
-                actor.addAttribute("jid", actorJID.toBareJID());
-                if (nick != null) {
-                    actor.addAttribute("nick", nick);
+        List<MUCRole> occupants = occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase());
+        if (occupants != null) {
+            for (MUCRole kickedRole : new ArrayList<>(occupants)) {
+                // Add the actor's JID that kicked this user from the room
+                if (actorJID!=null && actorJID.toString().length() > 0) {
+                    Element frag = kickPresence.getChildElement(
+                            "x", "http://jabber.org/protocol/muc#user");
+                    Element actor = frag.element("item").addElement("actor");
+                    actor.addAttribute("jid", actorJID.toBareJID());
+                    if (nick!=null) {
+                        actor.addAttribute("nick", nick);
+                    }
                 }
-            }
-            // Send the unavailable presence to the banned user
-            kickedRole.send(kickPresence);
-            // Remove the occupant from the room's occupants lists
-            OccupantLeftEvent event = new OccupantLeftEvent(this, kickedRole);
-            event.setOriginator(true);
-            event.run();
+                // Send the unavailable presence to the banned user
+                kickedRole.send(kickPresence);
+                // Remove the occupant from the room's occupants lists
+                OccupantLeftEvent event = new OccupantLeftEvent(this, kickedRole);
+                event.setOriginator(true);
+                event.run();
 
-            // Remove the occupant from the room's occupants lists
-            event = new OccupantLeftEvent(this, kickedRole);
-            CacheFactory.doClusterTask(event);
+                // Remove the occupant from the room's occupants lists
+                event = new OccupantLeftEvent(this, kickedRole);
+                CacheFactory.doClusterTask(event);
+            }
         }
     }
 
@@ -2909,9 +2889,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 return false;
         } else if (!password.equals(other.password))
             return false;
-        if (roomID != other.roomID)
-            return false;
-        return true;
+        return roomID==other.roomID;
     }
     
     // overrides for important Group events

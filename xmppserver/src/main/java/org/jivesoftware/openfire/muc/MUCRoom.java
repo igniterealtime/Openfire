@@ -21,7 +21,6 @@ import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
 import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
 import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -247,7 +246,7 @@ public interface MUCRoom extends Externalizable, Result {
      * @throws NotAcceptableException       If the registered user is trying to join with a
      *                                      nickname different than the reserved nickname.
      */
-    LocalMUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
+    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
             Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
             ConflictException, ServiceUnavailableException, NotAcceptableException;

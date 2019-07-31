@@ -545,7 +545,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public LocalMUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
+    public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
             LocalMUCUser user, Presence presence) throws UnauthorizedException,
             UserAlreadyExistsException, RoomLockedException, ForbiddenException,
             RegistrationRequiredException, ConflictException, ServiceUnavailableException,
@@ -556,7 +556,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new UnauthorizedException();
             }
         }
-        LocalMUCRole joinRole;
+        MUCRole joinRole;
         lock.writeLock().lock();
         boolean clientOnlyJoin = false;
         // A "client only join" here is one where the client is already joined, but has re-joined.
@@ -676,7 +676,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 occupantsByFullJID.put(user.getAddress(), joinRole);
             } else {
                 // Grab the existing one.
-                joinRole = (LocalMUCRole) occupantsByFullJID.get(user.getAddress());
+                joinRole = occupantsByFullJID.get(user.getAddress());
                 joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
            }
         }
@@ -758,7 +758,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param joinRole the role of the new occupant in the room.
      */
-    private void sendInitialPresences(LocalMUCRole joinRole) {
+    private void sendInitialPresences(MUCRole joinRole) {
         for (MUCRole occupant : occupantsByFullJID.values()) {
             if (occupant == joinRole) {
                 continue;

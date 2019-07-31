@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -513,17 +514,16 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
-     * Returns all Software Version data Map 
-     * response by the peer for the Software information request Service Discovery (XEP-0232)
+     * Set all Software Version data  
+     * responsed by the peer for the Software information request Service Discovery (XEP-0232)
      * @param Element query represented on the response of the peer
-     * @return The Software Version information Map (never null, possibly empty).
+     * @param LocalSession session represented the LocalSession with peer
      */
-    public static Map<String, String> getSoftwareVersionDataFromDiscoInfoQuery(Element query){
-        final Map<String, String> softVesrsiobInfos = new HashMap<>();
+    public static void setSoftwareVersionDataFormFromDiscoInfo(Element query ,LocalSession session){
         Boolean containDisco = new Boolean("false");
         Boolean typeformDataSoftwareInfo = new Boolean("false");
         List<Element> elements = query.elements();
-        if (elements.isEmpty() && elements!= null && elements.size()>0){
+        if (elements.isEmpty() && elements!= null && elements.size()>0 && session != null){
             for (Element element : elements){
                 if (element !=null && "feature".equals(element.getName()) 
                     && "http://jabber.org/protocol/disco".equals(element.attributeValue("var")) ){
@@ -542,16 +542,15 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                             }
                             if(typeformDataSoftwareInfo && field.element("value")!= null
                                 && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
-                                softVesrsiobInfos.put(field.attributeValue("var"), field.element("value").getText());
+                                session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
                             }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
-                                softVesrsiobInfos.put("image", field.element("media").element("uri").getText());
+                                session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
                             }
                         }
                     }    
                 }
             }
         }
-        return softVesrsiobInfos;
     }
 
     /**

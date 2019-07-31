@@ -341,15 +341,7 @@ public abstract class StanzaHandler {
             return new IQ(doc, !validateJIDs());
         }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
             //XEP-0232 if responses service discovery can include detailed information about the software application
-            Map<String,String>  list = IQDiscoInfoHandler.getSoftwareVersionDataFromDiscoInfoQuery(query);
-            if (!list.isEmpty() && list != null){
-                for(Map.Entry<String, String> entry : list.entrySet()) {
-                    if (entry != null){
-                        session.setSoftwareVersionData(entry.getKey(), entry.getValue());
-                    }
-                       
-                }
-            }   
+            IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(query, session);
             return new IQ(doc, !validateJIDs());
         }
         else {

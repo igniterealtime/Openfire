@@ -387,13 +387,7 @@ public abstract class SocketReader implements Runnable {
             //XEP-0232 if responses service discovery can include detailed information about the software application
             IQ iq = new IQ(doc); 
             if(iq.getFrom().equals(session.getAddress())){
-               Map<String,String>  list = IQDiscoInfoHandler.getSoftwareVersionDataFromDiscoInfoQuery(query);
-               if (!list.isEmpty() && list != null){
-                    for(Map.Entry<String, String> entry : list.entrySet()) {
-                        if (entry != null)
-                            session.setSoftwareVersionData(entry.getKey(), entry.getValue());
-                    }
-               }
+                IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(query, session);
             } 
             return new IQ(doc);
         }else {

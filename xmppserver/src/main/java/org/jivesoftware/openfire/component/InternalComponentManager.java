@@ -627,23 +627,16 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                         }
                     }else if("query".equals(childElement.getQName().getName()) && "http://jabber.org/protocol/disco#info".equals(namespace)){
                         //XEP-0232 if responses service discovery can include detailed information about the software application
-                        Map<String,String>  list = IQDiscoInfoHandler.getSoftwareVersionDataFromDiscoInfoQuery(childElement);
-                        if (!list.isEmpty() && list != null){
-                            for(Map.Entry<String, String> entry : list.entrySet()) {
-                                if (entry != null){
-                                    for (Component component : components) {
-                                        if (component instanceof LocalComponentSession.LocalExternalComponent) {
-                                            LocalComponentSession.LocalExternalComponent externalComponent =
-                                                    ( LocalComponentSession.LocalExternalComponent) component;
-                                            LocalComponentSession session = externalComponent.getSession();
-                                            if(session != null && session.getAddress() == iq.getFrom()){
-                                                session.setSoftwareVersionData(entry.getKey(), entry.getValue());
-                                            }    
-                                        }
-                                    }  
+                        for (Component component : components) {
+                            if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                LocalComponentSession.LocalExternalComponent externalComponent =
+                                        ( LocalComponentSession.LocalExternalComponent) component;
+                                LocalComponentSession session = externalComponent.getSession();
+                                if(session != null && session.getAddress() == iq.getFrom()){
+                                    IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(childElement, session);
                                 }    
                             }
-                        }
+                        }  
                     }
                 }
             }

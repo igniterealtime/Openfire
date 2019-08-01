@@ -59,8 +59,6 @@ chmod 755 $RPM_BUILD_ROOT%{homedir}/bin/openfire.sh
 # Set up the sysconfig file.
 mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
 cp $RPM_BUILD_ROOT%{homedir}/bin/extra/redhat/openfire-sysconfig $RPM_BUILD_ROOT/etc/sysconfig/openfire
-# Copy over the documentation
-cp -R documentation $RPM_BUILD_ROOT%{homedir}/documentation
 cp changelog.html $RPM_BUILD_ROOT%{homedir}/
 cp LICENSE.html $RPM_BUILD_ROOT%{homedir}/
 cp README.html $RPM_BUILD_ROOT%{homedir}/

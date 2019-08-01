@@ -24,6 +24,8 @@ URL: https://igniterealtime.org/projects/openfire/
 # couldn't find another way to disable the brp-java-repack-jars which was called in __os_install_post
 %define __os_install_post %{nil}
 %define debug_package %{nil}
+# libshaj.so is included in the noarch build, so we disable the error about this
+%define _binaries_in_noarch_packages_terminate_build 0
 
 %description
 Openfire is a leading Open Source, cross-platform IM server based on the

@@ -32,6 +32,12 @@ public class EncryptionArtifactFactory
         .setDynamic( false )
         .build();
 
+    public static final SystemProperty<String> SSLCONTEXT_PROTOCOL = SystemProperty.Builder.ofType( String.class )
+        .setKey( "xmpp.auth.ssl.context_protocol" )
+        .setDefaultValue( null )
+        .setDynamic( false )
+        .build();
+
     private final ConnectionConfiguration configuration;
 
     // lazy loaded factory objects. These re-usable objects should be lazy loaded, preventing initialization in situations where they're never going to be used.
@@ -130,6 +136,28 @@ public class EncryptionArtifactFactory
     }
 
     /**
+     * Generates a new, uninitialized SSLContext instance.
+     *
+     * The SSLContext will use the protocol as defined by {@link #SSLCONTEXT_PROTOCOL}, or,
+     * if that's null, uses the best available protocol from the default configuration
+     * of the JVM.
+     *
+     * @return An uninitialized SSLContext (never null)
+     * @throws NoSuchAlgorithmException if the protocol is not supported.
+     */
+    public static SSLContext getUninitializedSSLContext() throws NoSuchAlgorithmException
+    {
+        final String protocol = SSLCONTEXT_PROTOCOL.getValue();
+        if ( protocol == null ) {
+            // Use the 'highest' available protocol from the default, which happens to coincide with alphabetic ordering: SSLv1 < TLSv1 < TLSv1.3
+            final String defaultProtocol = Arrays.stream( SSLContext.getDefault().getDefaultSSLParameters().getProtocols() ).max( Comparator.naturalOrder() ).orElse( "TLSv1" );
+            return SSLContext.getInstance( defaultProtocol ) ;
+        } else {
+            return SSLContext.getInstance( protocol );
+        }
+    }
+
+    /**
      * Generates a new, initialized SSLContext instance that is suitable for connections that are created based on a
      * particular configuration.
      *
@@ -141,7 +169,7 @@ public class EncryptionArtifactFactory
      */
     public synchronized SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException
     {
-        final SSLContext sslContext = SSLContext.getInstance("TLSv1");
+        final SSLContext sslContext = getUninitializedSSLContext();
         sslContext.init( getKeyManagers(), getTrustManagers(), new SecureRandom() );
         return sslContext;
     }
@@ -381,7 +409,7 @@ public class EncryptionArtifactFactory
     public static List<String> getSupportedProtocols() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
-        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        final SSLContext context = getUninitializedSSLContext();
         context.init( null, null, null );
         return Arrays.asList( context.createSSLEngine().getSupportedProtocols() );
     }
@@ -396,7 +424,7 @@ public class EncryptionArtifactFactory
     public static List<String> getDefaultProtocols() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
-        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        final SSLContext context = getUninitializedSSLContext();
         context.init( null, null, null );
         return Arrays.asList( context.createSSLEngine().getEnabledProtocols() );
     }
@@ -411,7 +439,7 @@ public class EncryptionArtifactFactory
     public static List<String> getSupportedCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
-        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        final SSLContext context = getUninitializedSSLContext();
         context.init( null, null, null );
         return Arrays.asList( context.createSSLEngine().getSupportedCipherSuites() );
     }
@@ -426,7 +454,7 @@ public class EncryptionArtifactFactory
     public static List<String> getDefaultCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
-        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        final SSLContext context = getUninitializedSSLContext();
         context.init( null, null, null );
         return Arrays.asList( context.createSSLEngine().getEnabledCipherSuites() );
     }

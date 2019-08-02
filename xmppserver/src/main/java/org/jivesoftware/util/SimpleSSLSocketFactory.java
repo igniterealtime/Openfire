@@ -16,6 +16,7 @@
 
 package org.jivesoftware.util;
 
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory implements Comparat
     public SimpleSSLSocketFactory() {
 
         try {
-            final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            final SSLContext sslContext = EncryptionArtifactFactory.getUninitializedSSLContext();
             sslContext.init(null, // KeyManager not required
                             new TrustManager[] { new DummyTrustManager() },
                             new java.security.SecureRandom());

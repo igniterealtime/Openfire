@@ -137,6 +137,9 @@
                 if (searchFilter != null) {
                     manager.setSearchFilter(searchFilter);
                 }
+                if (serverType.equals("activedirectory")) {
+                    xmppSettings.put(LdapManager.LDAP_PAGE_SIZE.getKey(), "1000");
+                }
                 // Save vCard mappings
                 vcardBean.saveProperties();
 

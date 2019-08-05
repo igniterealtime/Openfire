@@ -459,7 +459,7 @@ if (errors.size() > 0) { %>
 %>
     <tr valign="top">
         <td>
-            <%= JID.unescapeNode( authJID.getNode() )%>
+            <%= StringUtils.escapeForXML(JID.unescapeNode( authJID.getNode() ))%>
         </td>
         <td width="1%" align="center">
             <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"

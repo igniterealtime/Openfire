@@ -43,6 +43,11 @@
                 e.printStackTrace();
             }
         }
+
+        pageContext.setAttribute( "errorDetail", errorDetail );
+        pageContext.setAttribute( "success", success );
+        pageContext.setAttribute( "hasPassword", password != null );
+        pageContext.setAttribute( "username", JID.unescapeNode(username) );
 %>
     <!-- BEGIN connection settings test panel -->
     <div class="jive-testPanel">
@@ -53,18 +58,20 @@
             </div>
 
             <h2><fmt:message key="global.test" />: <span><fmt:message key="setup.admin.settings.test.title-desc" /></span></h2>
-            <% if (password != null) { %>
-                <% if (success) { %>
-                <h4 class="jive-testSuccess"><fmt:message key="setup.admin.settings.test.status-success" /></h4>
+            <c:if test="${hasPassword}">
+                <c:choose>
+                    <c:when test="${success}">
+                        <h4 class="jive-testSuccess"><fmt:message key="setup.admin.settings.test.status-success" /></h4>
+                        <p><fmt:message key="setup.admin.settings.test.status-success.detail" /></p>
+                    </c:when>
+                    <c:otherwise>
+                        <h4 class="jive-testError"><fmt:message key="setup.admin.settings.test.status-error" /></h4>
+                        <p><c:out value="${errorDetail}"/></p>
+                    </c:otherwise>
+                </c:choose>
+            </c:if>
 
-                <p><fmt:message key="setup.admin.settings.test.status-success.detail" /></p>
-                <% } else { %>
-                <h4 class="jive-testError"><fmt:message key="setup.admin.settings.test.status-error" /></h4>
-                <p><%= errorDetail %></p>
-                <% }
-                }
-                if (!success) {
-             %>
+            <c:if test="${not success}">
             <form action="setup-admin-settings.jsp" name="testform" method="post">
                 <input type="hidden" name="ldap" value="true">
                 <input type="hidden" name="test" value="true">
@@ -74,8 +81,8 @@
                         <td class="jive-label">
                             <fmt:message key="setup.admin.settings.administrator" />:
                         </td>
-                         <td>
-                        <%= JID.unescapeNode(username) %>
+                        <td>
+                             <c:out value="${username}"/>
                         </td>
                         <td>
                             &nbsp;
@@ -94,7 +101,7 @@
                     </tr>
                 </table>
             </form>
-            <% } %>
+            </c:if>
         </div>
     </div>
     <!-- END connection settings test panel -->
@@ -104,17 +111,18 @@
     <div class="jive-testPanel-content">
 
         <h2><fmt:message key="global.test" />: <span><fmt:message key="setup.admin.settings.test.title-desc" /></span></h2>
-        <% if (password != null) { %>
-            <% if (success) { %>
-            <h4 class="jive-testSuccess"><fmt:message key="setup.admin.settings.test.status-success" /></h4>
-
-            <p><fmt:message key="setup.admin.settings.test.status-success.detail" /></p>
-            <% } else { %>
-            <h4 class="jive-testError"><fmt:message key="setup.admin.settings.test.status-error" /></h4>
-            <p><%= errorDetail %></p>
-            <% }
-            }
-        %>
+        <c:if test="${hasPassword}">
+            <c:choose>
+                <c:when test="${success}">
+                    <h4 class="jive-testSuccess"><fmt:message key="setup.admin.settings.test.status-success" /></h4>
+                    <p><fmt:message key="setup.admin.settings.test.status-success.detail" /></p>
+                </c:when>
+                <c:otherwise>
+                    <h4 class="jive-testError"><fmt:message key="setup.admin.settings.test.status-error" /></h4>
+                    <p><c:out value="${errorDetail}"/></p>
+                </c:otherwise>
+            </c:choose>
+        </c:if>
     </div>
 </div>
 <!-- END connection settings test panel -->

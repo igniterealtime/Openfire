@@ -204,10 +204,18 @@ public class PluginManager
             Files.copy( bin, partFile, StandardCopyOption.REPLACE_EXISTING );
 
             // Check if zip file, else ZipException caught below.
-            try (JarFile ignored = new JarFile(partFile.toFile())) {
+            try (JarFile pluginJar = new JarFile(partFile.toFile())) {
+                final boolean pluginXMLCheckEnabled = JiveGlobals.getBooleanProperty("plugins.upload.pluginxml-check.enabled", true);
+                // Check if the zip file contains a plugin.xml file.
+                if ( pluginXMLCheckEnabled && pluginJar.getEntry( "plugin.xml" ) == null ) {
+                    Log.error( "Error installing plugin '{}': Unable to find 'plugin.xml' in archive.", pluginFilename );
+                    Files.deleteIfExists( partFile );
+                    return false;
+                }
             } catch (ZipException e) {
+                Log.error( "Error installing plugin '{}': Cannot parse file into a JAR format.", pluginFilename, e);
                 Files.deleteIfExists(partFile);
-                throw e;
+                return false;
             }
 
             // Rename temp file to .jar

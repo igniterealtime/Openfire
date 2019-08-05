@@ -16,33 +16,7 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.jar.JarFile;
-import java.util.zip.ZipException;
-
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
@@ -52,12 +26,21 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JavaSpecVersion;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
 
 /**
  * Manages plugins.
@@ -201,15 +184,24 @@ public class PluginManager
             Log.error( "Error installing plugin '{}': Input stream was null.", pluginFilename );
             return false;
         }
-        try
+
+        try ( final BufferedInputStream bin = new BufferedInputStream( in ) )
         {
+            // Check magic bytes to ensure this is a JAR file.
+            final boolean magicNumberCheckEnabled = JiveGlobals.getBooleanProperty("plugins.upload.magic-number-check.enabled", true);
+            if ( magicNumberCheckEnabled && ! validMagicNumbers( bin ) )
+            {
+                Log.error( "Error installing plugin '{}': This does not appear to be a JAR file (unable to find a magic byte match).", pluginFilename );
+                return false;
+            }
+
             // If pluginFilename is a path instead of a simple file name, we only want the file name
             pluginFilename = Paths.get(pluginFilename).getFileName().toString();
             // Absolute path to the plugin file
             Path absolutePath = pluginDirectory.resolve( pluginFilename );
             Path partFile = pluginDirectory.resolve( pluginFilename + ".part" );
             // Save input stream contents to a temp file
-            Files.copy( in, partFile, StandardCopyOption.REPLACE_EXISTING );
+            Files.copy( bin, partFile, StandardCopyOption.REPLACE_EXISTING );
 
             // Check if zip file, else ZipException caught below.
             try (JarFile ignored = new JarFile(partFile.toFile())) {
@@ -1120,6 +1112,40 @@ public class PluginManager
         return classloaders.get( plugin );
     }
 
+    /**
+     * Verifies that the first few bytes of the input stream correspond to any of the known 'magic numbers' that
+     * are known to represent a JAR archive.
+     *
+     * This method uses the mark/reset functionality of InputStream. This ensures that the input stream is reset
+     * back to its original position after execution of this method.
+     *
+     * @param bin The input to read (cannot be null).
+     * @return true if the stream first few bytes are equal to any of the known magic number sequences, otherwise false.
+     */
+    public static boolean validMagicNumbers( final BufferedInputStream bin ) throws IOException
+    {
+        final List<String> validMagicBytesCollection = JiveGlobals.getListProperty( "plugins.upload.magic-number.values.expected-value", Arrays.asList( "504B0304", "504B0506", "504B0708" ) );
+        for ( final String entry : validMagicBytesCollection )
+        {
+            final byte[] validMagicBytes = StringUtils.decodeHex( entry );
+            bin.mark( validMagicBytes.length );
+            try
+            {
+                final byte[] magicBytes = new byte[validMagicBytes.length];
+                final int bytesRead = IOUtils.read( bin, magicBytes );
+                if ( bytesRead == validMagicBytes.length && Arrays.equals( validMagicBytes, magicBytes ) )
+                {
+                    return true;
+                }
+            }
+            finally
+            {
+                bin.reset();
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Deletes a directory.

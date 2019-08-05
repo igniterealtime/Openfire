@@ -520,32 +520,28 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      * @param LocalSession session represented the LocalSession with peer
      */
     public static void setSoftwareVersionDataFormFromDiscoInfo(Element query ,LocalSession session){
-        Boolean containDisco = new Boolean("false");
-        Boolean typeformDataSoftwareInfo = new Boolean("false");
-        List<Element> elements = query.elements();
-        if (elements.isEmpty() && elements!= null && elements.size()>0 && session != null){
-            for (Element element : elements){
-                if (element !=null && "feature".equals(element.getName()) 
+        boolean containDisco = false;
+        boolean typeformDataSoftwareInfo = false;
+        if (query != null && session != null){
+            for (Element element : query.elements()){
+                if ("feature".equals(element.getName()) 
                     && "http://jabber.org/protocol/disco".equals(element.attributeValue("var")) ){
                     containDisco = true;
                 }
-                if (containDisco && element != null && "x".equals(element.getName()) 
+                if (containDisco && "x".equals(element.getName()) 
                     && "jabber:x:data".equals(element.getNamespaceURI())
                     && "result".equals(element.attributeValue("type"))){
-                    List<Element> fields =  element.elements();
-                    if (fields != null && !fields.isEmpty() && fields.size() >0){
-                        for (Element field : fields){
-                            if (field != null && field.attributeValue("var").equals("FORM_TYPE") 
-                                && field.element("value")!= null
-                                && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
-                                typeformDataSoftwareInfo = true;     
-                            }
-                            if(typeformDataSoftwareInfo && field.element("value")!= null
-                                && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
-                                session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
-                            }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
-                                session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
-                            }
+                    for (Element field : element.elements()){
+                        if (field != null && field.attributeValue("var").equals("FORM_TYPE") 
+                            && field.element("value")!= null
+                            && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                            typeformDataSoftwareInfo = true;     
+                        }
+                        if(typeformDataSoftwareInfo && field.element("value")!= null
+                            && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
+                            session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                        }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
+                            session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
                         }
                     }    
                 }

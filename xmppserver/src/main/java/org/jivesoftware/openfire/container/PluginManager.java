@@ -814,7 +814,7 @@ public class PluginManager
 
     public boolean reloadPlugin( String pluginName )
     {
-        Log.debug( "Reloading plugin '{}'..." );
+        Log.debug( "Reloading plugin '{}'...", pluginName );
 
         final Plugin plugin = getPlugin( pluginName );
         if ( plugin == null )
@@ -836,7 +836,7 @@ public class PluginManager
         }
         catch ( IOException e )
         {
-            Log.warn( "Unable to reload plugin '{}'. Unable to reset the 'last modified time' of the plugin path. Try removing and restoring the plugin jar file manually." );
+            Log.warn( "Unable to reload plugin '{}'. Unable to reset the 'last modified time' of the plugin path. Try removing and restoring the plugin jar file manually.", pluginName );
             return false;
         }
 

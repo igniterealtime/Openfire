@@ -15,6 +15,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -125,7 +126,7 @@
             <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
             <td class="jive-icon-label">
             <fmt:message key="pubsub.node.items.deleted">
-                <fmt:param value="${param.ownerOfDeleted}"/>
+                <fmt:param value="${fn:escapeXml(param.ownerOfDeleted)}"/>
             </fmt:message>
             </td></tr>
         </tbody>

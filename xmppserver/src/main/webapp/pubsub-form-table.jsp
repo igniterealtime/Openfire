@@ -29,7 +29,7 @@ detailPreFix - property prefix for additional detail to be displayed against the
     function detect_enter_keyboard(event) {
 
         var key_board_keycode = event.which || event.keyCode;
-        if (key_board_keycode == 13) {
+        if (key_board_keycode === 13) {
             event.preventDefault();
             var target = event.target || event.srcElement;
             var buttonId = target.id.split('-')[0] + '-Add';

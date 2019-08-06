@@ -72,10 +72,9 @@
         return;
     }
 
-    List<NodeAffiliate> affiliates = new ArrayList<NodeAffiliate>(node.getAllAffiliates());
+    List<NodeAffiliate> affiliates = new ArrayList<>(node.getAllAffiliates());
 
-    Collections.sort(affiliates, new Comparator<NodeAffiliate>() {
-        public int compare(NodeAffiliate affiliate1, NodeAffiliate affiliate2) {
+    affiliates.sort( ( affiliate1, affiliate2 ) -> {
 
             // Sort by Emum ordinal which gives order: owner, publisher, none, outcast
             int affiliateComp = affiliate1.getAffiliation().compareTo(affiliate2.getAffiliation());
@@ -88,7 +87,7 @@
             }
 
         }
-    });
+    );
 
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);

@@ -138,10 +138,10 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="pubsub.node.delete.reason" />
+                <label for="reason"><fmt:message key="pubsub.node.delete.reason" /></label>
             </td>
             <td>
-                <input type="text" size="50" maxlength="150" name="reason">
+                <input type="text" size="50" maxlength="150" name="reason" id="reason">
             </td>
         </tr>
     </tbody>

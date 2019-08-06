@@ -10,7 +10,9 @@
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
-                 java.util.Collections"
+                 java.util.Collections,
+                 java.util.HashMap,
+                 java.util.Map"
     errorPage="error.jsp"
 %>
 
@@ -31,6 +33,8 @@
         ownerString = ParamUtils.getParameter( request, "username" );
     }
 
+    final Map<String, String> errors = new HashMap<>();
+
     JID owner = null;
     if (ownerString != null)
     {
@@ -49,7 +53,8 @@
 
     if (deleteID != null) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-             deleteID = null;
+            deleteID = null;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
 
@@ -71,7 +76,7 @@
     }
 
     // Delete specified subscription ID
-    if (deleteID != null) {
+    if (errors.isEmpty() && deleteID != null) {
         PublishedItem pi = node.getPublishedItem(deleteID);
         if (pi != null) {
             LeafNode lNode = (LeafNode) node;
@@ -96,6 +101,7 @@
 
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("owner", owner );
+    pageContext.setAttribute("errors", errors);
 %>
 
 <html>
@@ -114,26 +120,34 @@
 </head>
 <body>
 
+    <c:choose>
+        <c:when test="${empty errors and param.deleteSuccess}">
+            <admin:infobox type="success">
+                <fmt:message key="pubsub.node.items.deleted">
+                    <fmt:param value="${fn:escapeXml(param.ownerOfDeleted)}"/>
+                </fmt:message>
+            </admin:infobox>
+        </c:when>
+        <c:otherwise>
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:otherwise>
+    </c:choose>
+
     <p>
     <fmt:message key="pubsub.node.summary.table.info" />
     </p>
-
-    <c:if test="${param.deleteSuccess}">
-
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
-            <fmt:message key="pubsub.node.items.deleted">
-                <fmt:param value="${fn:escapeXml(param.ownerOfDeleted)}"/>
-            </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
-
-    </c:if>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">

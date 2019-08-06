@@ -7,9 +7,13 @@
                 org.jivesoftware.openfire.pubsub.Node,
                 org.jivesoftware.openfire.XMPPServer,
                 org.xmpp.packet.JID,
-                java.net.URLEncoder"
-    errorPage="error.jsp"
+                java.net.URLEncoder,
+                java.util.HashMap,
+                java.util.Map"
+        errorPage="error.jsp"
 %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -26,6 +30,8 @@
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     String nodeID = ParamUtils.getParameter(request,"nodeID");
     String affiliateJID = ParamUtils.getParameter(request,"affiliateJID");
+
+    final Map<String, String> errors = new HashMap<>();
 
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
@@ -49,13 +55,13 @@
     if (delete) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             delete = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID
-                + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode(nodeID, "UTF-8") + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
         return;
     }
 
@@ -74,7 +80,7 @@
     NodeAffiliate affiliate = node.getAffiliate(new JID(affiliateJID));
 
     // Handle a affiliate delete:
-    if (delete) {
+    if (errors.isEmpty() && delete) {
         if (affiliate != null) {
             JID jid = new JID(affiliateJID);
 
@@ -101,9 +107,9 @@
             webManager.logEvent("Deleted Affiliation for : " + affiliate + ", from Node " + nodeID, null);
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode( nodeID, "UTF-8" )
                 + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
-                +"&deleteSuccess=true&affiliateJID="+affiliateJID);
+                +"&deleteSuccess=true&affiliateJID="+URLEncoder.encode( affiliateJID, "UTF-8" ));
         return;
     }
 
@@ -114,7 +120,7 @@
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("affiliate", affiliate);
     pageContext.setAttribute("owner", owner);
-
+    pageContext.setAttribute("errors", errors);
 %>
 
 <html>
@@ -132,6 +138,20 @@
         </c:choose>
     </head>
     <body>
+
+    <c:forEach var="err" items="${errors}">
+        <admin:infobox type="error">
+            <c:choose>
+                <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                <c:otherwise>
+                    <c:if test="${not empty err.value}">
+                        <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                    </c:if>
+                    (<c:out value="${err.key}"/>)
+                </c:otherwise>
+            </c:choose>
+        </admin:infobox>
+    </c:forEach>
 
     <p>
         <fmt:message key="pubsub.node.affiliates.delete.info" />

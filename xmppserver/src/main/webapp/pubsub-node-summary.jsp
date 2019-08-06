@@ -111,22 +111,15 @@
     </head>
     <body>
 
+<c:if test="${param.deleteSuccess}">
+    <admin:infoBox type="success">
+        <fmt:message key="pubsub.node.summary.deleted" />
+    </admin:infoBox>
+</c:if>
+
 <p>
 <fmt:message key="pubsub.node.summary.info" />
 </p>
-
-<c:if test="${param.deleteSuccess}">
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="pubsub.node.summary.deleted" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-</c:if>
 
 <p>
 <fmt:message key="pubsub.node.summary.total_nodes" />: <c:out value="${listPager.totalItemCount}"/>

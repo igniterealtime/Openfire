@@ -21,6 +21,8 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
+    final Map<String, String> errors = new HashMap<>();
+
     boolean formSubmitted = false;
     if (csrfParam != null) {
         formSubmitted = true;
@@ -29,6 +31,7 @@
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
     csrfParam = StringUtils.randomString(15);
@@ -46,7 +49,7 @@
     DataForm form = pubSubServiceInfo.getServiceConfigurationForm();
 
     // Handle a service update:
-    if (update) {
+    if (errors.isEmpty() && update) {
 
         pubSubServiceInfo.configureService(pubSubServiceInfo.processForm(form, request, null));
 
@@ -64,8 +67,6 @@
     listTypes.put("pubsub#allowedToCreate", listType.user);
     listTypes.put("pubsub#sysadmins", listType.user);
 
-    Map<String,String> errors = new HashMap<>();
-
     pubSubServiceInfo.validateAdditions(form, request, listTypes, errors);
 
     pageContext.setAttribute("fields", form.getFields());
@@ -81,22 +82,32 @@
     </head>
     <body>
 
+<c:choose>
+    <c:when test="${empty errors and param.updateSuccess}">
+        <admin:infobox type="success">
+            <fmt:message key="pubsub.service.summary.updated" />
+        </admin:infobox>
+    </c:when>
+    <c:otherwise>
+        <c:forEach var="err" items="${errors}">
+            <admin:infobox type="error">
+                <c:choose>
+                    <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                    <c:otherwise>
+                        <c:if test="${not empty err.value}">
+                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                        </c:if>
+                        (<c:out value="${err.key}"/>)
+                    </c:otherwise>
+                </c:choose>
+            </admin:infobox>
+        </c:forEach>
+    </c:otherwise>
+</c:choose>
+
 <p>
     <fmt:message key="pubsub.service.summary.info" />
 </p>
-
-<c:if test="${param.updateSuccess}">
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="pubsub.service.summary.updated" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-</c:if>
 
 <form action="pubsub-service-summary.jsp">
     <input type="hidden" name="csrf" value="${csrf}">

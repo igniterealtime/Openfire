@@ -8,11 +8,12 @@
                 org.jivesoftware.util.CookieUtils,
                 org.jivesoftware.util.ParamUtils,
                 org.jivesoftware.util.StringUtils,
-                org.xmpp.packet.JID"
+                org.xmpp.packet.JID,
+                java.net.URLEncoder,
+                java.util.HashMap,
+                java.util.Map"
     errorPage="error.jsp"
 %>
-<%@ page import="java.net.URLEncoder" %>
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -29,6 +30,8 @@
     String nodeID = ParamUtils.getParameter(request,"nodeID");
     String affiliateJID = ParamUtils.getParameter(request,"affiliateJID");
     String affiliation = ParamUtils.getParameter(request,"affiliation");
+
+    final Map<String, String> errors = new HashMap<>();
 
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
@@ -52,12 +55,13 @@
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+ URLEncoder.encode( nodeID, "UTF-8" )
                 + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
         return;
     }
@@ -77,7 +81,7 @@
     NodeAffiliate affiliate = node.getAffiliate(new JID(affiliateJID));
 
     // Handle a affiliation update:
-    if (update) {
+    if (errors.isEmpty() && update) {
         if (affiliate != null) {
             JID jid = new JID(affiliateJID);
 
@@ -113,7 +117,7 @@
             webManager.logEvent("Changed affiliation between Node: " + nodeID + ", and JID: " + affiliateJID, "Changed from " + oldAffiliation +" to " + affiliation);
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID+"&updateSuccess=true&affiliateJID="+affiliateJID);
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode( nodeID, "UTF-8" )+"&updateSuccess=true&affiliateJID="+URLEncoder.encode( affiliateJID, "UTF-8" ));
         return;
     }
 
@@ -125,7 +129,7 @@
     pageContext.setAttribute("affiliate", affiliate);
     pageContext.setAttribute("affiliations", Affiliation.values());
     pageContext.setAttribute("owner", owner);
-
+    pageContext.setAttribute("errors", errors);
 %>
 
 <html>
@@ -143,6 +147,20 @@
         </c:choose>
     </head>
     <body>
+
+    <c:forEach var="err" items="${errors}">
+        <admin:infobox type="error">
+            <c:choose>
+                <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                <c:otherwise>
+                    <c:if test="${not empty err.value}">
+                        <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                    </c:if>
+                    (<c:out value="${err.key}"/>)
+                </c:otherwise>
+            </c:choose>
+        </admin:infobox>
+    </c:forEach>
 
     <p>
         <fmt:message key="pubsub.node.affiliates.edit.info" />

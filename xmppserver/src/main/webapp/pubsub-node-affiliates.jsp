@@ -4,17 +4,13 @@
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.NodeAffiliate,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
                  java.util.ArrayList,
-                 java.util.Collections,
-                 java.util.Comparator"
+                 java.util.List"
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
@@ -26,8 +22,8 @@
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-    String deleteID = ParamUtils.getParameter(request,"deleteID");
     String ownerString = ParamUtils.getParameter( request, "owner" );
+
     if ( ownerString == null )
     {
         ownerString = ParamUtils.getParameter( request, "username" );
@@ -43,14 +39,6 @@
         else
         {
             owner = XMPPServer.getInstance().createJID( ownerString, null );
-        }
-    }
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (deleteID != null) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-             deleteID = null;
         }
     }
 
@@ -89,10 +77,6 @@
         }
     );
 
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
-
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("owner", owner );
     pageContext.setAttribute("affiliates", affiliates);
@@ -114,39 +98,25 @@
 </head>
 <body>
 
-    <p>
-    <fmt:message key="pubsub.node.summary.table.info" />
-    </p>
-
     <c:if test="${param.deleteSuccess}">
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="pubsub.node.affiliates.deleted">
                 <fmt:param value="${fn:escapeXml(param.affiliateJID)}"/>
             </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
     </c:if>
 
     <c:if test="${param.updateSuccess}">
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="pubsub.node.affiliates.updated">
                 <fmt:param value="${fn:escapeXml(param.affiliateJID)}"/>
             </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
     </c:if>
+
+    <p>
+        <fmt:message key="pubsub.node.summary.table.info" />
+    </p>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">

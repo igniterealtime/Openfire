@@ -17,5 +17,11 @@
     String nextPage =  "setup-admin-settings.jsp?ldap=true";
     Map<String, String> meta = new HashMap<String, String>();
     meta.put("currentStep", "3");
+
+    pageContext.setAttribute( "initialSetup", initialSetup );
+    pageContext.setAttribute( "currentPage", currentPage );
+    pageContext.setAttribute( "testPage", testPage );
+    pageContext.setAttribute( "nextPage", nextPage );
+    pageContext.setAttribute( "meta", meta );
 %>
 <%@ include file="ldap-group.jspf" %>

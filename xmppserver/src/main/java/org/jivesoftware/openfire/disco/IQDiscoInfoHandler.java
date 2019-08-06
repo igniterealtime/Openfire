@@ -191,10 +191,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
                 }
-                // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
-                final Set<DataForm> dataForms = infoProvider.getExtendedInfos( name, node, packet.getFrom() );
-                if ( dataForms != null ) {
-                    dataForms.forEach( dataForm -> queryElement.add( dataForm.getElement() ) );
+
+                // Add to the reply the extended info (XDataForm) provided by the DiscoInfoProvider
+                DataForm dataForm = infoProvider.getExtendedInfo(name, node, packet.getFrom());
+                if (dataForm != null) {
+                    queryElement.add(dataForm.getElement());
                 }
             }
             else {
@@ -683,7 +684,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 if (node != null && name != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfo(name, node, senderJID);
                 }
-                return Collections.emptySet();
+                return null;
             }
         };
     }

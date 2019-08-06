@@ -12,6 +12,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -119,8 +120,8 @@
 
 <form action="pubsub-node-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="nodeID" value="${node.nodeID}">
-    <input type="hidden" name="owner" value="${owner}">
+    <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
+    <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
 
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>

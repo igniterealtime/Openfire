@@ -239,7 +239,7 @@
                 <% if (initialSetup) { %>
                 <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue"/>" id="jive-setup-save" border="0">
                 <% } else { %>
-                <input type="Submit" name="save" value=".j<fmt:message key="global.save_settings"/>" id="jive-setup-save" border="0">
+                <input type="Submit" name="save" value="<fmt:message key="global.save_settings"/>" id="jive-setup-save" border="0">
                 <% } %>
             </div>
             <!-- END right-aligned buttons -->

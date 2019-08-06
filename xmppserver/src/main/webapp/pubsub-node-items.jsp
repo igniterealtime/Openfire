@@ -1,16 +1,16 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.pep.PEPServiceInfo,
                  org.jivesoftware.openfire.pubsub.LeafNode,
                  org.jivesoftware.openfire.pubsub.Node,
-                 org.jivesoftware.openfire.pubsub.PublishedItem,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.pubsub.PublishedItem,
                  org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
-                 java.util.Arrays"
+                 java.util.Collections"
     errorPage="error.jsp"
 %>
 
@@ -75,7 +75,7 @@
         if (pi != null) {
             LeafNode lNode = (LeafNode) node;
 
-            lNode.deleteItems(Arrays.asList(pi));
+            lNode.deleteItems( Collections.singletonList( pi ) );
 
             // Log the event
             webManager.logEvent("Delete item ID: " + deleteID +  ", from node ID: " + nodeID, "Publisher: " + pi.getPublisher().toBareJID());

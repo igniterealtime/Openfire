@@ -164,14 +164,14 @@
     </thead>
     <tbody>
         <tr>
-            <td><c:out value="${node.getNodeID()}"/></td>
-            <td><c:out value="${node.getName()}"/></td>
-            <td><c:out value="${node.getDescription()}"/></td>
-            <td><c:out value="${node.getPublishedItems().size()}"/></td>
-            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
-            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
+            <td><c:out value="${node.nodeID}"/></td>
+            <td><c:out value="${node.name}"/></td>
+            <td><c:out value="${node.description}"/></td>
+            <td><c:out value="${node.publishedItems.size()}"/></td>
+            <td><c:out value="${node.allAffiliates.size()}"/></td>
+            <td><c:out value="${node.allSubscriptions.size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.creationDate}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.modificationDate}" /></td>
         </tr>
     </tbody>
     </table>
@@ -204,25 +204,25 @@
         <c:forEach var="affiliate" items="${affiliates}">
         <tr>
             <td>
-            <c:out value="${affiliate.getJID().toBareJID()}"/>
+            <c:out value="${affiliate.JID.toBareJID()}"/>
             </td>
             <td>
-            <c:out value="${affiliate.getAffiliation().name()}"/>
+            <c:out value="${affiliate.affiliation.name()}"/>
             </td>
             <td width="1%" align="center">
                 <c:url value="pubsub-node-subscribers.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
                 </c:url>
                 <a href="${url}">
-                     <c:out value="${affiliate.getSubscriptions().size()}"/>
+                     <c:out value="${affiliate.subscriptions.size()}"/>
                 </a>
             </td>
             <td width="1%" align="center">
                 <c:url value="pubsub-node-affiliates-edit.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
-                    <c:param name="affiliateJID" value="${affiliate.getJID().toBareJID()}" />
+                    <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_edit" />">
                     <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
@@ -230,9 +230,9 @@
             </td>
             <td width="1%" align="center" style="border-right:1px #ccc solid;">
                 <c:url value="pubsub-node-affiliates-delete.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
-                    <c:param name="affiliateJID" value="${affiliate.getJID().toBareJID()}" />
+                    <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">

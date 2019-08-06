@@ -147,9 +147,9 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><c:out value="${node.getNodeID()}"/></td>
-                    <td><c:out value="${affiliate.getJID().toBareJID()}"/></td>
-                    <td><c:out value="${affiliate.getAffiliation().name()}"/></td>
+                    <td><c:out value="${node.nodeID}"/></td>
+                    <td><c:out value="${affiliate.JID.toBareJID()}"/></td>
+                    <td><c:out value="${affiliate.affiliation.name()}"/></td>
                 </tr>
             </tbody>
         </table>
@@ -171,26 +171,26 @@
                 </tr>
             </thead>
             <tbody>
-                <c:if test="${empty affiliate.getSubscriptions()}">
+                <c:if test="${empty affiliate.subscriptions}">
                     <tr>
                         <td align="center" colspan="4">
                             <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
                         </td>
                     </tr>
                 </c:if>
-                <c:forEach var="subscription" items="${affiliate.getSubscriptions()}">
+                <c:forEach var="subscription" items="${affiliate.subscriptions}">
                     <tr>
                         <td>
-                        <c:out value="${subscription.getOwner().toBareJID()}"/>
+                        <c:out value="${subscription.owner.toBareJID()}"/>
                         </td>
                         <td>
-                        <c:out value="${subscription.getJID().getResource()}"/>
+                        <c:out value="${subscription.JID.resource}"/>
                         </td>
                         <td>
-                        <c:out value="${subscription.getState().name()}"/>
+                        <c:out value="${subscription.state.name()}"/>
                         </td>
                         <td>
-                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.getExpire()}" />
+                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.expire}" />
                         </td>
                     </tr>
                 </c:forEach>
@@ -207,7 +207,7 @@
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="nodeID" value="${node.nodeID}">
         <input type="hidden" name="owner" value="${owner}">
-        <input type="hidden" name="affiliateJID" value="${affiliate.getJID().toBareJID()}">
+        <input type="hidden" name="affiliateJID" value="${affiliate.JID.toBareJID()}">
 
         <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
         <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

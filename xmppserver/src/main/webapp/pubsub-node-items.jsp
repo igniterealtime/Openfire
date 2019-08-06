@@ -150,14 +150,14 @@
     </thead>
     <tbody>
         <tr>
-            <td><c:out value="${node.getNodeID()}"/></td>
-            <td><c:out value="${node.getName()}"/></td>
-            <td><c:out value="${node.getDescription()}"/></td>
-            <td><c:out value="${node.getPublishedItems().size()}"/></td>
-            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
-            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
+            <td><c:out value="${node.nodeID}"/></td>
+            <td><c:out value="${node.name}"/></td>
+            <td><c:out value="${node.description}"/></td>
+            <td><c:out value="${node.publishedItems.size()}"/></td>
+            <td><c:out value="${node.allAffiliates.size()}"/></td>
+            <td><c:out value="${node.allSubscriptions.size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.creationDate}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.modificationDate}" /></td>
         </tr>
     </tbody>
     </table>
@@ -180,31 +180,31 @@
         </tr>
     </thead>
     <tbody>
-        <c:if test="${empty node.getPublishedItems()}">
+        <c:if test="${empty node.publishedItems}">
         <tr>
             <td align="center" colspan="5">
                 <fmt:message key="pubsub.node.items.table.no_items" />
             </td>
         </tr>
         </c:if>
-        <c:forEach var="item" items="${node.getPublishedItems()}">
+        <c:forEach var="item" items="${node.publishedItems}">
         <tr>
             <td>
-            <c:out value="${item.getID()}"/>
+            <c:out value="${item.ID}"/>
             </td>
             <td>
-            <c:out value="${item.getPublisher().toBareJID()}"/>
+            <c:out value="${item.publisher.toBareJID()}"/>
             </td>
             <td>
-            <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${item.getCreationDate()}" />
+            <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${item.creationDate}" />
             </td>
             <td>
-            <c:out value="${item.getPayloadXML()}"/>
+            <c:out value="${item.payloadXML}"/>
             </td>
             <td width="1%" align="center" style="border-right:1px #ccc solid;">
                <c:url value="pubsub-node-items.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
-                    <c:param name="deleteID" value="${item.getID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
+                    <c:param name="deleteID" value="${item.ID}" />
                     <c:param name="csrf" value="${csrf}" />
                     <c:param name="owner" value="${owner}"/>
                 </c:url>

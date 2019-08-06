@@ -167,13 +167,13 @@
     </thead>
     <tbody>
         <tr>
-            <td><c:out value="${node.getNodeID()}"/></td>
-            <td><c:out value="${node.getCreator()}"/></td>
-            <td><c:out value="${node.getPublishedItems().size()}"/></td>
-            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
-            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
+            <td><c:out value="${node.nodeID}"/></td>
+            <td><c:out value="${node.creator}"/></td>
+            <td><c:out value="${node.publishedItems.size()}"/></td>
+            <td><c:out value="${node.allAffiliates.size()}"/></td>
+            <td><c:out value="${node.allSubscriptions.size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.creationDate}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.modificationDate}" /></td>
         </tr>
     </tbody>
     </table>

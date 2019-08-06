@@ -14,6 +14,7 @@
 <%@ page import="java.net.URLEncoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -216,22 +217,14 @@
 
     <form action="pubsub-node-affiliates-edit.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="nodeID" value="${node.nodeID}">
-        <input type="hidden" name="owner" value="${owner}">
-        <input type="hidden" name="affiliateJID" value="${affiliate.getJID().toBareJID()}">
-
+        <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
+        <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
+        <input type="hidden" name="affiliateJID" value="${fn:escapeXml(affiliate.JID.toBareJID())}">
         <fieldset>
 
         <select name="affiliation">
         <c:forEach var="value" items="${affiliations}">
-            <c:choose>
-            <c:when test="${value eq affiliate.getAffiliation()}">
-                <option value="${value.name()}" selected>${value.name()}</option>
-            </c:when>
-            <c:otherwise>
-                <option value="${value.name()}">${value.name()}</option>
-            </c:otherwise>
-            </c:choose>
+            <option value="${value.name()}" ${value eq affiliate.affiliation ? "selected" : ""}><c:out value="${value.name()}"/></option>
         </c:forEach>
         </select>
 

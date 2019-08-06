@@ -12,6 +12,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -205,9 +206,9 @@
 
     <form action="pubsub-node-affiliates-delete.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="nodeID" value="${node.nodeID}">
-        <input type="hidden" name="owner" value="${owner}">
-        <input type="hidden" name="affiliateJID" value="${affiliate.JID.toBareJID()}">
+        <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
+        <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
+        <input type="hidden" name="affiliateJID" value="${fn:escapeXml(affiliate.JID.toBareJID())}">
 
         <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
         <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

@@ -1,7 +1,14 @@
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collection" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="java.util.StringTokenizer" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -26,9 +33,23 @@
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
     Map<String, String> errors = new HashMap<>();
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
+
+    if ( save || test ) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            test = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     LdapManager manager = LdapManager.getInstance();
 
@@ -54,7 +75,7 @@
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", manager.isFollowReferralsEnabled());
         aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", manager.isFollowAliasReferralsEnabled());
         encloseDNs = ParamUtils.getBooleanParameter(request, "enclosedns", manager.isEnclosingDNs());
-    
+
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
             Map<String, String> settings = new HashMap<>();
@@ -99,7 +120,7 @@
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
                 manager.setIsEnclosingDNs(encloseDNs);
-                
+
                 // Save the settings for later, if we're in setup
                 if (xmppSettings != null) {
                     xmppSettings.put("ldap.host", host);
@@ -217,6 +238,8 @@
     </c:if>
 
     <form action="${currentPage}" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
+
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
             <table border="0" cellpadding="0" cellspacing="2">
@@ -394,7 +417,7 @@
                     <td class="jive-advancedBorderBottom" align="center">
                         <input type="radio" name="enclosedns" value="false" ${enclosingDNs ? "" : "checked"}>
                     </td>
-                </tr>                
+                </tr>
                 </tbody>
                 </table>
             </div>

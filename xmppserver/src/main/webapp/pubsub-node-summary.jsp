@@ -15,6 +15,7 @@
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -164,7 +165,7 @@
             <input type="search"
                    id="searchNodeId"
                    size="20"
-                   value="<c:out value="${searchNodeId}"/>"/>
+                   value="${fn:escapeXml(searchNodeId)}"/>
             <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"
@@ -176,7 +177,7 @@
             <input type="search"
                    id="searchNodeName"
                    size="20"
-                   value="<c:out value="${searchNodeName}"/>"/>
+                   value="${fn:escapeXml(searchNodeName)}"/>
             <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"
@@ -188,7 +189,7 @@
             <input type="search"
                    id="searchNodeDescription"
                    size="20"
-                   value="<c:out value="${searchNodeDescription}"/>"/>
+                   value="${fn:escapeXml(searchNodeDescription)}"/>
              <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"

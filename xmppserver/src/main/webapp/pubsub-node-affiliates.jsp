@@ -1,19 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.pep.PEPServiceInfo,
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.NodeAffiliate,
-                 org.jivesoftware.openfire.pubsub.NodeSubscription,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
-                 java.text.DateFormat,
-                 java.util.*"
+                 java.util.ArrayList,
+                 java.util.Collections,
+                 java.util.Comparator"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>

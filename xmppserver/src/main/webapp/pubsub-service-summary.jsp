@@ -1,13 +1,12 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.openfire.pubsub.Node,
-                 org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
+<%@ page import="org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo.listType,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.xmpp.forms.DataForm,
-                 org.xmpp.forms.FormField,
-                 org.xmpp.forms.FormField.Type,
-                 java.net.URLEncoder,
-                 java.util.*"
+                 java.util.HashMap,
+                 java.util.Map"
     errorPage="error.jsp"
 %>
 

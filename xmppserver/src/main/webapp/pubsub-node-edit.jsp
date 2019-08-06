@@ -16,6 +16,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -117,7 +118,7 @@
     <head>
         <title><fmt:message key="pubsub.node.edit.title"/></title>
         <meta name="subPageID" content="pubsub-node-edit"/>
-        <meta name="extraParams" content="nodeID=${node.nodeID}"/>
+        <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
         <script>
         function clearSelected(name){
             var elements = document.getElementById(name).options;
@@ -180,7 +181,7 @@
 
 <form action="pubsub-node-edit.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="nodeID" value="${node.nodeID}">
+    <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
     <br>
 
 <fieldset>

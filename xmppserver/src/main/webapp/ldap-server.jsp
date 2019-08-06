@@ -7,6 +7,13 @@
     String nextPage = "ldap-user.jsp";
     Map<String, String> meta = new HashMap<String, String>();
     meta.put("pageID", "profile-settings");
+
+    pageContext.setAttribute( "serverType", serverType );
+    pageContext.setAttribute( "initialSetup", initialSetup );
+    pageContext.setAttribute( "currentPage", currentPage );
+    pageContext.setAttribute( "testPage", testPage );
+    pageContext.setAttribute( "nextPage", nextPage );
+    pageContext.setAttribute( "meta", meta );
 %>
 
 <style type="text/css" title="setupStyle" media="screen">

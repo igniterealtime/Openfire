@@ -525,7 +525,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         if (query != null && session != null){
             for (Element element : query.elements()){
                 if ("feature".equals(element.getName()) 
-                    && "http://jabber.org/protocol/disco".equals(element.attributeValue("var")) ){
+                    && NAMESPACE_DISCO_INFO.equals(element.attributeValue("var")) ){
                     containDisco = true;
                 }
                 if (containDisco && "x".equals(element.getName()) 

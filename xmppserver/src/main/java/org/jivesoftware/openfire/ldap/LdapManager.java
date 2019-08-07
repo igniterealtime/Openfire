@@ -51,6 +51,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -98,6 +99,11 @@ public class LdapManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
     private static final String DEFAULT_LDAP_CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
+    public static final SystemProperty<Integer> LDAP_PAGE_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("ldap.pagedResultsSize")
+        .setDefaultValue(-1)
+        .setDynamic(true)
+        .build();
 
     private static LdapManager instance;
     static {
@@ -257,7 +263,6 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.encloseGroupDN");
         JiveGlobals.migrateProperty("ldap.encloseDNs");
         JiveGlobals.migrateProperty("ldap.initialContextFactory");
-        JiveGlobals.migrateProperty("ldap.pagedResultsSize");
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
         JiveGlobals.migrateProperty("ldap.encodeMultibyteCharacters");
@@ -444,7 +449,7 @@ public class LdapManager {
         buf.append("\t nameField: ").append(nameField).append("\n");
         buf.append("\t emailField: ").append(emailField).append("\n");
         buf.append("\t adminDN: ").append(adminDN).append("\n");
-        buf.append("\t adminPassword: ").append(adminPassword).append("\n");
+        buf.append("\t adminPassword: ").append("************").append("\n");
         buf.append("\t searchFilter: ").append(searchFilter).append("\n");
         buf.append("\t subTreeSearch:").append(subTreeSearch).append("\n");
         buf.append("\t ldapDebugEnabled: ").append(ldapDebugEnabled).append("\n");
@@ -1944,17 +1949,7 @@ public class LdapManager {
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
         List<String> results = new ArrayList<>();
-        int pageSize = -1;
-        String pageSizeStr = properties.get("ldap.pagedResultsSize");
-        if (pageSizeStr != null)
-        {
-            try {
-                 pageSize = Integer.parseInt(pageSizeStr); /* radix -1 is invalid */
-            }
-            catch (NumberFormatException e) {
-                // poorly formatted number, ignoring
-            }
-        }
+        final int pageSize = LDAP_PAGE_SIZE.getValue();
         Boolean clientSideSort = false;
         String clientSideSortStr = properties.get("ldap.clientSideSorting");
         if (clientSideSortStr != null) {
@@ -2161,16 +2156,7 @@ public class LdapManager {
      * @return The number of entries that match the filter.
      */
     public Integer retrieveListCount(String attribute, String searchFilter) {
-        int pageSize = -1;
-        String pageSizeStr = properties.get("ldap.pagedResultsSize");
-        if (pageSizeStr != null) {
-            try {
-                pageSize = Integer.parseInt(pageSizeStr); /* radix -1 is invalid */
-           }
-           catch (NumberFormatException e) {
-               // poorly formatted number, ignoring
-           }
-        }
+        final int pageSize = LDAP_PAGE_SIZE.getValue();
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         Integer count = 0;

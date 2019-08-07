@@ -10,13 +10,20 @@ import static org.junit.Assert.assertTrue;
 
 import javax.naming.ldap.Rdn;
 
+import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * @author Daniel Henninger
  */
 public class LDAPTest {
+
+    @BeforeClass
+    public static void reconfigureOpenfireHome() throws Exception {
+        Fixtures.reconfigureOpenfireHome();
+    }
 
     @Test
     public void testEncloseDN() {

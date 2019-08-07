@@ -92,7 +92,7 @@ CREATE TABLE ofGroup (
 CREATE TABLE ofGroupProp (
   groupName             VARCHAR(50)     NOT NULL,
   name                  VARCHAR2(100)   NOT NULL,
-  propValue             VARCHAR2(4000)  NOT NULL,
+  propValue             VARCHAR2(4000)  NULL,
   CONSTRAINT ofGroupProp_pk PRIMARY KEY (groupName, name)
 );
 

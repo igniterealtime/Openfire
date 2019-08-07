@@ -71,7 +71,31 @@ will compile the core server and any dependencies, and then assemble it in to so
 
 Testing your changes
 --------------------
-Although your IDE will happily compile the project unfortunately, it's not possible to run Openfire from within an 
+
+#### IntelliJ IDEA:
+
+1. Run -> Edit Configurations... -> Add Application
+2. fill in following values
+    1. Name: Openfire
+    2. Use classpath of module: starter
+    3. Main class: org.jivesoftware.openfire.starter.ServerStarter
+    4. VM options (adapt accordingly):
+        ````
+        -DopenfireHome="-absolute path to your project folder-\distribution\target\distribution-base" 
+        -Xverify:none
+        -server
+        -Dlog4j.configurationFile="-absolute path to your project folder-\distribution\target\distribution-base\lib\log4j2.xml"
+        -Dopenfire.lib.dir="-absolute path to your project folder-\distribution\target\distribution-base\lib"
+        -Dfile.encoding=UTF-8
+       ````
+   5. Working directory: -absolute path to your project folder-
+3. apply
+
+You need to execute `mvn verify` before you can launch openfire.
+
+#### Other IDE's:
+
+Although your IDE will happily compile the project, unfortunately it's not possible to run Openfire from within the 
 IDE - it must be done at the command line. After building the project using Maven, simply run the shell script or 
 batch file to start Openfire;
 ```

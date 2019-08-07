@@ -26,12 +26,9 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.slf4j.Logger" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -48,7 +45,9 @@
     boolean downloadRequested = request.getParameter("download") != null;
     boolean uploadPlugin = request.getParameter("uploadplugin") != null;
     String url = request.getParameter("url");
-    Boolean uploadEnabled = JiveGlobals.getBooleanProperty("plugins.upload.enabled", true);
+    boolean uploadEnabled = JiveGlobals.getBooleanProperty("plugins.upload.enabled", true);
+    boolean contentTypeCheckEnabled = JiveGlobals.getBooleanProperty("plugins.upload.content-type-check.enabled", false);
+    String expectedContentType = JiveGlobals.getProperty("plugins.upload.content-type-check.expected-value", "application/x-java-archive");
     boolean csrf_check = true;
 
     final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
@@ -108,28 +107,34 @@
 
         try {
             // Parse the request
-            List items = upload.parseRequest(request);
+            List<FileItem> items = upload.parseRequest(request);
 
-            for (Object objItem : items) {
-                FileItem item = (FileItem)objItem;
+            for (FileItem item : items) {
                 String fileName = item.getName();
-                if (fileName != null) {
-                    InputStream is = item.getInputStream();
-                    if (is != null) {
-                        installed = XMPPServer.getInstance().getPluginManager().installPlugin(is, fileName);
-                        if (!installed) {
-                            Log.error("Plugin manager failed to install plugin: " + fileName);
-                        }
-                        is.close();
-                        // Log the event
-                        webManager.logEvent("uploaded plugin "+fileName, null);
+                String contentType = item.getContentType();
+                Log.debug("Uploaded plugin '{}' content type: '{}'.", fileName, contentType );
+                if (fileName == null) {
+                    Log.error( "Ignoring uploaded file: No filename specified for file upload." );
+                    continue;
+                }
+
+                if (contentTypeCheckEnabled && !expectedContentType.equalsIgnoreCase( contentType )) {
+                    Log.error( "Ignoring uploaded file: Content type '{}' of uploaded file '{}' does not match expected content type '{}'", contentType, fileName, expectedContentType );
+                    continue;
+                }
+
+                InputStream is = item.getInputStream();
+                if (is != null) {
+                    installed = XMPPServer.getInstance().getPluginManager().installPlugin(is, fileName);
+                    if (!installed) {
+                        Log.error("Plugin manager failed to install plugin: " + fileName);
                     }
-                    else {
-                        Log.error("Unable to open file stream for uploaded file: " + fileName);
-                    }
+                    is.close();
+                    // Log the event
+                    webManager.logEvent("uploaded plugin "+fileName, null);
                 }
                 else {
-                    Log.error("No filename specified for file upload.");
+                    Log.error("Unable to open file stream for uploaded file: " + fileName);
                 }
             }
         }

@@ -18,9 +18,11 @@ package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -738,7 +740,33 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                                 continue;
                             }
                         }
+
+                        //XEP-0232 includes extended information about Software Version in a data form
+                        final DataForm dataFormSoftwareVersion = new DataForm(DataForm.Type.result);
+
+                        final FormField fieldTypeSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldTypeSoftwareVersion.setVariable("FORM_TYPE");
+                        fieldTypeSoftwareVersion.setType(FormField.Type.hidden);
+                        fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
+
+                        final FormField fieldOs = dataFormSoftwareVersion.addField();
+                        fieldOs.setVariable("os");
+                        fieldOs.addValue( System.getProperty("os.name"));
+
+                        final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
+                        fieldOsVersion.setVariable("os_version");
+                        fieldOsVersion .addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
+
+                        final FormField fieldSoftware = dataFormSoftwareVersion.addField();
+                        fieldSoftware.setVariable("software");
+                        fieldSoftware.addValue(AdminConsole.getAppName());
+
+                        final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldSoftwareVersion.setVariable("software_version");
+                        fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
+
                         final Set<DataForm> dataForms = new HashSet<>();
+                        dataForms.add(dataFormSoftwareVersion);
                         dataForms.add(dataForm);
                         return dataForms;
                     }

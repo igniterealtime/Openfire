@@ -1,7 +1,17 @@
 FROM maven:3.5-jdk-8
 WORKDIR /usr/src
-COPY . .
+
+COPY ./pom.xml .
+COPY ./i18n/pom.xml ./i18n/
+COPY ./xmppserver/pom.xml ./xmppserver/
+COPY ./starter/pom.xml ./starter/
+COPY ./starter/libs/* ./starter/libs/
+COPY ./plugins/pom.xml ./plugins/
+COPY ./plugins/openfire-plugin-assembly-descriptor/pom.xml ./plugins/openfire-plugin-assembly-descriptor/
+COPY ./distribution/pom.xml ./distribution/
 RUN mvn dependency:go-offline
+
+COPY . .
 RUN mvn package
 
 FROM openjdk:8-jre

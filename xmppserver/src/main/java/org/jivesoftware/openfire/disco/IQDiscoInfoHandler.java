@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -84,6 +85,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
     private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
+
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.IQDiscoInfo.XFormSoftwareVersion")
+        .setDefaultValue(Boolean.TRUE)
+        .setDynamic(Boolean.TRUE)
+        .build();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -766,7 +773,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
 
                         final Set<DataForm> dataForms = new HashSet<>();
-                        dataForms.add(dataFormSoftwareVersion);
+                        if (ENABLED.getValue()){
+                            dataForms.add(dataFormSoftwareVersion);
+                        }
                         dataForms.add(dataForm);
                         return dataForms;
                     }

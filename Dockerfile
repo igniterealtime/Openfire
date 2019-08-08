@@ -1,9 +1,8 @@
-FROM openjdk:8-jdk
-COPY . /usr/src
-RUN apt-get update -qq \
-    && apt-get install -qqy maven \
-    && cd /usr/src \
-    && mvn package
+FROM maven:3.5-jdk-8
+WORKDIR /usr/src
+COPY . .
+RUN mvn dependency:go-offline
+RUN mvn package
 
 FROM openjdk:8-jre
 COPY --from=0 /usr/src/distribution/target/distribution-base /usr/local/openfire

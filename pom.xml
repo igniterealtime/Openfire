@@ -4,7 +4,7 @@
 
     <groupId>org.igniterealtime.openfire</groupId>
     <artifactId>parent</artifactId>
-    <version>4.4.1-SNAPSHOT</version>
+    <version>4.4.1</version>
     <name>Parent</name>
     <packaging>pom</packaging>
 

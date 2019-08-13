@@ -12,11 +12,12 @@
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="javax.servlet.http.HttpSession" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
 <%@ page import="java.util.stream.Collectors" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -132,6 +133,22 @@
         return;
     }
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (addAdmin || deleteAdmins)
+    {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errors.put( "csrf", "CSRF failure!");
+            addAdmin = false;
+            deleteAdmins = false;
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (addAdmin && !doTest) {
         String admin = request.getParameter("administrator");
         if (admin != null) {
@@ -155,7 +172,7 @@
             }
             if (errors.isEmpty()) {
                 String currentList = xmppSettings.get("admin.authorizedJIDs");
-                final List users = new ArrayList(StringUtils.stringToCollection(currentList));
+                final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
                 users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
 
                 String userList = StringUtils.collectionToString(users);
@@ -170,10 +187,10 @@
         String[] params = request.getParameterValues("remove");
         String currentAdminList = xmppSettings.get("admin.authorizedJIDs");
         Collection<String> adminCollection = StringUtils.stringToCollection(currentAdminList);
-        List temporaryUserList = new ArrayList<String>(adminCollection);
+        List<String> temporaryUserList = new ArrayList<>(adminCollection);
         final int no = params != null ? params.length : 0;
         for (int i = 0; i < no; i++) {
-            temporaryUserList.remove(params[i]);
+            temporaryUserList.remove( URLDecoder.decode( params[i] ));
         }
 
         String newUserList = StringUtils.collectionToString(temporaryUserList);
@@ -217,7 +234,6 @@
 </head>
 <body>
 
-
     <h1>
     <fmt:message key="setup.admin.settings.account" />
     </h1>
@@ -231,6 +247,9 @@
     <c:if test="${not empty errors}">
         <div class="error">
             <c:choose>
+                <c:when test="${not empty errors['csrf']}">
+                    <fmt:message key="global.csrf.failed" />
+                </c:when>
                 <c:when test="${not empty errors['general']}">
                     <c:out value="${errors['general']}"/>
                 </c:when>
@@ -260,6 +279,7 @@ function checkClick() {
 </script>
 
 <form action="setup-admin-settings.jsp" name="acctform" method="post" onsubmit="return checkClick();">
+    <input type="hidden" name="csrf" value="${csrf}"/>
 
 <table cellpadding="3" cellspacing="2" border="0">
 
@@ -414,6 +434,9 @@ document.acctform.newPassword.focus();
         <c:if test="${not empty errors}">
             <div class="error">
                 <c:choose>
+                    <c:when test="${not empty errors['csrf']}">
+                        <fmt:message key="global.csrf.failed" />
+                    </c:when>
                     <c:when test="${not empty errors['general']}">
                         <c:out value="${errors['general']}"/>
                     </c:when>
@@ -434,6 +457,7 @@ document.acctform.newPassword.focus();
                     <c:param name="password" value="${password}"/>
                 </c:if>
                 <c:param name="ldap" value="true"/>
+                <c:param name="csrf" value="${csrf}"/>
             </c:url>
 
     <a href="${testLink}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
@@ -452,6 +476,7 @@ document.acctform.newPassword.focus();
 <div class="jive-contentBox">
 
 <form action="setup-admin-settings.jsp" name="acctform" method="post">
+    <input type="hidden" name="csrf" value="${csrf}"/>
 
     <!-- Admin Table -->
 
@@ -487,7 +512,7 @@ document.acctform.newPassword.focus();
                         <c:out value="${authJID.node}"/>
                     </td>
                     <td width="1%" align="center">
-                        <a href="setup-admin-settings.jsp?ldap=true&test=true&username=${admin:urlEncode(authJID.node)}}"
+                        <a href="setup-admin-settings.jsp?ldap=true&test=true&username=${admin:urlEncode(authJID.node)}&csrf=${csrf}"
                            title="<fmt:message key="global.click_test" />"
                         ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
                     </td>

@@ -1,72 +1,26 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%--
---%>
-
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.util.HashMap,
-                 javax.naming.Context,
-                 javax.naming.NamingEnumeration,
-                 javax.naming.InitialContext,
-                 javax.naming.Binding,
-                 org.jivesoftware.util.JiveGlobals,
+<%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider,
-                 org.jivesoftware.database.DbConnectionManager" %>
-<%@ page import="org.jivesoftware.util.ClassUtils"%>
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.util.ClassUtils,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 javax.naming.Binding,
+                 javax.naming.Context" %>
+<%@ page import="javax.naming.InitialContext"%>
+<%@ page import="javax.naming.NamingEnumeration"%>
+<%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.sql.Connection"%>
-<%@ page import="java.io.File"%>
-<%@ page import="java.sql.Statement"%>
-<%@ page import="java.sql.SQLException"%>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Redirect if we've already run setup:
     if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
-    }
-%>
-
-<%!
-    boolean testConnection(Map<String,String> errors) {
-        boolean success = true;
-        Connection con = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            if (con == null) {
-                success = false;
-                errors.put("general","A connection to the database could not be "
-                    + "made. View the error message by opening the "
-                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
-                    + "file, then go back to fix the problem.");
-            }
-            else {
-                // See if the Jive db schema is installed.
-                try {
-                    Statement stmt = con.createStatement();
-                    // Pick an arbitrary table to see if it's there.
-                    stmt.executeQuery("SELECT * FROM ofID");
-                    stmt.close();
-                }
-                catch (SQLException sqle) {
-                    success = false;
-                    sqle.printStackTrace();
-                    errors.put("general","The Openfire database schema does not "
-                        + "appear to be installed. Follow the installation guide to "
-                        + "fix this error.");
-                }
-            }
-        }
-        catch (Exception ignored) {}
-        finally {
-            try {
-                con.close();
-            } catch (Exception ignored) {}
-        }
-        return success;
     }
 %>
 
@@ -116,7 +70,7 @@
             // Set the provider in the connection manager
             DbConnectionManager.setConnectionProvider(conProvider);
             // Try to establish a connection to the datasource
-            if (testConnection(errors)) {
+            if (DbConnectionManager.testConnection(errors)) {
                 // Finished, so redirect
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;

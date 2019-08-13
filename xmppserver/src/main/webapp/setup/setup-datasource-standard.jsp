@@ -1,30 +1,23 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%--
---%>
-
 <%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
+                 org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.ClassUtils,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.Log,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.openfire.XMPPServer,
-                 java.io.File,
                  java.lang.Double,
                  java.lang.Exception,
                  java.lang.Integer,
-                 java.lang.String"
+                 java.lang.String,
+                 java.lang.Throwable"
 %>
-<%@ page import="java.lang.Throwable"%>
-<%@ page import="java.sql.Connection" %>
-<%@ page import="java.sql.SQLException" %>
-<%@ page import="java.sql.Statement" %>
-<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.ArrayList"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
@@ -34,49 +27,6 @@
         return;
     }
 %>
-
-<%!
-    boolean testConnection(Map<String,String> errors) {
-        boolean success = true;
-        Connection con = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            if (con == null) {
-            }
-            else {
-                // See if the Jive db schema is installed.
-                try {
-                    Statement stmt = con.createStatement();
-                    // Pick an arbitrary table to see if it's there.
-                    stmt.executeQuery("SELECT * FROM ofID");
-                    stmt.close();
-                }
-                catch (SQLException sqle) {
-                    success = false;
-                    sqle.printStackTrace();
-                    errors.put("general","The Openfire database schema does not "
-                        + "appear to be installed. Follow the installation guide to "
-                        + "fix this error.");
-                }
-            }
-        }
-        catch (SQLException ex) {
-            success = false;
-            errors.put("general","A connection to the database could not be "
-                + "made. View the error message by opening the "
-                + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
-                + "file, then go back to fix the problem.");
-
-        }
-        finally {
-            try {
-                con.close();
-            } catch (Exception ignored) {}
-        }
-        return success;
-    }
-%>
-
 
 <%  // Get parameters
     String driver = ParamUtils.getParameter(request,"driver");
@@ -160,7 +110,7 @@
             }
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);
-            if (testConnection(errors)) {
+            if (DbConnectionManager.testConnection(errors)) {
                 // Success, move on
                 response.sendRedirect("setup-profile-settings.jsp");
                 return;

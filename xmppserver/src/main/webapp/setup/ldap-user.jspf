@@ -81,11 +81,27 @@
 
     Map<String, String> errors = new HashMap<>();
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter( "test") != null;
     String userIndex = request.getParameter( "userIndex" );
     boolean isTesting = userIndex != null;
+
     if ((save || test) && !isTesting) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            save = false;
+            test = false;
+            errors.put( "csrf", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (errors.isEmpty() && (save || test) && !isTesting) {
         usernameField = ParamUtils.getParameter(request, "usernameField");
         if (usernameField == null) {
             errors.put("username",
@@ -240,6 +256,7 @@
     </c:if>
 
     <form action="${currentPage}" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="serverType" value="<c:out value="${serverType}"/>"/>
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">

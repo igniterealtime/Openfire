@@ -75,6 +75,11 @@
             AuthFactory.authenticate("admin", password);
         } catch (UnauthorizedException e) {
             errors.put("password", "password");
+        } catch (Exception e) {
+            e.printStackTrace();
+            errors.put("general", "There was an unexpected error encountered when "
+                + "setting the new admin information. Please check your error "
+                + "logs and try to remedy the problem.");
         }
         if (email == null) {
             errors.put("email", "email");
@@ -261,6 +266,12 @@ function checkClick() {
     }
     catch (UnauthorizedException e) {
         // Ignore.
+    }
+    catch (Exception e) {
+        e.printStackTrace();
+        errors.put("general", "There was an unexpected error encountered when "
+            + "setting the new admin information. Please check your error "
+            + "logs and try to remedy the problem.");
     }
     if (defaultPassword) {
 %>

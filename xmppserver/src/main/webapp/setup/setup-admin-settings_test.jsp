@@ -1,12 +1,12 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.openfire.ldap.LdapManager, org.jivesoftware.openfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin"%>
 
 <%
     String username = URLDecoder.decode( ParamUtils.getParameter( request, "username"), "UTF-8" );
@@ -75,7 +75,7 @@
             <form action="setup-admin-settings.jsp" name="testform" method="post">
                 <input type="hidden" name="ldap" value="true">
                 <input type="hidden" name="test" value="true">
-                <input type="hidden" name="username" value="<%= URLEncoder.encode(username, "UTF-8")%>">
+                <input type="hidden" name="username" value="${admin:urlEncode(username)}">
                 <table cellpadding="3" cellspacing="2" border="0">
                     <tr valign="top">
                         <td class="jive-label">
@@ -105,25 +105,4 @@
         </div>
     </div>
     <!-- END connection settings test panel -->
-
-<!-- BEGIN connection settings test panel -->
-<div class="jive-testPanel">
-    <div class="jive-testPanel-content">
-
-        <h2><fmt:message key="global.test" />: <span><fmt:message key="setup.admin.settings.test.title-desc" /></span></h2>
-        <c:if test="${hasPassword}">
-            <c:choose>
-                <c:when test="${success}">
-                    <h4 class="jive-testSuccess"><fmt:message key="setup.admin.settings.test.status-success" /></h4>
-                    <p><fmt:message key="setup.admin.settings.test.status-success.detail" /></p>
-                </c:when>
-                <c:otherwise>
-                    <h4 class="jive-testError"><fmt:message key="setup.admin.settings.test.status-error" /></h4>
-                    <p><c:out value="${errorDetail}"/></p>
-                </c:otherwise>
-            </c:choose>
-        </c:if>
-    </div>
-</div>
-<!-- END connection settings test panel -->
 <%  } %>

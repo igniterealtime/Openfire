@@ -112,6 +112,11 @@ public class OpenfireX509TrustManager implements X509TrustManager
     @Override
     public X509Certificate[] getAcceptedIssuers()
     {
+        if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.sendtrustedissuerList", false)) {
+            // Answer an empty list 
+            return new X509Certificate[0];
+        }
+        
         final Set<X509Certificate> result;
         if ( checkValidity )
         {

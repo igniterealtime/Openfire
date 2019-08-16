@@ -3,7 +3,7 @@ package org.jivesoftware.openfire.keystore;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.jivesoftware.util.JiveGlobals;
 import javax.net.ssl.*;
 import java.security.*;
 import java.security.cert.*;

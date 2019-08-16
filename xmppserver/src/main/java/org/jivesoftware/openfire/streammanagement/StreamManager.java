@@ -269,6 +269,11 @@ public class StreamManager {
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
+        if (otherSession.getStreamManager().namespace == null) {
+            Log.debug("Not allowing a client to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error." );
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
         if (!otherSession.getStreamManager().namespace.equals(namespace)) {
             Log.debug("Not allowing a client to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", otherSession.getStreamManager().namespace, namespace);
             sendError(new PacketError(PacketError.Condition.unexpected_request));

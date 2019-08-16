@@ -87,7 +87,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
 
     public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.IQDiscoInfo.XFormSoftwareVersion")
+        .setKey("xmpp.iqdiscoinfo.xformsoftwareversion")
         .setDefaultValue(Boolean.TRUE)
         .setDynamic(Boolean.TRUE)
         .build();

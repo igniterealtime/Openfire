@@ -216,10 +216,12 @@ public class StreamManager {
         this.namespace = namespace;
         // Ensure that resource binding has NOT occurred.
         if (!allowResume() ) {
+            Log.debug("Unable to process session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
             sendUnexpectedError();
             return;
         }
         if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            Log.debug("Unable to process session resumption attempt, as session {} is not authenticated.", session);
             sendUnexpectedError();
             return;
         }
@@ -229,6 +231,7 @@ public class StreamManager {
             authToken = ((LocalClientSession) session).getAuthToken();
         }
         if (authToken == null) {
+            Log.debug("Unable to process session resumption attempt, as session {} does not provide any auth context.", session);
             sendUnexpectedError();
             return;
         }
@@ -250,7 +253,7 @@ public class StreamManager {
         } else {
             fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
         }
-        Log.debug("Resuming session {}", fullJid);
+        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session);
 
         // Locate existing session.
         LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
@@ -262,41 +265,41 @@ public class StreamManager {
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;
         }
-        Log.debug("Found existing session, checking status");
+        Log.debug("Found existing session for '{}', checking status", fullJid);
         // Previd identifies proper session. Now check SM status
         if (!otherSession.getStreamManager().resume) {
-            Log.debug("Not allowing a client to resume a session, the session to be resumed does not have the stream management resumption feature enabled." );
+            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
         if (otherSession.getStreamManager().namespace == null) {
-            Log.debug("Not allowing a client to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error." );
+            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
         if (!otherSession.getStreamManager().namespace.equals(namespace)) {
-            Log.debug("Not allowing a client to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", otherSession.getStreamManager().namespace, namespace);
+            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
         if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
-            Log.debug("Not allowing a client to resume a session, as it reports it received more stanzas from us than that we've send it." );
+            Log.debug("Not allowing a client of '{}' to resume a session, as it reports it received more stanzas from us than that we've send it.", fullJid);
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }
         if (!otherSession.isDetached()) {
-            Log.debug("Existing session is not detached; detaching.");
+            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession, fullJid);
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
             oldConnection.close();
         }
-        Log.debug("Attaching to other session.");
+        Log.debug("Attaching to other session {} of '{}'.", otherSession, fullJid);
         // If we're all happy, disconnect this session.
         Connection conn = session.getConnection();
         session.setDetached();
         // Connect new session.
         otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {}. Closing session {}", otherSession, session );
+        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession, fullJid, session );
         session.close();
     }
 

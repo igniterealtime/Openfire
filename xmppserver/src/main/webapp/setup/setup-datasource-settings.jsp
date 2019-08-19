@@ -76,6 +76,9 @@
         }
     }
     pageContext.setAttribute("localizedShortTitle", LocaleUtils.getLocalizedString("short.title") );
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("mode", mode);
+    pageContext.setAttribute("embeddedMode", embeddedMode);
 %>
 
 <html>
@@ -95,13 +98,11 @@
     </fmt:message>
     </p>
 
-<%  if (errors.size() > 0) { %>
-
-    <p class="jive-error-text">
-    <%= errors.get("general") %>
-    </p>
-
-<%  } %>
+    <c:if test="${not empty errors}">
+        <p class="jive-error-text">
+            <c:out value="${errors['general']}"/>
+        </p>
+    </c:if>
 
     <!-- BEGIN jive-contentBox -->
     <div class="jive-contentBox">
@@ -113,8 +114,7 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="<%= STANDARD %>" id="rb02"
-         <%= ((STANDARD.equals(mode)) ? "checked" : "") %>>
+        <input type="radio" name="mode" value="standard" id="rb02" ${mode eq 'standard' ? 'checked' : ''}>
     </td>
     <td>
         <label for="rb02"><b><fmt:message key="setup.datasource.settings.connect" /></b></label>
@@ -122,25 +122,21 @@
     </td>
 </tr>
 
-<%  if (!embeddedMode) { %>
-
+<c:if test="${not embeddedMode}">
     <tr>
         <td align="center" valign="top">
-            <input type="radio" name="mode" value="<%= JNDI %>" id="rb03"
-             <%= ((JNDI.equals(mode)) ? "checked" : "") %>>
+            <input type="radio" name="mode" value="jndi" id="rb03" ${mode eq 'jndi' ? 'checked' : ''}>
         </td>
         <td>
             <label for="rb03"><b><fmt:message key="setup.datasource.settings.jndi" /></b></label>
             <br><fmt:message key="setup.datasource.settings.jndi_info" />
         </td>
     </tr>
-
-<%  } %>
+</c:if>
 
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="<%= EMBEDDED %>" id="rb01"
-         <%= ((EMBEDDED.equals(mode)) ? "checked" : "") %>>
+        <input type="radio" name="mode" value="embedded" id="rb01" ${mode eq 'embedded' ? 'checked' : ''}>
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.datasource.settings.embedded" /></b></label>

@@ -1,7 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%--
---%>
-
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.net.UnknownHostException" %>
 <%@ page import="java.util.HashMap" %>
@@ -17,6 +14,7 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
@@ -45,19 +43,21 @@
         // Validate parameters
         if (domain == null || domain.isEmpty()) {
             errors.put("domain", "domain");
+        } else {
+            try {
+                domain = JID.domainprep(domain);
+            } catch (IllegalArgumentException e) {
+                errors.put("domain", "domain");
+            }
         }
         if (fqdn == null || fqdn.isEmpty()) {
             errors.put("fqdn", "fqdn");
-        }
-        try {
-            fqdn = JID.domainprep(fqdn);
-        } catch (IllegalArgumentException e) {
-            errors.put("fqdn", "fqdn");
-        }
-        try {
-            domain = JID.domainprep(domain);
-        } catch (IllegalArgumentException e) {
-            errors.put("domain", "domain");
+        } else {
+            try {
+                fqdn = JID.domainprep(fqdn);
+            } catch (IllegalArgumentException e) {
+                errors.put("fqdn", "fqdn");
+            }
         }
         if (XMPPServer.getInstance().isStandAlone()) {
             if (embeddedPort == Integer.MIN_VALUE) {
@@ -140,6 +140,17 @@
             domain = fqdn;
         }
     }
+
+    pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "domain", domain );
+    pageContext.setAttribute( "fqdn", fqdn );
+    if ( embeddedPort != Integer.MIN_VALUE ) {
+        pageContext.setAttribute( "embeddedPort", embeddedPort );
+    }
+    if ( securePort != Integer.MIN_VALUE ) {
+        pageContext.setAttribute( "securePort", securePort );
+    }
+    pageContext.setAttribute( "xmppServer", XMPPServer.getInstance() );
 %>
 
 <html>
@@ -166,64 +177,60 @@
 <table cellpadding="3" cellspacing="0" border="0">
 <tr valign="top">
     <td width="1%" nowrap align="right">
-        <fmt:message key="setup.host.settings.domain" />
+        <label for="domain"><fmt:message key="setup.host.settings.domain" /></label>
     </td>
     <td width="99%">
-        <input type="text" size="30" maxlength="150" name="domain"
-         value="<%= ((domain != null) ? StringUtils.escapeForXML(domain) : "") %>">
+        <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.domain.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("domain") != null) { %>
+        <c:if test="${not empty errors['domain']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_domain" />
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td width="1%" nowrap align="right">
-        <fmt:message key="setup.host.settings.fqdn" />
+        <label for="fqdn"><fmt:message key="setup.host.settings.fqdn" /></label>
     </td>
     <td width="99%">
-        <input type="text" size="30" maxlength="150" name="fqdn"
-               value="<%= ((fqdn != null) ? StringUtils.escapeForXML(fqdn) : "") %>">
+        <input type="text" size="30" maxlength="150" name="fqdn" id="fqdn" value="${not empty fqdn ? fn:escapeXml(fqdn) : ''}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.fqdn.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("fqdn") != null) { %>
+        <c:if test="${not empty errors['fqdn']}">
         <span class="jive-error-text">
         <fmt:message key="setup.host.settings.invalid_fqdn" />
         </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 
-<% if (XMPPServer.getInstance().isStandAlone()){ %>
+<c:if test="${xmppServer.standAlone}">
 <tr valign="top">
     <td width="1%" nowrap align="right">
-        <fmt:message key="setup.host.settings.port" />
+        <label for="embeddedPort"><fmt:message key="setup.host.settings.port" /></label>
     </td>
     <td width="99%">
-        <input type="text" size="6" maxlength="6" name="embeddedPort"
-         value="<%= ((embeddedPort != Integer.MIN_VALUE) ? ""+embeddedPort : "9090") %>">
+        <input type="number" min="1" max="65535" size="6" maxlength="6" name="embeddedPort" id="embeddedPort" value="${not empty embeddedPort ? embeddedPort : 9090}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("embeddedPort") != null) { %>
+        <c:if test="${not empty errors['embeddedPort']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_port" />
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td width="1%" nowrap align="right">
-        <fmt:message key="setup.host.settings.secure_port" />
+        <label for="securePort"><fmt:message key="setup.host.settings.secure_port" /></label>
     </td>
     <td width="99%">
-        <input type="text" size="6" maxlength="6" name="securePort"
-         value="<%= ((securePort != Integer.MIN_VALUE) ? ""+securePort : "9091") %>">
+        <input type="number" min="1" max="65535" size="6" maxlength="6" name="securePort" id="securePort" value="${not empty securePort ? securePort : 9091}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.secure_port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-         <%  if (errors.get("securePort") != null) { %>
+        <c:if test="${not empty errors['securePort']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_port" />
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
@@ -232,26 +239,26 @@
     </td>
     <td width="99%">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_algorithm_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span><br /><br />
-        <input type="radio" name="encryptionAlgorithm" value="Blowfish" checked><fmt:message key="setup.host.settings.encryption_blowfish" /><br /><br />
-        <input type="radio" name="encryptionAlgorithm" value="AES"><fmt:message key="setup.host.settings.encryption_aes" /><br /><br />
+        <input type="radio" name="encryptionAlgorithm" value="Blowfish" id="Blowfish" checked><label for="Blowfish"><fmt:message key="setup.host.settings.encryption_blowfish" /></label><br /><br />
+        <input type="radio" name="encryptionAlgorithm" value="AES" id="AES"><label for="AES"><fmt:message key="setup.host.settings.encryption_aes" /></label><br /><br />
     </td>
 </tr>
 <tr valign="top">
     <td width="1%" nowrap align="right">
-        <fmt:message key="setup.host.settings.encryption_key" />
+        <label for="encryptionKey"><fmt:message key="setup.host.settings.encryption_key" /></label>
     </td>
     <td width="99%">
-        <input type="password" size="50" name="encryptionKey" /><br /><br />
-        <input type="password" size="50" name="encryptionKey1" />
+        <input type="password" size="50" name="encryptionKey" id="encryptionKey"/><br /><br />
+        <input type="password" size="50" name="encryptionKey1" id="encryptionKey1" />
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_key_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-         <%  if (errors.get("encryptionKey") != null) { %>
+        <c:if test="${not empty errors['encryptionKey']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.encryption_key_invalid" />
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
-<% } %>
+</c:if>
 </table>
 
 <br><br>

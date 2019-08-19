@@ -2,16 +2,13 @@
 <%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider,
                  org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.ParamUtils,
                  javax.naming.Binding,
                  javax.naming.Context" %>
 <%@ page import="javax.naming.InitialContext"%>
 <%@ page import="javax.naming.NamingEnumeration"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="org.jivesoftware.util.*" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -42,10 +39,26 @@
 <%  // Get parameters
     String jndiName = ParamUtils.getParameter(request,"jndiName");
     String jndiNameMode = ParamUtils.getParameter(request,"jndiNameMode");
+    boolean doContinue = request.getParameter("continue") != null;
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
     // Handle a continue request:
-    Map<String,String> errors = new HashMap<String,String>();
-    if (request.getParameter("continue") != null) {
+    Map<String,String> errors = new HashMap<>();
+
+    if (doContinue) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            doContinue = false;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (doContinue) {
         String lookupName = null;
         // Validate the fields:
         if ("custom".equals(jndiNameMode) && jndiName == null) {
@@ -107,6 +120,7 @@
 </c:if>
 
 <form action="setup-datasource-jndi.jsp" name="jndiform" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <%  boolean isLookupNames = false;
     Context context = null;

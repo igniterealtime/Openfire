@@ -2,10 +2,6 @@
 <%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
                  org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.Log,
-                 org.jivesoftware.util.ParamUtils,
                  java.lang.Double,
                  java.lang.Exception,
                  java.lang.Integer,
@@ -16,6 +12,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.*" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -39,8 +36,23 @@
 
     boolean doContinue = request.getParameter("continue") != null;
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    Map<String,String> errors = new HashMap<>();
+
+    if (doContinue) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            doContinue = false;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     // handle a continue request
-    Map<String,String> errors = new HashMap<String,String>();
     if (doContinue) {
         // Error check
         if (driver == null || "sun.jdbc.odbc.JdbcOdbcDriver".equals(driver)
@@ -227,6 +239,7 @@ function checkSubmit() {
 </script>
 
 <form action="setup-datasource-standard.jsp" method="post" name="dbform" onsubmit="return checkSubmit();">
+<input type="hidden" name="csrf" value="${csrf}">
 
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>

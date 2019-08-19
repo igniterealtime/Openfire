@@ -78,6 +78,8 @@
         }
     }
     pageContext.setAttribute("localizedShortTitle", LocaleUtils.getLocalizedString("short.title") );
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("jndiName", jndiName);
 %>
 
 <html>
@@ -98,73 +100,65 @@
 </fmt:message>
 </p>
 
-<%  if (errors.size() > 0 && errors.get("jndiName") == null) { %>
-
+<c:if test="${not empty errors and empty errors['jndiName']}">
     <p class="jive-error-text">
-    <%= errors.get("general") %>
+        <c:out value="${errors['general']}"/>
     </p>
-
-<%  } %>
+</c:if>
 
 <form action="setup-datasource-jndi.jsp" name="jndiform" method="post">
 
 <%  boolean isLookupNames = false;
     Context context = null;
-    NamingEnumeration ne = null;
+    NamingEnumeration<Binding> ne = null;
     try {
         context = new InitialContext();
         ne = context.listBindings("java:comp/env/jdbc");
         isLookupNames = ne.hasMore();
     }
     catch (Exception e) {}
+
+    pageContext.setAttribute( "isLookupNames", isLookupNames );
+    pageContext.setAttribute( "namingEnumeration", ne );
+
 %>
 
-<%  if (!isLookupNames) { %>
-
-    <fmt:message key="setup.datasource.jndi.name" />
-    <input type="text" name="jndiName" size="30" maxlength="100"
-     value="<%= ((jndiName!=null) ? jndiName : "") %>">
-
-<%  } else { %>
+<c:choose>
+    <c:when test="${isLookupNames}">
+        <label for="jndiName">fmt:message key="setup.datasource.jndi.name" /></label>
+        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}">
+    </c:when>
+    <c:otherwise>
 
     <table cellpadding="3" cellspacing="3" border="0">
     <tr>
         <td><input type="radio" name="jndiNameMode" value="custom"></td>
         <td>
-            <span onclick="document.jndiform.jndiName.focus();"
-            ><fmt:message key="setup.datasource.jndi.custom" /></span>
+            <span onclick="document.jndiform.jndiName.focus();"><label for="jndiName"><fmt:message key="setup.datasource.jndi.custom" /></label></span>
             &nbsp;
-            <input type="text" name="jndiName" size="30" maxlength="100"
-             value="<%= ((jndiName!=null) ? jndiName : "") %>"
-             onfocus="this.form.jndiNameMode[0].checked=true;">
-            <%  if (errors.get("jndiName") != null) { %>
-
+            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}" onfocus="this.form.jndiNameMode[0].checked=true;">
+            <c:if test="${not empty errors['jndiName']}">
                 <span class="jive-error-text"><br>
-                <fmt:message key="setup.datasource.jndi.valid_name" />
+                    <fmt:message key="setup.datasource.jndi.valid_name" />
                 </span>
-
-            <%  } %>
+            </c:if>
         </td>
     </tr>
-        <%  int i = 0;
-            while (ne != null && ne.hasMore()) {
-                i++;
-                Binding binding = (Binding)ne.next();
-                String name = "java:comp/env/jdbc/" + binding.getName();
-                String display = "java:comp/env/jdbc/<b>" + binding.getName() + "</b>";
-        %>
+    <c:if test="${not empty namingEnumeration}">
+        <c:forEach items="${namingEnumeration}" var="binding" varStatus="status">
             <tr>
-                <td><input type="radio" name="jndiNameMode" value="<%= name %>" id="rb<%= i %>"></td>
+                <td><input type="radio" name="jndiNameMode" value="java:comp/env/jdbc/${binding.name}" id="rb${status.index}"></td>
                 <td>
-                    <label for="rb<%= i %>" style="font-weight:normal"
-                     ><%= display %></label>
+                    <label for="rb${status.index}" style="font-weight:normal"
+                    >java:comp/env/jdbc/<b><c:out value="${binding.name}"/></b></label>
                 </td>
             </tr>
-
-        <%  } %>
+        </c:forEach>
+    </c:if>
     </table>
 
-<%  } %>
+    </c:otherwise>
+</c:choose>
 
 <br><br>
 

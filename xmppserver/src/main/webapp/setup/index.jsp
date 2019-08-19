@@ -1,14 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.io.File,
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="java.io.File,
                  java.lang.reflect.Method" %>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Locale"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -85,7 +82,21 @@
     String localeCode = ParamUtils.getParameter(request,"localeCode");
     boolean save = request.getParameter("save") != null;
 
-    Map errors = new HashMap();
+    Map<String, String> errors = new HashMap<>();
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            save = false;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (save) {
         Locale newLocale;
@@ -105,6 +116,7 @@
 
     Locale locale = JiveGlobals.getLocale();
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
+    pageContext.setAttribute( "errors", errors );
 %>
 
 <html>
@@ -117,6 +129,14 @@
     <h1>
         <fmt:message key="setup.index.title" />
     </h1>
+
+    <c:if test="${not empty errors}">
+        <div class="error">
+            <c:forEach var="err" items="${errors}">
+                <c:out value="${err.value}"/><br/>
+            </c:forEach>
+        </div>
+    </c:if>
 
     <c:choose>
         <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists}">
@@ -225,6 +245,7 @@
                 <h2><fmt:message key="setup.index.choose_lang" /></h2>
 
                 <form action="index.jsp" name="sform">
+                    <input type="hidden" name="csrf" value="${csrf}">
                     <%  boolean usingPreset = false;
                         Locale[] locales = Locale.getAvailableLocales();
                         for ( final Locale value : locales ) {

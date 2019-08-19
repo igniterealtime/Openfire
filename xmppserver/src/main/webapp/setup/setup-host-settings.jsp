@@ -12,6 +12,7 @@
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -37,8 +38,23 @@
 
     boolean doContinue = request.getParameter("continue") != null;
 
-    // handle a continue request:
-    Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    // Handle a continue request:
+    Map<String,String> errors = new HashMap<>();
+
+    if (doContinue) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            doContinue = false;
+            errors.put( "csrf", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (doContinue) {
         // Validate parameters
         if (domain == null || domain.isEmpty()) {
@@ -160,6 +176,11 @@
 </head>
 <body>
 
+    <c:if test="${not empty errors['csrf']}">
+        <div class="error">
+            <fmt:message key="global.csrf.failed"/>
+        </div>
+    </c:if>
 
     <h1>
     <fmt:message key="setup.host.settings.title" />
@@ -173,6 +194,7 @@
     <div class="jive-contentBox">
 
         <form action="setup-host-settings.jsp" name="f" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
 
 <table cellpadding="3" cellspacing="0" border="0">
 <tr valign="top">

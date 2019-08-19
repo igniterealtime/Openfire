@@ -2,14 +2,11 @@
 <%@ page import="org.jivesoftware.database.ConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.EmbeddedConnectionProvider,
-                 org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
+                 org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="java.io.File"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="org.jivesoftware.util.*" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -37,8 +34,24 @@
     String mode = ParamUtils.getParameter(request,"mode");
     boolean next = ParamUtils.getBooleanParameter(request,"next");
 
+    Map<String,String> errors = new HashMap<>();
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (next || mode != null) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            next = false;
+            mode = null;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     // handle a mode redirect
-    Map<String,String> errors = new HashMap<String,String>();
     if (next) {
         if (STANDARD.equals(mode)) {
             response.sendRedirect("setup-datasource-standard.jsp");
@@ -108,7 +121,7 @@
     <div class="jive-contentBox">
 
         <form action="setup-datasource-settings.jsp">
-
+<input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="next" value="true">
 
 <table cellpadding="3" cellspacing="2" border="0">

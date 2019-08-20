@@ -57,6 +57,8 @@
 <head>
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="style/framework/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/fontawesome.min.css" type="text/css">
     <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/prototype.js"></script>
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>
@@ -193,6 +195,10 @@
         </div>
     </div>
 <!-- END footer -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script language="JavaScript" type="text/javascript" src="js/framework/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="js/framework/popper.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="js/framework/bootstrap.min.js"></script>
 
 </body>
 </html>

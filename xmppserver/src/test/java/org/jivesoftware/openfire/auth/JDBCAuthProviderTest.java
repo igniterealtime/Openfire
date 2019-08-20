@@ -15,18 +15,10 @@ public class JDBCAuthProviderTest {
     private static final String SHA256_PASSWORD = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
     private static final String SHA512_PASSWORD = "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86";
     private static final String BCRYPTED_PASSWORD = "$2a$10$TS9mWNnHbTU.ukLUlrOopuGooirFR3IltqgRFcyM.iSPQuoPDAafG";
-    private final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
-
-    private void setPasswordTypes(final String passwordTypes) {
-        jdbcAuthProvider.propertySet("jdbcAuthProvider.passwordType", new HashMap<String, Object>() {
-            {
-                put("value", passwordTypes);
-            }
-        });
-    }
 
     @Test
     public void hashPassword() throws Exception {
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue(MD5_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.md5)));
         assertTrue(SHA1_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha1)));
         assertTrue(SHA256_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha256)));
@@ -37,43 +29,50 @@ public class JDBCAuthProviderTest {
 
     @Test
     public void comparePasswords_sha256() throws Exception {
-        setPasswordTypes("sha256");
+        JDBCAuthProvider.passwordType.setValue( "sha256" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("password should be sha256", jdbcAuthProvider.comparePasswords(PASSWORD, SHA256_PASSWORD));
     }
 
     @Test
     public void comparePasswords_bcrypt() throws Exception {
-        setPasswordTypes("bcrypt");
+        JDBCAuthProvider.passwordType.setValue( "bcrypt" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("password should be bcrypted", jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD));
     }
 
     @Test
     public void comparePasswords_bcryptLast() throws Exception {
-        setPasswordTypes("bcrypt,md5,plain");
+        JDBCAuthProvider.passwordType.setValue( "bcrypt,md5,plain" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("should ignore everything beyond bcrypt", jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD));
     }
 
     @Test
     public void comparePasswords_ignoreUnknownDefaultPlain() throws Exception {
-        setPasswordTypes("blowfish,puckerfish,rainbowtrout");
+        JDBCAuthProvider.passwordType.setValue( "blowfish,puckerfish,rainbowtrout" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("should passively ignore unknown, add plain if empty", jdbcAuthProvider.comparePasswords(PASSWORD, PASSWORD));
     }
 
     @Test
     public void comparePasswords_md5_sha1() throws Exception {
-        setPasswordTypes("md5,sha1");
+        JDBCAuthProvider.passwordType.setValue( "md5,sha1" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("password should be md5 -> sha1", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA1_PASSWORD));
     }
 
     @Test
     public void comparePasswords_md5_sha512() throws Exception {
-        setPasswordTypes("md5,sha512");
+        JDBCAuthProvider.passwordType.setValue( "md5,sha512" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("password should be md5 -> sha512", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA512_PASSWORD));
     }
     
     @Test
     public void comparePasswords_plain_md5_plain_plain() throws Exception {
-        setPasswordTypes("plain,md5,plain,plain");
+        JDBCAuthProvider.passwordType.setValue( "plain,md5,plain,plain" );
+        final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
         assertTrue("weird password chains are fine", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_PASSWORD));
     }    
 }

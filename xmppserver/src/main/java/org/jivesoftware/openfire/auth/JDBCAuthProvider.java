@@ -16,38 +16,26 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.security.MessageDigest;
-import java.security.Security;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
-
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.JDBCUserProvider;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.sql.*;
+import java.util.*;
 
 /**
  * The JDBC auth provider allows you to authenticate users against any database
@@ -105,21 +93,58 @@ import org.xmpp.packet.JID;
  *      <li>{@link PasswordType#nt nt}
  *  </ul>
  *
+ * XMPP disallows some characters in identifiers (notably: JID node-parts), requiring them to be escaped. This
+ * implementation assumes that the database returns properly escaped identifiers, but can apply escaping by
+ * setting the value of the {@code jdbcAuthProvider.isEscaped} property to 'false'.
+ *
  * @author David Snopek
  */
-public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
-
+public class JDBCAuthProvider implements AuthProvider, PropertyEventListener
+{
     private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
     private static final int DEFAULT_BCRYPT_COST = 10; // Current (2015) value provided by Mindrot's BCrypt.GENSALT_DEFAULT_LOG2_ROUNDS value
 
-    private String connectionString;
+    public static final SystemProperty<Boolean> useConnectionProvider = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcAuthProvider.useConnectionProvider")
+        .setDefaultValue( false )
+        .setDynamic( false )
+        .build();
 
-    private String passwordSQL;
-    private String setPasswordSQL;
+    public static final SystemProperty<Boolean> dataIsEscaped = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcAuthProvider.dataIsEscaped")
+        .setDefaultValue( true )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> passwordSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAuthProvider.passwordSQL")
+        .setDynamic( true )
+        .build();
+
+    public static final SystemProperty<String> setPasswordSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAuthProvider.setPasswordSQL")
+        .setDynamic( true )
+        .build();
+
+    public static final SystemProperty<Boolean> allowUpdate = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcAuthProvider.allowUpdate")
+        .setDefaultValue( false )
+        .setDynamic( true )
+        .build();
+
+    public static final SystemProperty<String> passwordType = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAuthProvider.passwordType")
+        .setDefaultValue("plain")
+        .setDynamic( true )
+        .build();
+
+    public static final SystemProperty<Integer> bcryptCost = SystemProperty.Builder.ofType( Integer.class )
+        .setKey("jdbcAuthProvider.bcrypt.cost")
+        .setDefaultValue( -1 )
+        .setDynamic( true )
+        .build();
+
     private List<PasswordType> passwordTypes;
-    private boolean allowUpdate;
-    private boolean useConnectionProvider;
-    private int bcryptCost;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -135,48 +160,26 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         JiveGlobals.migrateProperty("jdbcAuthProvider.bcrypt.cost");
         JiveGlobals.migrateProperty("jdbcAuthProvider.useConnectionProvider");
         JiveGlobals.migrateProperty("jdbcAuthProvider.acceptPreHashedPassword");
-        
-        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAuthProvider.useConnectionProvider");
-        
-        if (!useConnectionProvider) {
-            // Load the JDBC driver and connection string.
+
+        // Load the JDBC driver and connection string.
+        if (!useConnectionProvider.getValue()) {
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
-               Class.forName(jdbcDriver).newInstance();
+                Class.forName(jdbcDriver).newInstance();
             }
             catch (Exception e) {
                 Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-                return;
             }
-            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
         }
 
         // Load SQL statements.
-        passwordSQL = JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL");
-        setPasswordSQL = JiveGlobals.getProperty("jdbcAuthProvider.setPasswordSQL");
+        setPasswordTypes(passwordType.getValue());
 
-        allowUpdate = JiveGlobals.getBooleanProperty("jdbcAuthProvider.allowUpdate",false);
-
-        setPasswordTypes(JiveGlobals.getProperty("jdbcAuthProvider.passwordType", "plain"));
-        bcryptCost = JiveGlobals.getIntProperty("jdbcAuthProvider.bcrypt.cost", -1);
-        PropertyEventDispatcher.addListener(this);
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             java.security.Security.addProvider(new BouncyCastleProvider());
         }
-    }
 
-    /**
-     * XMPP disallows some characters in identifiers, requiring them to be escaped.
-     *
-     * This implementation assumes that the database returns properly escaped identifiers,
-     * but can apply escaping by setting the value of the 'jdbcAuthProvider.isEscaped'
-     * property to 'false'.
-     *
-     * @return 'false' if this implementation needs to escape database content before processing.
-     */
-    protected boolean assumePersistedDataIsEscaped()
-    {
-        return JiveGlobals.getBooleanProperty( "jdbcAuthProvider.isEscaped", true );
+        PropertyEventDispatcher.addListener(this);
     }
 
     private void setPasswordTypes(String passwordTypeProperty){
@@ -184,8 +187,9 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         List<PasswordType> passwordTypeList = new ArrayList<>(passwordTypeStringList.size());
         Iterator<String> it = passwordTypeStringList.iterator();
         while(it.hasNext()){
+            final String value = it.next().toLowerCase();
             try {
-                PasswordType type = PasswordType.valueOf(it.next().toLowerCase());
+                PasswordType type = PasswordType.valueOf(value);
                 passwordTypeList.add(type);
                 if(type == PasswordType.bcrypt){
                     // Do not support chained hashes beyond bcrypt
@@ -196,7 +200,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
                 }
             }
             catch (IllegalArgumentException iae) {
-                Log.debug( "Ignoring unparsable value '{}'", it.next().toLowerCase(), iae );
+                Log.debug( "Ignoring unparsable value '{}'", value, iae );
             }
         }
         if(passwordTypeList.isEmpty()){
@@ -273,7 +277,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             case bcrypt:
                 byte[] salt = new byte[16];
                 new SecureRandom().nextBytes(salt);
-                int cost = (bcryptCost < 4 || bcryptCost > 31) ? DEFAULT_BCRYPT_COST : bcryptCost;
+                int cost = (bcryptCost.getValue() < 4 || bcryptCost.getValue() > 31) ? DEFAULT_BCRYPT_COST : bcryptCost.getValue();
                 return OpenBSDBCrypt.generate(password.toCharArray(), salt, cost);
             case nt:
                 try {
@@ -317,7 +321,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
-        if (allowUpdate && setPasswordSQL != null) {
+        if (allowUpdate.getValue() && setPasswordSQL.getValue() != null) {
             setPasswordValue(username, password);
         } else { 
             throw new UnsupportedOperationException();
@@ -326,13 +330,13 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
 
     @Override
     public boolean supportsPasswordRetrieval() {
-        return (passwordSQL != null && passwordTypes.size() == 1 && passwordTypes.get(0) == PasswordType.plain);
+        return (passwordSQL.getValue() != null && passwordTypes.size() == 1 && passwordTypes.get(0) == PasswordType.plain);
     }
 
     private Connection getConnection() throws SQLException {
-        if (useConnectionProvider)
+        if (useConnectionProvider.getValue())
             return DbConnectionManager.getConnection();
-        return DriverManager.getConnection(connectionString);
+        return DriverManager.getConnection( JDBCUserProvider.connectionString.getValue());
     }
 
     /**
@@ -361,10 +365,10 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         }
         try {
             con = getConnection();
-            pstmt = con.prepareStatement(passwordSQL);
+            pstmt = con.prepareStatement(passwordSQL.getValue());
 
             // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-            final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+            final String queryValue = dataIsEscaped.getValue() ? username : JID.unescapeNode( username );
             pstmt.setString(1, queryValue);
 
             rs = pstmt.executeQuery();
@@ -402,10 +406,10 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         }
         try {
             con = getConnection();
-            pstmt = con.prepareStatement(setPasswordSQL);
+            pstmt = con.prepareStatement(setPasswordSQL.getValue());
 
             // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-            final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+            final String queryValue = dataIsEscaped.getValue() ? username : JID.unescapeNode( username );
             pstmt.setString(2, queryValue);
 
             password = hashPassword(password);
@@ -526,29 +530,9 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
     public void propertySet(String property, Map<String, Object> params) {
         String value = (String) params.get("value");
         switch (property) {
-            case "jdbcAuthProvider.passwordSQL":
-                passwordSQL = value;
-                Log.debug("jdbcAuthProvider.passwordSQL configured to: {}", passwordSQL);
-                break;
-            case "jdbcAuthProvider.setPasswordSQL":
-                setPasswordSQL = value;
-                Log.debug("jdbcAuthProvider.setPasswordSQL configured to: {}", setPasswordSQL);
-                break;
-            case "jdbcAuthProvider.allowUpdate":
-                allowUpdate = Boolean.parseBoolean(value);
-                Log.debug("jdbcAuthProvider.allowUpdate configured to: {}", allowUpdate);
-                break;
             case "jdbcAuthProvider.passwordType":
                 setPasswordTypes(value);
                 Log.debug("jdbcAuthProvider.passwordType configured to: {}", Arrays.toString(passwordTypes.toArray()));
-                break;
-            case "jdbcAuthProvider.bcrypt.cost":
-                try {
-                    bcryptCost = Integer.parseInt(value);
-                } catch (NumberFormatException e) {
-                    bcryptCost = -1;
-                }
-                Log.debug("jdbcAuthProvider.bcrypt.cost configured to: {}", bcryptCost);
                 break;
         }
     }

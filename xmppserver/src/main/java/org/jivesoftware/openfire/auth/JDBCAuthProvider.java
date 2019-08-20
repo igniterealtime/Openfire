@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.security.Security;
@@ -194,7 +195,9 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
                     break;
                 }
             }
-            catch (IllegalArgumentException iae) { }
+            catch (IllegalArgumentException iae) {
+                Log.debug( "Ignoring unparsable value '{}'", it.next().toLowerCase(), iae );
+            }
         }
         if(passwordTypeList.isEmpty()){
             Log.warn("The jdbcAuthProvider.passwordType setting is not set or contains invalid values.  Setting the type to 'plain'");
@@ -273,13 +276,11 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
                 int cost = (bcryptCost < 4 || bcryptCost > 31) ? DEFAULT_BCRYPT_COST : bcryptCost;
                 return OpenBSDBCrypt.generate(password.toCharArray(), salt, cost);
             case nt:
-                byte[] digestBytes;
-                byte[] utf16leBytes = null;
                 try {
                   MessageDigest md = MessageDigest.getInstance("MD4");
-                  utf16leBytes = password.getBytes("UTF-16LE");
-                  digestBytes = md.digest(utf16leBytes);
-                  return new String(new String(Hex.encode(digestBytes)));
+                  byte[] utf16leBytes = password.getBytes(StandardCharsets.UTF_16LE);
+                  byte[] digestBytes = md.digest(utf16leBytes);
+                  return new String( Hex.encode( digestBytes ) );
                 }
                 catch (Exception e) {
                   return null;
@@ -343,7 +344,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
      * @throws UserNotFoundException if the given user could not be loaded.
      */
     private String getPasswordValue(String username) throws UserNotFoundException {
-        String password = null;
+        String password;
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -554,7 +555,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
 
     @Override
     public void propertyDeleted(String property, Map<String, Object> params) {
-        propertySet(property, Collections.<String, Object>emptyMap());
+        propertySet(property, Collections.emptyMap());
     }
 
     @Override

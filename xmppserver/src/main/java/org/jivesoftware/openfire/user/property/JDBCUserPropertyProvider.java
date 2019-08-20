@@ -179,7 +179,6 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
             pstmt.setString( 2, propName );
             rs = pstmt.executeQuery();
 
-            final Map<String, String> result = new HashMap<>();
             if ( rs.next() )
             {
                 return rs.getString( 1 );

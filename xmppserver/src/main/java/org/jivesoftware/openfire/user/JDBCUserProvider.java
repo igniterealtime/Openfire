@@ -218,7 +218,7 @@ public class JDBCUserProvider implements UserProvider {
     @Override
     public Collection<User> getUsers() {
         Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
 
     @Override
@@ -286,7 +286,7 @@ public class JDBCUserProvider implements UserProvider {
     @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
     
     @Override
@@ -426,7 +426,7 @@ public class JDBCUserProvider implements UserProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
 
     @Override

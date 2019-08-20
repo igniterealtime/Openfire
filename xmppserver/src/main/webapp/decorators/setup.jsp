@@ -104,6 +104,8 @@
 <head>
     <title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
 
+    <link rel="stylesheet" href="style/framework/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/fontawesome.min.css" type="text/css">
     <style type="text/css" title="setupStyle" media="screen">
         @import "../style/global.css";
         @import "../style/setup.css";
@@ -234,6 +236,9 @@
         </div>
     </div>
 <!-- END jive-footer -->
-
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script language="JavaScript" type="text/javascript" src="js/framework/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="js/framework/popper.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="js/framework/bootstrap.min.js"></script>
 </body>
 </html>

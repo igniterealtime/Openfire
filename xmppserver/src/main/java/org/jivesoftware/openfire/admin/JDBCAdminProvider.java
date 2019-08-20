@@ -26,7 +26,9 @@ import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.user.JDBCUserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -63,6 +65,9 @@ import org.xmpp.packet.JID;
  * <li>{@code jdbcAdminProvider.useConnectionProvider = true}</li>
  * </ul>
  *
+ * XMPP disallows some characters in identifiers (notably: JID node-parts), requiring them to be escaped. This
+ * implementation assumes that the database returns properly escaped identifiers, but can apply escaping by
+ * setting the value of the {@code jdbcAdminProvider.isEscaped} property to 'false'.
  *
  * @author Robert Marcano
  */
@@ -70,13 +75,36 @@ public class JDBCAdminProvider implements AdminProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCAdminProvider.class);
 
-    private final String getAdminsSQL;
-    private final String insertAdminsSQL;
-    private final String deleteAdminsSQL;
-    private final String xmppDomain;
-    private final boolean useConnectionProvider;
+    public static final SystemProperty<Boolean> useConnectionProvider = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcAdminProvider.useConnectionProvider")
+        .setDefaultValue( false )
+        .setDynamic( false )
+        .build();
 
-    private String connectionString;
+    public static final SystemProperty<Boolean> dataIsEscaped = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcAdminProvider.dataIsEscaped")
+        .setDefaultValue( true )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> getAdminsSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAdminProvider.getAdminsSQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> insertAdminsSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAdminProvider.insertAdminsSQL")
+        .setDefaultValue( "" )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> deleteAdminsSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcAdminProvider.deleteAdminsSQL")
+        .setDefaultValue( "" )
+        .setDynamic( false )
+        .build();
+
+    private final String xmppDomain;
 
     /**
      * Constructs a new JDBC admin provider.
@@ -88,38 +116,17 @@ public class JDBCAdminProvider implements AdminProvider {
         JiveGlobals.migrateProperty("jdbcAdminProvider.getAdminsSQL");
 
         xmppDomain = XMPPServerInfo.XMPP_DOMAIN.getValue();
-        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAdminProvider.useConnectionProvider");
 
-        // Load database statement for reading admin list
-        getAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.getAdminsSQL");
-        insertAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.insertAdminsSQL", "");
-        deleteAdminsSQL = JiveGlobals.getProperty("jdbcAdminProvider.deleteAdminsSQL", "");
-
-        // Load the JDBC driver and connection string
-        if (!useConnectionProvider) {
+        // Load the JDBC driver and connection string.
+        if (!useConnectionProvider.getValue()) {
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
                 Class.forName(jdbcDriver).newInstance();
-            } catch (Exception e) {
-                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-                return;
             }
-            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
+            catch (Exception e) {
+                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+            }
         }
-    }
-
-    /**
-     * XMPP disallows some characters in identifiers, requiring them to be escaped.
-     *
-     * This implementation assumes that the database returns properly escaped identifiers,
-     * but can apply escaping by setting the value of the 'jdbcAdminProvider.isEscaped'
-     * property to 'false'.
-     *
-     * @return 'false' if this implementation needs to escape database content before processing.
-     */
-    protected boolean assumePersistedDataIsEscaped()
-    {
-        return JiveGlobals.getBooleanProperty( "jdbcAdminProvider.isEscaped", true );
     }
 
     @Override
@@ -132,12 +139,12 @@ public class JDBCAdminProvider implements AdminProvider {
         synchronized (getAdminsSQL) {
         try {
             con = getConnection();
-            pstmt = con.prepareStatement(getAdminsSQL);
+            pstmt = con.prepareStatement(getAdminsSQL.getValue());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 // OF-1837: When the database does not hold escaped data, escape values before processing them further.
                 final String username;
-                if (assumePersistedDataIsEscaped()) {
+                if (dataIsEscaped.getValue()) {
                     username = rs.getString(1);
                 } else {
                     username = JID.escapeNode( rs.getString(1) );
@@ -158,7 +165,7 @@ public class JDBCAdminProvider implements AdminProvider {
             try (final PreparedStatement pstmt = con.prepareStatement(sql)) {
                 for (final JID jid : admins) {
                     // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-                    final String queryValue = assumePersistedDataIsEscaped() ? jid.getNode() : JID.unescapeNode( jid.getNode() );
+                    final String queryValue = dataIsEscaped.getValue() ? jid.getNode() : JID.unescapeNode( jid.getNode() );
                     pstmt.setString(1, queryValue);
                     pstmt.execute();
                 }
@@ -181,8 +188,8 @@ public class JDBCAdminProvider implements AdminProvider {
             // Get a list of everyone in the current list not in the new list
             currentAdmins.removeAll(newAdmins);
             try (final Connection con = getConnection()) {
-                changeAdmins(con, insertAdminsSQL, adminsToAdd);
-                changeAdmins(con, deleteAdminsSQL, currentAdmins);
+                changeAdmins(con, insertAdminsSQL.getValue(), adminsToAdd);
+                changeAdmins(con, deleteAdminsSQL.getValue(), currentAdmins);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -191,13 +198,18 @@ public class JDBCAdminProvider implements AdminProvider {
 
     @Override
     public boolean isReadOnly() {
-        return insertAdminsSQL.isEmpty() || deleteAdminsSQL.isEmpty();
+        return insertAdminsSQL.getValue().isEmpty() || deleteAdminsSQL.getValue().isEmpty();
     }
 
-    private Connection getConnection() throws SQLException {
-        if (useConnectionProvider) {
+    private Connection getConnection() throws SQLException
+    {
+        if ( useConnectionProvider.getValue() )
+        {
             return DbConnectionManager.getConnection();
         }
-        return DriverManager.getConnection(connectionString);
+        else
+        {
+            return DriverManager.getConnection( JDBCUserProvider.connectionString.getValue() );
+        }
     }
 }

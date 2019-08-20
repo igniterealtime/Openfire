@@ -16,7 +16,9 @@
 package org.jivesoftware.openfire.user.property;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.user.JDBCUserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -42,10 +44,10 @@ import java.util.Map;
  * Then you need to set your driver, connection string and SQL statements:
  *
  * <ul>
- * <li>{@code jdbcUserPropertyProvider.driver = com.mysql.jdbc.Driver}</li>
- * <li>{@code jdbcUserPropertyProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
- * <li>{@code jdbcUserPropertyProvider.loadPropertySQL = SELECT propName, propValue FROM myUser WHERE user = ? AND propName = ?}</li>
- * <li>{@code jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propValue FROM myUser WHERE user = ?}</li>
+ * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
+ * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
+ * <li>{@code jdbcUserPropertyProvider.loadPropertySQL = SELECT propValue FROM myUser WHERE user = ? AND propName = ?}</li>
+ * <li>{@code jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propName, propValue FROM myUser WHERE user = ?}</li>
  * </ul>
  *
  * In order to use the configured JDBC connection provider do not use a JDBCconnection string, set the following
@@ -53,17 +55,37 @@ import java.util.Map;
  *
  * {@code jdbcUserPropertyProvider.useConnectionProvider = true}
  *
+ * XMPP disallows some characters in identifiers (notably: JID node-parts), requiring them to be escaped. This
+ * implementation assumes that the database returns properly escaped identifiers, but can apply escaping by
+ * setting the value of the {@code jdbcUserPropertyProvider.isEscaped} property to 'false'.
+ *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class JDBCUserPropertyProvider implements UserPropertyProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( JDBCUserPropertyProvider.class );
 
-    private String loadPropertySQL;
-    private String loadPropertiesSQL;
-    private String connectionString;
+    public static final SystemProperty<Boolean> useConnectionProvider = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcUserPropertyProvider.useConnectionProvider")
+        .setDefaultValue( false )
+        .setDynamic( false )
+        .build();
 
-    private boolean useConnectionProvider;
+    public static final SystemProperty<Boolean> dataIsEscaped = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcUserPropertyProvider.dataIsEscaped")
+        .setDefaultValue( true )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> loadPropertySQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserPropertyProvider.loadPropertySQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> loadPropertiesSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserPropertyProvider.loadPropertiesSQL")
+        .setDynamic( false )
+        .build();
 
     /**
      * Constructs a new JDBC user property provider.
@@ -71,57 +93,30 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
     public JDBCUserPropertyProvider()
     {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.driver" );
-        JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.connectionString" );
         JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.loadPropertySQL" );
         JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.loadPropertiesSQL" );
 
-        useConnectionProvider = JiveGlobals.getBooleanProperty( "jdbcUserProvider.useConnectionProvider" );
-
         // Load the JDBC driver and connection string.
-        if ( !useConnectionProvider )
-        {
-            String jdbcDriver = JiveGlobals.getProperty( "jdbcUserPropertyProvider.driver" );
-            try
-            {
-                Class.forName( jdbcDriver ).newInstance();
+        if (!useConnectionProvider.getValue()) {
+            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
+            try {
+                Class.forName(jdbcDriver).newInstance();
             }
-            catch ( Exception e )
-            {
-                Log.error( "Unable to load JDBC driver: " + jdbcDriver, e );
-                return;
+            catch (Exception e) {
+                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
             }
-            connectionString = JiveGlobals.getProperty( "jdbcProvider.connectionString" );
         }
-
-        // Load database statements for user data.
-        loadPropertySQL = JiveGlobals.getProperty( "jdbcUserPropertyProvider.loadPropertySQL" );
-        loadPropertiesSQL = JiveGlobals.getProperty( "jdbcUserPropertyProvider.loadPropertiesSQL" );
-    }
-
-    /**
-     * XMPP disallows some characters in identifiers, requiring them to be escaped.
-     *
-     * This implementation assumes that the database returns properly escaped identifiers,
-     * but can apply escaping by setting the value of the 'jdbcUserPropertyProvider.isEscaped'
-     * property to 'false'.
-     *
-     * @return 'false' if this implementation needs to escape database content before processing.
-     */
-    protected boolean assumePersistedDataIsEscaped()
-    {
-        return JiveGlobals.getBooleanProperty( "jdbcUserPropertyProvider.isEscaped", true );
     }
 
     private Connection getConnection() throws SQLException
     {
-        if ( useConnectionProvider )
+        if ( useConnectionProvider.getValue() )
         {
             return DbConnectionManager.getConnection();
         }
         else
         {
-            return DriverManager.getConnection( connectionString );
+            return DriverManager.getConnection( JDBCUserProvider.connectionString.getValue() );
         }
     }
 
@@ -133,12 +128,12 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         ResultSet rs = null;
 
         // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+        final String queryValue = dataIsEscaped.getValue() ? username : JID.unescapeNode( username );
 
         try
         {
             con = getConnection();
-            pstmt = con.prepareStatement( loadPropertiesSQL );
+            pstmt = con.prepareStatement( loadPropertiesSQL.getValue() );
             pstmt.setString( 1, queryValue );
             rs = pstmt.executeQuery();
 
@@ -169,12 +164,12 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         ResultSet rs = null;
 
         // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+        final String queryValue = dataIsEscaped.getValue() ? username : JID.unescapeNode( username );
 
         try
         {
             con = getConnection();
-            pstmt = con.prepareStatement( loadPropertySQL );
+            pstmt = con.prepareStatement( loadPropertySQL.getValue() );
             pstmt.setString( 1, queryValue );
             pstmt.setString( 2, propName );
             rs = pstmt.executeQuery();

@@ -33,6 +33,7 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -71,6 +72,9 @@ import org.xmpp.packet.JID;
  * <li>{@code jdbcUserProvider.useConnectionProvider = true}</li>
  * </ul>
  *
+ * XMPP disallows some characters in identifiers (notably: JID node-parts), requiring them to be escaped. This
+ * implementation assumes that the database returns properly escaped identifiers, but can apply escaping by
+ * setting the value of the {@code jdbcUserProvider.isEscaped} property to 'false'.
  *
  * @author Huw Richards huw.richards@gmail.com
  */
@@ -78,17 +82,59 @@ public class JDBCUserProvider implements UserProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCUserProvider.class);
 
-    private String connectionString;
+    public static final SystemProperty<String> connectionString = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcProvider.connectionString")
+        .setDynamic( false )
+        .build();
 
-    private String loadUserSQL;
-    private String userCountSQL;
-    private String allUsersSQL;
-    private String searchSQL;
-    private String usernameField;
-    private String nameField;
-    private String emailField;
-    private boolean useConnectionProvider;
-    private static final boolean IS_READ_ONLY = true;
+    public static final SystemProperty<Boolean> useConnectionProvider = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcUserProvider.useConnectionProvider")
+        .setDefaultValue( false )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<Boolean> dataIsEscaped = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("jdbcUserProvider.dataIsEscaped")
+        .setDefaultValue( true )
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> loadUserSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.loadUserSQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> userCountSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.userCountSQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> allUsersSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.allUsersSQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> searchSQL = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.searchSQL")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> usernameField = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.usernameField")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> nameField = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.nameField")
+        .setDynamic( false )
+        .build();
+
+    public static final SystemProperty<String> emailField = SystemProperty.Builder.ofType( String.class )
+        .setKey("jdbcUserProvider.emailField")
+        .setDynamic( false )
+        .build();
+
+    public static final boolean IS_READ_ONLY = true;
 
     /**
      * Constructs a new JDBC user provider.
@@ -105,43 +151,16 @@ public class JDBCUserProvider implements UserProvider {
         JiveGlobals.migrateProperty("jdbcUserProvider.nameField");
         JiveGlobals.migrateProperty("jdbcUserProvider.emailField");
 
-        useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcUserProvider.useConnectionProvider");
-
-            // Load the JDBC driver and connection string.
-        if (!useConnectionProvider) {
+        // Load the JDBC driver and connection string.
+        if (!useConnectionProvider.getValue()) {
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
                 Class.forName(jdbcDriver).newInstance();
             }
             catch (Exception e) {
                 Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-                return;
             }
-            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
         }
-
-        // Load database statements for user data.
-        loadUserSQL = JiveGlobals.getProperty("jdbcUserProvider.loadUserSQL");
-        userCountSQL = JiveGlobals.getProperty("jdbcUserProvider.userCountSQL");
-        allUsersSQL = JiveGlobals.getProperty("jdbcUserProvider.allUsersSQL");
-        searchSQL = JiveGlobals.getProperty("jdbcUserProvider.searchSQL");
-        usernameField = JiveGlobals.getProperty("jdbcUserProvider.usernameField");
-        nameField = JiveGlobals.getProperty("jdbcUserProvider.nameField");
-        emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
-    }
-
-    /**
-     * XMPP disallows some characters in identifiers, requiring them to be escaped.
-     *
-     * This implementation assumes that the database returns properly escaped identifiers,
-     * but can apply escaping by setting the value of the 'jdbcUserProvider.isEscaped'
-     * property to 'false'.
-     *
-     * @return 'false' if this implementation needs to escape database content before processing.
-     */
-    protected boolean assumePersistedDataIsEscaped()
-    {
-        return JiveGlobals.getBooleanProperty( "jdbcUserProvider.isEscaped", true );
     }
 
     @Override
@@ -154,14 +173,14 @@ public class JDBCUserProvider implements UserProvider {
         }
 
         // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
-        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+        final String queryValue = dataIsEscaped.getValue() ? username : JID.unescapeNode( username );
 
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = getConnection();
-            pstmt = con.prepareStatement(loadUserSQL);
+            pstmt = con.prepareStatement(loadUserSQL.getValue());
             pstmt.setString(1, queryValue);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
@@ -200,7 +219,7 @@ public class JDBCUserProvider implements UserProvider {
         ResultSet rs = null;
         try {
             con = getConnection();
-            pstmt = con.prepareStatement(userCountSQL);
+            pstmt = con.prepareStatement(userCountSQL.getValue());
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
@@ -235,7 +254,7 @@ public class JDBCUserProvider implements UserProvider {
             con = getConnection();
             if ((startIndex==0) && (numResults==Integer.MAX_VALUE))
             {
-                pstmt = con.prepareStatement(allUsersSQL);
+                pstmt = con.prepareStatement(allUsersSQL.getValue());
                 // Set the fetch size. This will prevent some JDBC drivers from trying
                 // to load the entire result set into memory.
                 DbConnectionManager.setFetchSize(pstmt, 500);
@@ -243,7 +262,7 @@ public class JDBCUserProvider implements UserProvider {
                 while (rs.next()) {
                     // OF-1837: When the database does not hold escaped data, escape values before processing them further.
                     final String username;
-                    if (assumePersistedDataIsEscaped()) {
+                    if (dataIsEscaped.getValue()) {
                         username = rs.getString(1);
                     } else {
                         username = JID.escapeNode( rs.getString(1) );
@@ -252,7 +271,7 @@ public class JDBCUserProvider implements UserProvider {
                 }
             }
             else {
-                pstmt = DbConnectionManager.createScrollablePreparedStatement(con, allUsersSQL);
+                pstmt = DbConnectionManager.createScrollablePreparedStatement(con, allUsersSQL.getValue());
                 DbConnectionManager.limitRowsAndFetchSize(pstmt, startIndex, numResults);
                 rs = pstmt.executeQuery();
                 DbConnectionManager.scrollResultSet(rs, startIndex);
@@ -260,7 +279,7 @@ public class JDBCUserProvider implements UserProvider {
                 while (rs.next() && count < numResults) {
                     // OF-1837: When the database does not hold escaped data, escape values before processing them further.
                     final String username;
-                    if (assumePersistedDataIsEscaped()) {
+                    if (dataIsEscaped.getValue()) {
                         username = rs.getString(1);
                     } else {
                         username = JID.escapeNode( rs.getString(1) );
@@ -469,11 +488,11 @@ public class JDBCUserProvider implements UserProvider {
     }
 
     private Connection getConnection() throws SQLException {
-        if (useConnectionProvider) {
+        if (useConnectionProvider.getValue()) {
             return DbConnectionManager.getConnection();
         } else
         {
-            return DriverManager.getConnection(connectionString);
+            return DriverManager.getConnection(connectionString.getValue());
         }
     }
 }

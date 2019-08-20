@@ -108,6 +108,20 @@ public class JDBCAdminProvider implements AdminProvider {
         }
     }
 
+    /**
+     * XMPP disallows some characters in identifiers, requiring them to be escaped.
+     *
+     * This implementation assumes that the database returns properly escaped identifiers,
+     * but can apply escaping by setting the value of the 'jdbcAdminProvider.isEscaped'
+     * property to 'false'.
+     *
+     * @return 'false' if this implementation needs to escape database content before processing.
+     */
+    protected boolean assumePersistedDataIsEscaped()
+    {
+        return JiveGlobals.getBooleanProperty( "jdbcAdminProvider.isEscaped", true );
+    }
+
     @Override
     public List<JID> getAdmins() {
         Connection con = null;
@@ -121,8 +135,14 @@ public class JDBCAdminProvider implements AdminProvider {
             pstmt = con.prepareStatement(getAdminsSQL);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                String name = rs.getString(1);
-                jids.add(new JID(name + "@" + xmppDomain));
+                // OF-1837: When the database does not hold escaped data, escape values before processing them further.
+                final String username;
+                if (assumePersistedDataIsEscaped()) {
+                    username = rs.getString(1);
+                } else {
+                    username = JID.escapeNode( rs.getString(1) );
+                }
+                jids.add(new JID(username + "@" + xmppDomain));
             }
             return jids;
         } catch (SQLException e) {
@@ -137,7 +157,9 @@ public class JDBCAdminProvider implements AdminProvider {
         if (!admins.isEmpty()) {
             try (final PreparedStatement pstmt = con.prepareStatement(sql)) {
                 for (final JID jid : admins) {
-                    pstmt.setString(1, jid.getNode());
+                    // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+                    final String queryValue = assumePersistedDataIsEscaped() ? jid.getNode() : JID.unescapeNode( jid.getNode() );
+                    pstmt.setString(1, queryValue);
                     pstmt.execute();
                 }
             }

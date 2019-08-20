@@ -46,6 +46,7 @@ import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The JDBC auth provider allows you to authenticate users against any database
@@ -162,7 +163,21 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             java.security.Security.addProvider(new BouncyCastleProvider());
         }
     }
-    
+
+    /**
+     * XMPP disallows some characters in identifiers, requiring them to be escaped.
+     *
+     * This implementation assumes that the database returns properly escaped identifiers,
+     * but can apply escaping by setting the value of the 'jdbcAuthProvider.isEscaped'
+     * property to 'false'.
+     *
+     * @return 'false' if this implementation needs to escape database content before processing.
+     */
+    protected boolean assumePersistedDataIsEscaped()
+    {
+        return JiveGlobals.getBooleanProperty( "jdbcAuthProvider.isEscaped", true );
+    }
+
     private void setPasswordTypes(String passwordTypeProperty){
         Collection<String> passwordTypeStringList = StringUtils.stringToCollection(passwordTypeProperty);
         List<PasswordType> passwordTypeList = new ArrayList<>(passwordTypeStringList.size());
@@ -346,7 +361,10 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         try {
             con = getConnection();
             pstmt = con.prepareStatement(passwordSQL);
-            pstmt.setString(1, username);
+
+            // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+            final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+            pstmt.setString(1, queryValue);
 
             rs = pstmt.executeQuery();
 
@@ -384,7 +402,11 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         try {
             con = getConnection();
             pstmt = con.prepareStatement(setPasswordSQL);
-            pstmt.setString(2, username);
+
+            // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+            final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+            pstmt.setString(2, queryValue);
+
             password = hashPassword(password);
             pstmt.setString(1, password);
             pstmt.executeQuery();

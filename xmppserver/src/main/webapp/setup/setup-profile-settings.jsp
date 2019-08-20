@@ -1,7 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%--
---%>
-
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Map" %>
@@ -10,7 +7,6 @@
 <%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
-<%@ page import="org.jivesoftware.openfire.auth.AuthProvider" %>
 <%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
 <%@ page import="org.jivesoftware.openfire.vcard.VCardManager" %>
 
@@ -72,6 +68,10 @@
             return;
         }
     }
+
+    pageContext.setAttribute( "sessionFailure", sessionFailure );
+    pageContext.setAttribute( "isLDAP", isLDAP );
+    pageContext.setAttribute( "scramOnly", scramOnly );
 %>
 <html>
 <head>
@@ -88,11 +88,11 @@
     <fmt:message key="setup.profile.description" />
     </p>
 
-<% if (sessionFailure) { %>
-            <span class="jive-error-text">
+    <c:if test="${sessionFailure}">
+        <span class="jive-error-text">
             <fmt:message key="setup.invalid_session" />
-            </span>
-<% } %>
+        </span>
+    </c:if>
 
     <!-- BEGIN jive-contentBox -->
     <div class="jive-contentBox">
@@ -101,7 +101,7 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP) { %>checked<% } %>>
+        <input type="radio" name="mode" value="default" id="rb01" ${not isLDAP ? 'checked' : ''}>
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
@@ -110,7 +110,7 @@
 </tr>
 <tr>
     <td align="center" valign="top">
-        <input type="checkbox" name="scramOnly" value="scramOnly" id="rb01-0" <% if (scramOnly) { %>checked<% } %>>
+        <input type="checkbox" name="scramOnly" value="scramOnly" id="rb01-0" ${scramOnly ? 'checked' : ''}>
     </td>
     <td>
         <label for="rb01-0"><b><fmt:message key="setup.profile.default.scramOnly" /></b></label><br>
@@ -119,7 +119,7 @@
 </tr>
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="ldap" id="rb02" <% if (isLDAP) { %>checked<% } %>>
+        <input type="radio" name="mode" value="ldap" id="rb02" ${isLDAP ? 'checked' : ''}>
     </td>
     <td>
         <label for="rb02"><b><fmt:message key="setup.profile.ldap" /></b></label><br>

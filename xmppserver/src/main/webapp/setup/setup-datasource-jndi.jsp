@@ -1,72 +1,23 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%--
---%>
-
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 java.util.HashMap,
-                 javax.naming.Context,
-                 javax.naming.NamingEnumeration,
-                 javax.naming.InitialContext,
-                 javax.naming.Binding,
-                 org.jivesoftware.util.JiveGlobals,
+<%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider,
-                 org.jivesoftware.database.DbConnectionManager" %>
-<%@ page import="org.jivesoftware.util.ClassUtils"%>
+                 org.jivesoftware.openfire.XMPPServer,
+                 javax.naming.Binding,
+                 javax.naming.Context" %>
+<%@ page import="javax.naming.InitialContext"%>
+<%@ page import="javax.naming.NamingEnumeration"%>
+<%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.sql.Connection"%>
-<%@ page import="java.io.File"%>
-<%@ page import="java.sql.Statement"%>
-<%@ page import="java.sql.SQLException"%>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.util.*" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Redirect if we've already run setup:
     if (!XMPPServer.getInstance().isSetupMode()) {
         response.sendRedirect("setup-completed.jsp");
         return;
-    }
-%>
-
-<%!
-    boolean testConnection(Map<String,String> errors) {
-        boolean success = true;
-        Connection con = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            if (con == null) {
-                success = false;
-                errors.put("general","A connection to the database could not be "
-                    + "made. View the error message by opening the "
-                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
-                    + "file, then go back to fix the problem.");
-            }
-            else {
-                // See if the Jive db schema is installed.
-                try {
-                    Statement stmt = con.createStatement();
-                    // Pick an arbitrary table to see if it's there.
-                    stmt.executeQuery("SELECT * FROM ofID");
-                    stmt.close();
-                }
-                catch (SQLException sqle) {
-                    success = false;
-                    sqle.printStackTrace();
-                    errors.put("general","The Openfire database schema does not "
-                        + "appear to be installed. Follow the installation guide to "
-                        + "fix this error.");
-                }
-            }
-        }
-        catch (Exception ignored) {}
-        finally {
-            try {
-                con.close();
-            } catch (Exception ignored) {}
-        }
-        return success;
     }
 %>
 
@@ -88,10 +39,26 @@
 <%  // Get parameters
     String jndiName = ParamUtils.getParameter(request,"jndiName");
     String jndiNameMode = ParamUtils.getParameter(request,"jndiNameMode");
+    boolean doContinue = request.getParameter("continue") != null;
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
     // Handle a continue request:
-    Map<String,String> errors = new HashMap<String,String>();
-    if (request.getParameter("continue") != null) {
+    Map<String,String> errors = new HashMap<>();
+
+    if (doContinue) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            doContinue = false;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (doContinue) {
         String lookupName = null;
         // Validate the fields:
         if ("custom".equals(jndiNameMode) && jndiName == null) {
@@ -116,7 +83,7 @@
             // Set the provider in the connection manager
             DbConnectionManager.setConnectionProvider(conProvider);
             // Try to establish a connection to the datasource
-            if (testConnection(errors)) {
+            if (DbConnectionManager.testConnection(errors)) {
                 // Finished, so redirect
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
@@ -124,6 +91,8 @@
         }
     }
     pageContext.setAttribute("localizedShortTitle", LocaleUtils.getLocalizedString("short.title") );
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("jndiName", jndiName);
 %>
 
 <html>
@@ -144,73 +113,66 @@
 </fmt:message>
 </p>
 
-<%  if (errors.size() > 0 && errors.get("jndiName") == null) { %>
-
+<c:if test="${not empty errors and empty errors['jndiName']}">
     <p class="jive-error-text">
-    <%= errors.get("general") %>
+        <c:out value="${errors['general']}"/>
     </p>
-
-<%  } %>
+</c:if>
 
 <form action="setup-datasource-jndi.jsp" name="jndiform" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <%  boolean isLookupNames = false;
     Context context = null;
-    NamingEnumeration ne = null;
+    NamingEnumeration<Binding> ne = null;
     try {
         context = new InitialContext();
         ne = context.listBindings("java:comp/env/jdbc");
         isLookupNames = ne.hasMore();
     }
     catch (Exception e) {}
+
+    pageContext.setAttribute( "isLookupNames", isLookupNames );
+    pageContext.setAttribute( "namingEnumeration", ne );
+
 %>
 
-<%  if (!isLookupNames) { %>
-
-    <fmt:message key="setup.datasource.jndi.name" />
-    <input type="text" name="jndiName" size="30" maxlength="100"
-     value="<%= ((jndiName!=null) ? jndiName : "") %>">
-
-<%  } else { %>
+<c:choose>
+    <c:when test="${isLookupNames}">
+        <label for="jndiName">fmt:message key="setup.datasource.jndi.name" /></label>
+        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}">
+    </c:when>
+    <c:otherwise>
 
     <table cellpadding="3" cellspacing="3" border="0">
     <tr>
         <td><input type="radio" name="jndiNameMode" value="custom"></td>
         <td>
-            <span onclick="document.jndiform.jndiName.focus();"
-            ><fmt:message key="setup.datasource.jndi.custom" /></span>
+            <span onclick="document.jndiform.jndiName.focus();"><label for="jndiName"><fmt:message key="setup.datasource.jndi.custom" /></label></span>
             &nbsp;
-            <input type="text" name="jndiName" size="30" maxlength="100"
-             value="<%= ((jndiName!=null) ? jndiName : "") %>"
-             onfocus="this.form.jndiNameMode[0].checked=true;">
-            <%  if (errors.get("jndiName") != null) { %>
-
+            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}" onfocus="this.form.jndiNameMode[0].checked=true;">
+            <c:if test="${not empty errors['jndiName']}">
                 <span class="jive-error-text"><br>
-                <fmt:message key="setup.datasource.jndi.valid_name" />
+                    <fmt:message key="setup.datasource.jndi.valid_name" />
                 </span>
-
-            <%  } %>
+            </c:if>
         </td>
     </tr>
-        <%  int i = 0;
-            while (ne != null && ne.hasMore()) {
-                i++;
-                Binding binding = (Binding)ne.next();
-                String name = "java:comp/env/jdbc/" + binding.getName();
-                String display = "java:comp/env/jdbc/<b>" + binding.getName() + "</b>";
-        %>
+    <c:if test="${not empty namingEnumeration}">
+        <c:forEach items="${namingEnumeration}" var="binding" varStatus="status">
             <tr>
-                <td><input type="radio" name="jndiNameMode" value="<%= name %>" id="rb<%= i %>"></td>
+                <td><input type="radio" name="jndiNameMode" value="java:comp/env/jdbc/${binding.name}" id="rb${status.index}"></td>
                 <td>
-                    <label for="rb<%= i %>" style="font-weight:normal"
-                     ><%= display %></label>
+                    <label for="rb${status.index}" style="font-weight:normal"
+                    >java:comp/env/jdbc/<b><c:out value="${binding.name}"/></b></label>
                 </td>
             </tr>
-
-        <%  } %>
+        </c:forEach>
+    </c:if>
     </table>
 
-<%  } %>
+    </c:otherwise>
+</c:choose>
 
 <br><br>
 

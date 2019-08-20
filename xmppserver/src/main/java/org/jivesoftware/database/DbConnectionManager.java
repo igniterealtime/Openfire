@@ -16,6 +16,7 @@
 
 package org.jivesoftware.database;
 
+import java.io.File;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -27,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.MissingResourceException;
 
 import org.jivesoftware.util.ClassUtils;
@@ -107,6 +109,45 @@ public class DbConnectionManager {
                 setConnectionProvider(new DefaultConnectionProvider());
             }
         }
+    }
+
+    /**
+     * Attempts to create a connection to the database and execute a query.
+     *
+     * @param errors A map populated with errors if they occur.
+     * @return true if the test was successful, otherwise false.
+     */
+    public static boolean testConnection( Map<String,String> errors ) {
+        boolean success = true;
+        try ( final Connection con = DbConnectionManager.getConnection() )
+        {
+            // See if the Jive db schema is installed.
+            try
+            {
+                Statement stmt = con.createStatement();
+                // Pick an arbitrary table to see if it's there.
+                stmt.executeQuery( "SELECT * FROM ofID" );
+                stmt.close();
+            }
+            catch ( SQLException sqle )
+            {
+                success = false;
+                Log.error( "The Openfire database schema does not appear to be installed.", sqle );
+                errors.put( "general", "The Openfire database schema does not "
+                    + "appear to be installed. Follow the installation guide to "
+                    + "fix this error." );
+            }
+        }
+        catch ( SQLException exception )
+        {
+            success = false;
+            Log.error( "Unable to connect to the database.", exception );
+            errors.put( "general", "A connection to the database could not be "
+                + "made. View the error message by opening the "
+                + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                + "file, then go back to fix the problem." );
+        }
+        return success;
     }
 
     /**

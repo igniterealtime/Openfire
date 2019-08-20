@@ -229,5 +229,10 @@
         <function-class>org.jivesoftware.util.JiveGlobals</function-class>
         <function-signature>java.lang.String formatTime(java.util.Date)</function-signature>
     </function>
+    <function>
+        <name>chopAtWord</name>
+        <function-class>org.jivesoftware.util.StringUtils</function-class>
+        <function-signature>java.lang.String chopAtWord(java.lang.String,int)</function-signature>
+    </function>
 
 </taglib>

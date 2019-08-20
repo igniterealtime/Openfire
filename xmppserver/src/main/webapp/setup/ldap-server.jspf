@@ -7,39 +7,58 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="java.util.StringTokenizer" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%
+    // These variables will either hold the current value as configured
+    // in the manager, or the values that are under test or being modified,
+    // when the end-user is performing tests / changing settings
     String host;
-    int port = 389;
+    int port;
     String baseDN;
     String adminDN;
     String adminPassword;
-    boolean connectionPoolEnabled = true;
-    boolean sslEnabled = false;
-    boolean startTlsEnabled = false;
-    boolean debugEnabled = false;
-    boolean referralsEnabled = false;
-    boolean aliasReferralsEnabled = true;
-    boolean encloseDNs = true;
+    boolean connectionPoolEnabled;
+    boolean sslEnabled;
+    boolean startTlsEnabled;
+    boolean debugEnabled;
+    boolean referralsEnabled;
+    boolean aliasReferralsEnabled;
+    boolean encloseDNs;
 
-    @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+    Map<String, String> errors = new HashMap<>();
+
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
     // Get parameters
     boolean save = request.getParameter("save") != null;
     boolean test = request.getParameter("test") != null;
 
+    if ( save || test ) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            test = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     LdapManager manager = LdapManager.getInstance();
-    Map<String, String> errors = new HashMap<>();
 
     if (save || test) {
         host = ParamUtils.getParameter(request, "host");
         if (host == null) {
             errors.put("host", LocaleUtils.getLocalizedString("setup.ldap.server.host_error"));
         }
-        port = ParamUtils.getIntParameter(request, "port", port);
+        port = ParamUtils.getIntParameter(request, "port", manager.getPort());
         if (port <= 0) {
             errors.put("port", LocaleUtils.getLocalizedString("setup.ldap.server.port_error"));
         }
@@ -49,15 +68,14 @@
         }
         adminDN = ParamUtils.getParameter(request, "admindn");
         adminPassword = ParamUtils.getParameter(request, "adminpwd");
-        connectionPoolEnabled =
-                ParamUtils.getBooleanParameter(request, "connectionpool", connectionPoolEnabled);
-        sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", sslEnabled);
-        startTlsEnabled = ParamUtils.getBooleanParameter(request, "starttls", startTlsEnabled);
-        debugEnabled = ParamUtils.getBooleanParameter(request, "debug", debugEnabled);
-        referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", referralsEnabled);
-        aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", aliasReferralsEnabled);
-        encloseDNs = ParamUtils.getBooleanParameter(request, "enclosedns", encloseDNs);
-    
+        connectionPoolEnabled = ParamUtils.getBooleanParameter(request, "connectionpool", manager.isConnectionPoolEnabled());
+        sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", manager.isSslEnabled());
+        startTlsEnabled = ParamUtils.getBooleanParameter(request, "starttls", manager.isStartTlsEnabled());
+        debugEnabled = ParamUtils.getBooleanParameter(request, "debug", manager.isDebugEnabled());
+        referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", manager.isFollowReferralsEnabled());
+        aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", manager.isFollowAliasReferralsEnabled());
+        encloseDNs = ParamUtils.getBooleanParameter(request, "enclosedns", manager.isEnclosingDNs());
+
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
             Map<String, String> settings = new HashMap<>();
@@ -102,7 +120,7 @@
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
                 manager.setIsEnclosingDNs(encloseDNs);
-                
+
                 // Save the settings for later, if we're in setup
                 if (xmppSettings != null) {
                     xmppSettings.put("ldap.host", host);
@@ -156,24 +174,34 @@
         encloseDNs = manager.isEnclosingDNs();
     }
 
-    pageContext.setAttribute("host", host );
-    pageContext.setAttribute("port", port );
-    pageContext.setAttribute("baseDN", baseDN );
+    // These hold the values that are either under test, or are stored in the manager when not testing.
+    pageContext.setAttribute("host", host);
+    pageContext.setAttribute("port", port);
+    pageContext.setAttribute("baseDN", baseDN);
     pageContext.setAttribute("adminDN", adminDN );
     pageContext.setAttribute("adminPassword", adminPassword );
+    pageContext.setAttribute("connectionPoolEnabled", connectionPoolEnabled );
+    pageContext.setAttribute("sslEnabled", sslEnabled );
+    pageContext.setAttribute("startTlsEnabled", startTlsEnabled );
+    pageContext.setAttribute("debugEnabled", debugEnabled );
+    pageContext.setAttribute("followReferralsEnabled", referralsEnabled );
+    pageContext.setAttribute("followAliasReferralsEnabled", aliasReferralsEnabled );
+    pageContext.setAttribute("enclosingDNs", encloseDNs );
+
+    pageContext.setAttribute("test", test);
+    pageContext.setAttribute("errors", errors);
 %>
 <html>
 <head>
     <title><fmt:message key="setup.ldap.title" /></title>
-    <% for (Map.Entry<String, String> entry : meta.entrySet()) { %>
-    <meta name="<%= entry.getKey()%>" content="<%= entry.getValue()%>"/>
-    <% } %>
+    <c:forEach items="${meta}" var="entry">
+        <meta name="${entry.key}" content="${entry.value}"/>
+    </c:forEach>
 </head>
 <body>
 
-    <% if (test && errors.isEmpty()) { %>
-
-        <a href="<%= testPage%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+    <c:if test="${empty errors and test}">
+        <a href="${testPage}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -181,12 +209,11 @@
             }
             setTimeout('loadMsg()', 500);
         </script>
+    </c:if>
 
-    <% } %>
-
-    <% if (initialSetup) { %>
-    <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
-    <% } %>
+    <c:if test="${initialSetup}">
+        <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h1>
+    </c:if>
 
     <!-- BEGIN jive-contentBox_stepbar -->
     <div id="jive-contentBox_stepbar">
@@ -202,36 +229,36 @@
     <h2><fmt:message key="setup.ldap.step_one" />: <span><fmt:message key="setup.ldap.connection_settings" /></span></h2>
     <p><fmt:message key="setup.ldap.server.description" /></p>
 
-    <%  if (errors.size() > 0) { %>
+    <c:if test="${not empty errors}">
+        <div class="error">
+            <c:forEach var="err" items="${errors}">
+                <c:out value="${err.value}"/><br/>
+            </c:forEach>
+        </div>
+    </c:if>
 
-    <div class="error">
-        <% for (String error:errors.values()) { %>
-            <%= error%><br/>
-        <% } %>
-    </div>
+    <form action="${currentPage}" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
 
-    <%  } %>
-
-    <form action="<%= currentPage%>" method="post">
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
             <table border="0" cellpadding="0" cellspacing="2">
             <tr>
                 <td colspan="4"><strong><fmt:message key="setup.ldap.server.ldap_server" /></strong></td>
             </tr>
-            <% if (initialSetup) { %>
+            <c:if test="${initialSetup}">
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.type" />:</td>
                 <td colspan="3" nowrap>
                     <select name="serverType" size="1" id="jiveLDAPserverType" style="width:90%;">
-                        <option value="" <%= serverType == null ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_select" /></option>
-                        <option value="activedirectory" <%= "activedirectory".equals(serverType) ? "selected" : "" %>>Active Directory</option>
-                        <option value="openldap" <%= "openldap".equals(serverType) ? "selected" : "" %>>OpenLDAP</option>
-                        <option value="other" <%= "other".equals(serverType) ? "selected" : "" %>><fmt:message key="setup.ldap.server.type_other" /></option>
+                        <option value="" ${empty serverType ? "selected" : ""}><fmt:message key="setup.ldap.server.type_select" /></option>
+                        <option value="activedirectory" ${'activedirectory' eq serverType ? "selected" : ""}>Active Directory</option>
+                        <option value="openldap" ${'openldap' eq serverType ? "selected" : ""}>OpenLDAP</option>
+                        <option value="other" ${'other' eq serverType ? "selected" : ""}><fmt:message key="setup.ldap.server.type_other" /></option>
                     </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
                 </td>
             </tr>
-            <% } %>
+            </c:if>
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.host" />:</td>
                 <td width="1%">
@@ -247,12 +274,12 @@
                     </table>
                 </td>
                 <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.ldap.server.port" />:</td>
-                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="<c:out value="${port}"/>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="${fn:escapeXml(port)}"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
             </tr>
             <tr>
                 <td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
                 <td colspan="3">
-                    <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="300" value="<c:out value="${baseDN}"/>" style="width:90%;">
+                    <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="300" value="${fn:escapeXml(baseDN)}" style="width:90%;">
                     <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></span>
                 </td>
             </tr>
@@ -263,13 +290,13 @@
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.admindn" />:</td>
                 <td colspan="3">
-                    <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="<c:out value="${adminDN}"/>" style="width:90%;">
+                    <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="${fn:escapeXml(adminDN)}" style="width:90%;">
                     <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>
                 </td>
             </tr>
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.password" />:</td>
-                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="<c:out value="${adminPassword}"/>"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${fn:escapeXml(adminPassword)}"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
             </tr>
             </table>
         </div>
@@ -303,10 +330,10 @@
                         <fmt:message key="setup.ldap.server.connection_pool_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="connectionpool" value="true" <% if (connectionPoolEnabled) { %>checked <% } %>>
+                        <input type="radio" name="connectionpool" value="true" ${connectionPoolEnabled ? "checked" : ""}>
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="connectionpool" value="false" <% if (!connectionPoolEnabled) { %>checked <% } %>>
+                        <input type="radio" name="connectionpool" value="false" ${connectionPoolEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -317,10 +344,10 @@
                         <fmt:message key="setup.ldap.server.ssl_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="ssl" value="true" <% if (sslEnabled) { %>checked <% } %>>
+                        <input type="radio" name="ssl" value="true" ${sslEnabled ? "checked" : ""}>
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="ssl" value="false" <% if (!sslEnabled) { %>checked <% } %>>
+                        <input type="radio" name="ssl" value="false" ${sslEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -331,10 +358,9 @@
                         <fmt:message key="setup.ldap.server.starttls_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="starttls" value="true" <% if (startTlsEnabled) { %>checked <% } %>>
-                    </td>
+                        <input type="radio" name="starttls" value="true" ${startTlsEnabled ? "checked" : ""}>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="starttls" value="false" <% if (!startTlsEnabled) { %>checked <% } %>>
+                        <input type="radio" name="starttls" value="false" ${startTlsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -345,10 +371,10 @@
                         <fmt:message key="setup.ldap.server.debug_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="debug" value="true" <% if (debugEnabled) { %>checked <% } %>>
+                        <input type="radio" name="debug" value="true" ${debugEnabled ? "checked" : ""}>
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="debug" value="false" <% if (!debugEnabled) { %>checked <% } %>>
+                        <input type="radio" name="debug" value="false" ${debugEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -359,10 +385,10 @@
                         <fmt:message key="setup.ldap.server.referral_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="referrals" value="true" <% if (referralsEnabled) { %>checked <% } %>>
+                        <input type="radio" name="referrals" value="true" ${followReferralsEnabled ? "checked" : ""}>
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="referrals" value="false" <% if (!referralsEnabled) { %>checked <% } %>>
+                        <input type="radio" name="referrals" value="false" ${followReferralsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -373,10 +399,10 @@
                         <fmt:message key="setup.ldap.server.alias_dereference_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="aliasreferrals" value="true" <% if (aliasReferralsEnabled) { %>checked <% } %>>
+                        <input type="radio" name="aliasreferrals" value="true" ${followAliasReferralsEnabled ? "checked" : ""}>
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="aliasreferrals" value="false" <% if (!aliasReferralsEnabled) { %>checked <% } %>>
+                        <input type="radio" name="aliasreferrals" value="false" ${followAliasReferralsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>
@@ -387,12 +413,11 @@
                         <fmt:message key="setup.ldap.server.enclose_dns_help" />
                     </td>
                     <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="enclosedns" value="true" <% if (encloseDNs) { %>checked <% } %>>
-                    </td>
+                        <input type="radio" name="enclosedns" value="true" ${enclosingDNs ? "checked" : ""}>
                     <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="enclosedns" value="false" <% if (!encloseDNs) { %>checked <% } %>>
+                        <input type="radio" name="enclosedns" value="false" ${enclosingDNs ? "" : "checked"}>
                     </td>
-                </tr>                
+                </tr>
                 </tbody>
                 </table>
             </div>

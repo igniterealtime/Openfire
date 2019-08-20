@@ -1,23 +1,23 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.openfire.group.Group,
+<%@ page import="org.jivesoftware.openfire.pubsub.LeafNode,
                  org.jivesoftware.openfire.pubsub.Node,
-                 org.jivesoftware.openfire.pubsub.LeafNode,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo.listType,
-                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.xmpp.forms.DataForm,
-                 org.xmpp.forms.FormField,
-                 org.xmpp.forms.FormField.Type,
-                 org.xmpp.packet.JID,
-                 java.net.URLEncoder,
-                 java.util.*"
+                 java.util.ArrayList,
+                 java.util.HashMap,
+                 java.util.Map,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -26,6 +26,9 @@
     boolean update = ParamUtils.getParameter(request,"update") != null;
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    final Map<String, String> errors = new HashMap<>();
+
     boolean formSubmitted = false;
     if (csrfParam != null) {
         formSubmitted = true;
@@ -34,6 +37,7 @@
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
     csrfParam = StringUtils.randomString(15);
@@ -54,7 +58,7 @@
     // Load the node object
     Node node = pubSubServiceInfo.getNode(nodeID);
 
-    DataForm form = ((LeafNode) node).getConfigurationForm();
+    DataForm form = node.getConfigurationForm();
 
     //Field that will not be returned to the server, i.e. cannot be edited on this page
     ArrayList<String> nonReturnFields = new ArrayList<String>();
@@ -89,7 +93,7 @@
             webManager.logEvent("Configuration updated for " + nodeID, null);
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-edit.jsp?nodeID=" + nodeID + "&updateSuccess=true");
+        response.sendRedirect( "pubsub-node-edit.jsp?nodeID=" + URLEncoder.encode( nodeID, "UTF-8" ) + "&updateSuccess=true");
         return;
     }
 
@@ -102,8 +106,6 @@
     listTypes.put("pubsub#contact", listType.user);
     listTypes.put("pubsub#replyto", listType.user);
     listTypes.put("pubsub#roster_groups_allowed", listType.group);
-
-    Map<String,String> errors = new HashMap<>();
 
     pubSubServiceInfo.validateAdditions(form, request, listTypes, errors);
 
@@ -119,7 +121,7 @@
     <head>
         <title><fmt:message key="pubsub.node.edit.title"/></title>
         <meta name="subPageID" content="pubsub-node-edit"/>
-        <meta name="extraParams" content="nodeID=${node.nodeID}"/>
+        <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
         <script>
         function clearSelected(name){
             var elements = document.getElementById(name).options;
@@ -132,25 +134,35 @@
     </head>
     <body>
 
-<p>
-    <fmt:message key="pubsub.node.edit.info" />
-    <b>
-        <c:out value="${node.nodeID}"/>
-    </b>
-</p>
+    <c:choose>
+        <c:when test="${empty errors and param.updateSuccess}">
+            <admin:infobox type="success">
+                <fmt:message key="pubsub.node.edit.updated" />
+            </admin:infobox>
+        </c:when>
+        <c:otherwise>
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:otherwise>
+    </c:choose>
 
-<c:if test="${param.updateSuccess}">
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="pubsub.node.edit.updated" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-</c:if>
+    <p>
+        <fmt:message key="pubsub.node.edit.info" />
+        <b>
+            <c:out value="${node.nodeID}"/>
+        </b>
+    </p>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -167,13 +179,13 @@
     </thead>
     <tbody>
         <tr>
-            <td><c:out value="${node.getNodeID()}"/></td>
-            <td><c:out value="${node.getCreator()}"/></td>
-            <td><c:out value="${node.getPublishedItems().size()}"/></td>
-            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
-            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
+            <td><c:out value="${node.nodeID}"/></td>
+            <td><c:out value="${node.creator}"/></td>
+            <td><c:out value="${node.publishedItems.size()}"/></td>
+            <td><c:out value="${node.allAffiliates.size()}"/></td>
+            <td><c:out value="${node.allSubscriptions.size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.creationDate}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.modificationDate}" /></td>
         </tr>
     </tbody>
     </table>
@@ -182,7 +194,7 @@
 
 <form action="pubsub-node-edit.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="nodeID" value="${node.nodeID}">
+    <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
     <br>
 
 <fieldset>

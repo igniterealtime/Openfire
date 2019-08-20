@@ -364,6 +364,7 @@ public final class StringUtils {
                 catch (NoSuchAlgorithmException nsae) {
                     Log.error("Failed to load the " + algorithm + " MessageDigest. " +
                             "Jive will be unable to function normally.", nsae);
+                    nsae.printStackTrace();
                     return null;
                 }
             }

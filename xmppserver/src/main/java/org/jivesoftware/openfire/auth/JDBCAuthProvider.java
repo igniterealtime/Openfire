@@ -245,6 +245,9 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener
     
     // @VisibleForTesting
     protected boolean comparePasswords(String plainText, String hashed) {
+        if (passwordTypes.isEmpty()) {
+            throw new IllegalStateException( "passwordTypes cannot be null. setPasswordTypes should have been called." );
+        }
         int lastIndex = passwordTypes.size() - 1;
         if (passwordTypes.get(lastIndex) == PasswordType.bcrypt) {
             for (int i = 0; i < lastIndex; i++) {

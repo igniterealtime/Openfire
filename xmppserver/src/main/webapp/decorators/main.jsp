@@ -57,8 +57,8 @@
 <head>
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="style/framework/bootstrap.min.css" type="text/css">
-    <link rel="stylesheet" href="style/framework/fontawesome.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/prototype.js"></script>
     <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>

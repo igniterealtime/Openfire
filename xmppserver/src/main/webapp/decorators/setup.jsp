@@ -104,8 +104,8 @@
 <head>
     <title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
 
-    <link rel="stylesheet" href="style/framework/bootstrap.min.css" type="text/css">
-    <link rel="stylesheet" href="style/framework/fontawesome.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
     <style type="text/css" title="setupStyle" media="screen">
         @import "../style/global.css";
         @import "../style/setup.css";

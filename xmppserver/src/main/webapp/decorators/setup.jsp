@@ -101,25 +101,27 @@
 %>
 
 <html>
-<head>
-    <title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
+        <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
+        <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
+        <style type="text/css" title="setupStyle" media="screen">
+            @import "../style/global.css";
+            @import "../style/setup.css";
+            @import "../style/lightbox.css";
+        </style>
 
-    <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
-    <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
-    <style type="text/css" title="setupStyle" media="screen">
-        @import "../style/global.css";
-        @import "../style/setup.css";
-        @import "../style/lightbox.css";
-    </style>
-
-    <script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
-    <script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
-    <script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
-    <script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
-    <script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
-    <script language="javascript" type="text/javascript" src="../js/setup.js"></script>
-    <decorator:head />
-</head>
+        <script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
+        <script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
+        <script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
+        <script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
+        <script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
+        <script language="javascript" type="text/javascript" src="../js/setup.js"></script>
+        <decorator:head />
+    </head>
 
 <body onload="<decorator:getProperty property="body.onload" />">
 

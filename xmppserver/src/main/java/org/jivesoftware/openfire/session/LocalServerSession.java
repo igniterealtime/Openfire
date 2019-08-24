@@ -53,5 +53,20 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     public boolean isUsingServerDialback() {
         return usingServerDialback;
     }
-    
+
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", isUsingServerDialback=" + isUsingServerDialback() +
+            '}';
+    }
 }

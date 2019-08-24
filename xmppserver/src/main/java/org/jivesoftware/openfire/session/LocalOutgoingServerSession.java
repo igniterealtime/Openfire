@@ -24,6 +24,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -746,5 +747,22 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     @Override
     public Collection<DomainPair> getOutgoingDomainPairs() {
         return outgoingDomainPairs;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", isUsingServerDialback=" + isUsingServerDialback() +
+            ", outgoingDomainPairs=" + getOutgoingDomainPairs().stream().map( DomainPair::toString ).collect(Collectors.joining(", ", "{", "}")) +
+            '}';
     }
 }

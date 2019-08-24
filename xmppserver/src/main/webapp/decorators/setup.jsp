@@ -238,9 +238,5 @@
             </div>
         </div>
         <!-- END jive-footer -->
-        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-        <script language="JavaScript" type="text/javascript" src="js/framework/jquery.min.js"></script>
-        <script language="JavaScript" type="text/javascript" src="js/framework/popper.min.js"></script>
-        <script language="JavaScript" type="text/javascript" src="js/framework/bootstrap.min.js"></script>
     </body>
 </html>

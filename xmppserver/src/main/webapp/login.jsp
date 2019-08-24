@@ -166,6 +166,9 @@
 
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /></title>
     <script language="JavaScript" type="text/javascript">
         <!--
@@ -186,6 +189,8 @@
         }
         //-->
     </script>
+    <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="style/global.css" type="text/css">
     <link rel="stylesheet" href="style/login.css" type="text/css">
 </head>

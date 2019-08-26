@@ -15,17 +15,11 @@
  */
 package org.jivesoftware.openfire.pep;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.concurrent.locks.Lock;
-
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -33,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+
+import java.util.concurrent.locks.Lock;
 
 /**
  * Manages the creation, persistence and removal of {@link PEPService}
@@ -46,8 +42,6 @@ public class PEPServiceManager {
 	public static final Logger Log = LoggerFactory
 			.getLogger(PEPServiceManager.class);
 
-	private final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM ofPubsubNode WHERE serviceID=?";
-
 	/**
 	 * Cache of PEP services. Table, Key: bare JID (String); Value: PEPService
 	 */
@@ -58,11 +52,11 @@ public class PEPServiceManager {
 
 	/**
 	 * Retrieves a PEP service -- attempting first from memory, then from the
-	 * database.
+	 * database, finally creating one on the fly if none existed.
 	 * 
 	 * @param jid
 	 *            the bare JID of the user that owns the PEP service.
-	 * @return the requested PEP service if found or null if not found.
+	 * @return the requested PEP service, never null.
 	 */
 	public PEPService getPEPService(String jid) {
 		PEPService pepService = null;
@@ -75,11 +69,28 @@ public class PEPServiceManager {
 				pepService = pepServices.get(jid);
 			} else {
 				// lookup in database.
-				pepService = loadPEPServiceFromDB(jid);
-				
-				// always add to the cache, even if it doesn't exist. This will
-				// prevent future database lookups.
-				pepServices.put(jid, pepService);
+				pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
+
+				if ( pepService != null ) {
+					if (Log.isDebugEnabled()) {
+						Log.debug("PEP: Restored service for {} from the database.", jid);
+					}
+					pepServices.put( jid, pepService );
+					pubSubEngine.start(pepService);
+				} else {
+					if (Log.isDebugEnabled()) {
+						Log.debug("PEP: Auto-created service for {}.", jid);
+					}
+					pepService = this.create(new JID( jid ));
+
+					// Probe presences
+					pubSubEngine.start(pepService);
+
+					// Those who already have presence subscriptions to jidFrom
+					// will now automatically be subscribed to this new
+					// PEPService.
+					XMPPServer.getInstance().getIQPEPHandler().addSubscriptionForRosterItems( pepService );
+				}
 			}
 		} finally {
 			lock.unlock();
@@ -115,48 +126,6 @@ public class PEPServiceManager {
 			}
 		} finally {
 			lock.unlock();
-		}
-
-		return pepService;
-	}
-
-	/**
-	 * Loads a PEP service from the database, if it exists.
-	 * 
-	 * @param jid
-	 *            the JID of the owner of the PEP service.
-	 * @return the loaded PEP service, or null if not found.
-	 */
-	private PEPService loadPEPServiceFromDB(String jid) {
-		PEPService pepService = null;
-
-		Connection con = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			con = DbConnectionManager.getConnection();
-			// Get all PEP services
-			pstmt = con.prepareStatement(GET_PEP_SERVICE);
-			pstmt.setString(1, jid);
-			rs = pstmt.executeQuery();
-			// Restore old PEPServices
-			while (rs.next()) {
-				String serviceID = rs.getString(1);
-
-				// Create a new PEPService
-				pepService = new PEPService(XMPPServer.getInstance(), serviceID);
-				pepServices.put(serviceID, pepService);
-				pubSubEngine.start(pepService);
-
-				if (Log.isDebugEnabled()) {
-					Log.debug("PEP: Restored service for " + serviceID
-							+ " from the database.");
-				}
-			}
-		} catch (SQLException sqle) {
-			Log.error(sqle.getMessage(), sqle);
-		} finally {
-			DbConnectionManager.closeConnection(rs, pstmt, con);
 		}
 
 		return pepService;

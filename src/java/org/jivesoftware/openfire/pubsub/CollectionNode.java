@@ -1,4 +1,4 @@
-/**
+/*
  * $RCSfile: $
  * $Revision: $
  * $Date: $
@@ -20,6 +20,9 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -72,6 +78,9 @@ public class CollectionNode extends Node {
         this.maxLeafNodes = defaultConfiguration.getMaxLeafNodes();
     }
 
+    public CollectionNode() { // to be used only for serialization;
+        super();
+    }
 
     @Override
 	protected void configure(FormField field) throws NotAcceptableException {
@@ -494,5 +503,40 @@ public class CollectionNode extends Node {
          * Only those on a whitelist may associate leaf nodes with the collection.
          */
         whitelist
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = super.getCachedSize(); // parent.
+        size += CacheSizes.sizeOfMap( nodes );
+        size += CacheSizes.sizeOfInt(); // associationPolicy
+        size += CacheSizes.sizeOfCollection( associationTrusted );
+        size += CacheSizes.sizeOfInt(); // maxLeafNodes
+        return size;
+    }
+
+    @Override
+    public void writeExternal( ObjectOutput out ) throws IOException
+    {
+        super.writeExternal( out );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.writeExternalizableMap( out, nodes );
+        util.writeSafeUTF( out, associationPolicy.name() );
+        util.writeSerializableCollection( out, associationTrusted );
+        util.writeInt( out, maxLeafNodes );
+    }
+
+    @Override
+    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
+    {
+        super.readExternal( in );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.readExternalizableMap( in, nodes, getClass().getClassLoader() );
+        associationPolicy = LeafNodeAssociationPolicy.valueOf( util.readSafeUTF( in ) );
+        util.readSerializableCollection( in, associationTrusted, getClass().getClassLoader() );
+        maxLeafNodes = util.readInt( in );
     }
 }

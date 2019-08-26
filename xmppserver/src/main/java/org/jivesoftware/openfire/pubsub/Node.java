@@ -23,17 +23,14 @@ import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.pubsub.cluster.AffiliationTask;
-import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
-import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
-import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
-import org.jivesoftware.openfire.pubsub.cluster.RemoveNodeTask;
+import org.jivesoftware.openfire.pubsub.cluster.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.*;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -43,6 +40,11 @@ import org.xmpp.packet.PacketError;
 
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * A virtual location to which information can be published and from which event
  * notifications and/or payloads can be received (in other pubsub systems, this may
@@ -50,7 +52,7 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  *
  * @author Matt Tucker
  */
-public abstract class Node {
+public abstract class Node implements Cacheable, Externalizable {
 
     /**
      * Reference to the publish and subscribe service.
@@ -186,6 +188,8 @@ public abstract class Node {
     protected Map<String, NodeSubscription> subscriptionsByJID =
             new ConcurrentHashMap<>();
 
+    Node() {} // to be used only for serialization;
+
     Node(PubSubService service, CollectionNode parent, String nodeID, JID creator) {
         this.service = service;
         this.parent = parent;
@@ -209,9 +213,15 @@ public abstract class Node {
         this.replyPolicy = defaultConfiguration.getReplyPolicy();
     }
 
+    /**
+     * Returns an identifier for this node that is unique within the XMPP domain.
+     *
+     * @return A unique identifier for this node.
+     */
     public UniqueIdentifier getUniqueIdentifier() {
         return new UniqueIdentifier( this.service.getServiceID(), this.nodeID );
     }
+
     /**
      * Adds a new affiliation or updates an existing affiliation of the specified entity JID
      * to become a node owner.
@@ -2330,26 +2340,19 @@ public abstract class Node {
 
     /**
      * A unique identifier for a node, in context of all services in the system.
+     *
+     * The properties that uniquely identify a node are its service, and its nodeId.
      */
-    public static class UniqueIdentifier
+    public static class UniqueIdentifier extends PubSubService.UniqueIdentifier implements Serializable
     {
-        private final String serviceId;
         private final String nodeId;
 
         public UniqueIdentifier( final String serviceId, final String nodeId ) {
-            if ( serviceId == null ) {
-                throw new IllegalArgumentException( "Argument 'serviceId' cannot be null." );
-            }
+            super( serviceId );
             if ( nodeId == null ) {
                 throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
             }
-            this.serviceId = serviceId;
             this.nodeId = nodeId;
-        }
-
-        public String getServiceId()
-        {
-            return serviceId;
         }
 
         public String getNodeId()
@@ -2362,24 +2365,200 @@ public abstract class Node {
         {
             if ( this == o ) { return true; }
             if ( o == null || getClass() != o.getClass() ) { return false; }
+            if ( !super.equals( o ) ) { return false; }
             final UniqueIdentifier that = (UniqueIdentifier) o;
-            return serviceId.equals( that.serviceId ) &&
-                    nodeId.equals( that.nodeId );
+            return nodeId.equals( that.nodeId );
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash( serviceId, nodeId );
+            return Objects.hash( super.hashCode(), nodeId );
         }
 
         @Override
         public String toString()
         {
-            return "UniqueIdentifier{" +
-                    "serviceId='" + serviceId + '\'' +
+            return "Node.UniqueIdentifier{" +
+                    "serviceId='" + getServiceId() + '\'' +
                     ", nodeId='" + nodeId + '\'' +
                     '}';
+        }
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException {
+
+        // Please keep this ordered alphabetically for easier maintenance.
+
+        int size = CacheSizes.sizeOfObject(); // object overhead.
+        size += CacheSizes.sizeOfInt(); // accessModel
+        size += CacheSizes.sizeOfCollection( affiliates );
+        size += CacheSizes.sizeOfString( bodyXSLT );
+        size += CacheSizes.sizeOfCollection( contacts );
+        size += CacheSizes.sizeOfDate(); // creationDate
+        size += CacheSizes.sizeOfAnything( creator );
+        size += CacheSizes.sizeOfString( dataformXSLT );
+        size += CacheSizes.sizeOfBoolean(); // deliverPayloads
+        size += CacheSizes.sizeOfString( description );
+        size += CacheSizes.sizeOfString( language );
+        size += CacheSizes.sizeOfDate(); // modificationDate
+        size += CacheSizes.sizeOfString( name );
+        size += CacheSizes.sizeOfString( nodeID );
+        size += CacheSizes.sizeOfBoolean(); // notifyConfigChanges
+        size += CacheSizes.sizeOfBoolean(); // notifyDelete
+        size += CacheSizes.sizeOfBoolean(); // notifyRetract
+        size += CacheSizes.sizeOfObject(); // parent (reference, parent itself will already be in the cache).
+        size += CacheSizes.sizeOfString( payloadType );
+        size += CacheSizes.sizeOfBoolean(); // presenceBasedDelivery
+        size += CacheSizes.sizeOfInt(); // publisherModel
+        size += CacheSizes.sizeOfInt(); // replyPolicy
+        size += CacheSizes.sizeOfCollection( replyRooms );
+        size += CacheSizes.sizeOfCollection( replyTo );
+        size += CacheSizes.sizeOfCollection( rosterGroupsAllowed );
+        size += CacheSizes.sizeOfBoolean(); // savedToDB
+        size += CacheSizes.sizeOfInt(); // service (reference, the instance is re-used by other nodes.
+        size += CacheSizes.sizeOfBoolean(); // subscriptionConfigurationRequired
+        size += CacheSizes.sizeOfBoolean(); // subscriptionEnabled
+        size += 350 * subscriptionsByID.size(); // 350 bytes per entry is a guestimate.
+        size += 350 * subscriptionsByJID.size(); // 350 bytes per entry is a guestimate.
+        return size;
+    }
+
+    @Override
+    public void writeExternal( ObjectOutput out ) throws IOException
+    {
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.writeSafeUTF( out, accessModel.getName() );
+
+        util.writeLong( out, affiliates.size() );
+        for ( final NodeAffiliate affiliate : affiliates )
+        {
+            util.writeSerializable( out, affiliate.getJID() );
+            util.writeBoolean( out, affiliate.getAffiliation() != null );
+            if ( affiliate.getAffiliation() != null ) {
+                util.writeSafeUTF( out, affiliate.getAffiliation().name() );
+            }
+        }
+
+        util.writeSafeUTF( out, bodyXSLT );
+        util.writeSerializableCollection( out, contacts );
+        util.writeSerializable( out, creationDate );
+        util.writeSerializable( out, creator );
+        util.writeSafeUTF( out, dataformXSLT );
+        util.writeBoolean( out, deliverPayloads );
+        util.writeSafeUTF( out, description );
+        util.writeSafeUTF( out, language );
+        util.writeSerializable( out, modificationDate );
+        util.writeSafeUTF( out, name );
+        util.writeSafeUTF( out, nodeID );
+        util.writeBoolean( out, notifyConfigChanges );
+        util.writeBoolean( out, notifyDelete );
+        util.writeBoolean( out, notifyRetract );
+        util.writeSafeUTF( out, parent.getNodeID() );
+        util.writeSafeUTF( out, payloadType );
+        util.writeBoolean( out, presenceBasedDelivery );
+        util.writeSafeUTF( out, publisherModel.getName() );
+        util.writeSafeUTF( out, replyPolicy.name() );
+        util.writeSerializableCollection( out, replyRooms );
+        util.writeSerializableCollection( out, replyTo );
+        util.writeSerializableCollection( out, rosterGroupsAllowed );
+        util.writeBoolean( out, savedToDB );
+        util.writeSerializable( out, service.getAddress() );
+        util.writeBoolean( out, subscriptionConfigurationRequired );
+        util.writeBoolean( out, subscriptionEnabled );
+
+        // write out subscriptions once. When reading, use them to populate both maps.
+        final Collection<NodeSubscription> subscriptions = subscriptionsByID.values();
+        util.writeInt( out, subscriptions.size() );
+        for ( final NodeSubscription subscription : subscriptions )
+        {
+            util.writeSerializable( out, subscription.getOwner() );
+            util.writeSerializable( out, subscription.getJID() );
+            util.writeSafeUTF( out, subscription.getState().name() );
+            util.writeSafeUTF( out, subscription.getID() );
+        }
+    }
+
+    @Override
+    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
+    {
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+
+        accessModel = AccessModel.valueOf( util.readSafeUTF( in ) );
+
+        final long affiliatesSize = util.readLong( in );
+        final List<NodeAffiliate> tmpAffiliates = new ArrayList<>();
+        for ( int i = 0; i<affiliatesSize; i++ ) {
+            final JID affiliateJID = (JID) util.readSerializable( in );
+            final NodeAffiliate affiliate = new NodeAffiliate( this, affiliateJID );
+            if ( util.readBoolean( in ) ) {
+                affiliate.setAffiliation( NodeAffiliate.Affiliation.valueOf( util.readSafeUTF( in ) ) );
+            }
+            tmpAffiliates.add( affiliate );
+        }
+        affiliates = new CopyOnWriteArrayList<>( tmpAffiliates ); // pass them all in, in one go, to prevent iterations where arrays are copied in each iteration.
+
+        bodyXSLT = util.readSafeUTF( in );
+        util.readSerializableCollection( in, contacts, getClass().getClassLoader() );
+        creationDate = (Date) util.readSerializable( in );
+        creator = (JID) util.readSerializable( in );
+        dataformXSLT = util.readSafeUTF( in );
+        deliverPayloads = util.readBoolean( in );
+        description = util.readSafeUTF( in );
+        language = util.readSafeUTF( in );
+        modificationDate = (Date) util.readSerializable( in );
+        name = util.readSafeUTF( in );
+        nodeID = util.readSafeUTF( in );
+        notifyConfigChanges = util.readBoolean( in );
+        notifyDelete = util.readBoolean( in );
+        notifyRetract = util.readBoolean( in );
+        final String parentId = util.readSafeUTF( in );
+        payloadType = util.readSafeUTF( in );
+        presenceBasedDelivery = util.readBoolean( in );
+        publisherModel = PublisherModel.valueOf( util.readSafeUTF( in ) );
+        replyPolicy = ItemReplyPolicy.valueOf( util.readSafeUTF( in ) );
+        util.readSerializableCollection( in, replyRooms, getClass().getClassLoader() );
+        util.readSerializableCollection( in, replyTo, getClass().getClassLoader() );
+        util.readSerializableCollection( in, rosterGroupsAllowed, getClass().getClassLoader() );
+        savedToDB = util.readBoolean( in );
+        final JID serviceAddress = (JID) util.readSerializable( in );
+        subscriptionConfigurationRequired = util.readBoolean( in );
+        subscriptionEnabled = util.readBoolean( in );
+
+        final int subscriptionCount = util.readInt( in );
+        for ( int i = 0; i < subscriptionCount; i++ )
+        {
+            final Node node = this;
+            final JID owner = (JID) util.readSerializable( in );
+            final JID jid = (JID) util.readSerializable( in );
+            final NodeSubscription.State state = NodeSubscription.State.valueOf( util.readSafeUTF( in ) );
+            final String id = util.readSafeUTF( in );
+            final NodeSubscription subscription = new NodeSubscription( node, owner, jid, state, id );
+
+            subscriptionsByID.put( subscription.getID(), subscription );
+            subscriptionsByJID.put( subscription.getJID().toString(), subscription );
+        }
+
+        final PubSubModule pubSubModule = XMPPServer.getInstance().getPubSubModule();
+        if ( pubSubModule.getAddress().equals( serviceAddress) ) {
+            service = pubSubModule;
+        } else {
+            service = XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( serviceAddress.toBareJID() );
+        }
+        if ( service == null ) {
+            // The service is neither a pubsubmodule, nor PEP service. Is there a new
+            // implementation of PubSubService that needs to be added to this code?
+            throw new IllegalStateException();
+        }
+
+        if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getNodeID().equals( parentId ) ) {
+            parent = service.getRootCollectionNode();
+        } else {
+            parent = (CollectionNode) service.getNode( parentId );
+        }
+        if ( parent == null ) {
+            throw new IllegalStateException();
         }
     }
 }

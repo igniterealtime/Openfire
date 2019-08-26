@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.pubsub;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -274,21 +275,33 @@ public class PublishedItem implements Serializable {
     }
 
     /**
-     * Returns a string that uniquely identifies this published item
-     * in the following format: <i>nodeId:itemId</i>
+     * Returns a string that uniquely identifies this published item in the following format: <i>nodeId:itemId</i>
+     *
+     * Note that this method generates a value that's unique only in context of the node. This allows for different
+     * services to have items with identical keys. Use {@link #getUniqueIdentifier()} to obtain an identifier that is
+     * unique for the entire XMPP domain.
+     *
      * @return Unique identifier for this item
+     * @deprecated Replaced by {@link #getUniqueIdentifier()} which generates more unique values.
      */
+    @Deprecated
     public String getItemKey() {
         return getItemKey(serviceId, nodeId,id);
     }
 
     /**
-     * Returns a string that uniquely identifies this published item
-     * in the following format: <i>nodeId:itemId</i>
+     * Returns a string that uniquely identifies this published item in the following format: <i>nodeId:itemId</i>
+     *
+     * Note that this method generates a value that's unique only in context of the node. This allows for different
+     * services to have items with identical keys. Use {@link #getUniqueIdentifier(LeafNode, String)} to obtain an
+     * identifier that is unique for the entire XMPP domain.
+     *
      * @param node Node for the published item
      * @param itemId Id for the published item (unique within the node)
      * @return Unique identifier for this item
+     * @deprecated Replaced by {@link #getUniqueIdentifier(LeafNode, String)} which generates more unique values.
      */
+    @Deprecated
     public static String getItemKey(LeafNode node, String itemId) {
         return getItemKey(node.getService().getServiceID(), node.getNodeID(), itemId);
     }
@@ -300,8 +313,91 @@ public class PublishedItem implements Serializable {
      * @param nodeId Node id for the published item
      * @param itemId Id for the published item (unique within the node)
      * @return Unique identifier for this item
+     * @deprecated Replaced by {@link #getUniqueIdentifier(String, String, String)} which generates more unique values.
      */
-    private static String getItemKey(String serviceId, String nodeId, String itemId) {
-        return serviceId + ":" + nodeId +":" + itemId;
+    @Deprecated
+    public static String getItemKey(String serviceId, String nodeId, String itemId) {
+    	return new StringBuilder(serviceId).append(nodeId)
+    		.append(':').append(itemId).toString();
+    }
+
+    /**
+     * Returns a value that uniquely identifies this published item in the XMPP domain.
+     *
+     * @return Unique identifier for this item
+     */
+    public UniqueIdentifier getUniqueIdentifier() {
+        return getUniqueIdentifier( getNode(), id );
+    }
+
+    /**
+     * Returns a value that uniquely identifies this published item in the XMPP domain.
+     *
+     * @param node Node for the published item
+     * @param itemId Id for the published item (unique within the node)
+     * @return Unique identifier for this item
+     */
+    public static UniqueIdentifier getUniqueIdentifier(LeafNode node, String itemId)
+    {
+        return getUniqueIdentifier( node.getService().getServiceID(), node.getNodeID(), itemId );
+    }
+
+    /**
+     * Returns a value that uniquely identifies this published item in the XMPP domain.
+     *
+     * @param serviceId Id of the service that contains the node.
+     * @param nodeId Node id for the published item
+     * @param itemId Id for the published item (unique within the node)
+     * @return Unique identifier for this item
+     */
+    public static UniqueIdentifier getUniqueIdentifier(String serviceId, String nodeId, String itemId)
+    {
+        return new UniqueIdentifier( serviceId, nodeId, itemId );
+    }
+
+    /**
+     * A unique identifier for an item, in context of all nodes of all services in the system.
+     *
+     * The properties that uniquely identify an item are its node, and its itemId.
+     */
+    public static class UniqueIdentifier extends Node.UniqueIdentifier implements Serializable
+    {
+        private final String itemId;
+
+        public UniqueIdentifier( final String serviceId, final String nodeId, final String itemId ) {
+            super( serviceId, nodeId );
+            if ( itemId == null ) {
+                throw new IllegalArgumentException( "Argument 'itemId' cannot be null." );
+            }
+            this.itemId = itemId;
+        }
+
+        public String getItemId() { return itemId; };
+
+        @Override
+        public boolean equals( final Object o )
+        {
+            if ( this == o ) { return true; }
+            if ( o == null || getClass() != o.getClass() ) { return false; }
+            if ( !super.equals( o ) ) { return false; }
+            final UniqueIdentifier that = (UniqueIdentifier) o;
+            return itemId.equals( that.itemId );
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash( super.hashCode(), itemId );
+        }
+
+        @Override
+        public String toString()
+        {
+            return "PublishedItem.UniqueIdentifier{" +
+                    "serviceId='" + getServiceId() + '\'' +
+                    ", nodeId='" + getNodeId() + '\'' +
+                    ", itemId='" + itemId + '\'' +
+                    '}';
+        }
     }
 }

@@ -18,7 +18,9 @@ package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DbConnectionManager.DatabaseType;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
@@ -207,6 +209,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             "presenceBased, sendItemSubscribe, publisherModel, subscriptionEnabled, " +
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+    private final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM ofPubsubNode WHERE serviceID=?";
 
     /**
      * Pseudo-random number generator is used to offset timing for scheduled tasks
@@ -1884,7 +1888,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                                     CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(15)));
                             config.setMaxLeafNodes(rs.getInt(16));
                         }
-                        defaultNodeConfigurationCache.put( key, config );
+                        if ( config != null ) {
+                            defaultNodeConfigurationCache.put( key, config );
+                        }
                         result = config;
                     }
                     catch (Exception sqle) {
@@ -1944,7 +1950,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setInt(18, config.getMaxLeafNodes());
                 pstmt.executeUpdate();
 
-                defaultNodeConfigurationCache.put( key, config );
+                if ( config != null ) {
+                    defaultNodeConfigurationCache.put( key, config );
+                }
             }
             catch (SQLException sqle) {
                 log.error(sqle.getMessage(), sqle);
@@ -2249,6 +2257,35 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             }
 		}
 	}
+
+    @Override
+    public PEPService loadPEPServiceFromDB(String jid) {
+        PEPService pepService = null;
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            // Get all PEP services
+            pstmt = con.prepareStatement(GET_PEP_SERVICE);
+            pstmt.setString(1, jid);
+            rs = pstmt.executeQuery();
+            // Restore old PEPService
+            while (rs.next()) {
+                String serviceID = rs.getString(1);
+
+                // Create a new PEPService
+                pepService = new PEPService(XMPPServer.getInstance(), serviceID);
+            }
+        } catch (SQLException sqle) {
+            log.error(sqle.getMessage(), sqle);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+
+        return pepService;
+    }
 
 	private static String encodeWithComma(Collection<String> strings) {
         StringBuilder sb = new StringBuilder(90);

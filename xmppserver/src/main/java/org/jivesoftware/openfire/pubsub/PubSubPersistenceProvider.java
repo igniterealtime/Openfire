@@ -15,7 +15,7 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.pep.PEPService;
 
 import java.util.List;
 
@@ -209,4 +209,13 @@ public interface PubSubPersistenceProvider
     PublishedItem getPublishedItem(LeafNode node, String itemID);
 
     void purgeNode(LeafNode leafNode);
+
+    /**
+     * Loads a PEP service from the database, if it exists.
+     *
+     * @param jid
+     *            the JID of the owner of the PEP service.
+     * @return the loaded PEP service, or null if not found.
+     */
+    PEPService loadPEPServiceFromDB( String jid);
 }

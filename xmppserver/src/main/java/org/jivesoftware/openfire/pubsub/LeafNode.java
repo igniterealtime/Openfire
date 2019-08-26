@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -27,6 +30,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -42,9 +48,6 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * @author Matt Tucker
  */
 public class LeafNode extends Node {
-
-    private static final String genIdSeed = UUID.randomUUID().toString();
-    private static final AtomicLong sequenceCounter = new AtomicLong();
 
     /**
      * Flag that indicates whether to persist items to storage. Note that when the
@@ -70,7 +73,7 @@ public class LeafNode extends Node {
     /**
      * The last item published to this node.  In a cluster this may have occurred on a different cluster node.
      */
-    private PublishedItem lastPublished;
+    private transient PublishedItem lastPublished;
 
     // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
@@ -82,6 +85,10 @@ public class LeafNode extends Node {
         this.maxPublishedItems = defaultConfiguration.getMaxPublishedItems();
         this.maxPayloadSize = defaultConfiguration.getMaxPayloadSize();
         this.sendItemSubscribe = defaultConfiguration.isSendItemSubscribe();
+    }
+
+    public LeafNode() { // to be used only for serialization;
+        super();
     }
 
     @Override
@@ -226,7 +233,7 @@ public class LeafNode extends Node {
                 
                 // Make sure that the published item has a unique ID if NOT assigned by publisher
                 if (itemID == null) {
-                    itemID = genIdSeed + sequenceCounter.getAndIncrement();
+                    itemID = UUID.randomUUID().toString();
                 }
 
                 // Create a new published item
@@ -425,5 +432,42 @@ public class LeafNode extends Node {
         items.addAttribute("node", nodeID);
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = super.getCachedSize(); // parent.
+        size += CacheSizes.sizeOfBoolean(); // persistPublishedItems
+        size += CacheSizes.sizeOfInt(); // maxPublishedItems
+        size += CacheSizes.sizeOfInt(); // maxPayloadSize
+        size += CacheSizes.sizeOfBoolean(); // sendItemSubscribe
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
+        return size;
+    }
+
+    @Override
+    public void writeExternal( ObjectOutput out ) throws IOException
+    {
+        super.writeExternal( out );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.writeBoolean( out, persistPublishedItems );
+        util.writeInt( out, maxPublishedItems );
+        util.writeInt( out, maxPayloadSize );
+        util.writeBoolean( out, sendItemSubscribe );
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
+    }
+
+    @Override
+    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
+    {
+        super.readExternal( in );
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        persistPublishedItems = util.readBoolean( in );
+        maxPublishedItems = util.readInt( in );
+        maxPayloadSize = util.readInt( in );
+        sendItemSubscribe = util.readBoolean( in );
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
     }
 }

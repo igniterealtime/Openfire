@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,6 +24,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.dom4j.Element;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -33,8 +38,8 @@ import org.xmpp.packet.Message;
  *
  * @author Matt Tucker
  */
-public class NodeAffiliate {
-
+public class NodeAffiliate implements Cacheable
+{
     private JID jid;
     private Node node;
 
@@ -279,6 +284,23 @@ public class NodeAffiliate {
     public String toString() {
         return super.toString() + " - JID: " + getJID() + " - Affiliation: " +
                 getAffiliation().name();
+    }
+
+    /**
+     * Returns the approximate size of the Object in bytes. The size should be
+     * considered to be a best estimate of how much memory the Object occupies
+     * and may be based on empirical trials or dynamic calculations.<p>
+     *
+     * @return the size of the Object in bytes.
+     */
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = CacheSizes.sizeOfObject();
+        size += CacheSizes.sizeOfAnything( jid );
+        size += CacheSizes.sizeOfInt(); // affiliation
+        size += CacheSizes.sizeOfInt(); // reference to node
+        return size;
     }
 
     /**

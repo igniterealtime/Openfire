@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.admin.AdminConsole,
-                 org.jivesoftware.openfire.admin.AdminManager"
+                org.jivesoftware.openfire.admin.AdminManager"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
@@ -196,99 +196,81 @@
 </head>
 
 <body>
+    <div class="jive-form-body">
+        <div class="row justify-content-center">
+            <div class="jive-form-holder">
+                <div class="jive-form-content">
+                    <div class="jive-form-items">
+                        <img src="images/login_logo.gif" alt="">
+                        <h3><fmt:message key="admin.console" /></h3>
+                        <form action="login.jsp" name="loginForm" method="post">
+                            <!-- BEGIN hidden input -->
+                            <%  if (url != null) { try { %> <input type="hidden" name="url" value="<%= StringUtils.escapeForXML(url) %>"> <%  } catch (Exception e) { Log.error(e); } } %>
+                            <input type="hidden" name="login" value="true">
+                            <input type="hidden" name="csrf" value="${csrf}">
+                            <!-- END hidden input -->
 
-<form action="login.jsp" name="loginForm" method="post">
+                            <!-- BEGIN login box -->
+                            <div class="jive-body-input-box">
+                                <div class="jive-input-box">
+                                    <input class="form-control" type="text" name="username"  maxlength="50" id="u01" value="<%= (username != null ? StringUtils.removeXSSCharacters(username) : "") %>" placeholder="<fmt:message key="login.username"/>" >
+                                    <span style="position: absolute"><i class="fa fa-user"></i></span>
+                                </div>
+                                <div class="jive-input-box">
+                                    <input class="form-control" type="password" name="password" maxlength="50" id="p01" placeholder="<fmt:message key="login.password" />" >
+                                    <span style="position: absolute"><i class="fa fa-key"></i></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-12 col-md-12 col-sm-12 ">
+                                    <div class="jive-form-button">
+                                        <button id="submit" type="submit" class="jive-ibtn jive-btn-gradient"><fmt:message key="login.login" /></button> 
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END login box -->
 
-<%  if (url != null) { try { %>
-
-    <input type="hidden" name="url" value="<%= StringUtils.escapeForXML(url) %>">
-
-<%  } catch (Exception e) { Log.error(e); } } %>
-
-<input type="hidden" name="login" value="true">
-<input type="hidden" name="csrf" value="${csrf}">
-
-<div align="center">
-    <!-- BEGIN login box -->
-    <div id="jive-loginBox">
-
-        <div align="center" id="jive-loginTable">
-
-            <span id="jive-login-header" style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0 10px 205px;">
-            <fmt:message key="admin.console" />
-            </span>
-
-            <div style="text-align: center; width: 380px;">
-            <table cellpadding="0" cellspacing="0" border="0" align="center">
-                <tr>
-                    <td align="right" class="loginFormTable">
-
-                        <table cellpadding="2" cellspacing="0" border="0">
-                        <noscript>
-                            <tr>
-                                <td colspan="3">
-                                    <table cellpadding="0" cellspacing="0" border="0">
-                                    <tr valign="top">
-                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.error" /></div></td>
-                                    </tr>
+                            <!-- BEGIN error box -->
+                            <noscript>
+                                <table class="table table-sm table-responsive table-borderless">
+                                    <tbody>
+                                        <tr>
+                                            <td class="jive-error-text" ><i class="fa fa-close fa-lg"></i></td>
+                                            <td class=" jive-error-text" ><p><fmt:message key="login.error" /></p></td>
+                                        </tr>
+                                    </tbody>
+                                </table> 
+                            </noscript>
+                            <%  if (errors.size() > 0) { %>
+                                <% for (String error:errors.values()) { %>
+                                    <table class="table table-sm table-responsive table-borderless">
+                                        <tbody>
+                                            <tr>
+                                                <td class="jive-error-text" ><i class="fa fa-close fa-lg"></i></td>
+                                                <td class="jive-error-text"><p><%= error%></p></td>
+                                            </tr>
+                                        </tbody>
                                     </table>
-                                </td>
-                            </tr>
-                        </noscript>
-                        <%  if (errors.size() > 0) { %>
-                            <tr>
-                                <td colspan="3">
-                                    <table cellpadding="0" cellspacing="0" border="0">
-                                        <% for (String error:errors.values()) { %>
-                                    <tr valign="top">
-                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><%= error%></div></td>
-                                    </tr>
-                                        <% } %>
-                                    </table>
-                                </td>
-                            </tr>
-                        <%  } %>
-                        <tr>
-                            <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? StringUtils.removeXSSCharacters(username) : "") %>"></td>
-                            <td><input type="password" name="password" size="15" maxlength="50" id="p01"></td>
-                            <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;"></td>
-                        </tr>
-                        <tr valign="top">
-                            <td class="jive-login-label"><label for="u01"><fmt:message key="login.username" /></label></td>
-                            <td class="jive-login-label"><label for="p01"><fmt:message key="login.password" /></label></td>
-                            <td>&nbsp;</td>
-                        </tr>
-                        </table>
-                    </td>
-                </tr>
-                <tr>
-                    <td align="right">
-                        <div align="right" id="jive-loginVersion">
-                        <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+                                <% } %>
+                            <%  } %>
+                            <!-- END error box -->
+                        </form>
+                        <div class="text" id="jive-loginVersion"> <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %></div>
+                    </div>
+                </div>
             </div>
         </div>
-
     </div>
-    <!-- END login box -->
-</div>
 
-</form>
-
-<script language="JavaScript" type="text/javascript">
-<!--
-    if (document.loginForm.username.value == '')  {
-        document.loginForm.username.focus();
-    } else {
-        document.loginForm.password.focus();
-    }
-//-->
-</script>
+    <script language="JavaScript" type="text/javascript">
+    <!--
+        if (document.loginForm.username.value == '')  {
+            document.loginForm.username.focus();
+        } else {
+            document.loginForm.password.focus();
+        }
+    //-->
+    </script>
 
 </body>
 </html>

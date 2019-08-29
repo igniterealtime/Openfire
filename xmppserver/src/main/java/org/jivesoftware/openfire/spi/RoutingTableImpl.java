@@ -314,7 +314,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             if (clientRoute != null) {
                 if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
-                        !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
+		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())
+                        && !PresenceUpdateHandler.isPresenceUpdateReflection( packet )) {
                     Log.debug("Unable to route packet. Packet should only be sent to available sessions and the route is not available. {} ", packet.toXML());
                     routed = false;
                 } else {

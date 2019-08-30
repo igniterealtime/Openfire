@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -383,5 +384,24 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     
     public void tlsAuth() {
         usingServerDialback = false;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", isUsingServerDialback=" + isUsingServerDialback() +
+            ", localDomain=" + getLocalDomain() +
+            ", defaultIdentity=" + getDefaultIdentity() +
+            ", validatedDomains=" + validatedDomains.stream().collect( Collectors.joining( ", ", "{", "}")) +
+            '}';
     }
 }

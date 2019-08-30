@@ -254,6 +254,14 @@ your Openfire installation root directory.</li>
 changed in step 6.</li>
 </ul>
 You will need to restart the server after you have modified any of the above system properties.
+        
+<h2>Other options</h2>
+<p>
+You can also use OpenSSL to create new private keys and generate certificate requests for your CA to issue new certificates.
+Also, check out the new <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=certificatemanager">Certificate Manager</a> plugin,
+which allows to setup a hotdeploy directory for new certificates deployment, which in turn combined with Let's Encrypt certbot
+allows dynamic certificates renewal without administrator intervention.
+</p>
 
     </div>
 

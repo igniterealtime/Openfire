@@ -137,6 +137,10 @@
         <servlet-class>org.jivesoftware.admin.servlet.SystemCacheDetailsServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>UserContactAddressesServlet</servlet-name>
+        <servlet-class>org.jivesoftware.admin.servlet.UserContactAddressesServlet</servlet-class>
+    </servlet>
     <!--@@JSPC-SERVLETS@@-->
 
     <servlet-mapping>
@@ -171,6 +175,11 @@
         <url-pattern>/dwr/*</url-pattern>
     </servlet-mapping>
 
+    <servlet-mapping>
+        <servlet-name>UserContactAddressesServlet</servlet-name>
+        <!-- NB. .jsp extension is only required so filters are applied, but also maintain the old address -->
+        <url-pattern>/user-contact.jsp</url-pattern>
+    </servlet-mapping>
 </web-app>
 
 

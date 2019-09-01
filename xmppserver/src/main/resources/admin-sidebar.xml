@@ -396,7 +396,7 @@
                   
             <!-- User Contact Adresses -->
             <item id="user-contact-addresses" name="${sidebar.user-contact-addresses}"
-                  url="user-contact-addresses.jsp"
+                  url="user-contact.jsp"
                   description="${sidebar.user-contact-addresses.descr}"/>
         </sidebar>
 

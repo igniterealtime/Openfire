@@ -202,8 +202,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             // Set the domain or subdomain of the local server targeted by the remote server
             session.setLocalDomain(serverName);
-            // After the session has been created, inform all listeners as well.
-            ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
             return session;
         }
         catch (Exception e) {

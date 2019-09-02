@@ -267,8 +267,6 @@ public class ServerDialback {
                     // Set the hostname as the address of the session
                     session.setAddress(new JID(null, remoteDomain, null));
                     log.debug( "Successfully created new outgoing session!" );
-                    // After the session has been created, inform all listeners as well.
-                    ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                     return session;
                 }
                 else {
@@ -588,7 +586,7 @@ public class ServerDialback {
                     case valid:
                     case invalid:
                         boolean valid = (result == VerifyResult.valid);
-                        log.debug( "Dialback key is" + (valid? "valid":"invalid") + ". Sending verification result to remote domain." );
+                        log.debug( "Dialback key is " + (valid? "valid":"invalid") + ". Sending verification result to remote domain." );
                         sb = new StringBuilder();
                         sb.append("<db:result");
                         sb.append(" from=\"").append(recipient).append("\"");

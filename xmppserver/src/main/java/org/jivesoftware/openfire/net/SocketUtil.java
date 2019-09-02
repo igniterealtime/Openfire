@@ -44,6 +44,7 @@ public class SocketUtil
         Log.debug( "Use DNS to resolve remote hosts for the provided XMPP domain '{}' (default port: {}) ...", xmppDomain, port );
         final List<DNSUtil.HostAddress> remoteHosts = DNSUtil.resolveXMPPDomain( xmppDomain, port );
         Log.debug( "Found {} host(s) for XMPP domain '{}'.", remoteHosts.size(), xmppDomain );
+        remoteHosts.forEach( remoteHost -> Log.debug( "- {} ({})", remoteHost.toString(), (remoteHost.isDirectTLS() ? "direct TLS" : "no direct TLS" ) ) );
 
         Socket socket = null;
         final int socketTimeout = RemoteServerManager.getSocketTimeout();

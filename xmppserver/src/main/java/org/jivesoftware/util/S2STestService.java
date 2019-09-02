@@ -231,6 +231,11 @@ public class S2STestService {
         @Override
         public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
                 throws PacketRejectedException {
+
+            if (ping.getTo() == null || packet.getFrom() == null || packet.getTo() == null) {
+                return;
+            }
+
             if (!processed
                     && (ping.getTo().getDomain().equals(packet.getFrom().getDomain()) || ping.getTo().getDomain().equals(packet.getTo().getDomain()))) {
 

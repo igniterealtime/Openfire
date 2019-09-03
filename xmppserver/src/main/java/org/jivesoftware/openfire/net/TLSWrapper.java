@@ -141,6 +141,8 @@ public class TLSWrapper {
         out = resizeApplicationBuffer(out);// guarantees enough room for unwrap
 
         // Record a hex dump of the buffer, but only when logging on level 'debug'.
+        // Create the dump before the buffer is being passed to tlsEngine, to ensure
+        // that the original content of the buffer is logged.
         String hexDump = null;
         if ( Log.isDebugEnabled() )
         {

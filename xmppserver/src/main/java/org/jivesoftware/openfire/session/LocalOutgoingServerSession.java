@@ -752,7 +752,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
     public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
-         return outgoingDomainPairs.contains(new DomainPair(localDomain, remoteDomain));
+        final DomainPair pair = new DomainPair(localDomain, remoteDomain);
+        final boolean result =  outgoingDomainPairs.contains(pair);
+        Log.trace( "Authentication exists for outgoing domain pair {}: {}", pair, result );
+        return result;
     }
 
     @Override

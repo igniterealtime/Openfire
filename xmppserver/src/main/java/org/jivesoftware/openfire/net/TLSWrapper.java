@@ -17,7 +17,9 @@
 package org.jivesoftware.openfire.net;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.security.*;
+import java.util.Arrays;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -29,6 +31,7 @@ import javax.net.ssl.SSLEngineResult.Status;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,10 +139,21 @@ public class TLSWrapper {
     public ByteBuffer unwrap(ByteBuffer net, ByteBuffer app) throws SSLException {
         ByteBuffer out = app;
         out = resizeApplicationBuffer(out);// guarantees enough room for unwrap
+
+        // Record a hex dump of the buffer, but only when logging on level 'debug'.
+        String hexDump = null;
+        if ( Log.isDebugEnabled() )
+        {
+            final ByteBuffer bb = net.duplicate();
+            final byte[] data = Arrays.copyOf( bb.array(), bb.limit() );
+            hexDump = StringUtils.encodeHex( data );
+        }
+
         try {
             tlsEngineResult = tlsEngine.unwrap( net, out );
         } catch ( SSLException e ) {
             if ( e.getMessage().startsWith( "Unsupported record version Unknown-" ) ) {
+                Log.debug( "Buffer that wasn't TLS: {}", hexDump );
                 throw new SSLException( "We appear to have received plain text data where we expected encrypted data. A common cause for this is a peer sending us a plain-text error message when it shouldn't send a message, but close the socket instead).", e );
             }
             else {

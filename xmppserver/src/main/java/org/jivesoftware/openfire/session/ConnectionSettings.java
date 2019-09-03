@@ -90,6 +90,7 @@ public final class ConnectionSettings {
         public static final String TLS_CERTIFICATE_VERIFY_VALIDITY = "xmpp.server.certificate.verify.validity";
         public static final String TLS_CERTIFICATE_ROOT_VERIFY = "xmpp.server.certificate.verify.root";
         public static final String TLS_CERTIFICATE_CHAIN_VERIFY = "xmpp.server.certificate.verify.chain";
+        public static final String TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK = "xmpp.server.tls.on-plain-detection-allow-nondirecttls-fallback";
 
         public static final String COMPRESSION_SETTINGS = "xmpp.server.compression.policy";
 

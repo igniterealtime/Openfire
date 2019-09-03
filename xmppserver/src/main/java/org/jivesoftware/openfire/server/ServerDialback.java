@@ -680,6 +680,9 @@ public class ServerDialback {
                 doc = reader.parseDocument();
             } catch (DocumentException e) {
                 log.warn("Unable to verify key: XML Error!", e);
+                // Close the stream
+                writer.write("</stream:stream>");
+                writer.flush();
                 return VerifyResult.error;
             }
             Element features = doc.getRootElement();
@@ -691,11 +694,17 @@ public class ServerDialback {
                     doc = reader.parseDocument();
                 } catch (DocumentException e) {
                     log.warn("Unable to verify key: XML Error!", e);
+                    // Close the stream
+                    writer.write("</stream:stream>");
+                    writer.flush();
                     return VerifyResult.error;
                 }
                 if (!doc.getRootElement().getName().equals("proceed")) {
                     log.warn("Unable to verify key: Got {} instead of proceed for starttls", doc.getRootElement().getName());
                     log.debug("Like this: {}", doc.asXML());
+                    // Close the stream
+                    writer.write("</stream:stream>");
+                    writer.flush();
                     return VerifyResult.error;
                 }
 
@@ -728,6 +737,7 @@ public class ServerDialback {
                     if (doc.attributeValue("id") == null || !streamID.equals(BasicStreamIDFactory.createStreamID( doc.attributeValue("id") ))) {
                         // Include the invalid-id stream error condition in the response
                         writer.write(new StreamError(StreamError.Condition.invalid_id).toXML());
+                        writer.write("</stream:stream>");
                         writer.flush();
                         // Thrown an error so <remote-connection-failed/> stream error
                         // condition is sent to the Originating Server
@@ -735,8 +745,8 @@ public class ServerDialback {
                     }
                     else if (isHostUnknown( doc.attributeValue( "to" ) )) {
                         // Include the host-unknown stream error condition in the response
-                        writer.write(
-                                new StreamError(StreamError.Condition.host_unknown).toXML());
+                        writer.write(new StreamError(StreamError.Condition.host_unknown).toXML());
+                        writer.write("</stream:stream>");
                         writer.flush();
                         // Thrown an error so <remote-connection-failed/> stream error
                         // condition is sent to the Originating Server
@@ -744,8 +754,8 @@ public class ServerDialback {
                     }
                     else if (!remoteDomain.equals(doc.attributeValue("from"))) {
                         // Include the invalid-from stream error condition in the response
-                        writer.write(
-                                new StreamError(StreamError.Condition.invalid_from).toXML());
+                        writer.write(new StreamError(StreamError.Condition.invalid_from).toXML());
+                        writer.write("</stream:stream>");
                         writer.flush();
                         // Thrown an error so <remote-connection-failed/> stream error
                         // condition is sent to the Originating Server
@@ -772,6 +782,8 @@ public class ServerDialback {
                 log.error("An error occurred while connecting to the Authoritative Server:", e);
                 // Thrown an error so <remote-connection-failed/> stream error condition is
                 // sent to the Originating Server
+                writer.write("</stream:stream>");
+                writer.flush();
                 throw new RemoteConnectionFailedException("Error connecting to the Authoritative Server");
             }
 
@@ -779,11 +791,14 @@ public class ServerDialback {
         else {
             // Include the invalid-namespace stream error condition in the response
             writer.write(new StreamError(StreamError.Condition.invalid_namespace).toXML());
+            writer.write("</stream:stream>");
             writer.flush();
             // Thrown an error so <remote-connection-failed/> stream error condition is
             // sent to the Originating Server
             throw new RemoteConnectionFailedException("Invalid namespace");
         }
+        writer.write("</stream:stream>");
+        writer.flush();
         return result;
     }
 
@@ -811,11 +826,6 @@ public class ServerDialback {
         }
         finally {
             try {
-                // Close the stream
-                StringBuilder sb = new StringBuilder();
-                sb.append("</stream:stream>");
-                writer.write(sb.toString());
-                writer.flush();
                 // Close the TCP connection
                 socket.close();
             }

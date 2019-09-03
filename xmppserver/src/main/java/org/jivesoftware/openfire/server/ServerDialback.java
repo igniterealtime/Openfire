@@ -52,6 +52,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 /**
@@ -555,8 +556,9 @@ public class ServerDialback {
                 VerifyResult result;
                 try {
                     log.debug( "Verifying dialback key..." );
-                    try
-                    {
+                    final SocketAddress socketAddress = socket.getRemoteSocketAddress();
+                    log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
+                    try {
                         result = verifyKey( key, streamID, recipient, remoteDomain, socket, directTLS, directTLS );
                     }
                     catch (SSLHandshakeException e)
@@ -579,6 +581,24 @@ public class ServerDialback {
                             log.debug( "Successfully re-opened socket! Try to validate dialback key again (without TLS this time)..." );
 
                             result = verifyKey( key, streamID, recipient, remoteDomain, socket, true, directTLS );
+                        }
+                    } catch ( SSLException ex ) {
+                        if ( JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) && ex.getMessage().contains( "plaintext connection?" ) ) {
+                            Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", socketAddress );
+                            try {
+                                // Close old socket
+                                socket.close();
+                            } catch ( Exception e ) {
+                                Log.debug( "An exception occurred (and is ignored) while trying to close a socket that was already in an error state.", e );
+                            }
+                            socket = new Socket();
+                            socket.connect( socketAddress, RemoteServerManager.getSocketTimeout() );
+                            result = verifyKey( key, streamID, recipient, remoteDomain, socket, false, false );
+                            directTLS = false; // No error this time? directTLS apparently is 'false'. Change it's value for future usage (if any)
+                            Log.info( "Re-established connection to {}. Proceeding without directTLS.", socketAddress );
+                        } else {
+                            // Do not retry as non-DirectTLS, rethrow the exception.
+                            throw ex;
                         }
                     }
 

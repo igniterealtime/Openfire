@@ -24,10 +24,13 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
+
+import java.util.Arrays;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -220,6 +223,57 @@ public class PresenceRouter extends BasicModule {
     public void routingFailed( JID recipient, Packet packet )
     {
         Log.debug( "Presence sent to unreachable address: " + packet.toXML() );
-        // presence packets are dropped silently
+
+        // Do nothing if the sender was the server itself
+        if (packet.getFrom() == null || packet.getFrom().toString().equals( serverName )) {
+            return;
+        }
+
+        final Presence presence = (Presence) packet;
+
+        // For a presence stanza with no 'type' attribute or a 'type' attribute
+        // of "unavailable", the server MUST silently ignore the stanza.
+        // (...)
+        // For a presence stanza of type "subscribed", "unsubscribe", or
+        // "unsubscribed", the server MUST ignore the stanza.
+        if ( presence.getType() == null || Arrays.asList( Presence.Type.unavailable, Presence.Type.subscribed, Presence.Type.unsubscribe, Presence.Type.unsubscribed ).contains( presence.getType() ) ) {
+            return;
+        }
+
+        // If the presence subscription request cannot be locally delivered or
+        // remotely routed (e.g., because the request is malformed, the local
+        // contact does not exist, the remote server does not exist, an attempt
+        // to contact the remote server times out, or any other error is
+        // determined or experienced by the user's server), then the user's
+        // server MUST return an appropriate error stanza to the user.
+        if ( presence.getType() == Presence.Type.subscribe ) {
+            bounce( presence );
+        }
+    }
+
+    private void bounce(Presence presence) {
+        // The bouncing behavior as implemented beyond this point was introduced as part
+        // of OF-1852. This kill-switch allows it to be disabled again in case it
+        // introduces unwanted side-effects.
+        if ( !JiveGlobals.getBooleanProperty( "xmpp.presence.bounce", true ) ) {
+            return;
+        }
+        
+        // Do nothing if the sender was the server itself
+        if (presence.getFrom() == null || presence.getFrom().toString().equals( serverName )) {
+            return;
+        }
+        try {
+            // Generate a rejection response to the sender
+            final Presence errorResponse = presence.createCopy();
+            errorResponse.setError(PacketError.Condition.service_unavailable);
+            errorResponse.setFrom(presence.getTo());
+            errorResponse.setTo(presence.getFrom());
+            // Send the response
+            route(errorResponse);
+        }
+        catch (Exception e) {
+            Log.error("An exception occurred while trying to bounce a message.", e);
+        }
     }
 }

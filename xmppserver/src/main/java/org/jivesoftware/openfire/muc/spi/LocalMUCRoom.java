@@ -20,13 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -725,9 +719,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             historyRequest.sendHistory(joinRole, roomHistory);
         }
         Message roomSubject = roomHistory.getChangedSubject();
-        if (roomSubject != null) {
-            joinRole.send(roomSubject);
+
+        // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
+        if (roomSubject == null) {
+            roomSubject = new Message();
+            roomSubject.setFrom( this.getJID() );
+            roomSubject.setType( Message.Type.groupchat );
+            roomSubject.setID( UUID.randomUUID().toString() );
+            roomSubject.getElement().addElement( "subject" );
         }
+        joinRole.send(roomSubject);
+
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
             setEmptyDate(null);

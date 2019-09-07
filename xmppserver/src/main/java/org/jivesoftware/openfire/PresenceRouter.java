@@ -256,6 +256,8 @@ public class PresenceRouter extends BasicModule {
         if ( presence.getType() == Presence.Type.subscribe ) {
             bounce( presence );
         }
+
+        bounce( presence );
     }
 
     private void bounce(Presence presence) {

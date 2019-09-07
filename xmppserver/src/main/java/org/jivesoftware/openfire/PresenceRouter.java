@@ -224,19 +224,6 @@ public class PresenceRouter extends BasicModule {
     {
         Log.debug( "Presence sent to unreachable address: " + packet.toXML() );
 
-        // Do nothing if the sender was the server itself
-        if (packet.getFrom() == null || packet.getFrom().toString().equals( serverName )) {
-            Log.trace( "Not bouncing a stanza that was sent by the server itself." );
-            return;
-        }
-
-        // Do nothing if the packet included an error. This intends to prevent scenarios
-        // where a stanza that is bounced itself gets bounced, causing a loop.
-        if (packet.getError() != null) {
-            Log.trace( "Not bouncing a stanza that included an error (to prevent never-ending loops of bounces-of-bounces)." );
-            return;
-        }
-
         final Presence presence = (Presence) packet;
 
         // For a presence stanza with no 'type' attribute or a 'type' attribute
@@ -271,9 +258,17 @@ public class PresenceRouter extends BasicModule {
             Log.trace( "Not bouncing a presence stanza, as bouncing is disabled by configuration." );
             return;
         }
-        
+
+        // Do nothing if the packet included an error. This intends to prevent scenarios
+        // where a stanza that is bounced itself gets bounced, causing a loop.
+        if (presence.getError() != null) {
+            Log.trace( "Not bouncing a stanza that included an error (to prevent never-ending loops of bounces-of-bounces)." );
+            return;
+        }
+
         // Do nothing if the sender was the server itself
         if (presence.getFrom() == null || presence.getFrom().toString().equals( serverName )) {
+            Log.trace( "Not bouncing a stanza that was sent by the server itself." );
             return;
         }
         try {

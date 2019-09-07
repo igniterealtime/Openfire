@@ -226,6 +226,7 @@ public class PresenceRouter extends BasicModule {
 
         // Do nothing if the sender was the server itself
         if (packet.getFrom() == null || packet.getFrom().toString().equals( serverName )) {
+            Log.trace( "Not bouncing a stanza that was sent by the server itself." );
             return;
         }
 
@@ -244,6 +245,7 @@ public class PresenceRouter extends BasicModule {
         // For a presence stanza of type "subscribed", "unsubscribe", or
         // "unsubscribed", the server MUST ignore the stanza.
         if ( presence.getType() == null || Arrays.asList( Presence.Type.unavailable, Presence.Type.subscribed, Presence.Type.unsubscribe, Presence.Type.unsubscribed ).contains( presence.getType() ) ) {
+            Log.trace( "Not bouncing a presence stanza of type {}", presence.getType() );
             return;
         }
 
@@ -254,9 +256,11 @@ public class PresenceRouter extends BasicModule {
         // determined or experienced by the user's server), then the user's
         // server MUST return an appropriate error stanza to the user.
         if ( presence.getType() == Presence.Type.subscribe ) {
+            Log.trace( "Bouncing a presence stanza of type {}", presence.getType() );
             bounce( presence );
         }
 
+        Log.trace( "Bouncing a presence stanza." );
         bounce( presence );
     }
 
@@ -282,7 +286,7 @@ public class PresenceRouter extends BasicModule {
             route(errorResponse);
         }
         catch (Exception e) {
-            Log.error("An exception occurred while trying to bounce a message.", e);
+            Log.error("An exception occurred while trying to bounce a presence stanza.", e);
         }
     }
 }

@@ -231,7 +231,7 @@ public class CertificateStoreManager extends BasicModule
         // Getting individual properties might use fallbacks. It is assumed (but not asserted) that each property value
         // is obtained from the same connectionType (which is either the argument to this method, or one of its
         // fallbacks.
-        final String keyStoreType = getKeyStoreType( type );
+        final String keyStoreType = getIdentityStoreType( type );
         final String password = getIdentityStorePassword( type );
         final String location = getIdentityStoreLocation( type );
         final String backupDirectory = getIdentityStoreBackupDirectory( type );
@@ -246,7 +246,7 @@ public class CertificateStoreManager extends BasicModule
         // Getting individual properties might use fallbacks. It is assumed (but not asserted) that each property value
         // is obtained from the same connectionType (which is either the argument to this method, or one of its
         // fallbacks.
-        final String keyStoreType = getKeyStoreType( type );
+        final String keyStoreType = getTrustStoreType( type );
         final String password = getTrustStorePassword( type );
         final String location = getTrustStoreLocation( type );
         final String backupDirectory = getTrustStoreBackupDirectory( type );
@@ -295,13 +295,90 @@ public class CertificateStoreManager extends BasicModule
     }
 
     /**
-     * The KeyStore type (jks, jceks, pkcs12, etc) for the identity and trust store for connections created by this
-     * listener.
+     * The KeyStore type (jks, jceks, pkcs12, etc) for the trust store for connections of a particular type.
      *
      * @param type the connection type
      * @return a store type (never null).
      * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
      */
+    public static String getTrustStoreType( ConnectionType type )
+    {
+        final String propertyName = type.getPrefix() + "trustStoreType";
+        final String defaultValue = getKeyStoreType( type );
+
+        if ( type.getFallback() == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, getTrustStoreType( type.getFallback() ) ).trim();
+        }
+    }
+
+    static void setTrustStoreType( ConnectionType type, String keyStoreType )
+    {
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "trustStoreType", keyStoreType );
+
+        final String oldKeyStoreType = getTrustStoreType( type );
+        if ( oldKeyStoreType.equals( keyStoreType ) )
+        {
+            Log.debug( "Ignoring Trust Store type change request (to '{}'): listener already in this state.", keyStoreType );
+            return;
+        }
+
+        Log.debug( "Changing Trust Store type from '{}' to '{}'.", oldKeyStoreType, keyStoreType );
+        // TODO shouldn't this do something?
+    }
+
+    /**
+     * The KeyStore type (jks, jceks, pkcs12, etc) for the identity store for connections of a particular type.
+     *
+     * @param type the connection type
+     * @return a store type (never null).
+     * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
+     */
+    public static String getIdentityStoreType( ConnectionType type )
+    {
+        final String propertyName = type.getPrefix() + "identityStoreType";
+        final String defaultValue = getKeyStoreType( type );
+
+        if ( type.getFallback() == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, getIdentityStoreType( type.getFallback() ) ).trim();
+        }
+    }
+
+    static void setIdentityStoreType( ConnectionType type, String keyStoreType )
+    {
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "identityStoreType", keyStoreType );
+
+        final String oldKeyStoreType = getIdentityStoreType( type );
+        if ( oldKeyStoreType.equals( keyStoreType ) )
+        {
+            Log.debug( "Ignoring Identity Store type change request (to '{}'): listener already in this state.", keyStoreType );
+            return;
+        }
+
+        Log.debug( "Changing Identity Store type from '{}' to '{}'.", oldKeyStoreType, keyStoreType );
+        // TODO shouldn't this do something?
+    }
+
+    /**
+     * The KeyStore type (jks, jceks, pkcs12, etc) for the identity and trust store for connections of a particular type.
+     *
+     * @param type the connection type
+     * @return a store type (never null).
+     * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
+     * @deprecated use either {@link #getTrustStoreType(ConnectionType)} or {@link #getIdentityStoreType(ConnectionType)}
+     */
+    @Deprecated
     public static String getKeyStoreType( ConnectionType type )
     {
         final String propertyName = type.getPrefix() + "storeType";
@@ -330,6 +407,7 @@ public class CertificateStoreManager extends BasicModule
         }
 
         Log.debug( "Changing KeyStore type from '{}' to '{}'.", oldKeyStoreType, keyStoreType );
+        // TODO shouldn't this do something?
     }
 
     /**

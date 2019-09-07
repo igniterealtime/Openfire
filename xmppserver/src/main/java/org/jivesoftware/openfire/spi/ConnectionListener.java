@@ -5,7 +5,9 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -429,22 +431,43 @@ public class ConnectionListener
         Connection.ClientAuth clientAuth;
         if ( clientAuthPolicyPropertyName == null )
         {
-            clientAuth = Connection.ClientAuth.disabled;
+            clientAuth = getDefaultClientAuth();
         }
         else
         {
-            final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, Connection.ClientAuth.disabled.name() );
+            final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, getDefaultClientAuth().name() );
             try
             {
                 clientAuth = Connection.ClientAuth.valueOf( value );
             }
             catch ( IllegalArgumentException e )
             {
-                Log.error( "Error parsing property value of '{}' into a valid ClientAUth. Offending value: '{}'.", value, clientAuthPolicyPropertyName, e );
-                clientAuth = Connection.ClientAuth.disabled;
+                Log.error( "Error parsing property value of '{}' into a valid ClientAuth. Offending value: '{}'.", value, clientAuthPolicyPropertyName, e );
+                clientAuth = getDefaultClientAuth();
             }
         }
         return clientAuth;
+    }
+
+    protected Connection.ClientAuth getDefaultClientAuth()
+    {
+        try
+        {
+            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( getType() );
+            final boolean hasSignedCert = identityStore.getAllCertificates()
+                .values()
+                .stream()
+                .anyMatch( certificate -> !CertificateManager.isSelfSignedCertificate( certificate ) && !CertificateManager.isSigningRequestPending( certificate ) );
+
+            if ( hasSignedCert && Arrays.asList( ConnectionType.SOCKET_S2S ).contains( getType() ) ) {
+                return Connection.ClientAuth.wanted;
+            } else {
+                return Connection.ClientAuth.disabled;
+            }
+        } catch ( Exception e ) {
+            Log.info( "An unexpected exception occurred while calculating the default client auth setting for connection type {}.", getType(), e );
+            return Connection.ClientAuth.disabled;
+        }
     }
 
     public void setClientAuth( Connection.ClientAuth clientAuth )

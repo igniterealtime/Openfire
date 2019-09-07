@@ -264,6 +264,7 @@ public class MessageRouter extends BasicModule {
         if ( serverName.equals( recipient.getDomain() ) )
         {
             // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
+            log.trace( "Delegating to offline message strategy." );
             messageStrategy.storeOffline( (Message) packet );
         }
         else
@@ -276,6 +277,7 @@ public class MessageRouter extends BasicModule {
             if (recipient.getResource() == null) {
                 if (msg.getType() == Message.Type.headline || msg.getType() == Message.Type.error) {
                     // For a message stanza of type "headline" or "error", the server MUST silently ignore the message.
+                    log.trace( "Not bouncing a message stanza to a bare JID of non-local user, of type {}", msg.getType() );
                     return;
                 }
             } else {
@@ -284,6 +286,7 @@ public class MessageRouter extends BasicModule {
 
                 // For a message stanza of type "error", the server MUST silently ignore the stanza.
                 if (msg.getType() == Message.Type.error) {
+                    log.trace( "Not bouncing a message stanza to a full JID of non-local user, of type {}", msg.getType() );
                     return;
                 }
             }
@@ -297,6 +300,7 @@ public class MessageRouter extends BasicModule {
         // of OF-1852. This kill-switch allows it to be disabled again in case it
         // introduces unwanted side-effects.
         if ( !JiveGlobals.getBooleanProperty( "xmpp.message.bounce", true ) ) {
+            log.trace( "Not bouncing a message stanza, as bouncing is disabled by configuration." );
             return;
         }
 
@@ -309,9 +313,12 @@ public class MessageRouter extends BasicModule {
 
         // Do nothing if the sender was the server itself
         if (message.getFrom() == null || message.getFrom().toString().equals( serverName )) {
+            log.trace( "Not bouncing a stanza that was sent by the server itself." );
             return;
         }
         try {
+            log.trace( "Bouncing a message stanza." );
+
             // Generate a rejection response to the sender
             final Message errorResponse = message.createCopy();
             // return an error stanza to the sender, which SHOULD be <service-unavailable/>

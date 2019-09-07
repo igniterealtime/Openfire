@@ -260,7 +260,6 @@ public class PresenceRouter extends BasicModule {
             bounce( presence );
         }
 
-        Log.trace( "Bouncing a presence stanza." );
         bounce( presence );
     }
 
@@ -269,6 +268,7 @@ public class PresenceRouter extends BasicModule {
         // of OF-1852. This kill-switch allows it to be disabled again in case it
         // introduces unwanted side-effects.
         if ( !JiveGlobals.getBooleanProperty( "xmpp.presence.bounce", true ) ) {
+            Log.trace( "Not bouncing a presence stanza, as bouncing is disabled by configuration." );
             return;
         }
         
@@ -277,6 +277,8 @@ public class PresenceRouter extends BasicModule {
             return;
         }
         try {
+            Log.trace( "Bouncing a presence stanza." );
+
             // Generate a rejection response to the sender
             final Presence errorResponse = presence.createCopy();
             errorResponse.setError(PacketError.Condition.service_unavailable);

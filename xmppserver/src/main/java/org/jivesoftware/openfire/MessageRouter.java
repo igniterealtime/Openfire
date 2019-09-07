@@ -300,6 +300,13 @@ public class MessageRouter extends BasicModule {
             return;
         }
 
+        // Do nothing if the packet included an error. This intends to prevent scenarios
+        // where a stanza that is bounced itself gets bounced, causing a loop.
+        if (message.getError() != null) {
+            log.trace( "Not bouncing a stanza that included an error (to prevent never-ending loops of bounces-of-bounces)." );
+            return;
+        }
+
         // Do nothing if the sender was the server itself
         if (message.getFrom() == null || message.getFrom().toString().equals( serverName )) {
             return;

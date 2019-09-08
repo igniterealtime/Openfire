@@ -62,7 +62,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
         // should really never occur.
         if (!XMPPServer.getInstance().getMultiUserChatManager().isServiceRegistered(subdomain)) {
             MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description, isHidden);
-            XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
+            XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service, false);
         }
     }
 

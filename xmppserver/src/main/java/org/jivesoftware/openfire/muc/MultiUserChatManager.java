@@ -40,7 +40,9 @@ import org.jivesoftware.openfire.muc.cluster.GetNewMemberRoomsRequest;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomInfo;
 import org.jivesoftware.openfire.muc.cluster.SeniorMemberServicesRequest;
+import org.jivesoftware.openfire.muc.cluster.ServiceAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.ServiceInfo;
+import org.jivesoftware.openfire.muc.cluster.ServiceRemovedEvent;
 import org.jivesoftware.openfire.muc.cluster.ServiceUpdatedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
@@ -106,7 +108,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         loadServices();
 
         for (MultiUserChatService service : mucServices.values()) {
-            registerMultiUserChatService(service);
+            registerMultiUserChatService(service, false);
         }
 
         // Add statistics
@@ -138,7 +140,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         StatisticsManager.getInstance().removeStatistic(outgoingStatKey);
 
         for (MultiUserChatService service : mucServices.values()) {
-            unregisterMultiUserChatService(service.getServiceName());
+            unregisterMultiUserChatService(service.getServiceName(), false);
         }
     }
 
@@ -153,6 +155,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param service The MultiUserChatService to be registered.
      */
     public void registerMultiUserChatService(MultiUserChatService service) {
+        registerMultiUserChatService(service, true);
+    }
+
+    public void registerMultiUserChatService(MultiUserChatService service, boolean allNodes) {
         Log.debug("MultiUserChatManager: Registering MUC service "+service.getServiceName());
         try {
             ComponentManagerFactory.getComponentManager().addComponent(service.getServiceName(), service);
@@ -160,6 +166,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
         catch (ComponentException e) {
             Log.error("MultiUserChatManager: Unable to add "+service.getServiceName()+" as component.", e);
+        }
+        if (allNodes) {
+            CacheFactory.doClusterTask(new ServiceAddedEvent(service.getServiceName(), service.getDescription(), service.isHidden()));
         }
     }
 
@@ -171,6 +180,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param subdomain The subdomain of the service to be unregistered.
      */
     public void unregisterMultiUserChatService(String subdomain) {
+        unregisterMultiUserChatService(subdomain, true);
+    }
+
+    public void unregisterMultiUserChatService(String subdomain, boolean allNodes) {
         Log.debug("MultiUserChatManager: Unregistering MUC service "+subdomain);
         MultiUserChatService service = mucServices.get(subdomain);
         if (service != null) {
@@ -182,6 +195,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 Log.error("MultiUserChatManager: Unable to remove "+subdomain+" from component manager.", e);
             }
             mucServices.remove(subdomain);
+        }
+        if (allNodes) {
+            CacheFactory.doClusterTask(new ServiceRemovedEvent(subdomain));
         }
     }
 
@@ -248,13 +264,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         else {
             // Changing the subdomain, here's where it gets complex.
             // Unregister existing muc service
-            unregisterMultiUserChatService(subdomain);
+            unregisterMultiUserChatService(subdomain, false);
             // Update the information stored about the MUC service
             updateService(serviceID, subdomain, description);
             // Create new MUC service with new settings
             muc = new MultiUserChatServiceImpl(subdomain, description, muc.isHidden());
             // Register to new service
-            registerMultiUserChatService(muc);
+            registerMultiUserChatService(muc, false);
         }
     }
 

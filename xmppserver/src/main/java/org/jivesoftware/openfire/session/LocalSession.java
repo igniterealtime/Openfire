@@ -89,8 +89,9 @@ public abstract class LocalSession implements Session {
     private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
-     * Session temporary data. All data stored in this <code>Map</code> disapear when session
-     * finishes.
+     * Session temporary data.
+     *
+     * All data stored in this <code>Map</code> disappears when the session finishes.
      */
     private final Map<String, Object> sessionData = new HashMap<>();
 
@@ -317,11 +318,15 @@ public abstract class LocalSession implements Session {
      *
      * @param key a <code>String</code> value of stored data key ID.
      * @param value a <code>Object</code> value of data stored in session.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
+     *         (A {@code null} return can also indicate that the map
+     *         previously associated {@code null} with {@code key}.)
      * @see #getSessionData(String)
      */
-    public void setSessionData(String key, Object value) {
+    public Object setSessionData(String key, Object value) {
         synchronized (sessionData) {
-            sessionData.put(key, value);
+            return sessionData.put(key, value);
         }
     }
 
@@ -345,11 +350,13 @@ public abstract class LocalSession implements Session {
      * for more details.
      *
      * @param key a <code>String</code> value of stored data ID.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
      * @see #setSessionData(String, Object)
      */
-    public void removeSessionData(String key) {
+    public Object removeSessionData(String key) {
         synchronized (sessionData) {
-            sessionData.remove(key);
+            return sessionData.remove(key);
         }
     }
 

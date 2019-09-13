@@ -35,6 +35,8 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserCollection;
@@ -201,11 +203,8 @@ public class LdapUserProvider implements UserProvider {
         if (userCount != -1 && System.currentTimeMillis() < userCountExpiresStamp ) {
             return userCount;
         }
-        this.userCount = manager.retrieveListCount(
-                manager.getUsernameField(),
-                MessageFormat.format(manager.getSearchFilter(), "*")
-        );
-        this.userCountExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        // Refresh the cache
+        getUsernames();
         return this.userCount;
     }
 
@@ -215,19 +214,8 @@ public class LdapUserProvider implements UserProvider {
         if ( allUsernames != null && System.currentTimeMillis() < allUserNamesExpiresStamp ) {
             return allUsernames;
         }
-        this.allUsernames = manager.retrieveList(
-                manager.getUsernameField(),
-                MessageFormat.format(manager.getSearchFilter(), "*"),
-                -1,
-                -1,
-                null,
-                true
-        );
-
-        // When all usernames have been fetched, we can update various other cached values.
-        this.userCount = this.allUsernames.size();
-        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
-        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
+        // Refresh the cache
+        getUsers();
         return this.allUsernames;
     }
     
@@ -245,14 +233,25 @@ public class LdapUserProvider implements UserProvider {
 
     @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
-        List<String> userlist = manager.retrieveList(
+        final List<String> userlist;
+        if (manager.isFindUsersFromGroupsEnabled()) {
+            final List<String> allUsers = GroupManager.getInstance().getGroups()
+                .stream()
+                .map(Group::getAll)
+                .flatMap(Collection::stream)
+                .map(JID::getNode)
+                .collect(Collectors.toList());
+            userlist = LdapManager.sortAndPaginate(allUsers, startIndex, numResults);
+        } else {
+            userlist = manager.retrieveList(
                 manager.getUsernameField(),
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 startIndex,
                 numResults,
                 manager.getUsernameSuffix(),
                 true
-        );
+            );
+        }
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 

@@ -203,6 +203,7 @@ public class LdapManager {
     private boolean encloseUserDN;
     private boolean encloseGroupDN;
     private boolean startTlsEnabled = false;
+    private final boolean findUsersFromGroupsEnabled;
 
     private String groupNameField;
     private String groupMemberField;
@@ -437,6 +438,11 @@ public class LdapManager {
         else {
             initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
         }
+        this.findUsersFromGroupsEnabled = Boolean.parseBoolean(properties.get("ldap.findUsersFromGroupsEnabled"));
+        if (this.findUsersFromGroupsEnabled && !Boolean.parseBoolean(properties.get("ldap.clientSideSorting"))) {
+            Log.info("Enabling client side sorting as findUsersFromGroupsEnabled is enabled");
+            properties.put("ldap.clientSideSorting", String.valueOf(true));
+        }
 
         StringBuilder buf = new StringBuilder();
         buf.append("Created new LdapManager() instance, fields:\n");
@@ -464,6 +470,7 @@ public class LdapManager {
         buf.append("\t groupDescriptionField: ").append(groupDescriptionField).append("\n");
         buf.append("\t posixMode: ").append(posixMode).append("\n");
         buf.append("\t groupSearchFilter: ").append(groupSearchFilter).append("\n");
+        buf.append("\t findUsersFromGroupsEnabled: ").append(findUsersFromGroupsEnabled).append("\n");
 
         if (Log.isDebugEnabled()) {
             Log.debug("LdapManager: "+buf.toString());
@@ -864,6 +871,10 @@ public class LdapManager {
             }
         }
         return true;
+    }
+
+    public boolean isFindUsersFromGroupsEnabled() {
+        return findUsersFromGroupsEnabled;
     }
 
     /**
@@ -2108,17 +2119,7 @@ public class LdapManager {
 
             // If client-side sorting is enabled, sort and trim.
             if (clientSideSort) {
-                Collections.sort(results);
-                if (startIndex != -1 || numResults != -1) {
-                    if (startIndex == -1) {
-                        startIndex = 0;
-                    }
-                    if (numResults == -1) {
-                        numResults = results.size();
-                    }
-                    int endIndex = Math.min(startIndex + numResults, results.size()-1);
-                    results = results.subList(startIndex, endIndex);
-                }
+                results = sortAndPaginate(results, startIndex, numResults);
             }
         }
         catch (Exception e) {
@@ -2140,6 +2141,18 @@ public class LdapManager {
             }
         }
         return results;
+    }
+
+    static List<String> sortAndPaginate(Collection<String> unpagedCollection, int startIndex, int numResults) {
+        final List<String> results = new ArrayList<>(unpagedCollection);
+        Collections.sort(results);
+        // If the startIndex is negative, start at the beginning
+        final int fromIndex = Math.max(startIndex, 0);
+        // If the numResults is negative, take all the results
+        final int resultCount = Math.max(numResults, results.size());
+        // Make sure we're not returning more results than there actually are
+        final int toIndex = Math.min(results.size(), resultCount);
+        return results.subList(fromIndex, toIndex);
     }
 
     /**

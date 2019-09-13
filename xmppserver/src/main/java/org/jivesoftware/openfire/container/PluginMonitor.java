@@ -24,21 +24,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -286,7 +272,10 @@ public class PluginMonitor implements PropertyEventListener
                             // If the JAR needs to be exploded, do so.
                             if ( Files.notExists( dir ) )
                             {
-                                unzipPlugin( canonicalPluginName, jarFile, dir );
+                                if (!unzipPlugin( canonicalPluginName, jarFile, dir ) )
+                                {
+                                    return;
+                                }
                             }
                         }
                     }
@@ -446,16 +435,32 @@ public class PluginMonitor implements PropertyEventListener
          * @param pluginName the name of the plugin.
          * @param file       the JAR file
          * @param dir        the directory to extract the plugin to.
+         * @return A boolean indicating success.
          */
-        private void unzipPlugin( String pluginName, Path file, Path dir )
+        private boolean unzipPlugin( String pluginName, Path file, Path dir )
         {
             try ( ZipFile zipFile = new JarFile( file.toFile() ) )
             {
                 // Ensure that this JAR is a plugin.
                 if ( zipFile.getEntry( "plugin.xml" ) == null )
                 {
-                    return;
+                    return false;
                 }
+
+                // Protect against zip-slip (before applying any file-system modifications).
+                if ( JiveGlobals.getBooleanProperty( "plugins.loading.zipslipDetection.enabled", true ) )
+                {
+                    for ( Enumeration e = zipFile.entries(); e.hasMoreElements(); )
+                    {
+                        JarEntry entry = (JarEntry) e.nextElement();
+                        Path entryFile = dir.resolve( entry.getName() );
+                        if ( !entryFile.normalize().toAbsolutePath().startsWith( dir.normalize().toAbsolutePath() ) )
+                        {
+                            throw new RuntimeException( "Plugin contains content that is outside of target plugin directory (possible zipslip attack)" );
+                        }
+                    }
+                }
+
                 Files.createDirectory( dir );
                 // Set the date of the JAR file to the newly created folder
                 Files.setLastModifiedTime( dir, Files.getLastModifiedTime( file ) );
@@ -479,10 +484,12 @@ public class PluginMonitor implements PropertyEventListener
                     }
                 }
                 Log.debug( "Successfully extracted plugin '{}'.", pluginName );
+                return true;
             }
             catch ( Exception e )
             {
                 Log.error( "An exception occurred while trying to extract plugin '{}':", pluginName, e );
+                return false;
             }
         }
 

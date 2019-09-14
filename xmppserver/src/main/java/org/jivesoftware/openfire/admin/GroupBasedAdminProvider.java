@@ -13,18 +13,18 @@ import java.util.List;
 /**
  * Makes the users of specific group Openfire administrators.
  *
- * <p>To use, set the System Property `provider.admin.className` to the value `org.jivesoftware.openfire.admin.GroupAdminProvider`</p>
+ * <p>To use, set the System Property `provider.admin.className` to the value `org.jivesoftware.openfire.admin.GroupBasedAdminProvider`</p>
  *
  * <p>The list of Openfire administrators will be taken from the members of the group defined by the System Property
- * `provider.group.groupAdminProvider.groupName` - which defaults to `openfire-administrators`</p>
+ * `provider.group.groupBasedAdminProvider.groupName` - which defaults to `openfire-administrators`</p>
  *
- * <p><strong>NOTE: </strong> Although the system properties `provider.admin.className` and `provider.group.groupAdminProvider.groupName` are dynamic, a restart may
+ * <p><strong>NOTE: </strong> Although the system properties `provider.admin.className` and `provider.group.groupBasedAdminProvider.groupName` are dynamic, a restart may
  * be required as the list of admin users may be cached.</p>
  */
-public class GroupAdminProvider implements AdminProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GroupAdminProvider.class);
+public class GroupBasedAdminProvider implements AdminProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroupBasedAdminProvider.class);
     private static final SystemProperty<String> GROUP_NAME = SystemProperty.Builder.ofType(String.class)
-        .setKey("provider.group.groupAdminProvider.groupName")
+        .setKey("provider.group.groupBasedAdminProvider.groupName")
         .setDefaultValue("openfire-administrators")
         .setDynamic(true)
         .build();

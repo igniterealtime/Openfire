@@ -20,13 +20,13 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-public class GroupAdminProviderTest {
+public class GroupBasedAdminProviderTest {
 
     private static final List<JID> ADMINS = Arrays.asList(new JID("user-a"), new JID("user-b"));
     private static String mockGroupName;
     private static Group mockGroup;
 
-    private GroupAdminProvider adminProvider;
+    private GroupBasedAdminProvider adminProvider;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -41,7 +41,7 @@ public class GroupAdminProviderTest {
         JiveGlobals.setProperty("provider.group.groupAdminProvider.groupName", mockGroupName);
         mockGroup = mock(Group.class);
         doReturn(ADMINS).when(mockGroup).getMembers();
-        adminProvider = new GroupAdminProvider();
+        adminProvider = new GroupBasedAdminProvider();
     }
 
     @Test

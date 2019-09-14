@@ -140,6 +140,9 @@ public class LdapUserProvider implements UserProvider {
             // As defined by RFC5803.
             Attribute authPassword = attrs.get("authPassword");
             User user = new User(username, name, email, creationDate, modificationDate);
+            if (manager.isFindUsersFromGroupsEnabled() && GroupManager.getInstance().getGroups(user).isEmpty()) {
+                throw new UserNotFoundException("User exists in LDAP but is not a member of any Openfire groups");
+            }
             if (authPassword != null) {
                 // The authPassword attribute can be multivalued.
                 // Not sure if this is the right API to loop through them.
@@ -354,6 +357,14 @@ public class LdapUserProvider implements UserProvider {
                 manager.getUsernameSuffix(),
                 true
         );
+        if (manager.isFindUsersFromGroupsEnabled()) {
+            userlist = userlist.stream()
+                .filter(user ->
+                    !GroupManager.getInstance().getGroups(
+                        XMPPServer.getInstance().createJID(user, null))
+                    .isEmpty())
+                .collect(Collectors.toList());
+        }
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 

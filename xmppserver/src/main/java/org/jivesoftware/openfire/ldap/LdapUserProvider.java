@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.ldap;
 
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -42,7 +44,6 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserCollection;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,14 +60,14 @@ public class LdapUserProvider implements UserProvider {
     private static final Logger Log = LoggerFactory.getLogger(LdapUserProvider.class);
 
     // LDAP date format parser.
-    private static SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-    private LdapManager manager;
+    private final LdapManager manager;
     private Map<String, String> searchFields;
+    private Instant allUserCacheExpires = Instant.now();
     private int userCount = -1;
-    private long userCountExpiresStamp = System.currentTimeMillis();
-    private transient List<String> allUsernames = null;
-    private long allUserNamesExpiresStamp = System.currentTimeMillis();
+    private List<String> allUsernames = null;
+    private Collection<User> allUsers = null;
 
     public LdapUserProvider() {
         // Convert XML based provider setup to Database based
@@ -203,18 +204,18 @@ public class LdapUserProvider implements UserProvider {
     @Override
     public int getUserCount() {
         // Cache user count for 5 minutes.
-        if (userCount != -1 && System.currentTimeMillis() < userCountExpiresStamp ) {
+        if (userCount != -1 && allUserCacheExpires.isAfter(Instant.now())) {
             return userCount;
         }
         // Refresh the cache
-        getUsernames();
+        getUsers();
         return this.userCount;
     }
 
     @Override
     public Collection<String> getUsernames() {
         // Cache usernames for 5 minutes.
-        if ( allUsernames != null && System.currentTimeMillis() < allUserNamesExpiresStamp ) {
+        if (allUsernames != null && allUserCacheExpires.isAfter(Instant.now())) {
             return allUsernames;
         }
         // Refresh the cache
@@ -223,15 +224,16 @@ public class LdapUserProvider implements UserProvider {
     }
     
     @Override
-    public Collection<User> getUsers() {
-        final Collection<User> users = getUsers( -1, -1 );
-
+    public synchronized Collection<User> getUsers() {
+        if (allUsers != null && allUserCacheExpires.isAfter(Instant.now())) {
+            return allUsers;
+        }
+        this.allUsers = getUsers( -1, -1 );
         // When all user have been fetched, we can update various other cached values.
-        this.allUsernames = users.stream().map( User::getUsername ).collect( Collectors.toList() );
-        this.userCount = this.allUsernames.size();
-        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
-        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
-        return users;
+        this.userCount = this.allUsers.size();
+        this.allUsernames = allUsers.stream().map(User::getUsername).collect(Collectors.toList());
+        this.allUserCacheExpires = Instant.now().plus(5, ChronoUnit.MINUTES);
+        return allUsers;
     }
 
     @Override

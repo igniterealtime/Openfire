@@ -38,7 +38,7 @@ public class GroupBasedAdminProviderTest {
         Fixtures.clearExistingProperties();
         GroupManager.GROUP_PROVIDER.setValue(TestGroupProvider.class);
         mockGroupName = "mock-group-name";
-        JiveGlobals.setProperty("provider.group.groupAdminProvider.groupName", mockGroupName);
+        JiveGlobals.setProperty("provider.group.groupBasedAdminProvider.groupName", mockGroupName);
         mockGroup = mock(Group.class);
         doReturn(ADMINS).when(mockGroup).getMembers();
         adminProvider = new GroupBasedAdminProvider();

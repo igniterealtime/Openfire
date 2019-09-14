@@ -91,6 +91,21 @@ import org.xmpp.packet.JID;
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
  *      <li>ldap.connectionPoolEnabled -- true if an LDAP connection pool should be used.
  *          False if not set.</li>
+ *      <li>ldap.findUsersFromGroupsEnabled</li> -- If true then Openfire users will be identified from the members
+ *      of Openfire groups instead of from the list of all users in LDAP. This option is only useful if you wish to
+ *      restrict the users of Openfire to those in certain groups. Normally this is done by applying an appropriate
+ *      ldap.searchFilter, but there are a number of reasons why you may wish to enable this option instead:
+ *      <ul>
+ *          <li>If group members cannot be identified by the attributes of the user in LDAP (typically the memberOf
+ *          attribute) then users cannot be filtered using ldap.searchFilter</li>
+ *          <li>If the number of Openfire users is small compared to the total number of users in LDAP
+ *          then it may be more performant to identify these users from the groups to which they belong instead
+ *          of applying an ldap.searchFilter. Note that if this is not the case, enabling this option may significantly
+ *          decrease performance.</li>
+ *      </ul>
+ *      In any case, an appropriate ldap.groupSearchFilter should be applied to prevent LDAP users belonging to
+ *      <i>any</i> group being selected as Openfire users.
+ *      (default value: false)
  * </ul>
  *
  * @author Matt Tucker

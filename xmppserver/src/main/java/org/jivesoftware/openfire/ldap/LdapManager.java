@@ -439,10 +439,6 @@ public class LdapManager {
             initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
         }
         this.findUsersFromGroupsEnabled = Boolean.parseBoolean(properties.get("ldap.findUsersFromGroupsEnabled"));
-        if (this.findUsersFromGroupsEnabled && !Boolean.parseBoolean(properties.get("ldap.clientSideSorting"))) {
-            Log.info("Enabling client side sorting as findUsersFromGroupsEnabled is enabled");
-            properties.put("ldap.clientSideSorting", String.valueOf(true));
-        }
 
         StringBuilder buf = new StringBuilder();
         buf.append("Created new LdapManager() instance, fields:\n");

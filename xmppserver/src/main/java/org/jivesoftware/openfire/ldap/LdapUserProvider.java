@@ -16,38 +16,25 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserCollection;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.user.UserProvider;
+import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -240,12 +227,12 @@ public class LdapUserProvider implements UserProvider {
     public Collection<User> getUsers(int startIndex, int numResults) {
         final List<String> userlist;
         if (manager.isFindUsersFromGroupsEnabled()) {
-            final List<String> allUsers = GroupManager.getInstance().getGroups()
+            final Set<String> allUsers = GroupManager.getInstance().getGroups()
                 .stream()
                 .map(Group::getAll)
                 .flatMap(Collection::stream)
                 .map(JID::getNode)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
             userlist = LdapManager.sortAndPaginate(allUsers, startIndex, numResults);
         } else {
             userlist = manager.retrieveList(

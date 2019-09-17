@@ -274,7 +274,11 @@ public class PluginMonitor implements PropertyEventListener
                             {
                                 if (!unzipPlugin( canonicalPluginName, jarFile, dir ) )
                                 {
-                                    return;
+                                    // the 'continue' statement is strictly unneeded here, as this
+                                    // is the last statement at the time of writing. It's left in
+                                    // to avoid future additions to this code from progressing
+                                    // beyond this point.
+                                    continue;
                                 }
                             }
                         }

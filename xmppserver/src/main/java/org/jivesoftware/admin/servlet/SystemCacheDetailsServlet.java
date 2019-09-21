@@ -13,13 +13,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.ListPager;
 import org.jivesoftware.util.LocaleUtils;
@@ -29,6 +22,15 @@ import org.jivesoftware.util.WebManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+@WebServlet(value = "/SystemCacheDetails.jsp")
 public class SystemCacheDetailsServlet extends HttpServlet {
 
     private static final String[] SEARCH_FIELDS = {"cacheName", "searchKey", "searchValue"};

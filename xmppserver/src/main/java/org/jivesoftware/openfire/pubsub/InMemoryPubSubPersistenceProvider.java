@@ -198,38 +198,10 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Removing node subscription (NOP): {} {}", subscription.getNode().getUniqueIdentifier(), subscription.getID() );
     }
 
-    @Override
-    public void flushPendingItems( Node.UniqueIdentifier nodeUniqueId )
-    {
-        log.debug( "Flushing pending items for node {} (NOP)", nodeUniqueId );
-        // Do nothing. In-memory state does not need 'flushing' to a persistent backend.
-    }
-
-    @Override
-    public void flushPendingItems()
-    {
-        log.debug( "Flushing all pending items (NOP)." );
-        // Do nothing. In-memory state does not need 'flushing' to a persistent backend.
-    }
-
-    @Override
-    public void flushPendingItems( Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster )
-    {
-        log.debug( "Flushing pending items for node {} (send to cluster: {}) (NOP)", nodeUniqueId, sendToCluster );
-        // Do nothing. In-memory state does not need 'flushing' to a persistent backend.
-    }
-
-    @Override
-    public void flushPendingItems( boolean sendToCluster )
-    {
-        log.debug( "Flushing all pending items (send to cluster: {}) (NOP).", sendToCluster );
-        // Do nothing. In-memory state does not need 'flushing' to a persistent backend.
-    }
-
     // This mimics the cache usage as pre-existed in DefaultPubSubPersenceProvider.
     private static String getDefaultNodeConfigurationCacheKey( PubSubService service, boolean isLeafType )
     {
-        return service.getServiceID() + "|" + Boolean.toString( isLeafType );
+        return service.getServiceID() + "|" + isLeafType;
     }
 
     @Override
@@ -397,5 +369,13 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public void bulkPublishedItems( final List<PublishedItem> addList, final List<PublishedItem> delList )
+    {
+        addList.removeAll( delList );
+        delList.forEach( this::removePublishedItem );
+        addList.forEach( this::savePublishedItem );
     }
 }

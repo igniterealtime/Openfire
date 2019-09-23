@@ -52,7 +52,7 @@ public class PubSubPersistenceProviderManager
 
     private void initProvider()
     {
-        String className = JiveGlobals.getProperty( "provider.pubsub-persistence.className", DefaultPubSubPersistenceProvider.class.getName() );
+        String className = JiveGlobals.getProperty( "provider.pubsub-persistence.className", CachingPubsubPersistenceProvider.class.getName() );
 
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {
@@ -68,7 +68,7 @@ public class PubSubPersistenceProviderManager
             }
             catch (Exception e) {
                 Log.error("Error loading PubSub persistence provider: {}. Using default provider instead.", className, e);
-                provider = new DefaultPubSubPersistenceProvider();
+                provider = new CachingPubsubPersistenceProvider();
                 provider.initialize();
             }
         }

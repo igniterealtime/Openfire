@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.jivesoftware.openfire.pubsub.CachingPubsubPersistenceProvider;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubPersistenceProvider;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -27,10 +29,14 @@ public class FlushTask implements ClusterTask<Void>
     @Override
     public void run()
     {
-		if ( uniqueIdentifier != null ) {
-			PubSubPersistenceProviderManager.getInstance().getProvider().flushPendingItems( uniqueIdentifier, false); // just this member
-		} else {
-			PubSubPersistenceProviderManager.getInstance().getProvider().flushPendingItems(false); // just this member
+		final PubSubPersistenceProvider provider = PubSubPersistenceProviderManager.getInstance().getProvider();
+		if ( provider instanceof CachingPubsubPersistenceProvider )
+		{
+			if ( uniqueIdentifier != null ) {
+				((CachingPubsubPersistenceProvider) provider).flushPendingItems( uniqueIdentifier, false ); // just this member
+			} else {
+				((CachingPubsubPersistenceProvider) provider).flushPendingItems( false ); // just this member
+			}
         }
 	}
 

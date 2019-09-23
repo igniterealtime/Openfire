@@ -129,29 +129,6 @@ public interface PubSubPersistenceProvider
     void savePublishedItem(PublishedItem item);
 
     /**
-     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete)
-     * for a specific node.
-     */
-    void flushPendingItems( Node.UniqueIdentifier nodeUniqueId );
-
-    /**
-     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
-     */
-    void flushPendingItems();
-
-    /**
-     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
-     * @param sendToCluster If true, delegate to cluster members, otherwise local only
-     */
-    void flushPendingItems( Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster);
-
-    /**
-     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
-     * @param sendToCluster If true, delegate to cluster members, otherwise local only
-     */
-    void flushPendingItems(boolean sendToCluster);
-
-    /**
      * Removes the specified published item from the DB.
      *
      * @param item The published item to delete.
@@ -218,4 +195,18 @@ public interface PubSubPersistenceProvider
      * @return the loaded PEP service, or null if not found.
      */
     PEPService loadPEPServiceFromDB( String jid);
+
+    /**
+     * Writes large changesets, using batches and transactions when available.
+     *
+     * The 'delete' list takes precedence over the 'add' list: when an item exists
+     * on both lists, it is removed (and not re-added) from storage
+     *
+     * To prevent duplicates to exist, this method will attempt to
+     * remove all items to-be-added, before re-adding them.
+     *
+     * @param addList A list of items to be added.
+     * @param delList A list of items to be removed.
+     */
+    void bulkPublishedItems( List<PublishedItem> addList, List<PublishedItem> delList );
 }

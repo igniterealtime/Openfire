@@ -271,6 +271,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         }
         // Auto Creation of nodes is supported in PEP
         features.add("http://jabber.org/protocol/pubsub#auto-create");
+        features.add("http://jabber.org/protocol/pubsub#auto-subscribe");
+        features.add("http://jabber.org/protocol/pubsub#filtered-notifications");
         return features.iterator();
     }
 

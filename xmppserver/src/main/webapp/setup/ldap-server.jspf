@@ -112,7 +112,9 @@
                 manager.setPort(port);
                 manager.setBaseDN(baseDN);
                 manager.setAdminDN(adminDN);
-                manager.setAdminPassword(adminPassword);
+                if ( adminPassword != null ) { // Only store a password if it was changed.
+                    manager.setAdminPassword( adminPassword );
+                }
                 manager.setConnectionPoolEnabled(connectionPoolEnabled);
                 manager.setSslEnabled(sslEnabled);
                 manager.setStartTlsEnabled(startTlsEnabled);
@@ -127,7 +129,9 @@
                     xmppSettings.put("ldap.port", Integer.toString(port));
                     xmppSettings.put("ldap.baseDN", baseDN);
                     xmppSettings.put("ldap.adminDN", adminDN);
-                    xmppSettings.put("ldap.adminPassword", adminPassword);
+                    if ( adminPassword != null ) { // Only store a password if it was changed.
+                        xmppSettings.put( "ldap.adminPassword", adminPassword );
+                    }
                     xmppSettings.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
                     xmppSettings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
                     xmppSettings.put("ldap.startTlsEnabled", Boolean.toString(startTlsEnabled));
@@ -141,7 +145,9 @@
                     Set<String> encryptedXmppSettings = (Set<String>) session.getAttribute("encryptedSettings");
                     if (encryptedXmppSettings != null) {
                         encryptedXmppSettings.add("ldap.adminDN");
-                        encryptedXmppSettings.add("ldap.adminPassword");
+                        if ( adminPassword != null ) { // Only store a password if it was changed.
+                            encryptedXmppSettings.add( "ldap.adminPassword" );
+                        }
                     }
                     session.setAttribute("encryptedSettings", encryptedXmppSettings);
                 }
@@ -164,7 +170,6 @@
         port = manager.getPort();
         baseDN = manager.getBaseDN();
         adminDN = manager.getAdminDN();
-        adminPassword = manager.getAdminPassword();
         connectionPoolEnabled = manager.isConnectionPoolEnabled();
         sslEnabled = manager.isSslEnabled();
         startTlsEnabled = manager.isStartTlsEnabled();
@@ -179,7 +184,13 @@
     pageContext.setAttribute("port", port);
     pageContext.setAttribute("baseDN", baseDN);
     pageContext.setAttribute("adminDN", adminDN );
-    pageContext.setAttribute("adminPassword", adminPassword );
+    // Only show password if it was set in this session (used for testing the password).
+    if ( session.getAttribute("ldapSettings") != null ) {
+        final Map<String, String> sessionSettings  = (( Map<String, String>) session.getAttribute( "ldapSettings" ));
+        if (sessionSettings.get( "ldap.adminPassword" ) != null) {
+            pageContext.setAttribute( "adminPassword", sessionSettings.get( "ldap.adminPassword" ) );
+        }
+    }
     pageContext.setAttribute("connectionPoolEnabled", connectionPoolEnabled );
     pageContext.setAttribute("sslEnabled", sslEnabled );
     pageContext.setAttribute("startTlsEnabled", startTlsEnabled );
@@ -296,7 +307,7 @@
             </tr>
             <tr>
                 <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.password" />:</td>
-                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${fn:escapeXml(adminPassword)}"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${not empty adminPassword ? fn:escapeXml(adminPassword) : ''}"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
             </tr>
             </table>
         </div>

@@ -11,6 +11,7 @@
     String errorDetail = "";
     Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
     if (settings != null) {
+        settings.computeIfAbsent( "ldap.adminPassword", (key) -> LdapManager.getInstance().getAdminPassword() );
         LdapManager manager = new LdapManager(settings);
         LdapContext context = null;
         try {

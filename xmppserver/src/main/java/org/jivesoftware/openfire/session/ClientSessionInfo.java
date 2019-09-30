@@ -42,6 +42,8 @@ public class ClientSessionInfo implements Externalizable {
     private String defaultList;
     private String activeList;
     private boolean offlineFloodStopped;
+    private boolean messageCarbonsEnabled;
+    private boolean hasRequestedBlocklist;
 
     public ClientSessionInfo() {
     }
@@ -51,6 +53,8 @@ public class ClientSessionInfo implements Externalizable {
         defaultList = session.getDefaultList() != null ? session.getDefaultList().getName() : null;
         activeList = session.getActiveList() != null ? session.getActiveList().getName() : null;
         offlineFloodStopped = session.isOfflineFloodStopped();
+        messageCarbonsEnabled = session.isMessageCarbonsEnabled();
+        hasRequestedBlocklist=session.hasRequestedBlocklist();
     }
 
     public Presence getPresence() {
@@ -68,6 +72,18 @@ public class ClientSessionInfo implements Externalizable {
     public boolean isOfflineFloodStopped() {
         return offlineFloodStopped;
     }
+    
+    /**
+    * Added for OF-1868
+    */
+    public boolean hasRequestedBlocklist() {
+        return hasRequestedBlocklist;
+    }
+    
+    /**
+    * Added for OF-1868
+    */
+    public boolean isMessageCarbonsEnabled() { return messageCarbonsEnabled; }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -81,6 +97,12 @@ public class ClientSessionInfo implements Externalizable {
             ExternalizableUtil.getInstance().writeSafeUTF(out, activeList);
         }
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
+        
+        /**
+        * Added for OF-1868
+        */
+        ExternalizableUtil.getInstance().writeBoolean(out, messageCarbonsEnabled);    
+	    ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
     }
 
     @Override
@@ -94,5 +116,11 @@ public class ClientSessionInfo implements Externalizable {
             activeList = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
         offlineFloodStopped = ExternalizableUtil.getInstance().readBoolean(in);
+        
+        /**
+        * Added for OF-1868
+        */
+        messageCarbonsEnabled = ExternalizableUtil.getInstance().readBoolean(in);
+        hasRequestedBlocklist = ExternalizableUtil.getInstance().readBoolean(in);
     }
 }

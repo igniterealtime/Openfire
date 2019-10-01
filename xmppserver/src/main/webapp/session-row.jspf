@@ -8,6 +8,7 @@
                  org.xmpp.packet.JID,
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
+ <%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -48,7 +49,12 @@
     </td>
     <td>
         <%  int _status = sess.getStatus();
-            if (_status == Session.STATUS_CLOSED) {
+            boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();
+            if (isDetached) { %>
+
+            <fmt:message key="session.details.sm-detached" />
+        <%
+            } else if (_status == Session.STATUS_CLOSED) {
         %>
             <fmt:message key="session.details.close" />
 
@@ -67,7 +73,9 @@
         <%  } %>
     </td>
     <td width="1%">
-        <%  if (sess.isSecure()) {
+        <%  if (isDetached) { %>
+                    <img src="images/working-16x16.gif" width="1" height="1" alt="">
+        <%  } else if (sess.isSecure()) {
                 if (sess.getPeerCertificates() != null && sess.getPeerCertificates().length > 0) { %>
                     <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
         <%      } else { %>
@@ -169,7 +177,7 @@
 
     <td width="1%" nowrap>
         <%
-            if (sess instanceof LocalClientSession && ((LocalClientSession)sess).isDetached()) { %>
+            if (isDetached) { %>
                 <fmt:message key="session.details.sm-detached"/>
             <% } else {
                 try { %>

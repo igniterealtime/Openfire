@@ -253,7 +253,7 @@ public class StreamManager {
         } else {
             fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
         }
-        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session);
+        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
         // Locate existing session.
         LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
@@ -288,18 +288,18 @@ public class StreamManager {
             return;
         }
         if (!otherSession.isDetached()) {
-            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession, fullJid);
+            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession.getStreamID(), fullJid);
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
             oldConnection.close();
         }
-        Log.debug("Attaching to other session {} of '{}'.", otherSession, fullJid);
+        Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
         // If we're all happy, disconnect this session.
         Connection conn = session.getConnection();
         session.setDetached();
         // Connect new session.
         otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession, fullJid, session );
+        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession.getStreamID(), fullJid, session.getStreamID() );
         session.close();
     }
 

@@ -185,8 +185,8 @@ public class FaviconServlet extends HttpServlet {
         // Try to get the favicon from the url using an HTTP connection from the pool
         // that also allows to configure timeout values (e.g. connect and get data)
         final RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(2000)
-            .setSocketTimeout(2000)
+            .setConnectTimeout(5000)
+            .setSocketTimeout(5000)
             .build();
         final HttpUriRequest getRequest = RequestBuilder.get(url)
             .setConfig(requestConfig)

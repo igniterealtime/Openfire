@@ -29,6 +29,8 @@ import org.xmpp.packet.JID;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
@@ -202,6 +204,7 @@ public class LdapManager {
     private String groupDescriptionField;
     private boolean posixMode = false;
     private String groupSearchFilter = null;
+    private boolean flattenNestedGroups = false;
 
     private final Map<String, String> properties;
 
@@ -245,6 +248,7 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.groupDescriptionField");
         JiveGlobals.migrateProperty("ldap.posixMode");
         JiveGlobals.migrateProperty("ldap.groupSearchFilter");
+        JiveGlobals.migrateProperty("ldap.flattenNestedGroups");
         JiveGlobals.migrateProperty("ldap.adminDN");
         JiveGlobals.migrateProperty("ldap.adminPassword");
         JiveGlobals.migrateProperty("ldap.debugEnabled");
@@ -370,6 +374,12 @@ public class LdapManager {
             posixMode = Boolean.valueOf(posixStr);
         }
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
+
+        flattenNestedGroups = false;
+        String flattenNestedGroupsStr = properties.get("ldap.flattenNestedGroups");
+        if (flattenNestedGroupsStr != null) {
+            flattenNestedGroups = Boolean.valueOf(flattenNestedGroupsStr);
+        }
 
         adminDN = properties.get("ldap.adminDN");
         if (adminDN != null && adminDN.trim().equals("")) {
@@ -1023,7 +1033,7 @@ public class LdapManager {
             constraints.setReturningAttributes(new String[] { usernameField });
 
             // NOTE: this assumes that the username has already been JID-unescaped
-            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), 
+            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(),
                     new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
@@ -1111,6 +1121,24 @@ public class LdapManager {
         catch (Exception e) {
             if (alternateBaseDN != null) {
                 return findGroupDN(groupname, alternateBaseDN);
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Like {@link #findGroupDN(String)} but returns the absolute DN of a group
+     */
+    public String findGroupAbsoluteDN(String groupname) throws Exception {
+        try {
+            return findGroupDN(groupname, baseDN) + (baseDN.isEmpty() ? "" : "," + baseDN);
+        }
+        catch (Exception e) {
+            if (alternateBaseDN != null) {
+                return findGroupDN(groupname, alternateBaseDN)
+                    + (alternateBaseDN.isEmpty() ? "" : "," + alternateBaseDN);
             }
             else {
                 throw e;
@@ -1218,6 +1246,63 @@ public class LdapManager {
         }
         finally {
             try { ctx.close(); }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
+     * Check if the given DN matches the group search filter
+     *
+     * @param dn the absolute DN of the node to check
+     * @return true if the given DN is matching the group filter. false oterwise.
+     * @throws NamingException if the search for the dn fails.
+     */
+    public boolean isGroupDN(String dn) throws NamingException {
+        Log.debug("LdapManager: Trying to check if DN is a group. DN: {}, Base DN: {} ...", dn, baseDN);
+
+        dn = getEnclosedDN(dn);
+        // is it a sub DN of the base DN?
+        if (!dn.endsWith(getEnclosedDN(baseDN))
+            && (alternateBaseDN == null || !dn.endsWith(getEnclosedDN(alternateBaseDN)))) {
+            if (Log.isDebugEnabled()) {
+                Log.debug("LdapManager: DN ({}) does not fit to baseDN ({},{})", dn, baseDN, alternateBaseDN);
+            }
+            return false;
+        }
+
+        DirContext ctx = null;
+        try {
+            Log.debug("LdapManager: Starting LDAP search to check group DN: {}", dn);
+            // Search for the group in the node with the given DN.
+            // should return the group object itself if is matches the group filter
+            ctx = getContext(dn);
+            // only search the object itself.
+            SearchControls constraints = new SearchControls();
+            constraints.setSearchScope(SearchControls.OBJECT_SCOPE);
+            constraints.setReturningAttributes(new String[]{});
+            String filter = MessageFormat.format(getGroupSearchFilter(), "*");
+            NamingEnumeration<SearchResult> answer = ctx.search("", filter, constraints);
+
+            Log.debug("LdapManager: ... group check search finished for DN: {}", dn);
+
+            boolean result = (answer != null && answer.hasMoreElements());
+
+            if (answer != null) {
+                answer.close();
+            }
+            Log.debug("LdapManager: DN is group: {}? {}!", dn, result);
+            return result;
+        }
+        catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when checking if DN is a group {}", dn, e);
+            throw e;
+        }
+        finally {
+            try {
+                ctx.close();
+            }
             catch (Exception ignored) {
                 // Ignore.
             }
@@ -1874,6 +1959,26 @@ public class LdapManager {
     }
 
     /**
+     * Returns true if nested / complex / hierarchic groups should be should be flattened.
+     * <p>
+     * This means: if group A is member of group B, the members of group A will also be members of
+     * group B
+     */
+    public boolean isFlattenNestedGroups() {
+        return flattenNestedGroups;
+    }
+
+    /**
+     * Set whether nested / complex / hierarchic groups should be should be flattened.
+     *
+     * @see #isFlattenNestedGroups()
+     */
+    public void setFlattenNestedGroups(boolean flattenNestedGroups) {
+        this.flattenNestedGroups = flattenNestedGroups;
+        properties.put("ldap.flattenNestedGroups", String.valueOf(posixMode));
+    }
+
+    /**
      * Sets the search filter appended to the default filter when searching for groups.
      *
      * @param groupSearchFilter the search filter appended to the default filter
@@ -2145,6 +2250,144 @@ public class LdapManager {
     }
 
     /**
+     * Generic routine for retrieving a single element from the LDAP server.  It's meant to be very
+     * flexible so that just about any query for a single results can make use of it without having
+     * to reimplement their own calls to LDAP.
+     * <p>
+     * The passed in filter string needs to be pre-prepared! In other words, nothing will be changed
+     * in the string before it is used as a string.
+     *
+     * @param attribute             LDAP attribute to be pulled from each result and placed in the return results.
+     *                              Typically pulled from this manager. Null means the the absolute DN is returned.
+     * @param searchFilter          Filter to use to perform the search.  Typically pulled from this manager.
+     * @param failOnMultipleResults It true, an {@link IllegalStateException} will be thrown, if the
+     *                              search result is not unique. If false, just the first result will be returned.
+     * @return A single string.
+     */
+    public String retrieveSingle(String attribute, String searchFilter, boolean failOnMultipleResults) {
+        try {
+            return retrieveSingle(attribute, searchFilter, failOnMultipleResults, baseDN);
+        }
+        catch (Exception e) {
+            if (alternateBaseDN != null) {
+                return retrieveSingle(attribute, searchFilter, failOnMultipleResults, alternateBaseDN);
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Generic routine for retrieving a single element from the LDAP server.  It's meant to be very
+     * flexible so that just about any query for a single results can make use of it without having
+     * to reimplement their own calls to LDAP.
+     * <p>
+     * The passed in filter string needs to be pre-prepared!  In other words, nothing will be changed
+     * in the string before it is used as a string.
+     *
+     * @param attribute             LDAP attribute to be pulled from each result and placed in the return results.
+     *                              Typically pulled from this manager. Null means the the absolute DN is returned.
+     * @param searchFilter          Filter to use to perform the search.  Typically pulled from this manager.
+     * @param failOnMultipleResults It true, an {@link IllegalStateException} will be thrown, if the
+     *                              search result is not unique. If false, just the first result will be returned.
+     * @param baseDN                DN where to start the search. Typically {@link #getBaseDN()} or {@link #getAlternateBaseDN()}.
+     * @return A single string.
+     */
+    public String retrieveSingle(String attribute, String searchFilter, boolean failOnMultipleResults, String baseDN) {
+        LdapContext ctx = null;
+        try {
+            ctx = getContext(baseDN);
+
+            SearchControls searchControls = new SearchControls();
+            // See if recursive searching is enabled. Otherwise, only search one level.
+            if (isSubTreeSearch()) {
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            else {
+                searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
+            searchControls.setReturningAttributes(attribute == null ? new String[0] : new String[]{attribute});
+
+            NamingEnumeration<SearchResult> answer = ctx.search("", searchFilter, searchControls);
+            if (answer == null || !answer.hasMoreElements()) {
+                return null;
+            }
+            SearchResult searchResult = answer.next();
+            String result = attribute == null
+                ? searchResult.getName() + (baseDN == null ? "" : "," + baseDN) :
+                (String) searchResult.getAttributes().get(attribute).get();
+            if (answer.hasMoreElements()) {
+                Log.debug("Search result for '{}' is not unique.", searchFilter);
+                if (failOnMultipleResults)
+                    throw new IllegalStateException("Search result for " + searchFilter + " is not unique.");
+            }
+            answer.close();
+            return result;
+        }
+        catch (Exception e) {
+            Log.error("Error while searching for single result of: {}", searchFilter, e);
+            return null;
+        }
+        finally {
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            } catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
+     * Reads the attribute values of an entry with the given DN.
+     *
+     * @param attributeName LDAP attribute to be read.
+     * @param dn            DN of the entry.
+     * @return A list with the values of the attribute.
+     */
+    public List<String> retrieveAttributeOf(String attributeName, String dn) throws NamingException {
+        Log.debug("LdapManager: Reading attribute '{}' of DN '{}' ...", attributeName, dn);
+
+        DirContext ctx = null;
+        NamingEnumeration<?> values = null;
+        try {
+
+            ctx = getContext(dn);
+            Attributes attributes = ctx.getAttributes("", new String[]{attributeName});
+            Attribute attribute = attributes.get(attributeName);
+            if (attribute == null)
+                return Collections.emptyList();
+            List<String> result = new ArrayList<>(attribute.size());
+            values = attribute.getAll();
+            while (values.hasMoreElements()) {
+                result.add(values.next().toString());
+            }
+            return result;
+        }
+        catch (final Exception e) {
+            Log.debug("LdapManager: Exception thrown when reading attribute '{}' of DN '{}' ...", attributeName, dn, e);
+            throw e;
+        }
+        finally {
+            try {
+                if (values != null)
+                    values.close();
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+            try {
+                ctx.close();
+            }
+            catch (Exception ignored) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
      * Generic routine for retrieving the number of available results from the LDAP server that
      * match the passed search filter.  This routine also accounts for paging settings and
      * alternate DNs.
@@ -2283,28 +2526,28 @@ public class LdapManager {
         }
         return count;
     }
-    
+
     /**
      * Escapes any special chars (RFC 4515) from a string representing
      * a search filter assertion value.
      *
      * @param value The input string.
      *
-     * @return A assertion value string ready for insertion into a 
+     * @return A assertion value string ready for insertion into a
      *         search filter string.
      */
     public static String sanitizeSearchFilter(final String value) {
       return sanitizeSearchFilter(value, false);
-      
+
     }
-      
+
     /**
      * Escapes any special chars (RFC 4515) from a string representing
      * a search filter assertion value, with the exception of the '*' wildcard sign
      *
      * @param value The input string.
      *
-     * @return A assertion value string ready for insertion into a 
+     * @return A assertion value string ready for insertion into a
      *         search filter string.
      */
     public static String sanitizeSearchFilter(final String value, boolean acceptWildcard ) {
@@ -2351,7 +2594,7 @@ public class LdapManager {
             }
             return result.toString();
     }
-    
+
 
     /**
      * Encloses DN values with "

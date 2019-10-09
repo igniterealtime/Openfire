@@ -393,6 +393,11 @@
             <item id="user-search" name="${sidebar.user-search}"
                   url="user-search.jsp"
                   description="${sidebar.user-search.descr}"/>
+                  
+            <!-- User Contact Adresses -->
+            <item id="user-contact-addresses" name="${sidebar.user-contact-addresses}"
+                  url="user-contact.jsp"
+                  description="${sidebar.user-contact-addresses.descr}"/>
         </sidebar>
 
         <!-- Groups -->

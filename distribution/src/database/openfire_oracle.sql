@@ -34,6 +34,14 @@ CREATE TABLE ofUserFlag (
 CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime ASC);
 CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime ASC);
 
+CREATE TABLE ofUserContactAddress (
+  cID                     INTEGER       NOT NULL,
+  cType                   VARCHAR(20)   NOT NULL,
+  cAddressType            VARCHAR(20)   NOT NULL,
+  cAddress                VARCHAR(100)  NOT NULL,
+  cDesciption             VARCHAR(3000) ,
+  CONSTRAINT ofContact_pk PRIMARY KEY (cID)
+);
 
 CREATE TABLE ofOffline (
   username              VARCHAR2(64)    NOT NULL,
@@ -370,7 +378,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 30);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 31);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

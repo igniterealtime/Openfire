@@ -57,7 +57,7 @@
 
     final GroupManager groupManager = webManager.getGroupManager();
     final List<Group> groups = new ArrayList<>(groupManager.getGroups());
-    groups.sort(Comparator.comparing(Group::getName));
+    groups.sort(Comparator.comparing(group -> group.getName().toLowerCase()));
     final ListPager<Group> listPager = new ListPager<>(request, response, groups, filter, "searchGroupName", "searchGroupDescription");
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("canEdit", !groupManager.isReadOnly());

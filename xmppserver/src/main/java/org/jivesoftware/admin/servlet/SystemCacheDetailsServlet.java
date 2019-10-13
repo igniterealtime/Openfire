@@ -48,20 +48,23 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(cacheName)));
         }
 
+        final boolean secretKey = optionalCache.map(Cache::isKeySecret).orElse(Boolean.FALSE);
+        final boolean secretValue = optionalCache.map(Cache::isValueSecret).orElse(Boolean.FALSE);
+
         final List<Map.Entry<String, String>> cacheEntries = optionalCache.map(Cache::entrySet)
             .map(Collection::stream)
             .orElseGet(Stream::empty)
-            .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().toString(), entry.getValue().toString()))
+            .map(entry -> new AbstractMap.SimpleEntry<>(secretKey ? "************" : entry.getKey().toString(), secretValue ? "************" : entry.getValue().toString()))
             .sorted(Comparator.comparing(Map.Entry::getKey))
             .collect(Collectors.toList());
 
         // Find what we're searching for
         final Search search = new Search(request);
         Predicate<Map.Entry<String, String>> predicate = entry -> true;
-        if (!search.key.isEmpty()) {
+        if (!search.key.isEmpty() && !secretKey) {
             predicate = predicate.and(entry -> StringUtils.containsIgnoringCase(entry.getKey(), search.key));
         }
-        if (!search.value.isEmpty()) {
+        if (!search.value.isEmpty() && !secretValue) {
             predicate = predicate.and(entry -> StringUtils.containsIgnoringCase(entry.getValue(), search.value));
         }
 

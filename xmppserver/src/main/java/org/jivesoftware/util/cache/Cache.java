@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -186,4 +187,21 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
         return CacheFactory.getLock(key, this);
     }
 
+    AtomicBoolean secretKey = new AtomicBoolean(false);
+    AtomicBoolean secretValue = new AtomicBoolean(false);
+    default void setSecretKey() {
+        this.secretKey.set(true);
+    }
+
+    default void setSecretValue() {
+        this.secretValue.set(true);
+    }
+
+    default boolean isKeySecret() {
+        return this.secretKey.get();
+    }
+
+    default boolean isValueSecret() {
+        return this.secretValue.get();
+    }
 }

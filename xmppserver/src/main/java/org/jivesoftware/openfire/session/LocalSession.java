@@ -18,13 +18,10 @@ package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.openfire.Connection;
@@ -109,7 +106,7 @@ public abstract class LocalSession implements Session {
     /**
      * A lock to protect the connection changes.
      */
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Lock lock = new ReentrantLock();
 
     private final Locale language;
 
@@ -150,12 +147,12 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
-        lock.writeLock().lock();
+        lock.lock();
         try {
             this.sessionManager.addDetached(this);
             this.conn = null;
         }finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
     }
 
@@ -167,7 +164,7 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
-        lock.writeLock().lock();
+        lock.lock();
         try {
             if (this.conn != null && !this.conn.isClosed())
             {
@@ -176,7 +173,7 @@ public abstract class LocalSession implements Session {
             this.conn = connection;
             connection.reinit(this);
         }finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
         this.status = STATUS_AUTHENTICATED;
         this.sessionManager.removeDetached(this);
@@ -214,16 +211,12 @@ public abstract class LocalSession implements Session {
      * @return The connection for this session
      */
     public Connection getConnection() {
-        lock.readLock().lock();
-        try {
-            if (conn == null)
-            {
-                Log.error("Attempt to read connection of detached session", new IllegalStateException());
-            }
-            return conn;
-        }finally {
-            lock.readLock().unlock();
+        Connection connection = conn;
+        if (connection == null)
+        {
+            Log.error("Attempt to read connection of detached session", new IllegalStateException());
         }
+        return connection;
     }
 
     /**
@@ -434,7 +427,7 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
-        lock.readLock().lock();
+        lock.lock();
         try {
             Connection connection = conn;
             if (connection == null )
@@ -444,7 +437,7 @@ public abstract class LocalSession implements Session {
             }
             connection.deliverRawText(text);
         }finally {
-            lock.readLock().unlock();
+            lock.unlock();
         }
     }
 
@@ -458,89 +451,64 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
-        lock.writeLock().lock();
+        lock.lock();
         try {
-            Connection connection = conn;
-            if (connection == null)
-            {
-                return;
-            }
-            connection.close();
+            Optional.ofNullable(conn)
+              .ifPresent(connection ->  connection.close());
         }finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
     }
 
     @Override
     public boolean validate() {
-        lock.writeLock().lock();
+        lock.lock();
         try {
-            Connection connection = conn;
-            return connection != null && connection.validate();
+            return Optional.ofNullable(conn)
+                    .map(Connection::validate)
+                    .orElse(Boolean.FALSE);
         }finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
     }
 
     @Override
     public boolean isSecure() {
-        lock.readLock().lock();
-        try {
-            Connection connection = conn;
-            return connection != null && connection.isSecure();
-        }finally {
-            lock.readLock().unlock();
-        }
+        return Optional.ofNullable(conn)
+                .map(Connection::isSecure)
+                .orElse(Boolean.FALSE);
     }
 
     @Override
     public Certificate[] getPeerCertificates() {
-        lock.readLock().lock();
-        try {
-            Connection connection = conn;
-            return connection == null ? new Certificate[0] : connection.getPeerCertificates();
-        }finally {
-            lock.readLock().unlock();
-        }
+        return Optional.ofNullable(conn)
+                .map(Connection::getPeerCertificates)
+                .orElse(new Certificate[0]);
     }
 
     @Override
     public boolean isClosed() {
-        lock.readLock().lock();
-        try {
-            Connection connection = conn;
-            return connection == null || connection.isClosed();
-        }finally {
-            lock.readLock().unlock();
-        }
+        return Optional.ofNullable(conn)
+                .map(Connection::isClosed)
+                .orElse(Boolean.TRUE);
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        lock.readLock().lock();
-        try {
-            Connection connection = conn;
-            if (connection == null) {
-                throw new UnknownHostException("Detached session");
-            }
-            return connection.getHostAddress();
-        }finally {
-            lock.readLock().unlock();
+        Connection connection = conn;
+        if (connection == null) {
+            throw new UnknownHostException("Detached session");
         }
+        return connection.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        lock.readLock().lock();
-            try {
-            Connection connection = conn;
-            if (connection == null) {
-                throw new UnknownHostException("Detached session");
-            }
-            return connection.getHostName();
-        }finally {
-            lock.readLock().unlock();
+        Connection connection = conn;
+        if (connection == null) {
+            throw new UnknownHostException("Detached session");
         }
+        return connection.getHostName();
     }
 
     @Override
@@ -565,12 +533,9 @@ public abstract class LocalSession implements Session {
      * @return true if the other peer of this session presented a self-signed certificate.
      */
     public boolean isUsingSelfSignedCertificate() {
-        lock.readLock().lock();
-        try {
-            return conn!=null && conn.isUsingSelfSignedCertificate();
-        }finally {
-            lock.readLock().unlock();
-        }
+        return Optional.ofNullable(conn)
+                .map(Connection::isUsingSelfSignedCertificate)
+                .orElse(Boolean.FALSE);
     }
 
     /**

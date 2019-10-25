@@ -135,7 +135,7 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
      * @param maxSize the maximum size of the cache in bytes.
      */
     @Override
-    public void setMaxCacheSize( final int maxSize )
+    public void setMaxCacheSize( final long maxSize )
     {
         cache.policy().eviction().ifPresent( eviction -> eviction.setMaximum(maxSize) );
     }
@@ -181,11 +181,10 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
      * @return the size of the cache contents in bytes.
      */
     @Override
-    public int getCacheSize()
+    public long getCacheSize()
     {
         // The constructor asserts that the eviction policy and weightedSize are present.
-        final long result = cache.policy().eviction().get().weightedSize().getAsLong();
-        return (int) Math.min( Integer.MAX_VALUE, result );
+        return cache.policy().eviction().get().weightedSize().getAsLong();
     }
 
     /**

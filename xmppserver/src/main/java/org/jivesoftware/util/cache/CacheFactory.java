@@ -91,6 +91,16 @@ public class CacheFactory {
      */
     private static final Map<String, Long> cacheProps = new HashMap<>();
 
+    private static final String              PROPERTY_PREFIX_CACHE         = "cache.";
+
+    private static final String              PROPERTY_SUFFIX_MAX_LIFE_TIME = ".maxLifetime";
+
+    private static final String              PROPERTY_SUFFIX_SIZE          = ".size";
+
+    private static final String              PROPERTY_SUFFIX_TYPE          = ".type";
+
+    private static final String              PROPERTY_SUFFIX_MIN           = ".min";
+
     static {
         localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
                 "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
@@ -140,88 +150,88 @@ public class CacheFactory {
         cacheNames.put("JID Domain-parts", "jidDomainprep");
         cacheNames.put("JID Resource-parts", "jidResourceprep");
 
-        cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
-        cacheProps.put("cache.fileTransfer.maxLifetime", 1000 * 60 * 10l);
-        cacheProps.put("cache.multicast.size", 128 * 1024l);
-        cacheProps.put("cache.multicast.maxLifetime", JiveConstants.DAY);
-        cacheProps.put("cache.offlinemessage.size", 100 * 1024l);
-        cacheProps.put("cache.offlinemessage.maxLifetime", JiveConstants.HOUR * 12);
-        cacheProps.put("cache.pop3.size", 512 * 1024l);
-        cacheProps.put("cache.pop3.maxLifetime", JiveConstants.HOUR);
-        cacheProps.put("cache.transferProxy.size", -1l);
-        cacheProps.put("cache.transferProxy.maxLifetime", 1000 * 60 * 10l);
-        cacheProps.put("cache.group.size", 1024 * 1024l);
-        cacheProps.put("cache.group.maxLifetime", JiveConstants.MINUTE * 15);
-        cacheProps.put("cache.lockOutCache.size", 1024 * 1024l);
-        cacheProps.put("cache.lockOutCache.maxLifetime", JiveConstants.MINUTE * 15);
-        cacheProps.put("cache.groupMeta.size", 512 * 1024l);
-        cacheProps.put("cache.groupMeta.maxLifetime", JiveConstants.MINUTE * 15);
-        cacheProps.put("cache.username2roster.size", 1024 * 1024l);
-        cacheProps.put("cache.username2roster.maxLifetime", JiveConstants.MINUTE * 30);
-        cacheProps.put("cache.username2rosterItems.size", 1024 * 1024l);
-        cacheProps.put("cache.username2rosterItems.maxLifetime", JiveConstants.MINUTE * 10);
-        cacheProps.put("cache.javascript.size", 128 * 1024l);
-        cacheProps.put("cache.javascript.maxLifetime", 3600 * 24 * 10l);
-        cacheProps.put("cache.ldap.size", 512 * 1024l);
-        cacheProps.put("cache.ldap.maxLifetime", JiveConstants.HOUR * 2);
-        cacheProps.put("cache.listsCache.size", 512 * 1024l);
-        cacheProps.put("cache.offlinePresence.size", 512 * 1024l);
-        cacheProps.put("cache.lastActivity.size", 128 * 1024l);
-        cacheProps.put("cache.userCache.size", 512 * 1024l);
-        cacheProps.put("cache.userCache.maxLifetime", JiveConstants.MINUTE * 30);
-        cacheProps.put("cache.remoteUsersCache.size", 512 * 1024l);
-        cacheProps.put("cache.remoteUsersCache.maxLifetime", JiveConstants.MINUTE * 30);
-        cacheProps.put("cache.vcardCache.size", 512 * 1024l);
-        cacheProps.put("cache.faviconHits.size", 128 * 1024l);
-        cacheProps.put("cache.faviconMisses.size", 128 * 1024l);
-        cacheProps.put("cache.routeServer.size", -1l);
-        cacheProps.put("cache.routeServer.maxLifetime", -1l);
-        cacheProps.put("cache.routeComponent.size", -1l);
-        cacheProps.put("cache.routeComponent.maxLifetime", -1l);
-        cacheProps.put("cache.routeUser.size", -1l);
-        cacheProps.put("cache.routeUser.maxLifetime", -1l);
-        cacheProps.put("cache.routeAnonymousUser.size", -1l);
-        cacheProps.put("cache.routeAnonymousUser.maxLifetime", -1l);
-        cacheProps.put("cache.routeUserSessions.size", -1l);
-        cacheProps.put("cache.routeUserSessions.maxLifetime", -1l);
-        cacheProps.put("cache.componentsSessions.size", -1l);
-        cacheProps.put("cache.componentsSessions.maxLifetime", -1l);
-        cacheProps.put("cache.connManagerSessions.size", -1l);
-        cacheProps.put("cache.connManagerSessions.maxLifetime", -1l);
-        cacheProps.put("cache.incServerSessions.size", -1l);
-        cacheProps.put("cache.incServerSessions.maxLifetime", -1l);
-        cacheProps.put("cache.sessionsHostname.size", -1l);
-        cacheProps.put("cache.sessionsHostname.maxLifetime", -1l);
-        cacheProps.put("cache.secretKeys.size", -1l);
-        cacheProps.put("cache.secretKeys.maxLifetime", -1l);
-        cacheProps.put("cache.validatedDomains.size", -1l);
-        cacheProps.put("cache.validatedDomains.maxLifetime", -1l);
-        cacheProps.put("cache.directedPresences.size", -1l);
-        cacheProps.put("cache.directedPresences.maxLifetime", -1l);
-        cacheProps.put("cache.serverFeatures.size", -1l);
-        cacheProps.put("cache.serverFeatures.maxLifetime", -1l);
-        cacheProps.put("cache.serverItems.size", -1l);
-        cacheProps.put("cache.serverItems.maxLifetime", -1l);
-        cacheProps.put("cache.serversConfigurations.size", 128 * 1024l);
-        cacheProps.put("cache.serversConfigurations.maxLifetime", JiveConstants.MINUTE * 30);
-        cacheProps.put("cache.entityCapabilities.size", -1l);
-        cacheProps.put("cache.entityCapabilities.maxLifetime", JiveConstants.DAY * 2);
-        cacheProps.put("cache.entityCapabilitiesUsers.size", -1l);
-        cacheProps.put("cache.entityCapabilitiesUsers.maxLifetime", JiveConstants.DAY * 2);
-        cacheProps.put("cache.pluginCacheInfo.size", -1l);
-        cacheProps.put("cache.pluginCacheInfo.maxLifetime", -1l);
-        cacheProps.put("cache.pepServiceManager.size", 1024l * 1024 * 10);
-        cacheProps.put("cache.pepServiceManager.maxLifetime", JiveConstants.MINUTE * 30);
-        cacheProps.put("cache.publishedItems.size", 1024l * 1024 * 10);
-        cacheProps.put("cache.publishedItems.maxLifetime", JiveConstants.MINUTE * 15);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "fileTransfer" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "fileTransfer" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 1000 * 60 * 10l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "multicast" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "multicast" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.DAY);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "offlinemessage" + PROPERTY_SUFFIX_SIZE, 100 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "offlinemessage" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.HOUR * 12);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pop3" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pop3" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.HOUR);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "transferProxy" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "transferProxy" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 1000 * 60 * 10l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "group" + PROPERTY_SUFFIX_SIZE, 1024 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "group" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "lockOutCache" + PROPERTY_SUFFIX_SIZE, 1024 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "lockOutCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "username2roster" + PROPERTY_SUFFIX_SIZE, 1024 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "username2roster" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "username2rosterItems" + PROPERTY_SUFFIX_SIZE, 1024 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "username2rosterItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 10);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "javascript" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "javascript" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 3600 * 24 * 10l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "ldap" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "ldap" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.HOUR * 2);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "listsCache" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "offlinePresence" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "lastActivity" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userCache" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "userCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "remoteUsersCache" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "remoteUsersCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "vcardCache" + PROPERTY_SUFFIX_SIZE, 512 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "faviconHits" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "faviconMisses" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeServer" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeServer" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeComponent" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeComponent" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUser" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUser" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeAnonymousUser" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeAnonymousUser" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUserSessions" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUserSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "componentsSessions" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "componentsSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "connManagerSessions" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "connManagerSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "incServerSessions" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "incServerSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "sessionsHostname" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "sessionsHostname" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "secretKeys" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "secretKeys" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "validatedDomains" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "validatedDomains" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "directedPresences" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "directedPresences" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serverFeatures" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serverFeatures" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serverItems" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serverItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serversConfigurations" + PROPERTY_SUFFIX_SIZE, 128 * 1024l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "serversConfigurations" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "entityCapabilities" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "entityCapabilities" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.DAY * 2);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "entityCapabilitiesUsers" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "entityCapabilitiesUsers" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.DAY * 2);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pluginCacheInfo" + PROPERTY_SUFFIX_SIZE, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pluginCacheInfo" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1l);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pepServiceManager" + PROPERTY_SUFFIX_SIZE, 1024l * 1024 * 10);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "pepServiceManager" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "publishedItems" + PROPERTY_SUFFIX_SIZE, 1024l * 1024 * 10);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "publishedItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
 
         // The JID-based classes (wrappers for Caffeine caches) take their default values from whatever is hardcoded in the JID implementation.
-        cacheProps.put("cache.jidNodeprep.size", JID.NODEPREP_CACHE.policy().eviction().get().getMaximum() );
-        cacheProps.put("cache.jidNodeprep.maxLifetime", JID.NODEPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
-        cacheProps.put("cache.jidDomainprep.size", JID.DOMAINPREP_CACHE.policy().eviction().get().getMaximum() );
-        cacheProps.put("cache.jidDomainprep.maxLifetime", JID.DOMAINPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
-        cacheProps.put("cache.jidResourceprep.size", JID.RESOURCEPREP_CACHE.policy().eviction().get().getMaximum() );
-        cacheProps.put("cache.jidResourceprep.maxLifetime", JID.RESOURCEPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidNodeprep" + PROPERTY_SUFFIX_SIZE, JID.NODEPREP_CACHE.policy().eviction().get().getMaximum() );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidNodeprep" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JID.NODEPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidDomainprep" + PROPERTY_SUFFIX_SIZE, JID.DOMAINPREP_CACHE.policy().eviction().get().getMaximum() );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidDomainprep" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JID.DOMAINPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidResourceprep" + PROPERTY_SUFFIX_SIZE, JID.RESOURCEPREP_CACHE.policy().eviction().get().getMaximum() );
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "jidResourceprep" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JID.RESOURCEPREP_CACHE.policy().expireAfterWrite().get().getExpiresAfter( TimeUnit.MILLISECONDS ) );
 
         PropertyEventDispatcher.addListener( new PropertyEventListener()
         {
@@ -235,13 +245,13 @@ public class CacheFactory {
                     return;
                 }
 
-                if ( property.endsWith( ".size" ) )
+                if (property.endsWith(PROPERTY_SUFFIX_SIZE))
                 {
                     final Long size = getMaxCacheSize( cache.getName() );
                     cache.setMaxCacheSize( size < Integer.MAX_VALUE ? size.intValue() : Integer.MAX_VALUE );
                 }
 
-                if ( property.endsWith( ".maxLifeTime" ) )
+                if (property.endsWith(PROPERTY_SUFFIX_MAX_LIFE_TIME))
                 {
                     final Long lifetime = getMaxCacheLifetime( cache.getName() );
                     cache.setMaxLifetime( lifetime );
@@ -281,7 +291,7 @@ public class CacheFactory {
      * @return either the property value or the default value.
      */
     public static long getMaxCacheSize(String cacheName) {
-        return getCacheProperty(cacheName, ".size", DEFAULT_MAX_CACHE_SIZE);
+        return getCacheProperty(cacheName, PROPERTY_SUFFIX_SIZE, DEFAULT_MAX_CACHE_SIZE);
     }
 
     /**
@@ -292,14 +302,14 @@ public class CacheFactory {
      */
     public static void setMaxSizeProperty(String cacheName, long size) {
         cacheName = cacheName.replaceAll(" ", "");
-        if ( !Long.toString(size).equals( JiveGlobals.getProperty( "cache." + cacheName + ".size" ) ) )
+        if ( !Long.toString(size).equals(JiveGlobals.getProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_SIZE)))
         {
-            JiveGlobals.setProperty( "cache." + cacheName + ".size", Long.toString( size ) );
+            JiveGlobals.setProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_SIZE, Long.toString(size));
         }
     }
 
     public static boolean hasMaxSizeFromProperty(String cacheName) {
-        return hasCacheProperty(cacheName, ".size");
+        return hasCacheProperty(cacheName, PROPERTY_SUFFIX_SIZE);
     }
 
     /**
@@ -310,7 +320,7 @@ public class CacheFactory {
     * @return either the property value or the default value.
     */
     public static long getMaxCacheLifetime(String cacheName) {
-        return getCacheProperty(cacheName, ".maxLifetime", DEFAULT_MAX_CACHE_LIFETIME);
+        return getCacheProperty(cacheName, PROPERTY_SUFFIX_MAX_LIFE_TIME, DEFAULT_MAX_CACHE_LIFETIME);
     }
 
     /**
@@ -321,50 +331,50 @@ public class CacheFactory {
      */
     public static void setMaxLifetimeProperty(String cacheName, long lifetime) {
         cacheName = cacheName.replaceAll(" ", "");
-        if ( !Long.toString( lifetime ).equals( JiveGlobals.getProperty( "cache." + cacheName + ".maxLifetime" ) ))
+        if ( !Long.toString(lifetime).equals(JiveGlobals.getProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_MAX_LIFE_TIME)))
         {
-            JiveGlobals.setProperty( ( "cache." + cacheName + ".maxLifetime" ), Long.toString( lifetime ) );
+            JiveGlobals.setProperty((PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_MAX_LIFE_TIME), Long.toString(lifetime));
         }
     }
 
     public static boolean hasMaxLifetimeFromProperty(String cacheName) {
-        return hasCacheProperty(cacheName, ".maxLifetime");
+        return hasCacheProperty(cacheName, PROPERTY_SUFFIX_MAX_LIFE_TIME);
     }
 
     public static void setCacheTypeProperty(String cacheName, String type) {
         cacheName = cacheName.replaceAll(" ", "");
-        if ( !type.equals( JiveGlobals.getProperty( "cache." + cacheName + ".type" ) ))
+        if ( !type.equals(JiveGlobals.getProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_TYPE)))
         {
-            JiveGlobals.setProperty( "cache." + cacheName + ".type", type );
+            JiveGlobals.setProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_TYPE, type);
         }
     }
 
     public static String getCacheTypeProperty(String cacheName) {
         cacheName = cacheName.replaceAll(" ", "");
-        return JiveGlobals.getProperty("cache." + cacheName + ".type");
+        return JiveGlobals.getProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_TYPE);
     }
 
     public static void setMinCacheSize(String cacheName, long size) {
         cacheName = cacheName.replaceAll(" ", "");
-        if ( !Long.toString( size ).equals( JiveGlobals.getProperty( "cache." + cacheName + ".min" ) ))
+        if ( !Long.toString(size).equals(JiveGlobals.getProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_MIN)))
         {
-            JiveGlobals.setProperty( "cache." + cacheName + ".min", Long.toString( size ) );
+            JiveGlobals.setProperty(PROPERTY_PREFIX_CACHE + cacheName + PROPERTY_SUFFIX_MIN, Long.toString(size));
         }
     }
 
     public static long getMinCacheSize(String cacheName) {
-        return getCacheProperty(cacheName, ".min", 0);
+        return getCacheProperty(cacheName, PROPERTY_SUFFIX_MIN, 0);
     }
 
     private static Cache getCacheByProperty( String property )
     {
-        if ( !property.startsWith( "cache." ) )
+        if ( !property.startsWith(PROPERTY_PREFIX_CACHE))
         {
             return null;
         }
 
         // Extract the cache name identifier from the property name.
-        final String name = property.substring( "cache.".length(), property.lastIndexOf( "." ) );
+        final String name = property.substring(PROPERTY_PREFIX_CACHE.length(), property.lastIndexOf("."));
 
         // See if property is using the short name variant.
         for ( final Map.Entry<String, String> entry : cacheNames.entrySet() )
@@ -389,11 +399,11 @@ public class CacheFactory {
 
     private static long getCacheProperty(String cacheName, String suffix, long defaultValue) {
         // First check if user is overwriting default value using a system property for the cache name
-        String propName = "cache." + cacheName.replaceAll(" ", "") + suffix;
+        String propName = PROPERTY_PREFIX_CACHE + cacheName.replaceAll(" ", "") + suffix;
         String sizeProp = JiveGlobals.getProperty(propName);
         if (sizeProp == null && cacheNames.containsKey(cacheName)) {
             // No system property was found for the cache name so try now with short name
-            propName = "cache." + cacheNames.get(cacheName) + suffix;
+            propName = PROPERTY_PREFIX_CACHE + cacheNames.get(cacheName) + suffix;
             sizeProp = JiveGlobals.getProperty(propName);
         }
         if (sizeProp != null) {
@@ -411,11 +421,11 @@ public class CacheFactory {
 
     private static boolean hasCacheProperty(String cacheName, String suffix) {
         // First check if user is overwriting default value using a system property for the cache name
-        String propName = "cache." + cacheName.replaceAll(" ", "") + suffix;
+        String propName = PROPERTY_PREFIX_CACHE + cacheName.replaceAll(" ", "") + suffix;
         String sizeProp = JiveGlobals.getProperty(propName);
         if (sizeProp == null && cacheNames.containsKey(cacheName)) {
             // No system property was found for the cache name so try now with short name
-            propName = "cache." + cacheNames.get(cacheName) + suffix;
+            propName = PROPERTY_PREFIX_CACHE + cacheNames.get(cacheName) + suffix;
             sizeProp = JiveGlobals.getProperty(propName);
         }
         if (sizeProp != null) {

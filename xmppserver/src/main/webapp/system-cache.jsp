@@ -191,7 +191,7 @@
 <%  // Loop through each cache, print out its info
     for (int i=0; i<caches.length; i++) {
         Cache cache = caches[i];
-        if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) {
+        if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Long.MAX_VALUE) {
             overallTotal += (double)cache.getMaxCacheSize();
         }
         int entries = cache.size();

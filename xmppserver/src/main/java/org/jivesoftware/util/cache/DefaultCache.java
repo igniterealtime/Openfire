@@ -93,7 +93,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     /**
      * Maintains the current size of the cache in bytes.
      */
-    private int cacheSize = 0;
+    private long cacheSize = 0;
 
     /**
      * Maximum length of time objects can exist in cache before expiring.
@@ -397,7 +397,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @return the size of the cache contents in bytes.
      */
     @Override
-    public int getCacheSize() {
+    public long getCacheSize() {
         return cacheSize;
     }
 
@@ -421,7 +421,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @param maxCacheSize the maximum size of this cache (-1 indicates unlimited max size).
      */
     @Override
-    public void setMaxCacheSize(final int maxCacheSize) {
+    public void setMaxCacheSize(final long maxCacheSize) {
         this.maxCacheSize = maxCacheSize;
         CacheFactory.setMaxSizeProperty(name, maxCacheSize);
         // It's possible that the new max size is smaller than our current cache
@@ -508,11 +508,11 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
 
         // See if the cache size is within 3% of being too big. If so, clean out
         // cache until it's 10% free.
-        int desiredSize = (int)(maxCacheSize * .97);
+        long desiredSize = (long)(maxCacheSize * .97);
         if (cacheSize >= desiredSize) {
             // First, delete any old entries to see how much memory that frees.
             deleteExpiredEntries();
-            desiredSize = (int)(maxCacheSize * .90);
+            desiredSize = (long) (maxCacheSize * .90);
             if (cacheSize > desiredSize) {
                 long t = System.currentTimeMillis();
                 cullTimes.add(t);

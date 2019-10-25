@@ -84,7 +84,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      *
      * @param maxSize the maximum size of the cache in bytes.
      */
-    void setMaxCacheSize(int maxSize);
+    void setMaxCacheSize(long maxSize);
 
     /**
      * Returns the maximum number of milliseconds that any object can live
@@ -117,7 +117,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      *
      * @return the size of the cache contents in bytes.
      */
-    int getCacheSize();
+    long getCacheSize();
 
     /**
      * Returns the number of cache hits. A cache hit occurs every

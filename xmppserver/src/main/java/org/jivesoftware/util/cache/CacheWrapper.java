@@ -59,7 +59,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public void setMaxCacheSize(final int maxSize) {
+    public void setMaxCacheSize(final long maxSize) {
         cache.setMaxCacheSize(maxSize);
     }
 
@@ -74,7 +74,7 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public int getCacheSize() {
+    public long getCacheSize() {
         return cache.getCacheSize();
     }
 

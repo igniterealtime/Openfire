@@ -247,13 +247,13 @@ public class CacheFactory {
 
                 if (property.endsWith(PROPERTY_SUFFIX_SIZE))
                 {
-                    final Long size = getMaxCacheSize( cache.getName() );
-                    cache.setMaxCacheSize( size < Integer.MAX_VALUE ? size.intValue() : Integer.MAX_VALUE );
+                    final long size = getMaxCacheSize( cache.getName() );
+                    cache.setMaxCacheSize( size );
                 }
 
                 if (property.endsWith(PROPERTY_SUFFIX_MAX_LIFE_TIME))
                 {
-                    final Long lifetime = getMaxCacheLifetime( cache.getName() );
+                    final long lifetime = getMaxCacheLifetime( cache.getName() );
                     cache.setMaxLifetime( lifetime );
                 }
 

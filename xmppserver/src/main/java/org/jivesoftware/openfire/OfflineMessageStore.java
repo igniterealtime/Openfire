@@ -69,6 +69,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         "SELECT stanza, creationDate FROM ofOffline WHERE username=? ORDER BY creationDate ASC";
     private static final String LOAD_OFFLINE_MESSAGE =
         "SELECT stanza FROM ofOffline WHERE username=? AND creationDate=?";
+    private static final String SELECT_COUNT_OFFLINE =
+        "SELECT COUNT(*) FROM ofOffline WHERE username=?";
     private static final String SELECT_SIZE_OFFLINE =
         "SELECT SUM(messageSize) FROM ofOffline WHERE username=?";
     private static final String SELECT_SIZE_ALL_OFFLINE =
@@ -359,6 +361,37 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+    }
+
+    /**
+     * Returns the number of XML messages stored for a particular user.
+     *
+     * @param username the username of the user.
+     * @return the amount of stored messages.
+     */
+    public int getCount(String username) {
+        // No cache: this needs to be more accurate than the 'size' method (that does have a cache).
+        // Maintaining a cache would likely add more overhead than that the cache would save.
+        int count = 0;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SELECT_COUNT_OFFLINE);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return count;
     }
 
     /**

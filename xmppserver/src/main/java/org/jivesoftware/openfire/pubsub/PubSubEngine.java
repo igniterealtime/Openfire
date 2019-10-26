@@ -843,7 +843,7 @@ public class PubSubEngine {
         }
 
         // A subscription was found so check if the user is allowed to cancel the subscription
-        if (!subscription.canModify(from) && !subscription.canModify(owner)) {
+        if (!subscription.canModify(from)) {
             // Requestor is prohibited from unsubscribing entity
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;

@@ -91,6 +91,21 @@ import org.xmpp.packet.JID;
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
  *      <li>ldap.connectionPoolEnabled -- true if an LDAP connection pool should be used.
  *          False if not set.</li>
+ *      <li>ldap.findUsersFromGroupsEnabled</li> -- If true then Openfire users will be identified from the members
+ *      of Openfire groups instead of from the list of all users in LDAP. This option is only useful if you wish to
+ *      restrict the users of Openfire to those in certain groups. Normally this is done by applying an appropriate
+ *      ldap.searchFilter, but there are a number of reasons why you may wish to enable this option instead:
+ *      <ul>
+ *          <li>If group members cannot be identified by the attributes of the user in LDAP (typically the memberOf
+ *          attribute) then users cannot be filtered using ldap.searchFilter</li>
+ *          <li>If the number of Openfire users is small compared to the total number of users in LDAP
+ *          then it may be more performant to identify these users from the groups to which they belong instead
+ *          of applying an ldap.searchFilter. Note that if this is not the case, enabling this option may significantly
+ *          decrease performance.</li>
+ *      </ul>
+ *      In any case, an appropriate ldap.groupSearchFilter should be applied to prevent LDAP users belonging to
+ *      <i>any</i> group being selected as Openfire users.
+ *      (default value: false)
  * </ul>
  *
  * @author Matt Tucker
@@ -203,6 +218,7 @@ public class LdapManager {
     private boolean encloseUserDN;
     private boolean encloseGroupDN;
     private boolean startTlsEnabled = false;
+    private final boolean findUsersFromGroupsEnabled;
 
     private String groupNameField;
     private String groupMemberField;
@@ -437,6 +453,7 @@ public class LdapManager {
         else {
             initialContextFactory = DEFAULT_LDAP_CONTEXT_FACTORY;
         }
+        this.findUsersFromGroupsEnabled = Boolean.parseBoolean(properties.get("ldap.findUsersFromGroupsEnabled"));
 
         StringBuilder buf = new StringBuilder();
         buf.append("Created new LdapManager() instance, fields:\n");
@@ -464,6 +481,7 @@ public class LdapManager {
         buf.append("\t groupDescriptionField: ").append(groupDescriptionField).append("\n");
         buf.append("\t posixMode: ").append(posixMode).append("\n");
         buf.append("\t groupSearchFilter: ").append(groupSearchFilter).append("\n");
+        buf.append("\t findUsersFromGroupsEnabled: ").append(findUsersFromGroupsEnabled).append("\n");
 
         if (Log.isDebugEnabled()) {
             Log.debug("LdapManager: "+buf.toString());
@@ -864,6 +882,10 @@ public class LdapManager {
             }
         }
         return true;
+    }
+
+    public boolean isFindUsersFromGroupsEnabled() {
+        return findUsersFromGroupsEnabled;
     }
 
     /**
@@ -2108,17 +2130,7 @@ public class LdapManager {
 
             // If client-side sorting is enabled, sort and trim.
             if (clientSideSort) {
-                Collections.sort(results);
-                if (startIndex != -1 || numResults != -1) {
-                    if (startIndex == -1) {
-                        startIndex = 0;
-                    }
-                    if (numResults == -1) {
-                        numResults = results.size();
-                    }
-                    int endIndex = Math.min(startIndex + numResults, results.size()-1);
-                    results = results.subList(startIndex, endIndex);
-                }
+                results = sortAndPaginate(results, startIndex, numResults);
             }
         }
         catch (Exception e) {
@@ -2140,6 +2152,18 @@ public class LdapManager {
             }
         }
         return results;
+    }
+
+    static List<String> sortAndPaginate(Collection<String> unpagedCollection, int startIndex, int numResults) {
+        final List<String> results = new ArrayList<>(unpagedCollection);
+        Collections.sort(results);
+        // If the startIndex is negative, start at the beginning
+        final int fromIndex = Math.max(startIndex, 0);
+        // If the numResults is negative, take all the results
+        final int resultCount = Math.max(numResults, results.size());
+        // Make sure we're not returning more results than there actually are
+        final int toIndex = Math.min(results.size(), resultCount);
+        return results.subList(fromIndex, toIndex);
     }
 
     /**

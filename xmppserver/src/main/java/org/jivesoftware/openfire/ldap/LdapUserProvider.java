@@ -16,35 +16,25 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserCollection;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.user.UserProvider;
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -57,14 +47,14 @@ public class LdapUserProvider implements UserProvider {
     private static final Logger Log = LoggerFactory.getLogger(LdapUserProvider.class);
 
     // LDAP date format parser.
-    private static SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-    private LdapManager manager;
+    private final LdapManager manager;
     private Map<String, String> searchFields;
+    private Instant allUserCacheExpires = Instant.now();
     private int userCount = -1;
-    private long userCountExpiresStamp = System.currentTimeMillis();
-    private transient List<String> allUsernames = null;
-    private long allUserNamesExpiresStamp = System.currentTimeMillis();
+    private List<String> allUsernames = null;
+    private Collection<User> allUsers = null;
 
     public LdapUserProvider() {
         // Convert XML based provider setup to Database based
@@ -138,6 +128,9 @@ public class LdapUserProvider implements UserProvider {
             // As defined by RFC5803.
             Attribute authPassword = attrs.get("authPassword");
             User user = new User(username, name, email, creationDate, modificationDate);
+            if (manager.isFindUsersFromGroupsEnabled() && GroupManager.getInstance().getGroups(user).isEmpty()) {
+                throw new UserNotFoundException("User exists in LDAP but is not a member of any Openfire groups");
+            }
             if (authPassword != null) {
                 // The authPassword attribute can be multivalued.
                 // Not sure if this is the right API to loop through them.
@@ -198,61 +191,59 @@ public class LdapUserProvider implements UserProvider {
     @Override
     public int getUserCount() {
         // Cache user count for 5 minutes.
-        if (userCount != -1 && System.currentTimeMillis() < userCountExpiresStamp ) {
+        if (userCount != -1 && allUserCacheExpires.isAfter(Instant.now())) {
             return userCount;
         }
-        this.userCount = manager.retrieveListCount(
-                manager.getUsernameField(),
-                MessageFormat.format(manager.getSearchFilter(), "*")
-        );
-        this.userCountExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        // Refresh the cache
+        getUsers();
         return this.userCount;
     }
 
     @Override
     public Collection<String> getUsernames() {
         // Cache usernames for 5 minutes.
-        if ( allUsernames != null && System.currentTimeMillis() < allUserNamesExpiresStamp ) {
+        if (allUsernames != null && allUserCacheExpires.isAfter(Instant.now())) {
             return allUsernames;
         }
-        this.allUsernames = manager.retrieveList(
-                manager.getUsernameField(),
-                MessageFormat.format(manager.getSearchFilter(), "*"),
-                -1,
-                -1,
-                null,
-                true
-        );
-
-        // When all usernames have been fetched, we can update various other cached values.
-        this.userCount = this.allUsernames.size();
-        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
-        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
+        // Refresh the cache
+        getUsers();
         return this.allUsernames;
     }
     
     @Override
-    public Collection<User> getUsers() {
-        final Collection<User> users = getUsers( -1, -1 );
-
+    public synchronized Collection<User> getUsers() {
+        if (allUsers != null && allUserCacheExpires.isAfter(Instant.now())) {
+            return allUsers;
+        }
+        this.allUsers = getUsers( -1, -1 );
         // When all user have been fetched, we can update various other cached values.
-        this.allUsernames = users.stream().map( User::getUsername ).collect( Collectors.toList() );
-        this.userCount = this.allUsernames.size();
-        this.allUserNamesExpiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
-        this.userCountExpiresStamp = this.allUserNamesExpiresStamp;
-        return users;
+        this.userCount = this.allUsers.size();
+        this.allUsernames = allUsers.stream().map(User::getUsername).collect(Collectors.toList());
+        this.allUserCacheExpires = Instant.now().plus(5, ChronoUnit.MINUTES);
+        return allUsers;
     }
 
     @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
-        List<String> userlist = manager.retrieveList(
+        final List<String> userlist;
+        if (manager.isFindUsersFromGroupsEnabled()) {
+            final Set<String> allUsers = GroupManager.getInstance().getGroups()
+                .stream()
+                .map(Group::getAll)
+                .flatMap(Collection::stream)
+                .map(JID::getNode)
+                .collect(Collectors.toSet());
+            userlist = LdapManager.sortAndPaginate(allUsers, startIndex, numResults);
+        } else {
+            userlist = manager.retrieveList(
                 manager.getUsernameField(),
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 startIndex,
                 numResults,
                 manager.getUsernameSuffix(),
                 true
-        );
+            );
+        }
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 
@@ -355,6 +346,14 @@ public class LdapUserProvider implements UserProvider {
                 manager.getUsernameSuffix(),
                 true
         );
+        if (manager.isFindUsersFromGroupsEnabled()) {
+            userlist = userlist.stream()
+                .filter(user ->
+                    !GroupManager.getInstance().getGroups(
+                        XMPPServer.getInstance().createJID(user, null))
+                    .isEmpty())
+                .collect(Collectors.toList());
+        }
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 

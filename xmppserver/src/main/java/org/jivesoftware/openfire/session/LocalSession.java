@@ -144,6 +144,7 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
+        Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
         this.sessionManager.addDetached(this);
         this.conn = null;
     }
@@ -156,6 +157,7 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
+        Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
         Connection temp = this.conn;
         this.conn = null;
         if (temp != null && !temp.isClosed()) {
@@ -203,7 +205,7 @@ public abstract class LocalSession implements Session {
             try {
                 conn.isClosed(); // This generates an NPE deliberately.
             } catch (NullPointerException e) {
-                Log.error("Attempt to read connection of detached session: ", e);
+                Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, e);
             }
         }
         return conn;
@@ -228,7 +230,7 @@ public abstract class LocalSession implements Session {
      */
     public void setStatus(int status) {
         if (status == STATUS_CLOSED && this.streamManager.getResume()) {
-            Log.debug("Suppressing close.");
+            Log.debug( "Suppressing close for session with address {} and streamID {}.", this.address, this.streamID );
             return;
         }
         this.status = status;
@@ -425,7 +427,7 @@ public abstract class LocalSession implements Session {
     public void deliverRawText(String text) {
         if ( conn == null )
         {
-            Log.debug( "Unable to deliver raw text in session, as its connection is null. Dropping: " + text );
+            Log.debug( "Unable to deliver raw text in session with address {} and streamID {}, as its connection is null. Dropping: {}", this.address, this.streamID, text );
             return;
         }
         conn.deliverRawText(text);

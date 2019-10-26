@@ -89,4 +89,13 @@ public class ClientRoute implements Cacheable, Externalizable {
         }
         available = ExternalizableUtil.getInstance().readBoolean(in);
     }
+
+    @Override
+    public String toString()
+    {
+        return "ClientRoute{" +
+            "nodeID=" + nodeID +
+            ", available=" + available +
+            '}';
+    }
 }

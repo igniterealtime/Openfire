@@ -30,6 +30,17 @@ public class SystemPropertiesServlet extends HttpServlet {
 
     private static final String[] SEARCH_FIELDS = {"searchName", "searchValue", "searchDefaultValue", "searchPlugin", "searchDescription", "searchDynamic"};
 
+    private static void addSessionFlashes(final HttpServletRequest request, final String... flashes) {
+        final HttpSession session = request.getSession();
+        for (final String flash : flashes) {
+            final Object flashValue = session.getAttribute(flash);
+            if (flashValue != null) {
+                request.setAttribute(flash, flashValue);
+                session.setAttribute(flash, null);
+            }
+        }
+    }
+
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 
@@ -77,17 +88,6 @@ public class SystemPropertiesServlet extends HttpServlet {
         request.getRequestDispatcher("system-properties.jsp").forward(request, response);
     }
 
-    private static void addSessionFlashes(final HttpServletRequest request, final String... flashes) {
-        final HttpSession session = request.getSession();
-        for (final String flash : flashes) {
-            final Object flashValue = session.getAttribute(flash);
-            if (flashValue != null) {
-                request.setAttribute(flash, flashValue);
-                session.setAttribute(flash, null);
-            }
-        }
-    }
-
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         final HttpSession session = request.getSession();
@@ -100,7 +100,7 @@ public class SystemPropertiesServlet extends HttpServlet {
             final String action = ParamUtils.getStringParameter(request, "action", "");
             switch (action) {
                 case "save":
-                    saveProperty(request);
+                    saveProperty(request, webManager);
                     break;
                 case "cancel":
                     session.setAttribute("warningMessage", String.format("No changes were made to the property %s", request.getParameter("key")));
@@ -119,13 +119,20 @@ public class SystemPropertiesServlet extends HttpServlet {
         response.sendRedirect(request.getRequestURI() + ListPager.getQueryString(request, '?', SEARCH_FIELDS));
     }
 
-    private void saveProperty(final HttpServletRequest request) {
+    private void saveProperty(final HttpServletRequest request, WebManager webManager) {
         final String key = request.getParameter("key");
+        final boolean oldEncrypt = JiveGlobals.isPropertyEncrypted(key);
+        final String oldValueToLog = oldEncrypt ? "***********" : JiveGlobals.getProperty(key);
         final String value = request.getParameter("value");
         final boolean encrypt = ParamUtils.getBooleanAttribute(request, "encrypt");
         final boolean alreadyExists = JiveGlobals.getProperty(key) != null;
         JiveGlobals.setProperty(key, value, encrypt);
         request.getSession().setAttribute("successMessage", String.format("The property %s was %s", key, alreadyExists ? "updated" : "created"));
+        final String newValueToLog = encrypt ? "***********" : value;
+        final String details = alreadyExists
+            ? String.format("Value of property changed from '%s' to '%s'", oldValueToLog, newValueToLog)
+            : String.format("Property created with value '%s'", newValueToLog);
+        webManager.logEvent("Updated server property " + key, details);
     }
 
     @SuppressWarnings("unchecked")

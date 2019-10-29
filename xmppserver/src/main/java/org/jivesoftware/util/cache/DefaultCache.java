@@ -389,7 +389,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     /**
-     * Returns the size of the cache contents in bytes. This value is only a
+     * Returns the size of the cache contents in bytes limited to integer size. This value is only a
      * rough approximation, so cache users should expect that actual VM
      * memory used by the cache could be significantly higher than the value
      * reported by this method.
@@ -397,7 +397,19 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      * @return the size of the cache contents in bytes.
      */
     @Override
-    public long getCacheSize() {
+    public int getCacheSize() {
+        return (int) Math.max(Integer.MAX_VALUE,cacheSize);
+    }
+
+    /**
+     * Returns the size of the cache contents in bytes. This value is only a
+     * rough approximation, so cache users should expect that actual VM
+     * memory used by the cache could be significantly higher than the value
+     * reported by this method.
+     *
+     * @return the size of the cache contents in bytes.
+     */
+    public long getLongCacheSize(){
         return cacheSize;
     }
 
@@ -414,16 +426,30 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     /**
-     * Sets the maximum size of the cache. If the cache grows larger
+     * Sets the maximum size of the cache in bytes limited to integer size. If the cache grows larger
      * than the max size, the least frequently used items will be removed. If
      * the max cache size is set to -1, there is no size limit.
      *
      * @param maxCacheSize the maximum size of this cache (-1 indicates unlimited max size).
      */
     @Override
-    public void setMaxCacheSize(final long maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
-        CacheFactory.setMaxSizeProperty(name, maxCacheSize);
+    public void setMaxCacheSize(final int maxCacheSize) {
+       setMaxCacheSize((long)maxCacheSize);
+    }
+
+    /**
+     * Sets the maximum size of the cache in bytes. If the cache grows larger
+     * than the max size, the least frequently used items will be removed. If
+     * the max cache size is set to -1, there is no size limit.
+     *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
+     *
+     * @param maxSize the maximum size of the cache in bytes.
+     */
+    public void setMaxCacheSize(long maxSize){
+        this.maxCacheSize = maxSize;
+        CacheFactory.setMaxSizeProperty(name, maxSize);
         // It's possible that the new max size is smaller than our current cache
         // size. If so, we need to delete infrequently used items.
         cullCache();

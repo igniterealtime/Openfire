@@ -1221,15 +1221,30 @@ public class XMPPServer {
             return;
         }
         logger.info("Shutting down " + modules.size() + " modules ...");
-        // Get all modules and stop and destroy them
-        for (Module module : modules.values()) {
-            try {
-                module.stop();
-                module.destroy();
-            } catch (Exception ex) {
-                logger.error("Exception during module shutdown", ex);
-            }
-        }
+
+        modules.values().stream()
+            // OF-1609: Ensure that the first module to be shut down is the ConnectionManager.
+            .sorted( ( o1, o2 ) -> {
+                if ( o1 == o2 ) return 0;
+                final boolean isCM1 = o1 instanceof ConnectionManager;
+                final boolean isCM2 = o2 instanceof ConnectionManager;
+                if ( isCM1 && isCM2 ) return 0;
+                if ( isCM1 ) return -1;
+                if ( isCM2 ) return 1;
+                return 0;
+            } )
+
+            // Get all modules and stop and destroy them
+            .forEachOrdered( module -> {
+                try {
+                    logger.debug("Stopping and shutting down module '{}'" + module.getName() );
+                    module.stop();
+                    module.destroy();
+                } catch (Exception ex) {
+                    logger.error("Exception during module '{}' shutdown", module.getName(), ex);
+                }}
+            );
+
         // Stop all plugins
         logger.info("Shutting down plugins ...");
         if (pluginManager != null) {

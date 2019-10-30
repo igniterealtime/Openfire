@@ -637,6 +637,28 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns a double value Jive property. If the specified property doesn't exist, the
+     *  {@code defaultValue} will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or {@code defaultValue}.
+     */
+    public static double getDoubleProperty(String name, double defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            try {
+                return Double.parseDouble(value);
+            }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
      * Returns a boolean value Jive property.
      *
      * @param name the name of the property to return.

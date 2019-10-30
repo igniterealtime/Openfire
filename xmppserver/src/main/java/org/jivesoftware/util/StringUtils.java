@@ -1204,6 +1204,16 @@ public final class StringUtils {
         }
     }
 
+    public static Optional<Double> parseDouble(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Double.valueOf(value));
+        } catch (final NumberFormatException ignored) {
+            return Optional.empty();
+        }
+    }
     /**
      * Simple Java program to tokenize string as a shell would - similar to shlex in Python
      *

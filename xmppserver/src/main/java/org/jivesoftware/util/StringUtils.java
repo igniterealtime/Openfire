@@ -1203,4 +1203,15 @@ public final class StringUtils {
             return Optional.empty();
         }
     }
+
+    public static Optional<Double> parseDouble(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Double.valueOf(value));
+        } catch (final NumberFormatException ignored) {
+            return Optional.empty();
+        }
+    }
 }

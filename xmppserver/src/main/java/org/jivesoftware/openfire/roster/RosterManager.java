@@ -42,6 +42,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -64,6 +65,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     private XMPPServer server;
     private RoutingTable routingTable;
     private RosterItemProvider provider;
+    private ExecutorService executor;
 
     /**
      * Returns true if the roster service is enabled. When disabled it is not possible to
@@ -291,7 +293,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void groupModified(Group group, Map params) {
+    public void groupModified(final Group group, Map params) {
         // Do nothing if no group property has been modified
         if ("propertyDeleted".equals(params.get("type"))) {
              return;
@@ -307,21 +309,33 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<>(group.getMembers());
+            final Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
-            Collection<JID> affectedUsers = getAffectedUsers(group, originalValue,
+            final Collection<JID> affectedUsers = getAffectedUsers(group, originalValue,
                     group.getProperties().get("sharedRoster.groupList"));
-            // Remove the group members from the affected rosters
-            for (JID deletedUser : users) {
-                groupUserDeleted(group, affectedUsers, deletedUser);
-            }
 
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
-            for (JID user : users) {
-                groupUserAdded(group, user);
-            }
+
+            executor.submit(new Callable<Boolean>()
+            {
+                public Boolean call() throws Exception
+                {
+                    // Remove the group members from the affected rosters
+                    for (JID deletedUser : users) {
+                        groupUserDeleted(group, affectedUsers, deletedUser);
+                    }
+
+                    // Simulate that the group users has been added to the group. This will cause to push
+                    // roster items to the "affected" users for the group users
+
+                    for (JID user : users) {
+                        groupUserAdded(group, user);
+                    }
+                    return true;
+                }
+            });
         }
         else if ("sharedRoster.groupList".equals(keyChanged)) {
             String currentValue = group.getProperties().get("sharedRoster.groupList");
@@ -330,21 +344,31 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<>(group.getMembers());
+            final Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
-            Collection<JID> affectedUsers = getAffectedUsers(group,
+            final Collection<JID> affectedUsers = getAffectedUsers(group,
                     group.getProperties().get("sharedRoster.showInRoster"), originalValue);
-            // Remove the group members from the affected rosters
-            for (JID deletedUser : users) {
-                groupUserDeleted(group, affectedUsers, deletedUser);
-            }
 
-            // Simulate that the group users has been added to the group. This will cause to push
-            // roster items to the "affected" users for the group users
-            for (JID user : users) {
-                groupUserAdded(group, user);
-            }
+            executor.submit(new Callable<Boolean>()
+            {
+                public Boolean call() throws Exception
+                {
+                    // Remove the group members from the affected rosters
+
+                    for (JID deletedUser : users) {
+                        groupUserDeleted(group, affectedUsers, deletedUser);
+                    }
+
+                    // Simulate that the group users has been added to the group. This will cause to push
+                    // roster items to the "affected" users for the group users
+
+                    for (JID user : users) {
+                        groupUserAdded(group, user);
+                    }
+                    return true;
+                }
+            });
         }
         else if ("sharedRoster.displayName".equals(keyChanged)) {
             String currentValue = group.getProperties().get("sharedRoster.displayName");
@@ -986,6 +1010,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.addListener(this);
         // Add the new instance as a listener of group events
         GroupEventDispatcher.addListener(this);
+        executor = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -995,6 +1020,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.removeListener(this);
         // Remove this module as a listener of group events
         GroupEventDispatcher.removeListener(this);
+        executor.shutdown();
     }
 
     public static RosterItemProvider getRosterItemProvider() {

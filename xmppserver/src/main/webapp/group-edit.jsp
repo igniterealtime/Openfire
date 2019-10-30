@@ -349,6 +349,10 @@
     final ListPager<JID> listPager = new ListPager<>(request, response, allMembers, filter, "group", "searchName");
     pageContext.setAttribute( "listPager", listPager );
     pageContext.setAttribute("searchName", searchName);
+
+    final List<Group> groups = new ArrayList(groupManager.getGroups());
+    Collections.sort(groups, Comparator.comparing(Group::getName));
+    pageContext.setAttribute("groups", groups);
 %>
 
 <html>
@@ -533,7 +537,7 @@
                                     <select name="groupNames" id="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;"
                                             multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
 
-                                        <c:forEach var="g" items="${webManager.groupManager.groups}">
+                                        <c:forEach var="g" items="${groups}">
                                             <!-- Do not offer the edited group in the list of groups. Members of the editing group can always see each other -->
                                             <c:if test="${not g.equals(group)}">
                                                 <option value="${fn:escapeXml(g.name)}" ${groupNames.contains(g.name) ? "selected": ""}>

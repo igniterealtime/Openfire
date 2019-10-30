@@ -127,16 +127,6 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
-    <servlet>
-        <servlet-name>SystemPropertiesServlet</servlet-name>
-        <servlet-class>org.jivesoftware.admin.servlet.SystemPropertiesServlet</servlet-class>
-    </servlet>
-
-    <servlet>
-        <servlet-name>SystemCacheDetails</servlet-name>
-        <servlet-class>org.jivesoftware.admin.servlet.SystemCacheDetailsServlet</servlet-class>
-    </servlet>
-
     <!--@@JSPC-SERVLETS@@-->
 
     <servlet-mapping>
@@ -152,18 +142,6 @@
     <servlet-mapping>
         <servlet-name>PluginIconServlet</servlet-name>
         <url-pattern>/geticon</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>SystemPropertiesServlet</servlet-name>
-        <!-- NB. .jsp extension is only required so filters are applied, but also maintain the old address -->
-        <url-pattern>/server-properties.jsp</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>SystemCacheDetails</servlet-name>
-        <!-- NB. .jsp extension is only required so filters are applied -->
-        <url-pattern>/SystemCacheDetails.jsp</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

@@ -156,6 +156,18 @@
     </tr>
     <tr>
         <td class="c1">
+            <fmt:message key="session.details.anon-status"/>:
+        </td>
+        <td>
+            <% if (currentSess.isAnonymousUser()) { %>
+            <fmt:message key="session.details.anon-true" />
+            <% } else { %>
+            <fmt:message key="session.details.anon-false" />
+            <% } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
             <fmt:message key="session.details.node" />
         </td>
         <td>
@@ -214,6 +226,31 @@
         </td>
     </tr>
     <% } %>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.cc-status"/>:
+        </td>
+        <td>
+            <% if (currentSess.isMessageCarbonsEnabled()) { %>
+            <fmt:message key="session.details.cc-enabled" />
+            <% } else { %>
+            <fmt:message key="session.details.cc-disabled" />
+            <% } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.flomr-status"/>:
+        </td>
+        <td>
+            <% if (currentSess.isOfflineFloodStopped()) { %>
+            <fmt:message key="session.details.flomr-enabled" />
+            <% } else { %>
+            <fmt:message key="session.details.flomr-disabled" />
+            <% } %>
+        </td>
+    </tr>
+
     <tr>
         <td class="c1">
             <fmt:message key="session.details.status" />:

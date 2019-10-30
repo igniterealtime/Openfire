@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
+import org.apache.logging.log4j.LogManager;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -516,7 +517,7 @@ public class XMPPServer {
 
         // steps from index.jsp
         String localeCode = JiveGlobals.getXMLProperty("autosetup.locale");
-        logger.warn("Setting locale to" + localeCode);
+        logger.warn("Setting locale to " + localeCode);
         JiveGlobals.setLocale(LocaleUtils.localeCodeToLocale(localeCode.trim()));
 
         // steps from setup-host-settings.jsp
@@ -1168,8 +1169,8 @@ public class XMPPServer {
          */
         @Override
         public void run() {
+            System.err.println("Halting server...");
             shutdownServer();
-            logger.info("Server halted");
             System.err.println("Server halted");
         }
     }
@@ -1191,6 +1192,7 @@ public class XMPPServer {
             try {
                 Thread.sleep(5000);
                 // No matter what, we make sure it's dead
+                System.out.println( "Openfire process forcefully killed." );
                 System.exit(0);
             }
             catch (InterruptedException e) {
@@ -1250,6 +1252,9 @@ public class XMPPServer {
 
         // hack to allow safe stopping
         logger.info("Openfire stopped");
+
+        // Shut down the logging framework (causing the last few log entries to be flushed)
+        LogManager.shutdown();
     }
     
     /**

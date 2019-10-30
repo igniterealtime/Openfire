@@ -18,7 +18,10 @@ package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,8 +91,9 @@ public abstract class LocalSession implements Session {
     private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
-     * Session temporary data. All data stored in this <code>Map</code> disapear when session
-     * finishes.
+     * Session temporary data.
+     *
+     * All data stored in this <code>Map</code> disappears when the session finishes.
      */
     private final Map<String, Object> sessionData = new HashMap<>();
 
@@ -149,6 +153,7 @@ public abstract class LocalSession implements Session {
     public void setDetached() {
         lock.lock();
         try {
+            Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
             this.sessionManager.addDetached(this);
             this.conn = null;
         }finally {
@@ -166,6 +171,7 @@ public abstract class LocalSession implements Session {
     public void reattach(Connection connection, long h) {
         lock.lock();
         try {
+            Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
             if (this.conn != null && !this.conn.isClosed())
             {
                 this.conn.close();
@@ -214,8 +220,8 @@ public abstract class LocalSession implements Session {
         Connection connection = conn;
         if (connection == null)
         {
-            Log.error("Attempt to read connection of detached session", new IllegalStateException());
-        }
+            Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, new IllegalStateException());
+            }
         return connection;
     }
 
@@ -238,7 +244,7 @@ public abstract class LocalSession implements Session {
      */
     public void setStatus(int status) {
         if (status == STATUS_CLOSED && this.streamManager.getResume()) {
-            Log.debug("Suppressing close.");
+            Log.debug( "Suppressing close for session with address {} and streamID {}.", this.address, this.streamID );
             return;
         }
         this.status = status;
@@ -328,11 +334,15 @@ public abstract class LocalSession implements Session {
      *
      * @param key a <code>String</code> value of stored data key ID.
      * @param value a <code>Object</code> value of data stored in session.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
+     *         (A {@code null} return can also indicate that the map
+     *         previously associated {@code null} with {@code key}.)
      * @see #getSessionData(String)
      */
-    public void setSessionData(String key, Object value) {
+    public Object setSessionData(String key, Object value) {
         synchronized (sessionData) {
-            sessionData.put(key, value);
+            return sessionData.put(key, value);
         }
     }
 
@@ -356,11 +366,13 @@ public abstract class LocalSession implements Session {
      * for more details.
      *
      * @param key a <code>String</code> value of stored data ID.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
      * @see #setSessionData(String, Object)
      */
-    public void removeSessionData(String key) {
+    public Object removeSessionData(String key) {
         synchronized (sessionData) {
-            sessionData.remove(key);
+            return sessionData.remove(key);
         }
     }
 
@@ -427,18 +439,13 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
-        lock.lock();
-        try {
-            Connection connection = conn;
-            if (connection == null )
-            {
-                Log.debug("Unable to deliver raw text in session, as its connection is null. Dropping: " + text);
-                return;
-            }
-            connection.deliverRawText(text);
-        }finally {
-            lock.unlock();
+        Connection connection = conn;
+        if (connection == null )
+        {
+            Log.debug( "Unable to deliver raw text in session with address {} and streamID {}, as its connection is null. Dropping: {}", this.address, this.streamID, text );
+            return;
         }
+        connection.deliverRawText(text);
     }
 
     /**
@@ -451,25 +458,15 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
-        lock.lock();
-        try {
-            Optional.ofNullable(conn)
-              .ifPresent(connection ->  connection.close());
-        }finally {
-            lock.unlock();
-        }
+        Optional.ofNullable(conn)
+         .ifPresent(connection ->  connection.close());
     }
 
     @Override
     public boolean validate() {
-        lock.lock();
-        try {
-            return Optional.ofNullable(conn)
-                    .map(Connection::validate)
-                    .orElse(Boolean.FALSE);
-        }finally {
-            lock.unlock();
-        }
+        return Optional.ofNullable(conn)
+                .map(Connection::validate)
+                .orElse(Boolean.FALSE);
     }
 
     @Override
@@ -512,8 +509,19 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
+    public String toString()
+    {
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", serverName='" + getServerName() + '\'' +
+            '}';
     }
 
     protected static int[] decodeVersion(String version) {

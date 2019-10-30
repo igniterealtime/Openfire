@@ -1,30 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%--
---%>
-
 <%@ page import="org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
-                 org.jivesoftware.util.ClassUtils,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.Log,
-                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.openfire.XMPPServer,
-                 java.io.File,
                  java.lang.Double,
                  java.lang.Exception,
                  java.lang.Integer,
-                 java.lang.String"
+                 java.lang.String,
+                 java.lang.Throwable"
 %>
-<%@ page import="java.lang.Throwable"%>
-<%@ page import="java.sql.Connection" %>
-<%@ page import="java.sql.SQLException" %>
-<%@ page import="java.sql.Statement" %>
-<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.ArrayList"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-
+<%@ page import="org.jivesoftware.util.*" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
@@ -34,49 +24,6 @@
         return;
     }
 %>
-
-<%!
-    boolean testConnection(Map<String,String> errors) {
-        boolean success = true;
-        Connection con = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            if (con == null) {
-            }
-            else {
-                // See if the Jive db schema is installed.
-                try {
-                    Statement stmt = con.createStatement();
-                    // Pick an arbitrary table to see if it's there.
-                    stmt.executeQuery("SELECT * FROM ofID");
-                    stmt.close();
-                }
-                catch (SQLException sqle) {
-                    success = false;
-                    sqle.printStackTrace();
-                    errors.put("general","The Openfire database schema does not "
-                        + "appear to be installed. Follow the installation guide to "
-                        + "fix this error.");
-                }
-            }
-        }
-        catch (SQLException ex) {
-            success = false;
-            errors.put("general","A connection to the database could not be "
-                + "made. View the error message by opening the "
-                + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
-                + "file, then go back to fix the problem.");
-
-        }
-        finally {
-            try {
-                con.close();
-            } catch (Exception ignored) {}
-        }
-        return success;
-    }
-%>
-
 
 <%  // Get parameters
     String driver = ParamUtils.getParameter(request,"driver");
@@ -89,8 +36,23 @@
 
     boolean doContinue = request.getParameter("continue") != null;
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    Map<String,String> errors = new HashMap<>();
+
+    if (doContinue) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            doContinue = false;
+            errors.put( "general", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     // handle a continue request
-    Map<String,String> errors = new HashMap<String,String>();
     if (doContinue) {
         // Error check
         if (driver == null || "sun.jdbc.odbc.JdbcOdbcDriver".equals(driver)
@@ -160,7 +122,7 @@
             }
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);
-            if (testConnection(errors)) {
+            if (DbConnectionManager.testConnection(errors)) {
                 // Success, move on
                 response.sendRedirect("setup-profile-settings.jsp");
                 return;
@@ -196,6 +158,15 @@
             connectionTimeout = 1.0;
         }
     }
+
+    pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "driver", driver );
+    pageContext.setAttribute( "serverURL", serverURL );
+    pageContext.setAttribute( "username", username );
+    pageContext.setAttribute( "password", password );
+    pageContext.setAttribute( "minConnections", minConnections );
+    pageContext.setAttribute( "maxConnections", maxConnections );
+    pageContext.setAttribute( "connectionTimeout", connectionTimeout );
 %>
 
 <html>
@@ -217,20 +188,18 @@
     <b><fmt:message key="setup.datasource.standard.info2" /> </b><fmt:message key="setup.datasource.standard.info3" /> <tt>[Openfire_HOME]/resources/database</tt>.
     </p>
 
-<%  if (errors.size() > 0) { %>
-    <div class="error">
-    <%  if (errors.get("general") != null) { %>
-
-        <%= errors.get("general") %>
-
-    <%  } else { %>
-
-        <fmt:message key="setup.datasource.standard.failed_connect" />
-
-    <%  } %>
-    </div>
-<%  } %>
-
+    <c:if test="${not empty errors}">
+       <div class="error">
+           <c:choose>
+               <c:when test="${not empty errors['general']}">
+                   <c:out value="${errors['general']}"/>
+               </c:when>
+               <c:otherwise>
+                   <fmt:message key="setup.datasource.standard.failed_connect" />
+               </c:otherwise>
+           </c:choose>
+       </div>
+    </c:if>
 
 
     <!-- BEGIN jive-contentBox -->
@@ -247,7 +216,7 @@
     presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"});
     pageContext.setAttribute("presets", presets );
 %>
-<script language="JavaScript" type="text/javascript">
+<script>
 var data = [];
 <c:set var="i" value="0"/>
 <c:forEach items="${presets}" var="preset">
@@ -270,132 +239,120 @@ function checkSubmit() {
 </script>
 
 <form action="setup-datasource-standard.jsp" method="post" name="dbform" onsubmit="return checkSubmit();">
+<input type="hidden" name="csrf" value="${csrf}">
 
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
-    <td nowrap align="right"><fmt:message key="setup.datasource.standard.label" />:</td>
+    <td nowrap align="right"><label for="presets"><fmt:message key="setup.datasource.standard.label" /></label>:</td>
     <td>
-        <select size="1" name="presets" onchange="populate(this.options[this.selectedIndex].value)">
-            <option value=""><fmt:message key="setup.datasource.standard.pick_database" />
-            <%  for (int i=0; i<presets.size(); i++) {
-                    String[] data = presets.get(i);
-                    final String selected;
-                    if(data[1].equals(driver) ) {
-                        selected = "SELECTED";
-                    } else {
-                        selected = "";
-                    }
-            %>
-                <option value="<%= i %>" <%=selected%>> &#149; <%= data[0] %>
-            <%  } %>
+        <select size="1" name="presets" id="presets" onchange="populate(this.options[this.selectedIndex].value)">
+            <option value=""><fmt:message key="setup.datasource.standard.pick_database" /></option>
+            <c:forEach items="${presets}" var="preset" varStatus="status">
+                <option value="${status.index}" ${preset[1] eq driver ? 'selected' : ''}>
+                    &#149; <c:out value="${preset[0]}"/>
+                </option>
+            </c:forEach>
         </select>
     </td>
 </tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.jdbc" />
+        <label for="driver"><fmt:message key="setup.datasource.standard.jdbc" /></label>
     </td>
     <td>
-        <input type="text" name="driver" size="50" maxlength="150"
-         value="<%= ((driver != null) ? driver : "") %>">
+        <input type="text" name="driver" id="driver" size="75" maxlength="150" value="${fn:escapeXml(not empty driver ? driver : '')}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.jdbc_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("driver") != null) { %>
+        <c:if test="${not empty errors['driver']}">
             <span class="jive-error-text">
-            <%= errors.get("driver") %>
+                <c:out value="${errors['driver']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.url" />
+        <label for="serverURL"><fmt:message key="setup.datasource.standard.url" /></label>
     </td>
     <td>
-        <input type="text" name="serverURL" size="50" maxlength="250"
-         value="<%= ((serverURL != null) ? serverURL : "") %>">
+        <input type="text" name="serverURL" id="serverURL" size="75" maxlength="250" value="${not empty serverURL ? fn:escapeXml(serverURL) : ''}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.valid_url" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("serverURL") != null) { %>
+        <c:if test="${not empty errors['serverURL']}">
             <span class="jive-error-text">
-            <%= errors.get("serverURL") %>
+                <c:out value="${errors['serverURL']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.username" />
+        <label for="username"><fmt:message key="setup.datasource.standard.username" /></label>
     </td>
     <td>
-        <input type="text" name="username" size="20" maxlength="50"
-         value="<%= ((username != null) ? username : "") %>">
+        <input type="text" name="username" id="username" size="20" maxlength="50" value="${fn:escapeXml(not empty username ? username : '')}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.username_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("username") != null) { %>
+        <c:if test="${not empty errors['username']}">
             <span class="jive-error-text">
-            <%= errors.get("username") %>
+                <c:out value="${errors['username']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.password" />
+        <label for="password"><fmt:message key="setup.datasource.standard.password" /></label>
     </td>
     <td>
-        <input type="password" name="password" size="20" maxlength="50"
-         value="<%= ((password != null) ? password : "") %>">
+        <input type="password" name="password" id="password" size="20" maxlength="50" value="${fn:escapeXml(not empty password ? password : '')}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.password_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("password") != null) { %>
+        <c:if test="${not empty errors['password']}">
             <span class="jive-error-text">
-            <%= errors.get("password") %>
+                <c:out value="${errors['password']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr valign="top">
     <td nowrap align="right">
-        <%--<fmt:message key="setup.datasource.standard.connect" />--%>
-        Minimum Connections:
+        <label for="minConnections"><fmt:message key="setup.datasource.standard.min_connections" /></label>
     </td>
     <td>
-        <input type="text" name="minConnections" size="5" maxlength="5" value="<%= ((minConnections != -1) ? ""+minConnections : "") %>">
+        <input type="number" min="0" name="minConnections" id="minConnections" size="5" maxlength="5" value="${fn:escapeXml(not empty minConnections and minConnections > -1 ? minConnections : '')}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("minConnections") != null) { %>
+        <c:if test="${not empty errors['minConnections']}">
             <span class="jive-error-text">
-            <%= errors.get("minConnections") %>
+                <c:out value="${errors['minConnections']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td nowrap align="right">
-        <%--<fmt:message key="setup.datasource.standard.connect" />--%>
-        Maximum Connections:
+        <label for="maxConnections"><fmt:message key="setup.datasource.standard.max_connections" /></label>
     </td>
     <td>
-        <input type="text" name="maxConnections" size="5" maxlength="5" value="<%= ((maxConnections != -1) ? ""+maxConnections : "") %>">
+        <input type="number" min="1" name="maxConnections" id="maxConnections" size="5" maxlength="5" value="${fn:escapeXml(not empty maxConnections and maxConnections > -1 ? maxConnections : '')}">
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("maxConnections") != null) { %>
+        <c:if test="${not empty errors['maxConnections']}">
             <span class="jive-error-text">
-            <%= errors.get("maxConnections") %>
+                <c:out value="${errors['maxConnections']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 <tr valign="top">
     <td nowrap align="right">
-        <fmt:message key="setup.datasource.standard.timeout" />
+        <label for="connectionTimeout"><fmt:message key="setup.datasource.standard.timeout" /></label>
     </td>
     <td>
-        <input type="text" name="connectionTimeout" size="5" maxlength="5"
-         value="<%= connectionTimeout %>"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;">Days</span>
+        <input type="text" name="connectionTimeout" id="connectionTimeout" size="5" maxlength="5" value="${fn:escapeXml(not empty connectionTimeout ? connectionTimeout : '')}"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;"><fmt:message key="setup.datasource.standard.timeout.days" /></span>
         <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.timeout_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-        <%  if (errors.get("connectionTimeout") != null) { %>
+        <c:if test="${not empty errors['connectionTimeout']}">
             <span class="jive-error-text">
-            <%= errors.get("connectionTimeout") %>
+                <c:out value="${errors['connectionTimeout']}"/>
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 </table>

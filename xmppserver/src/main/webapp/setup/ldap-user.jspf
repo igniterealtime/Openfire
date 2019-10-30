@@ -4,12 +4,10 @@
                  org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapUserProvider"%>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
-<%@ page import="org.jivesoftware.util.BeanUtils" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="vcardBean" scope="session" class="org.jivesoftware.admin.LdapUserProfile" />
 
@@ -83,10 +81,27 @@
 
     Map<String, String> errors = new HashMap<>();
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
     boolean save = request.getParameter("save") != null;
-    boolean doTest = request.getParameter("test") != null;
-    boolean isTesting = request.getParameter("userIndex") != null;
-    if ((save || doTest) && !isTesting) {
+    boolean test = request.getParameter( "test") != null;
+    String userIndex = request.getParameter( "userIndex" );
+    boolean isTesting = userIndex != null;
+
+    if ((save || test) && !isTesting) {
+        if ( csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals( csrfParam ) ) {
+            save = false;
+            test = false;
+            errors.put( "csrf", "CSRF Failure!" );
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (errors.isEmpty() && (save || test) && !isTesting) {
         usernameField = ParamUtils.getParameter(request, "usernameField");
         if (usernameField == null) {
             errors.put("username",
@@ -137,6 +152,9 @@
                 if (searchFilter != null) {
                     manager.setSearchFilter(searchFilter);
                 }
+                if (serverType.equals("activedirectory")) {
+                    xmppSettings.put(LdapManager.LDAP_PAGE_SIZE.getKey(), "1000");
+                }
                 // Save vCard mappings
                 vcardBean.saveProperties();
 
@@ -172,27 +190,36 @@
     pageContext.setAttribute("searchFilter", searchFilter );
     pageContext.setAttribute("vcardBean", vcardBean );
 
+    pageContext.setAttribute("meta", meta);
+    pageContext.setAttribute("testPage", testPage);
+    pageContext.setAttribute("currentPage", currentPage);
+    pageContext.setAttribute("initialSetup", initialSetup);
+
+    pageContext.setAttribute("test", test);
+    pageContext.setAttribute("isTesting", isTesting);
+    pageContext.setAttribute("userIndex", userIndex);
+    pageContext.setAttribute("errors", errors);
+
 %>
 <html>
 <head>
     <title><fmt:message key="setup.ldap.title" /></title>
-    <% for (Map.Entry<String, String> entry : meta.entrySet()) { %>
-    <meta name="<%= entry.getKey()%>" content="<%= entry.getValue()%>"/>
-    <% } %>
+    <c:forEach items="${meta}" var="entry">
+        <meta name="${entry.key}" content="${entry.value}"/>
+    </c:forEach>
 </head>
 
 <body>
+    <c:if test="${test and empty errors}">
+        <c:url var="sb" value="${testPage}">
+            <c:param name="serverType" value="${serverType}"/>
+            <c:param name="currentPage" value="${currentPage}"/>
+            <c:if test="${isTesting}">
+                <c:param name="userIndex" value="${userIndex}"/>
+            </c:if>
+        </c:url>
 
-    <% if (doTest && errors.isEmpty()) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(testPage);
-        sb.append("?serverType=").append(serverType);
-        sb.append("&currentPage=").append(currentPage);
-        if (isTesting) {
-            sb.append("&userIndex=").append(request.getParameter("userIndex"));
-        }
-    %>
-        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+        <a href="${sb}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -200,12 +227,11 @@
             }
             setTimeout('loadMsg()', 500);
         </script>
+    </c:if>
 
-    <% } %>
-
-    <% if (initialSetup) { %>
-    <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h1>
-    <% } %>
+    <c:if test="${initialSetup}">
+        <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h1>
+    </c:if>
 
     <!-- BEGIN jive-contentBox_stepbar -->
     <div id="jive-contentBox_stepbar">
@@ -221,17 +247,16 @@
     <h2><fmt:message key="setup.ldap.step_two" />: <span><fmt:message key="setup.ldap.user_mapping" /></span></h2>
     <p><fmt:message key="setup.ldap.user.description" /></p>
 
-    <%  if (errors.size() > 0) { %>
+    <c:if test="${not empty errors}">
+        <div class="error">
+            <c:forEach var="err" items="${errors}">
+                <c:out value="${err.value}"/><br/>
+            </c:forEach>
+        </div>
+    </c:if>
 
-    <div class="error">
-        <% for (String error:errors.values()) { %>
-            <%= error%><br/>
-        <% } %>
-    </div>
-
-    <%  } %>
-
-    <form action="<%= currentPage%>" method="post">
+    <form action="${currentPage}" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="serverType" value="<c:out value="${serverType}"/>"/>
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
@@ -241,7 +266,7 @@
             <td colspan="2"><strong><fmt:message key="setup.ldap.user_mapping" /></strong></td>
             </tr>
             <tr>
-            <td align="right"><fmt:message key="setup.ldap.user.username_field" />:</td>
+            <td align="right"><label for="jiveLDAPusername"><fmt:message key="setup.ldap.user.username_field" /></label>:</td>
                 <td><input type="text" name="usernameField" id="jiveLDAPusername" size="22" maxlength="50" value="<c:out value="${usernameField}"/>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.username_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
             </tr>
             </table>
@@ -257,11 +282,11 @@
                     <div>
                         <table border="0" cellpadding="0" cellspacing="2">
                         <tr>
-                        <td align="right"><fmt:message key="setup.ldap.user.search_fields" />:</td>
+                        <td align="right"><label for="jiveLDAPsearchfields"><fmt:message key="setup.ldap.user.search_fields" /></label>:</td>
                         <td><input type="text" name="searchFields" value="<c:out value="${searchFields}"/>" id="jiveLDAPsearchfields" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.search_fields_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
                         </tr>
                         <tr>
-                        <td align="right"><fmt:message key="setup.ldap.user.user_filter" />:</td>
+                        <td align="right"><label for="jiveLDAPsearchfilter"><fmt:message key="setup.ldap.user.user_filter" /></label>:</td>
                         <td><input type="text" name="searchFilter" value="<c:out value="${searchFilter}"/>" id="jiveLDAPsearchfilter" size="40" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.user.user_filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
                         </tr>
                         </table>
@@ -273,7 +298,7 @@
         <!-- END jive-contentBox_bluebox -->
 
 
-        <script type="text/javascript" language="JavaScript">
+        <script type="text/javascript">
             function jiveRowHighlight(theInput) {
 
                 var e = $(jivevCardTable).getElementsByTagName('tr');
@@ -289,7 +314,7 @@
         <div class="jive-contentBox_greybox">
             <strong><fmt:message key="setup.ldap.user.vcard.mapping" /></strong>
             <p><fmt:message key="setup.ldap.user.vcard.description" /><br/>
-            <input type="checkbox" value="enabled" name="storeAvatarInDB"<%= vcardBean.getAvatarStoredInDB() ? " checked" : ""%>/> <fmt:message key="setup.ldap.user.vcard.avatardb" /></p>
+            <input type="checkbox" value="enabled" name="storeAvatarInDB" id="storeAvatarInDB" ${vcardBean.avatarStoredInDB ? "checked" : ""}/> <label for="storeAvatarInDB"><fmt:message key="setup.ldap.user.vcard.avatardb" /></label></p>
 
             <!-- BEGIN vcard table -->
             <table border="0" cellpadding="0" cellspacing="1" class="jive-vcardTable" id="jivevCardTable">
@@ -302,18 +327,18 @@
                 <tbody>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.name" /></strong>
+                        <strong><label for="name"><fmt:message key="setup.ldap.user.vcard.name" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="name" value="<c:out value="${vcardBean.name}"/>" id="name" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="name" value="${fn:escapeXml(vcardBean.name)}" id="name" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.email" /></strong>
+                        <strong><label for="email"><fmt:message key="setup.ldap.user.vcard.email" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="email" value="<c:out value="${vcardBean.email}"/>" id="email" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="email" value="${fn:escapeXml(vcardBean.email)}" id="email" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
@@ -326,34 +351,34 @@
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.fullname" /></strong>
+                        <strong><label for="fullName"><fmt:message key="setup.ldap.user.vcard.fullname" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="fullName" value="<c:out value="${vcardBean.fullName}"/>" id="fullName" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="fullName" value="${fn:escapeXml(vcardBean.fullName)}" id="fullName" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.nickname" /></strong>
+                        <strong><label for="nickname"><fmt:message key="setup.ldap.user.vcard.nickname" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="nickname" value="<c:out value="${vcardBean.nickname}"/>" id="nickname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="nickname" value="${fn:escapeXml(vcardBean.nickname)}" id="nickname" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.birthday" /></strong>
+                        <strong><label for="birthday"><fmt:message key="setup.ldap.user.vcard.birthday" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="birthday" value="<c:out value="${vcardBean.birthday}"/>" id="birthday" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="birthday" value="${fn:escapeXml(vcardBean.birthday)}" id="birthday" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><fmt:message key="setup.ldap.user.vcard.photo" /></strong>
+                        <strong><label for="photo"><fmt:message key="setup.ldap.user.vcard.photo" /></label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="photo" value="<c:out value="${vcardBean.photo}"/>" id="photo" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="photo" value="${fn:escapeXml(vcardBean.photo)}" id="photo" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
@@ -366,74 +391,74 @@
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.street" />
+                        - <label for="homeStreet"><fmt:message key="setup.ldap.user.vcard.street" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeStreet" value="<c:out value="${vcardBean.homeStreet}"/>" id="homeStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeStreet" value="${fn:escapeXml(vcardBean.homeStreet)}" id="homeStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.city" />
+                        - <label for="homeCity"><fmt:message key="setup.ldap.user.vcard.city" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeCity" value="<c:out value="${vcardBean.homeCity}"/>" id="homeCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeCity" value="${fn:escapeXml(vcardBean.homeCity)}" id="homeCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.state" />
+                        - <label for="homeState"><fmt:message key="setup.ldap.user.vcard.state" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeState" value="<c:out value="${vcardBean.homeState}"/>" id="homeState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeState" value="${fn:escapeXml(vcardBean.homeState)}" id="homeState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.pcode" />
+                        - <label for="homeZip"><fmt:message key="setup.ldap.user.vcard.pcode" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeZip" value="<c:out value="${vcardBean.homeZip}"/>" id="homeZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeZip" value="${fn:escapeXml(vcardBean.homeZip)}" id="homeZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.country" />
+                        - <label for="homeCountry"><fmt:message key="setup.ldap.user.vcard.country" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeCountry" value="<c:out value="${vcardBean.homeCountry}"/>" id="homeCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeCountry" value="${fn:escapeXml(vcardBean.homeCountry)}" id="homeCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.phone" />
+                        - <label for="homePhone"><fmt:message key="setup.ldap.user.vcard.phone" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homePhone" value="<c:out value="${vcardBean.homePhone}"/>" id="homePhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homePhone" value="${fn:escapeXml(vcardBean.homePhone)}" id="homePhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.mobile" />
+                        - <label for="homeMobile"><fmt:message key="setup.ldap.user.vcard.mobile" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeMobile" value="<c:out value="${vcardBean.homeMobile}"/>" id="homeMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeMobile" value="${fn:escapeXml(vcardBean.homeMobile)}" id="homeMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.fax" />
+                        - <label for="homeFax"><fmt:message key="setup.ldap.user.vcard.fax" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homeFax" value="<c:out value="${vcardBean.homeFax}"/>" id="homeFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homeFax" value="${fn:escapeXml(vcardBean.homeFax)}" id="homeFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.pager" />
+                        - <label for="homePager"><fmt:message key="setup.ldap.user.vcard.pager" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="homePager" value="<c:out value="${vcardBean.homePager}"/>" id="homePager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="homePager" value="${fn:escapeXml(vcardBean.homePager)}" id="homePager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
@@ -446,90 +471,90 @@
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.street" />
+                        - <label for="businessStreet"><fmt:message key="setup.ldap.user.vcard.street" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessStreet" value="<c:out value="${vcardBean.businessStreet}"/>" id="businessStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessStreet" value="${fn:escapeXml(vcardBean.businessStreet)}" id="businessStreet" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.city" />
+                        - <label for="businessCity"><fmt:message key="setup.ldap.user.vcard.city" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessCity" value="<c:out value="${vcardBean.businessCity}"/>" id="businessCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessCity" value="${fn:escapeXml(vcardBean.businessCity)}" id="businessCity" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.state" />
+                        - <label for="businessState"><fmt:message key="setup.ldap.user.vcard.state" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessState" value="<c:out value="${vcardBean.businessState}"/>" id="businessState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessState" value="${fn:escapeXml(vcardBean.businessState)}" id="businessState" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.pcode" />
+                        - <label for="businessZip"><fmt:message key="setup.ldap.user.vcard.pcode" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessZip" value="<c:out value="${vcardBean.businessZip}"/>" id="businessZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessZip" value="${fn:escapeXml(vcardBean.businessZip)}" id="businessZip" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.country" />
+                        - <label for="businessCountry"><fmt:message key="setup.ldap.user.vcard.country" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessCountry" value="<c:out value="${vcardBean.businessCountry}"/>" id="businessCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessCountry" value="${fn:escapeXml(vcardBean.businessCountry)}" id="businessCountry" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.title" />
+                        - <label for="businessJobTitle"><fmt:message key="setup.ldap.user.vcard.title" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessJobTitle" value="<c:out value="${vcardBean.businessJobTitle}"/>" id="businessJobTitle" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessJobTitle" value="${fn:escapeXml(vcardBean.businessJobTitle)}" id="businessJobTitle" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.department" />
+                        - <label for="businessDepartment"><fmt:message key="setup.ldap.user.vcard.department" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessDepartment" value="<c:out value="${vcardBean.businessDepartment}"/>" id="businessDepartment" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessDepartment" value="${fn:escapeXml(vcardBean.businessDepartment)}" id="businessDepartment" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.phone" />
+                        - <label for="businessPhone"><fmt:message key="setup.ldap.user.vcard.phone" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessPhone" value="<c:out value="${vcardBean.businessPhone}"/>" id="businessPhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessPhone" value="${fn:escapeXml(vcardBean.businessPhone)}" id="businessPhone" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.mobile" />
+                        - <label for="businessMobile"><fmt:message key="setup.ldap.user.vcard.mobile" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessMobile" value="<c:out value="${vcardBean.businessMobile}"/>" id="businessMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessMobile" value="${fn:escapeXml(vcardBean.businessMobile)}" id="businessMobile" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.fax" />
+                        - <label for="businessFax"><fmt:message key="setup.ldap.user.vcard.fax" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessFax" value="<c:out value="${vcardBean.businessFax}"/>" id="businessFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessFax" value="${fn:escapeXml(vcardBean.businessFax)}" id="businessFax" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        - <fmt:message key="setup.ldap.user.vcard.pager" />
+                        - <label for="businessPager"><fmt:message key="setup.ldap.user.vcard.pager" /></label>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
-                        <input type="text" name="businessPager" value="<c:out value="${vcardBean.businessPager}"/>" id="businessPager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
+                        <input type="text" name="businessPager" value="${fn:escapeXml(vcardBean.businessPager)}" id="businessPager" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
                     </td>
                 </tr>
             </table>

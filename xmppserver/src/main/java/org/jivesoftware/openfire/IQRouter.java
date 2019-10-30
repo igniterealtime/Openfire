@@ -101,7 +101,7 @@ public class IQRouter extends BasicModule {
                 }
                 reply.setError(PacketError.Condition.bad_request);
                 session.process(reply);
-                Log.warn("User tried to authenticate with this server using an unknown receipient: " +
+                Log.warn("User tried to authenticate with this server using an unknown recipient: " +
                         packet.toXML());
             }
             else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (

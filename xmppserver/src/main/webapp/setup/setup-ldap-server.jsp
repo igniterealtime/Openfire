@@ -29,5 +29,12 @@
     String nextPage = "setup-ldap-user.jsp?serverType=" + serverType;
     Map<String, String> meta = new HashMap<String, String>();
     meta.put("currentStep", "3");
+
+    pageContext.setAttribute( "serverType", serverType );
+    pageContext.setAttribute( "initialSetup", initialSetup );
+    pageContext.setAttribute( "currentPage", currentPage );
+    pageContext.setAttribute( "testPage", testPage );
+    pageContext.setAttribute( "nextPage", nextPage );
+    pageContext.setAttribute( "meta", meta );
 %>
 <%@ include file="ldap-server.jspf" %>

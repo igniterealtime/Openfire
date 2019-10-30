@@ -182,11 +182,11 @@ public class FaviconServlet extends HttpServlet {
     }
 
     private byte[] getImage(String url) {
-        // Try to get the fiveicon from the url using an HTTP connection from the pool
+        // Try to get the favicon from the url using an HTTP connection from the pool
         // that also allows to configure timeout values (e.g. connect and get data)
         final RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(2000)
-            .setSocketTimeout(2000)
+            .setConnectTimeout(5000)
+            .setSocketTimeout(5000)
             .build();
         final HttpUriRequest getRequest = RequestBuilder.get(url)
             .setConfig(requestConfig)
@@ -194,10 +194,17 @@ public class FaviconServlet extends HttpServlet {
 
         try(final CloseableHttpResponse response = client.execute(getRequest)) {
             if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                return EntityUtils.toByteArray(response.getEntity());
+                final byte[] result = EntityUtils.toByteArray(response.getEntity());
+
+                // Prevent SSRF by checking result (OF-1885)
+                if ( !GraphicsUtils.isImage( result ) ) {
+                    LOGGER.info( "Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url) ;
+                    return null;
+                }
+                return result;
             }
-        } catch (final IOException ignored) {
-            // Do nothing
+        } catch (final IOException ex) {
+            LOGGER.debug( "An exception occurred while trying to obtain an image from: {}", url, ex );
         }
 
         return null;

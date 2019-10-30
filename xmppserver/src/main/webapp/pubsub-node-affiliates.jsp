@@ -1,21 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+<%@ page import="org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.pep.PEPServiceInfo,
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.NodeAffiliate,
-                 org.jivesoftware.openfire.pubsub.NodeSubscription,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                 org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
                  org.xmpp.packet.JID,
                  java.net.URLEncoder,
-                 java.text.DateFormat,
-                 java.util.*"
+                 java.util.ArrayList,
+                 java.util.List"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -24,8 +22,8 @@
 
 <%  // Get parameters
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-    String deleteID = ParamUtils.getParameter(request,"deleteID");
     String ownerString = ParamUtils.getParameter( request, "owner" );
+
     if ( ownerString == null )
     {
         ownerString = ParamUtils.getParameter( request, "username" );
@@ -41,14 +39,6 @@
         else
         {
             owner = XMPPServer.getInstance().createJID( ownerString, null );
-        }
-    }
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (deleteID != null) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-             deleteID = null;
         }
     }
 
@@ -70,10 +60,9 @@
         return;
     }
 
-    List<NodeAffiliate> affiliates = new ArrayList<NodeAffiliate>(node.getAllAffiliates());
+    List<NodeAffiliate> affiliates = new ArrayList<>(node.getAllAffiliates());
 
-    Collections.sort(affiliates, new Comparator<NodeAffiliate>() {
-        public int compare(NodeAffiliate affiliate1, NodeAffiliate affiliate2) {
+    affiliates.sort( ( affiliate1, affiliate2 ) -> {
 
             // Sort by Emum ordinal which gives order: owner, publisher, none, outcast
             int affiliateComp = affiliate1.getAffiliation().compareTo(affiliate2.getAffiliation());
@@ -86,11 +75,7 @@
             }
 
         }
-    });
-
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
+    );
 
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("owner", owner );
@@ -113,39 +98,25 @@
 </head>
 <body>
 
-    <p>
-    <fmt:message key="pubsub.node.summary.table.info" />
-    </p>
-
     <c:if test="${param.deleteSuccess}">
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="pubsub.node.affiliates.deleted">
-                <fmt:param value="${param.affiliateJID}"/>
+                <fmt:param value="${fn:escapeXml(param.affiliateJID)}"/>
             </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
     </c:if>
 
     <c:if test="${param.updateSuccess}">
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="pubsub.node.affiliates.updated">
-                <fmt:param value="${param.affiliateJID}"/>
+                <fmt:param value="${fn:escapeXml(param.affiliateJID)}"/>
             </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
     </c:if>
+
+    <p>
+        <fmt:message key="pubsub.node.summary.table.info" />
+    </p>
 
     <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -163,14 +134,14 @@
     </thead>
     <tbody>
         <tr>
-            <td><c:out value="${node.getNodeID()}"/></td>
-            <td><c:out value="${node.getName()}"/></td>
-            <td><c:out value="${node.getDescription()}"/></td>
-            <td><c:out value="${node.getPublishedItems().size()}"/></td>
-            <td><c:out value="${node.getAllAffiliates().size()}"/></td>
-            <td><c:out value="${node.getAllSubscriptions().size()}"/></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getCreationDate()}" /></td>
-            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.getModificationDate()}" /></td>
+            <td><c:out value="${node.nodeID}"/></td>
+            <td><c:out value="${node.name}"/></td>
+            <td><c:out value="${node.description}"/></td>
+            <td><c:out value="${node.publishedItems.size()}"/></td>
+            <td><c:out value="${node.allAffiliates.size()}"/></td>
+            <td><c:out value="${node.allSubscriptions.size()}"/></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.creationDate}" /></td>
+            <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${node.modificationDate}" /></td>
         </tr>
     </tbody>
     </table>
@@ -203,25 +174,25 @@
         <c:forEach var="affiliate" items="${affiliates}">
         <tr>
             <td>
-            <c:out value="${affiliate.getJID().toBareJID()}"/>
+            <c:out value="${affiliate.JID.toBareJID()}"/>
             </td>
             <td>
-            <c:out value="${affiliate.getAffiliation().name()}"/>
+            <c:out value="${affiliate.affiliation.name()}"/>
             </td>
             <td width="1%" align="center">
                 <c:url value="pubsub-node-subscribers.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
                 </c:url>
                 <a href="${url}">
-                     <c:out value="${affiliate.getSubscriptions().size()}"/>
+                     <c:out value="${affiliate.subscriptions.size()}"/>
                 </a>
             </td>
             <td width="1%" align="center">
                 <c:url value="pubsub-node-affiliates-edit.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
-                    <c:param name="affiliateJID" value="${affiliate.getJID().toBareJID()}" />
+                    <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_edit" />">
                     <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
@@ -229,9 +200,9 @@
             </td>
             <td width="1%" align="center" style="border-right:1px #ccc solid;">
                 <c:url value="pubsub-node-affiliates-delete.jsp" var="url">
-                    <c:param name="nodeID" value="${node.getNodeID()}" />
+                    <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
-                    <c:param name="affiliateJID" value="${affiliate.getJID().toBareJID()}" />
+                    <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">

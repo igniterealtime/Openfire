@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xmpp.packet.IQ;
 
@@ -47,7 +48,7 @@ public class IQEntityTimeHandlerTest {
         assertEquals(iqEntityTimeHandler.getUtcDate(date), DatatypeConverter.printDateTime(calendar));
     }
 
-    @Test
+    @Test @Ignore
     public void testPerformanceDatatypeConvertVsXMPPDateFormat() {
 
         Date date = new Date();

@@ -35,6 +35,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
@@ -226,8 +228,10 @@ public class TLSStreamHandler {
                 try {
                     tlsEngine.closeInbound();
                 } catch (javax.net.ssl.SSLException ex) {
-                    // OF-1009 Process these as a 'normal' handshake rejection - it's the peer closing the connection abruptly.
-                    if ("Inbound closed before receiving peer's close_notify: possible truncation attack?".equals( ex.getMessage() ) ) {
+                    // OF-1830 / OF-1009 Process these as a 'normal' handshake rejection - it's the peer closing the connection abruptly.
+                    final List<String> ignorable = Arrays.asList( "closing inbound before receiving peer's close_notify",
+                                                                  "Inbound closed before receiving peer's close_notify: possible truncation attack?" );
+                    if ( ex.getMessage() != null && ignorable.stream().anyMatch( m -> ex.getMessage().contains( m ) ) ) {
                         throw new SSLHandshakeException( "The peer closed the connection while performing a TLS handshake." );
                     }
                     throw ex;

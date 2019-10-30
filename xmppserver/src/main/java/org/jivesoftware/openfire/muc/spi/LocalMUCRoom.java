@@ -20,13 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -549,7 +543,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public LocalMUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
+    public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
             LocalMUCUser user, Presence presence) throws UnauthorizedException,
             UserAlreadyExistsException, RoomLockedException, ForbiddenException,
             RegistrationRequiredException, ConflictException, ServiceUnavailableException,
@@ -560,7 +554,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new UnauthorizedException();
             }
         }
-        LocalMUCRole joinRole = null;
+        MUCRole joinRole = null;
         lock.writeLock().lock();
         boolean clientOnlyJoin = false;
         // A "client only join" here is one where the client is already joined, but has re-joined.
@@ -682,7 +676,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 occupantsByFullJID.put(user.getAddress(), joinRole);
             } else {
                 // Grab the existing one.
-                joinRole = (LocalMUCRole) occupantsByFullJID.get(user.getAddress());
+                joinRole = occupantsByFullJID.get(user.getAddress());
                 joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
            }
         }
@@ -725,9 +719,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             historyRequest.sendHistory(joinRole, roomHistory);
         }
         Message roomSubject = roomHistory.getChangedSubject();
-        if (roomSubject != null) {
-            joinRole.send(roomSubject);
+
+        // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
+        if (roomSubject == null) {
+            roomSubject = new Message();
+            roomSubject.setFrom( this.getJID() );
+            roomSubject.setType( Message.Type.groupchat );
+            roomSubject.setID( UUID.randomUUID().toString() );
+            roomSubject.getElement().addElement( "subject" );
         }
+        joinRole.send(roomSubject);
+
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
             setEmptyDate(null);
@@ -764,7 +766,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param joinRole the role of the new occupant in the room.
      */
-    private void sendInitialPresences(LocalMUCRole joinRole) {
+    private void sendInitialPresences(MUCRole joinRole) {
         for (MUCRole occupant : occupantsByFullJID.values()) {
             if (occupant == joinRole) {
                 continue;

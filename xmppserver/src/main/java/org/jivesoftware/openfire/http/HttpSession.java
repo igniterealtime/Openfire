@@ -1355,4 +1355,40 @@ public class HttpSession extends LocalClientSession {
             HttpBindManager.getInstance().getSessionManager().execute(this);
         }
     }
+
+    @Override
+    public String toString()
+    {
+        String peerAddress = "(not available)";
+        if ( getConnection() != null ) {
+            try {
+                peerAddress = getConnection().getHostAddress();
+            } catch ( UnknownHostException e ) {
+                Log.debug( "Unable to determine address for peer of local client session.", e );
+            }
+        }
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", serverName='" + getServerName() + '\'' +
+            ", isInitialized=" + isInitialized() +
+            ", hasAuthToken=" + (getAuthToken() != null) +
+            ", peer address='" + peerAddress +'\'' +
+            ", presence='" + getPresence().toString() + '\'' +
+            ", hold='" + getHold() + '\'' +
+            ", wait='" + getWait() + '\'' +
+            ", maxRequests='" + getMaxRequests() + '\'' +
+            ", maxPause='" + getMaxPause() + '\'' +
+            ", lastActivity='" + getLastActivity() + '\'' +
+            ", lastAcknowledged='" + getLastAcknowledged() + '\'' +
+            ", inactivityTimeout='" + getInactivityTimeout() + '\'' +
+            ", openConnectionCount='" + getOpenConnectionCount() + '\'' +
+            '}';
+    }
 }

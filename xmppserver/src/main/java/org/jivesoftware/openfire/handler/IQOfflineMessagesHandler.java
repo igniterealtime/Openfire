@@ -174,7 +174,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
         final FormField field2 = dataForm.addField();
         field2.setVariable("number_of_messages");
-        field2.addValue(String.valueOf(messageStore.getMessages(senderJID.getNode(), false).size()));
+        field2.addValue(String.valueOf(messageStore.getCount(senderJID.getNode())));
         
         final Set<DataForm> dataForms = new HashSet<>();
         dataForms.add(dataForm);

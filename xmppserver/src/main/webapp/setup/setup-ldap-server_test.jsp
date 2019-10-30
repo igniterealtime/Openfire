@@ -11,6 +11,7 @@
     String errorDetail = "";
     Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
     if (settings != null) {
+        settings.computeIfAbsent( "ldap.adminPassword", (key) -> LdapManager.getInstance().getAdminPassword() );
         LdapManager manager = new LdapManager(settings);
         LdapContext context = null;
         try {
@@ -54,6 +55,9 @@
             }
         }
     }
+
+    pageContext.setAttribute( "success", success );
+    pageContext.setAttribute( "errorDetail", errorDetail );
 %>
     <!-- BEGIN connection settings test panel -->
     <div class="jive-testPanel">
@@ -65,15 +69,17 @@
             
             
             <h2><fmt:message key="setup.ldap.server.test.title" />: <span><fmt:message key="setup.ldap.server.test.title-desc" /></span></h2>
-            <% if (success) { %>
-            <h4 class="jive-testSuccess"><fmt:message key="setup.ldap.server.test.status-success" /></h4>
+            <c:choose>
+                <c:when test="${success}">
+                    <h4 class="jive-testSuccess"><fmt:message key="setup.ldap.server.test.status-success" /></h4>
+                    <p><fmt:message key="setup.ldap.server.test.status-success.detail" /></p>
+                </c:when>
+                <c:otherwise>
+                    <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
+                    <p><c:out value="${errorDetail}"/></p>
+                </c:otherwise>
+            </c:choose>
 
-            <p><fmt:message key="setup.ldap.server.test.status-success.detail" /></p>
-            <% } else { %>
-            <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
-            <p><%= errorDetail %></p>
-            <% } %>
-            
         </div>
     </div>
     <!-- END connection settings test panel -->

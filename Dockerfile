@@ -1,13 +1,22 @@
-FROM openjdk:8-jdk
-COPY . /usr/src
-RUN apt-get update -qq \
-    && apt-get install -qqy maven \
-    && cd /usr/src \
-    && mvn package
+FROM maven:3.6.2-jdk-8 as packager
+WORKDIR /usr/src
+
+COPY ./pom.xml .
+COPY ./i18n/pom.xml ./i18n/
+COPY ./xmppserver/pom.xml ./xmppserver/
+COPY ./starter/pom.xml ./starter/
+COPY ./starter/libs/* ./starter/libs/
+COPY ./plugins/pom.xml ./plugins/
+COPY ./plugins/openfire-plugin-assembly-descriptor/pom.xml ./plugins/openfire-plugin-assembly-descriptor/
+COPY ./distribution/pom.xml ./distribution/
+RUN mvn dependency:go-offline
+
+COPY . .
+RUN mvn package
 
 FROM openjdk:8-jre
-COPY --from=0 /usr/src/distribution/target/distribution-base /usr/local/openfire
-COPY --from=0 /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
+COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/openfire
+COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 WORKDIR /usr/local/openfire
 
 ENV OPENFIRE_USER=openfire \

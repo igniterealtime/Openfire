@@ -18,10 +18,7 @@ package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -87,7 +84,9 @@ public abstract class LocalSession implements Session {
     private long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
+
     private AtomicLong clientPacketCount = new AtomicLong( 0 );
+
     private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
@@ -459,7 +458,7 @@ public abstract class LocalSession implements Session {
     @Override
     public void close() {
         Optional.ofNullable(conn)
-         .ifPresent(connection ->  connection.close());
+         .ifPresent(Connection::close);
     }
 
     @Override

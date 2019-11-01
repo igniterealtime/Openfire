@@ -9,6 +9,7 @@
 <%@ page import="java.util.StringTokenizer" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="javax.naming.ldap.LdapName" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -19,8 +20,8 @@
     // when the end-user is performing tests / changing settings
     String host;
     int port;
-    String baseDN;
-    String adminDN;
+    LdapName baseDN;
+    LdapName adminDN;
     String adminPassword;
     boolean connectionPoolEnabled;
     boolean sslEnabled;
@@ -62,11 +63,24 @@
         if (port <= 0) {
             errors.put("port", LocaleUtils.getLocalizedString("setup.ldap.server.port_error"));
         }
-        baseDN = ParamUtils.getParameter(request, "basedn");
-        if (baseDN == null) {
+        try {
+            baseDN = new LdapName( ParamUtils.getParameter(request, "basedn") );
+        } catch ( Exception e ) {
             errors.put("baseDN", LocaleUtils.getLocalizedString("setup.ldap.server.basedn_error"));
+            baseDN = null;
         }
-        adminDN = ParamUtils.getParameter(request, "admindn");
+
+        final String adminDNvalue = ParamUtils.getParameter(request, "admindn");
+        if ( adminDNvalue != null && !adminDNvalue.isEmpty() ) {
+            try {
+                adminDN = new LdapName( adminDNvalue );
+            } catch ( Exception e ) {
+                errors.put("adminDN", LocaleUtils.getLocalizedString("setup.ldap.server.admindn_error"));
+                adminDN = null;
+            }
+        } else {
+            adminDN = null;
+        }
         adminPassword = ParamUtils.getParameter(request, "adminpwd");
         connectionPoolEnabled = ParamUtils.getBooleanParameter(request, "connectionpool", manager.isConnectionPoolEnabled());
         sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", manager.isSslEnabled());
@@ -82,9 +96,9 @@
             settings.put("ldap.serverType", serverType);
             settings.put("ldap.host", host);
             settings.put("ldap.port", Integer.toString(port));
-            settings.put("ldap.baseDN", baseDN);
+            settings.put("ldap.baseDN", baseDN.toString());
             if (adminDN != null) {
-                settings.put("ldap.adminDN", adminDN);
+                settings.put("ldap.adminDN", adminDN.toString());
             }
             if (adminPassword != null) {
                 settings.put("ldap.adminPassword", adminPassword);
@@ -127,8 +141,8 @@
                 if (xmppSettings != null) {
                     xmppSettings.put("ldap.host", host);
                     xmppSettings.put("ldap.port", Integer.toString(port));
-                    xmppSettings.put("ldap.baseDN", baseDN);
-                    xmppSettings.put("ldap.adminDN", adminDN);
+                    xmppSettings.put("ldap.baseDN", baseDN.toString());
+                    xmppSettings.put("ldap.adminDN", adminDN.toString());
                     if ( adminPassword != null ) { // Only store a password if it was changed.
                         xmppSettings.put( "ldap.adminPassword", adminPassword );
                     }

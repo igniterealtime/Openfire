@@ -25,9 +25,7 @@ import org.xmpp.packet.JID;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.SortControl;
+import javax.naming.ldap.*;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -154,7 +152,7 @@ public class LdapUserTester {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            LdapName userDN = manager.findUserDN(username);
             // Build list of attributes to load from LDAP
             Map<String, PropertyMapping> ldapMappings = getLdapAttributes();
             Set<String> fields = new HashSet<>();

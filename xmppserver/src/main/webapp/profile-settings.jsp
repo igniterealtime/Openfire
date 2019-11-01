@@ -3,6 +3,7 @@
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapAuthProvider" %>
+<%@ page import="javax.naming.ldap.LdapName" %>
 <%--
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
@@ -47,8 +48,8 @@
             hosts = hosts.substring( 0, hosts.length() - 2 );
         }
         int port = LdapManager.getInstance().getPort();
-        String baseDN = LdapManager.getInstance().getBaseDN();
-        String adminDN = LdapManager.getInstance().getAdminDN();
+        LdapName baseDN = LdapManager.getInstance().getBaseDN();
+        LdapName adminDN = LdapManager.getInstance().getAdminDN();
 
         request.setAttribute( "hosts", hosts );
         request.setAttribute( "port", port );

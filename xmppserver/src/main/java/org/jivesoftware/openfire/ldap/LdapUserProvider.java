@@ -35,6 +35,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import javax.naming.ldap.LdapName;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -94,7 +95,7 @@ public class LdapUserProvider implements UserProvider {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            LdapName userDN = manager.findUserDN(username);
             // Load record.
             String[] attributes = new String[]{
                 manager.getUsernameField(), manager.getNameField(),

@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import javax.naming.ldap.LdapName;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -186,7 +187,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            LdapName userDN = manager.findUserDN(username);
 
             ctx = manager.getContext(manager.getUsersBaseDN(username));
             Attributes attrs = ctx.getAttributes(userDN, template.getAttributes());

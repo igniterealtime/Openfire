@@ -16,37 +16,6 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.io.Serializable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.PagedResultsControl;
-import javax.naming.ldap.PagedResultsResponseControl;
-import javax.naming.ldap.SortControl;
-import javax.naming.ldap.StartTlsRequest;
-import javax.naming.ldap.StartTlsResponse;
-import javax.net.ssl.SSLSession;
-
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -57,6 +26,17 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.naming.*;
+import javax.naming.directory.*;
+import javax.naming.ldap.*;
+import javax.net.ssl.SSLSession;
+import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -202,9 +182,9 @@ public class LdapManager {
     private String usernameSuffix;
     private String nameField;
     private String emailField;
-    private String baseDN;
-    private String alternateBaseDN = null;
-    private String adminDN = null;
+    private LdapName baseDN;
+    private LdapName alternateBaseDN = null;
+    private LdapName adminDN = null;
     private String adminPassword;
     private boolean encloseDNs;
     private boolean ldapDebugEnabled = false;
@@ -342,18 +322,9 @@ public class LdapManager {
             encloseDNs = Boolean.valueOf(encloseStr);
         }
 
-        baseDN = properties.get("ldap.baseDN");
-        if (baseDN == null) {
-            baseDN = "";
-        }
-        if (encloseDNs) {
-           baseDN = getEnclosedDN(baseDN);
-        }
+        baseDN = parseAsLdapNameOrLog( properties.get("ldap.baseDN") );
 
-        alternateBaseDN = properties.get("ldap.alternateBaseDN");
-        if (encloseDNs && alternateBaseDN != null) {
-           alternateBaseDN = getEnclosedDN(alternateBaseDN);
-        }
+        alternateBaseDN = parseAsLdapNameOrLog( properties.get("ldap.alternateBaseDN") );
 
         nameField = properties.get("ldap.nameField");
         if (nameField == null) {
@@ -393,13 +364,7 @@ public class LdapManager {
         }
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
 
-        adminDN = properties.get("ldap.adminDN");
-        if (adminDN != null && adminDN.trim().equals("")) {
-            adminDN = null;
-        }
-        if (encloseDNs && adminDN != null) {
-           adminDN = getEnclosedDN(adminDN);
-        }
+        adminDN = parseAsLdapNameOrLog( properties.get("ldap.adminDN") );
 
         adminPassword = properties.get("ldap.adminPassword");
         ldapDebugEnabled = false;
@@ -492,6 +457,39 @@ public class LdapManager {
     }
 
     /**
+     * Attempts to parse a string value as an LdapName.
+     *
+     * This method returns null (and logs an error) if the value was non-null
+     * and non-empty and the parsing fails.
+     *
+     * This method returns null if the provided value was null or empty.
+     *
+     * @param value The value to be parsed (can be null or empty).
+     * @return The parsed value, possibly null.
+     */
+    public LdapName parseAsLdapNameOrLog( String value )
+    {
+        LdapName result = null;
+        if ( value != null && !value.isEmpty() )
+        {
+            try
+            {
+                result = new LdapName( value );
+                if ( encloseDNs )
+                {
+                    result = getEnclosedDN( result );
+                }
+                return result;
+            }
+            catch ( InvalidNameException ex )
+            {
+                Log.error( "Unable to parse LDAPvalue '{}'.", value, ex );
+            }
+        }
+        return result;
+    }
+
+    /**
      * Returns a DirContext for the LDAP server that can be used to perform
      * lookups and searches using the default base DN. The alternate DN will be used
      * in case there is a {@link NamingException} using base DN. The context uses the
@@ -522,7 +520,7 @@ public class LdapManager {
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
      */
-    public LdapContext getContext(String baseDN) throws NamingException {
+    public LdapContext getContext(LdapName baseDN) throws NamingException {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
             Log.debug("LdapManager: Creating a DirContext in LdapManager.getContext()...");
@@ -548,7 +546,7 @@ public class LdapManager {
              * the secure connection has been established. */
             if (!(startTlsEnabled && !sslEnabled)) {
                 env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                env.put(Context.SECURITY_PRINCIPAL, adminDN);
+                env.put(Context.SECURITY_PRINCIPAL, adminDN.toString());
                 if (adminPassword != null) {
                     env.put(Context.SECURITY_CREDENTIALS, adminPassword);
                 }
@@ -664,7 +662,7 @@ public class LdapManager {
      * @param password the user's password.
      * @return true if the user successfully authenticates.
      */
-    public boolean checkAuthentication(String userDN, String password) {
+    public boolean checkAuthentication(LdapName userDN, String password) {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
             Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userDN is: " + userDN + "...");
@@ -689,7 +687,7 @@ public class LdapManager {
              * the secure connection has been established. */
             if (!(startTlsEnabled && !sslEnabled)) {
                 env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
+                env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userDN ).toString() );
                 env.put(Context.SECURITY_CREDENTIALS, password);
             } else {
                 if (followReferrals) {
@@ -749,8 +747,7 @@ public class LdapManager {
                     }
 
                     ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL,
-                            userDN + "," + baseDN);
+                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userDN ));
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
@@ -761,7 +758,7 @@ public class LdapManager {
                 // make at least one lookup to check authorization
                 lookupExistence(
                         ctx,
-                        userDN + "," + baseDN,
+                        createNewAbsolute( baseDN, userDN ),
                         new String[] {usernameField});
             }
 
@@ -795,7 +792,7 @@ public class LdapManager {
                      * the secure connection has been established. */
                     if (!(startTlsEnabled && !sslEnabled)) {
                         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                        env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
+                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userDN ));
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
 
@@ -841,8 +838,7 @@ public class LdapManager {
                             }
 
                             ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL,
-                                    userDN + "," + alternateBaseDN);
+                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userDN ));
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {
@@ -853,7 +849,7 @@ public class LdapManager {
                         // make at least one lookup to check user authorization
                         lookupExistence(
                                 ctx,
-                                userDN + "," + alternateBaseDN,
+                                createNewAbsolute(alternateBaseDN, userDN),
                                 new String[] {usernameField});
                     }
                 }
@@ -888,6 +884,11 @@ public class LdapManager {
         return findUsersFromGroupsEnabled;
     }
 
+    public static LdapName createNewAbsolute( LdapName base, LdapName relative )
+    {
+        return (LdapName)((LdapName) base.clone()).addAll(relative.getRdns());
+    }
+
     /**
      * Looks up an LDAP object by its DN and returns {@code true} if
      * the search was successful.
@@ -897,7 +898,7 @@ public class LdapManager {
      * @return true if the lookup was successful.
      * @throws NamingException if login credentials were wrong.
      */
-    private Boolean lookupExistence(InitialDirContext ctx, String dn, String[] returnattrs) throws NamingException {
+    private Boolean lookupExistence(InitialDirContext ctx, LdapName dn, String[] returnattrs) throws NamingException {
         boolean debug = Log.isDebugEnabled();
 
         if (debug) {
@@ -961,7 +962,7 @@ public class LdapManager {
      * @return the dn associated with {@code username}.
      * @throws Exception if the search for the dn fails.
      */
-    public String findUserDN( String username ) throws Exception
+    public LdapName findUserDN( String username ) throws Exception
     {
         if ( userDNCache != null )
         {
@@ -976,7 +977,7 @@ public class LdapManager {
         // No cache entry. Query for the value, and add that to the cache.
         try
         {
-            final String userDN = findUserDN( username, baseDN );
+            final LdapName userDN = findUserDN( username, baseDN );
             if ( userDNCache != null )
             {
                 userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
@@ -987,7 +988,7 @@ public class LdapManager {
         {
             if ( alternateBaseDN != null )
             {
-                final String userDN = findUserDN( username, alternateBaseDN );
+                final LdapName userDN = findUserDN( username, alternateBaseDN );
                 if ( userDNCache != null )
                 {
                     userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
@@ -1026,7 +1027,7 @@ public class LdapManager {
      * @throws Exception if the search for the dn fails.
      * @see #findUserDN(String) to search using the default baseDN and alternateBaseDN.
      */
-    public String findUserDN(String username, String baseDN) throws Exception {
+    public LdapName findUserDN(String username, LdapName baseDN) throws Exception {
         boolean debug = Log.isDebugEnabled();
         //Support for usernameSuffix
         username = username + usernameSuffix;
@@ -1067,7 +1068,29 @@ public class LdapManager {
                 }
                 throw new UserNotFoundException("Username " + username + " not found");
             }
-            String userDN = answer.next().getName();
+
+            String name = answer.next().getName();
+            // All other methods assume that UserDN is not a full LDAP string.
+            // However if a referral was followed this is not the case.  The
+            // following code converts a referral back to a "partial" LDAP string.
+            if (name.startsWith("ldap://")) {
+                // TODO there must be a better way to parse this than using string manipulations.
+                name = name.replace("," + baseDN, "");
+                name = name.substring(name.lastIndexOf("/") + 1);
+                name = java.net.URLDecoder.decode(name, "UTF-8");
+            }
+
+            LdapName userDN = new LdapName( name );
+//            if (encloseUserDN) {
+//                userDN = getEnclosedDN(userDN);
+//            }
+//            LdapName userDN;
+//            if ( name.startsWith( "cn=" ) ) {
+//                userDN = new Rdn( "cn=" + Rdn.escapeValue( name.substring( 3 ) ) );
+//            } else {
+//                userDN = new Rdn( name );
+//            }
+
             // Make sure there are no more search results. If there are, then
             // the username isn't unique on the LDAP server (a perfectly possible
             // scenario since only fully qualified dn's need to be unqiue).
@@ -1083,17 +1106,7 @@ public class LdapManager {
             }
             // Close the enumeration.
             answer.close();
-            // All other methods assume that userDN is not a full LDAP string.
-            // However if a referal was followed this is not the case.  The
-            // following code converts a referral back to a "partial" LDAP string.
-            if (userDN.startsWith("ldap://")) {
-                userDN = userDN.replace("," + baseDN, "");
-                userDN = userDN.substring(userDN.lastIndexOf("/") + 1);
-                userDN = java.net.URLDecoder.decode(userDN, "UTF-8");
-            }
-            if (encloseUserDN) {
-                userDN = getEnclosedDN(userDN);
-            }
+
             return userDN;
         } catch (final UserNotFoundException e) {
             Log.trace("LdapManager: UserNotFoundException thrown", e);
@@ -1134,7 +1147,7 @@ public class LdapManager {
      * @return the dn associated with {@code groupname}.
      * @throws Exception if the search for the dn fails.
      */
-    public String findGroupDN(String groupname) throws Exception {
+    public LdapName findGroupDN(String groupname) throws Exception {
         try {
             return findGroupDN(groupname, baseDN);
         }
@@ -1174,7 +1187,7 @@ public class LdapManager {
      * @throws Exception if the search for the dn fails.
      * @see #findGroupDN(String) to search using the default baseDN and alternateBaseDN.
      */
-    public String findGroupDN(String groupname, String baseDN) throws Exception {
+    public LdapName findGroupDN(String groupname, LdapName baseDN) throws Exception {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
             Log.debug("LdapManager: Trying to find a groups's DN based on it's groupname. " + groupNameField + ": " + groupname
@@ -1211,7 +1224,26 @@ public class LdapManager {
                 }
                 throw new GroupNotFoundException("Groupname " + groupname + " not found");
             }
-            String groupDN = answer.next().getName();
+
+            final SearchResult result = answer.next();
+            String name = result.getName();
+            // All other methods assume that GroupDN is not a full LDAP string.
+            // However if a referral was followed this is not the case.  The
+            // following code converts a referral back to a "partial" LDAP string.
+            if (name.startsWith("ldap://")) {
+                // TODO there must be a better way to parse this than using string manipulations.
+                name = name.replace("," + baseDN, "");
+                name = name.substring(name.lastIndexOf("/") + 1);
+                name = java.net.URLDecoder.decode(name, "UTF-8");
+            }
+
+            LdapName groupDN = new LdapName( name );
+//            if ( name.startsWith( "cn=" ) ) {
+//                groupDN = new Rdn( "cn=" + Rdn.escapeValue( name.substring( 3 ) ) );
+//            } else {
+//                groupDN = new Rdn( name );
+//            }
+
             // Make sure there are no more search results. If there are, then
             // the groupname isn't unique on the LDAP server (a perfectly possible
             // scenario since only fully qualified dn's need to be unqiue).
@@ -1227,17 +1259,10 @@ public class LdapManager {
             }
             // Close the enumeration.
             answer.close();
-            // All other methods assume that groupDN is not a full LDAP string.
-            // However if a referal was followed this is not the case.  The
-            // following code converts a referral back to a "partial" LDAP string.
-            if (groupDN.startsWith("ldap://")) {
-                groupDN = groupDN.replace("," + baseDN, "");
-                groupDN = groupDN.substring(groupDN.lastIndexOf("/") + 1);
-                groupDN = java.net.URLDecoder.decode(groupDN, "UTF-8");
-            }
-            if (encloseGroupDN) {
-                groupDN = getEnclosedDN(groupDN);
-            }
+//
+//            if (encloseGroupDN) {
+//                groupDN = getEnclosedDN(groupDN);
+//            }
             return groupDN;
         } catch (final GroupNotFoundException e) {
             Log.trace("LdapManager: GroupNotFoundException thrown", e);
@@ -1261,16 +1286,9 @@ public class LdapManager {
      * @param baseDN the base dn to use in the URL.
      * @return the properly encoded URL for use in as PROVIDER_URL.
      */
-    private String getProviderURL(String baseDN) {
+    private String getProviderURL(LdapName baseDN) {
         StringBuffer ldapURL = new StringBuffer();
-        try {
-            baseDN = URLEncoder.encode(baseDN, "UTF-8");
-            // The java.net.URLEncoder class encodes spaces as +, but they need to be %20
-            baseDN = baseDN.replaceAll("\\+", "%20");
-        }
-        catch (java.io.UnsupportedEncodingException e) {
-            // UTF-8 is not supported, fall back to using raw baseDN
-        }
+
         for (String host : hosts) {
             // Create a correctly-encoded ldap URL for the PROVIDER_URL
             ldapURL.append("ldap://");
@@ -1514,7 +1532,7 @@ public class LdapManager {
      *
      * @return the starting DN used for performing searches.
      */
-    public String getBaseDN() {
+    public LdapName getBaseDN() {
         if (encloseDNs) {
             return getEnclosedDN(baseDN);
         } else {
@@ -1528,9 +1546,9 @@ public class LdapManager {
      *
      * @param baseDN the starting DN used for performing searches.
      */
-    public void setBaseDN(String baseDN) {
+    public void setBaseDN(LdapName baseDN) {
         this.baseDN = baseDN;
-        properties.put("ldap.baseDN", baseDN);
+        properties.put("ldap.baseDN", baseDN.toString());
     }
 
     /**
@@ -1541,7 +1559,7 @@ public class LdapManager {
      * @return the alternate starting DN used for performing searches. If no alternate
      *      DN is set, this method will return {@code null}.
      */
-    public String getAlternateBaseDN() {
+    public LdapName getAlternateBaseDN() {
         return getEnclosedDN(alternateBaseDN);
     }
 
@@ -1552,13 +1570,13 @@ public class LdapManager {
      *
      * @param alternateBaseDN the alternate starting DN used for performing searches.
      */
-    public void setAlternateBaseDN(String alternateBaseDN) {
+    public void setAlternateBaseDN(LdapName alternateBaseDN) {
         this.alternateBaseDN = alternateBaseDN;
         if (alternateBaseDN == null) {
             properties.remove("ldap.alternateBaseDN");
         }
         else {
-            properties.put("ldap.alternateBaseDN", alternateBaseDN);
+            properties.put("ldap.alternateBaseDN", alternateBaseDN.toString());
         }
     }
 
@@ -1569,7 +1587,7 @@ public class LdapManager {
      * @return the BaseDN for the given username. If no baseDN is found,
      *         this method will return {@code null}.
      */
-    public String getUsersBaseDN( String username )
+    public LdapName getUsersBaseDN( String username )
     {
         if ( userDNCache != null )
         {
@@ -1584,7 +1602,7 @@ public class LdapManager {
         // No cache entry. Query for the value, and add that to the cache.
         try
         {
-            final String userDN = findUserDN( username, baseDN );
+            final LdapName userDN = findUserDN( username, baseDN );
             if ( userDNCache != null )
             {
                 userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
@@ -1597,7 +1615,7 @@ public class LdapManager {
             {
                 if ( alternateBaseDN != null )
                 {
-                    final String userDN = findUserDN( username, alternateBaseDN );
+                    final LdapName userDN = findUserDN( username, alternateBaseDN );
                     if ( userDNCache != null )
                     {
                         userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
@@ -1621,7 +1639,7 @@ public class LdapManager {
      * @return the BaseDN for the given groupname. If no baseDN is found,
      *         this method will return {@code null}.
      */
-    public String getGroupsBaseDN(String groupname) {
+    public LdapName getGroupsBaseDN(String groupname) {
         try {
             findGroupDN(groupname, baseDN);
             return baseDN;
@@ -1646,7 +1664,7 @@ public class LdapManager {
      *
      * @return the starting DN used for performing searches.
      */
-    public String getAdminDN() {
+    public LdapName getAdminDN() {
         if (encloseDNs) {
             return getEnclosedDN(adminDN);
         } else {
@@ -1660,9 +1678,9 @@ public class LdapManager {
      *
      * @param adminDN the starting DN used for performing admin searches.
      */
-    public void setAdminDN(String adminDN) {
+    public void setAdminDN(LdapName adminDN) {
         this.adminDN = adminDN;
-        properties.put("ldap.adminDN", adminDN);
+        properties.put("ldap.adminDN", adminDN.toString());
     }
 
     /**
@@ -2394,21 +2412,21 @@ public class LdapManager {
 
     private static class DNCacheEntry implements Serializable
     {
-        private final String userDN;
-        private final String baseDN;
+        private final LdapName userDN; // relative to baseDN!
+        private final LdapName baseDN;
 
-        public DNCacheEntry( String userDN, String baseDN )
+        public DNCacheEntry( LdapName userDN, LdapName baseDN )
         {
             this.userDN = userDN;
             this.baseDN = baseDN;
         }
 
-        public String getUserDN()
+        public LdapName getUserDN()
         {
             return userDN;
         }
 
-        public String getBaseDN()
+        public LdapName getBaseDN()
         {
             return baseDN;
         }

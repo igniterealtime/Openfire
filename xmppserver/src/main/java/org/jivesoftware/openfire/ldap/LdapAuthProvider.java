@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.ldap;
 
 import javax.naming.CommunicationException;
+import javax.naming.ldap.LdapName;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
@@ -96,7 +97,7 @@ public class LdapAuthProvider implements AuthProvider {
             }
         }
 
-        String userDN;
+        LdapName userDN;
         try {
             // The username by itself won't help us much with LDAP since we
             // need a fully qualified dn. We could make the assumption that

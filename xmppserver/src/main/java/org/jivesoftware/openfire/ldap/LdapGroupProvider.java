@@ -76,7 +76,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     public Group getGroup(String groupName) throws GroupNotFoundException {
         LdapContext ctx = null;
         try {
-            String groupDN = manager.findGroupDN(groupName);
+            LdapName groupDN = manager.findGroupDN(groupName);
             // Load record.
             ctx = manager.getContext(manager.getGroupsBaseDN(groupName));
             Attributes attrs = ctx.getAttributes(groupDN, standardAttributes);

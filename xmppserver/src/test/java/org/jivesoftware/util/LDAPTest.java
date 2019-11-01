@@ -25,23 +25,23 @@ public class LDAPTest {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Test
-    public void testEncloseDN() {
-        String before = "ou=Jive Software\\, Inc,dc=support,dc=jive,dc=com";
-        String after = "ou=\"Jive Software, Inc\",dc=\"support\",dc=\"jive\",dc=\"com\"";
-        String converted = LdapManager.getEnclosedDN(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
-
-        before = "ou=Jive Software\\, Inc,dc=t,dc=jive,dc=com";
-        after = "ou=\"Jive Software, Inc\",dc=\"t\",dc=\"jive\",dc=\"com\"";
-        converted = LdapManager.getEnclosedDN(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
-
-        before = "ou=jive,dc=test,dc=jive,dc=com";
-        after = "ou=\"jive\",dc=\"test\",dc=\"jive\",dc=\"com\"";
-        converted = LdapManager.getEnclosedDN(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
-    }
+//    @Test
+//    public void testEncloseDN() {
+//        String before = "ou=Jive Software\\, Inc,dc=support,dc=jive,dc=com";
+//        String after = "ou=\"Jive Software, Inc\",dc=\"support\",dc=\"jive\",dc=\"com\"";
+//        String converted = LdapManager.getEnclosedDN(before);
+//        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+//
+//        before = "ou=Jive Software\\, Inc,dc=t,dc=jive,dc=com";
+//        after = "ou=\"Jive Software, Inc\",dc=\"t\",dc=\"jive\",dc=\"com\"";
+//        converted = LdapManager.getEnclosedDN(before);
+//        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+//
+//        before = "ou=jive,dc=test,dc=jive,dc=com";
+//        after = "ou=\"jive\",dc=\"test\",dc=\"jive\",dc=\"com\"";
+//        converted = LdapManager.getEnclosedDN(before);
+//        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+//    }
 
     @Test
     public void testRdnEscapeValue() {

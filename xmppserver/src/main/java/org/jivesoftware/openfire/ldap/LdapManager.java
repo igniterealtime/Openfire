@@ -2330,7 +2330,7 @@ public class LdapManager {
     }
       
     /**
-     * Escapes any special chars (RFC 4515) from a string representing
+     * Escapes any special chars (RFC 4514/4515) from a string representing
      * a search filter assertion value, with the exception of the '*' wildcard sign
      *
      * @param value The input string.
@@ -2348,23 +2348,35 @@ public class LdapManager {
 
                 char c = value.charAt(i);
 
+                //'"'     , '+',    ',',      ';',    '<',    '>',  or '\'
+                //(U+0022, U+002B, U+002C, U+003B, U+003C, U+003E, or U+005C,
+
                 switch(c) {
-                    case '!':		result.append("\\21");	break;
-                    case '&':		result.append("\\26");	break;
-                    case '(':		result.append("\\28");	break;
-                    case ')':		result.append("\\29");	break;
-                    case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;
-                    case ':':		result.append("\\3a");	break;
-                    case '\\':		result.append("\\5c");	break;
-                    case '|':		result.append("\\7c");	break;
-                    case '~':		result.append("\\7e");	break;
-                    case '\u0000':	result.append("\\00");	break;
+                    case ' ':		result.append( i == 0 || i == (value.length()-1)? "\\20" : c );	break; // RFC 4514 (only at the beginning or end of the string)
+                    case '!':		result.append("\\21");	break; // RFC 4515
+                    case '"':		result.append("\\22");	break; // RFC 4514
+                    case '#':		result.append( i == 0 ? "\\23" : c );	break; // RFC 4514 (only at the beginning of the string)
+                    case '&':		result.append("\\26");	break; // RFC 4515
+                    case '(':		result.append("\\28");	break; // RFC 4515
+                    case ')':		result.append("\\29");	break; // RFC 4515
+                    case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;  // RFC 4515
+                    case '+':		result.append("\\2b");	break; // RFC 4514
+                    case ',':		result.append("\\2c");	break; // RFC 4514
+                    case '/':		result.append("\\2f");	break; // forward-slash  has special meaning to the JDNI. Escape it!
+                    case ':':		result.append("\\3a");	break; // RFC 4515
+                    case ';':		result.append("\\3b");	break; // RFC 4514
+                    case '<':		result.append("\\3c");	break; // RFC 4514
+                    case '>':		result.append("\\3e");	break; // RFC 4514
+                    case '\\':		result.append("\\5c");	break; // RFC 4515
+                    case '|':		result.append("\\7c");	break; // RFC 4515
+                    case '~':		result.append("\\7e");	break; // RFC 4515
+                    case '\u0000':	result.append("\\00");	break; // RFC 4515
                 default:
                     if (c <= 0x7f) {
                         // regular 1-byte UTF-8 char
-                        result.append(String.valueOf(c));
+                        result.append(c);
                     }
-                    else if (c >= 0x080) {
+                    else {
                         // higher-order 2, 3 and 4-byte UTF-8 chars
                         if ( JiveGlobals.getBooleanProperty( "ldap.encodeMultibyteCharacters", false ) )
                         {
@@ -2376,7 +2388,7 @@ public class LdapManager {
                         }
                         else
                         {
-                            result.append(String.valueOf(c));
+                            result.append(c);
                         }
                     }
                 }
@@ -2391,20 +2403,57 @@ public class LdapManager {
      * @param dnValue the unenclosed value of a DN (e.g. ou=Jive Software\, Inc,dc=support,dc=jive,dc=com)
      * @return String the enclosed value of the DN (e.g. ou="Jive Software\, Inc",dc="support",dc="jive",dc="com")
      */
-    public static String getEnclosedDN(String dnValue) {
+    public static LdapName getEnclosedDN(LdapName dnValue) {
+//        if (dnValue == null || dnValue.equals("")) {
+//            return dnValue;
+//        }
+//
+//        if (dnPattern == null) {
+//            dnPattern = Pattern.compile("([^\\\\]=)([^\"]*?[^\\\\])(,|$)");
+//        }
+//
+//        Matcher matcher = dnPattern.matcher(dnValue);
+//        dnValue = matcher.replaceAll("$1\"$2\"$3");
+//        dnValue = dnValue.replace("\\,", ",");
+//
+//        return dnValue;
+        return dnValue; // TODO phase out explicit encloding.
+    }
+
+    /**
+     * Encloses DN values with "
+     *
+     * @param dnValue the unenclosed value of a DN (e.g. ou=Jive Software\, Inc,dc=support,dc=jive,dc=com)
+     * @return String the enclosed value of the DN (e.g. ou="Jive Software\, Inc",dc="support",dc="jive",dc="com")
+     */
+    public static LdapName getEnclosedDN(String dnValue) throws InvalidNameException {
         if (dnValue == null || dnValue.equals("")) {
-            return dnValue;
+            return null;
         }
 
         if (dnPattern == null) {
-            dnPattern = Pattern.compile("([^\\\\]=)([^\"]*?[^\\\\])(,|$)");
+            dnPattern = Pattern.compile("([^\\\\=]+)=([^\"]*?[^\\\\])(,|$)");
         }
 
+        final List<Rdn> rdns = new ArrayList<>();
         Matcher matcher = dnPattern.matcher(dnValue);
-        dnValue = matcher.replaceAll("$1\"$2\"$3");
-        dnValue = dnValue.replace("\\,", ",");
+        while (matcher.find()) {
+            final String type = matcher.group(1);
+            System.out.println( type );
+            final String value = matcher.group(2);
+            System.out.println( value );
+            //sb.append('"');
+            rdns.add( new Rdn( type, Rdn.escapeValue( value ) ) );
+            //sb.append('"');
+            System.out.println("");
+        }
 
-        return dnValue;
+        Collections.reverse( rdns );
+        return new LdapName(rdns);
+
+        //ou=Jive Software\, Inc,dc=support,dc=jive,dc=com
+        //ou="Jive Software, Inc",dc="support",dc="jive",dc="com"
+        //ou="Jive Software, Inc",dc="support",dc="jive",dc="com"
     }
 
     // Set the pattern to use to wrap DN values with "

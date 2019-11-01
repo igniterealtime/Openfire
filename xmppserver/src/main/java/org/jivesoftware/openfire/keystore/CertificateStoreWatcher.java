@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class CertificateStoreWatcher
 {
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "cert.storewatcher.enabled" )
+        .setDefaultValue( true )
+        .setDynamic( false )
+        .build();
+
     private static final Logger Log = LoggerFactory.getLogger( CertificateStoreWatcher.class );
 
     private final Map<CertificateStore, Path> watchedStores = new HashMap<>();
@@ -30,12 +37,18 @@ public class CertificateStoreWatcher
 
     private WatchService storeWatcher;
 
-    private ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     public CertificateStoreWatcher()
     {
         try
         {
+            if ( !ENABLED.getValue() ) {
+                Log.info( "Certificate update detection disabled by configuration." );
+                storeWatcher = null;
+                return;
+            }
+
             storeWatcher = FileSystems.getDefault().newWatchService();
 
             executorService.submit( new Runnable()

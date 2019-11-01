@@ -29,7 +29,6 @@
     boolean debugEnabled;
     boolean referralsEnabled;
     boolean aliasReferralsEnabled;
-    boolean encloseDNs;
 
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
     Map<String, String> errors = new HashMap<>();
@@ -88,7 +87,6 @@
         debugEnabled = ParamUtils.getBooleanParameter(request, "debug", manager.isDebugEnabled());
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", manager.isFollowReferralsEnabled());
         aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", manager.isFollowAliasReferralsEnabled());
-        encloseDNs = ParamUtils.getBooleanParameter(request, "enclosedns", manager.isEnclosingDNs());
 
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
@@ -111,7 +109,6 @@
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
             settings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
             settings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
-            settings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
 
             session.setAttribute("ldapSettings", settings);
 
@@ -135,7 +132,6 @@
                 manager.setDebugEnabled(debugEnabled);
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
-                manager.setIsEnclosingDNs(encloseDNs);
 
                 // Save the settings for later, if we're in setup
                 if (xmppSettings != null) {
@@ -152,7 +148,6 @@
                     xmppSettings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
                     xmppSettings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
                     xmppSettings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
-                    xmppSettings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
 
                     session.setAttribute("xmppSettings", xmppSettings);
 
@@ -190,7 +185,6 @@
         debugEnabled = manager.isDebugEnabled();
         referralsEnabled = manager.isFollowReferralsEnabled();
         aliasReferralsEnabled = manager.isFollowAliasReferralsEnabled();
-        encloseDNs = manager.isEnclosingDNs();
     }
 
     // These hold the values that are either under test, or are stored in the manager when not testing.
@@ -211,7 +205,6 @@
     pageContext.setAttribute("debugEnabled", debugEnabled );
     pageContext.setAttribute("followReferralsEnabled", referralsEnabled );
     pageContext.setAttribute("followAliasReferralsEnabled", aliasReferralsEnabled );
-    pageContext.setAttribute("enclosingDNs", encloseDNs );
 
     pageContext.setAttribute("test", test);
     pageContext.setAttribute("errors", errors);
@@ -428,19 +421,6 @@
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
                         <input type="radio" name="aliasreferrals" value="false" ${followAliasReferralsEnabled ? "" : "checked"}>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="jive-advancedLabel" nowrap>
-                        <fmt:message key="setup.ldap.server.enclose_dns" />:
-                    </td>
-                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-                        <fmt:message key="setup.ldap.server.enclose_dns_help" />
-                    </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="enclosedns" value="true" ${enclosingDNs ? "checked" : ""}>
-                    <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="enclosedns" value="false" ${enclosingDNs ? "" : "checked"}>
                     </td>
                 </tr>
                 </tbody>

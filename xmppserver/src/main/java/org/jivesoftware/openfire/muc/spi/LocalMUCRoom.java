@@ -582,7 +582,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 // Is this client already joined with this nickname?
                 for (MUCRole mucRole : occupants) {
                     if (mucRole.getUserAddress().equals(user.getAddress())) {
-                        clientOnlyJoin = true;
+                        if (occupantsByFullJID.get(user.getAddress()) != null)
+                            clientOnlyJoin = true;
                         break;
                     }
                 }

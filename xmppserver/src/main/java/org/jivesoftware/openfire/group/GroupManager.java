@@ -17,11 +17,7 @@
 package org.jivesoftware.openfire.group;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
@@ -171,7 +167,17 @@ public class GroupManager {
 
                             // 'groupList' has changed
                             if (!StringUtils.equals(originalValue, newValue)) {
-                                evictCachedUsersForGroup(group, originalValue);
+                                evictCachedUsersForGroup( group );
+
+                                // Also clear the cache for groups that have been removed from the shared list.
+                                if ( originalValue != null ) {
+                                    final Set<String> newGroupNames = newValue == null ? new HashSet<>() : splitGroupList(newValue);
+                                    final Set<String> oldGroupNames = splitGroupList(originalValue);
+
+                                    // The 'new' group names are already handled by the evictCachedUserForGroup call above. No need to do that twice.
+                                    oldGroupNames.removeAll(newGroupNames);
+                                    oldGroupNames.forEach( g -> evictCachedUsersForGroup(g) );
+                                }
                             }
                         }
                     }
@@ -698,62 +704,108 @@ public class GroupManager {
         }
     }
 
-    private void evictCachedUsersForGroup(Group group) {
-        evictCachedUsersForGroup(group, null);
+    /**
+     * Evict from cache all cached user entries that relate to the provided group.
+     *
+     * This method ignores group names for which a group cannot be found.
+     * 
+     * @param group The name of a group for which to evict cached user entries (cannot be null).
+     */
+    private void evictCachedUsersForGroup(String groupName)
+    {
+        try {
+            evictCachedUsersForGroup( getGroup(groupName) );
+        } catch ( GroupNotFoundException e ) {
+            Log.debug("Unable to evict cached users for group '{}': this group does not exist.", groupName, e);
+        }
     }
 
-    private void evictCachedUsersForGroup(Group group, String oldGroupList) {
-        // Evict cached information for affected users
-        for (JID user : group.getAdmins()) {
-            evictCachedUserForGroup(user.toBareJID());
+    /**
+     * Evict from cache all cached user entries that relate to the provided group.
+     *
+     * @param group The group for which to evict cached user entries (cannot be null).
+     */
+    private void evictCachedUsersForGroup(Group group)
+    {
+        // Get all nested groups, removing any cyclic dependency.
+        final Set<Group> groups = getSharedGroups( group, new HashMap<>() );
+
+        // Evict cached information for affected users.
+        groups.forEach( g -> {
+            g.getAdmins().forEach( jid -> evictCachedUserForGroup( jid.toBareJID()) );
+            g.getMembers().forEach( jid -> evictCachedUserForGroup( jid.toBareJID()) );
+        });
+
+        // If any of the groups is shared with everybody, evict all cached groups.
+        if ( groups.stream().anyMatch( g -> {
+            final String showInRoster = g.getProperties().get("sharedRoster.showInRoster");
+            return "everybody".equalsIgnoreCase( showInRoster );
+        } )) {
+            evictCachedUserSharedGroups();
         }
-        for (JID user : group.getMembers()) {
-            evictCachedUserForGroup(user.toBareJID());
-        }
+    }
+
+    /**
+     * Find the unique set of groups with which the provided group is shared,
+     * directly or indirectly. An indirect share is defined as a scenario where
+     * the group is shared by a group that's shared with another group).
+     *
+     * This method is designed to allow for cyclic group sharing dependencies.
+     *
+     * The returned set will include the original group itself.
+     *
+     * @param group The group for which to return all groups that its shared with (cannot be null).
+     * @param result An intermediate result, used in recursive calls. Cannot be null. Use an empty group when invoking this.
+     * @return A set of groups with which all members of 'group' are shared with (never null, will at least contain 'group').
+     */
+    private Set<Group> getSharedGroups( final Group group, final Map<String, Group> result ) {
+        result.put( group.getName(), group );
 
         final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-        if (showInRoster != null )
+        if ( "onlygroup".equals(showInRoster.toLowerCase()) )
         {
-            switch ( showInRoster.toLowerCase() )
+            final Set<String> groupNames = new HashSet<>();
+            final String groupList = group.getProperties().get("sharedRoster.groupList");
+            if ( groupList != null ) {
+                groupNames.addAll( splitGroupList( groupList ) );
+            }
+
+            for ( String groupName : groupNames )
             {
-                case "everybody":
-                    evictCachedUserSharedGroups();
-                    break;
-
-                case "onlygroup":
-                    String groupList = group.getProperties().get( "sharedRoster.groupList" );
-                    if (groupList != null && oldGroupList != null) {
-                        groupList = groupList + "," + oldGroupList;
-                    } else if (groupList == null) {
-                        groupList = oldGroupList;
+                // When this group is shared with groups that we haven't visited yet, recurse.
+                if ( !result.containsKey(groupName) )
+                {
+                    try
+                    {
+                        final Group nested = getGroup(groupName);
+                        getSharedGroups(nested, result);
                     }
-                    if (groupList != null) {
-                        HashSet<String> spefgroups = new HashSet<>();
-                        final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
-                        while ( tokenizer.hasMoreTokens() ) {
-                            spefgroups.add(tokenizer.nextToken().trim());
-                        }
-                        for (String spefgroup : spefgroups){
-                            try
-                            {
-                                final Group nested = getGroup( spefgroup );
-                                evictCachedUsersForGroup( nested );
-                            }
-                            catch ( StackOverflowError e )
-                            {
-                                Log.warn( "Cyclic sharing groups found. Please remove the cycle of groups '{}' and '{}'", group.getName(), spefgroup );
-                            }
-                            catch ( GroupNotFoundException e )
-                            {
-                                Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );
-                            }
-                        }
+                    catch ( GroupNotFoundException e )
+                    {
+                        Log.debug("While iterating over subgroups of group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), groupName, e);
                     }
-                    break;
-
-
+                }
             }
         }
+
+        return new HashSet<>(result.values());
+    }
+
+    /**
+     * Splits a comma-separated string of group name in a set of group names.
+     * @param csv The comma-separated list. Cannot be null.
+     * @return A set of group names.
+     */
+    protected static Set<String> splitGroupList( String csv )
+    {
+        final Set<String> result = new HashSet<>();
+        final StringTokenizer tokenizer = new StringTokenizer(csv, ",\t\n\r\f");
+        while ( tokenizer.hasMoreTokens() )
+        {
+            result.add(tokenizer.nextToken().trim());
+        }
+
+        return result;
     }
 
     private void evictCachedPaginatedGroupNames() {

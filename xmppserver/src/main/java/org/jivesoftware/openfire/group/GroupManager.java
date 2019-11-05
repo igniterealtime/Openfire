@@ -709,7 +709,7 @@ public class GroupManager {
      *
      * This method ignores group names for which a group cannot be found.
      * 
-     * @param group The name of a group for which to evict cached user entries (cannot be null).
+     * @param groupName The name of a group for which to evict cached user entries (cannot be null).
      */
     private void evictCachedUsersForGroup(String groupName)
     {

@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -663,13 +664,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                         affiliation, user, presence, router);
                 // Add the new user as an occupant of this room
                 occupantsByNickname.compute(nickname.toLowerCase(), (nick, occupants) -> {
-                    List<MUCRole> ret=occupants !=null ? occupants : new ArrayList<>();
+                    List<MUCRole> ret=occupants !=null ? occupants : new CopyOnWriteArrayList<>();
                     ret.add(joinRole);
                     return ret;
                 });
                 // Update the tables of occupants based on the bare and full JID
                 occupantsByBareJID.compute(bareJID, (jid, occupants) -> {
-                    List<MUCRole> ret=occupants !=null ? occupants : new ArrayList<>();
+                    List<MUCRole> ret=occupants !=null ? occupants : new CopyOnWriteArrayList<>();
                     ret.add(joinRole);
                     return ret;
                 });
@@ -792,7 +793,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         String nickname = event.getNickname();
         lock.writeLock().lock();
         try {
-            List<MUCRole> occupants = occupantsByNickname.computeIfAbsent(nickname.toLowerCase(), nick -> new ArrayList<>());
+            List<MUCRole> occupants = occupantsByNickname.computeIfAbsent(nickname.toLowerCase(), nick -> new CopyOnWriteArrayList<>());
             // Do not add new occupant with one with same nickname already exists
             // sanity check; make sure the nickname is owned by the same JID
             if (occupants.size() > 0) {
@@ -805,7 +806,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             // Add the new user as an occupant of this room
             occupants.add(joinRole);
             // Update the tables of occupants based on the bare and full JID
-            occupantsByBareJID.computeIfAbsent(bareJID, jid->new ArrayList<>()).add(joinRole);
+            occupantsByBareJID.computeIfAbsent(bareJID, jid->new CopyOnWriteArrayList<>()).add(joinRole);
             occupantsByFullJID.put(event.getUserAddress(), joinRole);
 
             // Update the date when the last occupant left the room
@@ -954,7 +955,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     public void destroyRoom(DestroyRoomRequest destroyRequest) {
         JID alternateJID = destroyRequest.getAlternateJID();
         String reason = destroyRequest.getReason();
-        Collection<MUCRole> removedRoles = new ArrayList<>();
+        Collection<MUCRole> removedRoles = new CopyOnWriteArrayList<>();
         lock.writeLock().lock();
         try {
             boolean hasRemoteOccupants = false;
@@ -2330,7 +2331,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         // Get the role(s) to kick
         List<MUCRole> occupants = occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase());
         if (occupants != null) {
-            for (MUCRole kickedRole : new ArrayList<>(occupants)) {
+            for (MUCRole kickedRole : occupants) {
                 // Add the actor's JID that kicked this user from the room
                 if (actorJID!=null && actorJID.toString().length() > 0) {
                     Element frag = kickPresence.getChildElement(
@@ -2435,7 +2436,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public List<Presence> setMembersOnly(boolean membersOnly) {
-        List<Presence> presences = new ArrayList<>();
+        List<Presence> presences = new CopyOnWriteArrayList<>();
         if (membersOnly && !this.membersOnly) {
             // If the room was not members-only and now it is, kick occupants that aren't member
             // of the room

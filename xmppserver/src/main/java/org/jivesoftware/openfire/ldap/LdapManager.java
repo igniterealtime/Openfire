@@ -1883,21 +1883,6 @@ public class LdapManager {
     }
 
     /**
-     * @Deprecated As of Openfire 4.5.0, DNs used by Openfire are never enclosed.
-     */
-    @Deprecated
-    public boolean isEnclosingDNs() {
-        return false;
-    }
-
-    /**
-     * @Deprecated As of Openfire 4.5.0, DNs used by Openfire are never enclosed.
-     */
-    @Deprecated
-    public void setIsEnclosingDNs(boolean enable) {
-    }
-
-    /**
      * Generic routine for retrieving a list of results from the LDAP server.  It's meant to be very
      * flexible so that just about any query for a list of results can make use of it without having
      * to reimplement their own calls to LDAP.  This routine also accounts for sorting settings,

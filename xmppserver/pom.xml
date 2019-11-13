@@ -90,11 +90,6 @@
     <dependencies>
         <!-- Ignite Realtime -->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>i18n</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.igniterealtime</groupId>
             <artifactId>tinder</artifactId>
             <version>2.0.0</version>
@@ -199,11 +194,6 @@
         </dependency>
 
         <!-- BouncyCastle -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpg-jdk15on</artifactId>
-            <version>${bouncycastle.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
@@ -319,21 +309,12 @@
             <version>2.6</version>
         </dependency>
         <dependency>
-            <groupId>org.directwebremoting</groupId>
-            <artifactId>dwr</artifactId>
-        </dependency>
-        <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.1</version>
         </dependency>
 
         <!-- Database Drivers -->
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.4.1</version>
-        </dependency>
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>

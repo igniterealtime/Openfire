@@ -12,135 +12,81 @@
     <properties>
         <warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory>
     </properties>
-    <profiles>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                    <excludes>
+                        <exclude>**/*_jsp.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Create the admin console web archive. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <!-- Exclude JSP files, they will be compiled -->
+                    <warSourceExcludes>**/*.jsp,**/*.jspf,WEB-INF/lib/*.*</warSourceExcludes>
+                    <warSourceDirectory>${warSourceDirectory}</warSourceDirectory>
+                    <!-- Use the web.xml, which contains the generated servlet declarations from the jetty-jspc-maven-plugin -->
+                    <webXml>${project.build.directory}/web.xml</webXml>
+                </configuration>
+            </plugin>
+
+            <!-- Compile the JSP pages -->
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-jspc-maven-plugin</artifactId>
+                <version>${jetty.version}</version>
+                <executions>
+                    <execution>
+                        <id>jspc</id>
+                        <goals>
+                            <goal>jspc</goal>
+                        </goals>
                         <configuration>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                </manifest>
-                            </archive>
-                            <excludes>
-                                <exclude>**/*_jsp.java</exclude>
-                            </excludes>
+                            <sourceVersion>1.8</sourceVersion>
+                            <targetVersion>1.8</targetVersion>
+                            <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
+                            <!-- Merge this web.xml with the generated servlet declarations -->
+                            <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>
+                            <jspc>
+                                <package>org.jivesoftware.openfire.admin</package>
+                            </jspc>
+                            <sourceVersion>1.8</sourceVersion>
+                            <targetVersion>1.8</targetVersion>
+                            <keepSources>true</keepSources>
                         </configuration>
-                    </plugin>
+                    </execution>
+                </executions>
+            </plugin>
 
-                    <!-- Create the admin console web archive. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-war-plugin</artifactId>
-                        <version>3.2.2</version>
-                        <configuration>
-                            <!-- Exclude JSP files, they will be compiled -->
-                            <warSourceExcludes>**/*.jsp,**/*.jspf,WEB-INF/lib/*.*</warSourceExcludes>
-                            <warSourceDirectory>${warSourceDirectory}</warSourceDirectory>
-                            <!-- Use the web.xml, which contains the generated servlet declarations from the jetty-jspc-maven-plugin -->
-                            <webXml>${project.build.directory}/web.xml</webXml>
-                        </configuration>
-                    </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
+                    </systemPropertyVariables>
+                    <argLine>-Duser.language=us -Duser.country=US</argLine>
+                </configuration>
+            </plugin>
 
-                    <!-- Compile the JSP pages -->
-                    <plugin>
-                        <groupId>org.eclipse.jetty</groupId>
-                        <artifactId>jetty-jspc-maven-plugin</artifactId>
-                        <version>${jetty.version}</version>
-                        <executions>
-                            <execution>
-                                <id>jspc</id>
-                                <goals>
-                                    <goal>jspc</goal>
-                                </goals>
-                                <configuration>
-                                    <sourceVersion>1.8</sourceVersion>
-                                    <targetVersion>1.8</targetVersion>
-                                    <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
-                                    <!-- Merge this web.xml with the generated servlet declarations -->
-                                    <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>
-                                    <jspc>
-                                        <package>org.jivesoftware.openfire.admin</package>
-                                    </jspc>
-                                    <sourceVersion>1.8</sourceVersion>
-                                    <targetVersion>1.8</targetVersion>
-                                    <keepSources>true</keepSources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
+        </plugins>
+    </build>
 
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M3</version>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
-                            </systemPropertyVariables>
-                            <argLine>-Duser.language=us -Duser.country=US</argLine>
-                        </configuration>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>coverage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.5</version>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/*_jsp.class</exclude>
-                            </excludes>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>default-prepare-agent</id>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                                <configuration>
-                                    <propertyName>argLine</propertyName>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M3</version>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
-                            </systemPropertyVariables>
-                            <argLine>@{argLine} -Duser.language=us -Duser.country=US</argLine>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
     <dependencies>
         <!-- Ignite Realtime -->
         <dependency>

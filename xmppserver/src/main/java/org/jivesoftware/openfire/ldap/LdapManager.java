@@ -468,9 +468,16 @@ public class LdapManager {
         return result;
     }
 
-    public static LdapName parseAsLdapName( NamingEnumeration<SearchResult> answer, LdapName baseDN ) throws NamingException, UnsupportedEncodingException
+    /**
+     * Parses a LdapName from a Search result.
+     *
+     * @param result The search result (cannot be null).
+     * @param baseDN The base DN on which the search was executed (cannot be null).
+     * @return The RDN that represents the result.
+     */
+    public static LdapName parseAsLdapName( SearchResult result, LdapName baseDN ) throws NamingException, UnsupportedEncodingException
     {
-        String name = answer.next().getName();
+        String name = result.getName();
 
         // Occasionally, the name is returned as: "cn=ship crew/cooks" (a string
         // that starts with a quote). Quotes around the entire name cannot be
@@ -1109,7 +1116,7 @@ public class LdapManager {
                 throw new UserNotFoundException("Username " + username + " not found");
             }
 
-            final LdapName userDN = parseAsLdapName( answer, baseDN );
+            final LdapName userDN = parseAsLdapName( answer.next(), baseDN );
 
             // Make sure there are no more search results. If there are, then
             // the username isn't unique on the LDAP server (a perfectly possible
@@ -1245,7 +1252,7 @@ public class LdapManager {
                 throw new GroupNotFoundException("Groupname " + groupname + " not found");
             }
 
-            final LdapName groupDN = parseAsLdapName( answer, baseDN );
+            final LdapName groupDN = parseAsLdapName( answer.next(), baseDN );
 
             // Make sure there are no more search results. If there are, then
             // the groupname isn't unique on the LDAP server (a perfectly possible

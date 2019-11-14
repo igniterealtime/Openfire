@@ -84,7 +84,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             return processGroup(ctx, attrs);
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("Unable to load group: {}", groupName, e);
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
         }
         finally {

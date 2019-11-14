@@ -32,6 +32,7 @@ import javax.naming.directory.*;
 import javax.naming.ldap.*;
 import javax.net.ssl.SSLSession;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
@@ -94,6 +95,12 @@ public class LdapManager {
     public static final SystemProperty<Integer> LDAP_PAGE_SIZE = SystemProperty.Builder.ofType(Integer.class)
         .setKey("ldap.pagedResultsSize")
         .setDefaultValue(-1)
+        .setDynamic(true)
+        .build();
+
+    public static final SystemProperty<Boolean> PARSE_RETRY_ESCAPING = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("ldap.parse-retry-escaping")
+        .setDefaultValue(true)
         .setDynamic(true)
         .build();
 
@@ -459,6 +466,67 @@ public class LdapManager {
             }
         }
         return result;
+    }
+
+    public static LdapName parseAsLdapName( NamingEnumeration<SearchResult> answer, LdapName baseDN ) throws NamingException, UnsupportedEncodingException
+    {
+        String name = answer.next().getName();
+
+        // Occasionally, the name is returned as: "cn=ship crew/cooks" (a string
+        // that starts with a quote). Quotes around the entire name cannot be
+        // parsed (unlike, for example: cn="ship crew/cooks").
+        // As this method escapes RDNs, we'll strip quotes before parsing the
+        // value further.
+        if ( name.startsWith("\"") && name.endsWith("\"")) {
+            name = name.substring(1, name.length()-1 );
+        }
+
+        // All other methods assume that UserDN is not a full LDAP string.
+        // However if a referral was followed this is not the case.  The
+        // following code converts a referral back to a "partial" LDAP string.
+        if (name.startsWith("ldap://")) {
+            // TODO there must be a better way to parse this than using string manipulations.
+            name = name.replace("," + baseDN, "");
+            name = name.substring(name.lastIndexOf("/") + 1);
+            name = java.net.URLDecoder.decode(name, "UTF-8");
+        }
+
+        return parseAsLdapName(name);
+    }
+
+    /**
+     * Returns an LdapName instance for the provided value. When parsing fails,
+     * an InvalidNameException is thrown.
+     *
+     * When enabled through configuration (see PARSE_RETRY_ESCAPING), this method
+     * will retry a failed parse after applying escaping according to the rules
+     * specified in <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>.
+     *
+     * @param name The RDN to parse
+     * @return A parsed RDN.
+     * @throws InvalidNameException
+     */
+    public static LdapName parseAsLdapName( String name ) throws InvalidNameException
+    {
+        try {
+            return new LdapName( name );
+        } catch ( InvalidNameException e ) {
+            if ( PARSE_RETRY_ESCAPING.getValue() )
+            {
+                Log.info("Unable to parse '{}' as an LdapName. Will apply escaping and try again.", name);
+
+                // Escape the RDN that's part of the result.
+                final int split = name.indexOf("=");
+                final String field = name.substring(0, split);
+                final String rdn = name.substring(split + 1);
+                final String escapedRdn = Rdn.escapeValue(rdn);
+                return new LdapName(field + "=" + escapedRdn);
+            }
+            else
+            {
+                throw e;
+            }
+        }
     }
 
     /**
@@ -1041,18 +1109,7 @@ public class LdapManager {
                 throw new UserNotFoundException("Username " + username + " not found");
             }
 
-            String name = answer.next().getName();
-            // All other methods assume that UserDN is not a full LDAP string.
-            // However if a referral was followed this is not the case.  The
-            // following code converts a referral back to a "partial" LDAP string.
-            if (name.startsWith("ldap://")) {
-                // TODO there must be a better way to parse this than using string manipulations.
-                name = name.replace("," + baseDN, "");
-                name = name.substring(name.lastIndexOf("/") + 1);
-                name = java.net.URLDecoder.decode(name, "UTF-8");
-            }
-
-            LdapName userDN = new LdapName( name );
+            final LdapName userDN = parseAsLdapName( answer, baseDN );
 
             // Make sure there are no more search results. If there are, then
             // the username isn't unique on the LDAP server (a perfectly possible
@@ -1188,19 +1245,7 @@ public class LdapManager {
                 throw new GroupNotFoundException("Groupname " + groupname + " not found");
             }
 
-            final SearchResult result = answer.next();
-            String name = result.getName();
-            // All other methods assume that GroupDN is not a full LDAP string.
-            // However if a referral was followed this is not the case.  The
-            // following code converts a referral back to a "partial" LDAP string.
-            if (name.startsWith("ldap://")) {
-                // TODO there must be a better way to parse this than using string manipulations.
-                name = name.replace("," + baseDN, "");
-                name = name.substring(name.lastIndexOf("/") + 1);
-                name = java.net.URLDecoder.decode(name, "UTF-8");
-            }
-
-            LdapName groupDN = new LdapName( name );
+            final LdapName groupDN = parseAsLdapName( answer, baseDN );
 
             // Make sure there are no more search results. If there are, then
             // the groupname isn't unique on the LDAP server (a perfectly possible

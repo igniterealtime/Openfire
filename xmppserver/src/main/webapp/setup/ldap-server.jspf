@@ -21,7 +21,7 @@
     String host;
     int port;
     LdapName baseDN;
-    LdapName adminDN;
+    String adminDN;
     String adminPassword;
     boolean connectionPoolEnabled;
     boolean sslEnabled;
@@ -69,17 +69,7 @@
             baseDN = null;
         }
 
-        final String adminDNvalue = ParamUtils.getParameter(request, "admindn");
-        if ( adminDNvalue != null && !adminDNvalue.isEmpty() ) {
-            try {
-                adminDN = new LdapName( adminDNvalue );
-            } catch ( Exception e ) {
-                errors.put("adminDN", LocaleUtils.getLocalizedString("setup.ldap.server.admindn_error"));
-                adminDN = null;
-            }
-        } else {
-            adminDN = null;
-        }
+        adminDN = ParamUtils.getParameter(request, "admindn");
         adminPassword = ParamUtils.getParameter(request, "adminpwd");
         connectionPoolEnabled = ParamUtils.getBooleanParameter(request, "connectionpool", manager.isConnectionPoolEnabled());
         sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", manager.isSslEnabled());
@@ -96,7 +86,7 @@
             settings.put("ldap.port", Integer.toString(port));
             settings.put("ldap.baseDN", baseDN.toString());
             if (adminDN != null) {
-                settings.put("ldap.adminDN", adminDN.toString());
+                settings.put("ldap.adminDN", adminDN);
             }
             if (adminPassword != null) {
                 settings.put("ldap.adminPassword", adminPassword);
@@ -138,7 +128,7 @@
                     xmppSettings.put("ldap.host", host);
                     xmppSettings.put("ldap.port", Integer.toString(port));
                     xmppSettings.put("ldap.baseDN", baseDN.toString());
-                    xmppSettings.put("ldap.adminDN", adminDN.toString());
+                    xmppSettings.put("ldap.adminDN", adminDN);
                     if ( adminPassword != null ) { // Only store a password if it was changed.
                         xmppSettings.put( "ldap.adminPassword", adminPassword );
                     }

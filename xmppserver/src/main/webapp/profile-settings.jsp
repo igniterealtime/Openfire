@@ -49,7 +49,7 @@
         }
         int port = LdapManager.getInstance().getPort();
         LdapName baseDN = LdapManager.getInstance().getBaseDN();
-        LdapName adminDN = LdapManager.getInstance().getAdminDN();
+        String adminDN = LdapManager.getInstance().getAdminDN();
 
         request.setAttribute( "hosts", hosts );
         request.setAttribute( "port", port );

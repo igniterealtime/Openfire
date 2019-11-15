@@ -435,7 +435,7 @@ public class LdapManager {
         buf.append("\t findUsersFromGroupsEnabled: ").append(findUsersFromGroupsEnabled).append("\n");
 
         if (Log.isDebugEnabled()) {
-            Log.debug("LdapManager: "+buf.toString());
+            Log.debug(""+buf.toString());
         }
         if (ldapDebugEnabled) {
             System.err.println(buf.toString());
@@ -555,9 +555,9 @@ public class LdapManager {
     public LdapContext getContext(LdapName baseDN) throws NamingException {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
-            Log.debug("LdapManager: Creating a DirContext in LdapManager.getContext()...");
+            Log.debug("Creating a DirContext in LdapManager.getContext()...");
             if (!sslEnabled && !startTlsEnabled) {
-                Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+                Log.debug("Warning: Using unencrypted connection to LDAP service!");
             }
         }
 
@@ -600,7 +600,7 @@ public class LdapManager {
                 if (debug) {
                     // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
                     // "When Not to Use Pooling"
-                    Log.debug("LdapManager: connection pooling was requested but has been disabled because of StartTLS.");
+                    Log.debug("connection pooling was requested but has been disabled because of StartTLS.");
                 }
                 env.put("com.sun.jndi.ldap.connect.pool", "false");
             }
@@ -624,7 +624,7 @@ public class LdapManager {
         }
 
         if (debug) {
-            Log.debug("LdapManager: Created hashtable with context values, attempting to create context...");
+            Log.debug("Created hashtable with context values, attempting to create context...");
         }
         // Create new initial context
         JiveInitialLdapContext context = new JiveInitialLdapContext(env, null);
@@ -632,7 +632,7 @@ public class LdapManager {
         // TLS http://www.ietf.org/rfc/rfc2830.txt ("1.3.6.1.4.1.1466.20037")
         if (startTlsEnabled && !sslEnabled) {
             if (debug) {
-                Log.debug("LdapManager: ... StartTlsRequest");
+                Log.debug("... StartTlsRequest");
             }
             if (followReferrals) {
                 Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
@@ -653,7 +653,7 @@ public class LdapManager {
                 context.setSslSession(session);
 
                 if (debug) {
-                    Log.debug("LdapManager: ... peer host: "
+                    Log.debug("... peer host: "
                             + session.getPeerHost()
                             + ", CipherSuite: " + session.getCipherSuite());
                 }
@@ -680,7 +680,7 @@ public class LdapManager {
         }
 
         if (debug) {
-            Log.debug("LdapManager: ... context created successfully, returning.");
+            Log.debug("... context created successfully, returning.");
         }
 
         return context;
@@ -697,10 +697,10 @@ public class LdapManager {
     public boolean checkAuthentication(Rdn userRDN, String password) {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
-            Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userRDN is: " + userRDN + "...");
+            Log.debug("In LdapManager.checkAuthentication(userDN, password), userRDN is: " + userRDN + "...");
 
             if (!sslEnabled && !startTlsEnabled) {
-                Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+                Log.debug("Warning: Using unencrypted connection to LDAP service!");
             }
         }
 
@@ -749,14 +749,14 @@ public class LdapManager {
             }
 
             if (debug) {
-                Log.debug("LdapManager: Created context values, attempting to create context...");
+                Log.debug("Created context values, attempting to create context...");
             }
             ctx = new JiveInitialLdapContext(env, null);
 
             if (startTlsEnabled && !sslEnabled) {
 
                 if (debug) {
-                    Log.debug("LdapManager: ... StartTlsRequest");
+                    Log.debug("... StartTlsRequest");
                 }
 
                 // Perform a StartTLS extended operation
@@ -773,7 +773,7 @@ public class LdapManager {
                     ctx.setSslSession(session);
 
                     if (debug) {
-                        Log.debug("LdapManager: ... peer host: "
+                        Log.debug("... peer host: "
                                 + session.getPeerHost()
                                 + ", CipherSuite: " + session.getCipherSuite());
                     }
@@ -795,7 +795,7 @@ public class LdapManager {
             }
 
             if (debug) {
-                Log.debug("LdapManager: ... context created successfully, returning.");
+                Log.debug("... context created successfully, returning.");
             }
         }
         catch (NamingException ne) {
@@ -840,14 +840,14 @@ public class LdapManager {
                         env.put("java.naming.ldap.derefAliases", "never");
                     }
                     if (debug) {
-                        Log.debug("LdapManager: Created context values, attempting to create context...");
+                        Log.debug("Created context values, attempting to create context...");
                     }
                     ctx = new JiveInitialLdapContext(env, null);
 
                     if (startTlsEnabled && !sslEnabled) {
 
                         if (debug) {
-                            Log.debug("LdapManager: ... StartTlsRequest");
+                            Log.debug("... StartTlsRequest");
                         }
 
                         // Perform a StartTLS extended operation
@@ -864,7 +864,7 @@ public class LdapManager {
                             ctx.setSslSession(session);
 
                             if (debug) {
-                                Log.debug("LdapManager: ... peer host: "
+                                Log.debug("... peer host: "
                                         + session.getPeerHost()
                                         + ", CipherSuite: " + session.getCipherSuite());
                             }
@@ -887,14 +887,14 @@ public class LdapManager {
                 }
                 catch (NamingException e) {
                     if (debug) {
-                        Log.debug("LdapManager: Caught a naming exception when creating InitialContext", ne);
+                        Log.debug("Caught a naming exception when creating InitialContext", ne);
                     }
                     return false;
                 }
             }
             else {
                 if (debug) {
-                    Log.debug("LdapManager: Caught a naming exception when creating InitialContext", ne);
+                    Log.debug("Caught a naming exception when creating InitialContext", ne);
                 }
                 return false;
             }
@@ -934,7 +934,7 @@ public class LdapManager {
         boolean debug = Log.isDebugEnabled();
 
         if (debug) {
-            Log.debug("LdapManager: In lookupExistence(ctx, dn, returnattrs), searchdn is: " + dn);
+            Log.debug("In lookupExistence(ctx, dn, returnattrs), searchdn is: " + dn);
         }
 
         // Bind to the object's DN
@@ -960,12 +960,12 @@ public class LdapManager {
 
         if (answer == null || !answer.hasMoreElements())
         {
-            Log.debug("LdapManager: .... lookupExistence: DN not found.");
+            Log.debug(".... lookupExistence: DN not found.");
             return false;
         }
         else
         {
-            Log.debug("LdapManager: .... lookupExistence: DN found.");
+            Log.debug(".... lookupExistence: DN found.");
             return true;
         }
     }
@@ -1062,11 +1062,11 @@ public class LdapManager {
     public Rdn findUserRDN(String username, LdapName baseDN) throws Exception {
         //Support for usernameSuffix
         username = username + usernameSuffix;
-        Log.debug("LdapManager: Trying to find a user's RDN based on their username: '{}'. Field: '{}', Base DN: '{}' ...", usernameField, username, baseDN);
+        Log.debug("Trying to find a user's RDN based on their username: '{}'. Field: '{}', Base DN: '{}' ...", username, usernameField, baseDN);
         DirContext ctx = null;
         try {
             ctx = getContext(baseDN);
-            Log.debug("LdapManager: Starting LDAP search for username '{}'...", username);
+            Log.debug("Starting LDAP search for username '{}'...", username);
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
             // If sub-tree searching is enabled (default is true) then search the entire tree.
@@ -1084,10 +1084,10 @@ public class LdapManager {
                     new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
-            Log.debug("LdapManager: ... search finished for username '{}'.", username);
+            Log.debug("... search finished for username '{}'.", username);
 
             if (answer == null || !answer.hasMoreElements()) {
-                Log.debug("LdapManager: User DN based on username '{}' not found.", username);
+                Log.debug("User DN based on username '{}' not found.", username);
                 throw new UserNotFoundException("Username " + username + " not found");
             }
 
@@ -1100,7 +1100,7 @@ public class LdapManager {
             // There really isn't a way to handle this, so throw an exception.
             // The baseDN must be set correctly so that this doesn't happen.
             if (answer.hasMoreElements()) {
-                Log.debug("LdapManager: Search for userDN based on username '{}' found multiple responses, throwing exception.", username);
+                Log.debug("Search for userDN based on username '{}' found multiple responses, throwing exception.", username);
                 throw new UserNotFoundException("LDAP username lookup for " + username + " matched multiple entries.");
             }
             // Close the enumeration.
@@ -1108,10 +1108,10 @@ public class LdapManager {
 
             return userRDN;
         } catch (final UserNotFoundException e) {
-            Log.trace("LdapManager: UserNotFoundException thrown when searching for username '{}'", username, e);
+            Log.trace("UserNotFoundException thrown when searching for username '{}'", username, e);
             throw e;
         } catch (final Exception e) {
-            Log.debug("LdapManager: Exception thrown when searching for userDN based on username '{}'", username, e);
+            Log.debug("Exception thrown when searching for userDN based on username '{}'", username, e);
             throw e;
         }
         finally {
@@ -1187,12 +1187,12 @@ public class LdapManager {
      * @see #findGroupRDN(String) to search using the default baseDN and alternateBaseDN.
      */
     public Rdn findGroupRDN(String groupname, LdapName baseDN) throws Exception {
-        Log.debug("LdapManager: Trying to find a groups's RDN based on their group name: '{}'. Field: '{}', Base DN: '{}' ...", usernameField, groupname, baseDN);
+        Log.debug("Trying to find a groups's RDN based on their group name: '{}'. Field: '{}', Base DN: '{}' ...", usernameField, groupname, baseDN);
 
         DirContext ctx = null;
         try {
             ctx = getContext(baseDN);
-            Log.debug("LdapManager: Starting LDAP search for group '{}'...", groupname);
+            Log.debug("Starting LDAP search for group '{}'...", groupname);
 
             // Search for the dn based on the groupname.
             SearchControls constraints = new SearchControls();
@@ -1209,10 +1209,10 @@ public class LdapManager {
             String filter = MessageFormat.format(getGroupSearchFilter(), sanitizeSearchFilter(groupname));
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, constraints);
 
-            Log.debug("LdapManager: ... search finished for group '{}'.", groupname);
+            Log.debug("... search finished for group '{}'.", groupname);
 
             if (answer == null || !answer.hasMoreElements()) {
-                Log.debug("LdapManager: Group DN based on groupname '{}' not found.", groupname);
+                Log.debug("Group DN based on groupname '{}' not found.", groupname);
                 throw new GroupNotFoundException("Groupname " + groupname + " not found");
             }
 
@@ -1225,7 +1225,7 @@ public class LdapManager {
             // There really isn't a way to handle this, so throw an exception.
             // The baseDN must be set correctly so that this doesn't happen.
             if (answer.hasMoreElements()) {
-                Log.debug("LdapManager: Search for groupDN based on groupname '{}' found multiple responses, throwing exception.", groupname);
+                Log.debug("Search for groupDN based on groupname '{}' found multiple responses, throwing exception.", groupname);
                 throw new GroupNotFoundException("LDAP groupname lookup for " + groupname + " matched multiple entries.");
             }
             // Close the enumeration.
@@ -1233,10 +1233,10 @@ public class LdapManager {
 
             return groupRDN;
         } catch (final GroupNotFoundException e) {
-            Log.trace("LdapManager: Group not found: '{}'", groupname, e);
+            Log.trace("Group not found: '{}'", groupname, e);
             throw e;
         } catch (final Exception e) {
-            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '{}'", groupname, e);
+            Log.debug("Exception thrown when searching for groupDN based on groupname '{}'", groupname, e);
             throw e;
         }
         finally {

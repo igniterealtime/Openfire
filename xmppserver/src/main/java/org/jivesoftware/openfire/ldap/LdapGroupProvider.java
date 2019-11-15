@@ -32,6 +32,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.AbstractGroupProvider;
@@ -76,10 +77,10 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     public Group getGroup(String groupName) throws GroupNotFoundException {
         LdapContext ctx = null;
         try {
-            LdapName groupDN = manager.findGroupDN(groupName);
+            Rdn groupRDN = manager.findGroupRDN(groupName);
             // Load record.
             ctx = manager.getContext(manager.getGroupsBaseDN(groupName));
-            Attributes attrs = ctx.getAttributes(groupDN, standardAttributes);
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(groupRDN), standardAttributes);
 
             return processGroup(ctx, attrs);
         }
@@ -145,7 +146,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             }
             username = JID.unescapeNode(user.getNode());
             try {
-                username = manager.findUserDN(username) + "," + manager.getUsersBaseDN(username);
+                username = manager.findUserRDN(username) + "," + manager.getUsersBaseDN(username);
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);

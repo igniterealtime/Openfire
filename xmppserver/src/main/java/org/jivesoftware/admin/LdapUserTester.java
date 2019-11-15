@@ -152,7 +152,7 @@ public class LdapUserTester {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            LdapName userDN = manager.findUserDN(username);
+            Rdn userRDN = manager.findUserRDN(username);
             // Build list of attributes to load from LDAP
             Map<String, PropertyMapping> ldapMappings = getLdapAttributes();
             Set<String> fields = new HashSet<>();
@@ -162,7 +162,7 @@ public class LdapUserTester {
             fields.add(manager.getUsernameField());
             // Load records
             ctx = manager.getContext(manager.getUsersBaseDN(username));
-            Attributes attrs = ctx.getAttributes(userDN, fields.toArray(new String[]{}));
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), fields.toArray(new String[]{}));
             // Build answer
             for (Map.Entry<String, PropertyMapping> entry : ldapMappings.entrySet()) {
                 String attribute = entry.getKey();

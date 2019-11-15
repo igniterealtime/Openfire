@@ -187,7 +187,7 @@ public class LdapManager {
     private String emailField;
     private LdapName baseDN;
     private LdapName alternateBaseDN = null;
-    private LdapName adminDN = null;
+    private String adminDN = null;
     private String adminPassword;
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
@@ -357,7 +357,10 @@ public class LdapManager {
         }
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
 
-        adminDN = parseAsLdapNameOrLog( properties.get("ldap.adminDN") );
+        adminDN = properties.get("ldap.adminDN");
+        if (adminDN != null && adminDN.trim().equals("")) {
+            adminDN = null;
+        }
 
         adminPassword = properties.get("ldap.adminPassword");
         ldapDebugEnabled = false;
@@ -575,7 +578,7 @@ public class LdapManager {
              * the secure connection has been established. */
             if (!(startTlsEnabled && !sslEnabled)) {
                 env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                env.put(Context.SECURITY_PRINCIPAL, adminDN.toString());
+                env.put(Context.SECURITY_PRINCIPAL, adminDN);
                 if (adminPassword != null) {
                     env.put(Context.SECURITY_CREDENTIALS, adminPassword);
                 }
@@ -1625,7 +1628,7 @@ public class LdapManager {
      *
      * @return the starting DN used for performing searches.
      */
-    public LdapName getAdminDN() {
+    public String getAdminDN() {
         return adminDN;
     }
 
@@ -1635,9 +1638,9 @@ public class LdapManager {
      *
      * @param adminDN the starting DN used for performing admin searches.
      */
-    public void setAdminDN(LdapName adminDN) {
+    public void setAdminDN(String adminDN) {
         this.adminDN = adminDN;
-        properties.put("ldap.adminDN", adminDN.toString());
+        properties.put("ldap.adminDN", adminDN);
     }
 
     /**

@@ -6,6 +6,7 @@
  */
 package org.jivesoftware.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import javax.naming.ldap.Rdn;
@@ -97,5 +98,20 @@ public class LDAPTest {
         after = "\\7e Group\\7cSection \\26 Teams\\21";
         converted = LdapManager.sanitizeSearchFilter(before, false);
         assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+    }
+
+    /**
+     * Verifies that a forward-slash is escaped by  org.jivesoftware.openfire.ldap.LdapManager#escapeForJNDI(javax.naming.ldap.Rdn)
+     */
+    @Test
+    public void testEscapeForJNDI() throws Exception {
+        // Setup test fixture.
+        final Rdn input = new Rdn("cn=O/R");
+
+        // Execute system under test.
+        final String result = LdapManager.escapeForJNDI( input );
+
+        // Verify result.
+        assertEquals("cn=O\\/R", result);
     }
 }

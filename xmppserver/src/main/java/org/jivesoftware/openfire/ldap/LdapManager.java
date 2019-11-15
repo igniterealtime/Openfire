@@ -32,7 +32,6 @@ import javax.naming.directory.*;
 import javax.naming.ldap.*;
 import javax.net.ssl.SSLSession;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
@@ -98,8 +97,8 @@ public class LdapManager {
         .setDynamic(true)
         .build();
 
-    public static final SystemProperty<Boolean> PARSE_RETRY_ESCAPING = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("ldap.parse-retry-escaping")
+    public static final SystemProperty<Boolean> RDN_ESCAPE_FORWARDSLASH = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("ldap.rdn.escape.forwardslash")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
@@ -469,71 +468,54 @@ public class LdapManager {
     }
 
     /**
-     * Parses a LdapName from a Search result.
+     * Returns a RDN from the search result answer.
      *
-     * @param result The search result (cannot be null).
-     * @param baseDN The base DN on which the search was executed (cannot be null).
-     * @return The RDN that represents the result.
+     * @param answer The result of the search (cannot be null).
+     * @return A relative distinguished name from the anwer.
+     * @throws NamingException When the search result value cannot be used to form a valid RDN value.
      */
-    public static LdapName parseAsLdapName( SearchResult result, LdapName baseDN ) throws NamingException, UnsupportedEncodingException
+    public static Rdn getFirstRdnFromResult( SearchResult answer ) throws NamingException
     {
-        String name = result.getName();
+        // All other methods assume that UserDN is a relative distinguished name,
+        // not a (full) distinguised named. However if a referral was followed,
+        // a DN instead of a RDN value is returned. The following code converts
+        // a referral back to a RDN (previously referred to as a "partial" LDAP
+        // string).
+        if (!answer.isRelative()) {
+            final LdapName dn = new LdapName(( answer.getName() ));
+            final List<Rdn> rdns = dn.getRdns();
+            return rdns.get( rdns.size() - 1 );
+        }
 
         // Occasionally, the name is returned as: "cn=ship crew/cooks" (a string
-        // that starts with a quote). Quotes around the entire name cannot be
-        // parsed (unlike, for example: cn="ship crew/cooks").
-        // As this method escapes RDNs, we'll strip quotes before parsing the
-        // value further.
-        if ( name.startsWith("\"") && name.endsWith("\"")) {
+        // that starts with a quote). This likely occurs when the value contains
+        // characters that are invalid when not escaped.
+        //
+        // Quotes around the entire name cannot be parsed (unlike, for example:
+        // cn="ship crew/cooks", where the value component, rather than the
+        // entire name, is put in quotes).
+        //
+        // When quotes are detected, this method will strip them, and apply
+        // instead escaping according to the rules specified in
+        // <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>. This is
+        // designed to prevent quotes, or otherwise escaped values from showing
+        // in Openfire user and group names.
+        String name = answer.getName();
+        if ( name.startsWith("\"") && name.endsWith("\"") ) {
+            // Strip off the leading and trailing quote.
             name = name.substring(1, name.length()-1 );
-        }
 
-        // All other methods assume that UserDN is not a full LDAP string.
-        // However if a referral was followed this is not the case.  The
-        // following code converts a referral back to a "partial" LDAP string.
-        if (name.startsWith("ldap://")) {
-            // TODO there must be a better way to parse this than using string manipulations.
-            name = name.replace("," + baseDN, "");
-            name = name.substring(name.lastIndexOf("/") + 1);
-            name = java.net.URLDecoder.decode(name, "UTF-8");
-        }
-
-        return parseAsLdapName(name);
-    }
-
-    /**
-     * Returns an LdapName instance for the provided value. When parsing fails,
-     * an InvalidNameException is thrown.
-     *
-     * When enabled through configuration (see PARSE_RETRY_ESCAPING), this method
-     * will retry a failed parse after applying escaping according to the rules
-     * specified in <a href="http://www.ietf.org/rfc/rfc2253.txt">RFC 2253</a>.
-     *
-     * @param name The RDN to parse
-     * @return A parsed RDN.
-     * @throws InvalidNameException
-     */
-    public static LdapName parseAsLdapName( String name ) throws InvalidNameException
-    {
-        try {
-            return new LdapName( name );
-        } catch ( InvalidNameException e ) {
-            if ( PARSE_RETRY_ESCAPING.getValue() )
-            {
-                Log.info("Unable to parse '{}' as an LdapName. Will apply escaping and try again.", name);
-
-                // Escape the RDN that's part of the result.
-                final int split = name.indexOf("=");
-                final String field = name.substring(0, split);
-                final String rdn = name.substring(split + 1);
-                final String escapedRdn = Rdn.escapeValue(rdn);
-                return new LdapName(field + "=" + escapedRdn);
-            }
-            else
-            {
-                throw e;
+            // Escape the value (but first split off the type, to prevent the
+            // '=' character from being escaped).
+            final String[] typeValue = name.split("=",2);
+            if (typeValue.length != 2) {
+                Log.warn("Unexpected value while parsing a RDN: '{}'.", name);
+            } else {
+                name = typeValue[0] + "=" + Rdn.escapeValue(typeValue[1]);
             }
         }
+
+        return new Rdn( name );
     }
 
     /**
@@ -705,14 +687,14 @@ public class LdapManager {
      * Returns true if the user is able to successfully authenticate against
      * the LDAP server. The "simple" authentication protocol is used.
      *
-     * @param userDN the user's dn to authenticate (relative to {@code baseDN}).
+     * @param userRDN the user's rdn to authenticate (relative to {@code baseDN}).
      * @param password the user's password.
      * @return true if the user successfully authenticates.
      */
-    public boolean checkAuthentication(LdapName userDN, String password) {
+    public boolean checkAuthentication(Rdn userRDN, String password) {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
-            Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userDN is: " + userDN + "...");
+            Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userRDN is: " + userRDN + "...");
 
             if (!sslEnabled && !startTlsEnabled) {
                 Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
@@ -734,7 +716,7 @@ public class LdapManager {
              * the secure connection has been established. */
             if (!(startTlsEnabled && !sslEnabled)) {
                 env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userDN ).toString() );
+                env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userRDN ).toString() );
                 env.put(Context.SECURITY_CREDENTIALS, password);
             } else {
                 if (followReferrals) {
@@ -794,7 +776,7 @@ public class LdapManager {
                     }
 
                     ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userDN ));
+                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userRDN ));
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
@@ -805,7 +787,7 @@ public class LdapManager {
                 // make at least one lookup to check authorization
                 lookupExistence(
                         ctx,
-                        createNewAbsolute( baseDN, userDN ),
+                        createNewAbsolute( baseDN, userRDN ),
                         new String[] {usernameField});
             }
 
@@ -839,7 +821,7 @@ public class LdapManager {
                      * the secure connection has been established. */
                     if (!(startTlsEnabled && !sslEnabled)) {
                         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userDN ));
+                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
 
@@ -885,7 +867,7 @@ public class LdapManager {
                             }
 
                             ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userDN ));
+                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {
@@ -896,7 +878,7 @@ public class LdapManager {
                         // make at least one lookup to check user authorization
                         lookupExistence(
                                 ctx,
-                                createNewAbsolute(alternateBaseDN, userDN),
+                                createNewAbsolute(alternateBaseDN, userRDN),
                                 new String[] {usernameField});
                     }
                 }
@@ -931,9 +913,9 @@ public class LdapManager {
         return findUsersFromGroupsEnabled;
     }
 
-    public static LdapName createNewAbsolute( LdapName base, LdapName relative )
+    public static LdapName createNewAbsolute( LdapName base, Rdn relative )
     {
-        return (LdapName)((LdapName) base.clone()).addAll(relative.getRdns());
+        return (LdapName)((LdapName) base.clone()).add(relative);
     }
 
     /**
@@ -986,7 +968,7 @@ public class LdapManager {
     }
 
     /**
-     * Finds a user's dn using their username. Normally, this search will
+     * Finds a user's RDN using their username. Normally, this search will
      * be performed using the field "uid", but this can be changed by setting
      * the {@code usernameField} property.<p>
      *
@@ -1009,7 +991,7 @@ public class LdapManager {
      * @return the dn associated with {@code username}.
      * @throws Exception if the search for the dn fails.
      */
-    public LdapName findUserDN( String username ) throws Exception
+    public Rdn findUserRDN( String username ) throws Exception
     {
         if ( userDNCache != null )
         {
@@ -1017,30 +999,30 @@ public class LdapManager {
             final DNCacheEntry dnCacheEntry = userDNCache.get( username );
             if ( dnCacheEntry != null )
             {
-                return dnCacheEntry.getUserDN();
+                return dnCacheEntry.getUserRDN();
             }
         }
 
         // No cache entry. Query for the value, and add that to the cache.
         try
         {
-            final LdapName userDN = findUserDN( username, baseDN );
+            final Rdn userRDN = findUserRDN( username, baseDN );
             if ( userDNCache != null )
             {
-                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+                userDNCache.put( username, new DNCacheEntry( userRDN, baseDN ) );
             }
-            return userDN;
+            return userRDN;
         }
         catch ( Exception e )
         {
             if ( alternateBaseDN != null )
             {
-                final LdapName userDN = findUserDN( username, alternateBaseDN );
+                final Rdn userRDN = findUserRDN( username, alternateBaseDN );
                 if ( userDNCache != null )
                 {
-                    userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                    userDNCache.put( username, new DNCacheEntry( userRDN, alternateBaseDN ) );
                 }
-                return userDN;
+                return userRDN;
             }
             else
             {
@@ -1050,9 +1032,9 @@ public class LdapManager {
     }
 
     /**
-     * Finds a user's dn using their username in the specified baseDN. Normally, this search
+     * Finds a user's RDN using their username in the specified baseDN. Normally, this search
      * will be performed using the field "uid", but this can be changed by setting
-     * the {@code usernameField} property.<p>
+     * the {@code usernameField} property.
      *
      * Searches are performed over all sub-trees relative to the {@code baseDN} unless
      * sub-tree searching has been disabled. For example, if the {@code baseDN} is
@@ -1066,28 +1048,22 @@ public class LdapManager {
      * "uid=mtucker,ou=Administrators". In such a case, it's not possible to
      * uniquely identify a user, so this method will throw an error.<p>
      *
-     * The DN that's returned is relative to the {@code baseDN}.
+     * The RDN that's returned is relative to the {@code baseDN}.
      *
      * @param username the username to lookup the dn for.
      * @param baseDN the base DN to use for this search.
-     * @return the dn associated with {@code username}.
-     * @throws Exception if the search for the dn fails.
-     * @see #findUserDN(String) to search using the default baseDN and alternateBaseDN.
+     * @return the RDN associated with {@code username}.
+     * @throws Exception if the search for the RDN fails.
+     * @see #findUserRDN(String) to search using the default baseDN and alternateBaseDN.
      */
-    public LdapName findUserDN(String username, LdapName baseDN) throws Exception {
-        boolean debug = Log.isDebugEnabled();
+    public Rdn findUserRDN(String username, LdapName baseDN) throws Exception {
         //Support for usernameSuffix
         username = username + usernameSuffix;
-        if (debug) {
-            Log.debug("LdapManager: Trying to find a user's DN based on their username. " + usernameField + ": " + username
-                    + ", Base DN: " + baseDN + "...");
-        }
+        Log.debug("LdapManager: Trying to find a user's RDN based on their username: '{}'. Field: '{}', Base DN: '{}' ...", usernameField, username, baseDN);
         DirContext ctx = null;
         try {
             ctx = getContext(baseDN);
-            if (debug) {
-                Log.debug("LdapManager: Starting LDAP search...");
-            }
+            Log.debug("LdapManager: Starting LDAP search for username '{}'...", username);
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
             // If sub-tree searching is enabled (default is true) then search the entire tree.
@@ -1105,18 +1081,15 @@ public class LdapManager {
                     new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
-            if (debug) {
-                Log.debug("LdapManager: ... search finished");
-            }
+            Log.debug("LdapManager: ... search finished for username '{}'.", username);
 
             if (answer == null || !answer.hasMoreElements()) {
-                if (debug) {
-                    Log.debug("LdapManager: User DN based on username '" + username + "' not found.");
-                }
+                Log.debug("LdapManager: User DN based on username '{}' not found.", username);
                 throw new UserNotFoundException("Username " + username + " not found");
             }
 
-            final LdapName userDN = parseAsLdapName( answer.next(), baseDN );
+            final SearchResult result = answer.next();
+            final Rdn userRDN = getFirstRdnFromResult( result );
 
             // Make sure there are no more search results. If there are, then
             // the username isn't unique on the LDAP server (a perfectly possible
@@ -1124,34 +1097,30 @@ public class LdapManager {
             // There really isn't a way to handle this, so throw an exception.
             // The baseDN must be set correctly so that this doesn't happen.
             if (answer.hasMoreElements()) {
-                if (debug) {
-                    Log.debug("LdapManager: Search for userDN based on username '" + username + "' found multiple " +
-                            "responses, throwing exception.");
-                }
-                throw new UserNotFoundException("LDAP username lookup for " + username +
-                        " matched multiple entries.");
+                Log.debug("LdapManager: Search for userDN based on username '{}' found multiple responses, throwing exception.", username);
+                throw new UserNotFoundException("LDAP username lookup for " + username + " matched multiple entries.");
             }
             // Close the enumeration.
             answer.close();
 
-            return userDN;
+            return userRDN;
         } catch (final UserNotFoundException e) {
-            Log.trace("LdapManager: UserNotFoundException thrown", e);
+            Log.trace("LdapManager: UserNotFoundException thrown when searching for username '{}'", username, e);
             throw e;
         } catch (final Exception e) {
-            Log.debug("LdapManager: Exception thrown when searching for userDN based on username '" + username + "'", e);
+            Log.debug("LdapManager: Exception thrown when searching for userDN based on username '{}'", username, e);
             throw e;
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) {
-                // Ignore.
+            try { if ( ctx != null ) { ctx.close(); } }
+            catch (Exception e) {
+                Log.debug("An unexpected exception occurred while closing the LDAP context after searching for user '{}'.", username, e);
             }
         }
     }
 
     /**
-     * Finds a groups's dn using it's group name. Normally, this search will
+     * Finds a groups's RDN using it's group name. Normally, this search will
      * be performed using the field "cn", but this can be changed by setting
      * the {@code groupNameField} property.<p>
      *
@@ -1168,19 +1137,19 @@ public class LdapManager {
      * "cn=managers,ou=Engineers". In such a case, it's not possible to
      * uniquely identify a group, so this method will throw an error.<p>
      *
-     * The dn that's returned is relative to the default {@code baseDN}.
+     * The RDN that's returned is relative to the default {@code baseDN}.
      *
-     * @param groupname the groupname to lookup the dn for.
-     * @return the dn associated with {@code groupname}.
-     * @throws Exception if the search for the dn fails.
+     * @param groupname the groupname to lookup the RDN for.
+     * @return the RDN associated with {@code groupname}.
+     * @throws Exception if the search for the RDN fails.
      */
-    public LdapName findGroupDN(String groupname) throws Exception {
+    public Rdn findGroupRDN(String groupname) throws Exception {
         try {
-            return findGroupDN(groupname, baseDN);
+            return findGroupRDN(groupname, baseDN);
         }
         catch (Exception e) {
             if (alternateBaseDN != null) {
-                return findGroupDN(groupname, alternateBaseDN);
+                return findGroupRDN(groupname, alternateBaseDN);
             }
             else {
                 throw e;
@@ -1212,20 +1181,16 @@ public class LdapManager {
      * @param baseDN the base DN to use for this search.
      * @return the dn associated with {@code groupname}.
      * @throws Exception if the search for the dn fails.
-     * @see #findGroupDN(String) to search using the default baseDN and alternateBaseDN.
+     * @see #findGroupRDN(String) to search using the default baseDN and alternateBaseDN.
      */
-    public LdapName findGroupDN(String groupname, LdapName baseDN) throws Exception {
-        boolean debug = Log.isDebugEnabled();
-        if (debug) {
-            Log.debug("LdapManager: Trying to find a groups's DN based on it's groupname. " + groupNameField + ": " + groupname
-                    + ", Base DN: " + baseDN + "...");
-        }
+    public Rdn findGroupRDN(String groupname, LdapName baseDN) throws Exception {
+        Log.debug("LdapManager: Trying to find a groups's RDN based on their group name: '{}'. Field: '{}', Base DN: '{}' ...", usernameField, groupname, baseDN);
+
         DirContext ctx = null;
         try {
             ctx = getContext(baseDN);
-            if (debug) {
-                Log.debug("LdapManager: Starting LDAP search...");
-            }
+            Log.debug("LdapManager: Starting LDAP search for group '{}'...", groupname);
+
             // Search for the dn based on the groupname.
             SearchControls constraints = new SearchControls();
             // If sub-tree searching is enabled (default is true) then search the entire tree.
@@ -1241,18 +1206,15 @@ public class LdapManager {
             String filter = MessageFormat.format(getGroupSearchFilter(), sanitizeSearchFilter(groupname));
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, constraints);
 
-            if (debug) {
-                Log.debug("LdapManager: ... search finished");
-            }
+            Log.debug("LdapManager: ... search finished for group '{}'.", groupname);
 
             if (answer == null || !answer.hasMoreElements()) {
-                if (debug) {
-                    Log.debug("LdapManager: Group DN based on groupname '" + groupname + "' not found.");
-                }
+                Log.debug("LdapManager: Group DN based on groupname '{}' not found.", groupname);
                 throw new GroupNotFoundException("Groupname " + groupname + " not found");
             }
 
-            final LdapName groupDN = parseAsLdapName( answer.next(), baseDN );
+            final SearchResult result = answer.next();
+            final Rdn groupRDN = getFirstRdnFromResult( result );
 
             // Make sure there are no more search results. If there are, then
             // the groupname isn't unique on the LDAP server (a perfectly possible
@@ -1260,31 +1222,24 @@ public class LdapManager {
             // There really isn't a way to handle this, so throw an exception.
             // The baseDN must be set correctly so that this doesn't happen.
             if (answer.hasMoreElements()) {
-                if (debug) {
-                    Log.debug("LdapManager: Search for groupDN based on groupname '" + groupname + "' found multiple " +
-                            "responses, throwing exception.");
-                }
-                throw new GroupNotFoundException("LDAP groupname lookup for " + groupname +
-                        " matched multiple entries.");
+                Log.debug("LdapManager: Search for groupDN based on groupname '{}' found multiple responses, throwing exception.", groupname);
+                throw new GroupNotFoundException("LDAP groupname lookup for " + groupname + " matched multiple entries.");
             }
             // Close the enumeration.
             answer.close();
-//
-//            if (encloseGroupDN) {
-//                groupDN = getEnclosedDN(groupDN);
-//            }
-            return groupDN;
+
+            return groupRDN;
         } catch (final GroupNotFoundException e) {
-            Log.trace("LdapManager: GroupNotFoundException thrown", e);
+            Log.trace("LdapManager: Group not found: '{}'", groupname, e);
             throw e;
         } catch (final Exception e) {
-            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '" + groupname + "'", e);
+            Log.debug("LdapManager: Exception thrown when searching for groupDN based on groupname '{}'", groupname, e);
             throw e;
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) {
-                // Ignore.
+            try { if ( ctx != null ) { ctx.close(); } }
+            catch (Exception e) {
+                Log.debug("An unexpected exception occurred while closing the LDAP context after searching for group '{}'.", groupname, e);
             }
         }
     }
@@ -1608,10 +1563,10 @@ public class LdapManager {
         // No cache entry. Query for the value, and add that to the cache.
         try
         {
-            final LdapName userDN = findUserDN( username, baseDN );
+            final Rdn userRDN = findUserRDN( username, baseDN );
             if ( userDNCache != null )
             {
-                userDNCache.put( username, new DNCacheEntry( userDN, baseDN ) );
+                userDNCache.put( username, new DNCacheEntry( userRDN, baseDN ) );
             }
             return baseDN;
         }
@@ -1621,10 +1576,10 @@ public class LdapManager {
             {
                 if ( alternateBaseDN != null )
                 {
-                    final LdapName userDN = findUserDN( username, alternateBaseDN );
+                    final Rdn userRDN = findUserRDN( username, alternateBaseDN );
                     if ( userDNCache != null )
                     {
-                        userDNCache.put( username, new DNCacheEntry( userDN, alternateBaseDN ) );
+                        userDNCache.put( username, new DNCacheEntry( userRDN, alternateBaseDN ) );
                     }
                     return alternateBaseDN;
                 }
@@ -1647,13 +1602,13 @@ public class LdapManager {
      */
     public LdapName getGroupsBaseDN(String groupname) {
         try {
-            findGroupDN(groupname, baseDN);
+            findGroupRDN(groupname, baseDN);
             return baseDN;
         }
         catch (Exception e) {
             try {
                 if (alternateBaseDN != null) {
-                    findGroupDN(groupname, alternateBaseDN);
+                    findGroupRDN(groupname, alternateBaseDN);
                     return alternateBaseDN;
                 }
             }
@@ -2314,7 +2269,26 @@ public class LdapManager {
       return sanitizeSearchFilter(value, false);
       
     }
-      
+
+    /**
+     * Returns a string value for a RDN that is suitable to use to access LDAP
+     * through JNDI.
+     *
+     * <blockquote>When using the JNDI to access an LDAP service, you should be
+     * aware that the forward slash character ("/") in a string name has special
+     * meaning to the JNDI. If the LDAP entry's name contains this character,
+     * then you need to escape it (using the backslash character ("\")).
+     * For example, an LDAP entry with the name "cn=O/R" must be presented as
+     * the string "cn=O\\/R" to the JNDI context methods.</blockquote>
+     *
+     * @param rdn The name to escape (cannot be null).
+     * @return The escaped name (never null).
+     * @see https://docs.oracle.com/javase/tutorial/jndi/ldap/jndi.html
+     */
+    public static String escapeForJNDI( Rdn rdn ) {
+        return rdn.toString().replaceAll("/","\\\\/");
+    }
+
     /**
      * Escapes any special chars (RFC 4514/4515) from a string representing
      * a search filter assertion value, with the exception of the '*' wildcard sign
@@ -2381,18 +2355,18 @@ public class LdapManager {
 
     private static class DNCacheEntry implements Serializable
     {
-        private final LdapName userDN; // relative to baseDN!
+        private final Rdn userRDN; // relative to baseDN!
         private final LdapName baseDN;
 
-        public DNCacheEntry( LdapName userDN, LdapName baseDN )
+        public DNCacheEntry( Rdn userRDN, LdapName baseDN )
         {
-            this.userDN = userDN;
+            this.userRDN = userRDN;
             this.baseDN = baseDN;
         }
 
-        public LdapName getUserDN()
+        public Rdn getUserRDN()
         {
-            return userDN;
+            return userRDN;
         }
 
         public LdapName getBaseDN()
@@ -2414,7 +2388,7 @@ public class LdapManager {
 
             DNCacheEntry that = (DNCacheEntry) o;
 
-            if ( userDN != null ? !userDN.equals( that.userDN ) : that.userDN != null )
+            if ( userRDN != null ? !userRDN.equals(that.userRDN) : that.userRDN != null )
             {
                 return false;
             }
@@ -2424,7 +2398,7 @@ public class LdapManager {
         @Override
         public int hashCode()
         {
-            int result = userDN != null ? userDN.hashCode() : 0;
+            int result = userRDN != null ? userRDN.hashCode() : 0;
             result = 31 * result + ( baseDN != null ? baseDN.hashCode() : 0 );
             return result;
         }

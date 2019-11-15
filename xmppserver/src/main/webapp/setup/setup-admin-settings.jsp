@@ -162,7 +162,7 @@
                     manager.setUsernameField(userSettings.get("ldap.usernameField"));
                     manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
                     try {
-                        manager.findUserDN(JID.unescapeNode(admin));
+                        manager.findUserRDN(JID.unescapeNode(admin));
                     }
                     catch (Exception e) {
                         e.printStackTrace();

@@ -474,7 +474,7 @@ public class LdapManager {
      * Returns a RDN from the search result answer.
      *
      * @param answer The result of the search (cannot be null).
-     * @return A relative distinguished name from the anwer.
+     * @return A relative distinguished name from the answer.
      * @throws NamingException When the search result value cannot be used to form a valid RDN value.
      */
     public static Rdn getFirstRdnFromResult( SearchResult answer ) throws NamingException

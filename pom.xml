@@ -139,9 +139,6 @@
 
         <profile>
             <id>release</id>
-            <properties>
-                <argLine>-Duser.language=us -Duser.country=US</argLine>
-            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -164,9 +161,6 @@
 
         <profile>
             <id>ci</id>
-            <properties>
-                <argLine>-Duser.language=us -Duser.country=US</argLine>
-            </properties>
             <build>
                 <plugins>
                     <plugin>

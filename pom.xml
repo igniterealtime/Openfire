@@ -128,16 +128,6 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <argLine>-Duser.language=us -Duser.country=US</argLine>
-            </properties>
-        </profile>
-
-        <profile>
             <id>release</id>
             <build>
                 <plugins>
@@ -211,6 +201,9 @@
                             <excludes>
                                 <exclude>**/*_jsp.class</exclude>
                             </excludes>
+
+                            <destFile>${project.build.directory}/coverage-reports/jacoco-unit.exec</destFile>
+                            <dataFile>${project.build.directory}/coverage-reports/jacoco-unit.exec</dataFile>
                         </configuration>
                         <executions>
                             <execution>
@@ -219,6 +212,7 @@
                                     <goal>prepare-agent</goal>
                                 </goals>
                                 <configuration>
+                                    <destFile>${project.build.directory}/coverage-reports/jacoco-unit.exec</destFile>
                                     <propertyName>argLine</propertyName>
                                 </configuration>
                             </execution>

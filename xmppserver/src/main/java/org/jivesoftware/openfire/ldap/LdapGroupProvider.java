@@ -37,12 +37,10 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
@@ -145,7 +143,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             }
             username = JID.unescapeNode(user.getNode());
             try {
-                username = manager.findUserRDN(username) + "," + manager.getUsersBaseDN(username);
+                final String relativePart =
+                    Arrays.stream(manager.findUserRDN(username))
+                    .map(Rdn::toString)
+                    .collect(Collectors.joining(","));
+
+                username = relativePart + "," + manager.getUsersBaseDN(username);
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);

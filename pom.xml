@@ -207,9 +207,6 @@
 
         <profile>
             <id>coverage</id>
-            <properties>
-                <argLine>@{argLine} -Duser.language=us -Duser.country=US</argLine>
-            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -239,6 +236,18 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.0.0-M3</version>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
+                            </systemPropertyVariables>
+                            <argLine>@{argLine} -Duser.language=us -Duser.country=US</argLine>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

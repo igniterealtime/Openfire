@@ -152,7 +152,7 @@ public class LdapUserTester {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            Rdn userRDN = manager.findUserRDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
             // Build list of attributes to load from LDAP
             Map<String, PropertyMapping> ldapMappings = getLdapAttributes();
             Set<String> fields = new HashSet<>();

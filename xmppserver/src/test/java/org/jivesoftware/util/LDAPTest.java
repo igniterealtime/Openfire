@@ -1,14 +1,16 @@
 /*
  * Copyright (C) 2008 Daniel Henninger. All rights reserved.
  *
- * This software is published under the terms of the GNU Public License (GPL),
- * a copy of which is included in this distribution.
+ * This software is published under the terms of the GNU Public License (GPL), a copy of which is
+ * included in this distribution.
  */
 package org.jivesoftware.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
+import java.util.ArrayList;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Rdn;
 
 import org.jivesoftware.Fixtures;
@@ -113,5 +115,85 @@ public class LDAPTest {
 
         // Verify result.
         assertEquals("cn=O\\/R", result);
+    }
+
+    /**
+     * Verifies that org.jivesoftware.openfire.ldap.LdapManager#escapeForJNDI(javax.naming.ldap.Rdn) can handle an array
+     * or RDN values.
+     */
+    @Test
+    public void testEscapeForJNDIArray() throws Exception {
+        // Setup test fixture.
+        final Rdn[] input = new Rdn[] {
+            new Rdn("cn=O/R"),
+            new Rdn("o=Acme/Foo")
+        };
+
+        // Execute system under test.
+        final String result = LdapManager.escapeForJNDI( input );
+
+        // Verify result.
+        assertEquals("cn=O\\/R,o=Acme\\/Foo", result);
+    }
+
+    /**
+     * Verifies that org.jivesoftware.openfire.ldap.LdapManager#getRelativeDNFromResult(javax.naming.directory.SearchResult)
+     * can handle a result that contains one RDN value.
+     */
+    @Test
+    public void testGetRelativeDNFromResultSingleValue() throws Exception
+    {
+        // Setup test fixture.
+        final SearchResult input = new SearchResult( "cn=bender", null, new BasicAttributes(), true );
+
+        // Execute system under test.
+        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+
+        // Verify result.
+        assertEquals( 1, result.length );
+        assertEquals( "cn", result[0].getType() );
+        assertEquals( "bender", result[0].getValue() );
+    }
+
+    /**
+     * Verifies that org.jivesoftware.openfire.ldap.LdapManager#getRelativeDNFromResult(javax.naming.directory.SearchResult)
+     * can handle a result that contains multiple RDN values.
+     */
+    @Test
+    public void testGetRelativeDNFromResultMultiValue() throws Exception
+    {
+        // Setup test fixture.
+        final SearchResult input = new SearchResult( "cn=bender,ou=people", null, new BasicAttributes(), true );
+
+        // Execute system under test.
+        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+
+        // Verify result.
+        assertEquals( 2, result.length );
+        assertEquals( "cn", result[0].getType() );
+        assertEquals( "bender", result[0].getValue() );
+        assertEquals( "ou", result[1].getType() );
+        assertEquals( "people", result[1].getValue() );
+    }
+
+    /**
+     * Verifies that org.jivesoftware.openfire.ldap.LdapManager#getRelativeDNFromResult(javax.naming.directory.SearchResult)
+     * can handle a result that contains multiple RDN values.
+     *
+     * Openldap has been observed returning the type of quoted values that are tested here.
+     */
+    @Test
+    public void testGetRelativeDNFromResultQuoted() throws Exception
+    {
+        // Setup test fixture.
+        final SearchResult input = new SearchResult( "\"cn=ship crew/cooks\"", null, new BasicAttributes(), true );
+
+        // Execute system under test.
+        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+
+        // Verify result.
+        assertEquals( 1, result.length );
+        assertEquals( "cn", result[0].getType() );
+        assertEquals( "ship crew/cooks", result[0].getValue() );
     }
 }

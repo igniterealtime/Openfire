@@ -44,7 +44,7 @@
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
         try {
-            Rdn userRDN = manager.findUserRDN(JID.unescapeNode(username));
+            Rdn[] userRDN = manager.findUserRDN(JID.unescapeNode(username));
             // See if the user authenticates.
             if (manager.checkAuthentication(userRDN, password)) {
                 // User was able to authenticate with provided password

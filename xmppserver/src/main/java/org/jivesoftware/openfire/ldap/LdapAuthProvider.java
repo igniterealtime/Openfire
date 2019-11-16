@@ -16,10 +16,6 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import javax.naming.CommunicationException;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.Rdn;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -31,6 +27,9 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.naming.CommunicationException;
+import javax.naming.ldap.Rdn;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -98,7 +97,7 @@ public class LdapAuthProvider implements AuthProvider {
             }
         }
 
-        Rdn userRDN;
+        Rdn[] userRDN;
         try {
             // The username by itself won't help us much with LDAP since we
             // need a fully qualified dn. We could make the assumption that

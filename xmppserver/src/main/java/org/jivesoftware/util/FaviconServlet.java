@@ -17,8 +17,10 @@
 package org.jivesoftware.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -37,6 +39,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -77,6 +80,7 @@ public class FaviconServlet extends HttpServlet {
      * Cache the favicons that we've found.
      */
     private Cache<String, byte[]> hitsCache;
+    private SessionManager sessionManager;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -88,15 +92,15 @@ public class FaviconServlet extends HttpServlet {
             .build();
         // Load the default favicon to use when no favicon was found of a remote host
         try {
-            URL resource = config.getServletContext().getResource("/images/server_16x16.gif");
-            defaultBytes = getImage(resource.toString());
+           defaultBytes = Files.readAllBytes(Paths.get(JiveGlobals.getHomeDirectory(), "plugins/admin/webapp/images/server_16x16.gif"));
         }
-        catch (MalformedURLException e) {
+        catch (final IOException e) {
             LOGGER.warn("Unable to retrieve default favicon", e);
         }
         // Initialize caches.
         missesCache = CacheFactory.createCache("Favicon Misses");
         hitsCache = CacheFactory.createCache("Favicon Hits");
+        sessionManager = SessionManager.getInstance();
     }
 
     @Override
@@ -116,11 +120,22 @@ public class FaviconServlet extends HttpServlet {
      */
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String host = request.getParameter("host");
-        // Check special cases where we need to change host to get a favicon
-        host = "gmail.com".equals(host) ? "google.com" : host;
+        final String host = request.getParameter("host");
 
-        byte[] bytes = getImage(host, defaultBytes);
+        // Validate that we're connected to the host
+        final Optional<String> optionalHost = Stream
+            .concat(sessionManager.getIncomingServers().stream(), sessionManager.getOutgoingServers().stream())
+            .filter(remoteServerHost -> remoteServerHost.equalsIgnoreCase(host))
+            .findAny();
+        if (!optionalHost.isPresent()) {
+            LOGGER.info("Request to unconnected host {} ignored - using default response", host);
+            writeBytesToStream(defaultBytes, response);
+            return;
+        }
+
+        // Check special cases where we need to change host to get a favicon
+        final String hostToUse = "gmail.com".equals(host) ? "google.com" : host;
+        byte[] bytes = getImage(hostToUse, defaultBytes);
         if (bytes != null) {
             writeBytesToStream(bytes, response);
         }

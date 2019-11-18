@@ -523,7 +523,13 @@ public class LdapManager {
             needsEscaping = true;
         }
 
-        List<Rdn> result = new ArrayList<>();
+        if (!needsEscaping)
+        {
+            // The search result contains a JNDI composite name. From this, a DN needs to be extracted before it can be processed further.
+            // See https://bugs.openjdk.java.net/browse/JDK-6201615?focusedCommentId=12344311&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-12344311
+            final Name cname = new CompositeName(name);
+            name = cname.get(0);
+        }
 
         // Split the search result, which is a relative distinguished name, into separate Rdn values, using a regular expression.
         //
@@ -534,6 +540,7 @@ public class LdapManager {
         //   which must be followed by at least one other character.
         final String[] rdns = name.split("(?<![\\\\]),(?=[a-zA-z]+=.+)");
 
+        final List<Rdn> result = new ArrayList<>();
         for (String rdn : rdns)
         {
             // If the entire value was in quotes, each individual RDN needs escaping.
@@ -1132,7 +1139,7 @@ public class LdapManager {
             }
 
             final SearchResult result = answer.next();
-            final Rdn[] userRDN = getRelativeDNFromResult(result );
+            final Rdn[] userRDN = getRelativeDNFromResult(result);
 
             // Make sure there are no more search results. If there are, then
             // the username isn't unique on the LDAP server (a perfectly possible
@@ -2320,11 +2327,10 @@ public class LdapManager {
     }
 
     /**
-     * Returns a string value for an array of RDNs that is suitable to use to
+     * Returns a JNDI Name for an array of RDNs that is suitable to use to
      * access LDAP through JNDI.
      *
-     * This method applies JDNI-suitable escaping to each RDN, and joins them
-     * into one string, using a comma for a join character.
+     * This method applies JDNI-suitable escaping to each RDN
      *
      * <blockquote>When using the JNDI to access an LDAP service, you should be
      * aware that the forward slash character ("/") in a string name has special
@@ -2334,13 +2340,19 @@ public class LdapManager {
      * the string "cn=O\\/R" to the JNDI context methods.</blockquote>
      *
      * @param rdn The names to escape (cannot be null).
-     * @return A string consisting of comma-separated escaped values (never null).
+     * @return A JNDI name representation of the values (never null).
      * @see https://docs.oracle.com/javase/tutorial/jndi/ldap/jndi.html
+     * @see https://docs.oracle.com/javase/jndi/tutorial/beyond/names/syntax.html
      */
-    public static String escapeForJNDI( Rdn... rdn ) {
-        return Arrays.stream(rdn)
-            .map(value -> value.toString().replaceAll("/", "\\\\/"))
-            .collect(Collectors.joining(","));
+    public static Name escapeForJNDI( Rdn... rdn )
+    {
+        // Create a clone, to prevent changes to ordering of elements to affect the original array.
+        final Rdn[] copy = Arrays.copyOf(rdn, rdn.length);
+        final List<Rdn> rdns = Arrays.asList(copy);
+        Collections.reverse(rdns);
+
+        // LdapName is a JNDI name that will apply all relevant escaping.
+        return new LdapName(rdns);
     }
 
     /**

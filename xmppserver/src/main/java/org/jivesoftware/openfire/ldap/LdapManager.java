@@ -328,13 +328,13 @@ public class LdapManager {
         connectionPoolEnabled = true;
         String connectionPoolStr = properties.get("ldap.connectionPoolEnabled");
         if (connectionPoolStr != null) {
-            connectionPoolEnabled = Boolean.valueOf(connectionPoolStr);
+            connectionPoolEnabled = Boolean.parseBoolean(connectionPoolStr);
         }
         searchFilter = properties.get("ldap.searchFilter");
         subTreeSearch = true;
         String subTreeStr = properties.get("ldap.subTreeSearch");
         if (subTreeStr != null) {
-            subTreeSearch = Boolean.valueOf(subTreeStr);
+            subTreeSearch = Boolean.parseBoolean(subTreeStr);
         }
         groupNameField = properties.get("ldap.groupNameField");
         if (groupNameField == null) {
@@ -351,7 +351,7 @@ public class LdapManager {
         posixMode = false;
         String posixStr = properties.get("ldap.posixMode");
         if (posixStr != null) {
-            posixMode = Boolean.valueOf(posixStr);
+            posixMode = Boolean.parseBoolean(posixStr);
         }
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
 
@@ -364,27 +364,27 @@ public class LdapManager {
         ldapDebugEnabled = false;
         String ldapDebugStr = properties.get("ldap.debugEnabled");
         if (ldapDebugStr != null) {
-            ldapDebugEnabled = Boolean.valueOf(ldapDebugStr);
+            ldapDebugEnabled = Boolean.parseBoolean(ldapDebugStr);
         }
         sslEnabled = false;
         String sslEnabledStr = properties.get("ldap.sslEnabled");
         if (sslEnabledStr != null) {
-            sslEnabled = Boolean.valueOf(sslEnabledStr);
+            sslEnabled = Boolean.parseBoolean(sslEnabledStr);
         }
         startTlsEnabled = false;
         String startTlsEnabledStr = properties.get("ldap.startTlsEnabled");
         if (startTlsEnabledStr != null) {
-            startTlsEnabled = Boolean.valueOf(startTlsEnabledStr);
+            startTlsEnabled = Boolean.parseBoolean(startTlsEnabledStr);
         }
         followReferrals = false;
         String followReferralsStr = properties.get("ldap.autoFollowReferrals");
         if (followReferralsStr != null) {
-            followReferrals = Boolean.valueOf(followReferralsStr);
+            followReferrals = Boolean.parseBoolean(followReferralsStr);
         }
         followAliasReferrals = true;
         String followAliasReferralsStr = properties.get("ldap.autoFollowAliasReferrals");
         if (followAliasReferralsStr != null) {
-            followAliasReferrals = Boolean.valueOf(followAliasReferralsStr);
+            followAliasReferrals = Boolean.parseBoolean(followAliasReferralsStr);
         }
 
         this.initialContextFactory = properties.get("ldap.initialContextFactory");

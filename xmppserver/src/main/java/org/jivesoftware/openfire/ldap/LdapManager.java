@@ -184,25 +184,25 @@ public class LdapManager {
     private String nameField;
     private String emailField;
     private LdapName baseDN;
-    private LdapName alternateBaseDN = null;
-    private String adminDN = null;
+    private LdapName alternateBaseDN;
+    private String adminDN;
     private String adminPassword;
-    private boolean ldapDebugEnabled = false;
-    private boolean sslEnabled = false;
+    private boolean ldapDebugEnabled;
+    private boolean sslEnabled;
     private String initialContextFactory;
-    private boolean followReferrals = false;
-    private boolean followAliasReferrals = true;
-    private boolean connectionPoolEnabled = true;
-    private String searchFilter = null;
+    private boolean followReferrals;
+    private boolean followAliasReferrals;
+    private boolean connectionPoolEnabled;
+    private String searchFilter;
     private boolean subTreeSearch;
-    private boolean startTlsEnabled = false;
+    private boolean startTlsEnabled;
     private final boolean findUsersFromGroupsEnabled;
 
     private String groupNameField;
     private String groupMemberField;
     private String groupDescriptionField;
-    private boolean posixMode = false;
-    private String groupSearchFilter = null;
+    private boolean posixMode;
+    private String groupSearchFilter;
 
     private final Map<String, String> properties;
 
@@ -952,7 +952,7 @@ public class LdapManager {
 
     public static LdapName createNewAbsolute( LdapName base, Rdn[] relative )
     {
-        final LdapName result = (LdapName)((LdapName) base.clone());
+        final LdapName result = (LdapName) base.clone();
         for (int i = relative.length - 1; i >= 0; i--) {
             result.add(relative[i]);
         }

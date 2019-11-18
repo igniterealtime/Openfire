@@ -1978,10 +1978,10 @@ public class LdapManager {
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
         List<String> results = new ArrayList<>();
         final int pageSize = LDAP_PAGE_SIZE.getValue();
-        Boolean clientSideSort = false;
+        boolean clientSideSort = false;
         String clientSideSortStr = properties.get("ldap.clientSideSorting");
         if (clientSideSortStr != null) {
-            clientSideSort = Boolean.valueOf(clientSideSortStr);
+            clientSideSort = Boolean.parseBoolean(clientSideSortStr);
         }
         LdapContext ctx = null;
         LdapContext ctx2 = null;
@@ -1998,7 +1998,7 @@ public class LdapManager {
                 // Server side paging.
                 baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
-            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[baseTmpRequestControls.size()]);
+            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[0]);
             ctx.setRequestControls(baseRequestControls);
 
             SearchControls searchControls = new SearchControls();
@@ -2072,7 +2072,7 @@ public class LdapManager {
                     // Server side paging.
                     tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
                 }
-                Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                Control[] requestControls = tmpRequestControls.toArray(new Control[0]);
                 ctx.setRequestControls(requestControls);
             } while (cookie != null && (lastRes == -1 || count <= lastRes));
 
@@ -2129,7 +2129,7 @@ public class LdapManager {
                         // Server side paging.
                         tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
                     }
-                    Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                    Control[] requestControls = tmpRequestControls.toArray(new Control[0]);
                     ctx2.setRequestControls(requestControls);
                 } while (cookie != null && (lastRes == -1 || count <= lastRes));
             }
@@ -2199,7 +2199,7 @@ public class LdapManager {
                 // Server side paging.
                 baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
-            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[baseTmpRequestControls.size()]);
+            Control[] baseRequestControls = baseTmpRequestControls.toArray(new Control[0]);
             ctx.setRequestControls(baseRequestControls);
 
             SearchControls searchControls = new SearchControls();
@@ -2240,7 +2240,7 @@ public class LdapManager {
                     // Server side paging.
                     tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
                 }
-                Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                Control[] requestControls = tmpRequestControls.toArray(new Control[0]);
                 ctx.setRequestControls(requestControls);
             } while (cookie != null);
 
@@ -2277,7 +2277,7 @@ public class LdapManager {
                         // Server side paging.
                         tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
                     }
-                    Control[] requestControls = tmpRequestControls.toArray(new Control[tmpRequestControls.size()]);
+                    Control[] requestControls = tmpRequestControls.toArray(new Control[0]);
                     ctx2.setRequestControls(requestControls);
                 } while (cookie != null);
             }

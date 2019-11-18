@@ -992,8 +992,6 @@ public class LdapManager {
                     srcnt);
         } catch (javax.naming.NameNotFoundException nex) {
             // DN not found
-        } catch (NamingException ex){
-            throw ex;
         }
 
         if (answer == null || !answer.hasMoreElements())

@@ -35,13 +35,10 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.*;
 import javax.net.ssl.SSLSession;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -101,12 +98,6 @@ public class LdapManager {
     public static final SystemProperty<Integer> LDAP_PAGE_SIZE = SystemProperty.Builder.ofType(Integer.class)
         .setKey("ldap.pagedResultsSize")
         .setDefaultValue(-1)
-        .setDynamic(true)
-        .build();
-
-    public static final SystemProperty<Boolean> RDN_ESCAPE_FORWARDSLASH = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("ldap.rdn.escape.forwardslash")
-        .setDefaultValue(true)
         .setDynamic(true)
         .build();
 

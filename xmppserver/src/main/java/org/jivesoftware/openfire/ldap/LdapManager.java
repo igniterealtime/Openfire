@@ -587,12 +587,9 @@ public class LdapManager {
      * @throws NamingException if there is an error making the LDAP connection.
      */
     public LdapContext getContext(LdapName baseDN) throws NamingException {
-        boolean debug = Log.isDebugEnabled();
-        if (debug) {
-            Log.debug("Creating a DirContext in LdapManager.getContext()...");
-            if (!sslEnabled && !startTlsEnabled) {
-                Log.debug("Warning: Using unencrypted connection to LDAP service!");
-            }
+        Log.debug("Creating a DirContext in LdapManager.getContext() for baseDN '{}'...", baseDN);
+        if (!sslEnabled && !startTlsEnabled) {
+            Log.warn("Using unencrypted connection to LDAP service!");
         }
 
         // Set up the environment for creating the initial context
@@ -631,11 +628,8 @@ public class LdapManager {
                 env.put("com.sun.jndi.ldap.connect.pool", "true");
                 System.setProperty("com.sun.jndi.ldap.connect.pool.protocol", "plain ssl");
             } else {
-                if (debug) {
-                    // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
-                    // "When Not to Use Pooling"
-                    Log.debug("connection pooling was requested but has been disabled because of StartTLS.");
-                }
+                // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html "When Not to Use Pooling"
+                Log.debug("connection pooling was requested but has been disabled because of StartTLS.");
                 env.put("com.sun.jndi.ldap.connect.pool", "false");
             }
         } else {
@@ -657,17 +651,14 @@ public class LdapManager {
             env.put("java.naming.ldap.derefAliases", "never");
         }
 
-        if (debug) {
-            Log.debug("Created hashtable with context values, attempting to create context...");
-        }
+        Log.debug("Created hashtable with context values, attempting to create context...");
+
         // Create new initial context
         JiveInitialLdapContext context = new JiveInitialLdapContext(env, null);
 
         // TLS http://www.ietf.org/rfc/rfc2830.txt ("1.3.6.1.4.1.1466.20037")
         if (startTlsEnabled && !sslEnabled) {
-            if (debug) {
-                Log.debug("... StartTlsRequest");
-            }
+            Log.debug("... StartTlsRequest");
             if (followReferrals) {
                 Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
             }
@@ -686,11 +677,7 @@ public class LdapManager {
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
 
-                if (debug) {
-                    Log.debug("... peer host: "
-                            + session.getPeerHost()
-                            + ", CipherSuite: " + session.getCipherSuite());
-                }
+                Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                 /* Set login credentials only if SSL session has been
                  * negotiated successfully - otherwise user/password
@@ -713,9 +700,7 @@ public class LdapManager {
             }
         }
 
-        if (debug) {
-            Log.debug("... context created successfully, returning.");
-        }
+        Log.debug("... context created successfully, returning.");
 
         return context;
     }
@@ -729,13 +714,10 @@ public class LdapManager {
      * @return true if the user successfully authenticates.
      */
     public boolean checkAuthentication(Rdn[] userRDN, String password) {
-        boolean debug = Log.isDebugEnabled();
-        if (debug) {
-            Log.debug("In LdapManager.checkAuthentication(userDN, password), userRDN is: " + Arrays.toString(userRDN) + "...");
+        Log.debug("In LdapManager.checkAuthentication(userDN, password), userRDN is: " + Arrays.toString(userRDN) + "...");
 
-            if (!sslEnabled && !startTlsEnabled) {
-                Log.debug("Warning: Using unencrypted connection to LDAP service!");
-            }
+        if (!sslEnabled && !startTlsEnabled) {
+            Log.warn("Using unencrypted connection to LDAP service!");
         }
 
         JiveInitialLdapContext ctx = null;
@@ -761,8 +743,6 @@ public class LdapManager {
                 }
             }
 
-
-
             if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
@@ -782,16 +762,12 @@ public class LdapManager {
                 env.put("java.naming.ldap.derefAliases", "never");
             }
 
-            if (debug) {
-                Log.debug("Created context values, attempting to create context...");
-            }
+            Log.debug("Created context values, attempting to create context...");
             ctx = new JiveInitialLdapContext(env, null);
 
             if (startTlsEnabled && !sslEnabled) {
 
-                if (debug) {
-                    Log.debug("... StartTlsRequest");
-                }
+                Log.debug("... StartTlsRequest");
 
                 // Perform a StartTLS extended operation
                 StartTlsResponse tls = (StartTlsResponse)
@@ -806,11 +782,7 @@ public class LdapManager {
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
 
-                    if (debug) {
-                        Log.debug("... peer host: "
-                                + session.getPeerHost()
-                                + ", CipherSuite: " + session.getCipherSuite());
-                    }
+                    Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                     ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
                     ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userRDN ));
@@ -828,9 +800,7 @@ public class LdapManager {
                         new String[] {usernameField});
             }
 
-            if (debug) {
-                Log.debug("... context created successfully, returning.");
-            }
+            Log.debug("... context created successfully, returning.");
         }
         catch (NamingException ne) {
             // If an alt baseDN is defined, attempt a lookup there.
@@ -873,16 +843,11 @@ public class LdapManager {
                     if (!followAliasReferrals) {
                         env.put("java.naming.ldap.derefAliases", "never");
                     }
-                    if (debug) {
-                        Log.debug("Created context values, attempting to create context...");
-                    }
+                    Log.debug("Created context values, attempting to create context...");
                     ctx = new JiveInitialLdapContext(env, null);
 
                     if (startTlsEnabled && !sslEnabled) {
-
-                        if (debug) {
-                            Log.debug("... StartTlsRequest");
-                        }
+                        Log.debug("... StartTlsRequest");
 
                         // Perform a StartTLS extended operation
                         StartTlsResponse tls = (StartTlsResponse)
@@ -897,11 +862,7 @@ public class LdapManager {
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);
 
-                            if (debug) {
-                                Log.debug("... peer host: "
-                                        + session.getPeerHost()
-                                        + ", CipherSuite: " + session.getCipherSuite());
-                            }
+                            Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                             ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
                             ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
@@ -920,16 +881,12 @@ public class LdapManager {
                     }
                 }
                 catch (NamingException e) {
-                    if (debug) {
-                        Log.debug("Caught a naming exception when creating InitialContext", ne);
-                    }
+                    Log.debug("Caught a naming exception when creating InitialContext", ne);
                     return false;
                 }
             }
             else {
-                if (debug) {
-                    Log.debug("Caught a naming exception when creating InitialContext", ne);
-                }
+                Log.debug("Caught a naming exception when creating InitialContext", ne);
                 return false;
             }
         }
@@ -940,7 +897,7 @@ public class LdapManager {
                 }
             }
             catch (Exception e) {
-                Log.error("An exception occurred while trying to close the context after an authentication attempt.", baseDN);
+                Log.error("An exception occurred while trying to close the context after an authentication attempt.");
             }
         }
         return true;
@@ -969,11 +926,7 @@ public class LdapManager {
      * @throws NamingException if login credentials were wrong.
      */
     private Boolean lookupExistence(InitialDirContext ctx, LdapName dn, String[] returnattrs) throws NamingException {
-        boolean debug = Log.isDebugEnabled();
-
-        if (debug) {
-            Log.debug("In lookupExistence(ctx, dn, returnattrs), searchdn is: " + dn);
-        }
+        Log.debug("In lookupExistence(ctx, dn, returnattrs), searchdn is: {}", dn);
 
         // Bind to the object's DN
         ctx.addToEnvironment(Context.PROVIDER_URL, getProviderURL(dn));

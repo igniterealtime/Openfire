@@ -282,7 +282,7 @@ public class LdapManager {
                 this.port = Integer.parseInt(portStr);
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe.getMessage(), nfe);
+                Log.error("Unable to parse 'ldap.port' value as a number.", nfe);
             }
         }
         String cTimeout = properties.get("ldap.connectionTimeout");
@@ -291,7 +291,7 @@ public class LdapManager {
                 this.connTimeout = Integer.parseInt(cTimeout);
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe.getMessage(), nfe);
+                Log.error("Unable to parse 'ldap.connectionTimeout' value as a number.", nfe);
             }
         }
         String timeout = properties.get("ldap.readTimeout");
@@ -300,7 +300,7 @@ public class LdapManager {
                 this.readTimeout = Integer.parseInt(timeout);
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe.getMessage(), nfe);
+                Log.error("Unable to parse 'ldap.readTimeout' value as a number.", nfe);
             }
         }
 
@@ -709,7 +709,7 @@ public class LdapManager {
                     }
                 }
             } catch (java.io.IOException ex) {
-                Log.error(ex.getMessage(), ex);
+                Log.error("An exception occurred while trying to create a context for baseDN {}", baseDN, ex);
             }
         }
 
@@ -841,7 +841,7 @@ public class LdapManager {
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e.getMessage(), e);
+                    Log.error("An exception occurred while trying to authenticate against the alternate baseDN.", e);
                 }
                 try {
                     // See if the user authenticates.
@@ -940,7 +940,7 @@ public class LdapManager {
                 }
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An exception occurred while trying to close the context after an authentication attempt.", baseDN);
             }
         }
         return true;
@@ -991,7 +991,7 @@ public class LdapManager {
                     filter,
                     srcnt);
         } catch (javax.naming.NameNotFoundException nex) {
-            // DN not found
+            Log.debug("Unable to find ldap object {}.", dn);
         }
 
         if (answer == null || !answer.hasMoreElements())
@@ -1631,7 +1631,7 @@ public class LdapManager {
             }
             catch ( Exception ex )
             {
-                Log.debug( ex.getMessage(), ex );
+                Log.debug( "An exception occurred while tyring to get the user baseDn for {}", username, ex );
             }
         }
 
@@ -1658,7 +1658,7 @@ public class LdapManager {
                 }
             }
             catch (Exception ex) {
-                Log.debug(ex.getMessage(), ex);
+                Log.debug("An exception occurred while trying to find the base dn for group: {}", groupname, ex);
             }
         }
         return null;
@@ -2138,7 +2138,7 @@ public class LdapManager {
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An exception occurred while trying to retrieve a list of results from the LDAP server", e);
         }
         finally {
             try {
@@ -2151,8 +2151,8 @@ public class LdapManager {
                     ctx2.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception e) {
+                Log.debug("An exception occurred while trying to close contexts after retrieving a list of results from the LDAP server.", e);
             }
         }
         return results;
@@ -2281,7 +2281,7 @@ public class LdapManager {
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An exception occurred while trying to retrieve a list count for attribute: {}", attribute, e);
         }
         finally {
             try {
@@ -2294,8 +2294,8 @@ public class LdapManager {
                     ctx2.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception e) {
+                Log.debug("An exception occurred while trying to close contexts after retrieving a list count for attribute: {}", attribute, e);
             }
         }
         return count;
@@ -2311,8 +2311,7 @@ public class LdapManager {
      *         search filter string.
      */
     public static String sanitizeSearchFilter(final String value) {
-      return sanitizeSearchFilter(value, false);
-      
+        return sanitizeSearchFilter(value, false);
     }
 
     /**

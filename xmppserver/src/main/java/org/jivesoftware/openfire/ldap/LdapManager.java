@@ -27,10 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
-import javax.naming.Context;
-import javax.naming.InvalidNameException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
+import javax.naming.*;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
@@ -38,6 +35,9 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.*;
 import javax.net.ssl.SSLSession;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
@@ -1294,20 +1294,26 @@ public class LdapManager {
      * @param baseDN the base dn to use in the URL.
      * @return the properly encoded URL for use in as PROVIDER_URL.
      */
-    private String getProviderURL(LdapName baseDN) {
+    String getProviderURL(LdapName baseDN) throws NamingException
+    {
         StringBuffer ldapURL = new StringBuffer();
 
-        for (String host : hosts) {
-            // Create a correctly-encoded ldap URL for the PROVIDER_URL
-            ldapURL.append("ldap://");
-            ldapURL.append(host);
-            ldapURL.append(':');
-            ldapURL.append(port);
-            ldapURL.append('/');
-            ldapURL.append(baseDN);
-            ldapURL.append(' ');
+        try
+        {
+            for ( String host : hosts )
+            {
+                // Create a correctly-encoded ldap URL for the PROVIDER_URL
+                final URI uri = new URI("ldap", null, host, port, "/" + baseDN.toString(), null, null);
+                ldapURL.append(uri.toASCIIString());
+                ldapURL.append(" ");
+            }
+            return ldapURL.toString().trim();
         }
-        return ldapURL.toString();
+        catch ( Exception e )
+        {
+            Log.error( "Unable to generate provider URL for baseDN: '{}'.", baseDN, e );
+            throw new NamingException( "Unable to generate provider URL for baseDN: '"+baseDN+"': " + e.getMessage() );
+        }
     }
 
     /**

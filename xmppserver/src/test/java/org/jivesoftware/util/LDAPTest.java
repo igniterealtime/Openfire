@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 
 import org.jivesoftware.Fixtures;
@@ -103,40 +104,6 @@ public class LDAPTest {
     }
 
     /**
-     * Verifies that a forward-slash is escaped by  org.jivesoftware.openfire.ldap.LdapManager#escapeForJNDI(javax.naming.ldap.Rdn)
-     */
-    @Test
-    public void testEscapeForJNDI() throws Exception {
-        // Setup test fixture.
-        final Rdn input = new Rdn("cn=O/R");
-
-        // Execute system under test.
-        final String result = LdapManager.escapeForJNDI( input );
-
-        // Verify result.
-        assertEquals("cn=O\\/R", result);
-    }
-
-    /**
-     * Verifies that org.jivesoftware.openfire.ldap.LdapManager#escapeForJNDI(javax.naming.ldap.Rdn) can handle an array
-     * or RDN values.
-     */
-    @Test
-    public void testEscapeForJNDIArray() throws Exception {
-        // Setup test fixture.
-        final Rdn[] input = new Rdn[] {
-            new Rdn("cn=O/R"),
-            new Rdn("o=Acme/Foo")
-        };
-
-        // Execute system under test.
-        final String result = LdapManager.escapeForJNDI( input );
-
-        // Verify result.
-        assertEquals("cn=O\\/R,o=Acme\\/Foo", result);
-    }
-
-    /**
      * Verifies that org.jivesoftware.openfire.ldap.LdapManager#getRelativeDNFromResult(javax.naming.directory.SearchResult)
      * can handle a result that contains one RDN value.
      */
@@ -178,7 +145,7 @@ public class LDAPTest {
 
     /**
      * Verifies that org.jivesoftware.openfire.ldap.LdapManager#getRelativeDNFromResult(javax.naming.directory.SearchResult)
-     * can handle a result that contains multiple RDN values.
+     * can handle a result that contains a quoted RDN values.
      *
      * Openldap has been observed returning the type of quoted values that are tested here.
      */

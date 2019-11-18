@@ -185,7 +185,7 @@ public class LdapUserTester {
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An error occurred while trying to get attributes for user: {}", username, e);
             // TODO something else?
         }
         finally {

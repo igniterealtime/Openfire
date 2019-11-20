@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire;
 
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1459,8 +1460,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
-        // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
-        int period = 3 * 60 * 1000;
+
+        // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
+        // detached, or every 3 minutes if the max time is outside the default boundaries.
+        // TODO Reschedule task if getSessionDetachTime value changes.
+        final int max = getSessionDetachTime();
+        final long period;
+        if ( max > Duration.ofMinutes(1).toMillis() && max < Duration.ofHours(1).toMillis() ) {
+            period = max / 10;
+        } else {
+            period = Duration.ofMinutes(3).toMillis();
+        }
         TaskEngine.getInstance().scheduleAtFixedRate(new DetachedCleanupTask(), period, period);
     }
 

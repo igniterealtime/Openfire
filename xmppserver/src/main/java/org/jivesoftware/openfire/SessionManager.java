@@ -214,7 +214,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public synchronized void removeDetached(LocalSession localSession) {
         LocalSession other = this.detachedSessions.get(localSession.getStreamID());
         if (other == localSession) {
-            Log.trace( "Removing detached session '{}'", localSession.getAddress(), localSession.getStreamID() );
+            Log.trace( "Removing detached session '{}' ({}).", localSession.getAddress(), localSession.getStreamID() );
             this.detachedSessions.remove(localSession.getStreamID());
         }
     }

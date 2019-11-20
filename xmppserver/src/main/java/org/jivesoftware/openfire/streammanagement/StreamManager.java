@@ -23,6 +23,7 @@ import org.xmpp.packet.*;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -39,6 +40,12 @@ public class StreamManager {
 
     public static SystemProperty<Boolean> LOCATION_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.location.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> MAX_SERVER_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.max-server.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
@@ -226,6 +233,14 @@ public class StreamManager {
             if ( !namespace.equals(NAMESPACE_V2) && LOCATION_ENABLED.getValue() ) {
                 // OF-1925: Hint clients to do resumes at the same cluster node.
                 enabled.addAttribute("location", XMPPServer.getInstance().getServerInfo().getHostname());
+            }
+
+            // OF-1926: Tell clients how long they can be detached.
+            if ( MAX_SERVER_ENABLED.getValue() ) {
+                final int sessionDetachTime = XMPPServer.getInstance().getSessionManager().getSessionDetachTime();
+                if ( sessionDetachTime > 0 ) {
+                    enabled.addAttribute("max", String.valueOf(sessionDetachTime/1000));
+                }
             }
         }
         session.deliverRawText(enabled.asXML());

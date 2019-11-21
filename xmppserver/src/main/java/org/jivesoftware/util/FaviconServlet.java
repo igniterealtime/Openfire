@@ -80,7 +80,6 @@ public class FaviconServlet extends HttpServlet {
      * Cache the favicons that we've found.
      */
     private Cache<String, byte[]> hitsCache;
-    private SessionManager sessionManager;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -100,7 +99,6 @@ public class FaviconServlet extends HttpServlet {
         // Initialize caches.
         missesCache = CacheFactory.createCache("Favicon Misses");
         hitsCache = CacheFactory.createCache("Favicon Hits");
-        sessionManager = SessionManager.getInstance();
     }
 
     @Override
@@ -123,6 +121,7 @@ public class FaviconServlet extends HttpServlet {
         final String host = request.getParameter("host");
 
         // Validate that we're connected to the host
+        final SessionManager sessionManager = SessionManager.getInstance();
         final Optional<String> optionalHost = Stream
             .concat(sessionManager.getIncomingServers().stream(), sessionManager.getOutgoingServers().stream())
             .filter(remoteServerHost -> remoteServerHost.equalsIgnoreCase(host))

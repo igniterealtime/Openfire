@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_COMMIT_ID="ae208d6a2f608a69c54aae7cb2b22dc52524e9ff"
-GRADLE_VERSION="5.2.1"
+SMACK_COMMIT_ID="9d626bf" # master 22 Nov 2019
+GRADLE_VERSION="6.0.1"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
 
@@ -124,7 +124,7 @@ SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT::-1}"
 pushd "${SMACKDIR}"
 sed -i '/-Werror/d' build.gradle
 sed -i 's/if (config.testPackages == null) {/if (config.testPackages == null || config.testPackages.isEmpty()) {/' smack-integration-test/src/main/java/org/igniterealtime/smack/inttest/SmackIntegrationTestFramework.java
-$GRADLE integrationTest \
+$GRADLE --stacktrace integrationTest \
 		-Dsinttest.service=example.org \
 		-Dsinttest.securityMode=disabled \
 		-Dsinttest.replyTimeout=60000 \

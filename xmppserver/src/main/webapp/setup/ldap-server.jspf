@@ -268,21 +268,84 @@
             </tr>
             </c:if>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.host" />:</td>
-                <td width="1%">
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                    <tr>
-                        <td width="1%" nowrap="nowrap">
-                            <input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="150" value="<c:out value="${host}"/>">
-                        </td>
-                        <td width="99%">
-                            <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
-                        </td>
-                    </tr>
+                <td align="right" width="1%" nowrap="nowrap" style="vertical-align:bottom"><fmt:message key="setup.ldap.server.details" />:</td>
+                <td colspan="3">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <thead>
+                        <tr>
+                            <td nowrap="nowrap">
+                                <fmt:message key="setup.ldap.server.protocol" />
+                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.protocol_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                            </td>
+                            <td nowrap="nowrap">
+                                <fmt:message key="setup.ldap.server.host" />
+                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                            </td>
+                            <td nowrap="nowrap">
+                                <fmt:message key="setup.ldap.server.port" />
+                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                            </td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td nowrap="nowrap">
+                                <script type="text/javascript">
+                                    function updateEncryptionSettings() {
+                                        var selectProtocolField = document.getElementById("selectProtocol");
+                                        var sslEnabled = selectProtocolField[selectProtocolField.selectedIndex].text == "ldaps";
+                                        var portField = document.getElementById("jiveLDAPport");
+                                        if (sslEnabled && portField.value == "389") {
+                                           portField.value = "636";
+                                        } else if (!sslEnabled && portField.value == "636") {
+                                           portField.value = "389";
+                                        }
+                                        var startTlsField = document.getElementById("starttls");
+                                        startTlsField.disabled = sslEnabled;
+                                        var startTlsEnabled = !sslEnabled && startTlsField[startTlsField.selectedIndex].value == "true";
+                                        if(!sslEnabled && !startTlsEnabled) {
+                                            plainTextWarningDisplay = "";
+                                        } else {
+                                            plainTextWarningDisplay = "none";
+                                        }
+                                        document.getElementById("plainTextWarning").style.display = plainTextWarningDisplay;
+                                    }
+                                </script>
+                                <select id="selectProtocol" name="sslEnabled" onchange="updateEncryptionSettings();">
+                                    <option value="true" <c:if test="${sslEnabled}">SELECTED</c:if>>ldaps</option>
+                                    <option value="false" <c:if test="${!sslEnabled}">SELECTED</c:if>>ldap</option>
+                                </select>
+                                ://
+                            </td>
+                            <td nowrap="nowrap">
+                                <input type="text" name="host" id="jiveLDAPphost" size="22" maxlength="150" value="<c:out value="${host}"/>">
+                            </td>
+                            <td nowrap="nowrap">
+                                <span style="float:left">:</span>
+                                <input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="${fn:escapeXml(port)}">
+                            </td>
+                        </tr>
+                        </tbody>
                     </table>
                 </td>
-                <td align="right" width="1%" nowrap="nowrap">&nbsp;&nbsp; <fmt:message key="setup.ldap.server.port" />:</td>
-                <td><input type="text" name="port" id="jiveLDAPport" size="5" maxlength="5" value="${fn:escapeXml(port)}"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+            </tr>
+            <tr>
+                <td align="right" width="1%" nowrap="nowrap">
+                    <fmt:message key="setup.ldap.server.starttls" />:
+                </td>
+                <td colspan="3">
+                    <select id="starttls" name="starttls" onchange="updateEncryptionSettings();">
+                        <option value="true" <c:if test="${startTlsEnabled}">SELECTED</c:if>><fmt:message key="global.yes" /></option>
+                        <option value="false" <c:if test="${!startTlsEnabled}">SELECTED</c:if>><fmt:message key="global.no" /></option>
+                    </select>
+                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.starttls_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                </td>
+            </tr>
+            <tr id="plainTextWarning">
+                <td colspan="4" width="100%">
+                    <script type="text/javascript">updateEncryptionSettings();</script>
+                    <div class="warning"><fmt:message key="setup.ldap.plaintext" /></div>
+                </td>
             </tr>
             <tr>
                 <td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
@@ -342,33 +405,6 @@
                     </td>
                     <td class="jive-advancedBorderBottom" align="center">
                         <input type="radio" name="connectionpool" value="false" ${connectionPoolEnabled ? "" : "checked"}>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="jive-advancedLabel" nowrap>
-                        <fmt:message key="setup.ldap.server.ssl" />:
-                    </td>
-                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-                        <fmt:message key="setup.ldap.server.ssl_help" />
-                    </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="ssl" value="true" ${sslEnabled ? "checked" : ""}>
-                    </td>
-                    <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="ssl" value="false" ${sslEnabled ? "" : "checked"}>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="jive-advancedLabel" nowrap>
-                        <fmt:message key="setup.ldap.server.starttls" />:
-                    </td>
-                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
-                        <fmt:message key="setup.ldap.server.starttls_help" />
-                    </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
-                        <input type="radio" name="starttls" value="true" ${startTlsEnabled ? "checked" : ""}>
-                    <td class="jive-advancedBorderBottom" align="center">
-                        <input type="radio" name="starttls" value="false" ${startTlsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
                 <tr>

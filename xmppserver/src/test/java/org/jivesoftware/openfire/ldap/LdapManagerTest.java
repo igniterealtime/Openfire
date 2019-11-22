@@ -32,7 +32,7 @@ public class LdapManagerTest
         final String result = manager.getProviderURL( name );
 
         // Verify result.
-        assertEquals("ldap://localhost:389/ou=people,dc=example,dc=org", result);
+        assertEquals("ldaps://localhost:389/ou=people,dc=example,dc=org", result);
     }
 
     /**
@@ -53,7 +53,7 @@ public class LdapManagerTest
         final String result = manager.getProviderURL( name );
 
         // Verify result.
-        assertEquals("ldap://localhost:389/ou=people,dc=example,dc=org ldap://example.org:389/ou=people,dc=example,dc=org", result);
+        assertEquals("ldaps://localhost:389/ou=people,dc=example,dc=org ldaps://example.org:389/ou=people,dc=example,dc=org", result);
     }
 
     /**
@@ -66,6 +66,7 @@ public class LdapManagerTest
         final Map<String, String> properties = new HashMap<>();
         properties.put("ldap.host", "localhost");
         properties.put("ldap.port", "389");
+        properties.put("ldap.sslEnabled", "false");
         final LdapManager manager = new LdapManager( properties );
         final LdapName name = new LdapName("ou=people,dc=example with spaces,dc=org");
 

@@ -263,12 +263,12 @@
     </p>
     <p>
         <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
-        <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
+        <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? StringUtils.escapeHTMLTags(userJID) : "") %>" id="memberJID">
     </p>
     <% if(!affName.isEmpty() && affName.equals("member")) {%>
         <p>
             <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid_nickname" /></label>
-            <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? nickName : "") %>" id="memberJID">
+            <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? StringUtils.escapeHTMLTags(nickName) : "") %>" id="memberJID">
         </p>
     <%  } %>
     <p>

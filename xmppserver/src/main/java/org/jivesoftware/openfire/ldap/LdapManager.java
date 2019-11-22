@@ -329,7 +329,7 @@ public class LdapManager {
         connectionPoolEnabled = StringUtils.parseBoolean(properties.get("ldap.connectionPoolEnabled"))
             .orElse(Boolean.TRUE);
         searchFilter = properties.get("ldap.searchFilter");
-        subTreeSearch = StringUtils.parseBoolean("ldap.subTreeSearch")
+        subTreeSearch = StringUtils.parseBoolean(properties.get("ldap.subTreeSearch"))
             .orElse(Boolean.TRUE);
         groupNameField = properties.get("ldap.groupNameField");
         if (groupNameField == null) {
@@ -343,7 +343,7 @@ public class LdapManager {
         if (groupDescriptionField == null) {
             groupDescriptionField = "description";
         }
-        posixMode = StringUtils.parseBoolean("ldap.posixMode")
+        posixMode = StringUtils.parseBoolean(properties.get("ldap.posixMode"))
             .orElse(Boolean.FALSE);
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
 
@@ -353,15 +353,15 @@ public class LdapManager {
         }
 
         adminPassword = properties.get("ldap.adminPassword");
-        ldapDebugEnabled = StringUtils.parseBoolean("ldap.debugEnabled")
+        ldapDebugEnabled = StringUtils.parseBoolean(properties.get("ldap.debugEnabled"))
             .orElse(Boolean.FALSE);
-        sslEnabled = StringUtils.parseBoolean("ldap.sslEnabled")
+        sslEnabled = StringUtils.parseBoolean(properties.get("ldap.sslEnabled"))
             .orElse(Boolean.TRUE);
-        startTlsEnabled = StringUtils.parseBoolean("ldap.startTlsEnabled")
+        startTlsEnabled = StringUtils.parseBoolean(properties.get("ldap.startTlsEnabled"))
             .orElse(Boolean.FALSE);
-        followReferrals = StringUtils.parseBoolean("ldap.autoFollowReferrals")
+        followReferrals = StringUtils.parseBoolean(properties.get("ldap.autoFollowReferrals"))
             .orElse(Boolean.FALSE);
-        followAliasReferrals = StringUtils.parseBoolean("ldap.autoFollowAliasReferrals")
+        followAliasReferrals = StringUtils.parseBoolean(properties.get("ldap.autoFollowAliasReferrals"))
             .orElse(Boolean.TRUE);
 
         this.initialContextFactory = properties.get("ldap.initialContextFactory");
@@ -1229,7 +1229,7 @@ public class LdapManager {
             for ( String host : hosts )
             {
                 // Create a correctly-encoded ldap URL for the PROVIDER_URL
-                final URI uri = new URI("ldap", null, host, port, "/" + baseDN.toString(), null, null);
+                final URI uri = new URI(sslEnabled ? "ldaps" : "ldap", null, host, port, "/" + baseDN.toString(), null, null);
                 ldapURL.append(uri.toASCIIString());
                 ldapURL.append(" ");
             }

@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveInitialLdapContext;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -325,17 +326,11 @@ public class LdapManager {
         if (emailField == null) {
             emailField = "mail";
         }
-        connectionPoolEnabled = true;
-        String connectionPoolStr = properties.get("ldap.connectionPoolEnabled");
-        if (connectionPoolStr != null) {
-            connectionPoolEnabled = Boolean.parseBoolean(connectionPoolStr);
-        }
+        connectionPoolEnabled = StringUtils.parseBoolean(properties.get("ldap.connectionPoolEnabled"))
+            .orElse(Boolean.TRUE);
         searchFilter = properties.get("ldap.searchFilter");
-        subTreeSearch = true;
-        String subTreeStr = properties.get("ldap.subTreeSearch");
-        if (subTreeStr != null) {
-            subTreeSearch = Boolean.parseBoolean(subTreeStr);
-        }
+        subTreeSearch = StringUtils.parseBoolean("ldap.subTreeSearch")
+            .orElse(Boolean.TRUE);
         groupNameField = properties.get("ldap.groupNameField");
         if (groupNameField == null) {
             groupNameField = "cn";
@@ -348,11 +343,8 @@ public class LdapManager {
         if (groupDescriptionField == null) {
             groupDescriptionField = "description";
         }
-        posixMode = false;
-        String posixStr = properties.get("ldap.posixMode");
-        if (posixStr != null) {
-            posixMode = Boolean.parseBoolean(posixStr);
-        }
+        posixMode = StringUtils.parseBoolean("ldap.posixMode")
+            .orElse(Boolean.FALSE);
         groupSearchFilter = properties.get("ldap.groupSearchFilter");
 
         adminDN = properties.get("ldap.adminDN");
@@ -361,31 +353,16 @@ public class LdapManager {
         }
 
         adminPassword = properties.get("ldap.adminPassword");
-        ldapDebugEnabled = false;
-        String ldapDebugStr = properties.get("ldap.debugEnabled");
-        if (ldapDebugStr != null) {
-            ldapDebugEnabled = Boolean.parseBoolean(ldapDebugStr);
-        }
-        sslEnabled = false;
-        String sslEnabledStr = properties.get("ldap.sslEnabled");
-        if (sslEnabledStr != null) {
-            sslEnabled = Boolean.parseBoolean(sslEnabledStr);
-        }
-        startTlsEnabled = false;
-        String startTlsEnabledStr = properties.get("ldap.startTlsEnabled");
-        if (startTlsEnabledStr != null) {
-            startTlsEnabled = Boolean.parseBoolean(startTlsEnabledStr);
-        }
-        followReferrals = false;
-        String followReferralsStr = properties.get("ldap.autoFollowReferrals");
-        if (followReferralsStr != null) {
-            followReferrals = Boolean.parseBoolean(followReferralsStr);
-        }
-        followAliasReferrals = true;
-        String followAliasReferralsStr = properties.get("ldap.autoFollowAliasReferrals");
-        if (followAliasReferralsStr != null) {
-            followAliasReferrals = Boolean.parseBoolean(followAliasReferralsStr);
-        }
+        ldapDebugEnabled = StringUtils.parseBoolean("ldap.debugEnabled")
+            .orElse(Boolean.FALSE);
+        sslEnabled = StringUtils.parseBoolean("ldap.sslEnabled")
+            .orElse(Boolean.TRUE);
+        startTlsEnabled = StringUtils.parseBoolean("ldap.startTlsEnabled")
+            .orElse(Boolean.FALSE);
+        followReferrals = StringUtils.parseBoolean("ldap.autoFollowReferrals")
+            .orElse(Boolean.FALSE);
+        followAliasReferrals = StringUtils.parseBoolean("ldap.autoFollowAliasReferrals")
+            .orElse(Boolean.TRUE);
 
         this.initialContextFactory = properties.get("ldap.initialContextFactory");
         if (initialContextFactory != null) {
@@ -1929,11 +1906,7 @@ public class LdapManager {
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
         List<String> results = new ArrayList<>();
         final int pageSize = LDAP_PAGE_SIZE.getValue();
-        boolean clientSideSort = false;
-        String clientSideSortStr = properties.get("ldap.clientSideSorting");
-        if (clientSideSortStr != null) {
-            clientSideSort = Boolean.parseBoolean(clientSideSortStr);
-        }
+        boolean clientSideSort = Boolean.parseBoolean(properties.get("ldap.clientSideSorting"));
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         try {
@@ -2282,8 +2255,8 @@ public class LdapManager {
      *
      * @param rdn The names to escape (cannot be null).
      * @return A JNDI name representation of the values (never null).
-     * @see https://docs.oracle.com/javase/tutorial/jndi/ldap/jndi.html
-     * @see https://docs.oracle.com/javase/jndi/tutorial/beyond/names/syntax.html
+     * @see <a href="https://docs.oracle.com/javase/tutorial/jndi/ldap/jndi.html">JNDI</a>
+     * @see <a href="https://docs.oracle.com/javase/jndi/tutorial/beyond/names/syntax.html">Handling Special Characters</a>
      */
     public static Name escapeForJNDI( Rdn... rdn )
     {

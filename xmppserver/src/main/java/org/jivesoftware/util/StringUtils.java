@@ -1214,6 +1214,23 @@ public final class StringUtils {
             return Optional.empty();
         }
     }
+
+    /**
+     * Parses a boolean. Subtly different from Boolean.parseBoolean in that it returns {@code Optional.empty()}
+     * instead of {@code false} if the supplied value is not "true" or "false" (ignoring case)
+     * @param value Any string value
+     * @return {@code true}, {@code false} or {@code Optional.empty()}
+     */
+    public static Optional<Boolean> parseBoolean(final String value) {
+        if("true".equalsIgnoreCase(value)) {
+            return Optional.of(Boolean.TRUE);
+        } else if("false".equalsIgnoreCase(value)) {
+            return Optional.of(Boolean.FALSE);
+        } else {
+            return Optional.empty();
+        }
+    }
+
     /**
      * Simple Java program to tokenize string as a shell would - similar to shlex in Python
      *

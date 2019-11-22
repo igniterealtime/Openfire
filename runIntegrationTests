@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_COMMIT_ID="ae208d6a2f608a69c54aae7cb2b22dc52524e9ff"
-GRADLE_VERSION="5.2.1"
+SMACK_COMMIT_ID="8831961afeda11e9055ff105da3352d3bd0e91e5" # release 4.3.4
+GRADLE_VERSION="6.0.1"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
 

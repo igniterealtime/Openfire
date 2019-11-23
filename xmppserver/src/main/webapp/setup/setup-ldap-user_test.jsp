@@ -23,6 +23,7 @@
     LdapUserProfile vCardSettings = (LdapUserProfile) session.getAttribute("ldapVCardBean");
     int userIndex = ParamUtils.getIntParameter(request, "userIndex", -1);
     if (settings != null && userSettings != null && vCardSettings != null) {
+        settings.computeIfAbsent( "ldap.adminPassword", (key) -> LdapManager.getInstance().getAdminPassword() );
         LdapManager manager = new LdapManager(settings);
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));

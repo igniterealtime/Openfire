@@ -36,6 +36,7 @@ import org.jivesoftware.admin.FlashMessageTag;
 import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.WebXmlUtils;
 import org.slf4j.Logger;
@@ -106,7 +107,7 @@ public class PluginServlet extends HttpServlet {
                 final PluginMetadata pluginMetadata = getPluginMetadataFromPath(pathInfo);
                 if (pluginMetadata.isCsrfProtectionEnabled()) {
                     if (!passesCsrf(request)) {
-                        request.getSession().setAttribute(FlashMessageTag.ERROR_MESSAGE_KEY, "CSRF Failure!");
+                        request.getSession().setAttribute(FlashMessageTag.ERROR_MESSAGE_KEY, LocaleUtils.getLocalizedString("global.csrf.failed"));
                         response.sendRedirect(request.getRequestURI());
                         return;
                     }

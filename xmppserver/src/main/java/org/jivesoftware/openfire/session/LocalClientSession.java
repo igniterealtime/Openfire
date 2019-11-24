@@ -945,6 +945,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
         messageCarbonsEnabled = enabled;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     @Override
@@ -955,6 +960,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void setHasRequestedBlocklist(boolean hasRequestedBlocklist) {
         this.hasRequestedBlocklist = hasRequestedBlocklist;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**

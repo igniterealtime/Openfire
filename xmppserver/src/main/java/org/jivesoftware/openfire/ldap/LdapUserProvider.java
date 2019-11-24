@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -325,10 +326,22 @@ public class LdapUserProvider implements UserProvider {
         if (!query.endsWith("*")) {
             query = query + "*";
         }
-
-        if (!searchFields.keySet().containsAll(fields)) {
-            throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
+        
+        if (fields==null||fields.size()==0)
+        	throw new IllegalArgumentException("Search fields are not set!");
+        
+        HashSet<String> newFields = new HashSet<String>();
+        for (String value : fields)
+        {
+        	if (searchFields.keySet().contains(value))
+        		newFields.add(value);
         }
+        
+        if (newFields==null||newFields.size()==0)
+        	throw new IllegalArgumentException("Search fields " + newFields + " are not valid.");
+        
+        fields = newFields;
+        
         StringBuilder filter = new StringBuilder();
         //Add the global search filter so only those users the directory administrator wants to include
         //are returned from the directory

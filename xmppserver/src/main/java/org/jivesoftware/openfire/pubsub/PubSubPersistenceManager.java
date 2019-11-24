@@ -58,7 +58,7 @@ public class PubSubPersistenceManager {
 
     private static final Logger log = LoggerFactory.getLogger(PubSubPersistenceManager.class);
 
-    private static final String PERSISTENT_NODES = "SELECT serviceID, nodeID, maxItems " +
+    private static final String PERSISTENT_NODES = "SELECT DISTINCT serviceID, nodeID, maxItems " +
             "FROM ofPubsubNode WHERE leaf=1 AND persistItems=1 AND maxItems > 0";
     
     private static final String PURGE_FOR_SIZE =
@@ -75,14 +75,10 @@ public class PubSubPersistenceManager {
             "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
-
+    
     private static final String PURGE_FOR_SIZE_SQLSERVER =
-            "DELETE from ofPubsubItem where id in " +
-            "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
-            "(SELECT TOP (?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
-            "ORDER BY creationDate DESC) AS noDelete " +
-            "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
-            "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
+            "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN " + 
+            "(SELECT TOP(?) id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC)";
 
     private static final String PURGE_FOR_SIZE_MYSQL =
             "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
@@ -1920,9 +1916,9 @@ public class PubSubPersistenceManager {
         }
         finally
         {
-            DbConnectionManager.closeResultSet(rs);
-            DbConnectionManager.closeStatement(rs, nodeConfig);
-            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+	    try { DbConnectionManager.closeResultSet(rs); } catch (Exception e1){}
+	    try { DbConnectionManager.closeStatement(rs, nodeConfig); } catch (Exception e1){}
+	    try { DbConnectionManager.closeTransactionConnection( con, abortTransaction); } catch (Exception e1){}
         }
     }
 
@@ -1937,14 +1933,7 @@ public class PubSubPersistenceManager {
             purgeStmt.setString(3, serviceId);
             purgeStmt.setString(4, nodeId);
             purgeStmt.setInt(5, maxItems);
-            break;
-        case sqlserver:
-            purgeStmt.setInt(1, maxItems);
-            purgeStmt.setString(2, serviceId);
-            purgeStmt.setString(3, nodeId);
-            purgeStmt.setString(4, serviceId);
-            purgeStmt.setString(5, nodeId);
-            break;
+            break;       
 
         default:
             purgeStmt.setString(1, serviceId);

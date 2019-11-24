@@ -630,15 +630,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return;
             }
             try {
-                Date cleanUpDate = getCleanupDate();
-                Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
-                while (it.hasNext()) {
-                    LocalMUCRoom room = it.next();
-                    Date emptyDate = room.getEmptyDate();
-                    if (emptyDate != null && emptyDate.before(cleanUpDate)) {
-                        removeChatRoom(room.getName());
-                    }
-                }
+            	if (JiveGlobals.getBooleanProperty( "xmpp.muc.cleanup", true))
+            	{
+			Date cleanUpDate = getCleanupDate();
+		        Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
+		        while (it.hasNext()) {
+		            LocalMUCRoom room = it.next();
+		            Date emptyDate = room.getEmptyDate();
+		            if (emptyDate != null && emptyDate.before(cleanUpDate)) {
+		                removeChatRoom(room.getName());
+		            }
+		        }
+		}
             }
             catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

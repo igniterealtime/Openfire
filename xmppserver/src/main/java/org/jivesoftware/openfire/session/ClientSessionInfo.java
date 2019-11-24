@@ -73,16 +73,10 @@ public class ClientSessionInfo implements Externalizable {
         return offlineFloodStopped;
     }
     
-    /**
-    * Added for OF-1868
-    */
     public boolean hasRequestedBlocklist() {
         return hasRequestedBlocklist;
     }
     
-    /**
-    * Added for OF-1868
-    */
     public boolean isMessageCarbonsEnabled() { return messageCarbonsEnabled; }
 
     @Override
@@ -97,10 +91,6 @@ public class ClientSessionInfo implements Externalizable {
             ExternalizableUtil.getInstance().writeSafeUTF(out, activeList);
         }
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
-        
-        /**
-        * Added for OF-1868
-        */
         ExternalizableUtil.getInstance().writeBoolean(out, messageCarbonsEnabled);    
 	    ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
     }
@@ -116,10 +106,6 @@ public class ClientSessionInfo implements Externalizable {
             activeList = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
         offlineFloodStopped = ExternalizableUtil.getInstance().readBoolean(in);
-        
-        /**
-        * Added for OF-1868
-        */
         messageCarbonsEnabled = ExternalizableUtil.getInstance().readBoolean(in);
         hasRequestedBlocklist = ExternalizableUtil.getInstance().readBoolean(in);
     }

@@ -39,6 +39,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.WebXmlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,16 +55,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.jasper.JspC;
-import org.dom4j.Document;
-import org.jivesoftware.admin.PluginFilter;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.WebXmlUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)

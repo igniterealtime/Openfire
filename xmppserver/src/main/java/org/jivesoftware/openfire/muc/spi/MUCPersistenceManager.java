@@ -76,6 +76,12 @@ public class MUCPersistenceManager {
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister, allowpm " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
+    private static final String LOAD_REALLY_ALL_ROOMS =
+        "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
+        "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "useReservedNick, canChangeNick, canRegister, allowpm " +
+        "FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
         "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
@@ -499,9 +505,17 @@ public class MUCPersistenceManager {
         ResultSet resultSet = null;
         try {
             connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_ROOMS);
-            statement.setLong(1, serviceID);
-            statement.setString(2, StringUtils.dateToMillis(emptyDate));
+            if (emptyDate!=null) 
+            {
+            	 statement = connection.prepareStatement(LOAD_ALL_ROOMS);
+            	 statement.setLong(1, serviceID);
+                 statement.setString(2, StringUtils.dateToMillis(emptyDate));
+            }
+            else
+            {
+            	 statement = connection.prepareStatement(LOAD_REALLY_ALL_ROOMS);
+            	 statement.setLong(1, serviceID);
+            }
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {

@@ -42,8 +42,12 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
@@ -1221,15 +1225,38 @@ public class XMPPServer {
             return;
         }
         logger.info("Shutting down " + modules.size() + " modules ...");
-        // Get all modules and stop and destroy them
-        for (Module module : modules.values()) {
-            try {
-                module.stop();
-                module.destroy();
-            } catch (Exception ex) {
-                logger.error("Exception during module shutdown", ex);
-            }
-        }
+
+        final SimpleTimeLimiter timeLimiter = SimpleTimeLimiter.create( Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder()
+                .setDaemon( true )
+                .setNameFormat( "shutdown-thread-%d" )
+                .build() ) );
+
+        modules.values().stream()
+            // OF-1609: Ensure that the first module to be shut down is the ConnectionManager.
+            .sorted( ( o1, o2 ) -> {
+                if ( o1 == o2 ) return 0;
+                final boolean isCM1 = o1 instanceof ConnectionManager;
+                final boolean isCM2 = o2 instanceof ConnectionManager;
+                if ( isCM1 && isCM2 ) return 0;
+                if ( isCM1 ) return -1;
+                if ( isCM2 ) return 1;
+                return 0;
+            } )
+
+            // Get all modules and stop and destroy them.
+            .forEachOrdered( module -> {
+                try {
+                    // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
+                    timeLimiter.runWithTimeout( () -> {
+                        stopAndDestroyModule( module );
+                    }, JiveGlobals.getLongProperty( "shutdown.modules.timeout-millis", Long.MAX_VALUE ), TimeUnit.MILLISECONDS );
+                } catch ( Exception e ) {
+                    logger.warn( "An exception occurred while stopping / destroying module '{}'.", module.getName(), e );
+                    System.err.println( e );
+                }
+            } );
+
         // Stop all plugins
         logger.info("Shutting down plugins ...");
         if (pluginManager != null) {
@@ -1256,7 +1283,22 @@ public class XMPPServer {
         // Shut down the logging framework (causing the last few log entries to be flushed)
         LogManager.shutdown();
     }
-    
+
+    /**
+     * Stops and destroys a module.
+     *
+     * @param module The module to be stopped (cannot be null).
+     */
+    private static void stopAndDestroyModule( final Module module ) {
+        try {
+            logger.debug("Stopping and shutting down module '{}'" + module.getName() );
+            module.stop();
+            module.destroy();
+        } catch (Exception ex) {
+            logger.error("Exception during module '{}' shutdown", module.getName(), ex);
+        }
+    }
+
     /**
      * Returns true if the server is being shutdown.
      *

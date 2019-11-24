@@ -16,23 +16,6 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.LdapName;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.AbstractGroupProvider;
 import org.jivesoftware.openfire.group.Group;
@@ -43,6 +26,32 @@ import org.jivesoftware.util.JiveConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.text.MessageFormat;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.naming.Name;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
@@ -74,18 +83,48 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Group getGroup(String groupName) throws GroupNotFoundException {
-        LdapContext ctx = null;
         try {
-            String groupDN = manager.findGroupDN(groupName);
-            // Load record.
-            ctx = manager.getContext(manager.getGroupsBaseDN(groupName));
-            Attributes attrs = ctx.getAttributes(groupDN, standardAttributes);
-
-            return processGroup(ctx, attrs);
+            LdapName groupDN = manager.findGroupAbsoluteDN(groupName);
+            return getGroupByDN(groupDN, new HashSet<>(Collections.singleton(groupDN.toString())));
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("Unable to load group: {}", groupName, e);
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
+        }
+    }
+
+    /**
+     * Reads the group with the given DN
+     *
+     * @param groupDN         the absolute DN of the group
+     * @param membersToIgnore A mutable set of DNs and/or UIDs (for Posix mode) to ignore. This set will be
+     *                        filled with visited DNs. If flatten of hierarchies of groups is active
+     *                        ({@link LdapManager#isFlattenNestedGroups()}, this will prevent endless loops
+     *                        for cyclic hierarchies.
+     * @return
+     * @throws NamingException
+     */
+    private Group getGroupByDN(LdapName groupDN, Set<String> membersToIgnore) throws NamingException {
+        LdapContext ctx = null;
+        try {
+            LdapName baseDN;
+            Name relativeDN;
+            if (manager.getAlternateBaseDN() != null
+                && groupDN.startsWith(manager.getAlternateBaseDN())) {
+                baseDN = manager.getAlternateBaseDN();
+            } else if (groupDN.startsWith(manager.getBaseDN())) {
+                baseDN = manager.getBaseDN();
+            }
+            else {
+                throw new IllegalArgumentException("GroupDN does not match any baseDN");
+            }
+            relativeDN = groupDN.getSuffix(baseDN.size());
+            membersToIgnore.add(groupDN.toString());
+            // Load record.
+            ctx = manager.getContext(baseDN);
+            Attributes attrs = ctx.getAttributes(relativeDN, standardAttributes);
+
+            return processGroup(ctx, attrs, membersToIgnore);
         }
         finally {
             try {
@@ -145,7 +184,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             }
             username = JID.unescapeNode(user.getNode());
             try {
-                username = manager.findUserDN(username) + "," + manager.getUsersBaseDN(username);
+                final String relativePart =
+                    Arrays.stream(manager.findUserRDN(username))
+                    .map(Rdn::toString)
+                    .collect(Collectors.joining(","));
+
+                username = relativePart + "," + manager.getUsersBaseDN(username);
             }
             catch (Exception e) {
                 Log.error("Could not find user in LDAP " + username);
@@ -159,7 +203,46 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         if (username == null || "".equals(username)) {
             return Collections.emptyList();
         }
-        return search(manager.getGroupMemberField(), username);
+
+        Set<String> groupNames = new LinkedHashSet<>(search(manager.getGroupMemberField(), username));
+
+        if (manager.isFlattenNestedGroups()) {
+            // search groups that contain the given groups
+
+            Set<String> checkedGroups = new HashSet<>();
+            Deque<String> todo = new ArrayDeque<>(groupNames);
+            String group;
+            while (null != (group = todo.pollFirst())) {
+                if (checkedGroups.contains(group)) {
+                    continue;
+                }
+                checkedGroups.add(group);
+                try {
+                    // get the DN of the group
+                    LdapName groupDN = manager.findGroupAbsoluteDN(group);
+                    if(manager.isPosixMode()){
+                        // in posix mode we need to search for the "uid" of the group.
+                        List<String> uids = manager.retrieveAttributeOf(manager.getUsernameField(), groupDN);
+                        if(uids.isEmpty()) {
+                            // group not there or has not the "uid" attribute
+                            continue;
+                        }
+                        group = uids.get(0);
+                    } else {
+                        group = groupDN.toString();
+                    }
+                    // search for groups that have the given group (DN normal, UID posix) as member
+                    Collection<String> containingGroupNames = search(manager.getGroupMemberField(), group);
+                    // add the found groups to the result and to the groups to be checked transitively
+                    todo.addAll(containingGroupNames);
+                    groupNames.addAll(containingGroupNames);
+                }
+                catch (Exception e) {
+                    Log.warn("Error looking up group: {}", group);
+                }
+            }
+        }
+        return groupNames;
     }
 
     @Override
@@ -167,7 +250,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
-        filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value));
+        filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value, false));
         filter.append("))");
         if (Log.isDebugEnabled()) {
             Log.debug("Trying to find group names using query: " + filter.toString());
@@ -196,7 +279,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         // Make the query be a wildcard search by default. So, if the user searches for
         // "Test", make the sanitized search be "Test*" instead.
         filter.append('(').append(manager.getGroupNameField()).append('=')
-                .append(LdapManager.sanitizeSearchFilter(query)).append("*)");
+                .append(LdapManager.sanitizeSearchFilter(query, false)).append("*)");
         // Perform the LDAP query
         return manager.retrieveList(
                 manager.getGroupNameField(),
@@ -212,7 +295,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         return true;
     }
 
-    private Group processGroup(LdapContext ctx, Attributes a) throws NamingException {
+    private Group processGroup(LdapContext ctx, Attributes a, Set<String> membersToIgnore) throws NamingException {
         XMPPServer server = XMPPServer.getInstance();
         String serverName = server.getServerInfo().getXMPPDomain();
         // Build `3 groups.
@@ -225,7 +308,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         // We have to process Active Directory differently.
         boolean isAD = manager.getUsernameField().equals("sAMAccountName");
         String[] returningAttributes = isAD ? new String[] { "distinguishedName", manager.getUsernameField() } : new String[] { manager.getUsernameField() };
-        
+
         SearchControls searchControls = new SearchControls();
         searchControls.setReturningAttributes(returningAttributes);
         // See if recursive searching is enabled. Otherwise, only search one level.
@@ -252,10 +335,14 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         }
         Set<JID> members = new TreeSet<>();
         Attribute memberField = a.get(manager.getGroupMemberField());
+
+        Log.debug("Loading members of group: {}", name);
+
         if (memberField != null) {
             NamingEnumeration ne = memberField.getAll();
             while (ne.hasMore()) {
                 String username = (String) ne.next();
+                LdapName userDN = null;
                 // If not posix mode, each group member is stored as a full DN.
                 if (!manager.isPosixMode()) {
                     try {
@@ -271,18 +358,18 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         // sAMAccountName, but stores group members as "CN=...".
                         else {
                             // Create an LDAP name with the full DN.
-                            LdapName ldapName = new LdapName(username);
+                            userDN = new LdapName(username);
                             // Turn the LDAP name into something we can use in a
                             // search by stripping off the comma.
                             StringBuilder userFilter = new StringBuilder();
                             userFilter.append("(&(");
-                            userFilter.append(ldapName.get(ldapName.size() - 1));
+                            userFilter.append(userDN.get(userDN.size() - 1));
                             userFilter.append(')');
                             userFilter.append(MessageFormat.format(manager.getSearchFilter(), "*"));
                             userFilter.append(')');
                             NamingEnumeration usrAnswer = ctx.search("",
                                     userFilter.toString(), searchControls);
-                            if (usrAnswer != null && usrAnswer.hasMoreElements()) {
+                            if (usrAnswer.hasMoreElements()) {
                                 SearchResult searchResult = null;
                                 // We may get multiple search results for the same user CN.
                                 // Iterate through the entire set to find a matching distinguished name.
@@ -317,35 +404,67 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 // Therefore, we have to try to load each user we found to see if
                 // it passes the filter.
                 try {
-                    JID userJID;
-                    int position = username.indexOf("@" + serverName);
-                    // Create JID of local user if JID does not match a component's JID
-                    if (position == -1) {
-                        // In order to lookup a username from the manager, the username
-                        // must be a properly escaped JID node.
-                        String escapedUsername = JID.escapeNode(username);
-                        if (!escapedUsername.equals(username)) {
+                    if (!membersToIgnore.contains(username)) {
+                        JID userJID;
+                        int position = username.indexOf("@" + serverName);
+                        // Create JID of local user if JID does not match a component's JID
+                        if (position == -1) {
+                            // In order to lookup a username from the manager, the username
+                            // must be a properly escaped JID node.
+                            String escapedUsername = JID.escapeNode(username);
                             // Check if escaped username is valid
                             userManager.getUser(escapedUsername);
+                            // No exception, so the user must exist. Add the user as a group
+                            // member using the escaped username.
+                            userJID = server.createJID(escapedUsername, null);
                         }
-                        // No exception, so the user must exist. Add the user as a group
-                        // member using the escaped username.
-                        userJID = server.createJID(escapedUsername, null);
+                        else {
+                            // This is a JID of a component or node of a server's component
+                            String node = username.substring(0, position);
+                            String escapedUsername = JID.escapeNode(node);
+                            userJID = new JID(escapedUsername + "@" + serverName);
+                        }
+                        members.add(userJID);
                     }
-                    else {
-                        // This is a JID of a component or node of a server's component
-                        String node = username.substring(0, position);
-                        String escapedUsername = JID.escapeNode(node);
-                        userJID = new JID(escapedUsername + "@" + serverName);
-                    }
-                    members.add(userJID);
                 }
                 catch (UserNotFoundException e) {
-                    // We can safely ignore this error. It likely means that
-                    // the user didn't pass the search filter that's defined.
-                    // So, we want to simply ignore the user as a group member.
-                    if (manager.isDebugEnabled()) {
-                        Log.debug("LdapGroupProvider: User not found: " + username);
+                    // not a user!
+                    // maybe it is a group?
+                    boolean isGroup = false;
+                    if (manager.isFlattenNestedGroups()) {
+                        if (manager.isPosixMode()) { // in posix mode, the DN has not been set...
+                            // Look up the userDN using the UID
+                            String userDNStr = manager.retrieveSingle(null,
+                                "(" + manager.getUsernameField()
+                                    + "=" + LdapManager.sanitizeSearchFilter(username) + ")",
+                                true);
+                            if (userDNStr != null)
+                                userDN = new LdapName(userDNStr);
+                        } else if (userDN == null) {
+                            // Create an LDAP name with the full DN.
+                            userDN = new LdapName(username);
+                        }
+                        if (userDN != null && manager.isGroupDN(userDN)) {
+                            isGroup = true;
+                            if (!membersToIgnore.contains(userDN.toString())
+                                && !membersToIgnore.contains(username)) {
+                                // prevent endless adding of cyclic referenced groups
+                                membersToIgnore.add(username);
+                                membersToIgnore.add(userDN.toString());
+                                // it's a sub group not already added, so add its members
+                                Log.debug("Adding members of sub-group: {}", userDN);
+                                Group subGroup = getGroupByDN(userDN, membersToIgnore);
+                                members.addAll(subGroup.getMembers());
+                            }
+                        }
+                    }
+                    if (!isGroup) {
+                        // We can safely ignore this error. It likely means that
+                        // the user didn't pass the search filter that's defined.
+                        // So, we want to simply ignore the user as a group member.
+                        if (manager.isDebugEnabled()) {
+                            Log.debug("LdapGroupProvider: User not found: " + username);
+                        }
                     }
                 }
             }

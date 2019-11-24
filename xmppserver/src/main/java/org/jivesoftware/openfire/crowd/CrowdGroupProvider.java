@@ -73,15 +73,15 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
         int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
 
         Cache<String, ArrayList<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
-        groupMembershipCache.setMaxCacheSize(-1);
+        groupMembershipCache.setMaxCacheSize(-1L);
         groupMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 
         Cache<JID, ArrayList<String>> userMembershipCache = CacheFactory.createLocalCache(USER_MEMBERSHIP_CACHE_NAME);
-        userMembershipCache.setMaxCacheSize(-1);
+        userMembershipCache.setMaxCacheSize(-1L);
         userMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
         
         Cache<String, org.jivesoftware.openfire.crowd.jaxb.Group> groupCache = CacheFactory.createLocalCache(GROUP_CACHE_NAME);
-        groupCache.setMaxCacheSize(-1);
+        groupCache.setMaxCacheSize(-1L);
         groupCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
     }
 

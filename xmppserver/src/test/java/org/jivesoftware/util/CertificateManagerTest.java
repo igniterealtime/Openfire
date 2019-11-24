@@ -13,7 +13,6 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import sun.security.x509.GeneralNameInterface;
 
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
@@ -418,7 +417,7 @@ public class CertificateManagerTest
 
         final ArrayList<List<?>> expectedNames = new ArrayList<>();
         for ( final String sanDnsName : sanDnsNames ) {
-            expectedNames.add( Arrays.asList( GeneralNameInterface.NAME_DNS, sanDnsName ) );
+            expectedNames.add( Arrays.asList( 2 , sanDnsName ) );
         }
 
         assertThat( "Expected to find all 'alternative names' as DNS entries in the subject alternative names (but does not).",

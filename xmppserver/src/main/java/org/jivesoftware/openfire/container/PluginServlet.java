@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -54,6 +55,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.jasper.JspC;
+import org.dom4j.Document;
+import org.jivesoftware.admin.PluginFilter;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.WebXmlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
  * to plugins. Since plugins can be dynamically loaded and live in a different place
@@ -79,6 +90,12 @@ public class PluginServlet extends HttpServlet {
 
     private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
     private static final String CSRF_ATTRIBUTE = "csrf";
+
+    public static final SystemProperty<Boolean> ALLOW_LOCAL_FILE_READING = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "plugins.servlet.allowLocalFileReading" )
+        .setDynamic( true )
+        .setDefaultValue( false )
+        .build();
 
     private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
@@ -510,7 +527,21 @@ public class PluginServlet extends HttpServlet {
 
         if (environment != null) {
             file = new File(environment.getWebRoot(), contextPath);
+        } else {
+            if ( !ALLOW_LOCAL_FILE_READING.getValue() ) {
+                // If _not_ in a DEV environment, ensure that the file that's being served is a
+                // file that is part of Openfire. This guards against accessing files from the
+                // operating system, or other files that shouldn't be accessible via the web (OF-1886).
+                final Path absoluteHome = new File( JiveGlobals.getHomeDirectory() ).toPath().normalize().toAbsolutePath();
+                final Path absoluteLookup = file.toPath().normalize().toAbsolutePath();
+                if ( !absoluteLookup.startsWith( absoluteHome ) )
+                {
+                    response.setStatus( HttpServletResponse.SC_FORBIDDEN );
+                    return;
+                }
+            }
         }
+
         if (!file.exists()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;

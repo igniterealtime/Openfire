@@ -120,7 +120,7 @@ public class POP3AuthProvider implements AuthProvider {
             Log.debug("\t authRequiresDomain: " + authRequiresDomain);
             Log.debug("\t authCacheEnabled: " + (authCache != null));
             if (authCache != null) {
-                Log.debug("\t authCacheSize: " + authCache.getCacheSize());
+                Log.debug("\t authCacheSize: " + authCache.getLongCacheSize());
                 Log.debug("\t authCacheMaxLifetime: " + authCache.getMaxLifetime());
             }
         }

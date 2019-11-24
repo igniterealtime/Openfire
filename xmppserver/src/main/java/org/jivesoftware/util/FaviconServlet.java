@@ -17,8 +17,10 @@
 package org.jivesoftware.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -37,6 +39,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -88,10 +91,9 @@ public class FaviconServlet extends HttpServlet {
             .build();
         // Load the default favicon to use when no favicon was found of a remote host
         try {
-            URL resource = config.getServletContext().getResource("/images/server_16x16.gif");
-            defaultBytes = getImage(resource.toString());
+           defaultBytes = Files.readAllBytes(Paths.get(JiveGlobals.getHomeDirectory(), "plugins/admin/webapp/images/server_16x16.gif"));
         }
-        catch (MalformedURLException e) {
+        catch (final IOException e) {
             LOGGER.warn("Unable to retrieve default favicon", e);
         }
         // Initialize caches.
@@ -116,11 +118,23 @@ public class FaviconServlet extends HttpServlet {
      */
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String host = request.getParameter("host");
-        // Check special cases where we need to change host to get a favicon
-        host = "gmail.com".equals(host) ? "google.com" : host;
+        final String host = request.getParameter("host");
 
-        byte[] bytes = getImage(host, defaultBytes);
+        // Validate that we're connected to the host
+        final SessionManager sessionManager = SessionManager.getInstance();
+        final Optional<String> optionalHost = Stream
+            .concat(sessionManager.getIncomingServers().stream(), sessionManager.getOutgoingServers().stream())
+            .filter(remoteServerHost -> remoteServerHost.equalsIgnoreCase(host))
+            .findAny();
+        if (!optionalHost.isPresent()) {
+            LOGGER.info("Request to unconnected host {} ignored - using default response", host);
+            writeBytesToStream(defaultBytes, response);
+            return;
+        }
+
+        // Check special cases where we need to change host to get a favicon
+        final String hostToUse = "gmail.com".equals(host) ? "google.com" : host;
+        byte[] bytes = getImage(hostToUse, defaultBytes);
         if (bytes != null) {
             writeBytesToStream(bytes, response);
         }
@@ -182,11 +196,11 @@ public class FaviconServlet extends HttpServlet {
     }
 
     private byte[] getImage(String url) {
-        // Try to get the fiveicon from the url using an HTTP connection from the pool
+        // Try to get the favicon from the url using an HTTP connection from the pool
         // that also allows to configure timeout values (e.g. connect and get data)
         final RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(2000)
-            .setSocketTimeout(2000)
+            .setConnectTimeout(5000)
+            .setSocketTimeout(5000)
             .build();
         final HttpUriRequest getRequest = RequestBuilder.get(url)
             .setConfig(requestConfig)
@@ -194,10 +208,17 @@ public class FaviconServlet extends HttpServlet {
 
         try(final CloseableHttpResponse response = client.execute(getRequest)) {
             if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                return EntityUtils.toByteArray(response.getEntity());
+                final byte[] result = EntityUtils.toByteArray(response.getEntity());
+
+                // Prevent SSRF by checking result (OF-1885)
+                if ( !GraphicsUtils.isImage( result ) ) {
+                    LOGGER.info( "Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url) ;
+                    return null;
+                }
+                return result;
             }
-        } catch (final IOException ignored) {
-            // Do nothing
+        } catch (final IOException ex) {
+            LOGGER.debug( "An exception occurred while trying to obtain an image from: {}", url, ex );
         }
 
         return null;

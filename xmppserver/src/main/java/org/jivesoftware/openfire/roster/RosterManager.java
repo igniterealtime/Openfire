@@ -42,6 +42,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -59,11 +60,12 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     private static final Logger Log = LoggerFactory.getLogger(RosterManager.class);
 
     private static final String MUTEX_SUFFIX = " ro";
-    
+
     private Cache<String, Roster> rosterCache = null;
     private XMPPServer server;
     private RoutingTable routingTable;
     private RosterItemProvider provider;
+    private ExecutorService executor;
 
     /**
      * Returns true if the roster service is enabled. When disabled it is not possible to
@@ -291,7 +293,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void groupModified(Group group, Map params) {
+    public void groupModified(final Group group, Map params) {
         // Do nothing if no group property has been modified
         if ("propertyDeleted".equals(params.get("type"))) {
              return;
@@ -307,21 +309,33 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<>(group.getMembers());
+            final Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
-            Collection<JID> affectedUsers = getAffectedUsers(group, originalValue,
+            final Collection<JID> affectedUsers = getAffectedUsers(group, originalValue,
                     group.getProperties().get("sharedRoster.groupList"));
-            // Remove the group members from the affected rosters
-            for (JID deletedUser : users) {
-                groupUserDeleted(group, affectedUsers, deletedUser);
-            }
 
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
-            for (JID user : users) {
-                groupUserAdded(group, user);
-            }
+
+            executor.submit(new Callable<Boolean>()
+            {
+                public Boolean call() throws Exception
+                {
+                    // Remove the group members from the affected rosters
+                    for (JID deletedUser : users) {
+                        groupUserDeleted(group, affectedUsers, deletedUser);
+                    }
+
+                    // Simulate that the group users has been added to the group. This will cause to push
+                    // roster items to the "affected" users for the group users
+
+                    for (JID user : users) {
+                        groupUserAdded(group, user);
+                    }
+                    return true;
+                }
+            });
         }
         else if ("sharedRoster.groupList".equals(keyChanged)) {
             String currentValue = group.getProperties().get("sharedRoster.groupList");
@@ -330,21 +344,31 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<>(group.getMembers());
+            final Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
-            Collection<JID> affectedUsers = getAffectedUsers(group,
+            final Collection<JID> affectedUsers = getAffectedUsers(group,
                     group.getProperties().get("sharedRoster.showInRoster"), originalValue);
-            // Remove the group members from the affected rosters
-            for (JID deletedUser : users) {
-                groupUserDeleted(group, affectedUsers, deletedUser);
-            }
 
-            // Simulate that the group users has been added to the group. This will cause to push
-            // roster items to the "affected" users for the group users
-            for (JID user : users) {
-                groupUserAdded(group, user);
-            }
+            executor.submit(new Callable<Boolean>()
+            {
+                public Boolean call() throws Exception
+                {
+                    // Remove the group members from the affected rosters
+
+                    for (JID deletedUser : users) {
+                        groupUserDeleted(group, affectedUsers, deletedUser);
+                    }
+
+                    // Simulate that the group users has been added to the group. This will cause to push
+                    // roster items to the "affected" users for the group users
+
+                    for (JID user : users) {
+                        groupUserAdded(group, user);
+                    }
+                    return true;
+                }
+            });
         }
         else if ("sharedRoster.displayName".equals(keyChanged)) {
             String currentValue = group.getProperties().get("sharedRoster.displayName");
@@ -361,16 +385,13 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             // Iterate on all the affected users and update their rosters
             for (JID updatedUser : users) {
                 // Get the roster to update.
-                Roster roster;
+                Roster roster = null;
                 if (server.isLocal(updatedUser)) {
-                    try {
-                        roster = getRoster(updatedUser.getNode());
-
-                        // Update the roster with the new group display name
-                        roster.shareGroupRenamed(users);
-                    } catch (UserNotFoundException e) {
-                        Log.debug( "Unexpected exception while applying group modification for user '{}' .", updatedUser.getNode(), e );
-                    }
+                    roster = rosterCache.get(updatedUser.getNode());
+                }
+                if (roster != null) {
+                    // Update the roster with the new group display name
+                    roster.shareGroupRenamed(users);
                 }
             }
         }
@@ -554,17 +575,19 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 // Get the roster to update
                 Roster roster = null;
                 if (server.isLocal(userToUpdate)) {
-                    // Get the roster. If the user does not exist then continue with the next user
+                    // Check that the user exists, if not then continue with the next user
                     try {
-                        roster = getRoster(userToUpdate.getNode());
+                        UserManager.getInstance().getUser(userToUpdate.getNode());
                     }
                     catch (UserNotFoundException e) {
                         continue;
                     }
+                    roster = rosterCache.get(userToUpdate.getNode());
                 }
-                // Update roster
-                roster.addSharedUser(group, newUserJID);
-
+                // Only update rosters in memory
+                if (roster != null) {
+                    roster.addSharedUser(group, newUserJID);
+                }
                 if (!server.isLocal(userToUpdate)) {
                     // Susbcribe to the presence of the remote user. This is only necessary for
                     // remote users and may only work with remote users that **automatically**
@@ -591,17 +614,19 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 // Get the roster to update
                 Roster roster = null;
                 if (server.isLocal(userToUpdate)) {
-                    // Get the roster. If the user does not exist then continue with the next user
+                    // Check that the user exists, if not then continue with the next user
                     try {
-                        roster = getRoster(userToUpdate.getNode());
+                        UserManager.getInstance().getUser(userToUpdate.getNode());
                     }
                     catch (UserNotFoundException e) {
                         continue;
                     }
+                    roster = rosterCache.get(userToUpdate.getNode());
                 }
-                // Update roster
-                roster.deleteSharedUser(group, userJID);
-
+                // Only update rosters in memory
+                if (roster != null) {
+                    roster.deleteSharedUser(group, userJID);
+                }
                 if (!server.isLocal(userToUpdate)) {
                     // Unsusbcribe from the presence of the remote user. This is only necessary for
                     // remote users and may only work with remote users that **automatically**
@@ -651,16 +676,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Get the roster of the added user.
         Roster addedUserRoster = null;
         if (server.isLocal(addedUser)) {
-            try {
-                // force the roster reload to get fresh subscription in the rosterItems
-                String username = addedUser.getNode();
-                synchronized ((username + " ro").intern()) {
-                    rosterCache.remove(username);
-                    addedUserRoster = getRoster(username);
-                }
-            } catch (UserNotFoundException e) {
-                Log.warn( "Unexpected exception while adding user '{}' to group '{}'.", addedUser, group, e );
-            }
+            addedUserRoster = rosterCache.get(addedUser.getNode());
         }
 
         // Iterate on all the affected users and update their rosters
@@ -669,25 +685,23 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 // Get the roster to update
                 Roster roster = null;
                 if (server.isLocal(userToUpdate)) {
-                    // Get the roster. If the user does not exist then continue with the next user
+                    // Check that the user exists, if not then continue with the next user
                     try {
-                        roster = getRoster(userToUpdate.getNode());
+                        UserManager.getInstance().getUser(userToUpdate.getNode());
                     }
                     catch (UserNotFoundException e) {
                         continue;
                     }
+                    roster = rosterCache.get(userToUpdate.getNode());
                 }
-                // Update roster
-                roster.addSharedUser(group, addedUser);
-
+                // Only update rosters in memory
+                if (roster != null) {
+                    roster.addSharedUser(group, addedUser);
+                }
                 // Check if the roster is still not in memory
                 if (addedUserRoster == null && server.isLocal(addedUser)) {
-                    try {
-                        addedUserRoster =
-                                getRoster(addedUser.getNode());
-                    } catch (UserNotFoundException e) {
-                        Log.warn( "Unexpected exception while adding user '{}' to group '{}'.", addedUser, group, e );
-                    }
+                    addedUserRoster =
+                            rosterCache.get(addedUser.getNode());
                 }
                 // Update the roster of the newly added group user.
                 if (addedUserRoster != null) {
@@ -731,11 +745,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Get the roster of the deleted user.
         Roster deletedUserRoster = null;
         if (server.isLocal(deletedUser)) {
-            try {
-                deletedUserRoster = getRoster(deletedUser.getNode());
-            } catch (UserNotFoundException e) {
-                Log.warn( "Unexpected exception while deleting user '{}' from group '{}'.", deletedUser, group, e );
-            }
+            deletedUserRoster = rosterCache.get(deletedUser.getNode());
         }
 
         // Iterate on all the affected users and update their rosters
@@ -743,17 +753,24 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             // Get the roster to update
             Roster roster = null;
             if (server.isLocal(userToUpdate)) {
-                // Get the roster. If the user does not exist then continue with the next user
+                // Check that the user exists, if not then continue with the next user
                 try {
-                    roster = getRoster(userToUpdate.getNode());
+                    UserManager.getInstance().getUser(userToUpdate.getNode());
                 }
                 catch (UserNotFoundException e) {
                     continue;
-                } 
+                }
+                roster = rosterCache.get(userToUpdate.getNode());
             }
-            // Update roster
-            roster.deleteSharedUser(group, deletedUser);
-
+            // Only update rosters in memory
+            if (roster != null) {
+                roster.deleteSharedUser(group, deletedUser);
+            }
+            // Check if the roster is still not in memory
+            if (deletedUserRoster == null && server.isLocal(deletedUser)) {
+                deletedUserRoster =
+                        rosterCache.get(deletedUser.getNode());
+            }
             // Update the roster of the newly deleted group user.
             if (deletedUserRoster != null) {
                 deletedUserRoster.deleteSharedUser(userToUpdate, group);
@@ -993,6 +1010,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.addListener(this);
         // Add the new instance as a listener of group events
         GroupEventDispatcher.addListener(this);
+        executor = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -1002,6 +1020,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.removeListener(this);
         // Remove this module as a listener of group events
         GroupEventDispatcher.removeListener(this);
+        executor.shutdown();
     }
 
     public static RosterItemProvider getRosterItemProvider() {

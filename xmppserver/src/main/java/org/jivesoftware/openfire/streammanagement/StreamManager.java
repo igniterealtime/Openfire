@@ -1,11 +1,5 @@
 package org.jivesoftware.openfire.streammanagement;
 
-import java.math.BigInteger;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.dom4j.dom.DOMElement;
@@ -20,10 +14,21 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
+
+import java.math.BigInteger;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Date;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * XEP-0198 Stream Manager.
@@ -32,6 +37,24 @@ import org.xmpp.packet.*;
  * @author jonnyheavey
  */
 public class StreamManager {
+
+    public static SystemProperty<Boolean> LOCATION_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.location.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> MAX_SERVER_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.max-server.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> ACTIVE = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.active")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
 
     private final Logger Log;
     private boolean resume = false;
@@ -47,7 +70,7 @@ public class StreamManager {
     }
     
     public static boolean isStreamManagementActive() {
-        return JiveGlobals.getBooleanProperty("stream.management.active", true);
+        return ACTIVE.getValue();
     }
 
     /**
@@ -206,7 +229,19 @@ public class StreamManager {
         Element enabled = new DOMElement(QName.get("enabled", namespace));
         if (this.resume) {
             enabled.addAttribute("resume", "true");
-            enabled.addAttribute( "id", smId);
+            enabled.addAttribute("id", smId);
+            if ( !namespace.equals(NAMESPACE_V2) && LOCATION_ENABLED.getValue() ) {
+                // OF-1925: Hint clients to do resumes at the same cluster node.
+                enabled.addAttribute("location", XMPPServer.getInstance().getServerInfo().getHostname());
+            }
+
+            // OF-1926: Tell clients how long they can be detached.
+            if ( MAX_SERVER_ENABLED.getValue() ) {
+                final int sessionDetachTime = XMPPServer.getInstance().getSessionManager().getSessionDetachTime();
+                if ( sessionDetachTime > 0 ) {
+                    enabled.addAttribute("max", String.valueOf(sessionDetachTime/1000));
+                }
+            }
         }
         session.deliverRawText(enabled.asXML());
     }
@@ -253,7 +288,7 @@ public class StreamManager {
         } else {
             fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
         }
-        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session);
+        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
         // Locate existing session.
         LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
@@ -288,18 +323,18 @@ public class StreamManager {
             return;
         }
         if (!otherSession.isDetached()) {
-            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession, fullJid);
+            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession.getStreamID(), fullJid);
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
             oldConnection.close();
         }
-        Log.debug("Attaching to other session {} of '{}'.", otherSession, fullJid);
+        Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
         // If we're all happy, disconnect this session.
         Connection conn = session.getConnection();
         session.setDetached();
         // Connect new session.
         otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession, fullJid, session );
+        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession.getStreamID(), fullJid, session.getStreamID() );
         session.close();
     }
 

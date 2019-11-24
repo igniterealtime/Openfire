@@ -16,14 +16,10 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
@@ -43,6 +39,7 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
 
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
@@ -2082,6 +2079,24 @@ public abstract class Node {
         if (options != null) {
             subscription.configure(options);
         }
+
+        if ( subscription.isAuthorizationPending() ) {
+            final Set<NodeSubscription> existing = new HashSet<>();
+            existing.add( subscriptionsByJID.get( subscription.getJID().toString() ) ); // potentially null
+            existing.addAll( subscriptionsByID.values().stream().filter( s -> s.getJID().equals( subscription.getJID() ) ).collect( Collectors.toSet()) );
+            if (existing.stream().anyMatch( s -> s != null && s.isAuthorizationPending() ) ) {
+                // This node already has a pending subscription for this JID. The XEP forbids this.
+                if (originalIQ != null ) {
+                    final IQ response = IQ.createResultIQ( originalIQ );
+                    response.setError( PacketError.Condition.not_authorized );
+                    response.getError().getElement().addElement( "pending-subscription", "http://jabber.org/protocol/pubsub#errors" );
+                    getService().send( response );
+                }
+                // Silently ignore if this was an internal API call.
+                return;
+            }
+        }
+
         addSubscription(subscription);
 
         if (savedToDB) {

@@ -3,6 +3,7 @@
                  org.jivesoftware.admin.LdapUserProfile,
                  org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapUserProvider"%>
+<%@ page import="org.jivesoftware.openfire.user.UserProvider"%>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
 
@@ -135,10 +136,10 @@
             if (save) {
                 manager.setUsernameField(usernameField);
                 if (searchFields != null) {
-                    if ("org.jivesoftware.openfire.ldap.LdapUserProvider"
-                            .equals(JiveGlobals.getProperty("provider.user.className"))) {
+                    final UserProvider userProvider = UserManager.getUserProvider();
+                    if (userProvider instanceof LdapUserProvider) {
                         // Update current instance being used
-                        ((LdapUserProvider) UserManager.getUserProvider()).setSearchFields(searchFields);
+                        ((LdapUserProvider) userProvider).setSearchFields(searchFields);
                     } else {
                         // Just update the property. It will be later used by LdapUserProvider 
                         JiveGlobals.setProperty("ldap.searchFields", searchFields);

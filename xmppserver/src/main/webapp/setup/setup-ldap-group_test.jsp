@@ -18,6 +18,7 @@
     Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
     Map<String, String> groupSettings = (Map<String, String>) session.getAttribute("ldapGroupSettings");
     if (settings != null && userSettings != null && groupSettings != null) {
+        settings.computeIfAbsent( "ldap.adminPassword", (key) -> LdapManager.getInstance().getAdminPassword() );
         LdapManager manager = new LdapManager(settings);
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));

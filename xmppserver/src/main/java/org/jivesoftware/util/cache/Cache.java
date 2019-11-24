@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -74,7 +75,7 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     long getMaxCacheSize();
 
     /**
-     * Sets the maximum size of the cache in bytes. If the cache grows larger
+     * Sets the maximum size of the cache in bytes limited to integer size. If the cache grows larger
      * than the max size, the least frequently used items will be removed. If
      * the max cache size is set to -1, there is no size limit.
      *
@@ -83,7 +84,24 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      *
      * @param maxSize the maximum size of the cache in bytes.
      */
+    @Deprecated
     void setMaxCacheSize(int maxSize);
+
+    /**
+     * Sets the maximum size of the cache in bytes. If the cache grows larger
+     * than the max size, the least frequently used items will be removed. If
+     * the max cache size is set to -1, there is no size limit.
+     *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
+     *
+     * Attention: The default implementation of this method sets the cache value limited to integer size.
+     *
+     * @param maxSize the maximum size of the cache in bytes.
+     */
+    default void setMaxCacheSize(long maxSize){
+        setMaxCacheSize((int)Math.min(Integer.MAX_VALUE,maxSize));
+    }
 
     /**
      * Returns the maximum number of milliseconds that any object can live
@@ -109,14 +127,29 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     void setMaxLifetime(long maxLifetime);
 
     /**
-     * Returns the size of the cache contents in bytes. This value is only a
+     * Returns the size of the cache contents in bytes limited to integer size. This value is only a
      * rough approximation, so cache users should expect that actual VM
      * memory used by the cache could be significantly higher than the value
      * reported by this method.
      *
      * @return the size of the cache contents in bytes.
      */
+    @Deprecated
     int getCacheSize();
+
+    /**
+     * Returns the size of the cache contents in bytes. This value is only a
+     * rough approximation, so cache users should expect that actual VM
+     * memory used by the cache could be significantly higher than the value
+     * reported by this method.
+     *
+     * Attention: The default implementation of this method returns the cache value limited to integer size.
+     *
+     * @return the size of the cache contents in bytes.
+     */
+    default long getLongCacheSize(){
+        return getCacheSize();
+    }
 
     /**
      * Returns the number of cache hits. A cache hit occurs every
@@ -186,4 +219,21 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
         return CacheFactory.getLock(key, this);
     }
 
+    AtomicBoolean secretKey = new AtomicBoolean(false);
+    AtomicBoolean secretValue = new AtomicBoolean(false);
+    default void setSecretKey() {
+        this.secretKey.set(true);
+    }
+
+    default void setSecretValue() {
+        this.secretValue.set(true);
+    }
+
+    default boolean isKeySecret() {
+        return this.secretKey.get();
+    }
+
+    default boolean isValueSecret() {
+        return this.secretValue.get();
+    }
 }

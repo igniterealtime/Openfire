@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire;
 
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -199,6 +200,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param localSession the LocalSession (this) to mark as detached.
      */
     public void addDetached(LocalSession localSession) {
+        Log.trace( "Marking session '{}' ({}) as detached.", localSession.getAddress(), localSession.getStreamID() );
         this.detachedSessions.put(localSession.getStreamID(), localSession);
     }
 
@@ -212,6 +214,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public synchronized void removeDetached(LocalSession localSession) {
         LocalSession other = this.detachedSessions.get(localSession.getStreamID());
         if (other == localSession) {
+            Log.trace( "Removing detached session '{}' ({}).", localSession.getAddress(), localSession.getStreamID() );
             this.detachedSessions.remove(localSession.getStreamID());
         }
     }
@@ -1459,8 +1462,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
-        // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
-        int period = 3 * 60 * 1000;
+
+        // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
+        // detached, or every 3 minutes if the max time is outside the default boundaries.
+        // TODO Reschedule task if getSessionDetachTime value changes.
+        final int max = getSessionDetachTime();
+        final long period;
+        if ( max > Duration.ofMinutes(1).toMillis() && max < Duration.ofHours(1).toMillis() ) {
+            period = max / 10;
+        } else {
+            period = Duration.ofMinutes(3).toMillis();
+        }
         TaskEngine.getInstance().scheduleAtFixedRate(new DetachedCleanupTask(), period, period);
     }
 
@@ -1697,10 +1709,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             final long deadline = System.currentTimeMillis() - idleTime;
             for (LocalSession session : detachedSessions.values()) {
                 try {
+                    Log.trace("Iterating over detached session '{}' ({}) to determine if it needs to be cleaned up.", session.getAddress(), session.getStreamID());
                     if (session.getLastActiveDate().getTime() < deadline) {
+                        Log.debug("Detached session '{}' ({}) has been detached for longer than {} and will be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(idleTime));
                         removeDetached(session);
                         LocalClientSession clientSession = (LocalClientSession)session;
-                        if (clientSession != null) {
+
+                        // OF-1923: Only close the session if it has not been replaced by another session (if the session
+                        // has been replaced, then the condition below will compare to distinct instances). This *should* not
+                        // occur (but has been observed, prior to the fix of OF-1923). This check is left in as a safeguard.
+                        if (session == routingTable.getClientRoute(session.getAddress())) {
                             try {
                                 if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&
                                     routingTable.hasClientRoute(session.getAddress())) {
@@ -1718,11 +1736,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                                 // Remove the session
                                 removeSession(clientSession);
                             }
+                        } else {
+                            Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
                         }
+                    } else {
+                        Log.trace("Detached session '{}' ({}) has been detached for {}, which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(System.currentTimeMillis()-session.getLastActiveDate().getTime()), Duration.ofMillis(idleTime));
                     }
                 }
                 catch (Throwable e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                    Log.error("An exception occurred while trying processing detached session '{}' ({}).", session.getAddress(), session.getStreamID(), e);
                 }
             }
         }

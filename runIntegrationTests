@@ -5,11 +5,17 @@ SMACK_COMMIT_ID="9d626bf" # master 22 Nov 2019
 GRADLE_VERSION="6.0.1"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
+DEBUG=false
+LOCAL_RUN=false
 
-while getopts dgs: OPTION "$@"; do
+while getopts dlgs: OPTION "$@"; do
 	case $OPTION in
 		d)
+			DEBUG=true
 			set -x
+			;;
+		l)
+			LOCAL_RUN=true
 			;;
 		g)
 			FORCE_CUSTOM_GRADLE=true
@@ -38,7 +44,16 @@ declare -r BASEDIR="${SCRIPTDIR}"
 cd "${BASEDIR}"
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf ${TMPDIR}" EXIT
+function cleanup {
+	if [[ $DEBUG == false ]]; then
+		rm -rf ${TMPDIR}
+	fi
+	if [[ $LOCAL_RUN == true ]]; then
+		echo "Resetting hosts file after local running. This may prompt for sudo."
+		sudo sed -i'.original' "/example.org/d" /etc/hosts
+	fi
+}
+trap cleanup EXIT
 
 SMACKDIR="${TMPDIR}/smack"
 GRADLEDIR="${TMPDIR}/gradle"
@@ -91,6 +106,10 @@ curl ${CURL_ARGS} \
 	-o distribution/target/distribution-base/conf/openfire.xml \
 	https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
 
+if [[ $LOCAL_RUN == true ]]; then
+	echo "Setting hosts file for local running. This may prompt for sudo."
+	sudo /bin/sh -c 'echo "127.0.0.1 example.org" >> /etc/hosts'
+fi
 echo "Starting Openfire…"
 
 "${OPENFIRE_SHELL_SCRIPT}" &

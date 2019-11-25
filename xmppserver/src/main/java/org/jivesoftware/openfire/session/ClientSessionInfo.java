@@ -92,7 +92,7 @@ public class ClientSessionInfo implements Externalizable {
         }
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
         ExternalizableUtil.getInstance().writeBoolean(out, messageCarbonsEnabled);    
-	    ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
+        ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
     }
 
     @Override

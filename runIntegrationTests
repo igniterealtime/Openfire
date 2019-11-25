@@ -52,6 +52,8 @@ function cleanup {
 		echo "Resetting hosts file after local running. This may prompt for sudo."
 		sudo sed -i'.original' "/example.org/d" /etc/hosts
 	fi
+	echo "Stopping Openfire"
+	pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
 }
 trap cleanup EXIT
 

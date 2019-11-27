@@ -12,6 +12,19 @@ HOST='example.org'
 ADMINUSER='admin'
 ADMINPASS='admin'
 
+usage()
+{
+	echo "Usage: $0 [-d] [-l] [-g] [-s GITREF] [-h HOST] [-u USERNAME] [-p PASSWORD]"
+	echo "    -d: Enable debug mode. Preserves temp directories once complete (default: off)"
+	echo "    -l: Launch a local Openfire. Sets a hosts file before and unsets it afterwards (default: off)"
+	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
+	echo "    -s: Set Smack to the given label or SHA (default: 9d626bf787dc3e0e0a4399cef429285b22744d73)"
+	echo "    -h: The hostname for the Openfire under test (default: example.org)"
+	echo "    -u: Admin username for Openfire (default: admin)"
+	echo "    -p: Admin password for Openfire (default: password)"
+	exit 2
+}
+
 while getopts dlgs:h:u:p: OPTION "$@"; do
 	case $OPTION in
 		d)
@@ -36,9 +49,9 @@ while getopts dlgs:h:u:p: OPTION "$@"; do
 		p)
 			ADMINPASS="${OPTARG}"
 			;;
-		\? ) echo "Unknown option: -$OPTARG" >&2; exit 1;;
-        :  ) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
-        *  ) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
+		\? ) usage;;
+        :  ) usage;;
+        *  ) usage;;
 	esac
 done
 
@@ -52,12 +65,12 @@ fi
 # stackoverflow: http://stackoverflow.com/a/12197518/194894
 pushd . > /dev/null
 SCRIPTDIR="${BASH_SOURCE[0]}";
-while([ -h "${SCRIPTDIR}" ]); do
-    cd "`dirname "${SCRIPTDIR}"`"
-    SCRIPTDIR="$(readlink "`basename "${SCRIPTDIR}"`")";
+while [ -h "${SCRIPTDIR}" ]; do
+    cd "$(dirname "${SCRIPTDIR}")"
+    SCRIPTDIR="$(readlink "$(basename "${SCRIPTDIR}")")";
 done
-cd "`dirname "${SCRIPTDIR}"`" > /dev/null
-SCRIPTDIR="`pwd`";
+cd "$(dirname "${SCRIPTDIR}")" > /dev/null
+SCRIPTDIR="$(pwd)";
 popd  > /dev/null
 declare -r BASEDIR="${SCRIPTDIR}"
 cd "${BASEDIR}"

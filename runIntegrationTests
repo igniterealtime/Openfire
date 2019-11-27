@@ -25,7 +25,7 @@ usage()
 	exit 2
 }
 
-while getopts dlgs:h:u:p: OPTION "$@"; do
+while getopts dlgs:h:i:u:p: OPTION "$@"; do
 	case $OPTION in
 		d)
 			DEBUG=true
@@ -42,6 +42,9 @@ while getopts dlgs:h:u:p: OPTION "$@"; do
 			;;
 		h)
 			HOST="${OPTARG}"
+			;;
+		i)
+			IPADDRESS="${OPTARG}"
 			;;
 		u)
 			ADMINUSER="${OPTARG}"
@@ -81,9 +84,11 @@ function cleanup {
 	if [[ $DEBUG == false ]]; then
 		rm -rf ${TMPDIR}
 	fi
-	if [[ $LOCAL_RUN == true ]]; then
+	if [[ -n "$IPADDRESS" ]]; then
 		echo "Resetting hosts file after local running. This may prompt for sudo."
-		sudo sed -i'.original' "/example.org/d" /etc/hosts
+		sudo sed -i'.original' "/$IPADDRESS $HOST/d" /etc/hosts
+	fi
+	if [[ $LOCAL_RUN == true ]]; then
 		echo "Stopping Openfire"
 		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
 	fi
@@ -126,6 +131,12 @@ fi
 git reset --hard "${SMACK_COMMIT_ID}"
 popd
 
+if [[ -n "$IPADDRESS" ]]; then
+	echo "Setting hosts file for local running. This may prompt for sudo."
+	sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
+	echo "Starting Openfire…"
+fi
+
 if [[ $LOCAL_RUN == true ]]; then
 
 	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
@@ -142,10 +153,6 @@ if [[ $LOCAL_RUN == true ]]; then
 	curl ${CURL_ARGS} \
 		-o distribution/target/distribution-base/conf/openfire.xml \
 		https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
-
-	echo "Setting hosts file for local running. This may prompt for sudo."
-	sudo /bin/sh -c 'echo "127.0.0.1 example.org" >> /etc/hosts'
-	echo "Starting Openfire…"
 
 	"${OPENFIRE_SHELL_SCRIPT}" &
 

@@ -2955,7 +2955,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         List<Presence> presences = applyAffiliationChange(getRole(), groupMember, null);
 
         if (presences.size() == 0 && isMembersOnly()) {
-            sendAffiliationChangeNotification(groupMember, affiliation);
+            sendOutOfRoomAffiliationChangeNotification(groupMember, affiliation);
         }
         else {      // member is in MUC, send presence stanzas
             for (Presence presence : presences) {
@@ -2964,7 +2964,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
     }
 
-    private void sendAffiliationChangeNotification(JID jid, String affiliation) {
+    private void sendOutOfRoomAffiliationChangeNotification(JID jid, String affiliation) {
         // Announce affiliation change for a user that is NOT currently in the room,
         // XEP-0045 (v1.31.2) example 195
 

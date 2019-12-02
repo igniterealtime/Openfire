@@ -462,7 +462,7 @@ public class MUCPersistenceManager {
      * will be executed only when the service is starting up.
      *
      * @param chatserver the chat server that will hold the loaded rooms.
-     * @param emptyDate rooms that hadn't been used before this date won't be loaded.
+     * @param cleanupDate rooms that hadn't been used before this date won't be loaded.
      * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */

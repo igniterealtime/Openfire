@@ -8,7 +8,11 @@ CURL_ARGS="--location --silent"
 DEBUG=false
 LOCAL_RUN=false
 
-while getopts dlgs: OPTION "$@"; do
+HOST='example.org'
+ADMINUSER='admin'
+ADMINPASS='admin'
+
+while getopts dlgs:h:u:p: OPTION "$@"; do
 	case $OPTION in
 		d)
 			DEBUG=true
@@ -23,8 +27,25 @@ while getopts dlgs: OPTION "$@"; do
 		s)
 			SMACK_COMMIT_ID="${OPTARG}"
 			;;
+		h)
+			HOST="${OPTARG}"
+			;;
+		u)
+			ADMINUSER="${OPTARG}"
+			;;
+		p)
+			ADMINPASS="${OPTARG}"
+			;;
+		\? ) echo "Unknown option: -$OPTARG" >&2; exit 1;;
+        :  ) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
+        *  ) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
 	esac
 done
+
+if [[ $LOCAL_RUN == true ]] && [[ $HOST != "example.org" ]]; then
+	echo "Cannot specify custom host if launching a local instance. If you have an already-running local instance to test against, omit the -l flag."
+	exit 1
+fi
 
 # Pretty fancy method to get reliable the absolute path of a shell
 # script, *even if it is sourced*. Credits go to GreenFox on
@@ -38,12 +59,11 @@ done
 cd "`dirname "${SCRIPTDIR}"`" > /dev/null
 SCRIPTDIR="`pwd`";
 popd  > /dev/null
-
 declare -r BASEDIR="${SCRIPTDIR}"
-
 cd "${BASEDIR}"
 
 TMPDIR=$(mktemp -d)
+
 function cleanup {
 	if [[ $DEBUG == false ]]; then
 		rm -rf ${TMPDIR}
@@ -51,9 +71,9 @@ function cleanup {
 	if [[ $LOCAL_RUN == true ]]; then
 		echo "Resetting hosts file after local running. This may prompt for sudo."
 		sudo sed -i'.original' "/example.org/d" /etc/hosts
+		echo "Stopping Openfire"
+		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
 	fi
-	echo "Stopping Openfire"
-	pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
 }
 trap cleanup EXIT
 
@@ -93,33 +113,35 @@ fi
 git reset --hard "${SMACK_COMMIT_ID}"
 popd
 
-declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
-
-if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
-	mvn verify -P ci
-fi
-
-rm distribution/target/distribution-base/conf/openfire.xml
-
-# TODO: This file should probably be part of Openfire's git and be
-# selectable by openfire.sh (.e.g "openfire.sh -c
-# openfire-demoboot.xml").
-curl ${CURL_ARGS} \
-	-o distribution/target/distribution-base/conf/openfire.xml \
-	https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
-
 if [[ $LOCAL_RUN == true ]]; then
+
+	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
+
+	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
+		mvn verify -P ci
+	fi
+
+	rm distribution/target/distribution-base/conf/openfire.xml
+
+	# TODO: This file should probably be part of Openfire's git and be
+	# selectable by openfire.sh (.e.g "openfire.sh -c
+	# openfire-demoboot.xml").
+	curl ${CURL_ARGS} \
+		-o distribution/target/distribution-base/conf/openfire.xml \
+		https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
+
 	echo "Setting hosts file for local running. This may prompt for sudo."
 	sudo /bin/sh -c 'echo "127.0.0.1 example.org" >> /etc/hosts'
+	echo "Starting Openfire…"
+
+	"${OPENFIRE_SHELL_SCRIPT}" &
+
+	# Wait 120 seconds for Openfire to open up the web interface and
+	# assume Openfire is fully operational once that happens (not sure if
+	# this assumption is correct).
+	timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
+
 fi
-echo "Starting Openfire…"
-
-"${OPENFIRE_SHELL_SCRIPT}" &
-
-# Wait 120 seconds for Openfire to open up the web interface and
-# assume Openfire is fully operational once that happens (not sure if
-# this assumption is correct).
-timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
 
 echo "Starting Integration Tests (using Smack ${SMACK_COMMIT_ID})…"
 
@@ -143,12 +165,10 @@ done
 SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT::-1}"
 
 pushd "${SMACKDIR}"
-sed -i '/-Werror/d' build.gradle
-sed -i 's/if (config.testPackages == null) {/if (config.testPackages == null || config.testPackages.isEmpty()) {/' smack-integration-test/src/main/java/org/igniterealtime/smack/inttest/SmackIntegrationTestFramework.java
 $GRADLE --stacktrace integrationTest \
-		-Dsinttest.service=example.org \
+		-Dsinttest.service=${HOST} \
 		-Dsinttest.securityMode=disabled \
 		-Dsinttest.replyTimeout=60000 \
-		-Dsinttest.adminAccountUsername=admin \
-		-Dsinttest.adminAccountPassword=admin \
+		-Dsinttest.adminAccountUsername="${ADMINUSER}" \
+		-Dsinttest.adminAccountPassword="${ADMINPASS}" \
 		${SINTTEST_DISABLED_TESTS_ARGUMENT}

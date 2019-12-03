@@ -92,33 +92,46 @@
                 >
             </td>
             <td>
-                <fmt:message key="security.audit.viewer.timestamp-from"/>:
-                <input type="search"
-                       id="searchFrom"
-                       placeholder="YYYY/MM/DD"
-                       size="10"
-                       value="<c:out value="${search.from}"/>"/>
-                <img src="images/search-16x16.png"
-                     width="16" height="16"
-                     class="clickable"
-                     alt="Search" title="Search"
-                     style="vertical-align: middle; cursor: pointer;"
-                     onclick="submitForm();"
-                >
-                <br/>
-                <fmt:message key="security.audit.viewer.timestamp-to"/>:
-                <input type="search"
-                       id="searchTo"
-                       placeholder="YYYY/MM/DD"
-                       size="10"
-                       value="<c:out value="${search.to}"/>"/>
-                <img src="images/search-16x16.png"
-                     width="16" height="16"
-                     class="clickable"
-                     alt="Search" title="Search"
-                     style="vertical-align: middle; cursor: pointer;"
-                     onclick="submitForm();"
-                >
+                <table>
+                    <tr>
+                        <td nowrap>
+                            <fmt:message key="security.audit.viewer.timestamp-from"/>:
+                        </td>
+                        <td nowrap>
+                            <input type="search"
+                                   id="searchFrom"
+                                   placeholder="YYYY/MM/DD"
+                                   size="10"
+                                   value="<c:out value="${search.from}"/>"/>
+                            <img src="images/search-16x16.png"
+                                 width="16" height="16"
+                                 class="clickable"
+                                 alt="Search" title="Search"
+                                 style="vertical-align: middle; cursor: pointer;"
+                                 onclick="submitForm();"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td nowrap>
+                            <fmt:message key="security.audit.viewer.timestamp-to"/>:
+                        </td>
+                        <td nowrap>
+                            <input type="search"
+                                   id="searchTo"
+                                   placeholder="YYYY/MM/DD"
+                                   size="10"
+                                   value="<c:out value="${search.to}"/>"/>
+                            <img src="images/search-16x16.png"
+                                 width="16" height="16"
+                                 class="clickable"
+                                 alt="Search" title="Search"
+                                 style="vertical-align: middle; cursor: pointer;"
+                                 onclick="submitForm();"
+                            >
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
         </thead>

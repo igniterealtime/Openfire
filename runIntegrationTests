@@ -137,14 +137,9 @@ function launchOpenfire {
 		mvn verify -P ci
 	fi
 
-	rm distribution/target/distribution-base/conf/openfire.xml
-
-	# TODO: This file should probably be part of Openfire's git and be
-	# selectable by openfire.sh (.e.g "openfire.sh -c
-	# openfire-demoboot.xml").
-	curl ${CURL_ARGS} \
-		-o distribution/target/distribution-base/conf/openfire.xml \
-		https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
+	rm -f distribution/target/distribution-base/conf/openfire.xml
+	cp distribution/src/conf/openfire-demoboot.xml \
+		distribution/target/distribution-base/conf/openfire.xml
 
 	echo "Starting Openfire…"
 	"${OPENFIRE_SHELL_SCRIPT}" &

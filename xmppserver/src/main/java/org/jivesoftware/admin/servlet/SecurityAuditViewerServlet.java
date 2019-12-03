@@ -36,7 +36,7 @@ public class SecurityAuditViewerServlet extends HttpServlet {
             events = Collections.emptyList();
         } else {
             // The ListPager deals with paging & filtering so fetch all events
-            events = securityAuditProvider.getEvents(null, null, Integer.MAX_VALUE, null, null);
+            events = securityAuditProvider.getEvents(null, null, null, null, null);
         }
 
         final Search search = new Search(request);

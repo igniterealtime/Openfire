@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.jivesoftware.openfire.security.SecurityAuditEvent;
@@ -50,22 +51,45 @@ public class SecurityAuditViewerServlet extends HttpServlet {
         if (!search.summary.isEmpty()) {
             predicate = predicate.and(event -> StringUtils.containsIgnoringCase(event.getSummary(), search.summary));
         }
+
+        Optional<Date> from;
         if (!search.from.isEmpty()) {
-            try {
-                final Date date = DATE_FORMAT.parse(search.from);
-                predicate = predicate.and(auditEvent -> !auditEvent.getEventStamp().before(date));
-            } catch (final ParseException e) {
+            from = parseSearchDate(search.from);
+            if (!from.isPresent()) {
+                // Nothing matches a bad date!
                 predicate = auditEvent -> false;
             }
+        } else {
+            from = Optional.empty();
         }
+
+        Optional<Date> to;
         if (!search.to.isEmpty()) {
-            try {
-                // Intuitively the end date is exclusive, so add an extra day
-                final Date date = Date.from(DATE_FORMAT.parse(search.to).toInstant().plus(1, ChronoUnit.DAYS));
-                predicate = predicate.and(auditEvent -> auditEvent.getEventStamp().before(date));
-            } catch (final ParseException e) {
+            to = parseSearchDate(search.to);
+            if (!to.isPresent()) {
+                // Nothing matches a bad date!
                 predicate = auditEvent -> false;
             }
+        } else {
+            to = Optional.empty();
+        }
+
+        // Make sure the from/to are the correct way around
+        if (from.isPresent() && to.isPresent() && from.get().after(to.get())) {
+            final Optional<Date> temp = to;
+            to = from;
+            from = temp;
+        }
+
+        if (from.isPresent()) {
+            final Date date = from.get();
+            predicate = predicate.and(auditEvent -> !auditEvent.getEventStamp().before(date));
+        }
+
+        if (to.isPresent()) {
+            // Intuitively the end date is exclusive, so add an extra day
+            final Date date = Date.from(to.get().toInstant().plus(1, ChronoUnit.DAYS));
+            predicate = predicate.and(auditEvent -> auditEvent.getEventStamp().before(date));
         }
 
         final ListPager<SecurityAuditEvent> listPager = new ListPager<>(request, response, events, predicate, SEARCH_FIELDS);
@@ -74,6 +98,14 @@ public class SecurityAuditViewerServlet extends HttpServlet {
         request.setAttribute("listPager", listPager);
         request.setAttribute("search", search);
         request.getRequestDispatcher("security-audit-viewer-jsp.jsp").forward(request, response);
+    }
+
+    private static Optional<Date> parseSearchDate(final String searchDate) {
+        try {
+            return Optional.ofNullable(DATE_FORMAT.parse(searchDate));
+        } catch (ParseException e) {
+            return Optional.empty();
+        }
     }
 
     public static class Search {

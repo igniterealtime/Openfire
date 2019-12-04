@@ -1,133 +1,204 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_COMMIT_ID="9d626bf" # master 22 Nov 2019
+SMACK_VERSION="4.4.0-alpha2" # master 22 Nov 2019
 GRADLE_VERSION="6.0.1"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
+DEBUG=false
+LOCAL_RUN=false
 
-while getopts dgs: OPTION "$@"; do
+HOST='example.org'
+ADMINUSER='admin'
+ADMINPASS='admin'
+
+usage()
+{
+	echo "Usage: $0 [-d] [-l] [-g] [-i IPADDRESS] [-s GITREF] [-h HOST] [-u USERNAME] [-p PASSWORD]"
+	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
+	echo "    -l: Launch a local Openfire. (default: off)"
+	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
+	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
+	echo "    -s: Set Smack to the given version (default: 4.3.4-SNAPSHOT)"
+	echo "    -h: The hostname for the Openfire under test (default: example.org)"
+	echo "    -u: Admin username for Openfire (default: admin)"
+	echo "    -p: Admin password for Openfire (default: password)"
+	exit 2
+}
+
+while getopts dlgs:h:i:u:p: OPTION "$@"; do
 	case $OPTION in
 		d)
+			DEBUG=true
 			set -x
+			;;
+		l)
+			LOCAL_RUN=true
 			;;
 		g)
 			FORCE_CUSTOM_GRADLE=true
 			;;
 		s)
-			SMACK_COMMIT_ID="${OPTARG}"
+			SMACK_VERSION="${OPTARG}"
 			;;
+		h)
+			HOST="${OPTARG}"
+			;;
+		i)
+			IPADDRESS="${OPTARG}"
+			;;
+		u)
+			ADMINUSER="${OPTARG}"
+			;;
+		p)
+			ADMINPASS="${OPTARG}"
+			;;
+		\? ) usage;;
+        :  ) usage;;
+        *  ) usage;;
 	esac
 done
 
-# Pretty fancy method to get reliable the absolute path of a shell
-# script, *even if it is sourced*. Credits go to GreenFox on
-# stackoverflow: http://stackoverflow.com/a/12197518/194894
-pushd . > /dev/null
-SCRIPTDIR="${BASH_SOURCE[0]}";
-while([ -h "${SCRIPTDIR}" ]); do
-    cd "`dirname "${SCRIPTDIR}"`"
-    SCRIPTDIR="$(readlink "`basename "${SCRIPTDIR}"`")";
-done
-cd "`dirname "${SCRIPTDIR}"`" > /dev/null
-SCRIPTDIR="`pwd`";
-popd  > /dev/null
-
-declare -r BASEDIR="${SCRIPTDIR}"
-
-cd "${BASEDIR}"
-
-TMPDIR=$(mktemp -d)
-trap "rm -rf ${TMPDIR}" EXIT
-
-SMACKDIR="${TMPDIR}/smack"
-GRADLEDIR="${TMPDIR}/gradle"
-
-if command -v gradle &> /dev/null; then
-	GRADLE_IN_PATH=true
-else
-	GRADLE_IN_PATH=false
+if [[ $LOCAL_RUN == true ]] && [[ $HOST != "example.org" ]]; then
+	echo "Host is fixed if launching a local instance. If you have an already-running instance to test against, omit the -l flag (and provide -i 127.0.0.1 if necessary)."
+	exit 1
 fi
 
-if [[ $GRADLE_IN_PATH == false ]] || $FORCE_CUSTOM_GRADLE; then
-	mkdir "${GRADLEDIR}"
-	pushd "${GRADLEDIR}"
-	declare -r GRADLE_ZIP="gradle-${GRADLE_VERSION}-bin.zip"
-	curl ${CURL_ARGS} --output ${GRADLE_ZIP} "https://services.gradle.org/distributions/${GRADLE_ZIP}"
-	unzip "${GRADLE_ZIP}"
-	GRADLE="${GRADLEDIR}/gradle-${GRADLE_VERSION}/bin/gradle"
-	popd
-else
-	GRADLE="gradle"
+function setBaseDirectory {
+	# Pretty fancy method to get reliable the absolute path of a shell
+	# script, *even if it is sourced*. Credits go to GreenFox on
+	# stackoverflow: http://stackoverflow.com/a/12197518/194894
+	pushd . > /dev/null
+	SCRIPTDIR="${BASH_SOURCE[0]}";
+	while [ -h "${SCRIPTDIR}" ]; do
+		cd "$(dirname "${SCRIPTDIR}")"
+		SCRIPTDIR="$(readlink "$(basename "${SCRIPTDIR}")")";
+	done
+	cd "$(dirname "${SCRIPTDIR}")" > /dev/null
+	SCRIPTDIR="$(pwd)";
+	popd  > /dev/null
+	BASEDIR="${SCRIPTDIR}"
+	cd "${BASEDIR}"
+}
+
+function createTempDirectory {
+	OFTEMPDIR=$(mktemp -d)
+}
+
+function cleanup {
+	if [[ $DEBUG == false && -n "${OFTEMPDIR-}" ]]; then
+		echo "Removing temp directories"
+		rm -rf "${OFTEMPDIR}"
+	fi
+	if [[ -n "${IPADDRESS-}" ]]; then
+		echo "Resetting hosts file after local running. This may prompt for sudo."
+		sudo sed -i'.original' "/$IPADDRESS $HOST/d" /etc/hosts
+	fi
+	if [[ $LOCAL_RUN == true ]]; then
+		echo "Stopping Openfire"
+		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
+	fi
+}
+
+function setUpGradleEnvironment {
+
+	if command -v gradle &> /dev/null; then
+		GRADLE_IN_PATH=true
+	else
+		GRADLE_IN_PATH=false
+	fi
+
+	if [[ $GRADLE_IN_PATH == false ]] || $FORCE_CUSTOM_GRADLE; then
+		createTempDirectory
+		GRADLEDIR="${OFTEMPDIR}/gradle"
+		mkdir "${GRADLEDIR}"
+		pushd "${GRADLEDIR}"
+		declare -r GRADLE_ZIP="gradle-${GRADLE_VERSION}-bin.zip"
+		curl ${CURL_ARGS} --output ${GRADLE_ZIP} "https://services.gradle.org/distributions/${GRADLE_ZIP}"
+		unzip "${GRADLE_ZIP}"
+		GRADLE="${GRADLEDIR}/gradle-${GRADLE_VERSION}/bin/gradle"
+		popd
+	else
+		GRADLE="gradle"
+	fi
+}
+
+function setHostsFile {
+	if [[ -n "${IPADDRESS-}" ]]; then
+		echo "Setting hosts file for local running. This may prompt for sudo."
+		sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
+	fi
+}
+
+function launchOpenfire {
+	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
+
+	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
+		mvn verify -P ci
+	fi
+
+	rm -f distribution/target/distribution-base/conf/openfire.xml
+	cp distribution/src/conf/openfire-demoboot.xml \
+		distribution/target/distribution-base/conf/openfire.xml
+
+	echo "Starting Openfire…"
+	"${OPENFIRE_SHELL_SCRIPT}" &
+
+	# Wait 120 seconds for Openfire to open up the web interface and
+	# assume Openfire is fully operational once that happens (not sure if
+	# this assumption is correct).
+	echo "Waiting for Openfire…"
+	timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
+}
+
+function runTestsInGradle {
+	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
+
+	DISABLED_INTEGRATION_TESTS=()
+	#Fails only in Java8, only on Travis
+	DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
+	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
+	# Flaps sometimes (possibly a Openfire issue)
+	#DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
+	# Does sometimes not succeed in Travis (stress test is too much?)
+	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
+	# EntityCapsTest#testEntityCaps fails regularly. Reason unknown.
+	#DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+	#FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
+	DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
+	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
+	DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+
+	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
+	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
+		SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
+	done
+	# Remove last ',' from the argument. Can't use ${SINTTEST_DISABLED_TESTS_ARGUMENT::-1} because bash on MacOS is infuriatingly incompatible.
+	SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
+	
+	#SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
+	$GRADLE --stacktrace run \
+			-b test.gradle \
+			-PsmackVersion="${SMACK_VERSION}" \
+			-Dsinttest.service="${HOST}" \
+			-Dsinttest.securityMode=disabled \
+			-Dsinttest.replyTimeout=60000 \
+			-Dsinttest.adminAccountUsername="${ADMINUSER}" \
+			-Dsinttest.adminAccountPassword="${ADMINPASS}" \
+			${SINTTEST_DISABLED_TESTS_ARGUMENT}
+}
+
+
+setBaseDirectory
+trap cleanup EXIT
+setUpGradleEnvironment
+if [[ -n "${IPADDRESS-}" ]]; then
+	setHostsFile
 fi
-
-mkdir "${SMACKDIR}"
-pushd "${SMACKDIR}"
-git init
-git remote add origin git://github.com/igniterealtime/Smack.git
-set +e
-git fetch --depth=1 origin "${SMACK_COMMIT_ID}"
-GIT_FETCH_EXIT_CODE=$?
-set -e
-if [[ $GIT_FETCH_EXIT_CODE -ne 0 ]]; then
-	echo "Git shallow fetch failed, falling back to full fetch"
-	git fetch origin
+if [[ $LOCAL_RUN == true ]]; then
+	launchOpenfire
 fi
-git reset --hard "${SMACK_COMMIT_ID}"
-popd
-
-declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
-
-if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
-	mvn verify -P ci
-fi
-
-rm distribution/target/distribution-base/conf/openfire.xml
-
-# TODO: This file should probably be part of Openfire's git and be
-# selectable by openfire.sh (.e.g "openfire.sh -c
-# openfire-demoboot.xml").
-curl ${CURL_ARGS} \
-	-o distribution/target/distribution-base/conf/openfire.xml \
-	https://raw.github.com/igniterealtime/ci-tooling/master/openfire-demoboot.xml
-
-echo "Starting Openfire…"
-
-"${OPENFIRE_SHELL_SCRIPT}" &
-
-# Wait 120 seconds for Openfire to open up the web interface and
-# assume Openfire is fully operational once that happens (not sure if
-# this assumption is correct).
-timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
-
-echo "Starting Integration Tests (using Smack ${SMACK_COMMIT_ID})…"
-
-DISABLED_INTEGRATION_TESTS=()
-DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
-DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
-# Flaps sometimes (possibly a Openfire issue)
-DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
-# Does sometimes not succeed (possibly a Smack issue)
-DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-# EntityCapsTest#testEntityCaps fails regularly. Reason unknown.
-DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
-
-SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
-for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
-	SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
-done
-# Remove last ',' from the argument.
-SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT::-1}"
-
-pushd "${SMACKDIR}"
-sed -i '/-Werror/d' build.gradle
-sed -i 's/if (config.testPackages == null) {/if (config.testPackages == null || config.testPackages.isEmpty()) {/' smack-integration-test/src/main/java/org/igniterealtime/smack/inttest/SmackIntegrationTestFramework.java
-$GRADLE --stacktrace integrationTest \
-		-Dsinttest.service=example.org \
-		-Dsinttest.securityMode=disabled \
-		-Dsinttest.replyTimeout=60000 \
-		-Dsinttest.adminAccountUsername=admin \
-		-Dsinttest.adminAccountPassword=admin \
-		${SINTTEST_DISABLED_TESTS_ARGUMENT}
+runTestsInGradle

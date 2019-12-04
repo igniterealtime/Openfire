@@ -28,3 +28,5 @@ nbbuild/
 # build temp folders
 rpmbuild/
 debian/
+
+.gradle

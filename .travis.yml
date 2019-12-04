@@ -18,7 +18,7 @@ before_script:
 - gem install travis
 script:
   - mvn verify -P ci
-  - TERM="dumb" ./runIntegrationTests -g
+  - TERM="dumb" ./runIntegrationTests -gl
 install: true
 deploy:
   provider: script

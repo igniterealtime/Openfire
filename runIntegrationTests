@@ -155,16 +155,16 @@ function runTestsInGradle {
 	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
 
 	DISABLED_INTEGRATION_TESTS=()
-	DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-	DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
 	# Flaps sometimes (possibly a Openfire issue)
-	DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
 	# Does sometimes not succeed (possibly a Smack issue)
-	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
+	#DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
 	# EntityCapsTest#testEntityCaps fails regularly. Reason unknown.
-	DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+	#DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
 	#FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
 	DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
 	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
@@ -177,7 +177,8 @@ function runTestsInGradle {
 	done
 	# Remove last ',' from the argument. Can't use ${SINTTEST_DISABLED_TESTS_ARGUMENT::-1} because bash on MacOS is infuriatingly incompatible.
 	SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
-
+	
+	#SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
 	$GRADLE --stacktrace run \
 			-b test.gradle \
 			-PsmackVersion="${SMACK_VERSION}" \

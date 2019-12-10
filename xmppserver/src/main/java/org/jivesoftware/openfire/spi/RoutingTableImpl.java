@@ -142,7 +142,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void addServerRoute(DomainPair address, LocalOutgoingServerSession destination) {
         localRoutingTable.addRoute(address, destination);
-        Lock lock = CacheFactory.getLock(address, serversCache);
+        Lock lock = serversCache.getLock(address);
         try {
             lock.lock();
             serversCache.put(address, server.getNodeID());
@@ -157,7 +157,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         DomainPair pair = new DomainPair("", route.getDomain());
         String address = route.getDomain();
         localRoutingTable.addRoute(pair, destination);
-        Lock lock = CacheFactory.getLock(address, componentsCache);
+        Lock lock = componentsCache.getLock(address);
         try {
             lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
@@ -178,7 +178,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.debug("Adding client route {}", route);
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
         if (destination.getAuthToken().isAnonymous()) {
-            Lock lockAn = CacheFactory.getLock(route.toString(), anonymousUsersCache);
+            Lock lockAn = anonymousUsersCache.getLock(route.toString());
             try {
                 lockAn.lock();
                 added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) ==
@@ -189,7 +189,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
+                Lock lock = usersSessions.getLock(route.toBareJID());
                 try {
                     lock.lock();
                     usersSessions.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
@@ -200,7 +200,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         else {
-            Lock lockU = CacheFactory.getLock(route.toString(), usersCache);
+            Lock lockU = usersCache.getLock(route.toString());
             try {
                 lockU.lock();
                 added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
@@ -210,7 +210,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
+                Lock lock = usersSessions.getLock(route.toBareJID());
                 try {
                     lock.lock();
                     HashSet<String> jids = usersSessions.get(route.toBareJID());
@@ -637,13 +637,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Many sessions have the highest priority (be smart now) :)
             if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
                 // Sort sessions by show value (e.g. away, xa)
-                Collections.sort(highestPrioritySessions, new Comparator<ClientSession>() {
+                highestPrioritySessions.sort(new Comparator<ClientSession>() {
 
                     @Override
                     public int compare(ClientSession o1, ClientSession o2) {
                         int thisVal = getShowValue(o1);
                         int anotherVal = getShowValue(o2);
-                        return (thisVal<anotherVal ? -1 : (thisVal==anotherVal ? 0 : 1));
+                        return (Integer.compare(thisVal, anotherVal));
                     }
 
                     /**
@@ -653,17 +653,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         Presence.Show show = session.getPresence().getShow();
                         if (show == Presence.Show.chat) {
                             return 1;
-                        }
-                        else if (show == null) {
+                        } else if (show == null) {
                             return 2;
-                        }
-                        else if (show == Presence.Show.away) {
+                        } else if (show == Presence.Show.away) {
                             return 3;
-                        }
-                        else if (show == Presence.Show.xa) {
+                        } else if (show == Presence.Show.xa) {
                             return 4;
-                        }
-                        else {
+                        } else {
                             return 5;
                         }
                     }
@@ -682,12 +678,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
 
                 // Get session with most recent activity (and highest show value)
-                Collections.sort(targets, new Comparator<ClientSession>() {
-                    @Override
-                    public int compare(ClientSession o1, ClientSession o2) {
-                        return o2.getLastActiveDate().compareTo(o1.getLastActiveDate());
-                    }
-                });
+                targets.sort((o1, o2) -> o2.getLastActiveDate().compareTo(o1.getLastActiveDate()));
 
                 // Make sure, we don't send the packet again, if it has already been sent by message carbons.
                 ClientSession session = targets.get(0);
@@ -777,7 +768,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public Collection<ClientSession> getClientsRoutes(boolean onlyLocal) {
         // Add sessions hosted by this cluster node
-        Collection<ClientSession> sessions = new ArrayList<ClientSession>(localRoutingTable.getClientRoutes());
+        Collection<ClientSession> sessions = new ArrayList<>(localRoutingTable.getClientRoutes());
         if (!onlyLocal) {
             // Add sessions not hosted by this JVM
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -892,7 +883,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
-                Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
+                Lock lock = usersSessions.getLock(route.toBareJID());
                 try {
                     lock.lock(); // temporarily block new sessions for this JID
                     Collection<String> sessions = usersSessions.get(route.toBareJID());
@@ -932,8 +923,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeClientRoute(JID route) {
         boolean anonymous = false;
         String address = route.toString();
-        ClientRoute clientRoute = null;
-        Lock lockU = CacheFactory.getLock(address, usersCache);
+        ClientRoute clientRoute;
+        Lock lockU = usersCache.getLock(address);
         try {
             lockU.lock();
             clientRoute = usersCache.remove(address);
@@ -942,7 +933,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             lockU.unlock();
         }
         if (clientRoute == null) {
-            Lock lockA = CacheFactory.getLock(address, anonymousUsersCache);
+            Lock lockA = anonymousUsersCache.getLock(address);
             try {
                 lockA.lock();
                 clientRoute = anonymousUsersCache.remove(address);
@@ -953,7 +944,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         if (clientRoute != null && route.getResource() != null) {
-            Lock lock = CacheFactory.getLock(route.toBareJID(), usersSessions);
+            Lock lock = usersSessions.getLock(route.toBareJID());
             try {
                 lock.lock();
                 if (anonymous) {
@@ -984,7 +975,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public boolean removeServerRoute(DomainPair route) {
         boolean removed;
-        Lock lock = CacheFactory.getLock(route, serversCache);
+        Lock lock = serversCache.getLock(route);
         try {
             lock.lock();
             removed = serversCache.remove(route) != null;
@@ -1010,7 +1001,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private boolean removeComponentRoute(JID route, NodeID nodeID) {
         String address = route.getDomain();
         boolean removed = false;
-        Lock lock = CacheFactory.getLock(address, componentsCache);
+        Lock lock = componentsCache.getLock(address);
         try {
             lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
@@ -1172,9 +1163,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // caches that are shared by the remaining cluster member(s).
         
         // drop routes for all client sessions connected via the defunct cluster node
-        Lock clientLock = CacheFactory.getLock(nodeID, usersCache);
-        try {
-            clientLock.lock();
             List<String> remoteClientRoutes = new ArrayList<>();
             for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
                 if (entry.getValue().getNodeID().equals(nodeID)) {
@@ -1192,11 +1180,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // The detour is needed, as SessionManager does not keep track what client is associated to what cluster node.
                 SessionManager.getInstance().removeRemoteClientSession( new JID(route) );
             }
-        }
-        finally {
-            clientLock.unlock();
-        }
-        
+
         // remove routes for server domains that were accessed through the defunct node
         final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, NodeID.getInstance( nodeID ) );
         removedServers.forEach( removedServer -> {

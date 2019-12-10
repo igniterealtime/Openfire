@@ -18,7 +18,15 @@ package org.jivesoftware.openfire.spi;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.IQRouter;
+import org.jivesoftware.openfire.MessageRouter;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PresenceRouter;
+import org.jivesoftware.openfire.RemotePacketRouter;
+import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -30,20 +38,34 @@ import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * Routing table that stores routes to client sessions, outgoing server sessions
@@ -340,7 +362,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                                             carbon.addExtension(new Received(new Forwarded(message)));
 
                                             try {
-                                                localRoutingTable.getRoute(route).process(carbon);
+                                                final RoutableChannelHandler routableChannelHandler = localRoutingTable.getRoute(route);
+                                                if (routableChannelHandler != null) {
+                                                    routableChannelHandler.process(carbon);
+                                                }
                                             } catch (UnauthorizedException e) {
                                                 Log.error("Unable to route packet " + packet.toXML(), e);
                                             }

@@ -6,6 +6,8 @@
 <%@ page import="org.jivesoftware.openfire.user.UserProvider"%>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.util.Arrays" %>
+<%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -172,6 +174,9 @@
                     xmppSettings.put("provider.auth.className",
                             "org.jivesoftware.openfire.ldap.LdapAuthProvider");
                 }
+
+                // Wipe caches, as modified settings might have made their content invalid.
+                CacheFactory.clearCaches("Group", "Group Metadata Cache", "User", "VCard", "LDAP Authentication", "LDAP UserDN");
 
                 // Redirect
                 response.sendRedirect(nextPage + "?serverType=" + serverType);

@@ -19,6 +19,7 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapGroupProvider" %>
+<%@ page import="org.jivesoftware.openfire.admin.GroupBasedAdminProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -178,7 +179,7 @@
                                 xmppSettings.remove("admin.authorizedJIDs");
 
                                 // Set admin group provider.
-                                xmppSettings.put("provider.admin.className", "org.jivesoftware.openfire.admin.GroupBasedAdminProvider");
+                                xmppSettings.put("provider.admin.className", GroupBasedAdminProvider.class.getName());
                                 xmppSettings.put("provider.group.groupBasedAdminProvider.groupName", admin);
                             }
 

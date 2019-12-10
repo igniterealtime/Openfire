@@ -31,7 +31,7 @@
         errorDetail = "CSRF failure!";
     }
 
-    csrfParam = StringUtils.randomString(15);
+    // Used embedded in another page. Do not reset the csrf value. // csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 

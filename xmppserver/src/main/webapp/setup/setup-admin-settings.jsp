@@ -18,6 +18,7 @@
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="java.net.URLDecoder" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapGroupProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -151,32 +152,63 @@
 
     if (addAdmin && !doTest) {
         String admin = request.getParameter("administrator");
+        boolean isGroup = ParamUtils.getBooleanParameter(request, "isGroup", false);
         if (admin != null) {
             admin = JID.escapeNode( admin );
             if (ldap) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
                 Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
+                Map<String, String> groupSettings = (Map<String, String>) session.getAttribute("ldapGroupSettings");
+
                 if (settings != null) {
                     LdapManager manager = new LdapManager(settings);
-                    manager.setUsernameField(userSettings.get("ldap.usernameField"));
-                    manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
-                    try {
-                        manager.findUserRDN(JID.unescapeNode(admin));
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        errors.put("administrator", "");
+                    if ( isGroup ) {
+                        manager.setGroupNameField(groupSettings.get("ldap.groupNameField"));
+                        manager.setGroupSearchFilter(groupSettings.get("ldap.groupSearchFilter"));
+                        try {
+                            manager.findGroupRDN(JID.unescapeNode(admin));
+
+                            final Collection<JID> groupMembers = new LdapGroupProvider().getGroup(admin).getMembers();
+                            if ( groupMembers.isEmpty() ) {
+                                errors.put("group", "empty");
+                            } else {
+
+                                // Remove non-group (individual) admins
+                                xmppSettings.remove("admin.authorizedJIDs");
+
+                                // Set admin group provider.
+                                xmppSettings.put("provider.admin.className", "org.jivesoftware.openfire.admin.GroupBasedAdminProvider");
+                                xmppSettings.put("provider.group.groupBasedAdminProvider.groupName", admin);
+                            }
+
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                            errors.put("administrator", "");
+                        }
+                    } else {
+                        manager.setUsernameField(userSettings.get("ldap.usernameField"));
+                        manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
+                        try {
+                            manager.findUserRDN(JID.unescapeNode(admin));
+
+                            // Add individual admin
+                            String currentList = xmppSettings.get("admin.authorizedJIDs");
+                            final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
+                            users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
+
+                            String userList = StringUtils.collectionToString(users);
+                            xmppSettings.put("admin.authorizedJIDs", userList);
+
+                            // Remove admin group provider.
+                            xmppSettings.remove( "provider.admin.className" );
+                            xmppSettings.remove( "provider.group.groupBasedAdminProvider.groupName" );
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                            errors.put("administrator", "");
+                        }
                     }
                 }
-            }
-            if (errors.isEmpty()) {
-                String currentList = xmppSettings.get("admin.authorizedJIDs");
-                final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
-                users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
-
-                String userList = StringUtils.collectionToString(users);
-                xmppSettings.put("admin.authorizedJIDs", userList);
             }
         } else {
             errors.put("administrator", "");
@@ -226,6 +258,15 @@
     pageContext.setAttribute( "newPasswordConfirm", newPasswordConfirm );
     pageContext.setAttribute( "doTest", doTest );
 
+    // Populate authorized JIDs to be displayed on this page.
+    final String groupName = xmppSettings.get("provider.group.groupBasedAdminProvider.groupName");
+    if ( groupName != null ) {
+        pageContext.setAttribute( "authorizedJIDs", new LdapGroupProvider().getGroup(groupName).getMembers() );
+    } else {
+        String currentList = xmppSettings.get("admin.authorizedJIDs");
+        final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
+        pageContext.setAttribute( "authorizedJIDs", users.stream().map(JID::new).collect(Collectors.toSet()) );
+    }
 %>
 <html>
 <head>
@@ -470,9 +511,10 @@ document.acctform.newPassword.focus();
     </script>
 
         </c:if>
-<p>
- <fmt:message key="setup.admin.settings.ldap.info" />
-  </p>
+    <p>
+        <fmt:message key="setup.admin.settings.ldap.info"/>
+        <fmt:message key="setup.admin.settings.ldap.info.group"/>
+    </p>
 <div class="jive-contentBox">
 
 <form action="setup-admin-settings.jsp" name="acctform" method="post">
@@ -480,34 +522,47 @@ document.acctform.newPassword.focus();
 
     <!-- Admin Table -->
 
-<table cellpadding="3" cellspacing="2" border="0">
-    <tr valign="top">
+<table cellpadding="3" cellspacing="2" border="0" style="margin-bottom: 1em;">
+    <tr>
         <td class="jive-label">
-            <fmt:message key="setup.admin.settings.add.administrator" />:
-        </td>
-         <td>
-        <input type="text" name="administrator" size="20" maxlength="50"/>
+            <label for="administrator"><fmt:message key="setup.admin.settings.add.administrator" />:</label>
         </td>
         <td>
+            <input type="text" name="administrator" id="administrator" size="20" maxlength="50" value="${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? fn:escapeXml(xmppSettings['provider.group.groupBasedAdminProvider.groupName']) : ''}"/>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
+            <input type="radio" name="isGroup" value="false" id="isUser" ${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? '' : 'checked'}> <label for="isUser"><fmt:message key="setup.admin.settings.is-user" /></label>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
+            <input type="radio" name="isGroup" value="true" id="isGroup" ${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? 'checked' : ''}> <label for="isGroup"><fmt:message key="setup.admin.settings.is-group" /></label>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
             <input type="submit" name="addAdministrator" value="<fmt:message key="global.add" />"/>
         </td>
     </tr>
 </table>
-<%
-    Collection<JID> authorizedJIDs = StringUtils.stringToCollection( xmppSettings.get("admin.authorizedJIDs") ).stream().map( JID::new ).collect( Collectors.toSet() );
-    pageContext.setAttribute( "authorizedJIDs", authorizedJIDs );
-%>
         <c:if test="${not empty authorizedJIDs}">
             <!-- List of admins -->
-            <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
+            <div class="jive-table">
+            <table cellpadding="0" cellspacing="0" border="0">
             <tr>
+                <th width="1%" nowrap>&nbsp;</th>
                 <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
                 <th width="1%" nowrap><fmt:message key="global.test" /></th>
-                <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+                <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                    <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+                </c:if>
             </tr>
 
             <c:forEach var="authJID" items="${authorizedJIDs}">
-                <tr valign="top">
+                <tr>
+                    <td>&nbsp;</td>
                     <td>
                         <c:out value="${authJID.node}"/>
                     </td>
@@ -516,25 +571,29 @@ document.acctform.newPassword.focus();
                            title="<fmt:message key="global.click_test" />"
                         ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
                     </td>
-                    <td>
-                        <input type="checkbox" name="remove" value="${admin:urlEncode(authJID.toBareJID())}"/>
-                    </td>
+                    <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                        <td>
+                            <input type="checkbox" name="remove" value="${admin:urlEncode(authJID.toBareJID())}"/>
+                        </td>
+                    </c:if>
                 </tr>
             </c:forEach>
 
-         <tr valign="top">
-        <td>
-           &nbsp;
-        </td>
-        <td>
-           &nbsp;
-        </td>
-        <td>
-            <input type="submit" name="deleteAdmins" value="Remove"/>
-        </td>
-    </tr>
+            <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                <tr valign="top">
+                    <td>
+                       &nbsp;
+                    </td>
+                    <td>
+                       &nbsp;
+                    </td>
+                    <td>
+                        <input type="submit" name="deleteAdmins" value="Remove"/>
+                    </td>
+                </tr>
+            </c:if>
             </table>
-
+            </div>
         </c:if>
 
 <input type="hidden" name="ldap" value="true"/>

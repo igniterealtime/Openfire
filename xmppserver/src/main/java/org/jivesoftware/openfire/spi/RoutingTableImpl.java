@@ -313,7 +313,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private boolean routeToLocalDomain(JID jid, Packet packet,
             boolean fromServer) {
         boolean routed = false;
-        Element privateElement = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2"));
+        Element privateElement = packet.getElement().element(QName.get("private", Received.NAMESPACE));
         boolean isPrivate = privateElement != null;
         // The receiving server and SHOULD remove the <private/> element before delivering to the recipient.
         packet.getElement().remove(privateElement);
@@ -339,49 +339,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     routed = false;
                 } else {
                     if (localRoutingTable.isLocalRoute(jid)) {
-                        if (packet instanceof Message) {
-                            Message message = (Message) packet;
-                            if (message.getType() == Message.Type.chat && !isPrivate) {
-                                List<JID> routes = getRoutes(jid.asBareJID(), null);
-                                for (JID ccJid : routes) {
-                                    // The receiving server MUST NOT send a forwarded copy to the full JID the original <message/> stanza was addressed to, as that recipient receives the original <message/> stanza.
-                                    if (!ccJid.equals(jid)) {
-                                        ClientSession clientSession = getClientRoute(ccJid);
-                                        if (clientSession.isMessageCarbonsEnabled()) {
-                                            Message carbon = new Message();
-                                            // The wrapping message SHOULD maintain the same 'type' attribute value;
-                                            carbon.setType(message.getType());
-                                            // the 'from' attribute MUST be the Carbons-enabled user's bare JID
-                                            carbon.setFrom(ccJid.asBareJID());
-                                            // and the 'to' attribute MUST be the full JID of the resource receiving the copy
-                                            carbon.setTo(ccJid);
-                                            // The content of the wrapping message MUST contain a <received/> element qualified by the namespace "urn:xmpp:carbons:2", which itself contains a <forwarded/> element qualified by the namespace "urn:xmpp:forward:0" that contains the original <message/>.
-                                            carbon.addExtension(new Received(new Forwarded(message)));
-
-                                            try {
-                                                final RoutableChannelHandler localRoute = localRoutingTable.getRoute(ccJid);
-                                                if (localRoute != null) {
-                                                    // This session is on a local cluster node
-                                                    localRoute.process(carbon);
-                                                } else {
-                                                    // The session is not on a local cluster node, so try a remote
-                                                    final ClientRoute remoteRoute = getClientRouteForLocalUser(ccJid);
-                                                    if (remotePacketRouter != null // If we're in a cluster
-                                                        && remoteRoute != null // and we've found a route to the other node
-                                                        && !remoteRoute.getNodeID().equals(XMPPServer.getInstance().getNodeID())) { // and it really is a remote node
-                                                        // Try and route the packet to the remote session
-                                                        remotePacketRouter.routePacket(remoteRoute.getNodeID().toByteArray(), ccJid, carbon);
-                                                    } else {
-                                                        Log.warn("Unable to find route to CC remote user {}", ccJid);
-                                                    }
-                                                }
-                                            } catch (UnauthorizedException e) {
-                                                Log.error("Unable to route packet " + packet.toXML(), e);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if (!isPrivate && packet instanceof Message) {
+                            ccMessage(jid, (Message) packet);
                         }
 
                         // This is a route to a local user hosted in this node
@@ -406,6 +365,53 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         return routed;
+    }
+
+    private void ccMessage(JID originalRecipient, Message message) {
+        // We don't want to CC a message that is already a CC
+        final Element receivedElement = message.getChildElement(Received.NAME, Received.NAMESPACE);
+        final boolean isCC = receivedElement != null;
+        if (message.getType() == Message.Type.chat && !isCC) {
+            List<JID> routes = getRoutes(originalRecipient.asBareJID(), null);
+            for (JID ccJid : routes) {
+                // The receiving server MUST NOT send a forwarded copy to the full JID the original <message/> stanza was addressed to, as that recipient receives the original <message/> stanza.
+                if (!ccJid.equals(originalRecipient)) {
+                    ClientSession clientSession = getClientRoute(ccJid);
+                    if (clientSession.isMessageCarbonsEnabled()) {
+                        Message carbon = new Message();
+                        // The wrapping message SHOULD maintain the same 'type' attribute value;
+                        carbon.setType(message.getType());
+                        // the 'from' attribute MUST be the Carbons-enabled user's bare JID
+                        carbon.setFrom(ccJid.asBareJID());
+                        // and the 'to' attribute MUST be the full JID of the resource receiving the copy
+                        carbon.setTo(ccJid);
+                        // The content of the wrapping message MUST contain a <received/> element qualified by the namespace "urn:xmpp:carbons:2", which itself contains a <forwarded/> element qualified by the namespace "urn:xmpp:forward:0" that contains the original <message/>.
+                        carbon.addExtension(new Received(new Forwarded(message)));
+
+                        try {
+                            final RoutableChannelHandler localRoute = localRoutingTable.getRoute(ccJid);
+                            if (localRoute != null) {
+                                // This session is on a local cluster node
+                                localRoute.process(carbon);
+                            } else {
+                                // The session is not on a local cluster node, so try a remote
+                                final ClientRoute remoteRoute = getClientRouteForLocalUser(ccJid);
+                                if (remotePacketRouter != null // If we're in a cluster
+                                    && remoteRoute != null // and we've found a route to the other node
+                                    && !remoteRoute.getNodeID().equals(XMPPServer.getInstance().getNodeID())) { // and it really is a remote node
+                                    // Try and route the packet to the remote session
+                                    remotePacketRouter.routePacket(remoteRoute.getNodeID().toByteArray(), ccJid, carbon);
+                                } else {
+                                    Log.warn("Unable to find route to CC remote user {}", ccJid);
+                                }
+                            }
+                        } catch (UnauthorizedException e) {
+                            Log.error("Unable to route packet {}", message, e);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private ClientRoute getClientRouteForLocalUser(JID jid) {

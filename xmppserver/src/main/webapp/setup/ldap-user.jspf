@@ -328,7 +328,7 @@
                 <tbody>
                 <tr>
                     <td class="jive-vcardTable-label jive-vardBorderBottom jive-vardBorderRight" nowrap>
-                        <strong><label for="name"><fmt:message key="setup.ldap.user.vcard.name" /></label></strong>
+                        <strong><label for="name"><fmt:message key="setup.ldap.user.vcard.name" /> *</label></strong>
                     </td>
                     <td class="jive-vcardTable-value jive-vardBorderBottom">
                         <input type="text" name="name" value="${fn:escapeXml(vcardBean.name)}" id="name" size="22" maxlength="50" onFocus="jiveRowHighlight(this);">
@@ -563,6 +563,8 @@
 
         </div>
         <!-- END jive-contentBox_greybox -->
+
+        <p>* <fmt:message key="setup.ldap.first-match-description" /></p>
 
         <!-- BEGIN jive-buttons -->
         <div class="jive-buttons">

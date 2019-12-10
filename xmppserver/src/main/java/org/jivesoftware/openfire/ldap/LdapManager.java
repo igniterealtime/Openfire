@@ -212,7 +212,7 @@ public class LdapManager {
     private int readTimeout = -1;
     private String usernameField;
     private String usernameSuffix;
-    private String nameField;
+    private List<String> nameField;
     private String emailField;
     private LdapName baseDN;
     private LdapName alternateBaseDN;
@@ -350,10 +350,12 @@ public class LdapManager {
 
         alternateBaseDN = parseAsLdapNameOrLog( properties.get("ldap.alternateBaseDN") );
 
-        nameField = properties.get("ldap.nameField");
-        if (nameField == null) {
-            nameField = "cn";
+        String nameFieldValue = properties.get("ldap.nameField");
+        if (nameFieldValue == null) {
+            nameFieldValue = "cn";
         }
+        nameField = LdapManager.splitFilter(nameFieldValue);
+
         emailField = properties.get("ldap.emailField");
         if (emailField == null) {
             emailField = "mail";
@@ -454,6 +456,56 @@ public class LdapManager {
         if (ldapDebugEnabled) {
             System.err.println(buf.toString());
         }
+    }
+
+    /**
+     * Splits a string formatted as an LDAP filter, such as <code>(&(part-a)(part-b)(part-c))</code>, in separate parts.
+     * When the provided input cannot be parsed as an LDAP filter, the returned collection contains one element: the
+     * original input.
+     *
+     * @param input The value to be split.
+     * @return The splitted value.
+     */
+    public static List<String> splitFilter( final String input )
+    {
+        final List<String> result = new ArrayList<>();
+        if ( input.length() >= 5 && input.startsWith("(") && input.endsWith("))") && (input.charAt(1) == '&' || input.charAt(1) == '|') && input.charAt(2) == '(' )
+        {
+            // Strip off the outer parenthesis and search operator.
+            String stripped = input.substring(2, input.length() - 1);
+
+            // The remainder should consist only of ()-surrounded parts.
+            // We'll remove the leading '(' and trailing ')' character, then split on ")(" to get all parts.
+            stripped = stripped.substring(1, stripped.length() - 1);
+
+            final String[] split = stripped.split("\\)\\(");
+            result.addAll(Arrays.asList(split));
+        }
+        else
+        {
+            result.add(input);
+        }
+
+        return result;
+    }
+
+    /**
+     * Joins individual strings into one, formatted as an LDAP filter, such as <code>(&(part-a)(part-b)(part-c))</code>.
+     *
+     * @param operator the second character of the resulting string.
+     * @param parts    The parts to be joined into one string.
+     * @return The joined string value.
+     */
+    public static String joinFilter( char operator, List<String> parts )
+    {
+        final StringBuilder result = new StringBuilder();
+        result.append('(').append(operator);
+        for ( final String part : parts )
+        {
+            result.append('(').append(part).append(')');
+        }
+        result.append(')');
+        return result.toString();
     }
 
     /**
@@ -1535,7 +1587,7 @@ public class LdapManager {
      *
      * @return the LDAP field that that corresponds to the user's name.
      */
-    public String getNameField() {
+    public List<String> getNameField() {
         return nameField;
     }
 
@@ -1545,13 +1597,14 @@ public class LdapManager {
      *
      * @param nameField the LDAP field that that corresponds to the user's name.
      */
-    public void setNameField(String nameField) {
+    public void setNameField(List<String> nameField) {
         this.nameField = nameField;
-        if (nameField == null) {
+        if (nameField == null || nameField.isEmpty()) {
             properties.remove("ldap.nameField");
-        }
-        else {
-            properties.put("ldap.nameField", nameField);
+        } else if (nameField.size() == 1) {
+            properties.put("ldap.nameField", nameField.get(0));
+        } else {
+            properties.put("ldap.nameField", LdapManager.joinFilter('|', nameField));
         }
     }
 

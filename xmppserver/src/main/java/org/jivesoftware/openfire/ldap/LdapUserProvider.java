@@ -66,8 +66,11 @@ public class LdapUserProvider implements UserProvider {
         String fieldList = JiveGlobals.getProperty("ldap.searchFields");
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
+            final List<String> nameField = manager.getNameField();
             searchFields.put("Username", manager.getUsernameField());
-            searchFields.put("Name", manager.getNameField());
+            for ( int i = 0; i < nameField.size(); i++ ) {
+                searchFields.put((i == 0 ? "Name" : "Name (" + i + ")"), nameField.get(i));
+            }
             searchFields.put("Email", manager.getEmailField());
         }
         else {
@@ -97,16 +100,24 @@ public class LdapUserProvider implements UserProvider {
         try {
             Rdn[] userRDN = manager.findUserRDN(username);
             // Load record.
-            String[] attributes = new String[]{
-                manager.getUsernameField(), manager.getNameField(),
-                manager.getEmailField(), "createTimestamp", "modifyTimestamp"
-            };
+            final List<String> attributes = new ArrayList<>();
+            attributes.add( manager.getUsernameField() );
+            attributes.addAll( manager.getNameField() );
+            attributes.add( manager.getEmailField() );
+            attributes.add( "createTimestamp" );
+            attributes.add( "modifyTimestamp" );
+
             ctx = manager.getContext(manager.getUsersBaseDN(username));
-            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes);
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes.toArray( new String[0]));
             String name = null;
-            Attribute nameField = attrs.get(manager.getNameField());
-            if (nameField != null) {
-                name = (String)nameField.get();
+            for ( final String field : manager.getNameField() ) {
+                Attribute nameField = attrs.get(field);
+                if (nameField != null) {
+                    name = (String)nameField.get();
+                    if ( name != null && !name.isEmpty() ) {
+                        break; // Stop processing name fields when the first valid value is found.
+                    }
+                }
             }
             String email = null;
             Attribute emailField = attrs.get(manager.getEmailField());
@@ -278,7 +289,9 @@ public class LdapUserProvider implements UserProvider {
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
-            searchFields.put("Name", manager.getNameField());
+            for ( int i = 0; i < manager.getNameField().size(); i++ ) {
+                searchFields.put((i == 0 ? "Name" : "Name (" + i + ")"), manager.getNameField().get(i));
+            }
             searchFields.put("Email", manager.getEmailField());
         }
         else {

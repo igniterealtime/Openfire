@@ -178,7 +178,17 @@ public class LdapUserTester {
                         } else {
                             answer = Base64.encodeBytes((byte[]) ob);
                         }
-                        value = value.replace("{" + field + "}", answer);
+                        if ( mapping.isFirstMatchOnly()) {
+                            // find and use the first non-null value.
+                            if ( answer == null || answer.isEmpty() ) {
+                                continue;
+                            }
+                            value = value.replace("{VALUE}", answer);
+                            break;
+                        } else {
+                            // replace all fields with values.
+                            value = value.replace("{" + field + "}", answer);
+                        }
                     }
                 }
                 userAttributes.put(attribute, value);
@@ -296,13 +306,22 @@ public class LdapUserTester {
          */
         private Collection<String> fields = new ArrayList<>();
 
+        private final boolean firstMatchOnly;
 
         public PropertyMapping(String displayFormat) {
-            this.displayFormat = displayFormat;
-
-            StringTokenizer st = new StringTokenizer(displayFormat.trim(), ", //{}");
-            while (st.hasMoreTokens()) {
-                fields.add(st.nextToken().replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
+            final List<String> splitted = LdapManager.splitFilter(displayFormat);
+            firstMatchOnly = splitted.size() > 1;
+            if ( splitted.size() == 1 ) {
+                this.displayFormat = splitted.get(0);
+                StringTokenizer st = new StringTokenizer(displayFormat.trim(), ", //{}");
+                while (st.hasMoreTokens()) {
+                    fields.add(st.nextToken().replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
+                }
+            } else {
+                this.displayFormat = "{VALUE}";
+                for ( final String split : splitted ) {
+                    fields.add( split.replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2") );
+                }
             }
         }
 
@@ -312,6 +331,10 @@ public class LdapUserTester {
 
         public Collection<String> getFields() {
             return fields;
+        }
+
+        public boolean isFirstMatchOnly() {
+            return firstMatchOnly;
         }
     }
 }

@@ -28,7 +28,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Bean that stores the vcard mapping. It is also responsible for saving the mapping
@@ -512,7 +515,7 @@ public class LdapUserProfile {
         VCardManager.VCARD_PROVIDER.setValue(LdapVCardProvider.class);
 
         // Save duplicated fields in LdapManager (should be removed in the future)
-        LdapManager.getInstance().setNameField(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
+        LdapManager.getInstance().setNameField(LdapManager.splitFilter(name.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2")));
         LdapManager.getInstance().setEmailField(email.replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
 
         // Store the DB storage variable in the actual database.

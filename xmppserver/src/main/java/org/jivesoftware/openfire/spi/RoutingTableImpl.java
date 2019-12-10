@@ -262,11 +262,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
                 // Packet sent to component hosted in this server
-                routed = routeToComponent(jid, packet, routed);
+                routed = routeToComponent(jid, packet);
             }
             else {
                 // Packet sent to remote server
-                routed = routeToRemoteDomain(jid, packet, routed);
+                routed = routeToRemoteDomain(jid, packet);
             }
         } catch (Exception ex) {
             // Catch here to ensure that all packets get handled, despite various processing
@@ -330,10 +330,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         else {
             // Packet sent to local user (full JID)
-            ClientRoute clientRoute = usersCache.get(jid.toString());
-            if (clientRoute == null) {
-                clientRoute = anonymousUsersCache.get(jid.toString());
-            }
+            ClientRoute clientRoute = getClientRouteForLocalUser(jid);
             if (clientRoute != null) {
                 if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
 		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())
@@ -346,25 +343,37 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                             Message message = (Message) packet;
                             if (message.getType() == Message.Type.chat && !isPrivate) {
                                 List<JID> routes = getRoutes(jid.asBareJID(), null);
-                                for (JID route : routes) {
+                                for (JID ccJid : routes) {
                                     // The receiving server MUST NOT send a forwarded copy to the full JID the original <message/> stanza was addressed to, as that recipient receives the original <message/> stanza.
-                                    if (!route.equals(jid)) {
-                                        ClientSession clientSession = getClientRoute(route);
+                                    if (!ccJid.equals(jid)) {
+                                        ClientSession clientSession = getClientRoute(ccJid);
                                         if (clientSession.isMessageCarbonsEnabled()) {
                                             Message carbon = new Message();
                                             // The wrapping message SHOULD maintain the same 'type' attribute value;
                                             carbon.setType(message.getType());
                                             // the 'from' attribute MUST be the Carbons-enabled user's bare JID
-                                            carbon.setFrom(route.asBareJID());
+                                            carbon.setFrom(ccJid.asBareJID());
                                             // and the 'to' attribute MUST be the full JID of the resource receiving the copy
-                                            carbon.setTo(route);
+                                            carbon.setTo(ccJid);
                                             // The content of the wrapping message MUST contain a <received/> element qualified by the namespace "urn:xmpp:carbons:2", which itself contains a <forwarded/> element qualified by the namespace "urn:xmpp:forward:0" that contains the original <message/>.
                                             carbon.addExtension(new Received(new Forwarded(message)));
 
                                             try {
-                                                final RoutableChannelHandler routableChannelHandler = localRoutingTable.getRoute(route);
-                                                if (routableChannelHandler != null) {
-                                                    routableChannelHandler.process(carbon);
+                                                final RoutableChannelHandler localRoute = localRoutingTable.getRoute(ccJid);
+                                                if (localRoute != null) {
+                                                    // This session is on a local cluster node
+                                                    localRoute.process(carbon);
+                                                } else {
+                                                    // If tt's not a local cluster node, so try a remote
+                                                    final ClientRoute remoteRoute = getClientRouteForLocalUser(ccJid);
+                                                    if (remotePacketRouter != null // If we're in a cluster
+                                                        && remoteRoute != null // and we've fond a route to the other node
+                                                        && !remoteRoute.getNodeID().equals(XMPPServer.getInstance().getNodeID())) { // and it really is remote node
+                                                        // Try and route the packet to the remote session
+                                                        remotePacketRouter.routePacket(remoteRoute.getNodeID().toByteArray(), ccJid, carbon);
+                                                    } else {
+                                                        Log.warn("Unable to find route to CC remote user {}", ccJid);
+                                                    }
                                                 }
                                             } catch (UnauthorizedException e) {
                                                 Log.error("Unable to route packet " + packet.toXML(), e);
@@ -399,6 +408,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return routed;
     }
 
+    private ClientRoute getClientRouteForLocalUser(JID jid) {
+        ClientRoute clientRoute = usersCache.get(jid.toString());
+        if (clientRoute == null) {
+            clientRoute = anonymousUsersCache.get(jid.toString());
+        }
+        return clientRoute;
+    }
+
     /**
      * Routes packets that are sent to components of the XMPP domain (which are
      * subdomains of the XMPP domain)
@@ -413,14 +430,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @return {@code true} if the packet was routed successfully,
      *         {@code false} otherwise.
      */
-    private boolean routeToComponent(JID jid, Packet packet,
-            boolean routed) {
+    private boolean routeToComponent(JID jid, Packet packet) {
         if (!hasComponentRoute(jid) 
                 && !ExternalComponentManager.hasConfiguration(jid.getDomain())) {
             return false;
         }
         
         // First check if the component is being hosted in this JVM
+        boolean routed = false;
         RoutableChannelHandler route = localRoutingTable.getRoute(new JID(null, jid.getDomain(), null, true));
         if (route != null) {
             try {
@@ -478,19 +495,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @return {@code true} if the packet was routed successfully,
      *         {@code false} otherwise.
      */
-    private boolean routeToRemoteDomain(JID jid, Packet packet, boolean routed)
-    {
+    private boolean routeToRemoteDomain(JID jid, Packet packet) {
         if ( !JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
         {
             // Disallow anonymous local users to send data to other domains than the local domain.
             if ( isAnonymousRoute( packet.getFrom() ) )
             {
                 Log.info( "The anonymous user '{}' attempted to send data to '{}', which is on a remote domain. Openfire is configured to not allow anonymous users to send data to remote domains.", packet.getFrom(), jid );
-                routed = false;
-                return routed;
+                return false;
             }
         }
 
+        boolean routed = false;
         DomainPair pair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
         NodeID nodeID = serversCache.get(pair);
         if (nodeID != null) {
@@ -753,10 +769,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
             if (locator != null) {
                 // Check if the session is hosted by other cluster node
-                ClientRoute route = usersCache.get(jid.toString());
-                if (route == null) {
-                    route = anonymousUsersCache.get(jid.toString());
-                }
+                ClientRoute route = getClientRouteForLocalUser(jid);
                 if (route != null) {
                     session = locator.getClientSession(route.getNodeID().toByteArray(), jid);
                 }
@@ -872,10 +885,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Address belongs to local user
             if (route.getResource() != null) {
                 // Address is a full JID of a user
-                ClientRoute clientRoute = usersCache.get(route.toString());
-                if (clientRoute == null) {
-                    clientRoute = anonymousUsersCache.get(route.toString());
-                }
+                ClientRoute clientRoute = getClientRouteForLocalUser(route);
                 if (clientRoute != null &&
                         (clientRoute.isAvailable() || presenceUpdateHandler.hasDirectPresence(route, requester))) {
                     jids.add(route);

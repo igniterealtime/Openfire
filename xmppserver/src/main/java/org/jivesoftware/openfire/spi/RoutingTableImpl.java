@@ -364,10 +364,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                                                     // This session is on a local cluster node
                                                     localRoute.process(carbon);
                                                 } else {
-                                                    // If tt's not a local cluster node, so try a remote
+                                                    // The session is not on a local cluster node, so try a remote
                                                     final ClientRoute remoteRoute = getClientRouteForLocalUser(ccJid);
                                                     if (remotePacketRouter != null // If we're in a cluster
-                                                        && remoteRoute != null // and we've fond a route to the other node
+                                                        && remoteRoute != null // and we've found a route to the other node
                                                         && !remoteRoute.getNodeID().equals(XMPPServer.getInstance().getNodeID())) { // and it really is remote node
                                                         // Try and route the packet to the remote session
                                                         remotePacketRouter.routePacket(remoteRoute.getNodeID().toByteArray(), ccJid, carbon);

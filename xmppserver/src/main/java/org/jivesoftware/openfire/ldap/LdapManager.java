@@ -638,7 +638,7 @@ public class LdapManager {
         if (connTimeout > 0) {
             env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
         } else {
-            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+            env.put("com.sun.jndi.ldap.connect.timeout", "4000");
         }
 
         if (readTimeout > 0) {
@@ -746,7 +746,7 @@ public class LdapManager {
             if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
-                    env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                    env.put("com.sun.jndi.ldap.connect.timeout", "4000");
                 }
 
             if (readTimeout > 0) {
@@ -832,7 +832,11 @@ public class LdapManager {
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
 
-                        env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                    if (connTimeout > 0) {
+                        env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+                    } else {
+                        env.put("com.sun.jndi.ldap.connect.timeout", "4000");
+                    }
 
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);

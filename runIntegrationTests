@@ -19,10 +19,10 @@ usage()
 	echo "    -l: Launch a local Openfire. (default: off)"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
 	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
-	echo "    -s: Set Smack to the given version (default: 4.3.4-SNAPSHOT)"
+	echo "    -s: Set Smack to the given version (default: 4.4.0-alpha2)"
 	echo "    -h: The hostname for the Openfire under test (default: example.org)"
 	echo "    -u: Admin username for Openfire (default: admin)"
-	echo "    -p: Admin password for Openfire (default: password)"
+	echo "    -p: Admin password for Openfire (default: admin)"
 	exit 2
 }
 

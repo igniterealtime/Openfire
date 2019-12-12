@@ -135,6 +135,31 @@ public class VCardTemplateTest
         assertTrue( Arrays.asList( result.getAttributes()).contains("placeholderA") );
         assertTrue( Arrays.asList( result.getAttributes()).contains("placeholderB") );
     }
+
+    /**
+     * Verifies that, using a simplified template, all placeholders get correctly identified in a VCardTemplate, when
+     * they're defined in the format that uses the first non-empty placeholder that's available.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testIdentifyPrioritizedPlaceholders() throws Exception
+    {
+        // Setup fixture.
+        final Document input = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+
+        // Verify result.
+        assertNotNull( result );
+        assertNotNull( result.getAttributes() );
+        assertEquals( 3, result.getAttributes().length );
+        assertTrue( Arrays.asList( result.getAttributes()).contains("placeholderA") );
+        assertTrue( Arrays.asList( result.getAttributes()).contains("placeholderB") );
+        assertTrue( Arrays.asList( result.getAttributes()).contains("placeholderC") );
+    }
+
     /**
      * Verifies that, using a simplified template, attribute values do not get wrongly identified as a placeholder.
      */
@@ -235,6 +260,49 @@ public class VCardTemplateTest
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "telephoneNumber" ) );
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "mail" ) );
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "lastName" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "givenName" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "postalCode" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "homePhone" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "mobile" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "cn" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "l" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "title" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "homePostalAddress" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "uid" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "postalAddress" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "pager" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "departmentNumber" ) );
+        assertEquals( 17, result.getAttributes().length );
+    }
+
+    /**
+     * Verifies that all placeholder gets correctly identified in the full, default VCardTemplate that has been
+     * modified to have one element that uses a combination of more than one placeholder in the format that uses the
+     * first non-empty placeholder that's available.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testPrioritizedTemplate() throws Exception
+    {
+        // Setup fixture.
+        final Document input;
+        try ( final InputStream stream = getClass().getResourceAsStream("/org/jivesoftware/openfire/ldap/vcardmapping-prioritized.xml" ) )
+        {
+            SAXReader reader = new SAXReader();
+            input = reader.read(stream);
+        }
+
+        // Execute system under test.
+        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+
+        // Verify result.
+        assertNotNull( result );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "jpegPhoto" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "st" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "telephoneNumber" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "mail" ) );
+        assertTrue( Arrays.asList( result.getAttributes() ).contains( "fullName" ) );
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "givenName" ) );
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "postalCode" ) );
         assertTrue( Arrays.asList( result.getAttributes() ).contains( "homePhone" ) );

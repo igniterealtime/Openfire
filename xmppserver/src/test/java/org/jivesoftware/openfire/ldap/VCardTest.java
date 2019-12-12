@@ -20,11 +20,12 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests that verify the implementation of {@link LdapVCardProvider.VCard}
@@ -119,6 +120,136 @@ public class VCardTest
         // Verify result.
         assertNotNull( result );
         assertEquals( "<vcard><el>valueA, valueB</el></vcard>", result.asXML() );
+    }
+
+    /**
+     * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
+     * to be replaced with the first non-empty matching attribute value, get correctly replaced.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testReplacePrioritizedPlaceholders() throws Exception
+    {
+        // Setup fixture.
+        final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("placeholderA", "");
+        attributes.put("placeholderB", "valueB");
+        attributes.put("placeholderC", "valueC");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final Element result = vCard.getVCard(attributes);
+
+        // Verify result.
+        assertNotNull( result );
+        assertEquals( "<vcard><el>valueB</el></vcard>", result.asXML() );
+    }
+
+    /**
+     * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
+     * to be replaced with the first non-empty matching attribute value, get correctly replaced.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testReplacePrioritizedPlaceholdersVariantA() throws Exception
+    {
+        // Setup fixture.
+        final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("placeholderA", "valueA");
+        attributes.put("placeholderB", "valueB");
+        attributes.put("placeholderC", "valueC");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final Element result = vCard.getVCard(attributes);
+
+        // Verify result.
+        assertNotNull( result );
+        assertEquals( "<vcard><el>valueA</el></vcard>", result.asXML() );
+    }
+
+    /**
+     * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
+     * to be replaced with the first non-empty matching attribute value, get correctly replaced.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testReplacePrioritizedPlaceholdersVariantB() throws Exception
+    {
+        // Setup fixture.
+        final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("placeholderA", "valueA");
+        attributes.put("placeholderB", "");
+        attributes.put("placeholderC", "");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final Element result = vCard.getVCard(attributes);
+
+        // Verify result.
+        assertNotNull( result );
+        assertEquals( "<vcard><el>valueA</el></vcard>", result.asXML() );
+    }
+
+    /**
+     * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
+     * to be replaced with the first non-empty matching attribute value, get correctly replaced.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testReplacePrioritizedPlaceholdersVariantC() throws Exception
+    {
+        // Setup fixture.
+        final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("placeholderA", "");
+        attributes.put("placeholderB", "");
+        attributes.put("placeholderC", "valueC");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final Element result = vCard.getVCard(attributes);
+
+        // Verify result.
+        assertNotNull( result );
+        assertEquals( "<vcard><el>valueC</el></vcard>", result.asXML() );
+    }
+
+    /**
+     * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
+     * to be replaced with the first non-empty matching attribute value, get correctly replaced.
+     *
+     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     */
+    @Test
+    public void testReplacePrioritizedPlaceholdersVariantD() throws Exception
+    {
+        // Setup fixture.
+        final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
+        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("placeholderA", "");
+        attributes.put("placeholderB", "");
+        attributes.put("placeholderC", "");
+
+        // Execute system under test.
+        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final Element result = vCard.getVCard(attributes);
+
+        // Verify result.
+        assertNotNull( result );
+        assertEquals( "<vcard><el></el></vcard>", result.asXML() );
     }
 
     /**

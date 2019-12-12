@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.ldap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.Node;
 import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
@@ -561,6 +560,34 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                         final String replacement = entry.getValue();
                         format = format.replace(placeholder, replacement);
                         Log.trace("Replaced attribute '{}' with '{}'", placeholder, replacement);
+                    }
+
+                    // When 'prioritized' replacements are used, the resulting value now will have those filled out:
+                    // example:   (|()(valueB)(valueC))
+                    // From this format, only the first non-empty value enclosed in brackets needs to be used.
+                    final int start = format.indexOf("(|(");
+                    final int end = format.indexOf("))");
+                    if ( start > -1 && end > start ) {
+                        // Take the substring that is: (|()(valueB)(valueC))
+                        final String filter = format.substring(start, end + "))".length());
+
+                        // Take the substring that is: )(valueB)(valueC
+                        final String values = filter.substring("(|(".length(), filter.length() - "))".length() );
+
+                        // Split on ")(" to get the individual values.
+                        final String[] splitted = values.split("\\)\\(");
+
+                        // find the first non-empty string.
+                        String firstValue = "";
+                        for ( final String split : splitted ) {
+                            if ( split != null && !split.isEmpty() ) {
+                                firstValue = split;
+                                break;
+                            }
+                        }
+
+                        // Replace the original filter with just the first matching value.
+                        format = format.replace(filter, firstValue);
                     }
 
                     element.setText(format);

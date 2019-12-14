@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
@@ -59,7 +60,6 @@ public class DefaultVCardProvider implements VCardProvider {
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
     private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
-
 
     public DefaultVCardProvider() {
         super();
@@ -101,35 +101,116 @@ public class DefaultVCardProvider implements VCardProvider {
                 }
                 DbConnectionManager.closeConnection(rs, pstmt, con);
             }
-
-            if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_LOAD, PhotoResizer.PROPERTY_RESIZE_ON_LOAD_DEFAULT ) )
+            
+            if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
             {
-                PhotoResizer.resizeAvatar( vCardElement );
+                vCardElement=mergePEPAvatarIntoVCard(username,vCardElement);
+            }
+            else
+            {
+                if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_LOAD, PhotoResizer.PROPERTY_RESIZE_ON_LOAD_DEFAULT ) )
+                {
+                    PhotoResizer.resizeAvatar( vCardElement );
+                }
             }
 
             return vCardElement;
         }
     }
+    
+    public Element mergePEPAvatarIntoVCard(String username, Element vCardElement)
+    {
+        PEPAvatar pavatar = PEPAvatar.load(username);
+        if (pavatar!=null&&pavatar.getImage()!=null&&pavatar.getId()!=null&&vCardElement!=null)
+        {
+             if (vCardElement.element("PHOTO")==null)
+             {
+                 Element photo = vCardElement.addElement("PHOTO");
+                 photo.addElement("TYPE");
+                 photo.addElement("BINVAL");
+             }
+
+             vCardElement.element("PHOTO").element("TYPE").setText(pavatar.getMimetype());
+             vCardElement.element("PHOTO").element("BINVAL").setText(pavatar.getImageAsBase64String());
+        }
+
+        return vCardElement;
+    }
+    
+    public void updatePEPAvatarFromVCard(String username, Element vCardElement)
+    {
+        Element photo = vCardElement.element("PHOTO");
+        if (photo!=null)
+        {
+            Element type = photo.element("TYPE");
+            Element binval = photo.element("BINVAL");
+            PEPAvatar pavatar = null;
+
+            if (type!=null)
+            {
+                pavatar = new PEPAvatar(binval.getText(),type.getText());
+            }
+            else
+            {
+                pavatar = new PEPAvatar(binval.getText());
+            }
+
+            pavatar.routeDataToServer(username);
+            pavatar.routeMetaDataToServer(username);
+            pavatar.broadcastPresenceUpdate(username, true);
+        }
+        else
+        {
+            deletePEPAvatarFromVCard(username);
+        }
+    }
+    
+    public void deletePEPAvatarFromVCard(String username)
+    {
+        PEPAvatar.deletePEPAvatar(username);
+    }
 
     @Override
-    public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
+    public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException
+    {
         if (loadVCard(username) != null) {
             // The user already has a vCard
             throw new AlreadyExistsException("Username " + username + " already has a vCard");
         }
 
-        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+        Element vCardElementToSaveToDB = vCardElement.createCopy();
+        boolean xep398=JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false);
+        if (xep398)
         {
-            PhotoResizer.resizeAvatar( vCardElement );
+            vCardElement=mergePEPAvatarIntoVCard(username,vCardElement);
+            if (vCardElementToSaveToDB.element("PHOTO")!=null)
+            {
+            	vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+            }
+        }
+        else
+        {
+	        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+	        {
+	            PhotoResizer.resizeAvatar( vCardElement );
+	        }
         }
 
         Connection con = null;
         PreparedStatement pstmt = null;
-        try {
+        try
+        {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
             pstmt.setString(1, username);
-            pstmt.setString(2, vCardElement.asXML());
+            if (xep398)
+            {
+                pstmt.setString(2, vCardElementToSaveToDB.asXML());
+            }
+            else
+            {
+                pstmt.setString(2, vCardElement.asXML());
+            }
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -142,15 +223,30 @@ public class DefaultVCardProvider implements VCardProvider {
     }
 
     @Override
-    public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
-        if (loadVCard(username) == null) {
+    public Element updateVCard(String username, Element vCardElement) throws NotFoundException
+    {
+        if (loadVCard(username) == null)
+        {
             // The user does not have a vCard
             throw new NotFoundException("Username " + username + " does not have a vCard");
         }
 
-        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+        Element vCardElementToSaveToDB = vCardElement.createCopy();
+        boolean xep398=JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false);
+        if (xep398)
         {
-            PhotoResizer.resizeAvatar( vCardElement );
+            updatePEPAvatarFromVCard(username,vCardElement);
+            if (vCardElementToSaveToDB.element("PHOTO")!=null)
+            {
+            	vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+            }
+        }
+        else
+        {
+	        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+	        {
+	            PhotoResizer.resizeAvatar( vCardElement );
+	        }
         }
 
         Connection con = null;
@@ -158,7 +254,16 @@ public class DefaultVCardProvider implements VCardProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTIES);
-            pstmt.setString(1, vCardElement.asXML());
+
+            if (xep398)
+            {
+            	pstmt.setString(1, vCardElementToSaveToDB.asXML());
+            }
+            else
+            {
+            	pstmt.setString(1, vCardElement.asXML());
+            }
+
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -172,7 +277,13 @@ public class DefaultVCardProvider implements VCardProvider {
     }
 
     @Override
-    public void deleteVCard(String username) {
+    public void deleteVCard(String username)
+    {
+        if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+        {
+            deletePEPAvatarFromVCard(username);
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

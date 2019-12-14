@@ -15,24 +15,31 @@
  */
 package org.jivesoftware.openfire.pep;
 
+import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
 import org.jivesoftware.util.CacheableOptional;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -226,8 +233,101 @@ public class PEPServiceManager {
         pubSubEngine = null;
     }
 
-    public void process(PEPService service, IQ iq) {
+    private void deleteVCardAvatar(JID from)
+    {
+        Element vcard = XMPPServer.getInstance().getVCardManager().getVCard(from.getNode());
+        Element vcardphoto = vcard.element("PHOTO");
+
+        if (vcardphoto!=null)
+        {
+            vcard.remove(vcardphoto);
+            try
+            {
+                XMPPServer.getInstance().getVCardManager().setVCard(from.getNode(), vcard);
+            }
+            catch (Exception e)
+            {
+                Log.error("Could not update vcard: "+e.getMessage());
+            }
+        }
+    }
+
+    //Send VCARD Presence
+    private void sendVCardPresence(JID from, String id)
+    {
+        User usr;
+        try 
+        {
+            usr = XMPPServer.getInstance().getUserManager().getUser(from.getNode());
+            Presence presenceStanza = XMPPServer.getInstance().getPresenceManager().getPresence(usr);
+            presenceStanza.setID(UUID.randomUUID().toString());
+            if (presenceStanza.getFrom()==null)
+            {
+                presenceStanza.setFrom(from);
+            }
+
+            Element x = presenceStanza.addChildElement("x", PEPAvatar.NAMESPACE_VCARDUPDATE);
+            Element photo = x.addElement("photo");                    
+            
+            if (id!=null)
+            {
+                photo.setText(id);
+            }
+
+            XMPPServer.getInstance().getPresenceRouter().route(presenceStanza);
+        }
+        catch (UserNotFoundException e) 
+        {
+            Log.error("Could not send presence: "+e.getMessage());
+        }
+    }
+
+    public void process(PEPService service, IQ iq)
+    {
         pubSubEngine.process(service, iq);
+
+        if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false)&&iq!=null)
+        {
+            Element childElement = iq.getChildElement();
+            if (childElement!=null)
+            {
+                String childns = childElement.attributeValue("xmlns");
+
+                //Check if IQ stanza is a pep avatar metadata node
+                if (childns!=null)
+                {
+                    //metadata node with new item
+                    if (childns.equalsIgnoreCase("http://jabber.org/protocol/pubsub")&&
+                       (childElement.element("publish")!=null&&
+                        childElement.element("publish").attributeValue("xmlns").
+                        equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA)))
+                        {
+                            Element publish = childElement.element("publish");
+                            Element item = publish.element("item");
+                            if (item!=null)
+                            {
+                                Element metadata=item.element("metadata");
+                                if (metadata!=null&&metadata.element("info")!=null)
+                                {
+                                    sendVCardPresence(iq.getFrom(),metadata.element("info").attributeValue("id"));
+                                }
+                            }
+                        }
+                        else //metadatanode which should be removed
+                            if (childns.equalsIgnoreCase("http://jabber.org/protocol/pubsub")&&
+                               ((childElement.element("retract")!=null&&
+                                childElement.element("retract").attributeValue("xmlns").
+                                equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA))||
+                                (childElement.element("delete")!=null&&
+                                 childElement.element("delete").attributeValue("xmlns").
+                                 equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA))))
+                                {
+                                    deleteVCardAvatar(iq.getFrom());
+                                    sendVCardPresence(iq.getFrom(),null);
+                                }
+                }
+            }
+        }
     }
 
     public boolean hasCachedService(JID owner) {

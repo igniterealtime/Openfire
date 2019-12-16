@@ -5,6 +5,8 @@
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="javax.naming.ldap.LdapName" %>
+<%@ page import="javax.naming.ldap.Rdn" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -29,7 +31,7 @@
         errorDetail = "CSRF failure!";
     }
 
-    csrfParam = StringUtils.randomString(15);
+    // Used embedded in another page. Do not reset the csrf value. // csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
@@ -42,9 +44,9 @@
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
         try {
-            String userDN = manager.findUserDN(JID.unescapeNode(username));
+            Rdn[] userRDN = manager.findUserRDN(JID.unescapeNode(username));
             // See if the user authenticates.
-            if (manager.checkAuthentication(userDN, password)) {
+            if (manager.checkAuthentication(userRDN, password)) {
                 // User was able to authenticate with provided password
                 success = true;
             }

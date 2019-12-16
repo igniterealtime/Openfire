@@ -25,9 +25,7 @@ import org.xmpp.packet.JID;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.SortControl;
+import javax.naming.ldap.*;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -154,7 +152,7 @@ public class LdapUserTester {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
             // Build list of attributes to load from LDAP
             Map<String, PropertyMapping> ldapMappings = getLdapAttributes();
             Set<String> fields = new HashSet<>();
@@ -164,7 +162,7 @@ public class LdapUserTester {
             fields.add(manager.getUsernameField());
             // Load records
             ctx = manager.getContext(manager.getUsersBaseDN(username));
-            Attributes attrs = ctx.getAttributes(userDN, fields.toArray(new String[]{}));
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), fields.toArray(new String[]{}));
             // Build answer
             for (Map.Entry<String, PropertyMapping> entry : ldapMappings.entrySet()) {
                 String attribute = entry.getKey();
@@ -187,7 +185,7 @@ public class LdapUserTester {
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An error occurred while trying to get attributes for user: {}", username, e);
             // TODO something else?
         }
         finally {

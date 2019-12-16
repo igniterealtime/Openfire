@@ -70,12 +70,18 @@ public class MUCPersistenceManager {
     private static final String LOAD_HISTORY =
         "SELECT sender, nickname, logTime, subject, body, stanza FROM ofMucConversationLog " +
         "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
-    private static final String LOAD_ALL_ROOMS =
+    private static final String RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister, allowpm " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
+    private static final String LOAD_ALL_ROOMS =
+        "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
+        "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "useReservedNick, canChangeNick, canRegister, allowpm " +
+        "FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
         "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
@@ -456,16 +462,16 @@ public class MUCPersistenceManager {
      * will be executed only when the service is starting up.
      *
      * @param chatserver the chat server that will hold the loaded rooms.
-     * @param emptyDate rooms that hadn't been used before this date won't be loaded.
+     * @param cleanupDate rooms that hadn't been used before this date won't be loaded.
      * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */
-    public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date emptyDate, PacketRouter packetRouter) {
+    public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate, PacketRouter packetRouter) {
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, LocalMUCRoom> rooms;
         try {
-            rooms = loadRooms(serviceID, emptyDate, chatserver, packetRouter);
+            rooms = loadRooms(serviceID, cleanupDate, chatserver, packetRouter);
             loadHistory(serviceID, rooms);
             loadAffiliations(serviceID, rooms);
             loadMembers(serviceID, rooms);
@@ -491,7 +497,7 @@ public class MUCPersistenceManager {
         return rooms.values();
     }
 
-    private static Map<Long, LocalMUCRoom> loadRooms(Long serviceID, Date emptyDate, MultiUserChatService chatserver, PacketRouter packetRouter) throws SQLException {
+    private static Map<Long, LocalMUCRoom> loadRooms(Long serviceID, Date cleanupDate, MultiUserChatService chatserver, PacketRouter packetRouter) throws SQLException {
         final Map<Long, LocalMUCRoom> rooms = new HashMap<>();
 
         Connection connection = null;
@@ -499,9 +505,17 @@ public class MUCPersistenceManager {
         ResultSet resultSet = null;
         try {
             connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_ROOMS);
-            statement.setLong(1, serviceID);
-            statement.setString(2, StringUtils.dateToMillis(emptyDate));
+            if (cleanupDate!=null) 
+            {
+                statement = connection.prepareStatement(RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY);
+                statement.setLong(1, serviceID);
+                statement.setString(2, StringUtils.dateToMillis(cleanupDate));
+            }
+            else
+            {
+                statement = connection.prepareStatement(LOAD_ALL_ROOMS);
+                statement.setLong(1, serviceID);
+            }
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {

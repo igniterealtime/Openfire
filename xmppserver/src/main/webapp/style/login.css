@@ -1,44 +1,20 @@
-#jive-loginBox {
-    display: block;
-    position: relative;
-    width: 500px;
-    text-align: left;
-    top: 148px;
+html{
+    height: 100%;
 }
-#jive-loginHeader {
-    font-size: 14pt;
-    font-weight: bold;
-    color: #555555;
+body {
+    background:rgba(8,27,73,0.97);
+    padding: 0;
     margin: 0;
 }
-#jive-loginTable {
-    display: block;
-    position: relative;
-    clear: both;
-    width: auto;
-    margin: 10px 0 0 0;
-    padding: 0;
-}
-#jive-loginTable table {
-    clear: both;
-    margin-top: 20px;
-}
-#jive-loginTable td.loginFormTable {
-    padding: 17px 17px 7px 55px;
-    background: #e0e0e0 url(../images/jive-login-form-bg-gray.gif) repeat-x top;
-    border: 1px solid #bbbbbb;
-    -moz-border-radius: 5px;
-}
+
 .loginFormTable TD {
     text-align : left;
 }
-#jive-loginTable td.loginFormTable table {
-    margin-top: 0;
-}
+
 #jive-loginVersion {
     color: #999999;
     font-weight: normal;
-    font-size: 10px;
+    font-size: 12px;
     padding-top: 4px;
 }
 
@@ -56,8 +32,214 @@
     margin: 0;
 }
 
-BODY {
-    background: #b6b6b6 url(../images/jive-login-bg.gif) repeat-x top;
-    padding: 0;
-    margin: 0;
+.jive-form-body{
+    justify-content: center;
+    width: 100%;
 }
+.jive-form-body > .row {
+    position: relative;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.jive-form-holder {
+    margin-left: 0;
+    width: 100%;
+}
+
+.jive-form-holder .jive-form-content {
+    position: relative;
+    text-align: center;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+    padding: 125px 60px 60px;
+    -webkit-perspective: 800px;
+    -moz-perspective: 800px;
+    -ms-perspective: 800px;
+    perspective: 800px;
+    background-color: transparent;
+}
+
+.jive-form-content .jive-form-items {
+    display: inline-block;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+    -webkit-transition: all 0.4s ease;
+    transition: all 0.4s ease;
+    padding: 35px 30px;
+    border-radius: 10px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 6px 15px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.16);
+}
+
+.jive-form-content h3 {
+    color: #aaa;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+.jive-form-content img{
+    margin-left: 24px;
+}
+.jive-form-content p {
+    
+    text-align: left;
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 20px;
+    margin-bottom: 10px;
+}
+
+.jive-body-input-box {
+    margin-top: 42px;
+    margin-bottom: 42px;
+    border-top: 1px solid #e9e9e9;
+}
+
+.jive-input-box{
+    position: relative;
+}
+
+.jive-input-box span{
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    margin-top: 18px;
+    font-size: 20px;
+    left: 15px;
+    color: #aaa;
+    transition: all 0.3s;
+}
+.jive-input-box input:focus + span{
+    color: #999;
+    transition: all 0.5s;
+}
+.jive-input-box input:valid + span{
+    color: #fda10e;
+    transition: all 0.5s;
+}
+
+.jive-form-content input{
+    color: #999;
+    width: 100%;
+    padding: 9px 20px;
+    text-align: left;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 300;
+    background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0) 98%, #FDA10E 2%);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 98%, #FDA10E 2%);
+    background: -webkit-linear-gradient(to top, rgba(255, 255, 255, 0) 98%, #FDA10E 2%);
+    display: block;
+    border: none;
+    padding: 20px 0 20px 59px;
+    border-bottom: 1px solid #e9e9e9;
+    background-position: -800px 0;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    margin-bottom: 10px;
+    transition: all 0.3s cubic-bezier(0.64, 0.09, 0.08, 1);
+    -webkit-transition: all 0.3s cubic-bezier(0.64, 0.09, 0.08, 1);
+    -webkit-box-shadow: inset 0 0 0px 9999px white, 0 0 8px rgba(255, 255, 255, 0.6);
+}
+.jive-form-content .jive-input-box input:focus{
+    box-shadow: none;
+    -webkit-box-shadow: inset 0 0 0px 9999px white, 0 0 8px rgba(255, 255, 255, 0.6);
+    outline: none;
+    background-position: 0 0;
+    color: #999;
+    border-bottom: 1px solid #FDA10E;
+    border-color: #FDA10E !important;
+}
+
+.jive-form-content .jive-input-box input:hover{
+    box-shadow: none;
+    -webkit-box-shadow: inset 0 0 0px 9999px white, 0 0 8px rgba(255, 255, 255, 0.6);
+    outline: none;
+    background-position: 0 0;
+    color: #999;
+    border-bottom: 1px solid #FDA10E;
+    border-color: #FDA10E !important;
+}
+.jive-input-box input:focus::-webkit-input-placeholder, .jive-input-box input:valid::-webkit-input-placeholder {
+    color: #999;
+    visibility: visible !important;
+}
+
+.jive-form-content .jive-form-button {
+    margin-top:0;
+    margin-bottom: 10px;
+}
+
+.jive-form-content .jive-form-button .jive-ibtn {
+    width: 100%;
+    border: 0;
+    padding: 6px 28px;
+    background-color:#fa6400;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    margin-right: 10px;
+    outline: none;
+    -webkit-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+    -webkit-box-shadow: 0 0 0 rgba(0, 0, 0, 0.16);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.16);
+}
+
+.jive-form-body .jive-form-content .jive-form-button .jive-ibtn:hover{
+    -webkit-box-shadow: 0 5px 6px rgba(0, 0, 0, 0.16);
+    box-shadow: 0 5px 6px rgba(0, 0, 0, 0.16);
+}
+
+.jive-btn-gradient{
+    color: #fff;
+    font-size: 15px;
+    border-radius: 30px;
+    border: none;
+    padding: 12px 30px;
+    letter-spacing: .5px;
+    margin-bottom: 15px;
+    background: -moz-linear-gradient(left, #FDA10E 0%, #FF6C0D 100%);
+    background: -webkit-linear-gradient(left, #FDA10E 0%, #FF6C0D 100%);
+    background: -o-linear-gradient(left, #FDA10E 0%, #FF6C0D 100%);
+    background: -ms-linear-gradient(left, #FDA10E 0%, #FF6C0D 100%);
+    background: linear-gradient(to right, #FDA10E 0%, #FF6C0D 100%); 
+    transition: all 0.3s;
+}
+
+.jive-btn-gradient:hover{
+    color: #fff;
+    box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.5s;
+}
+
+.jive-btn-gradient:focus{
+    color: #fff;
+}
+
+/* -----------------------------------
+    2 - Responsive Styles
+------------------------------------*/
+@media (max-width: 992px) {
+    .jive-form-holder {
+        margin-left: 0;
+    }
+    .jive-form-holder .jive-form-content {
+        padding: 125px 30px 60px;
+    }
+}
+
+

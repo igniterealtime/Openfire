@@ -67,6 +67,7 @@ public final class SystemProperty<T> {
         FROM_STRING.put(String.class, (value, systemProperty) -> value);
         FROM_STRING.put(Integer.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseInteger(value).orElse(null));
         FROM_STRING.put(Long.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).orElse(null));
+        FROM_STRING.put(Double.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseDouble(value).orElse(null));
         FROM_STRING.put(Boolean.class, (value, systemProperty) -> value == null ? null : Boolean.valueOf(value));
         FROM_STRING.put(Duration.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(longValue -> LONG_TO_DURATION.get(systemProperty.chronoUnit).apply(longValue)).orElse(null));
         FROM_STRING.put(Instant.class, (value, systemProperty) -> org.jivesoftware.util.StringUtils.parseLong(value).map(Instant::ofEpochMilli).orElse(null));
@@ -133,6 +134,7 @@ public final class SystemProperty<T> {
         TO_STRING.put(String.class, (value, systemProperty) -> (String)value);
         TO_STRING.put(Integer.class, (value, systemProperty) -> value.toString());
         TO_STRING.put(Long.class, (value, systemProperty) -> value.toString());
+        TO_STRING.put(Double.class, (value, systemProperty) -> value.toString());
         TO_STRING.put(Boolean.class, (value, systemProperty) -> value.toString());
         TO_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : DURATION_TO_LONG.get(systemProperty.chronoUnit).apply((Duration) value).toString());
         TO_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : String.valueOf(((Instant)value).toEpochMilli()));
@@ -161,6 +163,7 @@ public final class SystemProperty<T> {
         TO_DISPLAY_STRING.put(String.class, (value, systemProperty) -> (String) value);
         TO_DISPLAY_STRING.put(Integer.class, (value, systemProperty) -> value.toString());
         TO_DISPLAY_STRING.put(Long.class, (value, systemProperty) -> value.toString());
+        TO_DISPLAY_STRING.put(Double.class, (value, systemProperty) -> value.toString());
         TO_DISPLAY_STRING.put(Boolean.class, (value, systemProperty) -> value.toString());
         TO_DISPLAY_STRING.put(Duration.class, (value, systemProperty) -> value == null ? null : org.jivesoftware.util.StringUtils.getFullElapsedTime((Duration)value));
         TO_DISPLAY_STRING.put(Instant.class, (value, systemProperty) -> value == null ? null : Date.from((Instant) value).toString());
@@ -448,6 +451,7 @@ public final class SystemProperty<T> {
          * <li>{@link String}</li>
          * <li>{@link Integer} - for which a default value must be supplied using {@link #setDefaultValue(Object)}</li>
          * <li>{@link Long} - for which a default value must be supplied</li>
+         * <li>{@link Double} - for which a default value must be supplied</li>
          * <li>{@link Boolean} - for which a default value must be supplied</li>
          * <li>{@link Duration} - for which a {@link ChronoUnit} must be specified, to indicate how the value will be saved, using {@link #setChronoUnit(ChronoUnit)}</li>
          * <li>{@link Instant}</li>

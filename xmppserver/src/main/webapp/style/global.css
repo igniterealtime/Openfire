@@ -2,10 +2,56 @@
 /*  Global                                       */
 /* --------------------------------------------- */
 
-body {
-    margin:0;
-    padding:0;
-}
+/* 
+---------------------------------------------
+font & reset css
+--------------------------------------------- 
+*/
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, div
+pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q,
+s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li,
+figure, header, nav, section, article, aside, footer, figcaption {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0; }
+
+.clearfix:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0; }
+
+.clearfix {
+  display: inline-block; }
+
+html[xmlns] .clearfix {
+  display: block; }
+
+* html .clearfix {
+  height: 1%; }
+
+ul, li {
+  padding: 0;
+  margin: 0;
+  list-style: none; }
+
+header, nav, section, article, aside, footer, hgroup {
+  display: block; }
+
+* {
+  box-sizing: border-box; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0px;
+  margin-bottom: 0px; }
+
+ul {
+  margin-bottom: 0px; }
+
+
 #jive-main {
     padding-bottom:20px;
 }
@@ -18,9 +64,14 @@ body {
     color:#333333;
     margin:0;
     padding:0;
+    font-weight: 400;
+    -ms-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale; 
 }
 a {
     color:#D76C0D;
+    text-decoration: none !important; 
 }
 a:hover {
     text-decoration:underline;

@@ -1,0 +1,26 @@
+apply plugin: 'application'
+
+mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
+applicationDefaultJvmArgs = ["-enableassertions"]
+
+repositories {
+	mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+	compile group: 'org.igniterealtime.smack', name: 'smack-java7', version: smackVersion
+	compile group: 'org.igniterealtime.smack', name: 'smack-legacy', version: smackVersion
+	if (smackVersion.matches("(5|4.[45]).*")) {
+		compile group: 'org.igniterealtime.smack', name: 'smack-xmlparser-xpp3', version: smackVersion
+		compile group: 'org.igniterealtime.smack', name: 'smack-xmlparser-stax', version: smackVersion
+	}
+	compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
+}
+
+run {
+	// Pass all system properties down to the "application" run
+	systemProperties System.getProperties()
+}

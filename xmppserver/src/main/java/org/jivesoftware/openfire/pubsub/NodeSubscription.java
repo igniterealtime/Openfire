@@ -829,7 +829,7 @@ public class NodeSubscription {
      * @return true if the specified user is allowed to modify or cancel the subscription.
      */
     boolean canModify(JID user) {
-        return user.equals(getJID()) || user.equals(getOwner()) || node.getService().isServiceAdmin(user);
+        return user.equals(getJID()) || user.toBareJID().equals(getOwner().toBareJID()) || node.getService().isServiceAdmin(user);
     }
 
     /**

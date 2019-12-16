@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import javax.naming.CommunicationException;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -29,6 +27,9 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.naming.CommunicationException;
+import javax.naming.ldap.Rdn;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -96,7 +97,7 @@ public class LdapAuthProvider implements AuthProvider {
             }
         }
 
-        String userDN;
+        Rdn[] userRDN;
         try {
             // The username by itself won't help us much with LDAP since we
             // need a fully qualified dn. We could make the assumption that
@@ -109,10 +110,10 @@ public class LdapAuthProvider implements AuthProvider {
             // sub-tree searching). So, if the baseDN is set to
             // "o=jivesoftware, o=com" then a search will include the "People"
             // node as well all the others under the base.
-            userDN = manager.findUserDN(username);
+            userRDN = manager.findUserRDN(username);
 
             // See if the user authenticates.
-            if (!manager.checkAuthentication(userDN, password)) {
+            if (!manager.checkAuthentication(userRDN, password)) {
                 throw new UnauthorizedException("Username and password don't match");
             }
         }

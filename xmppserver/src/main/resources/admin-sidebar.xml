@@ -136,7 +136,10 @@
             <item id="server-transfer-proxy" name="${sidebar.transfer-proxy}"
                   url="file-transfer-proxy.jsp"
                   description="${sidebar.transfer-proxy.descr}"/>
-
+            <!-- XEP-0398 Avatar Conversion -->
+            <item id="server-avatar-conversion" name="${sidebar.avatar-conversion}"
+                  url="avatar-conversion.jsp"
+                  description="${sidebar.avatar-conversion.descr}"/>
         </sidebar>
 
         <!-- TLS / SSL-->

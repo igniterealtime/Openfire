@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.vcard;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,7 +30,9 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.event.UserEventAdapter;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -293,8 +296,19 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     @Override
-    public Iterator<String> getFeatures() {
-        return Collections.singleton("vcard-temp").iterator();
+    public Iterator<String> getFeatures()
+    {
+        if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+        {
+            ArrayList<String> features = new ArrayList<String>();
+            features.add("vcard-temp");
+            features.add("urn:xmpp:pep-vcard-conversion:0");
+            return features.iterator();
+        }
+        else
+        {
+            return Collections.singleton("vcard-temp").iterator();
+        }
     }
 
     private class EventHandler extends UserEventAdapter {

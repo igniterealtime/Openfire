@@ -35,6 +35,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.ldap.Rdn;
 import java.util.*;
 import java.util.regex.Matcher;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:
@@ -247,9 +248,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             }
         }
 
-        if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_LOAD, PhotoResizer.PROPERTY_RESIZE_ON_LOAD_DEFAULT ) )
+        if (!JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
         {
-            PhotoResizer.resizeAvatar( vcard );
+            if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+            {
+                PhotoResizer.resizeAvatar( vcard );
+            }
         }
 
         Log.debug("LdapVCardProvider: Returning vcard");
@@ -286,9 +290,13 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             return vcard;
         }
         // Now we need to check that the LDAP vcard doesn't have a PHOTO element that's filled in.
-        if (!((vcard.element("PHOTO") == null || vcard.element("PHOTO").element("BINVAL") == null || vcard.element("PHOTO").element("BINVAL").getText().matches("\\s*")))) {
-            // Hrm, it does, return the original vcard;
-            return vcard;
+        if (!JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+        {
+            if (!((vcard.element("PHOTO") == null || vcard.element("PHOTO").element("BINVAL") == null || vcard.element("PHOTO").element("BINVAL").getText().matches("\\s*")))) 
+            {
+                // Hrm, it does, return the original vcard;
+                return vcard;
+            }
         }
         Log.debug("LdapVCardProvider: Merging avatar element from passed vcard");
         Element currentElement = vcard.element("PHOTO");
@@ -393,14 +401,17 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             Log.debug("LdapVCardProvider: User has no LDAP vcard, nothing they can change, rejecting.");
             return false;
         }
-        // If the LDAP vcard has a non-empty PHOTO element set, then there is literally no way this will be accepted.
-        Element ldapPhotoElem = ldapvCard.element("PHOTO");
-        if (ldapPhotoElem != null) {
-            Element ldapBinvalElem = ldapPhotoElem.element("BINVAL");
-            if (ldapBinvalElem != null && !ldapBinvalElem.getTextTrim().matches("\\s*")) {
-                // LDAP is providing a valid PHOTO element, byebye!
-                Log.debug("LdapVCardProvider: LDAP has a PHOTO element set, no way to override, rejecting.");
-                return false;
+        if (!JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+        {
+            // If the LDAP vcard has a non-empty PHOTO element set, then there is literally no way this will be accepted.
+            Element ldapPhotoElem = ldapvCard.element("PHOTO");
+            if (ldapPhotoElem != null) {
+                Element ldapBinvalElem = ldapPhotoElem.element("BINVAL");
+                if (ldapBinvalElem != null && !ldapBinvalElem.getTextTrim().matches("\\s*")) {
+                    // LDAP is providing a valid PHOTO element, byebye!
+                    Log.debug("LdapVCardProvider: LDAP has a PHOTO element set, no way to override, rejecting.");
+                    return false;
+                }
             }
         }
         // Retrieve database vcard, if it exists

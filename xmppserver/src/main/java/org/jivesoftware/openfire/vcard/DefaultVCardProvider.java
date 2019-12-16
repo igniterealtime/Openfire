@@ -157,7 +157,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
             pavatar.routeDataToServer(username);
             pavatar.routeMetaDataToServer(username);
-            //pavatar.broadcastPresenceUpdate(username, true); // notification will be send in pep handler
+            pavatar.broadcastPresenceUpdate(username, true); // notification will be send in pep handler
         }
         else
         {

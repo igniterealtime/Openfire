@@ -244,7 +244,7 @@ public class PEPAvatar
             throw new Exception("PEPServiceManager not available");
         }
 
-        PEPService pep = pepmgr.getPEPService(jid.toBareJID());
+        PEPService pep = pepmgr.getPEPService(jid);
 
         if (pep!=null)
         {
@@ -261,6 +261,10 @@ public class PEPAvatar
         try
         {
             this.id=getSHA1Hash(this.image);
+            if (this.id==null)
+            {
+                Log.error("Could not calc. image hash!");
+            }
         }
         catch (NoSuchAlgorithmException e)
         {
@@ -429,10 +433,10 @@ public class PEPAvatar
 
         XMPPServer.getInstance().getIQRouter().route(imagedata);
     }
-	
-    public void broadcastPresenceUpdate(String username, boolean save)
+
+    public void broadcastPresenceUpdate(String username, boolean publish)
     {
-        broadcastPresenceUpdate(new JID(username+"@"+XMPPServer.getInstance().getServerInfo().getXMPPDomain()),  save);
+        broadcastPresenceUpdate(new JID(username+"@"+XMPPServer.getInstance().getServerInfo().getXMPPDomain()),  publish);
     }
 
     /**
@@ -460,7 +464,12 @@ public class PEPAvatar
                 x=presenceStanza.addChildElement("x", NAMESPACE_VCARDUPDATE);
             }
 
-            Element photo = x.addElement("photo");
+            Element photo = x.element("photo");
+
+            if (photo==null)
+            {
+                photo=x.addElement("photo");
+            }
 
             if (publish&&this.id!=null)
             {
@@ -480,7 +489,13 @@ public class PEPAvatar
     {
         try
         {
-            return ImageIO.read(new ByteArrayInputStream(this.image));
+        	if (this.image!=null)
+        		return ImageIO.read(new ByteArrayInputStream(this.image));
+        	else
+        	{
+        		Log.error("Error while converting bytes to BufferedImage: no image in buffer");
+        		return null;
+        	}
         }
         catch (IOException e)
         {

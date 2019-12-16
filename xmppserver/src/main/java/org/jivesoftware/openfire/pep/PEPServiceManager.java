@@ -309,7 +309,15 @@ public class PEPServiceManager {
                                 Element metadata=item.element("metadata");
                                 if (metadata!=null&&metadata.element("info")!=null)
                                 {
-                                    sendVCardPresence(iq.getFrom(),metadata.element("info").attributeValue("id"));
+                                    if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
+                                    {
+                                        sendVCardPresence(iq.getFrom(),metadata.element("info").attributeValue("id"));
+                                    }
+                                    else
+                                    {
+                                        PEPAvatar pavatar = PEPAvatar.load(iq.getFrom().getNode());
+                                        sendVCardPresence(iq.getFrom(),PEPAvatar.getSHA1FromShrinkedImage(pavatar.getMimetype(),pavatar.getImage()));
+                                    }
                                 }
                             }
                         }
@@ -322,7 +330,10 @@ public class PEPServiceManager {
                                  childElement.element("delete").attributeValue("xmlns").
                                  equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA))))
                                 {
-                                    deleteVCardAvatar(iq.getFrom());
+                                    if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
+                                    {
+                                        deleteVCardAvatar(iq.getFrom());
+                                    }
                                     sendVCardPresence(iq.getFrom(),null);
                                 }
                 }

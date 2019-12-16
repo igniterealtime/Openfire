@@ -356,8 +356,18 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 {
                     photo = x.addElement("photo");
                 }
-
-                photo.setText(pavatar.getId());
+                
+                if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
+                {
+                    if (pavatar.getId()!=null)
+                        photo.setText(pavatar.getId());
+                }
+                else
+                {
+                    String hash = PEPAvatar.getSHA1FromShrinkedImage(pavatar.getMimetype(),pavatar.getImage());
+                    if (hash!=null)
+                        photo.setText(hash);
+                }
             }
             else
             {

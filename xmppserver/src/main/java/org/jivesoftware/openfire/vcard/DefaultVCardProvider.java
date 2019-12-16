@@ -103,7 +103,8 @@ public class DefaultVCardProvider implements VCardProvider {
                 DbConnectionManager.closeConnection(rs, pstmt, con);
             }
             
-            if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+            if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false)&&
+                JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
             {
                 vCardElement=mergePEPAvatarIntoVCard(username,vCardElement);
             }
@@ -122,7 +123,7 @@ public class DefaultVCardProvider implements VCardProvider {
     public Element mergePEPAvatarIntoVCard(String username, Element vCardElement)
     {
         PEPAvatar pavatar = PEPAvatar.load(username);
-        if (pavatar!=null&&pavatar.getImage()!=null&&pavatar.getId()!=null)
+        if (pavatar!=null&&pavatar.getImage()!=null&&pavatar.getId()!=null&&vCardElement!=null)
         {
              if (vCardElement.element("PHOTO")==null)
              {
@@ -141,24 +142,30 @@ public class DefaultVCardProvider implements VCardProvider {
     public void updatePEPAvatarFromVCard(String username, Element vCardElement)
     {
         Element photo = vCardElement.element("PHOTO");
-        if (vCardElement.element("PHOTO")!=null)
+        if (photo!=null)
         {
             Element type = photo.element("TYPE");
             Element binval = photo.element("BINVAL");
             PEPAvatar pavatar = null;
 
-            if (type!=null)
+            if (binval.getText()!=null&&binval.getText().trim().length()>0)
             {
-                pavatar = new PEPAvatar(binval.getText(),type.getText());
-            }
-            else
-            {
-                pavatar = new PEPAvatar(binval.getText());
-            }
+                if (type!=null)
+                {
+                    pavatar = new PEPAvatar(binval.getText(),type.getText());
+                }
+                else
+                {
+                    pavatar = new PEPAvatar(binval.getText());
+                }
 
-            pavatar.routeDataToServer(username);
-            pavatar.routeMetaDataToServer(username);
-            pavatar.broadcastPresenceUpdate(username, true); // notification will be send in pep handler
+                if (pavatar.getImage()!=null)
+                {
+                    pavatar.routeDataToServer(username);
+                    pavatar.routeMetaDataToServer(username);
+                    pavatar.broadcastPresenceUpdate(username, true);
+                }
+            }
         }
         else
         {
@@ -184,9 +191,19 @@ public class DefaultVCardProvider implements VCardProvider {
         if (xep398)
         {
             vCardElement=mergePEPAvatarIntoVCard(username,vCardElement);
-            if (vCardElementToSaveToDB.element("PHOTO")!=null)
+            if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
             {
-            	vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+                if (vCardElementToSaveToDB.element("PHOTO")!=null)
+                {
+                    vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+                }
+            }
+            else
+            {
+            	if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+    	        {
+    	            PhotoResizer.resizeAvatar( vCardElement );
+    	        }
             }
         }
         else
@@ -206,7 +223,14 @@ public class DefaultVCardProvider implements VCardProvider {
             pstmt.setString(1, username);
             if (xep398)
             {
-                pstmt.setString(2, vCardElementToSaveToDB.asXML());
+                if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
+                {
+                    pstmt.setString(2, vCardElementToSaveToDB.asXML());
+                }
+                else
+                {
+                    pstmt.setString(2, vCardElement.asXML());
+                }
             }
             else
             {
@@ -237,9 +261,19 @@ public class DefaultVCardProvider implements VCardProvider {
         if (xep398)
         {
             updatePEPAvatarFromVCard(username,vCardElement);
-            if (vCardElementToSaveToDB.element("PHOTO")!=null)
+            if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
             {
-            	vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+                if (vCardElementToSaveToDB.element("PHOTO")!=null)
+                {
+                    vCardElementToSaveToDB.remove(vCardElementToSaveToDB.element("PHOTO"));
+                }
+            }
+            else
+            {
+            	if ( JiveGlobals.getBooleanProperty( PhotoResizer.PROPERTY_RESIZE_ON_CREATE, PhotoResizer.PROPERTY_RESIZE_ON_CREATE_DEFAULT ) )
+    	        {
+    	            PhotoResizer.resizeAvatar( vCardElement );
+    	        }
             }
         }
         else
@@ -258,7 +292,14 @@ public class DefaultVCardProvider implements VCardProvider {
 
             if (xep398)
             {
-            	pstmt.setString(1, vCardElementToSaveToDB.asXML());
+                if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
+                {
+                    pstmt.setString(1, vCardElementToSaveToDB.asXML());
+                }
+                else
+                {
+                    pstmt.setString(1, vCardElement.asXML());
+                }
             }
             else
             {
@@ -280,7 +321,8 @@ public class DefaultVCardProvider implements VCardProvider {
     @Override
     public void deleteVCard(String username)
     {
-        if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false))
+        if (JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_ENABLE_XEP398,false)&&
+            JiveGlobals.getBooleanProperty(PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,false))
         {
             deletePEPAvatarFromVCard(username);
         }

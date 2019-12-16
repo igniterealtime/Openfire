@@ -37,6 +37,7 @@
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean avatarconversionEnabled = ParamUtils.getBooleanParameter(request,"avatarconversionEnabled");
+    boolean deleteotherEnabled = ParamUtils.getBooleanParameter(request,"deleteotherEnabled");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -52,6 +53,7 @@
    
     if (update) {
         JiveGlobals.setProperty( PEPAvatar.PROPERTY_ENABLE_XEP398,  avatarconversionEnabled?"true":"false");
+        JiveGlobals.setProperty( PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR, deleteotherEnabled?"true":"false");
         // Log the event
         webManager.logEvent((avatarconversionEnabled ? "enabled" : "disabled")+" avatarconversion", null);
     %>
@@ -71,6 +73,7 @@
 
     // Set page vars
     avatarconversionEnabled = Boolean.parseBoolean(JiveGlobals.getProperty( PEPAvatar.PROPERTY_ENABLE_XEP398,"false"));
+    deleteotherEnabled = Boolean.parseBoolean(JiveGlobals.getProperty( PEPAvatar.PROPERTY_DELETE_OTHER_AVATAR,"false"));
 %>
 
 <p>
@@ -107,6 +110,18 @@
                     <label for="rb02">
                     <b><fmt:message key="avatarconversion.settings.disable" /></b> -
                     <fmt:message key="avatarconversion.settings.disable_info" />
+                    </label>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap>
+                    <input type="checkbox" name="deleteotherEnabled" id="deleteotherEnabled"
+                     <%= (deleteotherEnabled ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="rb02">
+                     <b><fmt:message key="avatarconversion.settings.deleteotheravatar" /></b> -
+                     <fmt:message key="avatarconversion.settings.deleteotheravatar_info" />
                     </label>
                 </td>
             </tr>

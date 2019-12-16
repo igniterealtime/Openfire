@@ -53,6 +53,7 @@ public class PEPAvatar
 
     //Propertystring for JiveGlobals
     public static String PROPERTY_ENABLE_XEP398 = "xmpp.avatarconversion.enabled";
+    public static String PROPERTY_DELETE_OTHER_AVATAR = "xmpp.deleteotheravatar.enabled";
 
     //Constructors
     public PEPAvatar(String id, byte[] image, int height, int width, String mimetype)
@@ -471,9 +472,20 @@ public class PEPAvatar
                 photo=x.addElement("photo");
             }
 
-            if (publish&&this.id!=null)
+            if (JiveGlobals.getBooleanProperty(PROPERTY_DELETE_OTHER_AVATAR,false))
             {
-                photo.setText(this.id);
+                if (publish&&this.id!=null)
+                {
+                    photo.setText(this.id);
+                }
+            }
+            else
+            {
+                String sha1=getSHA1FromShrinkedImage(this.mimetype,this.image);
+                if (sha1!=null)
+                {
+                    photo.setText(sha1);
+                }
             }
 
             XMPPServer.getInstance().getPresenceRouter().route(presenceStanza);
@@ -483,6 +495,34 @@ public class PEPAvatar
         {
             Log.error("Could not send presence: "+e.getMessage());
         }
+    }
+    
+    public static String getSHA1FromShrinkedImage(String mimetype, byte[] image)
+    {
+        if (image==null||mimetype==null)
+            return null;
+        
+        final Iterator it = ImageIO.getImageWritersByMIMEType( mimetype );
+        if ( !it.hasNext() )
+        {
+            Log.debug( "Cannot resize avatar. No writers available for MIME type {}.", mimetype );
+            return null;
+        }
+        final ImageWriter iw = (ImageWriter) it.next();
+
+        // Extract the original avatar from the VCard.        
+        final int targetDimension = JiveGlobals.getIntProperty( PhotoResizer.PROPERTY_TARGETDIMENSION, PhotoResizer.PROPERTY_TARGETDIMENSION_DEFAULT );
+        final byte[] resized = PhotoResizer.cropAndShrink( image, targetDimension, iw );
+        if (resized!=null)
+        {
+            try {
+				return getSHA1Hash(resized);
+			} catch (NoSuchAlgorithmException e) {
+				return null;
+			}
+        }
+        else
+        	return null;
     }
 
     private BufferedImage getImageFromBytes()
@@ -514,13 +554,13 @@ public class PEPAvatar
         return Base64.encodeBytes(this.image);
     }
 
-    private String getSHA1Hash(byte[] convertme) throws NoSuchAlgorithmException
+    private static String  getSHA1Hash(byte[] convertme) throws NoSuchAlgorithmException
     {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         return byteArray2Hex(md.digest(convertme));
     }
 
-    private String byteArray2Hex(final byte[] hash)
+    private static String byteArray2Hex(final byte[] hash)
     {
         Formatter formatter = new Formatter();
         try

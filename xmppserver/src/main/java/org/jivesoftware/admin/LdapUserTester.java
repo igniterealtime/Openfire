@@ -331,7 +331,7 @@ public class LdapUserTester {
             firstMatchOnly = splitted.size() > 1;
             if ( splitted.size() == 1 ) {
                 this.displayFormat = splitted.get(0);
-                StringTokenizer st = new StringTokenizer(template.trim(), ", //{}");
+                StringTokenizer st = new StringTokenizer(template.trim(), ", /{}");
                 while (st.hasMoreTokens()) {
                     fields.add(st.nextToken().replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
                 }

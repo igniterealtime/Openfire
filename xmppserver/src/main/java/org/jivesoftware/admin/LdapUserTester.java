@@ -166,31 +166,7 @@ public class LdapUserTester {
             // Build answer
             for (Map.Entry<String, PropertyMapping> entry : ldapMappings.entrySet()) {
                 String attribute = entry.getKey();
-                PropertyMapping mapping = entry.getValue();
-                String value = mapping.getDisplayFormat();
-                for (String field : mapping.getFields()) {
-                    Attribute ldapField = attrs.get(field);
-                    if (ldapField != null) {
-                        String answer;
-                        Object ob = ldapField.get();
-                        if (ob instanceof String) {
-                            answer = (String) ob;
-                        } else {
-                            answer = Base64.encodeBytes((byte[]) ob);
-                        }
-                        if ( mapping.isFirstMatchOnly()) {
-                            // find and use the first non-null value.
-                            if ( answer == null || answer.isEmpty() ) {
-                                continue;
-                            }
-                            value = value.replace("{VALUE}", answer);
-                            break;
-                        } else {
-                            // replace all fields with values.
-                            value = value.replace("{" + field + "}", answer);
-                        }
-                    }
-                }
+                String value = getPropertyValue(entry.getValue(), attrs);
                 userAttributes.put(attribute, value);
             }
         }
@@ -209,6 +185,36 @@ public class LdapUserTester {
             }
         }
         return userAttributes;
+    }
+
+    public static String getPropertyValue( final PropertyMapping mapping, final Attributes attributes ) throws NamingException
+    {
+        String value = mapping.getDisplayFormat();
+        for (String field : mapping.getFields()) {
+            Attribute ldapField = attributes.get(field);
+            if (ldapField != null) {
+                String answer;
+                Object ob = ldapField.get();
+                if (ob instanceof String) {
+                    answer = (String) ob;
+                } else {
+                    answer = Base64.encodeBytes((byte[]) ob);
+                }
+                if ( mapping.isFirstMatchOnly()) {
+                    // find and use the first non-null value.
+                    if ( answer == null || answer.isEmpty() ) {
+                        continue;
+                    }
+                    value = value.replace("{VALUE}", answer);
+                    break;
+                } else {
+                    // replace all fields with values.
+                    value = value.replace("{" + field + "}", answer);
+                }
+            }
+        }
+
+        return value;
     }
 
     private Map<String, PropertyMapping> getLdapAttributes() {
@@ -296,7 +302,7 @@ public class LdapUserTester {
         return map;
     }
 
-    private static class PropertyMapping {
+    public static class PropertyMapping {
         /**
          * Format how user property is going to appear (e.g. {firstname}, {lastname}
          */
@@ -308,12 +314,24 @@ public class LdapUserTester {
 
         private final boolean firstMatchOnly;
 
-        public PropertyMapping(String displayFormat) {
-            final List<String> splitted = LdapManager.splitFilter(displayFormat);
+        public  PropertyMapping(String displayFormat) {
+            // Versions of Openfire prior to 4.5.0 saved attributes without { and } characters (making it hard to
+            // reconstruct the original displayFormat. If these characters are not present in the value, wrap the entire
+            // value in them to simulate the post-4.5.0 behavior.
+            final String template;
+            if ( displayFormat.contains( "{" ) ) {
+                template = displayFormat;
+            } else {
+                template = "{" + displayFormat + "}";
+            }
+
+            // Process the displayformat / template to identify the fields that are part of it, and whether or not it's
+            // a format that uses only the first matching (non-empty) value, or a combination of all available values
+            final List<String> splitted = LdapManager.splitFilter(template);
             firstMatchOnly = splitted.size() > 1;
             if ( splitted.size() == 1 ) {
                 this.displayFormat = splitted.get(0);
-                StringTokenizer st = new StringTokenizer(displayFormat.trim(), ", //{}");
+                StringTokenizer st = new StringTokenizer(template.trim(), ", //{}");
                 while (st.hasMoreTokens()) {
                     fields.add(st.nextToken().replaceFirst("(\\{)([\\d\\D&&[^}]]+)(})", "$2"));
                 }

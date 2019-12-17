@@ -19,6 +19,7 @@ package org.jivesoftware.util.cache;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -55,16 +56,16 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     @Override
-    public Cache createCache(String name) {
+    public <K extends Serializable, V extends Serializable> Cache<K, V>  createCache(String name) {
         // Get cache configuration from system properties or default (hardcoded) values
         long maxSize = CacheFactory.getMaxCacheSize(name);
         long lifetime = CacheFactory.getMaxCacheLifetime(name);
         // Create cache with located properties
-        return new DefaultCache(name, maxSize, lifetime);
+        return new DefaultCache<>(name, maxSize, lifetime);
     }
 
     @Override
-    public void destroyCache(Cache cache) {
+    public void destroyCache(Cache<? extends Serializable, ? extends Serializable> cache) {
         cache.clear();
     }
 
@@ -99,26 +100,26 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     @Override
-    public void doClusterTask(final ClusterTask task) {
+    public void doClusterTask(final ClusterTask<?> task) {
     }
 
     @Override
-    public void doClusterTask(ClusterTask task, byte[] nodeID) {
+    public void doClusterTask(ClusterTask<?> task, byte[] nodeID) {
         throw new IllegalStateException("Cluster service is not available");
     }
 
     @Override
-    public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
+    public <T> Collection<T> doSynchronousClusterTask(ClusterTask<T> task, boolean includeLocalMember) {
         return Collections.emptyList();
     }
 
     @Override
-    public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
+    public <T> T doSynchronousClusterTask(ClusterTask<T> task, byte[] nodeID) {
         throw new IllegalStateException("Cluster service is not available");
     }
 
     @Override
-    public void updateCacheStats(Map<String, Cache> caches) {
+    public void updateCacheStats(Map<String, Cache<? extends Serializable, ? extends Serializable>> caches) {
     }
 
     @Override
@@ -127,7 +128,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     @Override
-    public Lock getLock(Object key, Cache cache) {
+    public Lock getLock(Serializable key, Cache<? extends Serializable, ? extends Serializable> cache) {
         Object lockKey = key;
         if (key instanceof String) {
             lockKey = ((String) key).intern();

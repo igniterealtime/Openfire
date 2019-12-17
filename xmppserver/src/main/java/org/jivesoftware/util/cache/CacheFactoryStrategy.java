@@ -17,6 +17,7 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -53,20 +54,20 @@ public interface CacheFactoryStrategy {
      * @param name name of the cache to create.
      * @return newly created and configured cache.
      */
-    Cache createCache(String name);
+    <K extends Serializable, V extends Serializable> Cache<K, V> createCache(String name);
 
     /**
      * Destroys the supplied cache.
      *
      * @param cache the cache to destroy.
      */
-    void destroyCache(Cache cache);
+    void destroyCache(Cache<? extends Serializable, ? extends Serializable> cache);
 
     /**
-     * Returns true if this node is the maste node of the cluster. When not running
+     * Returns true if this node is the master node of the cluster. When not running
      * in cluster mode a value of true should be returned.
      *
-     * @return true if this node is the maste node of the cluster.
+     * @return true if this node is the master node of the cluster.
      */
     boolean isSeniorClusterMember();
 
@@ -175,7 +176,7 @@ public interface CacheFactoryStrategy {
      *
      * @param caches caches to get their stats and publish them in a statistics cache.
      */
-    void updateCacheStats(Map<String, Cache> caches);
+    void updateCacheStats(Map<String, Cache<? extends Serializable, ? extends Serializable>> caches);
 
     /**
      * Returns an existing lock on the specified key or creates a new one if none was found. This
@@ -187,7 +188,7 @@ public interface CacheFactoryStrategy {
      * @param cache the cache used for holding the lock.
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
-    Lock getLock(Object key, Cache cache);
+    Lock getLock(Serializable key, Cache<? extends Serializable, ? extends Serializable> cache);
     
     /**
      * Get the plugin name corresponding to this clustering implementation

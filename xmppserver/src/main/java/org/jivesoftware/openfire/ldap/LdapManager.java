@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import org.jivesoftware.admin.LdapUserTester;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -181,7 +182,7 @@ public class LdapManager {
     private int readTimeout = -1;
     private String usernameField;
     private String usernameSuffix;
-    private List<String> nameField;
+    private LdapUserTester.PropertyMapping nameField;
     private String emailField;
     private LdapName baseDN;
     private LdapName alternateBaseDN;
@@ -321,7 +322,8 @@ public class LdapManager {
         if (nameFieldValue == null) {
             nameFieldValue = "cn";
         }
-        nameField = LdapManager.splitFilter(nameFieldValue);
+
+        nameField = new LdapUserTester.PropertyMapping(nameFieldValue);
 
         emailField = properties.get("ldap.emailField");
         if (emailField == null) {
@@ -1493,7 +1495,7 @@ public class LdapManager {
      *
      * @return the LDAP field that that corresponds to the user's name.
      */
-    public List<String> getNameField() {
+    public LdapUserTester.PropertyMapping getNameField() {
         return nameField;
     }
 
@@ -1503,14 +1505,12 @@ public class LdapManager {
      *
      * @param nameField the LDAP field that that corresponds to the user's name.
      */
-    public void setNameField(List<String> nameField) {
+    public void setNameField(LdapUserTester.PropertyMapping nameField) {
         this.nameField = nameField;
-        if (nameField == null || nameField.isEmpty()) {
+        if (nameField == null || nameField.getDisplayFormat() == null || nameField.getDisplayFormat().isEmpty() ) {
             properties.remove("ldap.nameField");
-        } else if (nameField.size() == 1) {
-            properties.put("ldap.nameField", nameField.get(0));
         } else {
-            properties.put("ldap.nameField", LdapManager.joinFilter('|', nameField));
+            properties.put("ldap.nameField", nameField.getDisplayFormat());
         }
     }
 

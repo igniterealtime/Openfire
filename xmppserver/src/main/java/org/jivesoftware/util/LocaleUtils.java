@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LocaleUtils {
 
+    public static final String OPENFIRE_PLUGIN_NAME = "Openfire";
     private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
 
     private static final Map<Locale, String[][]> timeZoneLists =
@@ -389,6 +390,38 @@ public class LocaleUtils {
         ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
 
         return getLocalizedString(key, locale, null, bundle);
+    }
+
+    /**
+     * <p>Returns an internationalized string loaded from a plugins resource bundle using
+     * the Jive Locale. The name of resource bundle will be the lower-case word characters of the plugin name, with an
+     * {@code _18n} suffix.</p>
+     * <p>As a special case, if the plugin name is {@link #OPENFIRE_PLUGIN_NAME} then the standard Openfire i18n
+     * resource bundle is used.</p>
+     *
+     * @param pluginName The name of the plugin - as defined in plugin.xml
+     * @param key        The key to use for retrieving the string from the
+     *                   appropriate resource bundle
+     * @return the localized string.
+     */
+    public static String getLocalizedPluginString(final String pluginName, final String key) {
+        if (pluginName.equals(OPENFIRE_PLUGIN_NAME)) {
+            return getLocalizedString(key);
+        }
+        final Locale locale = JiveGlobals.getLocale();
+        final String bundleName = pluginName.replaceAll("\\W", "").toLowerCase() + "_i18n";
+        final PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+        final ClassLoader bundleClassLoader = pluginManager.getPluginByName(pluginName)
+            .map(pluginManager::getPluginClassloader)
+            .map(pluginClassLoader -> (ClassLoader) pluginClassLoader)
+            .orElseGet(() -> Thread.currentThread().getContextClassLoader());
+        try {
+            final ResourceBundle bundle = ResourceBundle.getBundle(bundleName, locale, bundleClassLoader);
+            return getLocalizedString(key, locale, null, bundle);
+        } catch (final MissingResourceException mre) {
+            Log.error("Unable to load bundle {} from the {} class loader", bundleName, pluginName, mre);
+            return getDefaultLocalizedString(key);
+        }
     }
 
     /**

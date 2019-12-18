@@ -16,11 +16,11 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.util.JavaSpecVersion;
-import org.jivesoftware.util.Version;
-
 import java.net.URL;
 import java.nio.file.Path;
+
+import org.jivesoftware.util.JavaSpecVersion;
+import org.jivesoftware.util.Version;
 
 /**
  * A bean-like representation of the metadata of a plugin.
@@ -85,9 +85,14 @@ public class PluginMetadata
     private final Version priorToServerVersion;
 
     /**
-     * Minimum Java (specification) version (inclusive( required by this plugin as specified in plugin.xml.
+     * Minimum Java (specification) version (inclusive) required by this plugin as specified in plugin.xml.
      */
     private final JavaSpecVersion minJavaVersion;
+
+    /**
+     * Indicates if the plugin supports standard CSRF protection
+     */
+    private final boolean csrfProtectionEnabled;
 
     /**
      * Constructs a metadata object based on a plugin.
@@ -111,7 +116,8 @@ public class PluginMetadata
                 PluginMetadataHelper.getLicense( pluginDir ),
                 PluginMetadataHelper.getMinServerVersion( pluginDir ),
                 PluginMetadataHelper.getPriorToServerVersion( pluginDir ),
-                PluginMetadataHelper.getMinJavaVersion( pluginDir )
+                PluginMetadataHelper.getMinJavaVersion( pluginDir ),
+                PluginMetadataHelper.isCsrfProtectionEnabled( pluginDir )
                 );
     }
 
@@ -137,14 +143,14 @@ public class PluginMetadata
                 PluginMetadataHelper.getLicense( plugin ),
                 PluginMetadataHelper.getMinServerVersion( plugin ),
                 PluginMetadataHelper.getPriorToServerVersion( plugin ),
-                PluginMetadataHelper.getMinJavaVersion( plugin )
-
+                PluginMetadataHelper.getMinJavaVersion( plugin ),
+                PluginMetadataHelper.isCsrfProtectionEnabled( plugin )
         );
     }
 
     public PluginMetadata( String name, String canonicalName, String description, Version version, String author,
                            URL icon, URL changelog, URL readme, String license,
-                           Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion )
+                           Version minServerVersion, Version priorToServerVersion, JavaSpecVersion minJavaVersion, boolean csrfProtectionEnabled)
     {
         this.name = name;
         this.canonicalName = canonicalName;
@@ -158,6 +164,7 @@ public class PluginMetadata
         this.minServerVersion = minServerVersion;
         this.priorToServerVersion = priorToServerVersion;
         this.minJavaVersion = minJavaVersion;
+        this.csrfProtectionEnabled = csrfProtectionEnabled;
     }
 
     public String getName()
@@ -222,5 +229,9 @@ public class PluginMetadata
 
     public String getHashCode() {
         return String.valueOf( hashCode() );
+    }
+
+    public boolean isCsrfProtectionEnabled() {
+        return csrfProtectionEnabled;
     }
 }

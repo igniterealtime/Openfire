@@ -18,9 +18,11 @@ package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -29,11 +31,13 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -81,6 +85,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
     private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
+
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.iqdiscoinfo.xformsoftwareversion")
+        .setDefaultValue(Boolean.TRUE)
+        .setDynamic(Boolean.TRUE)
+        .build();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -519,6 +529,42 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
+     * Set all Software Version data  
+     * responsed by the peer for the Software information request Service Discovery (XEP-0232)
+     * @param Element query represented on the response of the peer
+     * @param LocalSession session represented the LocalSession with peer
+     */
+    public static void setSoftwareVersionDataFormFromDiscoInfo(Element query ,LocalSession session){
+        boolean containDisco = false;
+        boolean typeformDataSoftwareInfo = false;
+        if (query != null && session != null){
+            for (Element element : query.elements()){
+                if ("feature".equals(element.getName()) 
+                    && NAMESPACE_DISCO_INFO.equals(element.attributeValue("var")) ){
+                    containDisco = true;
+                }
+                if (containDisco && "x".equals(element.getName()) 
+                    && "jabber:x:data".equals(element.getNamespaceURI())
+                    && "result".equals(element.attributeValue("type"))){
+                    for (Element field : element.elements()){
+                        if (field != null && field.attributeValue("var").equals("FORM_TYPE") 
+                            && field.element("value")!= null
+                            && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                            typeformDataSoftwareInfo = true;     
+                        }
+                        if(typeformDataSoftwareInfo && field.element("value")!= null
+                            && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
+                            session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                        }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
+                            session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
+                        }
+                    }    
+                }
+            }
+        }
+    }
+
+    /**
      * Returns the DiscoInfoProvider responsible for providing information at the server level. This
      * means that this DiscoInfoProvider will provide information whenever a disco request whose
      * recipient JID is the server (e.g. localhost) is made.
@@ -707,7 +753,35 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                                 continue;
                             }
                         }
+
+                        //XEP-0232 includes extended information about Software Version in a data form
+                        final DataForm dataFormSoftwareVersion = new DataForm(DataForm.Type.result);
+
+                        final FormField fieldTypeSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldTypeSoftwareVersion.setVariable("FORM_TYPE");
+                        fieldTypeSoftwareVersion.setType(FormField.Type.hidden);
+                        fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
+
+                        final FormField fieldOs = dataFormSoftwareVersion.addField();
+                        fieldOs.setVariable("os");
+                        fieldOs.addValue( System.getProperty("os.name"));
+
+                        final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
+                        fieldOsVersion.setVariable("os_version");
+                        fieldOsVersion .addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
+
+                        final FormField fieldSoftware = dataFormSoftwareVersion.addField();
+                        fieldSoftware.setVariable("software");
+                        fieldSoftware.addValue(AdminConsole.getAppName());
+
+                        final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldSoftwareVersion.setVariable("software_version");
+                        fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
+
                         final Set<DataForm> dataForms = new HashSet<>();
+                        if (ENABLED.getValue()){
+                            dataForms.add(dataFormSoftwareVersion);
+                        }
                         dataForms.add(dataForm);
                         return dataForms;
                     }

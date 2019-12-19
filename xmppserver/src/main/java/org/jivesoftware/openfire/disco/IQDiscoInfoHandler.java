@@ -531,8 +531,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     /**
      * Set all Software Version data  
      * responsed by the peer for the Software information request Service Discovery (XEP-0232)
-     * @param Element query represented on the response of the peer
-     * @param LocalSession session represented the LocalSession with peer
+     * @param query represented on the response of the peer
+     * @param session represented the LocalSession with peer
      */
     public static void setSoftwareVersionDataFormFromDiscoInfo(Element query ,LocalSession session){
         boolean containDisco = false;
@@ -547,7 +547,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     && "jabber:x:data".equals(element.getNamespaceURI())
                     && "result".equals(element.attributeValue("type"))){
                     for (Element field : element.elements()){
-                        if (field != null && field.attributeValue("var").equals("FORM_TYPE") 
+                        if (field == null) {
+                            continue;
+                        }
+                        if (field.attributeValue("var").equals("FORM_TYPE")
                             && field.element("value")!= null
                             && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
                             typeformDataSoftwareInfo = true;     

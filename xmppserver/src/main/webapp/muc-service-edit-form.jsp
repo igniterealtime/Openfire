@@ -20,6 +20,7 @@
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.AlreadyExistsException,
+                 org.jivesoftware.openfire.muc.spi.MUCPersistenceManager,                 
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -75,6 +76,19 @@
         // Make sure that the MUC Service is lower cased.
         mucname = mucname.toLowerCase();
 
+        String muccleanupdays = ParamUtils.getParameter(request, "muccleanupdays");
+        if (muccleanupdays != null) {
+            MUCPersistenceManager.setProperty(mucname, "unload.empty_days", muccleanupdays);
+        }
+           
+        if (ParamUtils.getParameter(request, "muckeep") != null) {
+            boolean bmuckeep = ParamUtils.getParameter(request, "muckeep").equalsIgnoreCase("on") ? true : false;
+            if (bmuckeep)
+            {
+            	MUCPersistenceManager.setProperty(mucname, "unload.empty_days", "0");
+            }
+        }   
+
         // do validation
         if (mucname == null || mucname.indexOf('.') >= 0 || mucname.length() < 1) {
             errors.put("mucname","mucname");
@@ -109,7 +123,15 @@
                 }
             }
         }
-    }
+    }    
+   
+    boolean muckeep = false;
+	String muccleanupdays = MUCPersistenceManager.getProperty(mucname, "unload.empty_days");
+	if (muccleanupdays == null) {
+		muccleanupdays = "30";
+	}
+	if (Integer.parseInt(muccleanupdays)<=0)
+		muckeep=true;	
 %>
 
 <html>
@@ -121,7 +143,20 @@
 <meta name="subPageID" content="muc-service-edit-form"/>
 <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
 <% } %>
-<meta name="helpPage" content="edit_group_chat_service_properties.html"/>
+<meta name="helpPage" content="edit_group_chat_service_properties.html"/>    
+<script>
+	function checkMUCKeep() {
+		var checkedValue = null;
+		var inputKeeps = document.getElementsByName('muckeep');
+		var inputCleanups = document.getElementsByName('muccleanupdays');
+
+		if (inputKeeps[0].checked) {			
+			inputCleanups[0].disabled = true;			
+		} else {
+			inputCleanups[0].disabled = false;
+		}
+	}
+</script>
 </head>
 <body>
 
@@ -203,6 +238,22 @@
                 </td>
                 <td>
                     <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                   <fmt:message key="groupchat.service.properties.label_service_muckeep" />
+                </td>
+                <td>
+                    <input type="checkbox" name="muckeep" <%= muckeep ? "checked" : "" %> onClick="checkMUCKeep();">
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                   <fmt:message key="groupchat.service.properties.label_service_cleanupdays" />
+                </td>
+                <td>
+                    <input type="number" size="4" maxlength="3" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= (muccleanupdays != null ? StringUtils.escapeForXML(muccleanupdays) : "") %>">
                 </td>
             </tr>
         </table>

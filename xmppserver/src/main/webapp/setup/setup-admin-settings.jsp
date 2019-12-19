@@ -12,13 +12,19 @@
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="javax.servlet.http.HttpSession" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
+<%@ page import="java.util.stream.Collectors" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="java.net.URLDecoder" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapGroupProvider" %>
+<%@ page import="org.jivesoftware.openfire.admin.GroupBasedAdminProvider" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <%
     // Redirect if we've already run setup:
@@ -75,6 +81,11 @@
             AuthFactory.authenticate("admin", password);
         } catch (UnauthorizedException e) {
             errors.put("password", "password");
+        } catch (Exception e) {
+            e.printStackTrace();
+            errors.put("general", "There was an unexpected error encountered when "
+                + "setting the new admin information. Please check your error "
+                + "logs and try to remedy the problem.");
         }
         if (email == null) {
             errors.put("email", "email");
@@ -124,34 +135,81 @@
         return;
     }
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (addAdmin || deleteAdmins)
+    {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errors.put( "csrf", "CSRF failure!");
+            addAdmin = false;
+            deleteAdmins = false;
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (addAdmin && !doTest) {
         String admin = request.getParameter("administrator");
+        boolean isGroup = ParamUtils.getBooleanParameter(request, "isGroup", false);
         if (admin != null) {
             admin = JID.escapeNode( admin );
             if (ldap) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
                 Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
+                Map<String, String> groupSettings = (Map<String, String>) session.getAttribute("ldapGroupSettings");
+
                 if (settings != null) {
                     LdapManager manager = new LdapManager(settings);
-                    manager.setUsernameField(userSettings.get("ldap.usernameField"));
-                    manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
-                    try {
-                        manager.findUserDN(JID.unescapeNode(admin));
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        errors.put("administrator", "");
+                    if ( isGroup ) {
+                        manager.setGroupNameField(groupSettings.get("ldap.groupNameField"));
+                        manager.setGroupSearchFilter(groupSettings.get("ldap.groupSearchFilter"));
+                        try {
+                            manager.findGroupRDN(JID.unescapeNode(admin));
+
+                            final Collection<JID> groupMembers = new LdapGroupProvider().getGroup(admin).getMembers();
+                            if ( groupMembers.isEmpty() ) {
+                                errors.put("group", "empty");
+                            } else {
+
+                                // Remove non-group (individual) admins
+                                xmppSettings.remove("admin.authorizedJIDs");
+
+                                // Set admin group provider.
+                                xmppSettings.put("provider.admin.className", GroupBasedAdminProvider.class.getName());
+                                xmppSettings.put("provider.group.groupBasedAdminProvider.groupName", admin);
+                            }
+
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                            errors.put("administrator", "");
+                        }
+                    } else {
+                        manager.setUsernameField(userSettings.get("ldap.usernameField"));
+                        manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
+                        try {
+                            manager.findUserRDN(JID.unescapeNode(admin));
+
+                            // Add individual admin
+                            String currentList = xmppSettings.get("admin.authorizedJIDs");
+                            final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
+                            users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
+
+                            String userList = StringUtils.collectionToString(users);
+                            xmppSettings.put("admin.authorizedJIDs", userList);
+
+                            // Remove admin group provider.
+                            xmppSettings.remove( "provider.admin.className" );
+                            xmppSettings.remove( "provider.group.groupBasedAdminProvider.groupName" );
+                        } catch ( Exception e ) {
+                            e.printStackTrace();
+                            errors.put("administrator", "");
+                        }
                     }
                 }
-            }
-            if (errors.isEmpty()) {
-                String currentList = xmppSettings.get("admin.authorizedJIDs");
-                final List users = new ArrayList(StringUtils.stringToCollection(currentList));
-                users.add(new JID(admin.toLowerCase(), domain, null).toBareJID());
-
-                String userList = StringUtils.collectionToString(users);
-                xmppSettings.put("admin.authorizedJIDs", userList);
             }
         } else {
             errors.put("administrator", "");
@@ -162,10 +220,10 @@
         String[] params = request.getParameterValues("remove");
         String currentAdminList = xmppSettings.get("admin.authorizedJIDs");
         Collection<String> adminCollection = StringUtils.stringToCollection(currentAdminList);
-        List temporaryUserList = new ArrayList<String>(adminCollection);
+        List<String> temporaryUserList = new ArrayList<>(adminCollection);
         final int no = params != null ? params.length : 0;
         for (int i = 0; i < no; i++) {
-            temporaryUserList.remove(params[i]);
+            temporaryUserList.remove( URLDecoder.decode( params[i] ));
         }
 
         String newUserList = StringUtils.collectionToString(temporaryUserList);
@@ -193,6 +251,23 @@
     // Save the updated settings
     session.setAttribute("xmppSettings", xmppSettings);
 
+    pageContext.setAttribute( "ldap", ldap );
+    pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "username", username );
+    pageContext.setAttribute( "password", password );
+    pageContext.setAttribute( "newPassword", newPassword );
+    pageContext.setAttribute( "newPasswordConfirm", newPasswordConfirm );
+    pageContext.setAttribute( "doTest", doTest );
+
+    // Populate authorized JIDs to be displayed on this page.
+    final String groupName = xmppSettings.get("provider.group.groupBasedAdminProvider.groupName");
+    if ( groupName != null ) {
+        pageContext.setAttribute( "authorizedJIDs", new LdapGroupProvider().getGroup(groupName).getMembers() );
+    } else {
+        String currentList = xmppSettings.get("admin.authorizedJIDs");
+        final List<String> users = new ArrayList<>(StringUtils.stringToCollection(currentList));
+        pageContext.setAttribute( "authorizedJIDs", users.stream().map(JID::new).collect(Collectors.toSet()) );
+    }
 %>
 <html>
 <head>
@@ -201,42 +276,40 @@
 </head>
 <body>
 
-
     <h1>
     <fmt:message key="setup.admin.settings.account" />
     </h1>
 
-<% if(!ldap){ %>
+    <c:choose>
+        <c:when test="${not ldap}">
     <p>
     <fmt:message key="setup.admin.settings.info" />
     </p>
 
-<%  if (errors.size() > 0) { %>
-
-    <div class="error">
-    <%  if (errors.get("general") != null) { %>
-
-        <%= errors.get("general") %>
-
-    <%  } else if (errors.get("administrator") != null) { %>
-
-        <fmt:message key="setup.admin.settings.username-error" />
-
-    <%  } else { %>
-
-        <fmt:message key="setup.admin.settings.error" />
-
-    <%  } %>
-    </div>
-
-<%  } %>
-
+    <c:if test="${not empty errors}">
+        <div class="error">
+            <c:choose>
+                <c:when test="${not empty errors['csrf']}">
+                    <fmt:message key="global.csrf.failed" />
+                </c:when>
+                <c:when test="${not empty errors['general']}">
+                    <c:out value="${errors['general']}"/>
+                </c:when>
+                <c:when test="${not empty errors['administrator']}">
+                    <fmt:message key="setup.admin.settings.username-error" />
+                </c:when>
+                <c:otherwise>
+                    <fmt:message key="setup.admin.settings.error" />
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </c:if>
 
     <!-- BEGIN jive-contentBox -->
     <div class="jive-contentBox">
 
 
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
 var clicked = false;
 function checkClick() {
     if (!clicked) {
@@ -248,6 +321,7 @@ function checkClick() {
 </script>
 
 <form action="setup-admin-settings.jsp" name="acctform" method="post" onsubmit="return checkClick();">
+    <input type="hidden" name="csrf" value="${csrf}"/>
 
 <table cellpadding="3" cellspacing="2" border="0">
 
@@ -262,35 +336,44 @@ function checkClick() {
     catch (UnauthorizedException e) {
         // Ignore.
     }
-    if (defaultPassword) {
-%>
-<input type="hidden" name="password" value="admin">
-<%
+    catch (Exception e) {
+        e.printStackTrace();
+        errors.put("general", "There was an unexpected error encountered when "
+            + "setting the new admin information. Please check your error "
+            + "logs and try to remedy the problem.");
     }
-    else {
+
+    pageContext.setAttribute( "defaultPassword", defaultPassword );
 %>
+    <c:choose>
+        <c:when test="${defaultPassword}">
+            <input type="hidden" name="password" value="admin">
+        </c:when>
+        <c:otherwise>
+            <tr valign="top">
+                <td class="jive-label">
+                    <label for="password"><fmt:message key="setup.admin.settings.current_password" /></label>
+                </td>
+                <td>
+                    <input type="password" name="password" id="password" size="20" maxlength="50"
+                     value="${not empty password ? fn:escapeXml(password) : ''}"><br>
 
-<tr valign="top">
-    <td class="jive-label">
-        <fmt:message key="setup.admin.settings.current_password" />
-    </td>
-    <td>
-        <input type="password" name="password" size="20" maxlength="50"
-         value="<%= ((password!=null) ? StringUtils.escapeForXML(password) : "") %>"><br>
-
-        <%  if (errors.get("password") != null) { %>
-            <span class="jive-error-text">
-            <fmt:message key="setup.admin.settings.current_password_error" />
-            </span>
-        <%  } else { %>
-            <span class="jive-description">
-            <fmt:message key="setup.admin.settings.current_password_description" />
-            </span>
-        <% } %>
-    </td>
-</tr>
-
-<%  } %>
+                    <c:choose>
+                        <c:when test="${not empty errors['password']}">
+                            <span class="jive-error-text">
+                                <fmt:message key="setup.admin.settings.current_password_error" />
+                            </span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="jive-description">
+                                <fmt:message key="setup.admin.settings.current_password_description" />
+                            </span>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+            </tr>
+        </c:otherwise>
+    </c:choose>
 
 <%
     // Get the current email address, if there is one.
@@ -304,58 +387,67 @@ function checkClick() {
     catch (Exception e) {
         // Ignore.
     }
+
+    pageContext.setAttribute( "email", email );
+    pageContext.setAttribute( "currentEmail", currentEmail );
 %>
 
 <tr valign="top">
     <td class="jive-label" align="right">
-        <fmt:message key="setup.admin.settings.email" />
+        <label for="email"><fmt:message key="setup.admin.settings.email" /></label>
     </td>
     <td>
-        <input type="text" name="email" size="40" maxlength="150"
-         value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : StringUtils.escapeForXML(currentEmail)) %>"><br>
+        <input type="text" name="email" size="40" maxlength="150" id="email"
+         value="${not empty email ? fn:escapeXml(email) : fn:escapeXml(currentEmail)}"><br>
 
-        <%  if (errors.get("email") != null) { %>
-            <span class="jive-error-text">
-            <fmt:message key="setup.admin.settings.email_error" />
-            </span>
-        <%  } else { %>
-            <span class="jive-description">
-            <fmt:message key="setup.admin.settings.email_description" />
-            </span>
-        <% } %>
+        <c:choose>
+            <c:when test="${not empty errors['email']}">
+                <span class="jive-error-text">
+                    <fmt:message key="setup.admin.settings.email_error" />
+                </span>
+            </c:when>
+            <c:otherwise>
+                <span class="jive-description">
+                    <fmt:message key="setup.admin.settings.email_description" />
+                </span>
+            </c:otherwise>
+        </c:choose>
     </td>
 </tr>
 <tr valign="top">
     <td class="jive-label" align="right">
-        <fmt:message key="setup.admin.settings.new_password" />
+        <label for="newPassword"><fmt:message key="setup.admin.settings.new_password" /></label>
     </td>
     <td>
-        <input type="password" name="newPassword" size="20" maxlength="50"
-         value="<%= ((newPassword!=null) ? StringUtils.escapeForXML(newPassword) : "") %>"><br>
+        <input type="password" name="newPassword" id="newPassword" size="20" maxlength="50"
+         value="${not empty newPassword ? fn:escapeXml(newPassword) : ''}"><br>
 
-        <%  if (errors.get("newPassword") != null) { %>
-            <span class="jive-error-text">
-            <fmt:message key="setup.admin.settings.valid_new_password" />
-            </span>
-        <%  } else if (errors.get("match") != null) { %>
-            <span class="jive-error-text">
-            <fmt:message key="setup.admin.settings.not_new_password" />
-            </span>
-        <%  } %>
+        <c:choose>
+            <c:when test="${not empty errors['newPassword']}">
+                <span class="jive-error-text">
+                    <fmt:message key="setup.admin.settings.valid_new_password" />
+                </span>
+            </c:when>
+            <c:when test="${not empty errors['match']}">
+                <span class="jive-error-text">
+                    <fmt:message key="setup.admin.settings.not_new_password" />
+                </span>
+            </c:when>
+        </c:choose>
     </td>
 </tr>
 <tr valign="top">
     <td class="jive-label" align="right">
-        <fmt:message key="setup.admin.settings.confirm_password" />
+        <label for="newPasswordConfirm"><fmt:message key="setup.admin.settings.confirm_password" /></label>
     </td>
     <td>
-        <input type="password" name="newPasswordConfirm" size="20" maxlength="50"
-         value="<%= ((newPasswordConfirm!=null) ? StringUtils.escapeForXML(newPasswordConfirm) : "") %>"><br>
-        <%  if (errors.get("newPasswordConfirm") != null) { %>
+        <input type="password" name="newPasswordConfirm" id="newPasswordConfirm" size="20" maxlength="50"
+         value="${not empty newPasswordConfirm ? fn:escapeXml(newPasswordConfirm) : ''}"><br>
+        <c:if test="${not empty errors['newPasswordConfirm']}">
             <span class="jive-error-text">
-            <fmt:message key="setup.admin.settings.valid_confirm" />
+                <fmt:message key="setup.admin.settings.valid_confirm" />
             </span>
-        <%  } %>
+        </c:if>
     </td>
 </tr>
 </table>
@@ -371,45 +463,46 @@ function checkClick() {
     <!-- END jive-contentBox -->
 
 
-<script language="JavaScript" type="text/javascript">
+<script>
 <!--
 document.acctform.newPassword.focus();
 //-->
 </script>
 
 
+    </c:when>
+    <c:otherwise>
 
-<% } else if (ldap) {
-if (errors.size() > 0) { %>
+        <c:if test="${not empty errors}">
+            <div class="error">
+                <c:choose>
+                    <c:when test="${not empty errors['csrf']}">
+                        <fmt:message key="global.csrf.failed" />
+                    </c:when>
+                    <c:when test="${not empty errors['general']}">
+                        <c:out value="${errors['general']}"/>
+                    </c:when>
+                    <c:when test="${not empty errors['administrator']}">
+                        <fmt:message key="setup.admin.settings.username-error" />
+                    </c:when>
+                    <c:otherwise>
+                        <fmt:message key="setup.admin.settings.error" />
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </c:if>
 
-    <div class="error">
-    <%  if (errors.get("general") != null) { %>
+        <c:if test="${doTest}">
+            <c:url var="testLink" value="setup-admin-settings_test.jsp">
+                <c:param name="username" value="${username}"/>
+                <c:if test="${not empty password}">
+                    <c:param name="password" value="${password}"/>
+                </c:if>
+                <c:param name="ldap" value="true"/>
+                <c:param name="csrf" value="${csrf}"/>
+            </c:url>
 
-        <%= errors.get("general") %>
-
-    <%  } else if (errors.get("administrator") != null) { %>
-
-        <fmt:message key="setup.admin.settings.username-error" />
-
-    <%  } else { %>
-
-        <fmt:message key="setup.admin.settings.error" />
-
-    <%  } %>
-    </div>
-
-<%  }
-    if (doTest) {
-        StringBuffer testLink = new StringBuffer();
-        testLink.append("setup-admin-settings_test.jsp?username=");
-        testLink.append(URLEncoder.encode(username, "UTF-8"));
-        if (password != null) {
-            testLink.append("&password=").append(URLEncoder.encode(password, "UTF-8"));
-        }
-        testLink.append("&ldap=true");
-%>
-
-    <a href="<%= testLink %>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+    <a href="${testLink}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
     <script type="text/javascript">
         function loadMsg() {
             var lb = new lightbox(document.getElementById('lbmessage'));
@@ -418,82 +511,91 @@ if (errors.size() > 0) { %>
         setTimeout('loadMsg()', 250);
     </script>
 
-<% } %>
-<p>
- <fmt:message key="setup.admin.settings.ldap.info" />
-  </p>
+        </c:if>
+    <p>
+        <fmt:message key="setup.admin.settings.ldap.info"/>
+        <fmt:message key="setup.admin.settings.ldap.info.group"/>
+    </p>
 <div class="jive-contentBox">
 
 <form action="setup-admin-settings.jsp" name="acctform" method="post">
+    <input type="hidden" name="csrf" value="${csrf}"/>
 
     <!-- Admin Table -->
 
-<table cellpadding="3" cellspacing="2" border="0">
-    <tr valign="top">
+<table cellpadding="3" cellspacing="2" border="0" style="margin-bottom: 1em;">
+    <tr>
         <td class="jive-label">
-            <fmt:message key="setup.admin.settings.add.administrator" />:
-        </td>
-         <td>
-        <input type="text" name="administrator" size="20" maxlength="50"/>
+            <label for="administrator"><fmt:message key="setup.admin.settings.add.administrator" />:</label>
         </td>
         <td>
+            <input type="text" name="administrator" id="administrator" size="20" maxlength="50" value="${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? fn:escapeXml(xmppSettings['provider.group.groupBasedAdminProvider.groupName']) : ''}"/>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
+            <input type="radio" name="isGroup" value="false" id="isUser" ${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? '' : 'checked'}> <label for="isUser"><fmt:message key="setup.admin.settings.is-user" /></label>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
+            <input type="radio" name="isGroup" value="true" id="isGroup" ${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? 'checked' : ''}> <label for="isGroup"><fmt:message key="setup.admin.settings.is-group" /></label>
+        </td>
+    </tr>
+    <tr>
+        <td class="jive-label" colspan="2">
             <input type="submit" name="addAdministrator" value="<fmt:message key="global.add" />"/>
         </td>
     </tr>
 </table>
-<%
-    String authorizedJIDs = xmppSettings.get("admin.authorizedJIDs");
-    boolean hasAuthorizedName = authorizedJIDs != null && authorizedJIDs.length() > 0;
-%>
-    <% if(hasAuthorizedName) { %>
-    <!-- List of admins -->
-    <table class="jive-vcardTable" cellpadding="3" cellspacing="0" border="0">
-        <tr>
-            <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
-            <th width="1%" nowrap><fmt:message key="global.test" /></th>
-            <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
-        </tr>
-<%
-    for (String authJIDstr : StringUtils.stringToCollection(authorizedJIDs)) {
-        JID authJID = new JID(authJIDstr);
-%>
-    <tr valign="top">
-        <td>
-            <%= StringUtils.escapeForXML(JID.unescapeNode( authJID.getNode() ))%>
-        </td>
-        <td width="1%" align="center">
-            <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"
-             title="<fmt:message key="global.click_test" />"
-             ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
-        </td>
-        <td>
-            <input type="checkbox" name="remove" value="<%=authJID.toBareJID()%>"/>
-        </td>
-    </tr>
+        <c:if test="${not empty authorizedJIDs}">
+            <!-- List of admins -->
+            <div class="jive-table">
+            <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <th width="1%" nowrap>&nbsp;</th>
+                <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
+                <th width="1%" nowrap><fmt:message key="global.test" /></th>
+                <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                    <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+                </c:if>
+            </tr>
 
-    <%
-        }
-        if (authorizedJIDs != null) {
-    %>
-         <tr valign="top">
-        <td>
-           &nbsp;
-        </td>
-        <td>
-           &nbsp;
-        </td>
-        <td>
-            <input type="submit" name="deleteAdmins" value="Remove"/>
-        </td>
-    </tr>
+            <c:forEach var="authJID" items="${authorizedJIDs}">
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>
+                        <c:out value="${authJID.node}"/>
+                    </td>
+                    <td width="1%" align="center">
+                        <a href="setup-admin-settings.jsp?ldap=true&test=true&username=${admin:urlEncode(authJID.node)}&csrf=${csrf}"
+                           title="<fmt:message key="global.click_test" />"
+                        ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
+                    </td>
+                    <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                        <td>
+                            <input type="checkbox" name="remove" value="${admin:urlEncode(authJID.toBareJID())}"/>
+                        </td>
+                    </c:if>
+                </tr>
+            </c:forEach>
 
-        <%
-            }
-
-        %>
-</table>
-    <% } %>
-
+            <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
+                <tr valign="top">
+                    <td>
+                       &nbsp;
+                    </td>
+                    <td>
+                       &nbsp;
+                    </td>
+                    <td>
+                        <input type="submit" name="deleteAdmins" value="Remove"/>
+                    </td>
+                </tr>
+            </c:if>
+            </table>
+            </div>
+        </c:if>
 
 <input type="hidden" name="ldap" value="true"/>
 
@@ -505,13 +607,14 @@ if (errors.size() > 0) { %>
 
 </div>
 
-<%
-    if(hasAuthorizedName) {%>
-        <script type="text/javascript">
-            document.getElementById("jive-setup-save").style.display = "";
-        </script>
-    <% } %>
-<% } %>
+<c:if test="${not empty authorizedJIDs}">
+    <script type="text/javascript">
+    document.getElementById("jive-setup-save").style.display = "";
+    </script>
+</c:if>
+
+    </c:otherwise>
+</c:choose>
 
 </body>
 </html>

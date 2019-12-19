@@ -653,8 +653,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#modify-affiliations");
             // Node owners may manage subscriptions.
             features.add("http://jabber.org/protocol/pubsub#manage-subscriptions");
-            // A single entity may subscribe to a node multiple times
-            features.add("http://jabber.org/protocol/pubsub#multi-subscribe");
+            if (isMultipleSubscriptionsEnabled()) {
+                // A single entity may subscribe to a node multiple times
+                features.add( "http://jabber.org/protocol/pubsub#multi-subscribe" );
+            }
             // The outcast affiliation is supported
             features.add("http://jabber.org/protocol/pubsub#outcast-affiliation");
             // Persistent items are supported

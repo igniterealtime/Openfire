@@ -542,7 +542,7 @@ public class Roster implements Cacheable, Externalizable {
                 if (displayName != null) {
                     groups.add(displayName);
                 } else {
-                    // Do not add the shared group if it does not have a displayName. 
+                    // Do not add the shared group if it does not have a displayName.
                     Log.warn("Found shared group: " + sharedGroup.getName() +
                             " with no displayName");
                 }
@@ -677,7 +677,7 @@ public class Roster implements Cacheable, Externalizable {
         JID recipient = XMPPServer.getInstance().createJID(username, null, true);
         roster.setTo(recipient);
 
-        // When roster versioning is enabled, the server MUST include 
+        // When roster versioning is enabled, the server MUST include
         // the updated roster version with each roster push.
         if (RosterManager.isRosterVersioningEnabled()) {
             roster.getChildElement().addAttribute("ver", String.valueOf( roster.hashCode() ) );
@@ -1024,7 +1024,7 @@ public class Roster implements Cacheable, Externalizable {
                     RosterEventDispatcher.contactUpdated(this, item);
                 } else {
                     // Fire event indicating that a roster item has been removed
-                    RosterEventDispatcher.contactDeleted(this, item);                	
+                    RosterEventDispatcher.contactDeleted(this, item);
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
@@ -1034,7 +1034,7 @@ public class Roster implements Cacheable, Externalizable {
             Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
-            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
+            // Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, sharedGroup, e );
         }
     }
 
@@ -1103,7 +1103,7 @@ public class Roster implements Cacheable, Externalizable {
             Log.error( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
-            Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
+            // Log.warn( "Unexpected error while deleting user '{}' from shared group '{}'!", deletedUser, deletedGroup, e);
         }
     }
 
@@ -1127,7 +1127,7 @@ public class Roster implements Cacheable, Externalizable {
                 broadcast(item, true);
             } catch (UserNotFoundException e) {
                 // Do nothing since the contact does not exist in the user's roster. (strange case!)
-                Log.warn( "Unexpected error while broadcasting shared group rename for user '{}'!", user, e);
+                // Log.warn( "Unexpected error while broadcasting shared group rename for user '{}'!", user, e);
             }
         }
     }

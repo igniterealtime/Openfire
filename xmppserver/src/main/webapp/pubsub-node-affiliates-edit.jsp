@@ -1,18 +1,21 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+<%@page import="org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.openfire.pep.PEPServiceInfo,
+                org.jivesoftware.openfire.pubsub.Node,
                 org.jivesoftware.openfire.pubsub.NodeAffiliate,
                 org.jivesoftware.openfire.pubsub.NodeAffiliate.Affiliation,
-                org.jivesoftware.openfire.pubsub.NodeSubscription,
                 org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                org.jivesoftware.util.*,
-                org.jivesoftware.openfire.pubsub.Node,
-                org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.util.CookieUtils,
+                org.jivesoftware.util.ParamUtils,
+                org.jivesoftware.util.StringUtils,
                 org.xmpp.packet.JID,
-                java.net.URLEncoder"
+                java.net.URLEncoder,
+                java.util.HashMap,
+                java.util.Map"
     errorPage="error.jsp"
 %>
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -27,6 +30,8 @@
     String nodeID = ParamUtils.getParameter(request,"nodeID");
     String affiliateJID = ParamUtils.getParameter(request,"affiliateJID");
     String affiliation = ParamUtils.getParameter(request,"affiliation");
+
+    final Map<String, String> errors = new HashMap<>();
 
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
@@ -50,12 +55,13 @@
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+ URLEncoder.encode( nodeID, "UTF-8" )
                 + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
         return;
     }
@@ -75,7 +81,7 @@
     NodeAffiliate affiliate = node.getAffiliate(new JID(affiliateJID));
 
     // Handle a affiliation update:
-    if (update) {
+    if (errors.isEmpty() && update) {
         if (affiliate != null) {
             JID jid = new JID(affiliateJID);
 
@@ -111,7 +117,7 @@
             webManager.logEvent("Changed affiliation between Node: " + nodeID + ", and JID: " + affiliateJID, "Changed from " + oldAffiliation +" to " + affiliation);
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+nodeID+"&updateSuccess=true&affiliateJID="+affiliateJID);
+        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode( nodeID, "UTF-8" )+"&updateSuccess=true&affiliateJID="+URLEncoder.encode( affiliateJID, "UTF-8" ));
         return;
     }
 
@@ -123,7 +129,7 @@
     pageContext.setAttribute("affiliate", affiliate);
     pageContext.setAttribute("affiliations", Affiliation.values());
     pageContext.setAttribute("owner", owner);
-
+    pageContext.setAttribute("errors", errors);
 %>
 
 <html>
@@ -142,6 +148,20 @@
     </head>
     <body>
 
+    <c:forEach var="err" items="${errors}">
+        <admin:infobox type="error">
+            <c:choose>
+                <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                <c:otherwise>
+                    <c:if test="${not empty err.value}">
+                        <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                    </c:if>
+                    (<c:out value="${err.key}"/>)
+                </c:otherwise>
+            </c:choose>
+        </admin:infobox>
+    </c:forEach>
+
     <p>
         <fmt:message key="pubsub.node.affiliates.edit.info" />
     </p>
@@ -157,9 +177,9 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><c:out value="${node.getNodeID()}"/></td>
-                    <td><c:out value="${affiliate.getJID().toBareJID()}"/></td>
-                    <td><c:out value="${affiliate.getAffiliation().name()}"/></td>
+                    <td><c:out value="${node.nodeID}"/></td>
+                    <td><c:out value="${affiliate.JID.toBareJID()}"/></td>
+                    <td><c:out value="${affiliate.affiliation.name()}"/></td>
                 </tr>
             </tbody>
         </table>
@@ -181,26 +201,26 @@
                 </tr>
             </thead>
             <tbody>
-                <c:if test="${empty affiliate.getSubscriptions()}">
+                <c:if test="${empty affiliate.subscriptions}">
                     <tr>
                         <td align="center" colspan="4">
                             <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
                         </td>
                     </tr>
                 </c:if>
-                <c:forEach var="subscription" items="${affiliate.getSubscriptions()}">
+                <c:forEach var="subscription" items="${affiliate.subscriptions}">
                     <tr>
                         <td>
-                        <c:out value="${subscription.getOwner().toBareJID()}"/>
+                        <c:out value="${subscription.owner.toBareJID()}"/>
                         </td>
                         <td>
-                        <c:out value="${subscription.getJID().getResource()}"/>
+                        <c:out value="${subscription.JID.resource}"/>
                         </td>
                         <td>
-                        <c:out value="${subscription.getState().name()}"/>
+                        <c:out value="${subscription.state.name()}"/>
                         </td>
                         <td>
-                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.getExpire()}" />
+                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.expire}" />
                         </td>
                     </tr>
                 </c:forEach>
@@ -215,22 +235,14 @@
 
     <form action="pubsub-node-affiliates-edit.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="nodeID" value="${node.nodeID}">
-        <input type="hidden" name="owner" value="${owner}">
-        <input type="hidden" name="affiliateJID" value="${affiliate.getJID().toBareJID()}">
-
+        <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
+        <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
+        <input type="hidden" name="affiliateJID" value="${fn:escapeXml(affiliate.JID.toBareJID())}">
         <fieldset>
 
         <select name="affiliation">
         <c:forEach var="value" items="${affiliations}">
-            <c:choose>
-            <c:when test="${value eq affiliate.getAffiliation()}">
-                <option value="${value.name()}" selected>${value.name()}</option>
-            </c:when>
-            <c:otherwise>
-                <option value="${value.name()}">${value.name()}</option>
-            </c:otherwise>
-            </c:choose>
+            <option value="${value.name()}" ${value eq affiliate.affiliation ? "selected" : ""}><c:out value="${value.name()}"/></option>
         </c:forEach>
         </select>
 

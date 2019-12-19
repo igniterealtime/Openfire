@@ -4,14 +4,20 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
+<%@ page import="java.util.Arrays" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Get parameters
     @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
+    Map<String, String> errors = new HashMap<>();
 
     String serverType = ParamUtils.getParameter(request, "serverType");
     // Server type should never be null, but if it is, assume "other"
@@ -84,9 +90,25 @@
         groupSearchFilter = defaultGroupSearchFilter;
     }
 
+    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
     boolean save = request.getParameter("save") != null;
-    boolean doTest = request.getParameter("test") != null;
-    if (save || doTest) {
+    boolean test = request.getParameter("test") != null;
+
+    if (save || test) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            test = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (save || test) {
         // Save information in the session so we can use it in testing pages during setup
         Map<String, String> settings = new HashMap<String, String>();
         settings.put("ldap.groupNameField", groupNameField);
@@ -96,7 +118,7 @@
         settings.put("ldap.groupSearchFilter", groupSearchFilter);
         session.setAttribute("ldapGroupSettings", settings);
 
-        if (save) {
+        if (errors.isEmpty() && save) {
             if (groupNameField != null) {
                 manager.setGroupNameField(groupNameField);
             }
@@ -126,27 +148,47 @@
                 session.setAttribute("xmppSettings", xmppSettings);
             }
 
+            // Wipe caches, as modified settings might have made their content invalid.
+            CacheFactory.clearCaches("Group", "Group Metadata Cache");
+
             // Redirect
             response.sendRedirect(nextPage);
             return;
         }
     }
+
+    pageContext.setAttribute( "groupNameField", groupNameField );
+    pageContext.setAttribute( "groupMemberField", groupMemberField );
+    pageContext.setAttribute( "groupDescriptionField", groupDescriptionField );
+    pageContext.setAttribute( "posixMode", posixMode );
+    pageContext.setAttribute( "groupSearchFilter", groupSearchFilter );
+
+    pageContext.setAttribute("test", test);
+    pageContext.setAttribute("errors", errors);
 %>
 <html>
 <head>
     <title><fmt:message key="setup.ldap.title" /></title>
-    <% for (Map.Entry<String, String> entry : meta.entrySet()) { %>
-    <meta name="<%= entry.getKey()%>" content="<%= entry.getValue()%>"/>
-    <% } %>
+    <c:forEach items="${meta}" var="entry">
+        <meta name="${entry.key}" content="${entry.value}"/>
+    </c:forEach>
 </head>
 
 <body>
-    <% if (doTest) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(testPage);
-        sb.append("?serverType=").append(serverType);
-    %>
-        <a href="<%= sb.toString()%>" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
+    <c:if test="${not empty errors}">
+        <div class="error">
+            <c:forEach var="err" items="${errors}">
+                <c:out value="${err.value}"/><br/>
+            </c:forEach>
+        </div>
+    </c:if>
+
+    <c:if test="${test}">
+        <c:url var="sb" value="${testPage}">
+            <c:param name="serverType" value="${serverType}"/>
+        </c:url>
+
+        <a href="${sb}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
         <script type="text/javascript">
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
@@ -155,11 +197,11 @@
             setTimeout('loadMsg()', 500);
         </script>
 
-    <% } %>
+    </c:if>
 
-    <% if (initialSetup) { %>
+    <c:if test="${initialSetup}">
     <h1><fmt:message key="setup.ldap.profile" />: <span><fmt:message key="setup.ldap.group_mapping" /></span></h1>
-    <% } %>
+    </c:if>
 
     <!-- BEGIN jive-contentBox_stepbar -->
     <div id="jive-contentBox_stepbar">
@@ -176,6 +218,8 @@
     <p><fmt:message key="setup.ldap.group.description" /></p>
 
     <form action="" method="get">
+        <input type="hidden" name="csrf" value="${csrf}">
+
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
 
@@ -184,16 +228,16 @@
             <td colspan="2"><strong><fmt:message key="setup.ldap.group_mapping" /></strong></td>
             </tr>
             <tr>
-            <td align="right"><fmt:message key="setup.ldap.group.name_field" />:</td>
-            <td><input type="text" name="groupNameField" id="jiveLDAPgroupname" size="22" maxlength="50" value="<%= groupNameField!=null?groupNameField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.name_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+            <td align="right"><label for="jiveLDAPgroupname"><fmt:message key="setup.ldap.group.name_field" />:</label></td>
+            <td><input type="text" name="groupNameField" id="jiveLDAPgroupname" size="22" maxlength="50" value="${fn:escapeXml(groupNameField)}"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.name_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
             </tr>
             <tr>
-            <td align="right"><fmt:message key="setup.ldap.group.member_field" />:</td>
-            <td><input type="text" name="groupMemberField" id="jiveLDAPgroupmember" size="22" maxlength="50" value="<%= groupMemberField!=null?groupMemberField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.member_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+            <td align="right"><label for="jiveLDAPgroupmember"><fmt:message key="setup.ldap.group.member_field" />:</label></td>
+            <td><input type="text" name="groupMemberField" id="jiveLDAPgroupmember" size="22" maxlength="50" value="${fn:escapeXml(groupMemberField)}"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.member_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
             </tr>
             <tr>
-            <td align="right"><fmt:message key="setup.ldap.group.description_field" />:</td>
-            <td><input type="text" name="groupDescriptionField" id="jiveLDAPgroupdesc" size="22" maxlength="50" value="<%= groupDescriptionField!=null?groupDescriptionField:""%>"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.description_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+            <td align="right"><label for="jiveLDAPgroupdesc"><fmt:message key="setup.ldap.group.description_field" />:</label></td>
+            <td><input type="text" name="groupDescriptionField" id="jiveLDAPgroupdesc" size="22" maxlength="50" value="${fn:escapeXml(groupDescriptionField)}"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.description_field_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
             </tr>
             </table>
 
@@ -210,14 +254,14 @@
                         <tr>
                         <td align="right"><fmt:message key="setup.ldap.group.posix" />:</td>
                         <td><span style="float: left;">
-                            <input type="radio" name="posixMode" value="true" style="float: none;" id="posix1" <% if(posixMode) {%>checked<% } %>><label for="posix1"> <fmt:message key="global.yes" />  </label>
-                            <input type="radio" name="posixMode" value="false" style="float: none;" id="posix2" <% if(!posixMode) {%>checked<% } %>><label for="posix2"> <fmt:message key="global.no" />  </label>
+                            <input type="radio" name="posixMode" value="true" style="float: none;" id="posix1" ${posixMode ? "checked" : ""}><label for="posix1"> <fmt:message key="global.yes" />  </label>
+                            <input type="radio" name="posixMode" value="false" style="float: none;" id="posix2" ${posixMode ? "" : "checked"}><label for="posix2"> <fmt:message key="global.no" />  </label>
                             </span>
                             <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.posix_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
                         </tr>
                         <tr>
                         <td align="right"><fmt:message key="setup.ldap.group.filter" /></td>
-                        <td><input type="text" name="groupSearchFilter" value="<%= groupSearchFilter!=null?groupSearchFilter:""%>" id="jiveLDAPgroupsearchfilter" size="22" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
+                        <td><input type="text" name="groupSearchFilter" value="${fn:escapeXml(groupSearchFilter)}" id="jiveLDAPgroupsearchfilter" size="22" maxlength="250"><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.group.filter_description" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span></td>
                         </tr>
                         </table>
                     </div>
@@ -236,11 +280,14 @@
             <div align="right">
                 <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
 
-                <% if (initialSetup) { %>
-                <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue"/>" id="jive-setup-save" border="0">
-                <% } else { %>
-                <input type="Submit" name="save" value=".j<fmt:message key="global.save_settings"/>" id="jive-setup-save" border="0">
-                <% } %>
+                <c:choose>
+                    <c:when test="${initialSetup}">
+                        <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue"/>" id="jive-setup-save" border="0">
+                    </c:when>
+                    <c:otherwise>
+                        <input type="Submit" name="save" value="<fmt:message key="global.save_settings"/>" id="jive-setup-save" border="0">
+                    </c:otherwise>
+                </c:choose>
             </div>
             <!-- END right-aligned buttons -->
 

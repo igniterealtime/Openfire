@@ -54,145 +54,148 @@
 
 <fmt:setBundle basename="openfire_i18n"/>
 <html>
-<head>
-    <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
-    <script language="JavaScript" type="text/javascript" src="<%= path %>/js/prototype.js"></script>
-    <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>
-    <script language="JavaScript" type="text/javascript" src="<%= path %>/js/cookies.js"></script>
-    <script language="JavaScript" type="text/javascript">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
+        <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
+        <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
+        <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
+        <script language="JavaScript" type="text/javascript" src="<%= path %>/js/prototype.js"></script>
+        <script language="JavaScript" type="text/javascript" src="<%= path %>/js/scriptaculous.js"></script>
+        <script language="JavaScript" type="text/javascript" src="<%= path %>/js/cookies.js"></script>
+        <script language="JavaScript" type="text/javascript">
 
-    </script>
-    <script type="text/javascript" src="<%= path %>/js/behaviour.js"></script>
-    <script type="text/javascript">
-    // Add a nice little rollover effect to any row in a jive-table object. This will help
-    // visually link left and right columns.
-    /*
-    var myrules = {
-        '.jive-table TBODY TR' : function(el) {
-            el.onmouseover = function() {
-                this.style.backgroundColor = '#ffffee';
+        </script>
+        <script type="text/javascript" src="<%= path %>/js/behaviour.js"></script>
+        <script type="text/javascript">
+        // Add a nice little rollover effect to any row in a jive-table object. This will help
+        // visually link left and right columns.
+        /*
+        var myrules = {
+            '.jive-table TBODY TR' : function(el) {
+                el.onmouseover = function() {
+                    this.style.backgroundColor = '#ffffee';
+                }
+                el.onmouseout = function() {
+                    this.style.backgroundColor = '#ffffff';
+                }
             }
-            el.onmouseout = function() {
-                this.style.backgroundColor = '#ffffff';
-            }
-        }
-    };
-    Behaviour.register(myrules);
-    */
-    </script>
-    <decorator:head />
-</head>
+        };
+        Behaviour.register(myrules);
+        */
+        </script>
+        <decorator:head />
+    </head>
 
-<body id="jive-body">
+    <body id="jive-body">
 
-<!-- BEGIN main -->
-<div id="main">
+        <!-- BEGIN main -->
+        <div id="main">
 
-    <div id="jive-header">
-        <div id="jive-logo">
-            <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
-        </div>
-        <div id="jive-userstatus">
-            <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
-            <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a><br/>
-            <fmt:message key="admin.clustering.status"/> -
-                <% if (ClusterManager.isClusteringEnabled()) { %>
-                    <% if (ClusterManager.isClusteringStarted()) { %>
-                        <% if (ClusterManager.isSeniorClusterMember()) { %>
-                                <% if(ClusterManager.getNodesInfo().size() == 1) { %>
-                                <fmt:message key="admin.clustering.only"/>
+            <div id="jive-header">
+                <div id="jive-logo">
+                    <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
+                </div>
+                <div id="jive-userstatus">
+                    <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
+                    <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a><br/>
+                    <fmt:message key="admin.clustering.status"/> -
+                        <% if (ClusterManager.isClusteringEnabled()) { %>
+                            <% if (ClusterManager.isClusteringStarted()) { %>
+                                <% if (ClusterManager.isSeniorClusterMember()) { %>
+                                        <% if(ClusterManager.getNodesInfo().size() == 1) { %>
+                                        <fmt:message key="admin.clustering.only"/>
+                                        <% } else { %>
+                                        <fmt:message key="admin.clustering.senior"/>
+                                        <% }%>
                                 <% } else { %>
-                                <fmt:message key="admin.clustering.senior"/>
-                                <% }%>
+                                        <fmt:message key="admin.clustering.junior"/>
+                                <% }  %>
+                            <% } else { %>
+                                <fmt:message key="admin.clustering.starting"/>
+                            <% } %>
                         <% } else { %>
-                                <fmt:message key="admin.clustering.junior"/>
-                        <% }  %>
-                    <% } else { %>
-                        <fmt:message key="admin.clustering.starting"/>
-                    <% } %>
-                <% } else { %>
-                    <fmt:message key="admin.clustering.disabled"/>
-                <% } %>
-        </div>
-        <div id="jive-nav">
-            <div id="jive-nav-left"></div>
-            <admin:tabs css="" currentcss="currentlink">
-            <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
-            </admin:tabs>
-            <div id="jive-nav-right"></div>
-        </div>
-        <div id="jive-subnav">
-            <admin:subnavbar css="" currentcss="current">
-                <a href="[url]" title="[description]"
-                  onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                  >[name]</a>
-            </admin:subnavbar>
-        </div>
-    </div>
-
-    <div id="jive-main">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr valign="top">
-            <td width="1%">
-                <div id="jive-sidebar-container">
-                    <div id="jive-sidebar-box">
-                        <div id="jive-sidebar">
-                            <admin:sidebar css="" currentcss="currentlink" headercss="category">
-                                <a href="[url]" title="[description]"
-                                  onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                                  >[name]</a>
-                                 <admin:subsidebar css="" currentcss="currentlink">
-                                    <a href="[url]" title="[description]"
-                                     onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
-                                     >[name]</a>
-                                 </admin:subsidebar>
-                            </admin:sidebar>
-                            <br>
-                            <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
-                        </div>
-                    </div>
+                            <fmt:message key="admin.clustering.disabled"/>
+                        <% } %>
                 </div>
-            </td>
-            <td width="99%" id="jive-content">
-
-
-                <%  if (message != null) { %>
-
-                    <%= message %>
-
-                <%  } %>
-
-                <h1>
-                    <decorator:title default="&nbsp;"/>
-                </h1>
-
-                <div id="jive-main-content">
-                    <decorator:body/>
+                <div id="jive-nav">
+                    <div id="jive-nav-left"></div>
+                    <admin:tabs css="" currentcss="currentlink">
+                    <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
+                    </admin:tabs>
+                    <div id="jive-nav-right"></div>
                 </div>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
+                <div id="jive-subnav">
+                    <admin:subnavbar css="" currentcss="current">
+                        <a href="[url]" title="[description]"
+                        onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                        >[name]</a>
+                    </admin:subnavbar>
+                </div>
+            </div>
 
-</div>
-<!-- END main -->
+            <div id="jive-main">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tbody>
+                        <tr valign="top">
+                            <td width="1%">
+                                <div id="jive-sidebar-container">
+                                    <div id="jive-sidebar-box">
+                                        <div id="jive-sidebar">
+                                            <admin:sidebar css="" currentcss="currentlink" headercss="category">
+                                                <a href="[url]" title="[description]"
+                                                onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                                                >[name]</a>
+                                                <admin:subsidebar css="" currentcss="currentlink">
+                                                    <a href="[url]" title="[description]"
+                                                    onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;"
+                                                    >[name]</a>
+                                                </admin:subsidebar>
+                                            </admin:sidebar>
+                                            <br>
+                                            <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td width="99%" id="jive-content">
 
-<!-- BEGIN footer -->
-    <div id="jive-footer">
-        <div class="jive-footer-nav">
-            <admin:tabs css="" currentcss="currentlink" justlinks="true">
-            <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
-            </admin:tabs>
+
+                                <%  if (message != null) { %>
+
+                                    <%= message %>
+
+                                <%  } %>
+
+                                <h1>
+                                    <decorator:title default="&nbsp;"/>
+                                </h1>
+
+                                <div id="jive-main-content">
+                                    <decorator:body/>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-        <div class="jive-footer-copyright">
-            Built by the <a href="https://www.igniterealtime.org">IgniteRealtime.org</a> community.
-        </div>
-    </div>
-<!-- END footer -->
+        <!-- END main -->
 
-</body>
+        <!-- BEGIN footer -->
+        <div id="jive-footer">
+            <div class="jive-footer-nav">
+                <admin:tabs css="" currentcss="currentlink" justlinks="true">
+                <a href="[url]" title="[description]" onmouseover="self.status='[description]';return true;" onmouseout="self.status='';return true;">[name]</a>
+                </admin:tabs>
+            </div>
+            <div class="jive-footer-copyright">
+                Built by the <a href="https://www.igniterealtime.org">IgniteRealtime.org</a> community.
+            </div>
+        </div>
+        <!-- END footer -->
+    </body>
 </html>

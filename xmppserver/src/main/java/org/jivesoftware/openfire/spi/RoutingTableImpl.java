@@ -314,7 +314,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             if (clientRoute != null) {
                 if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
-                        !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
+		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())
+                        && !PresenceUpdateHandler.isPresenceUpdateReflection( packet )) {
                     Log.debug("Unable to route packet. Packet should only be sent to available sessions and the route is not available. {} ", packet.toXML());
                     routed = false;
                 } else {
@@ -824,7 +825,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean isAnonymousRoute(JID jid) {
-        return anonymousUsersCache.containsKey(jid.toString());
+        if ( jid.getResource() != null ) {
+            // Check if there's a anonymous route for the JID.
+            return anonymousUsersCache.containsKey( jid.toString() );
+        } else {
+            // Anonymous routes are mapped by full JID. if there's no full JID, check for any route for the node-part.
+            return anonymousUsersCache.keySet().stream().anyMatch( key -> key.startsWith( jid.toString() ) );
+        }
     }
 
     @Override

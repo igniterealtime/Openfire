@@ -16,35 +16,25 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.Node;
 import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
-import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.Base64;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.ldap.Rdn;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:
@@ -134,6 +124,11 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      */
     private DefaultVCardProvider defaultProvider = null;
 
+    /**
+     * A regular expression that matches values enclosed in { and }, applying a group to the value that's surrounded.
+     */
+    public static final Pattern PATTERN = Pattern.compile("(\\{)([\\d\\D&&[^}]]+)(})");
+
     public LdapVCardProvider() {
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("ldap.vcard-mapping");
@@ -186,10 +181,10 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
 
             ctx = manager.getContext(manager.getUsersBaseDN(username));
-            Attributes attrs = ctx.getAttributes(userDN, template.getAttributes());
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), template.getAttributes());
 
             for (String attribute : template.getAttributes()) {
                 javax.naming.directory.Attribute attr = attrs.get(attribute);
@@ -487,7 +482,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      *
      * @author rkelly
      */
-    private static class VCardTemplate {
+    static class VCardTemplate {
 
         private Document document;
 
@@ -497,7 +492,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             Set<String> set = new HashSet<>();
             this.document = document;
             treeWalk(this.document.getRootElement(), set);
-            attributes = set.toArray(new String[set.size()]);
+            attributes = set.toArray(new String[0]);
         }
 
         public String[] getAttributes() {
@@ -508,21 +503,18 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             return document;
         }
 
-        private void treeWalk(Element element, Set<String> set) {
-            for (int i = 0, size = element.nodeCount(); i < size; i++) {
-                Node node = element.node(i);
-                if (node instanceof Element) {
-                    Element emement = (Element) node;
-
-                    StringTokenizer st = new StringTokenizer(emement.getTextTrim(), ", //{}");
-                    while (st.hasMoreTokens()) {
-                        // Remove enclosing {}
-                        String string = st.nextToken().replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2");
-                        Log.debug("VCardTemplate: found attribute " + string);
-                        set.add(string);
+        private void treeWalk(Element rootElement, Set<String> set) {
+            for ( final Element element : rootElement.elements() ) {
+                final String value = element.getTextTrim();
+                if ( value != null && !value.isEmpty()) {
+                    final Matcher matcher = PATTERN.matcher(value);
+                    while (matcher.find()) {
+                        final String match = matcher.group(2);
+                        Log.trace("Found attribute '{}'", match);
+                        set.add(match);
                     }
-                    treeWalk(emement, set);
                 }
+                treeWalk(element, set);
             }
         }
     }
@@ -530,7 +522,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     /**
      * vCard class that converts vcard data using a template.
      */
-    private static class VCard {
+    static class VCard {
 
         private VCardTemplate template;
 
@@ -544,30 +536,65 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             return treeWalk(element, map);
         }
 
-        private Element treeWalk(Element element, Map<String, String> map) {
-            for (int i = 0, size = element.nodeCount(); i < size; i++) {
-                Node node = element.node(i);
-                if (node instanceof Element) {
-                    Element emement = (Element) node;
+        private Element treeWalk(Element rootElement, Map<String, String> map) {
+            for ( final Element element : rootElement.elements() ) {
+                String elementText = element.getTextTrim();
+                if (elementText != null && !"".equals(elementText)) {
+                    String format = element.getStringValue();
 
-                    String elementText = emement.getTextTrim();
-                    if (elementText != null && !"".equals(elementText)) {
-                        String format = emement.getStringValue();
+                    // A map that will hold all replacements for placeholders
+                    final Map<String,String> replacements = new HashMap<>();
 
-                        StringTokenizer st = new StringTokenizer(elementText, ", //{}");
-                        while (st.hasMoreTokens()) {
-                            // Remove enclosing {}
-                            String field = st.nextToken();
-                            String attrib = field.replaceAll("(\\{)(" + field + ")(})", "$2");
-                            String value = map.get(attrib);
-                            format = format.replaceFirst("(\\{)(" + field + ")(})", Matcher.quoteReplacement(value));
-                        }
-                        emement.setText(format);
+                    // find all placeholders, and look up what they should be replaced with.
+                    final Matcher matcher = PATTERN.matcher(format);
+                    while (matcher.find()) {
+                        final String group = matcher.group();
+                        final String attribute = matcher.group(2);
+                        final String value = map.get(attribute);
+                        replacements.put( group, value );
                     }
-                    treeWalk(emement, map);
+
+                    // perform the replacement.
+                    for ( Map.Entry<String, String> entry : replacements.entrySet() ) {
+                        final String placeholder = entry.getKey();
+                        final String replacement = entry.getValue();
+                        format = format.replace(placeholder, replacement);
+                        Log.trace("Replaced attribute '{}' with '{}'", placeholder, replacement);
+                    }
+
+                    // When 'prioritized' replacements are used, the resulting value now will have those filled out:
+                    // example:   (|()(valueB)(valueC))
+                    // From this format, only the first non-empty value enclosed in brackets needs to be used.
+                    final int start = format.indexOf("(|(");
+                    final int end = format.indexOf("))");
+                    if ( start > -1 && end > start ) {
+                        // Take the substring that is: (|()(valueB)(valueC))
+                        final String filter = format.substring(start, end + "))".length());
+
+                        // Take the substring that is: )(valueB)(valueC
+                        final String values = filter.substring("(|(".length(), filter.length() - "))".length() );
+
+                        // Split on ")(" to get the individual values.
+                        final String[] splitted = values.split("\\)\\(");
+
+                        // find the first non-empty string.
+                        String firstValue = "";
+                        for ( final String split : splitted ) {
+                            if ( split != null && !split.isEmpty() ) {
+                                firstValue = split;
+                                break;
+                            }
+                        }
+
+                        // Replace the original filter with just the first matching value.
+                        format = format.replace(filter, firstValue);
+                    }
+
+                    element.setText(format);
                 }
+                treeWalk(element, map);
             }
-            return element;
+            return rootElement;
         }
     }
 }

@@ -7,11 +7,14 @@
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                java.util.HashMap,
+                java.util.Map"
     errorPage="error.jsp"
 %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin" %>
 
@@ -26,6 +29,8 @@
     {
         ownerString = ParamUtils.getParameter( request, "username" );
     }
+
+    final Map<String, String> errors = new HashMap<>();
 
     JID owner = null;
     if (ownerString != null)
@@ -46,6 +51,7 @@
     if (delete) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             delete = false;
+            errors.put("csrf", "CSRF Failure!");
         }
     }
     csrfParam = StringUtils.randomString(15);
@@ -74,7 +80,7 @@
     Node node = pubSubServiceInfo.getNode( nodeID );
 
     // Handle a node delete:
-    if (delete) {
+    if (errors.isEmpty() && delete) {
         // Delete the node
         if (node != null) {
             // If the node still exists then destroy it
@@ -90,7 +96,7 @@
 
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("owner", owner);
-
+    pageContext.setAttribute("errors", errors);
 %>
 
 <html>
@@ -109,6 +115,20 @@
     </head>
     <body>
 
+<c:forEach var="err" items="${errors}">
+    <admin:infobox type="error">
+        <c:choose>
+            <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+            <c:otherwise>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+                (<c:out value="${err.key}"/>)
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:forEach>
+
 <p>
     <fmt:message key="pubsub.node.delete.info" />
         <b>
@@ -119,8 +139,8 @@
 
 <form action="pubsub-node-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="nodeID" value="${node.nodeID}">
-    <input type="hidden" name="owner" value="${owner}">
+    <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
+    <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
 
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>
@@ -137,10 +157,10 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="pubsub.node.delete.reason" />
+                <label for="reason"><fmt:message key="pubsub.node.delete.reason" /></label>
             </td>
             <td>
-                <input type="text" size="50" maxlength="150" name="reason">
+                <input type="text" size="50" maxlength="150" name="reason" id="reason">
             </td>
         </tr>
     </tbody>

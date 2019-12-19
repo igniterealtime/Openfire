@@ -47,7 +47,7 @@ public class ServiceRemovedEvent implements ClusterTask<Void> {
 
     @Override
     public void run() {
-        XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(subdomain);
+        XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(subdomain, false);
     }
 
     @Override

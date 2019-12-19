@@ -203,6 +203,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // XEP-0030 requires that every entity that supports service
                     // discovery broadcasts the disco#info feature.
                     queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
+                    // XEP-0411 requires that every entity that supports service
+                    // dicovery broadcasts the conversion between 'PEP' and 'Private Storage' feature
+                    if(XMPPServer.getInstance().getPrivateStorage().isEnabled()){ 
+                        //allow only if private storage is enabled
+                       queryElement.addElement("feature").addAttribute("var", "urn:xmpp:bookmarks-conversion:0");
+                    }
                 }
                 // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
                 final Set<DataForm> dataForms = infoProvider.getExtendedInfos( name, node, packet.getFrom() );

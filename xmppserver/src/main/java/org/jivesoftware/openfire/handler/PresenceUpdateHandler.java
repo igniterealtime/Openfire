@@ -533,6 +533,16 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
+    /**
+     * Checks if the packet is a presence stanza that intends to reflect an update back to the client from which the update originated.
+     *
+     * @param packet The stanza (cannot be null.
+     * @return true if the packet is presence reflection, otherwise false.
+     */
+    public static boolean isPresenceUpdateReflection( final Packet packet ) {
+        return packet instanceof Presence && packet.getTo() != null && packet.getTo().equals( packet.getFrom() );
+    }
+
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);

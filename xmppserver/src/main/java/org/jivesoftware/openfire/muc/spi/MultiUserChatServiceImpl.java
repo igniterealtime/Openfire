@@ -631,12 +631,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
             try {
                 Date cleanUpDate = getCleanupDate();
-                Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
-                while (it.hasNext()) {
-                    LocalMUCRoom room = it.next();
-                    Date emptyDate = room.getEmptyDate();
-                    if (emptyDate != null && emptyDate.before(cleanUpDate)) {
-                        removeChatRoom(room.getName());
+                if (cleanUpDate!=null)
+                {
+                    Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
+                    while (it.hasNext()) {
+                        LocalMUCRoom room = it.next();
+                        Date emptyDate = room.getEmptyDate();
+                        if (emptyDate != null && emptyDate.before(cleanUpDate)) {
+                            removeChatRoom(room.getName());
+                        }
                     }
                 }
             }
@@ -915,7 +918,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return the limit date after which rooms without activity will be removed from memory.
      */
     private Date getCleanupDate() {
-        return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
+        if (emptyLimit!=-1)
+            return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
+        else
+            return null;
     }
 
     @Override
@@ -1249,7 +1255,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         emptyLimit = 30 * 24;
         if (value != null) {
             try {
-                emptyLimit = Integer.parseInt(value) * 24;
+            	if (Integer.parseInt(value)>0)
+            		emptyLimit = Integer.parseInt(value) * 24;
+            	else
+            		emptyLimit = -1;
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property unload.empty_days for service "+chatServiceName, e);

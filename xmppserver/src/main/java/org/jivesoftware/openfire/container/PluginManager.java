@@ -916,6 +916,9 @@ public class PluginManager
         // Anyway, for a few seconds admins may not see the plugin in the admin console
         // and in a subsequent refresh it will appear if failed to be removed
         pluginsLoaded.remove( canonicalName );
+        final String pluginName = getMetadata(canonicalName).getName();
+        Log.info("Removing all System Properties for the plugin '{}'", pluginName);
+        SystemProperty.removePropertiesForPlugin(pluginName);
         Path pluginFile = pluginDirs.remove( canonicalName );
         PluginClassLoader pluginLoader = classloaders.remove( plugin );
         PluginMetadata metadata = pluginMetadata.remove( canonicalName );

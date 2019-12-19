@@ -99,7 +99,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     private boolean offlineFloodStopped = false;
 
-    private Presence presence = null;
+    private Presence presence;
 
     private int conflictCount = 0;
 
@@ -945,6 +945,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
         messageCarbonsEnabled = enabled;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     @Override
@@ -955,6 +960,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void setHasRequestedBlocklist(boolean hasRequestedBlocklist) {
         this.hasRequestedBlocklist = hasRequestedBlocklist;
+        if (ClusterManager.isClusteringStarted()) {
+            // Track information about the session and share it with other cluster nodes
+            Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
+            cache.put(getAddress().toString(), new ClientSessionInfo(this));
+        }
     }
 
     /**
@@ -991,7 +1001,30 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " presence: " + presence;
+    public String toString()
+    {
+        String peerAddress = "(not available)";
+        if ( getConnection() != null ) {
+        try {
+            peerAddress = getConnection().getHostAddress();
+        } catch ( UnknownHostException e ) {
+            Log.debug( "Unable to determine address for peer of local client session.", e );
+        }
+        }
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", serverName='" + getServerName() + '\'' +
+            ", isInitialized=" + isInitialized() +
+            ", hasAuthToken=" + (getAuthToken() != null) +
+            ", peer address='" + peerAddress +'\'' +
+            ", presence='" + getPresence().toString() + '\'' +
+            '}';
     }
 }

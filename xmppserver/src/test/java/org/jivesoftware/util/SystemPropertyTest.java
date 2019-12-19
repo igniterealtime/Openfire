@@ -72,6 +72,22 @@ public class SystemPropertyTest {
     }
 
     @Test
+    public void willBuildADoubleProperty() {
+
+        final SystemProperty<Double> doubleProperty = SystemProperty.Builder.ofType(Double.class)
+            .setKey("a-test-double-property")
+            .setDefaultValue(42.2)
+            .setDynamic(true)
+            .build();
+
+        assertThat(doubleProperty.getValue(), is(42.2));
+        assertThat(doubleProperty.getValueAsSaved(), is("42.2"));
+        doubleProperty.setValue(84.1);
+        assertThat(doubleProperty.getValue(), is(84.1));
+        assertThat(doubleProperty.getValueAsSaved(), is("84.1"));
+    }
+
+    @Test
     public void willBuildADurationProperty() {
 
         final SystemProperty<Duration> longProperty = SystemProperty.Builder.ofType(Duration.class)

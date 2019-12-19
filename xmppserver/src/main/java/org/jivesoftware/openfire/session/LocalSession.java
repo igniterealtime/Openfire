@@ -89,8 +89,9 @@ public abstract class LocalSession implements Session {
     private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
-     * Session temporary data. All data stored in this <code>Map</code> disapear when session
-     * finishes.
+     * Session temporary data.
+     *
+     * All data stored in this <code>Map</code> disappears when the session finishes.
      */
     private final Map<String, Object> sessionData = new HashMap<>();
 
@@ -143,6 +144,7 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
+        Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
         this.sessionManager.addDetached(this);
         this.conn = null;
     }
@@ -155,6 +157,7 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
+        Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
         Connection temp = this.conn;
         this.conn = null;
         if (temp != null && !temp.isClosed()) {
@@ -202,7 +205,7 @@ public abstract class LocalSession implements Session {
             try {
                 conn.isClosed(); // This generates an NPE deliberately.
             } catch (NullPointerException e) {
-                Log.error("Attempt to read connection of detached session: ", e);
+                Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, e);
             }
         }
         return conn;
@@ -227,7 +230,7 @@ public abstract class LocalSession implements Session {
      */
     public void setStatus(int status) {
         if (status == STATUS_CLOSED && this.streamManager.getResume()) {
-            Log.debug("Suppressing close.");
+            Log.debug( "Suppressing close for session with address {} and streamID {}.", this.address, this.streamID );
             return;
         }
         this.status = status;
@@ -317,11 +320,15 @@ public abstract class LocalSession implements Session {
      *
      * @param key a <code>String</code> value of stored data key ID.
      * @param value a <code>Object</code> value of data stored in session.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
+     *         (A {@code null} return can also indicate that the map
+     *         previously associated {@code null} with {@code key}.)
      * @see #getSessionData(String)
      */
-    public void setSessionData(String key, Object value) {
+    public Object setSessionData(String key, Object value) {
         synchronized (sessionData) {
-            sessionData.put(key, value);
+            return sessionData.put(key, value);
         }
     }
 
@@ -345,11 +352,13 @@ public abstract class LocalSession implements Session {
      * for more details.
      *
      * @param key a <code>String</code> value of stored data ID.
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
      * @see #setSessionData(String, Object)
      */
-    public void removeSessionData(String key) {
+    public Object removeSessionData(String key) {
         synchronized (sessionData) {
-            sessionData.remove(key);
+            return sessionData.remove(key);
         }
     }
 
@@ -418,7 +427,7 @@ public abstract class LocalSession implements Session {
     public void deliverRawText(String text) {
         if ( conn == null )
         {
-            Log.debug( "Unable to deliver raw text in session, as its connection is null. Dropping: " + text );
+            Log.debug( "Unable to deliver raw text in session with address {} and streamID {}, as its connection is null. Dropping: {}", this.address, this.streamID, text );
             return;
         }
         conn.deliverRawText(text);
@@ -475,8 +484,19 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " status: " + status + " address: " + address + " id: " + streamID;
+    public String toString()
+    {
+        return this.getClass().getSimpleName() +"{" +
+            "address=" + getAddress() +
+            ", streamID=" + getStreamID() +
+            ", status=" + getStatus() +
+            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
+            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
+            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
+            ", isSecure=" + isSecure() +
+            ", isDetached=" + isDetached() +
+            ", serverName='" + getServerName() + '\'' +
+            '}';
     }
 
     protected static int[] decodeVersion(String version) {

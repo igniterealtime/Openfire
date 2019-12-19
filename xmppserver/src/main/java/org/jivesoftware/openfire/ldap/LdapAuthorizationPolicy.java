@@ -23,7 +23,7 @@ import org.xmpp.packet.JID;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-
+import javax.naming.ldap.Rdn;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -83,14 +83,14 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
         Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
             // Load record.
             String[] attributes = new String[]{
                     usernameField,
                     authorizeField
             };
             ctx = manager.getContext();
-            Attributes attrs = ctx.getAttributes(userDN, attributes);
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes);
             Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
                 for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {

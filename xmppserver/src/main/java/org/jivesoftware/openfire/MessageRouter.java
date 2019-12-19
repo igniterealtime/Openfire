@@ -246,8 +246,6 @@ public class MessageRouter extends BasicModule {
     {
         log.debug( "Message sent to unreachable address: " + packet.toXML() );
         final Message msg = (Message) packet;
-        boolean storeOffline = true;
-
 
         if ( msg.getType().equals( Message.Type.chat ) && serverName.equals( recipient.getDomain() ) && recipient.getResource() != null ) {
             // Find an existing AVAILABLE session with non-negative priority.
@@ -255,21 +253,83 @@ public class MessageRouter extends BasicModule {
                 ClientSession session = routingTable.getClientRoute(address);
                 if (session != null && session.isInitialized()) {
                     if (session.getPresence().getPriority() >= 1) {
-                        storeOffline = false;
+                        // If message was sent to an unavailable full JID of a user then retry using the bare JID.
+                        routingTable.routePacket( recipient.asBareJID(), packet, false );
+                        return;
                     }
                 }
             }
         }
 
-        if ( !storeOffline )
+        if ( serverName.equals( recipient.getDomain() ) )
         {
-            // If message was sent to an unavailable full JID of a user then retry using the bare JID.
-            routingTable.routePacket( recipient.asBareJID(), packet, false );
+            // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
+            log.trace( "Delegating to offline message strategy." );
+            messageStrategy.storeOffline( (Message) packet );
         }
         else
         {
-            // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
-            messageStrategy.storeOffline( (Message) packet );
+            // Recipient is not a local user. Bounce the message.
+            // Note: this is similar, but not equal, to handling of message handling to local users in OfflineMessageStrategy.
+
+            // 8.5.2.  localpart@domainpart
+            // 8.5.2.2.  No Available or Connected Resources
+            if (recipient.getResource() == null) {
+                if (msg.getType() == Message.Type.headline || msg.getType() == Message.Type.error) {
+                    // For a message stanza of type "headline" or "error", the server MUST silently ignore the message.
+                    log.trace( "Not bouncing a message stanza to a bare JID of non-local user, of type {}", msg.getType() );
+                    return;
+                }
+            } else {
+                // 8.5.3.  localpart@domainpart/resourcepart
+                // 8.5.3.2.1.  Message
+
+                // For a message stanza of type "error", the server MUST silently ignore the stanza.
+                if (msg.getType() == Message.Type.error) {
+                    log.trace( "Not bouncing a message stanza to a full JID of non-local user, of type {}", msg.getType() );
+                    return;
+                }
+            }
+
+            bounce( msg );
+        }
+    }
+
+    private void bounce(Message message) {
+        // The bouncing behavior as implemented beyond this point was introduced as part
+        // of OF-1852. This kill-switch allows it to be disabled again in case it
+        // introduces unwanted side-effects.
+        if ( !JiveGlobals.getBooleanProperty( "xmpp.message.bounce", true ) ) {
+            log.trace( "Not bouncing a message stanza, as bouncing is disabled by configuration." );
+            return;
+        }
+
+        // Do nothing if the packet included an error. This intends to prevent scenarios
+        // where a stanza that is bounced itself gets bounced, causing a loop.
+        if (message.getError() != null) {
+            log.trace( "Not bouncing a stanza that included an error (to prevent never-ending loops of bounces-of-bounces)." );
+            return;
+        }
+
+        // Do nothing if the sender was the server itself
+        if (message.getFrom() == null || message.getFrom().toString().equals( serverName )) {
+            log.trace( "Not bouncing a stanza that was sent by the server itself." );
+            return;
+        }
+        try {
+            log.trace( "Bouncing a message stanza." );
+
+            // Generate a rejection response to the sender
+            final Message errorResponse = message.createCopy();
+            // return an error stanza to the sender, which SHOULD be <service-unavailable/>
+            errorResponse.setError(PacketError.Condition.service_unavailable);
+            errorResponse.setFrom(message.getTo());
+            errorResponse.setTo(message.getFrom());
+            // Send the response
+            route(errorResponse);
+        }
+        catch (Exception e) {
+            log.error("An exception occurred while trying to bounce a message.", e);
         }
     }
 }

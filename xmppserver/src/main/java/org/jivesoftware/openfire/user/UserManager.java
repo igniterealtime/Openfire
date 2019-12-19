@@ -518,4 +518,17 @@ public final class UserManager {
             }
         }
     }
+
+    /** Exposed for test use only */
+    public static void setProvider(UserProvider provider) {
+        USER_PROVIDER.setValue(provider.getClass());
+        UserManager.provider = provider;
+    }
+
+    /** Exposed for test use only */
+    public void clearCaches()
+    {
+        userCache.clear();
+        remoteUsersCache.clear();
+    }
 }

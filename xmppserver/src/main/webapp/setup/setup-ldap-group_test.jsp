@@ -12,12 +12,13 @@
 
 <%
     String errorDetail = null;
-    Collection<LdapGroupTester.Group> groups = new ArrayList<LdapGroupTester.Group>();
+    Collection<LdapGroupTester.Group> groups = new ArrayList<>();
 
     Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
     Map<String, String> userSettings = (Map<String, String>) session.getAttribute("ldapUserSettings");
     Map<String, String> groupSettings = (Map<String, String>) session.getAttribute("ldapGroupSettings");
     if (settings != null && userSettings != null && groupSettings != null) {
+        settings.computeIfAbsent( "ldap.adminPassword", (key) -> LdapManager.getInstance().getAdminPassword() );
         LdapManager manager = new LdapManager(settings);
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));
@@ -44,6 +45,9 @@
         // Information was not found in the HTTP Session. Internal error?
         errorDetail = LocaleUtils.getLocalizedString("setup.ldap.test.internal-server-error");
     }
+
+    pageContext.setAttribute( "errorDetail", errorDetail );
+    pageContext.setAttribute( "groups", groups );
 %>
 
 <html>
@@ -66,26 +70,28 @@
 
         <p><fmt:message key="setup.ldap.group.test.description" /></p>
 
-        <% if (errorDetail == null) { %>
-
-        <table border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
-            <tr>
-                <td width="19%" class="jive-testpanel-vcard-header"><fmt:message key="group.summary.page_name" /></td>
-                <td width="80%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-description" /></td>
-                <td width="1%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-members" /></td>
-            </tr>
-            <% for (LdapGroupTester.Group group : groups) { %>
-            <tr>
-                <td valign="top" class="jive-testpanel-vcard-value"><%= group.getName()%></td>
-                <td valign="top" class="jive-testpanel-vcard-value"><%= group.getDescription()%></td>
-                <td valign="top" class="jive-testpanel-vcard-value"><%= group.getMembers()%></td>
-            </tr>
-            <% } %>
-        </table>
-        <% } else { %>
-        <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
-        <p><%= errorDetail %></p>
-        <% }%>
+        <c:choose>
+            <c:when test="${empty errorDetail}">
+                <table border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
+                    <tr>
+                        <td width="19%" class="jive-testpanel-vcard-header"><fmt:message key="group.summary.page_name" /></td>
+                        <td width="80%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-description" /></td>
+                        <td width="1%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-members" /></td>
+                    </tr>
+                    <c:forEach items="${groups}" var="group">
+                        <tr>
+                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.name}"/></td>
+                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.description}"/></td>
+                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.members}"/></td>
+                        </tr>
+                    </c:forEach>
+                </table>
+            </c:when>
+            <c:otherwise>
+                <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
+                <p><c:out value="${errorDetail}"/></p>
+            </c:otherwise>
+        </c:choose>
     </div>
 </div>
 

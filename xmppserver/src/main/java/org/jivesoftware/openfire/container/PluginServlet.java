@@ -22,7 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -30,6 +30,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.jasper.JspC;
+import org.dom4j.Document;
+import org.jivesoftware.admin.FlashMessageTag;
+import org.jivesoftware.admin.PluginFilter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.WebXmlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
@@ -42,15 +55,6 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.jasper.JspC;
-import org.dom4j.Document;
-import org.jivesoftware.admin.PluginFilter;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.WebXmlUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -76,6 +80,13 @@ import org.slf4j.LoggerFactory;
 public class PluginServlet extends HttpServlet {
 
     private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
+    private static final String CSRF_ATTRIBUTE = "csrf";
+
+    public static final SystemProperty<Boolean> ALLOW_LOCAL_FILE_READING = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "plugins.servlet.allowLocalFileReading" )
+        .setDynamic( true )
+        .setDefaultValue( false )
+        .build();
 
     private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
@@ -101,6 +112,18 @@ public class PluginServlet extends HttpServlet {
         }
         else {
             try {
+                final PluginMetadata pluginMetadata = getPluginMetadataFromPath(pathInfo);
+                if (pluginMetadata.isCsrfProtectionEnabled()) {
+                    if (!passesCsrf(request)) {
+                        request.getSession().setAttribute(FlashMessageTag.ERROR_MESSAGE_KEY, LocaleUtils.getLocalizedString("global.csrf.failed"));
+                        response.sendRedirect(request.getRequestURI());
+                        return;
+                    }
+                    // Set a new CSRF
+                    final String csrf = StringUtils.randomString(32);
+                    request.getSession().setAttribute(CSRF_ATTRIBUTE, csrf);
+                    request.setAttribute(CSRF_ATTRIBUTE, csrf);
+                }
                 // Handle JSP requests.
                 if (pathInfo.endsWith(".jsp")) {
                     if (handleDevJSP(pathInfo, request, response)) {
@@ -122,6 +145,21 @@ public class PluginServlet extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
+    }
+
+    private boolean passesCsrf(final HttpServletRequest request) {
+        if (request.getMethod().equals("GET")) {
+            // No CSRF's for GET requests
+            return true;
+        }
+
+        final String sessionCsrf = (String) request.getSession().getAttribute(CSRF_ATTRIBUTE);
+        return sessionCsrf != null && sessionCsrf.equals(request.getParameter(CSRF_ATTRIBUTE));
+    }
+
+    private PluginMetadata getPluginMetadataFromPath(final String pathInfo) {
+        final String pluginName = pathInfo.split("/")[1];
+        return XMPPServer.getInstance().getPluginManager().getMetadata(pluginName);
     }
 
     /**
@@ -480,7 +518,21 @@ public class PluginServlet extends HttpServlet {
 
         if (environment != null) {
             file = new File(environment.getWebRoot(), contextPath);
+        } else {
+            if ( !ALLOW_LOCAL_FILE_READING.getValue() ) {
+                // If _not_ in a DEV environment, ensure that the file that's being served is a
+                // file that is part of Openfire. This guards against accessing files from the
+                // operating system, or other files that shouldn't be accessible via the web (OF-1886).
+                final Path absoluteHome = new File( JiveGlobals.getHomeDirectory() ).toPath().normalize().toAbsolutePath();
+                final Path absoluteLookup = file.toPath().normalize().toAbsolutePath();
+                if ( !absoluteLookup.startsWith( absoluteHome ) )
+                {
+                    response.setStatus( HttpServletResponse.SC_FORBIDDEN );
+                    return;
+                }
+            }
         }
+
         if (!file.exists()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;

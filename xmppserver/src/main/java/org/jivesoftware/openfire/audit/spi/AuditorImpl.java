@@ -290,16 +290,22 @@ public class AuditorImpl implements Auditor {
                         name.compareTo(oldestFile) < 0;
             }
         };
-        File[] files = baseFolder.listFiles(filter);
-        // Delete old audit files
-        for (File fileToDelete : files) {
-            if (fileToDelete.equals(currentAuditFile)) {
-                // Close current file
-                close();
-            }
-            if ( !fileToDelete.delete() )
+
+        final File[] files = baseFolder.listFiles(filter);
+        if ( files != null )
+        {
+            // Delete old audit files
+            for ( File fileToDelete : files )
             {
-                Log.warn( "Unable to delete file '{}' as part of regular log rotation based on age of file. (Openfire failed to clean up after itself)!", fileToDelete );
+                if ( fileToDelete.equals( currentAuditFile ) )
+                {
+                    // Close current file
+                    close();
+                }
+                if ( !fileToDelete.delete() )
+                {
+                    Log.warn( "Unable to delete file '{}' as part of regular log rotation based on age of file. (Openfire failed to clean up after itself)!", fileToDelete );
+                }
             }
         }
     }

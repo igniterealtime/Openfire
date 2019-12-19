@@ -1,4 +1,4 @@
-FROM maven:3.5-jdk-8
+FROM maven:3.6.2-jdk-8 as packager
 WORKDIR /usr/src
 
 COPY ./pom.xml .
@@ -15,8 +15,8 @@ COPY . .
 RUN mvn package
 
 FROM openjdk:8-jre
-COPY --from=0 /usr/src/distribution/target/distribution-base /usr/local/openfire
-COPY --from=0 /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
+COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/openfire
+COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 WORKDIR /usr/local/openfire
 
 ENV OPENFIRE_USER=openfire \

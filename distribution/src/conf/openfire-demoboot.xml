@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jive>
+  <adminConsole>
+      <port>9090</port>
+      <securePort>9091</securePort>
+  </adminConsole>
+  <connectionProvider>
+    <className>org.jivesoftware.database.EmbeddedConnectionProvider</className>
+  </connectionProvider>
+  <autosetup>
+      <run>true</run>
+      <locale>en</locale>
+      <xmpp>
+          <domain>example.org</domain>
+          <fqdn>example.org</fqdn>
+      </xmpp>
+      <database>
+          <mode>embedded</mode>
+      </database>
+      <admin>
+          <email>admin@example.com</email>
+          <password>admin</password>
+      </admin>
+  </autosetup>
+</jive>

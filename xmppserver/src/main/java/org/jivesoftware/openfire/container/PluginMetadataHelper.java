@@ -16,6 +16,12 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -28,12 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Various helper methods to retrieve plugin metadat from plugin.xml files.
@@ -351,6 +351,14 @@ public class PluginMetadataHelper
         }
 
         return new JavaSpecVersion( value );
+    }
+
+    public static boolean isCsrfProtectionEnabled(final Plugin plugin) {
+        return isCsrfProtectionEnabled(XMPPServer.getInstance().getPluginManager().getPluginPath(plugin));
+    }
+
+    public static boolean isCsrfProtectionEnabled(final Path pluginDir) {
+        return Boolean.parseBoolean(getElementValue(pluginDir, "/plugin/csrfProtectionEnabled"));
     }
 
     /**

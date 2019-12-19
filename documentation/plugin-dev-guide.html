@@ -119,6 +119,8 @@ file might look like the following:
     <li>minServerVersion -- the minimum version of Openfire required
           to run the plugin (supported by Openfire 2.1.2 and later). If the
           server version is less than the required value, the plugin will not be started.</li>
+    <li>priorToServerVersion -- the server version up, but not including, on which this plugin can run.</li>
+    <li>minJavaVersion -- the minimum Java specification version the plugin needs to run.</li>
     <li>databaseKey -- if the plugin requires it's own database tables, the databaseKey element should
             be set with a schema key name (often the same name as the plugin). Database
             schema files for each supported database should then be placed in the <tt>database</tt>
@@ -473,6 +475,43 @@ points that are the most common:
 </ol>
 
 </p>
+
+<h2>Openfire admin tags</h2>
+        Openfire provides useful JSP tags that can be used. To enable them on a JSP page, simply add:<br>
+        <code>&lt;%@ taglib uri="admin" prefix="admin" %&gt;</code>
+        <br>to the top of your JSP page. The tags include:
+        <ul>
+            <li><code>&lt;admin:ASN1DER value="${ASN.1 DER certificate as a byte[]}"/&gt;</code> (since Openfire 4.0.0)
+                will display an ASN.1 DER encoded certificate in an HTML table.</li>
+            <li><code>&lt;admin:FlashMessage/&gt;</code> (since Openfire 4.5.0) will display up to three suitably
+                decorated session attributes on the rendered page. The keys of these session attributes are defined by
+                <code>FlashMessageTag.SUCCESS_MESSAGE_KEY</code>, <code>WARNING_MESSAGE_KEY</code> and
+                <code>ERROR_MESSAGE_KEY</code>. This allows messages to be displayed to the user when navigating between
+                pages.</li>
+        </ul>
+
+        <h2>CSRF protection</h2>
+        Admin pages are liable to <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF attacks</a>.
+        Openfire provides facilities to aid plugin authors to protect against these attacks on their admin pages. To
+        enable CSRF protection:
+        <ol>
+            <li>Set the plugin.xml <code>minServerVersion</code> to 4.5.0 or above as this is when support was added.</li>
+            <li>Set the plugin.xml <code>csrfProtectionEnabled</code> to <code>true</code> to enable CSRF protection for
+                the plugin. This will;
+                <ul>
+                    <li>Guard against CSRF attacks for all requests to admin pages <strong>except</strong> GET requests</li>
+                    <li>Set a servlet request attribute with key "csrf"</li>
+                </ul>
+            </li>
+            <li>Ensure that GET requests do not modify any settings or change any data as this protections is not
+                enabled for GET requests</li>
+            <li>Ensure that any form submitted in the admin page has a field called <code>csrf</code> whose value is that
+            defined by the request attribute "csrf" - for example:<br>
+                <code>&lt;input name="csrf" value="&lt;c:out value="${csrf}"/&gt;" type="hidden"&gt;</code></li>
+        </ol>
+        That's it! If a CSRF attack is detected, the admin page will be reloaded (with a simple HTTP GET request) with
+        the session attribute <code>FlashMessageTag.ERROR_MESSAGE_KEY</code> set to indicate the problem - it's
+        therefore advised to include the <code>&lt;admin:FlashMessage/&gt;</code> at the top of your JSP page.
 
 <h2>Plugin FAQ</h2>
 

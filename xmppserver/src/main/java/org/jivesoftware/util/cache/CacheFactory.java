@@ -607,6 +607,13 @@ public class CacheFactory {
         }
     }
 
+    public synchronized static void clearCaches( String... cacheName )
+    {
+        caches.values().parallelStream()
+            .filter(cache -> Arrays.asList(cacheName).contains(cache.getName()))
+            .forEach(Map::clear);
+    }
+
     /**
      * Returns a byte[] that uniquely identifies this senior cluster member or {@code null}
      * when not in a cluster.

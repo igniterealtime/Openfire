@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalComponentSession;
@@ -624,6 +625,18 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                         } catch (Exception e) {
                             Log.error(e.getMessage(), e);
                         }
+                    }else if("query".equals(childElement.getQName().getName()) && "http://jabber.org/protocol/disco#info".equals(namespace)){
+                        //XEP-0232 if responses service discovery can include detailed information about the software application
+                        for (Component component : components) {
+                            if (component instanceof LocalComponentSession.LocalExternalComponent) {
+                                LocalComponentSession.LocalExternalComponent externalComponent =
+                                        ( LocalComponentSession.LocalExternalComponent) component;
+                                LocalComponentSession session = externalComponent.getSession();
+                                if(session != null && session.getAddress() == iq.getFrom()){
+                                    IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(childElement, session);
+                                }    
+                            }
+                        }  
                     }
                 }
             }

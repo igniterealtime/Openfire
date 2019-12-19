@@ -129,6 +129,11 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag>
+        <name>FlashMessage</name>
+        <tag-class>org.jivesoftware.admin.FlashMessageTag</tag-class>
+        <body-content>empty</body-content>
+    </tag>
     <tag-file>
         <name>contentBox</name>
         <path>/META-INF/tags/admin/contentBox.tagx</path>

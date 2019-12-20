@@ -76,19 +76,6 @@
         // Make sure that the MUC Service is lower cased.
         mucname = mucname.toLowerCase();
 
-        String muccleanupdays = ParamUtils.getParameter(request, "muccleanupdays");
-        if (muccleanupdays != null) {
-            MUCPersistenceManager.setProperty(mucname, "unload.empty_days", muccleanupdays);
-        }
-           
-        if (ParamUtils.getParameter(request, "muckeep") != null) {
-            boolean bmuckeep = ParamUtils.getParameter(request, "muckeep").equalsIgnoreCase("on") ? true : false;
-            if (bmuckeep)
-            {
-            	MUCPersistenceManager.setProperty(mucname, "unload.empty_days", "0");
-            }
-        }   
-
         // do validation
         if (mucname == null || mucname.indexOf('.') >= 0 || mucname.length() < 1) {
             errors.put("mucname","mucname");
@@ -100,20 +87,13 @@
             }
         }
         if (errors.size() == 0) {
+            // Create or update the service.
             if (!create) {
                 webManager.getMultiUserChatManager().updateMultiUserChatService(mucname, mucname, mucdesc);
-                // Log the event
-                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
-                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                return;
             }
             else {
                 try {
                     webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc, false);
-                    // Log the event
-                    webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
-                    response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                    return;
                 }
                 catch (IllegalArgumentException e) {
                     errors.put("mucname","mucname");
@@ -122,16 +102,44 @@
                     errors.put("already_exists","already_exists");
                 }
             }
+
+            // Update settings only after the service has been created.
+            // TODO move the parsing and validation of these parameters to the section above, that does that for all other parameters.
+            String muccleanupdays = ParamUtils.getParameter(request, "muccleanupdays");
+            if (muccleanupdays != null) {
+                MUCPersistenceManager.setProperty(mucname, "unload.empty_days", muccleanupdays);
+            }
+
+            if (ParamUtils.getParameter(request, "muckeep") != null) {
+                if (ParamUtils.getParameter(request, "muckeep").equalsIgnoreCase("on")) {
+                    MUCPersistenceManager.setProperty(mucname, "unload.empty_days", "0");
+                }
+            }
+
+            // Log the event
+            if (!create) {
+                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
+                return;
+            } else {
+                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
+                return;
+            }
         }
     }    
    
     boolean muckeep = false;
-	String muccleanupdays = MUCPersistenceManager.getProperty(mucname, "unload.empty_days");
-	if (muccleanupdays == null) {
-		muccleanupdays = "30";
-	}
-	if (Integer.parseInt(muccleanupdays)<=0)
-		muckeep=true;	
+    String muccleanupdays = "30"; // default
+
+    // When creating a new service (as opposed to editing an existing one), mucName will be initially empty (OF-1954)
+	if (mucname != null) {
+        muccleanupdays = MUCPersistenceManager.getProperty(mucname, "unload.empty_days", muccleanupdays);
+    }
+
+	if (Integer.parseInt(muccleanupdays)<=0) {
+        muckeep = true;
+    }
 %>
 
 <html>

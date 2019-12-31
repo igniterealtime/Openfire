@@ -62,6 +62,13 @@ public final class ConnectionSettings {
         public static final String MAX_THREADS_SSL = "xmpp.client_ssl.processing.threads";
         public static final String MAX_READ_BUFFER_SSL = "xmpp.client_ssl.maxReadBufferSize";
         public static final String TLS_ALGORITHM = "xmpp.socket.ssl.algorithm";
+        public static final SystemProperty<Duration> RESTART_PAUSE = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.client.restart.pause")
+            .setDefaultValue(Duration.ofMillis(0))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 
     public static final class Server {
@@ -97,6 +104,13 @@ public final class ConnectionSettings {
         public static final String PERMISSION_SETTINGS = "xmpp.server.permission";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.server.cert.policy";
         public static final String ALLOW_ANONYMOUS_OUTBOUND_DATA = "xmpp.server.allow-anonymous-outbound-data";
+        public static final SystemProperty<Duration> RESTART_PAUSE = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.server.restart.pause")
+            .setDefaultValue(Duration.ofMillis(500))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 
     public static final class Multiplex {
@@ -110,7 +124,14 @@ public final class ConnectionSettings {
         public static final String ENABLE_OLD_SSLPORT = "xmpp.multiplex.ssl.active";
         public static final String MAX_THREADS ="xmpp.multiplex.processing.threads";
         public static final String MAX_THREADS_SSL = "xmpp.multiplex.ssl.processing.threads";
-        public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.multiplex.cert.policy" ;
+        public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.multiplex.cert.policy";
+        public static final SystemProperty<Duration> RESTART_PAUSE = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.multiplex.restart.pause")
+            .setDefaultValue(Duration.ofMillis(500))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 
     public static final class Component {
@@ -132,5 +153,12 @@ public final class ConnectionSettings {
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.component.cert.policy";
         public static final String TLS_POLICY = "xmpp.component.tls.policy";
         public static final String COMPRESSION_SETTINGS = "xmpp.component.compression.policy";
+        public static final SystemProperty<Duration> RESTART_PAUSE = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.component.restart.pause")
+            .setDefaultValue(Duration.ofMillis(500))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 }

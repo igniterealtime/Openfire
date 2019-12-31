@@ -9,10 +9,12 @@ import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -78,6 +80,12 @@ public class ConnectionListener
      */
     private final String clientAuthPolicyPropertyName;
 
+    /**
+     * Property that configures the duration of the pause between stopping and starting this listener, when a
+     * restart is requested.
+     */
+    private final SystemProperty<Duration> pauseDurationDuringRestart;
+
     // The entity that performs the acceptance of new (socket) connections.
     private ConnectionAcceptor connectionAcceptor;
 
@@ -97,13 +105,14 @@ public class ConnectionListener
      * @param maxPoolSizePropertyName Property name (of an int) that defines maximum IO processing threads. Null causes an unconfigurable default amount to be used.
      * @param maxReadBufferPropertyName Property name (of an int) that defines maximum amount (in bytes) of IO data can be cached, pending processing. Null to indicate boundless caches.
      * @param tlsPolicyPropertyName Property name (of a string) that defines the applicable TLS Policy. Or, the value {@link org.jivesoftware.openfire.Connection.TLSPolicy} to indicate unconfigurable TLS Policy. Cannot be null.
-     * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurabel value of 'wanted' to be used.
+     * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurable value of 'wanted' to be used.
      * @param bindAddress the address to bind to
      * @param identityStoreConfiguration the certificates the server identify as
      * @param trustStoreConfiguration the certificates the server trusts
      * @param compressionPolicyPropertyName the name of the system property indicating if compression is enabled or not
+     * @param pauseDurationDuringRestartPropertyName Property name (of a long) that identifies the pause (in milliseconds) between a stop and a start when restarting. Null to indicate 'no pause'.
      */
-    public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, String compressionPolicyPropertyName )
+    public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, String compressionPolicyPropertyName, SystemProperty<Duration> pauseDurationDuringRestart )
     {
         this.type = type;
         this.tcpPortPropertyName = tcpPortPropertyName;
@@ -117,6 +126,7 @@ public class ConnectionListener
         this.identityStoreConfiguration = identityStoreConfiguration;
         this.trustStoreConfiguration = trustStoreConfiguration;
         this.compressionPolicyPropertyName = compressionPolicyPropertyName;
+        this.pauseDurationDuringRestart = pauseDurationDuringRestart;
 
         // A listener cannot be changed into or from legacy mode. That fact is safe to use in the name of the logger..
         final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ? "-legacyMode" : "" );
@@ -161,7 +171,7 @@ public class ConnectionListener
             return;
         }
 
-            JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
+        JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
         restart();
     }
 
@@ -322,7 +332,19 @@ public class ConnectionListener
         }
         finally
         {
-            start(); // won't actually start anything if not enabled.
+            // Protect against race conditions when restarting (OF-1956).
+            if ( pauseDurationDuringRestart != null && !pauseDurationDuringRestart.getValue().isNegative() )
+            {
+                try {
+                    Log.debug( "Sleeping {} before restarting...", pauseDurationDuringRestart.getValue() );
+                    Thread.sleep( pauseDurationDuringRestart.getValue().toMillis() );
+                    start(); // won't actually start anything if not enabled.
+                } catch ( InterruptedException e ) {
+                    Log.info( "Restart interrupted.", e );
+                }
+            } else {
+                start(); // won't actually start anything if not enabled.
+            }
         }
         Log.info( "Done restarting..." );
     }

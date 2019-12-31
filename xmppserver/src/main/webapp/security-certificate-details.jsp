@@ -490,7 +490,7 @@
 
     <form action="security-certificate-details.jsp">
         <input type="hidden" name="connectionType" value="${connectionType}"/>
-        <input type="hidden" name="isTrustStore" value="${param.isTrustStore}"/>
+        <input type="hidden" name="isTrustStore" value="<c:out value='${param.isTrustStore}'/>"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

@@ -235,7 +235,7 @@
                 <td align="right" valign="bottom"><fmt:message
                         key="group.summary.search" />: <input type="text" size="30"
                     maxlength="150" name="search"
-                    value="<%=((search!=null) ? search : "")%>"></td>
+                    value="<c:out value='${param.search}'/>"></td>
             </tr>
         </table>
         <input type="hidden" name="username"

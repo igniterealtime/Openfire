@@ -689,8 +689,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
         try {
             // Send the presence of this new occupant to existing occupants
-            Presence joinPresence = joinRole.getPresence().createCopy();
-            broadcastPresence(joinPresence, true);
+            if (JiveGlobals.getBooleanProperty("xmpp.muc.join.presence", true)) {
+                Presence joinPresence = joinRole.getPresence().createCopy();
+                broadcastPresence(joinPresence, true);
+            }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -763,6 +765,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param joinRole the role of the new occupant in the room.
      */
     private void sendInitialPresences(MUCRole joinRole) {
+        if (!JiveGlobals.getBooleanProperty("xmpp.muc.join.presence", true)) {
+            return;
+        }
+
         for (MUCRole occupant : occupantsByFullJID.values()) {
             if (occupant == joinRole) {
                 continue;
@@ -866,7 +872,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             else {
                 if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
                     // Inform the rest of the room occupants that the user has left the room
-                    broadcastPresence(presence, false);
+                    if (JiveGlobals.getBooleanProperty("xmpp.muc.join.presence", true)) {
+                        broadcastPresence(presence, false);
+                    }
                 }
             }
         }

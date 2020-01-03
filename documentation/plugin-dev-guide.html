@@ -159,7 +159,7 @@ file might look like the following:
                     plugin's Readme.</li>
             </ul>
             If the license type is not set, it is assumed to be other.</li>
-</ul></p>
+</ul>
 
 Several additional files can be present in the plugin to provide additional information to
 end-users (all placed in the main plugin directory):
@@ -342,7 +342,6 @@ body of your HTML page. The following meta tags can be used:
 </ul>
 
 The following HTML snippet demonstrates a valid page:
-</p>
 
 <fieldset>
     <legend>Sample HTML</legend>
@@ -388,7 +387,7 @@ procedure:
         <tt>&lt;description&gt;${plugin.description}&lt;/description&gt;</tt>
     </li>
 </ul>
-</p>
+
 <h2>Using the Openfire Build Script</h2>
 
 <p>
@@ -474,8 +473,6 @@ points that are the most common:
 
 </ol>
 
-</p>
-
 <h2>Openfire admin tags</h2>
         Openfire provides useful JSP tags that can be used. To enable them on a JSP page, simply add:<br>
         <code>&lt;%@ taglib uri="admin" prefix="admin" %&gt;</code>
@@ -503,15 +500,18 @@ points that are the most common:
                     <li>Set a servlet request attribute with key "csrf"</li>
                 </ul>
             </li>
-            <li>Ensure that GET requests do not modify any settings or change any data as this protections is not
+            <li>Ensure that GET requests do not modify any settings or change any data as this protection is not
                 enabled for GET requests</li>
             <li>Ensure that any form submitted in the admin page has a field called <code>csrf</code> whose value is that
             defined by the request attribute "csrf" - for example:<br>
                 <code>&lt;input name="csrf" value="&lt;c:out value="${csrf}"/&gt;" type="hidden"&gt;</code></li>
         </ol>
-        That's it! If a CSRF attack is detected, the admin page will be reloaded (with a simple HTTP GET request) with
+        If a CSRF attack is detected, the admin page will be reloaded (with a simple HTTP GET request) with
         the session attribute <code>FlashMessageTag.ERROR_MESSAGE_KEY</code> set to indicate the problem - it's
         therefore advised to include the <code>&lt;admin:FlashMessage/&gt;</code> at the top of your JSP page.
+
+        <p><strong>NOTE</strong>: It is still important to ensure that all your output is properly escaped using
+        <code>&lt;c:out&gt;</code> tags or the equivalent.</p>
 
 <h2>Plugin FAQ</h2>
 

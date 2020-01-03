@@ -119,13 +119,10 @@ public class PluginServlet extends HttpServlet {
                         response.sendRedirect(request.getRequestURI());
                         return;
                     }
-                    // Set a new CSRF
-                    final String csrf = StringUtils.randomString(32);
-                    request.getSession().setAttribute(CSRF_ATTRIBUTE, csrf);
-                    request.setAttribute(CSRF_ATTRIBUTE, csrf);
                 }
                 // Handle JSP requests.
                 if (pathInfo.endsWith(".jsp")) {
+                    setCSRF(request);
                     if (handleDevJSP(pathInfo, request, response)) {
                         return;
                     }
@@ -133,6 +130,7 @@ public class PluginServlet extends HttpServlet {
                 }
                 // Handle servlet requests.
                 else if (getServlet(pathInfo) != null) {
+                    setCSRF(request);
                     handleServlet(pathInfo, request, response);
                 }
                 // Handle image/other requests.
@@ -145,6 +143,12 @@ public class PluginServlet extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
+    }
+
+    private static void setCSRF(final HttpServletRequest request) {
+        final String csrf = StringUtils.randomString(32);
+        request.getSession().setAttribute(CSRF_ATTRIBUTE, csrf);
+        request.setAttribute(CSRF_ATTRIBUTE, csrf);
     }
 
     private boolean passesCsrf(final HttpServletRequest request) {

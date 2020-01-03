@@ -16,6 +16,33 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.spi.LoggerContext;
@@ -26,21 +53,14 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JavaSpecVersion;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.jar.JarFile;
-import java.util.zip.ZipException;
 
 /**
  * Manages plugins.
@@ -397,7 +417,7 @@ public class PluginManager
             // Find the canonical name for this plugin
             .map(PluginMetadata::getCanonicalName)
             // Finally, find the plugin
-            .flatMap(canonicalName -> Optional.of(pluginsLoaded.get(canonicalName)));
+            .flatMap(canonicalName -> Optional.ofNullable(pluginsLoaded.get(canonicalName)));
     }
 
     /**
@@ -582,8 +602,14 @@ public class PluginManager
             final Document pluginXML = saxReader.read( pluginConfig.toFile() );
 
             final String className = pluginXML.selectSingleNode( "/plugin/class" ).getText().trim();
-            final Plugin plugin = (Plugin) pluginLoader.loadClass( className ).newInstance();
-
+            final Plugin plugin;
+            final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(pluginLoader);
+                plugin = (Plugin) pluginLoader.loadClass(className).newInstance();
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalClassLoader);
+            }
             // Bookkeeping!
             classloaders.put( plugin, pluginLoader );
             pluginsLoaded.put( canonicalName, plugin );

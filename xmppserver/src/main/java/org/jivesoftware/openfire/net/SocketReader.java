@@ -19,7 +19,7 @@ package org.jivesoftware.openfire.net;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
-
+import java.util.Map;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -382,11 +383,18 @@ public abstract class SocketReader implements Runnable {
                 }  
             }
             return iq;
-        }
-        else {
+        }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
+            //XEP-0232 if responses service discovery can include detailed information about the software application
+            IQ iq = new IQ(doc); 
+            if(iq.getFrom().equals(session.getAddress())){
+                IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(query, session);
+            } 
+            return new IQ(doc);
+        }else {
             return new IQ(doc);
         }
     }
+
 
     /**
      * Uses the XPP to grab the opening stream tag and create an active session

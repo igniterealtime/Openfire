@@ -16,18 +16,18 @@
 
 package org.jivesoftware.openfire.update;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.PluginMetadata;
 import org.jivesoftware.util.JavaSpecVersion;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 /**
  * Plugin available at igniterealtime.org. The plugin may or may not be locally installed.
@@ -195,7 +195,8 @@ public class AvailablePlugin extends PluginMetadata
                 license,
                 minServerVersion,
                 priorToServerVersion,
-                minJavaVersion
+                minJavaVersion,
+                false
         );
         this.downloadURL = downloadUrl;
         this.fileSize = fileSize;

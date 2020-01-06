@@ -18,11 +18,10 @@ package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.openfire.Connection;
@@ -85,7 +84,9 @@ public abstract class LocalSession implements Session {
     private long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
+
     private AtomicLong clientPacketCount = new AtomicLong( 0 );
+
     private AtomicLong serverPacketCount = new AtomicLong( 0 );
 
     /**
@@ -104,6 +105,11 @@ public abstract class LocalSession implements Session {
      * XEP-0198 Stream Manager
      */
     protected final StreamManager streamManager;
+
+    /**
+     * A lock to protect the connection changes.
+     */
+    private final Lock lock = new ReentrantLock();
 
     private final Locale language;
 
@@ -144,9 +150,14 @@ public abstract class LocalSession implements Session {
      * has been closed.
      */
     public void setDetached() {
-        Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
-        this.sessionManager.addDetached(this);
-        this.conn = null;
+        lock.lock();
+        try {
+            Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
+            this.sessionManager.addDetached(this);
+            this.conn = null;
+        }finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -157,14 +168,18 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(Connection connection, long h) {
-        Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
-        Connection temp = this.conn;
-        this.conn = null;
-        if (temp != null && !temp.isClosed()) {
-            temp.close();
+        lock.lock();
+        try {
+            Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
+            if (this.conn != null && !this.conn.isClosed())
+            {
+                this.conn.close();
+            }
+            this.conn = connection;
+            connection.reinit(this);
+        }finally {
+            lock.unlock();
         }
-        this.conn = connection;
-        this.conn.reinit(this);
         this.status = STATUS_AUTHENTICATED;
         this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
@@ -201,14 +216,12 @@ public abstract class LocalSession implements Session {
      * @return The connection for this session
      */
     public Connection getConnection() {
-        if (conn == null) {
-            try {
-                conn.isClosed(); // This generates an NPE deliberately.
-            } catch (NullPointerException e) {
-                Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, e);
+        Connection connection = conn;
+        if (connection == null)
+        {
+            Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, new IllegalStateException());
             }
-        }
-        return conn;
+        return connection;
     }
 
     /**
@@ -425,12 +438,13 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void deliverRawText(String text) {
-        if ( conn == null )
+        Connection connection = conn;
+        if (connection == null )
         {
             Log.debug( "Unable to deliver raw text in session with address {} and streamID {}, as its connection is null. Dropping: {}", this.address, this.streamID, text );
             return;
         }
-        conn.deliverRawText(text);
+        connection.deliverRawText(text);
     }
 
     /**
@@ -443,44 +457,54 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void close() {
-        if (conn == null) return;
-        conn.close();
+        Optional.ofNullable(conn)
+         .ifPresent(Connection::close);
     }
 
     @Override
     public boolean validate() {
-        return conn.validate();
+        return Optional.ofNullable(conn)
+                .map(Connection::validate)
+                .orElse(Boolean.FALSE);
     }
 
     @Override
     public boolean isSecure() {
-        return conn.isSecure();
+        return Optional.ofNullable(conn)
+                .map(Connection::isSecure)
+                .orElse(Boolean.FALSE);
     }
 
     @Override
     public Certificate[] getPeerCertificates() {
-        return conn.getPeerCertificates();
+        return Optional.ofNullable(conn)
+                .map(Connection::getPeerCertificates)
+                .orElse(new Certificate[0]);
     }
 
     @Override
     public boolean isClosed() {
-        return conn.isClosed();
+        return Optional.ofNullable(conn)
+                .map(Connection::isClosed)
+                .orElse(Boolean.TRUE);
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        if (conn == null) {
+        Connection connection = conn;
+        if (connection == null) {
             throw new UnknownHostException("Detached session");
         }
-        return conn.getHostAddress();
+        return connection.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        if (conn == null) {
+        Connection connection = conn;
+        if (connection == null) {
             throw new UnknownHostException("Detached session");
         }
-        return conn.getHostName();
+        return connection.getHostName();
     }
 
     @Override
@@ -516,7 +540,9 @@ public abstract class LocalSession implements Session {
      * @return true if the other peer of this session presented a self-signed certificate.
      */
     public boolean isUsingSelfSignedCertificate() {
-        return conn.isUsingSelfSignedCertificate();
+        return Optional.ofNullable(conn)
+                .map(Connection::isUsingSelfSignedCertificate)
+                .orElse(Boolean.FALSE);
     }
 
     /**
@@ -544,12 +570,12 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-     * Retrieves Software Version data. This method gives access to temporary Software Version data only. 
+     * Retrieves Software Version data. This method gives access to temporary Software Version data only.
      * @return a Map collection value of data .
      */
     @Override
     public Map<String, String> getSoftwareVersion() {
-        return softwareVersionData; 
+        return softwareVersionData;
     }
 
     /**

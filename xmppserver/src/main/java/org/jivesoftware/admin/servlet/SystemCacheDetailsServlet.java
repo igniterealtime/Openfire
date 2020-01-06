@@ -45,7 +45,7 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             .map(cache -> (Cache<?, ?>) cache);
 
         if (!optionalCache.isPresent()) {
-            request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(cacheName)));
+            request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(StringUtils.escapeHTMLTags(cacheName))));
         }
 
         final boolean secretKey = optionalCache.map(Cache::isKeySecret).orElse(Boolean.FALSE);

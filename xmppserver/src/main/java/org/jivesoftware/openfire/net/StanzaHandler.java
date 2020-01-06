@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -39,6 +40,7 @@ import org.xmpp.packet.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -336,6 +338,10 @@ public abstract class StanzaHandler {
             } catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
+            return new IQ(doc, !validateJIDs());
+        }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
+            //XEP-0232 if responses service discovery can include detailed information about the software application
+            IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(query, session);
             return new IQ(doc, !validateJIDs());
         }
         else {

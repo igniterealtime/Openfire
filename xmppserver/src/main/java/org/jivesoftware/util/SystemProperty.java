@@ -238,8 +238,8 @@ public final class SystemProperty<T> {
         JiveGlobals.migrateProperty(builder.key);
         this.clazz = builder.clazz;
         this.key = builder.key;
-        this.description = LocaleUtils.getLocalizedString("system_property." + key);
         this.plugin = builder.plugin;
+        this.description = LocaleUtils.getLocalizedPluginString(plugin, "system_property." + key);
         this.defaultValue = builder.defaultValue;
         this.minValue = builder.minValue;
         this.maxValue = builder.maxValue;
@@ -430,7 +430,7 @@ public final class SystemProperty<T> {
         private final Class<T> clazz;
         private final Set<Consumer<T>> listeners = new HashSet<>();
         private String key;
-        private String plugin = "Openfire";
+        private String plugin = LocaleUtils.OPENFIRE_PLUGIN_NAME;
         private T defaultValue;
         private T minValue;
         private T maxValue;

@@ -555,11 +555,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                             && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
                             typeformDataSoftwareInfo = true;     
                         }
-                        if(typeformDataSoftwareInfo && field.element("value")!= null
-                            && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())){
-                            session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
-                        }else if(typeformDataSoftwareInfo && field.element("media").element("uri") != null){
-                            session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
+                        if (typeformDataSoftwareInfo) {
+                            if (field.element("value") != null && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())) {
+                                session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                            }
+                            else if (field.element("media") != null && field.element("media").element("uri") != null) {
+                                session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
+                            }
                         }
                     }    
                 }

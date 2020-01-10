@@ -163,15 +163,19 @@ hr {
     <div id="pageBody">
 
 
-<h2>4.5.0 Beta -- <span style="font-weight: normal;">December 20, 2019</span></h2>
+<h2>4.5.0 -- <span style="font-weight: normal;">January 10, 2020</span></h2>
 <h2>        Bug
 </h2>
 <ul>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-353'>OF-353</a>] -         LDAP InvalidNameException related to quotes
 </li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1779'>OF-1779</a>] -         Incorrect SQL DELETE statement in PubSub causes exception
+</li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1826'>OF-1826</a>] -         NullPointerException in new Dataforms implementation
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1830'>OF-1830</a>] -         Failing to establish TLS when using Java 11
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1858'>OF-1858</a>] -         MUC services are not added/removed from other cluster nodes
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1892'>OF-1892</a>] -         Group sorting shouldn&#39;t be case sensitive
 </li>
@@ -180,6 +184,16 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1898'>OF-1898</a>] -         max cache size should be consistent to long
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1902'>OF-1902</a>] -         Further limit HTTP fetching security from Openfire
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1923'>OF-1923</a>] -         Steam Management should not close reconnected session
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1928'>OF-1928</a>] -         Reflected XSS in MUC Room affiliation page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1932'>OF-1932</a>] -         &quot;Test Settings&quot; of LDAP User Mapping always fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1936'>OF-1936</a>] -         OOM when browsing audit log
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1937'>OF-1937</a>] -         Performance problems when first LDAP server cannot be reached
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1938'>OF-1938</a>] -         Bump Bouncy Castle version to v1.64
 </li>
@@ -190,6 +204,14 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1951'>OF-1951</a>] -         SystemProperty Description fails to work with plugins
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1953'>OF-1953</a>] -         NPE in admin console session page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1954'>OF-1954</a>] -         Creating new MUC conference leads to NPE in admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1955'>OF-1955</a>] -         XSS flaws identified by Cyber Security Works Document No: C1059
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1956'>OF-1956</a>] -         Restarting s2s may fail with Error starting: 5269 Address already in use (Bind failed)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1958'>OF-1958</a>] -         PSI XMPP Client fails to connect
 </li>
 </ul>
         
@@ -203,7 +225,14 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1943'>OF-1943</a>] -         Allow LDAP group to provide Openfire admins
 </li>
 </ul>
-            
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1219'>OF-1219</a>] -         ClassCastException on setup-ldap-user.jsp DefaultUserProvider cannot be cast to LdapUserProvider
+</li>
+</ul>
+    
 <h2>        Improvement
 </h2>
 <ul>
@@ -238,6 +267,12 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1890'>OF-1890</a>] -         Support for flattening LDAP nested groups
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1903'>OF-1903</a>] -         Support for @WebServlet annotation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1924'>OF-1924</a>] -         Make SM DetachedCleanupTask scheduling related to max detach time
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1925'>OF-1925</a>] -         Hint on what server a stream should be resumed.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1926'>OF-1926</a>] -         Steam Management should tell clients how long they can be detached.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1929'>OF-1929</a>] -         LDAPS should not be an advanced setting
 </li>

@@ -92,6 +92,11 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
         }
     }
+    
+    public String genRangePart(int i) 
+    { 
+        return manager.getGroupMemberField()+";range=" + i * 1500 + "-" + ((i + 1) * 1500 - 1);
+    }
 
     /**
      * Reads the group with the given DN
@@ -124,7 +129,66 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             ctx = manager.getContext(baseDN);
             Attributes attrs = ctx.getAttributes(relativeDN, standardAttributes);
 
-            return processGroup(ctx, attrs, membersToIgnore);
+            boolean paging = false;
+            int countPage=0;
+
+            NamingEnumeration<? extends Attribute> i = attrs.getAll();
+            String searchString = manager.getGroupMemberField()+";range=0-1499";
+            while (i.hasMore())
+            {
+                Attribute attribute = i.next();
+                String key = attribute.getID().toLowerCase();
+                if (key.startsWith(searchString))
+                {
+                    paging=true;
+                    break;
+                }
+            }
+
+            if (!paging)
+            {
+                return processGroup(ctx, attrs, membersToIgnore);
+            }
+            else
+            {
+                //retrieve first 0-1499
+                Group tmpGroup = processGroup(ctx, attrs, membersToIgnore);
+                Collection<JID> admins = tmpGroup.getAdmins();
+                String description = tmpGroup.getDescription();
+                String name = tmpGroup.getName();
+                ArrayList<JID> members = new ArrayList<JID>();
+                members.addAll(tmpGroup.getMembers());
+                do
+                {
+                    try
+                    {
+                        ArrayList<String> stdAttr = new ArrayList<String>();
+                        for (int n=0;n<standardAttributes.length;n++)
+                        {
+                            if (!standardAttributes[n].contains(manager.getGroupMemberField()))
+                                stdAttr.add(standardAttributes[n]);
+                        }
+                        countPage++;
+                        stdAttr.add(genRangePart(countPage));
+                        attrs = ctx.getAttributes(relativeDN, stdAttr.toArray(new String[stdAttr.size()]));
+                        //retrieve next 1500
+                        tmpGroup=processGroup(ctx, attrs, membersToIgnore);
+                        if (tmpGroup!=null&&tmpGroup.getMembers().size()>0)
+                        {
+                            members.addAll(tmpGroup.getMembers());
+                        }
+                        else // no next found
+                            break;
+                    }
+                    catch (Exception e)
+                    {
+                        // no next found, cause of missing attribute
+                        break;
+                    }
+                }while (true);
+
+                return new Group(name, description, members, admins);
+            }
         }
         finally {
             try {
@@ -337,6 +401,22 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         Attribute memberField = a.get(manager.getGroupMemberField());
 
         Log.debug("Loading members of group: {}", name);
+        
+        if (memberField==null)
+        {
+            NamingEnumeration<? extends Attribute> i = a.getAll();
+            String searchString = manager.getGroupMemberField()+";range=";
+            while (i.hasMore())
+            {
+                Attribute attribute = i.next();
+                String key = attribute.getID().toLowerCase();
+                if (key.startsWith(searchString))
+                {
+                    memberField=attribute;
+                    break;
+                }
+            }
+        }
 
         if (memberField != null) {
             NamingEnumeration ne = memberField.getAll();

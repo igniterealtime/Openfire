@@ -95,7 +95,10 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     
     public String genRangePart(int i) 
     { 
-        return manager.getGroupMemberField()+";range=" + i * 1500 + "-" + ((i + 1) * 1500 - 1);
+        String groupMemberField = manager.getGroupMemberField();
+        groupMemberField = groupMemberField.contains(";range=")?groupMemberField.substring(0,groupMemberField.indexOf(";range=")):groupMemberField;
+        
+        return groupMemberField+";range=" + i * 1500 + "-" + ((i + 1) * 1500 - 1);
     }
 
     /**
@@ -133,7 +136,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             int countPage=0;
 
             NamingEnumeration<? extends Attribute> i = attrs.getAll();
-            String searchString = manager.getGroupMemberField()+";range=0-1499";
+             String groupMemberField = manager.getGroupMemberField();
+            String searchString = groupMemberField.contains(";range=")?groupMemberField.substring(0,groupMemberField.indexOf(";range=")):groupMemberField;
             while (i.hasMore())
             {
                 Attribute attribute = i.next();
@@ -405,7 +409,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         if (memberField==null)
         {
             NamingEnumeration<? extends Attribute> i = a.getAll();
-            String searchString = manager.getGroupMemberField()+";range=";
+            String groupMemberField = manager.getGroupMemberField();
+            String searchString = groupMemberField.contains(";range=")?groupMemberField.substring(0,groupMemberField.indexOf(";range=")):groupMemberField;
             while (i.hasMore())
             {
                 Attribute attribute = i.next();

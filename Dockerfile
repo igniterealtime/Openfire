@@ -17,6 +17,11 @@ RUN mvn package
 FROM openjdk:8-jre
 COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/openfire
 COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
+
+COPY build/docker/inject_db_settings.sh /usr/local/openfire/inject_db_settings.sh
+COPY build/docker/template_openfire.xml /usr/local/openfire/template_openfire.xml
+COPY build/docker/template_security.xml /usr/local/openfire/template_security.xml
+
 WORKDIR /usr/local/openfire
 
 ENV OPENFIRE_USER=openfire \

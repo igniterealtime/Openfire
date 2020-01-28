@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    This file stores bootstrap properties needed by Openfire.
+    Property names must be in the format: "prop.name.is.blah=value"
+    That will be stored as:
+        <prop>
+            <name>
+                <is>
+                    <blah>value</blah>
+                </is>
+            </name>
+        </prop>
+
+    Most properties are stored in the Openfire database. A
+    property viewer and editor is included in the admin console.
+-->
+<!-- root element, all properties must be under this element -->
+<jive>
+    <adminConsole>
+        <!-- Disable either port by setting the value to -1 -->
+        <port>9090</port>
+        <securePort>9091</securePort>
+    </adminConsole>
+    <locale>en</locale>
+    <!-- Network settings. By default, Openfire will bind to all network interfaces.
+        Alternatively, you can specify a specific network interfaces that the server
+        will listen on. For example, 127.0.0.1. This setting is generally only useful
+         on multi-homed servers. -->
+    <!--
+      <network>
+          <interface></interface>
+      </network>
+      -->
+    <!--
+          One time token to gain temporary access to the admin console.
+      -->
+    <!--
+      <oneTimeAccessToken>secretToken</oneTimeAccessToken>
+      -->
+    <connectionProvider>
+        <className>org.jivesoftware.database.DefaultConnectionProvider</className>
+    </connectionProvider>
+    <setup>true</setup>
+    <fqdn>feinfone.com</fqdn>
+    <database>
+        <defaultProvider>
+            <driver>com.mysql.cj.jdbc.Driver</driver>
+            <serverURL>jdbc:mysql://_DB_URL_/_DB_NAME_?rewriteBatchedStatements=true&amp;characterEncoding=UTF-8&amp;characterSetResults=UTF-8</serverURL>
+            <username encrypted="false">_DB_USER_</username>
+            <password encrypted="false">_DB_PASS_</password>
+            <testSQL>select 1</testSQL>
+            <testBeforeUse>false</testBeforeUse>
+            <testAfterUse>false</testAfterUse>
+            <testTimeout>500</testTimeout>
+            <timeBetweenEvictionRuns>30000</timeBetweenEvictionRuns>
+            <minIdleTime>900000</minIdleTime>
+            <maxWaitTime>500</maxWaitTime>
+            <minConnections>5</minConnections>
+            <maxConnections>25</maxConnections>
+            <connectionTimeout>1.0</connectionTimeout>
+        </defaultProvider>
+        <mysql>
+            <useUnicode>true</useUnicode>
+        </mysql>>
+    </database>
+</jive>

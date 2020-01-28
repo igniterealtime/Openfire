@@ -42,12 +42,22 @@ initialize_log_dir() {
   ln -sf ${OPENFIRE_LOG_DIR} ${OPENFIRE_DIR}/logs
 }
 
+fill_config() {
+  echo "Injecting config..."
+  rm ${OPENFIRE_DIR}/conf_org/openfire.xml
+  rm ${OPENFIRE_DIR}/conf_org/security.xml
+  cp template_openfire.xml ${OPENFIRE_DIR}/conf_org/openfire.xml
+  cp template_security.xml ${OPENFIRE_DIR}/conf_org/security.xml
+  sh inject_db_settings.sh ${OPENFIRE_DIR}/conf_org/openfire.xml
+}
+
 # allow arguments to be passed to openfire launch
 if [[ ${1:0:1} = '-' ]]; then
   EXTRA_ARGS="$@"
   set --
 fi
 
+fill_config
 rewire_openfire
 initialize_data_dir
 initialize_log_dir
@@ -56,6 +66,9 @@ JAVACMD=`which java 2> /dev/null `
 # default behaviour is to launch openfire
 if [[ -z ${1} ]]; then
   exec start-stop-daemon --start --chuid ${OPENFIRE_USER}:${OPENFIRE_USER} --exec $JAVACMD -- \
+    -XX:+UnlockExperimentalVMOptions \
+    -XX:+UseCGroupMemoryLimitForHeap \
+    -XX:MaxRAMFraction=2 \
     -server \
     -DopenfireHome="${OPENFIRE_DIR}" \
     -Dopenfire.lib.dir=${OPENFIRE_DIR}/lib \

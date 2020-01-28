@@ -320,13 +320,24 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
         filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value, false));
         filter.append("))");
-        if (Log.isDebugEnabled()) {
-            Log.debug("Trying to find group names using query: " + filter.toString());
+        
+        String ldapfilter = filter.toString();
+        String searchRangeStr = ";range=";
+        if (ldapfilter.contains(searchRangeStr))
+        {
+            ldapfilter=ldapfilter.substring(0,ldapfilter.indexOf(searchRangeStr))+
+                    ldapfilter.substring(ldapfilter.indexOf("=", 
+                            ldapfilter.indexOf(searchRangeStr)+searchRangeStr.length()));
         }
+        
+        if (Log.isDebugEnabled()) {
+            Log.debug("Trying to find group names using query: " + ldapfilter);
+        }
+        
         // Perform the LDAP query
         return manager.retrieveList(
                 manager.getGroupNameField(),
-                filter.toString(),
+                ldapfilter,
                 -1,
                 -1,
                 null

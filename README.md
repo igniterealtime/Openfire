@@ -2,6 +2,18 @@ Openfire ![alt tag](https://raw.githubusercontent.com/igniterealtime/IgniteRealt
 ========
 [![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)  [![Project Stats](https://www.openhub.net/p/Openfire/widgets/project_thin_badge.gif)](https://www.openhub.net/p/Openfire)
 
+About this fork
+-----
+This fork is an attempt to make Openfire more "cloud-friendly". The idea is to build a container that is fully functioning when it starts while, at the same time, not containing hardcoded credentials.
+
+Currently:
+* It receives its database settings via environment variables
+  * However, it is still hardcoded to use the MySQL driver
+* It receives its database credentials via environment variables
+* The server configuration is inherited from the conf directory while building the docker image
+  * This includes the certificates in the keystore 
+* System properties are read from the database
+
 About
 -----
 [Openfire] is a real time collaboration (RTC) server licensed under the Open Source Apache License. It uses the only widely adopted open protocol for instant messaging, XMPP (also called Jabber). Openfire is incredibly easy to setup and administer, but offers rock-solid security and performance.

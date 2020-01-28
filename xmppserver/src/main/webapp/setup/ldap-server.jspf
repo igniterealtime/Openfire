@@ -310,7 +310,7 @@
                                         document.getElementById("plainTextWarning").style.display = plainTextWarningDisplay;
                                     }
                                 </script>
-                                <select id="selectProtocol" name="sslEnabled" onchange="updateEncryptionSettings();">
+                                <select id="selectProtocol" name="ssl" onchange="updateEncryptionSettings();">
                                     <option value="true" <c:if test="${sslEnabled}">SELECTED</c:if>>ldaps</option>
                                     <option value="false" <c:if test="${!sslEnabled}">SELECTED</c:if>>ldap</option>
                                 </select>

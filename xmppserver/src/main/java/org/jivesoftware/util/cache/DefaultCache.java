@@ -398,7 +398,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
      */
     @Override
     public int getCacheSize() {
-        return (int) Math.max(Integer.MAX_VALUE,cacheSize);
+        return (int) Math.min(Integer.MAX_VALUE, cacheSize);
     }
 
     /**

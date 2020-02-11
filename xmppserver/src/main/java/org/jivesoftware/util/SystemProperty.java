@@ -98,7 +98,7 @@ public final class SystemProperty<T> {
                 return null;
             }
             try {
-                final Class clazz = Class.forName(value);
+                final Class clazz = ClassUtils.forName(value);
                 //noinspection unchecked
                 if (systemProperty.baseClass.isAssignableFrom(clazz)) {
                     return clazz;

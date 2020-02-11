@@ -258,6 +258,19 @@ public class CollectionNode extends Node {
     }
 
     /**
+     * Notification that a child node configuration was modified. Trigger notifications
+     * to node subscribers whose subscription type is {@link NodeSubscription.Type#nodes} and
+     * have the proper depth.
+     *
+     * @param child the deleted node that was removed from this node.
+     * @param notification message which will be sent to subscribers.
+     */
+    void childNodeModified(Node child, Message notification){
+        // Broadcast event notification to subscribers
+        broadcastCollectionNodeEvent(child, notification);
+    }
+
+    /**
      * Notification that a child node was deleted from this node. Trigger notifications
      * to node subscribers whose subscription type is {@link NodeSubscription.Type#nodes} and
      * have the proper depth.

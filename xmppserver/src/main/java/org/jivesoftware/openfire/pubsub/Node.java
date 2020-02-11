@@ -756,6 +756,11 @@ public abstract class Node {
         }
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);
+
+        // And also to the subscribers of descendant nodes with proper subscription depth
+        if (parent != null){
+            parent.childNodeModified(this, message);
+        }
     }
 
     /**
@@ -1823,6 +1828,10 @@ public abstract class Node {
         if (PubSubPersistenceManager.removeNode(this)) {
             // Remove this node from the parent node (if any)
             if (parent != null) {
+                // Notify the parent that the node has been removed from the parent node
+                if (isNotifiedOfDelete()){
+                    parent.childNodeDeleted(this);
+                }
                 parent.removeChildNode(this);
             }
             deletingNode();
@@ -1835,10 +1844,6 @@ public abstract class Node {
                 items.addAttribute("node", nodeID);
                 // Send notification that the node was deleted
                 broadcastNodeEvent(message, true);
-            }
-            // Notify the parent (if any) that the node has been removed from the parent node
-            if (parent != null) {
-                parent.childNodeDeleted(this);
             }
             // Remove presence subscription when node was deleted.
             cancelPresenceSubscriptions();

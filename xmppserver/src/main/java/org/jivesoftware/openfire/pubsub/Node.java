@@ -757,7 +757,7 @@ public abstract class Node {
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);
 
-        // And also to the subscribers of descendant nodes with proper subscription depth
+        // And also to the subscribers of parent nodes with proper subscription depth
         if (parent != null){
             parent.childNodeModified(this, message);
         }

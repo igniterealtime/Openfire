@@ -200,7 +200,7 @@ public class ScramSha1SaslServer implements SaslServer {
             }
 
             if (!Arrays.equals(storedKey, MessageDigest.getInstance("SHA-1").digest(clientKey))) {
-                throw new SaslException("Authentication failed");
+                throw new SaslException("Authentication failed for: '"+username+"'");
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
                     .getBytes(StandardCharsets.UTF_8);

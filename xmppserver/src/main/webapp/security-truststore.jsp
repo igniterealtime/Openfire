@@ -188,7 +188,12 @@
 
                                 <tr valign="top">
                                     <td>
-                                        <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=true" title="<fmt:message key='session.row.cliked'/>">
+                                        <c:url var="url" value="security-certificate-details.jsp">
+                                            <c:param name="connectionType" value="${connectionType}"/>
+                                            <c:param name="alias" value="${alias}"/>
+                                            <c:param name="isTrustStore" value="true"/>
+                                        </c:url>
+                                        <a href="<c:out value="${url}"/>" title="<fmt:message key='session.row.cliked'/>">
                                             <c:choose>
                                                 <c:when test="${empty fn:trim(organization)}">
                                                     <c:out value="${commonname}"/>
@@ -222,7 +227,13 @@
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
                                     <td width="1" align="center">
-                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true&csrf=${csrf}"
+                                        <c:url var="url" value="security-truststore.jsp">
+                                            <c:param name="connectionType" value="${connectionType}"/>
+                                            <c:param name="alias" value="${alias}"/>
+                                            <c:param name="delete" value="true"/>
+                                            <c:param name="csrf" value="${csrf}"/>
+                                        </c:url>
+                                        <a href="<c:out value="${url}"/>"
                                            title="<fmt:message key="global.click_delete"/>"
                                            onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                                 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

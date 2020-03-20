@@ -134,6 +134,55 @@ from a remote computer using LAN IP address instead or hostname if it is resolva
 Windows Server administrators should add http://127.0.0.1 address to Internet Explorer's Trusted Sites list, if
 Enhanced Security configuration is enabled in Internet Explorer. Otherwise they will get a blank screen.</p>
 
+<h3><a name="autosetup"></a>Autosetup</h3>
+<p>As an alternative to the web-based "wizard" driven setup described above, Openfire can be configured by provisioning it
+with a specially crafted <tt>openfire.xml</tt> file.</p>
+<p>If <tt>&lt;setup&gt;true&lt;>/setup&gt;</tt> does not exist in <tt>openfire.xml</tt> (i.e. setup is not complete, and a block
+does exist called <tt>&lt;autosetup&gt;</tt> with a <tt>&lt;run&gt;true&lt;/run&gt;</tt> property inside it, that looks like this:</p>
+<tt><pre>
+    &lt;autosetup&gt;
+        &lt;run&gt;true&lt;/run&gt;
+        &lt;locale&gt;en&lt;/locale&gt;
+        &lt;xmpp&gt;
+            &lt;domain&gt;localhost&lt;/domain&gt;
+            &lt;fqdn&gt;localhost&lt;/fqdn&gt;
+            &lt;auth&gt;
+                &lt;anonymous&lt;true&lt;/anonymous&lt;
+            &lt;/auth&gt;
+            &lt;socket&gt;
+                &lt;ssl&gt;
+                    &lt;active&gt;true&lt;/active&gt;
+                &lt;/ssl&gt;
+            &lt;/socket&gt;
+        &lt;/xmpp&gt;
+        &lt;encryption&gt;
+            &lt;algorithm&gt;AES&lt;/algorithm&gt;
+            &lt;key&gt;some-key&lt;/key&gt;
+        &lt;/encryption&gt;
+        &lt;database&gt;
+            &lt;mode&gt;standard&lt;/mode&gt;
+            &lt;defaultProvider&gt;
+                &lt;driver&gt;org.postgresql.Driver&lt;/driver&gt;
+                &lt;serverURL&gt;jdbc:postgresql://localhost:5432/a-database&lt;/serverURL&gt;
+                &lt;username&gt;a-database&lt;/username&gt;
+                &lt;password&gt;a-password&lt;/password&gt;
+                &lt;minConnections&gt;5&lt;minConnections&gt;
+                &lt;maxConnections&gt;25&lt;maxConnections&gt;
+                &lt;connectionTimeout&gt;1.0&lt;connectionTimeout&gt;
+            &lt;/defaultProvider&gt;
+        &lt;/database&gt;
+        &lt;admin&gt;
+            &lt;email&gt;admin@example.com&lt;/email&gt;
+        &lt;password&gt;admin&lt;/password&gt;
+        &lt;/admin&gt;
+        &lt;authprovider&gt;
+            &lt;mode&gt;default&lt;/mode&gt;
+        &lt;/authprovider>
+    &lt;/autosetup&gt;
+</pre></tt>
+<p>Then setup will be run on first launch, and the <tt>&lt;autosetup/&gt;</tt> section will be deleted from <tt>openfire.xml</tt></p>
+<p>Note that autosetup provides less options to setup Openfire as compared to using the setup wizard.</p>
+
 <h2><a name="tools">Admin Console</a></h2>
 <p>After completing the above steps, Openfire will be configured
 and you can use the web-based admin console to administer

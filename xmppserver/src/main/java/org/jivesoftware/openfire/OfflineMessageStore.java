@@ -467,18 +467,18 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     }
 
     @Override
-    public void userCreated(User user, Map params) {
+    public void userCreated(User user, Map<String, Object> params) {
         //Do nothing
     }
 
     @Override
-    public void userDeleting(User user, Map params) {
+    public void userDeleting(User user, Map<String, Object> params) {
         // Delete all offline messages of the user
         deleteMessages(user.getUsername());
     }
 
     @Override
-    public void userModified(User user, Map params) {
+    public void userModified(User user, Map<String, Object> params) {
         //Do nothing
     }
 

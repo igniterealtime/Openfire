@@ -155,8 +155,13 @@
         if (description == null) {
             errors.put("roomconfig_roomdesc","roomconfig_roomdesc");
         }
-        if (maxUsers == null) {
-            errors.put("roomconfig_maxusers","roomconfig_maxusers");
+        if (maxUsers == null || maxUsers.isEmpty()) {
+            maxUsers = "0"; // 0 indicates no limit.
+        }
+        try {
+            Integer.parseInt(maxUsers);
+        } catch ( NumberFormatException e ) {
+            errors.put("roomconfig_maxusers", "roomconfig_maxusers");
         }
         if (password != null && !password.equals(confirmPassword)) {
             errors.put("roomconfig_roomsecret2","roomconfig_roomsecret2");
@@ -484,11 +489,19 @@
     <tbody>
         <tr>
             <td><%= StringUtils.escapeHTMLTags(room.getName()) %></td>
-            <% if (room.getOccupantsCount() == 0) { %>
-            <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
-            <% } else { %>
-            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8")%>"><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></a></td>
-            <% } %>
+            <td><% if (room.getOccupantsCount() == 0) { %>
+                    <%= room.getOccupantsCount() %>
+                    <% if (room.getMaxUsers() > 0 ) { %>
+                        / <%= room.getMaxUsers() %>
+                    <% } %>
+                <% } else { %>
+                    <a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8")%>"><%= room.getOccupantsCount() %>
+                    <% if (room.getMaxUsers() > 0 ) { %>
+                        / <%= room.getMaxUsers() %>
+                    <% } %>
+                    </a>
+                <% } %>
+            </td>
             <td><%= dateFormatter.format(room.getCreationDate()) %></td>
             <td><%= dateFormatter.format(room.getModificationDate()) %></td>
         </tr>
@@ -562,14 +575,8 @@
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.max_room" />:</td>
-                    <td><select name="roomconfig_maxusers">
-                            <option value="10" <% if ("10".equals(maxUsers)) out.write("selected");%>>10</option>
-                            <option value="20" <% if ("20".equals(maxUsers)) out.write("selected");%>>20</option>
-                            <option value="30" <% if ("30".equals(maxUsers)) out.write("selected");%>>30</option>
-                            <option value="40" <% if ("40".equals(maxUsers)) out.write("selected");%>>40</option>
-                            <option value="50" <% if ("50".equals(maxUsers)) out.write("selected");%>>50</option>
-                            <option value="0" <% if ("0".equals(maxUsers)) out.write("selected");%>><fmt:message key="muc.room.edit.form.none" /></option>
-                        </select>
+                    <td><input type="number" name="roomconfig_maxusers" min="1" value="<%= maxUsers == null || maxUsers.equals("0") ? "" : StringUtils.escapeForXML(maxUsers)%>" size="5">
+                        <fmt:message key="muc.room.edit.form.empty_nolimit" />
                     </td>
                 </tr>
                  <tr>

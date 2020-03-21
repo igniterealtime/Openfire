@@ -337,9 +337,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private void removeUsernameFromSizeCache(String username) {
         // Update the cached size if it exists.
-        if (sizeCache.containsKey(username)) {
-            sizeCache.remove(username);
-        }
+        sizeCache.remove(username);
     }
 
     /**

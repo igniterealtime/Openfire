@@ -74,6 +74,7 @@ import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
@@ -100,6 +101,12 @@ import org.xmpp.packet.Presence;
 public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(LocalMUCRoom.class);
+
+    private static final SystemProperty<Boolean> JOIN_PRESENCE_ENABLE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.join.presence")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
 
     /**
      * The service hosting the room.
@@ -689,8 +696,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
         try {
             // Send the presence of this new occupant to existing occupants
-            Presence joinPresence = joinRole.getPresence().createCopy();
-            broadcastPresence(joinPresence, true);
+            if (JOIN_PRESENCE_ENABLE.getValue()) {
+                Presence joinPresence = joinRole.getPresence().createCopy();
+                broadcastPresence(joinPresence, true);
+            }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -763,6 +772,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param joinRole the role of the new occupant in the room.
      */
     private void sendInitialPresences(MUCRole joinRole) {
+        if (!JOIN_PRESENCE_ENABLE.getValue()) {
+            return;
+        }
+
         for (MUCRole occupant : occupantsByFullJID.values()) {
             if (occupant == joinRole) {
                 continue;
@@ -866,7 +879,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             else {
                 if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
                     // Inform the rest of the room occupants that the user has left the room
-                    broadcastPresence(presence, false);
+                    if (JOIN_PRESENCE_ENABLE.getValue()) {
+                        broadcastPresence(presence, false);
+                    }
                 }
             }
         }

@@ -260,7 +260,7 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
                 // http://xmpp.org/extensions/xep-0160.html#disco
                 return Collections.singleton("msgoffline").iterator();
         }
-        return Collections.<String>emptyList().iterator();
+        return Collections.emptyIterator();
     }
 
     /**

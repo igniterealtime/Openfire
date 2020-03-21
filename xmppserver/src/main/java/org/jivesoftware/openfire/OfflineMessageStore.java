@@ -88,7 +88,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * Pattern to use for detecting invalid XML characters. Invalid XML characters will
      * be removed from the stored offline messages.
      */
-    private Pattern pattern = Pattern.compile("&\\#[\\d]+;");
+    private Pattern pattern = Pattern.compile("&#[\\d]+;");
 
     /**
      * Returns the instance of {@code OfflineMessageStore} being used by the XMPPServer.

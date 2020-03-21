@@ -508,7 +508,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     /**
      * Decide whether a message should be stored offline according to XEP-0160 and XEP-0334.
      *
-     * @param message
+     * @param message The message to evaluate. Cannot be null.
      * @return <code>true</code> if the message should be stored offline, <code>false</code> otherwise.
      */
     static boolean shouldStoreMessage(final Message message) {

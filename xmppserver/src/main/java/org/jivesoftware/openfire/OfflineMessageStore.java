@@ -116,25 +116,34 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * Adds a message to this message store. Messages will be stored and made
      * available for later delivery.
      *
+     * Note that certain messages are ignored by this implementation, for example, messages that are carbon copies,
+     * have 'no-store' hints, or for which the intended recipient is not a local user. When a message is discarded for
+     * reasons like these, this method will return 'false'.
+     *
      * @param message the message to store.
+     * @return true when data was stored, otherwise false.
      */
-    public void addMessage(Message message) {
+    public boolean addMessage(Message message) {
         if (message == null) {
-            return;
+            Log.trace( "Not storing null message." );
+            return false;
         }
         if(!shouldStoreMessage(message)) {
-            return;
+            Log.trace( "Not storing message, as 'should store' returned false." );
+            return false;
         }
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
         if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
-            return;
+            Log.trace( "Not storing message for which the recipient ({}) is not a registered user.", recipient );
+            return false;
         }
         else
         if (!XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(recipient.getDomain())) {
+            Log.trace( "Not storing message for which the recipient ({}) is not a local user.", recipient );
             // Do not store messages sent to users of remote servers
-            return;
+            return false;
         }
 
         long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
@@ -168,6 +177,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             size += msgXML.length();
             sizeCache.put(username, size);
         }
+        return true;
     }
 
     /**

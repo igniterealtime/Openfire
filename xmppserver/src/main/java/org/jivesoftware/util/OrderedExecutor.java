@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
  * <code>OrderedRunnable.getOrderingKey()</code>. This means that, when two
  * <code>OrderedRunnable</code> instances with same ordering key are submitted,
  * they are executed sequentially in the same order they were submitted. For
- * <code>OrderedRunnable</code> instances with different keys, this doesn't
- * apply and will be executed in parallel.
+ * <code>OrderedRunnable</code> instances with different keys, this rule doesn't
+ * apply and they will be executed in parallel.
  * 
  * 
  * @author <a href="mailto:renjithalexander@gmail.com">Renjith Alexander</a>
@@ -38,8 +38,7 @@ public class OrderedExecutor {
     private final Set<Object> executingItemKeys = new HashSet<>();
 
     /**
-     * The queue which holds the items that are yet to be submitted for execution,
-     * due to tasks with the same keys being executed.
+     * The queue which holds the items that are yet to be submitted for execution.
      */
     private final Queue<OrderedFutureRunnable> localQueue = new LinkedList<>();
 
@@ -54,9 +53,7 @@ public class OrderedExecutor {
     public OrderedExecutor() {
         final ThreadFactory threadFactory = new NamedThreadFactory("OrderedExecutor-pool-", true, Thread.NORM_PRIORITY,
                 Thread.currentThread().getThreadGroup(), 0L);
-        executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(),
+        executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
                 threadFactory);
     }
 
@@ -71,7 +68,7 @@ public class OrderedExecutor {
      * queued, after the tasks with same ordering key, which are running finishes.
      * 
      * @param item the task to be executed.
-     * @return a Future that can be used for getting knowing if the task is
+     * @return a Future that can be used for knowing when the task is gets
      *         completed.
      */
     public Future<?> submit(OrderedRunnable item) {
@@ -89,8 +86,8 @@ public class OrderedExecutor {
 
     /**
      * Removes the ordering key from the current set of executing task keys, and
-     * examines the queue for the next candidate to be taken for execution.
-     * If one found, that task is submitted to the ExecutorService.
+     * examines the queue for the next candidate to be taken for execution. If one
+     * found, that task is submitted to the ExecutorService.
      * 
      * @param finishedItemOrderingKey
      */

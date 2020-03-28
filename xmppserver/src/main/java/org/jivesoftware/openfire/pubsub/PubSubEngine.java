@@ -60,7 +60,7 @@ public class PubSubEngine {
     /**
      * The ordered executor used to publish IQ packets to their respective nodes.
      * This is specifically used to publish the messages to any particular node, in
-     * the same order as it was submitted. The messages to different nodes are
+     * the same order as they were submitted. The messages to separate nodes are
      * published in parallel.
      */
     private static final OrderedExecutor publishToNodePool = new OrderedExecutor();

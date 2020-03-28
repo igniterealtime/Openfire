@@ -190,7 +190,7 @@ class OrderedFutureRunnable implements Future<Void>, OrderedRunnable {
      */
     @Override
     public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        long actualWaitInMillis = unit.convert(timeout, TimeUnit.MILLISECONDS);
+        long actualWaitInMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
         long submitTime = now();
         synchronized (lock) {
             // Task hasn't been submitted for execution yet. Go wait.

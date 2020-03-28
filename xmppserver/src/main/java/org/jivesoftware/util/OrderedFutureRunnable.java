@@ -63,10 +63,8 @@ class OrderedFutureRunnable implements Future<Void>, OrderedRunnable {
             if (this.future != null) {
                 throw new IllegalArgumentException("Future can be set only once");
             }
-            if (!cancelled) {
-                this.future = f;
-                lock.notifyAll();
-            }
+            this.future = f;
+            lock.notifyAll();
         }
 
     }

@@ -105,6 +105,7 @@ public class OrderedExecutor {
                     ite.remove();
                     executingItemKeys.add(nextItemOrderingKey);
                     nextItemToSubmit = nextRunnable;
+                    break;
                 }
             }
         }

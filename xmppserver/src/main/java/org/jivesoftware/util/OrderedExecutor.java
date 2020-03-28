@@ -5,10 +5,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 
@@ -34,18 +35,18 @@ public class OrderedExecutor {
      * The set of keys that are corresponding to the tasks being executed at any
      * point of time.
      */
-    public final Set<Object> executingItemKeys = new HashSet<>();
+    private final Set<Object> executingItemKeys = new HashSet<>();
 
     /**
      * The queue which holds the items that are yet to be submitted for execution,
      * due to tasks with the same keys being executed.
      */
-    public final Queue<OrderedFutureRunnable> localQueue = new LinkedList<>();
+    private final Queue<OrderedFutureRunnable> localQueue = new LinkedList<>();
 
     /**
      * The actual ThreadPoolExecutor.
      */
-    private final ExecutorService executor;
+    private final ThreadPoolExecutor executor;
 
     /**
      * Constructor.
@@ -53,7 +54,10 @@ public class OrderedExecutor {
     public OrderedExecutor() {
         final ThreadFactory threadFactory = new NamedThreadFactory("OrderedExecutor-pool-", true, Thread.NORM_PRIORITY,
                 Thread.currentThread().getThreadGroup(), 0L);
-        executor = Executors.newCachedThreadPool(threadFactory);
+        executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>(),
+                threadFactory);
     }
 
     /**
@@ -107,6 +111,15 @@ public class OrderedExecutor {
         if (nextItemToSubmit != null) {
             nextItemToSubmit.setFuture(executor.submit(new ExecutorRunnable(nextItemToSubmit)));
         }
+    }
+
+    /**
+     * Returns the pool size.
+     * 
+     * @return
+     */
+    public int getPoolSize() {
+        return executor.getPoolSize();
     }
 
     /**

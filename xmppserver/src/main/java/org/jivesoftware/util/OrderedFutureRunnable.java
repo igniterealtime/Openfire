@@ -173,7 +173,11 @@ class OrderedFutureRunnable implements Future<Void>, OrderedRunnable {
                 lock.wait();
             }
         }
-        future.get();
+        // Future shouldn't be null here, if the wait was completed gracefully.
+        // Adding null check to avoid static violations.
+        if (future != null) {
+            future.get();
+        }
         return null;
     }
 

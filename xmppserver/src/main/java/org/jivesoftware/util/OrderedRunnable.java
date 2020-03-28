@@ -10,13 +10,13 @@ package org.jivesoftware.util;
  */
 public interface OrderedRunnable extends Runnable {
 
-	/**
-	 * The key that is used to group and order tasks. The tasks that share the same
-	 * ordering key will be executed in series, in the order that they were
-	 * submitted into the <code>OrderedExecutor</code> than in parallel.
-	 * 
-	 * @return the ordering key for this task.
-	 */
-	Object getOrderingKey();
+    /**
+     * The key that is used to group and order tasks. The tasks that share the same
+     * ordering key will be executed in series, in the order that they were
+     * submitted into the <code>OrderedExecutor</code> than in parallel.
+     * 
+     * @return the ordering key for this task.
+     */
+    Object getOrderingKey();
 
 }

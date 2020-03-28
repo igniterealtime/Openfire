@@ -57,52 +57,52 @@ public class PubSubEngine {
      */
     private PacketRouter router = null;
 
+    /**
+     * The ordered executor used to publish IQ packets to their respective nodes.
+     * This is specifically used to publish the messages to any particular node, in
+     * the same order as it was submitted. The messages to different nodes are
+     * published in parallel.
+     */
+    private static final OrderedExecutor publishToNodePool = new OrderedExecutor();
+    /**
+     * Used to generate ordering key for publish to node, if node id is null.
+     */
+    private static int defaultOrderingKeyGenPubSub = 0;
+
+    private class PublishToNodeTask implements OrderedRunnable {
+
+        private final PubSubService service;
+
+        private final IQ iq;
+
+        private final Element finalAction;
+
+        private final String orderingKey;
+
+        PublishToNodeTask(final PubSubService service, final IQ iq, final Element finalAction) {
+            this.service = service;
+            this.iq = iq;
+            this.finalAction = finalAction;
+            String nodeID = finalAction.attributeValue("node");
+            this.orderingKey = nodeID != null ? nodeID : String.valueOf(++defaultOrderingKeyGenPubSub);
+
+        }
+
+        @Override
+        public void run() {
+            publishItemsToNode(service, iq, finalAction);
+        }
+
+        @Override
+        public Object getOrderingKey() {
+            return this.orderingKey;
+        }
+
+    }
+
     public PubSubEngine(PacketRouter router) {
         this.router = router;
     }
-
-	/**
-	 * The ordered executor used to publish IQ packets to their respective nodes.
-	 * This is specifically used to publish the messages to any particular node, in
-	 * the same order as it was submitted. The messages to different nodes are
-	 * published in parallel.
-	 */
-	private static final OrderedExecutor publishToNodePool = new OrderedExecutor();
-	/** 
-	 * Used to generate ordering key for publish to node, if node id is null.
-	 */
-	private static int defaultOrderingKeyGenPubSub = 0;
-
-	private class PublishToNodeTask implements OrderedRunnable {
-
-		private final PubSubService service;
-
-		private final IQ iq;
-
-		private final Element finalAction;
-
-		private final String orderingKey;
-
-		PublishToNodeTask(final PubSubService service, final IQ iq, final Element finalAction) {
-			this.service = service;
-			this.iq = iq;
-			this.finalAction = finalAction;
-			String nodeID = finalAction.attributeValue("node");
-			this.orderingKey = nodeID != null ? nodeID : String.valueOf(++defaultOrderingKeyGenPubSub);
-
-		}
-
-		@Override
-		public void run() {
-			publishItemsToNode(service, iq, finalAction);
-		}
-
-		@Override
-		public Object getOrderingKey() {
-			return this.orderingKey;
-		}
-
-	}
 
     /**
      * Handles IQ packets sent to the pubsub service. Requests of disco#info and disco#items

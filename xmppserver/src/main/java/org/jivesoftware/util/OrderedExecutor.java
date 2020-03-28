@@ -51,7 +51,7 @@ public class OrderedExecutor {
      * Constructor.
      */
     public OrderedExecutor() {
-        final ThreadFactory threadFactory = new NamedThreadFactory("TaskEngine-pool-", true, Thread.NORM_PRIORITY,
+        final ThreadFactory threadFactory = new NamedThreadFactory("OrderedExecutor-pool-", true, Thread.NORM_PRIORITY,
                 Thread.currentThread().getThreadGroup(), 0L);
         executor = Executors.newCachedThreadPool(threadFactory);
     }

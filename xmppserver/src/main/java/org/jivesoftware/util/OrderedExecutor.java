@@ -63,9 +63,9 @@ public class OrderedExecutor {
     /**
      * Submits an <code>OrderedRunnable</code> to be executed.
      * <p>
-     * If an a task with the same ordering key, as this ordered runnable, is
+     * If a task with the same ordering key, as the passed ordered runnable, is
      * currently being executed by any thread in the pool, this task will be queued
-     * in a different queue. If no tasks with the same ordering key is being
+     * in a 'deferred' queue. If no tasks with the same ordering key is being
      * executed, this task will immediately be taken up for execution.<br>
      * The queued tasks will be taken for execution in the same order as they are
      * queued, after the tasks with same ordering key, which are running finishes.
@@ -90,6 +90,7 @@ public class OrderedExecutor {
     /**
      * Removes the ordering key from the current set of executing task keys, and
      * examines the queue for the next candidate to be taken for execution.
+     * If one found, that task is submitted to the ExecutorService.
      * 
      * @param finishedItemOrderingKey
      */

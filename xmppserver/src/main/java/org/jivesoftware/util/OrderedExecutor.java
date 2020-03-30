@@ -1,8 +1,10 @@
 package org.jivesoftware.util;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -36,6 +38,11 @@ public class OrderedExecutor {
      * point of time.
      */
     private final Set<Object> executingItemKeys = new HashSet<>();
+
+    /**
+     * The Map of keys to the count of queued items.
+     */
+    private final Map<Object, Integer> queuedItemKeys = new HashMap<>();
 
     /**
      * The queue which holds the items that are yet to be submitted for execution.
@@ -74,8 +81,12 @@ public class OrderedExecutor {
     public Future<?> submit(OrderedRunnable item) {
         OrderedFutureRunnable future = new OrderedFutureRunnable(item);
         synchronized (lock) {
-            if (executingItemKeys.contains(item.getOrderingKey())) {
+            Object orderingKey = item.getOrderingKey();
+            // If another task with the same key is being executed,
+            // queue this item and return.
+            if (executingItemKeys.contains(orderingKey)) {
                 localQueue.add(future);
+                incrementQueuedCount(orderingKey);
                 return future;
             }
             executingItemKeys.add(item.getOrderingKey());
@@ -95,6 +106,12 @@ public class OrderedExecutor {
         OrderedFutureRunnable nextItemToSubmit = null;
         synchronized (lock) {
             executingItemKeys.remove(finishedItemOrderingKey);
+            // Only if this task caused another task to get queued, try
+            // fetching the next task to execute. Otherwise, all threads will be
+            // trying to identify and submit the next task, wasting CPU cycles.
+            if (!queuedItemKeys.containsKey(finishedItemOrderingKey)) {
+                return;
+            }
             Iterator<OrderedFutureRunnable> ite = localQueue.iterator();
             while (ite.hasNext()) {
                 OrderedFutureRunnable nextRunnable = ite.next();
@@ -103,12 +120,26 @@ public class OrderedExecutor {
                     ite.remove();
                     executingItemKeys.add(nextItemOrderingKey);
                     nextItemToSubmit = nextRunnable;
+                    // Now that new task is taken up for execution,
+                    // reduced the queued count of its key.
+                    decrementQueuedCount(nextItemOrderingKey);
                     break;
                 }
             }
         }
         if (nextItemToSubmit != null) {
             nextItemToSubmit.setFuture(executor.submit(new ExecutorRunnable(nextItemToSubmit)));
+        }
+    }
+
+    private void incrementQueuedCount(Object orderingKey) {
+        queuedItemKeys.compute(orderingKey, (k, v) -> (v == null) ? 1 : v + 1);
+    }
+
+    private void decrementQueuedCount(Object orderingKey) {
+        Integer newValue = queuedItemKeys.computeIfPresent(orderingKey, (k, v) -> v - 1);
+        if (newValue != null && newValue <= 0) {
+            queuedItemKeys.remove(orderingKey);
         }
     }
 

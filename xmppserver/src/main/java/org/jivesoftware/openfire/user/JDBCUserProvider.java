@@ -43,7 +43,8 @@ import java.util.*;
  * <li>{@code provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider}</li>
  * </ul>
  * <p>
- * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class
+ * {@link org.jivesoftware.database.ExternalDbConnectionProperties}
  * to see what properties you <b>must</b> set. <br />
  * </p>
  *

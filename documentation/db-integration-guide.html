@@ -77,6 +77,26 @@
         in XML, so you should escape it using "&amp;amp;".
     </li>
 </ul>
+<p>
+  The next following properties are recommanded to finely tune the connection to the database.
+</p>
+<ul>
+  <li>jdbcProvider.username -- You can define the username to access the database with This
+    property if you don't want to set it in the connectionString.
+  </li>
+  <li>jdbcProvider.password -- You can define the password to access the database with This
+    property if you don't want to set it in the connectionString.
+  </li>
+  <li>jdbcProvider.poolMinConnection -- The minimum number of connections created in the
+    connectionPool (integer).
+  </li>
+  <li>jdbcProvider.poolMaxConnection -- The maximum number of connections that can be
+    created in the connectionPool (integer, must be more than poolMinConnection).
+  </li>
+  <li>jdbcProvider.connectionTimeout -- The time after which a connection in the connectionPool
+    will be renewed (double, in day. Example: 0,5 means half a day).
+  </li>
+</ul>
 
 <p>
     Below is a sample config file section (note: the "..." sections in the examples indicate areas

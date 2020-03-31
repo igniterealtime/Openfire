@@ -40,7 +40,8 @@ import java.util.*;
  * <li>{@code provider.group.className = org.jivesoftware.openfire.group.JDBCGroupProvider}</li>
  * </ul>
  *
- * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class
+ * {@link org.jivesoftware.database.ExternalDbConnectionProperties}
  * to see what properties you <b>must</b> set. <br />
  * <br />
  * The properties for the SQL statements are:
@@ -74,7 +75,7 @@ import java.util.*;
  *     <li>{@code jdbcGroupPropertyProvider.insertPropertySQL = "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)"}</li>
  * </ul>
  *
- * If you want to manually force Group properties to be read-only, set the following propertie to true:
+ * If you want to manually Group properties to be read-only, set the following propertie to true:
  * <ul>
  *     <li>{@code jdbcGroupPropertyProvider.groupPropertyReadonly = true}</li></li>
  * </ul>

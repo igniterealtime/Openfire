@@ -44,7 +44,8 @@ import org.xmpp.packet.JID;
  * <li>{@code provider.admin.className = org.jivesoftware.openfire.admin.JDBCAdminProvider}</li>
  * </ul>
  *
- * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class
+ * {@link org.jivesoftware.database.ExternalDbConnectionProperties}
  * to see what properties you <b>must</b> set. <br />
  *
  * And below are the SQL statements that should be set:

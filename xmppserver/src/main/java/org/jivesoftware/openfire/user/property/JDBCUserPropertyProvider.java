@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.user.property;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.ExternalDbConnectionManager;
+import org.jivesoftware.database.ExternalDbConnectionProperties;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +41,28 @@ import java.util.Map;
  * <li>{@code provider.userproperty.className = org.jivesoftware.openfire.user.property.JDBCUserPropertyProvider}</li>
  * </ul>
  *
- * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
- * to see what properties you <b>must</b> set. <br />
- * Below are the SQL statements you can define (with examples):
+ * Then you need to set the <b>driver properties</b> for the external database. You can use the the properties
+ * described below which are specific to this class, or you can use the generic properties defined in the class
+ * {@link ExternalDbConnectionManager}. <br />
+ * If you want to use the {@link ExternalDbConnectionManager} properties, set the following to <b>true</b> and
+ * check the documentation of {@link ExternalDbConnectionManager}:
+ * <ul>
+ *  <li>{@code jdbcUserPropertyProvider.useSameExternalDb = true}</li>
+ * </ul>
+ * <br />
+ * If you want to use the specific properties of this class, set the following:
+ * <ul>
+ *     <li>{@code jdbcUserPropertyProvider.driver = com.mysql.jdbc.Driver} (example) (mandatory)</li>
+ *     <li>{@code jdbcUserPropertyProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret} (mandatory)</li>
+ *     <li>{@code jdbcUserPropertyProvider.username = user} (if not defined in the connection string)</li>
+ *     <li>{@code jdbcUserPropertyProvider.password = password} (if not defined in the connection string)</li>
+ *     <li>{@code jdbcUserPropertyProvider.poolMinConnection = Integer > 0}</li>
+ *     <li>{@code jdbcUserPropertyProvider.poolMaxConnection = Integer > poolMinConnection}</li>
+ *     <li>{@code jdbcUserPropertyProvider.connectionTimeout = Double, eg 0.5 (in Day max time before a connection is forcibly renewed)}</li>
+ * </ul>
+ * <br />
+ *
+ * Then, the properties to set for the SQL requests are the following (examples):
  * <ul>
  * <li>{@code jdbcUserPropertyProvider.loadPropertySQL = SELECT propName, propValue FROM myUser WHERE user = ? AND propName = ?}</li>
  * <li>{@code jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propValue FROM myUser WHERE user = ?}</li>
@@ -50,7 +70,7 @@ import java.util.Map;
  *
  * In order to use the configured JDBC connection provider do not use a JDBCconnection string, set the following
  * property:
- *
+
  * {@code jdbcUserPropertyProvider.useConnectionProvider = true}
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
@@ -65,6 +85,7 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
     private boolean useConnectionProvider;
 
     private ExternalDbConnectionManager externalDb;
+    private String externalDbKey;
 
     /**
      * Constructs a new JDBC user property provider.
@@ -79,7 +100,22 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
 
         // Load the JDBC driver and connection string.
         if ( !useConnectionProvider ) {
-            externalDb = ExternalDbConnectionManager.getInstance();
+            boolean useSameExternalDb = JiveGlobals.getBooleanProperty("jdbcUserPropertyProvider.useSameExternalDb", false);
+            if (!useSameExternalDb) {
+                ExternalDbConnectionProperties exProps = new ExternalDbConnectionProperties(this.getClass().getName());
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.DRIVER, "jdbcUserPropertyProvider.driver");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.CONN_STRING, "jdbcUserPropertyProvider.connectionString");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.USERNAME, "jdbcUserPropertyProvider.username");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.PWD, "jdbcUserPropertyProvider.password");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.POOL_MIN_CONN, "jdbcUserPropertyProvider.poolMinConnection");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.POOL_MAX_CONN, "jdbcUserPropertyProvider.poolMaxConnection");
+                exProps.getProps().put(ExternalDbConnectionProperties.DbConPropKeys.CONN_TIMEOUT, "jdbcUserPropertyProvider.connectionTimeout");
+                externalDb = ExternalDbConnectionManager.getInstance(exProps);
+                externalDbKey = this.getClass().getName();
+            } else {
+                externalDb = ExternalDbConnectionManager.getInstance();
+                externalDbKey = ExternalDbConnectionProperties.DEFAULT_EXTERNAL_DB_PROVIDER_KEY;
+            }
         }
 
         // Load database statements for user data.
@@ -105,7 +141,7 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         if ( useConnectionProvider ) {
             return DbConnectionManager.getConnection();
         } else {
-            return externalDb.getConnection();
+            return externalDb.getConnection(externalDbKey);
         }
     }
 

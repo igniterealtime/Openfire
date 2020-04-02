@@ -25,6 +25,7 @@ deploy:
   script: if [ "$TRAVIS_REPO_SLUG" = "igniterealtime/Openfire" ]; then mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml -P ci; else echo "Skip deploy"; fi
   skip_cleanup: true
   on:
+    repo: igniterealtime/Openfire
     all_branches: true
 after_deploy:
 - curl -LO https://raw.github.com/igniterealtime/ci-tooling/master/trigger-travis.sh

@@ -46,6 +46,10 @@
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String enableLog = ParamUtils.getParameter(request, "roomconfig_enablelogging");
     String maxUsers = ParamUtils.getParameter(request, "roomconfig_maxusers");
+    String broadcastModerator = ParamUtils.getParameter(request, "roomconfig_broadcastmoderator");
+    String broadcastParticipant = ParamUtils.getParameter(request, "roomconfig_broadcastparticipant");
+    String broadcastVisitor = ParamUtils.getParameter(request, "roomconfig_broadcastvisitor");
+    String allowpm = ParamUtils.getParameter(request, "roomconfig_allowpm");
 
     if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
         // The requested service name does not exist so return to the list of the existing rooms
@@ -77,6 +81,11 @@
         }
         catch (Exception e) {
             errors.put("max_users", "max_users");
+        }
+        if ( Arrays.asList("anyone", "moderators", "participants", "none").contains(allowpm)) {
+            MUCPersistenceManager.setProperty(mucname, "room.allowpm", allowpm);
+        } else {
+            errors.put("allowpm", "allowpm");
         }
         if (errors.size() == 0) {
             if (publicRoom != null && publicRoom.trim().length() > 0) {
@@ -145,6 +154,24 @@
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.logEnabled", "false");
             }
+            if (broadcastModerator != null && broadcastModerator.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "false");
+            }
+            if (broadcastParticipant != null && broadcastParticipant.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "false");
+            }
+            if (broadcastVisitor != null && broadcastVisitor.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastVisitor", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastVisitor", "false");
+            }
         }
 
         response.sendRedirect("muc-default-settings.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
@@ -173,7 +200,11 @@
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
-        <fmt:message key="muc.default.settings.error" />
+        <% if (errors.get("csrf") != null) { %>
+            <fmt:message key="global.csrf.failed" />
+        <% } else {  %>
+            <fmt:message key="muc.default.settings.error" />
+        <% } %>
         </td></tr>
     </tbody>
     </table>
@@ -312,6 +343,46 @@
                     &nbsp;
                     <input type="number" name="roomconfig_maxusers" id="roomconfig_maxusers" min="1" value="<%= MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30) == 0  ? "" : MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30)%>" size="5">
                     <fmt:message key="muc.room.edit.form.empty_nolimit" />
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    <input name="roomconfig_broadcastmoderator" value="true" id="broadcastModerator" type="checkbox"
+                        <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastModerator", true)) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="broadcastModerator"><fmt:message key="muc.default.settings.broadcast_presence_moderator" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    <input name="roomconfig_broadcastparticipant" value="true" id="broadcastParticipant" type="checkbox"
+                        <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastParticipant", true)) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="broadcastParticipant"><fmt:message key="muc.default.settings.broadcast_presence_participant" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td width="1%">
+                    <input name="roomconfig_broadcastvisitor" value="true" id="broadcastVisitor" type="checkbox"
+                        <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastVisitor", true)) ? "checked" : "") %>>
+                </td>
+                <td width="99%">
+                    <label for="broadcastVisitor"><fmt:message key="muc.default.settings.broadcast_presence_visitor" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td><label for="allowpm"><fmt:message key="muc.default.settings.allowpm" /></label>
+                    <select name="roomconfig_allowpm" id="allowpm">
+                        <option value="none" <% if ("none".equals( MUCPersistenceManager.getProperty(mucname, "room.allowpm", "anyone") )) out.write("selected");%>><fmt:message key="muc.default.settings.none" /></option>
+                        <option value="moderators" <% if ("moderators".equals( MUCPersistenceManager.getProperty(mucname, "room.allowpm", "anyone") )) out.write("selected");%>><fmt:message key="muc.default.settings.moderator" /></option>
+                        <option value="participants" <% if ("participants".equals( MUCPersistenceManager.getProperty(mucname, "room.allowpm", "anyone") )) out.write("selected");%>><fmt:message key="muc.default.settings.participant" /></option>
+                        <option value="anyone" <% if ("anyone".equals( MUCPersistenceManager.getProperty(mucname, "room.allowpm", "anyone") )) out.write("selected");%>><fmt:message key="muc.default.settings.anyone" /></option>
+                    </select>
                 </td>
             </tr>
         </tbody>

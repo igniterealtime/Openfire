@@ -217,7 +217,10 @@
                 <% } %>
         </td>
         <td width="1%" align="center">
-            <nobr><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></nobr>
+            <nobr><%= room.getOccupantsCount() %>
+            <% if (room.getMaxUsers() > 0 ) { %>
+                / <%= room.getMaxUsers() %>
+            <% } %></nobr>
         </td>
         <td width="1%" align="center">
             <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"

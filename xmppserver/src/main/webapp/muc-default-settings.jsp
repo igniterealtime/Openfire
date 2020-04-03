@@ -69,7 +69,10 @@
     pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         try {
-            int max = Integer.parseInt(maxUsers);
+            if (maxUsers == null || maxUsers.isEmpty()) {
+                maxUsers = "0"; // 0 indicates no limit.
+            }
+            Integer.parseInt(maxUsers);
             MUCPersistenceManager.setProperty(mucname, "room.maxUsers", maxUsers);
         }
         catch (Exception e) {
@@ -307,16 +310,8 @@
                 <td width="99%">
                     <label for="roomconfig_maxusers"><fmt:message key="muc.default.settings.max_users" />:</label>
                     &nbsp;
-                    <select name="roomconfig_maxusers">
-                        <% for(int i=10; i<=50; i=i+10) { %>
-                            <option value="<%= i %>"
-                            <%= ((MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30)) == i ? "selected=\"selected\"" : "") %>
-                            ><%= i %></option>
-                        <% } %>
-                        <option value="<%= 0 %>"
-                        <%= ((MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30)) == 0 ? "selected=\"selected\"" : "") %>
-                        ><fmt:message key="global.unlimited" /></option>
-                    </select>
+                    <input type="number" name="roomconfig_maxusers" id="roomconfig_maxusers" min="1" value="<%= MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30) == 0  ? "" : MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30)%>" size="5">
+                    <fmt:message key="muc.room.edit.form.empty_nolimit" />
                 </td>
             </tr>
         </tbody>

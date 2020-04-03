@@ -35,6 +35,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
+<%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -354,19 +355,27 @@
     }
     else {
         if (create) {
-            // TODO Make this default values configurable (see JM-79)
-            maxUsers = "30";
-            broadcastModerator = "true";
-            broadcastParticipant = "true";
-            broadcastVisitor = "true";
-            whois = "moderator";
-            allowpm = "anyone";
-            publicRoom = "true";
-            // Rooms created from the admin console are always persistent
-            persistentRoom = "true";
-            enableLog = "true";
-            canChangeNick = "true";
-            registrationEnabled = "true";
+            // Before a selection for a service has been made (which is part of the room creation process in cases where
+            // more than one service exists) it's impossible to predict what service-specific configuration to use. To prevent
+            // having the user to go through a second step, we'll use the first available service. Given that having more than one
+            // service is a very uncommon scenario, this is an acceptable shortcut.
+            final String serviceName = webManager.getMultiUserChatManager().getMultiUserChatServices().iterator().next().getServiceName();
+            maxUsers = MUCPersistenceManager.getProperty(serviceName, "room.maxUsers", "30");
+            broadcastModerator = MUCPersistenceManager.getProperty(serviceName, "room.broadcastModerator", "true");
+            broadcastParticipant = MUCPersistenceManager.getProperty(serviceName, "room.broadcastParticipant", "true");
+            broadcastVisitor = MUCPersistenceManager.getProperty(serviceName, "room.broadcastVisitor", "true");
+            whois = MUCPersistenceManager.getBooleanProperty(serviceName, "room.canAnyoneDiscoverJID", true) ? "anyone" : "moderator";
+            allowpm = MUCPersistenceManager.getProperty(serviceName, "room.allowpm", "anyone");
+            publicRoom = MUCPersistenceManager.getProperty(serviceName, "room.publicRoom", "true");
+            persistentRoom = "true"; // Rooms created from the admin console are always persistent
+            moderatedRoom = MUCPersistenceManager.getProperty(serviceName, "room.moderated", "false");
+            membersOnly = MUCPersistenceManager.getProperty(serviceName, "room.membersOnly", "false");
+            allowInvites = MUCPersistenceManager.getProperty(serviceName, "room.canOccupantsInvite", "false");
+            changeSubject = MUCPersistenceManager.getProperty(serviceName, "room.canOccupantsChangeSubject", "false");
+            enableLog = MUCPersistenceManager.getProperty(serviceName, "room.logEnabled", "true");
+            reservedNick = MUCPersistenceManager.getProperty(serviceName, "room.loginRestrictedToNickname", "false");
+            canChangeNick = MUCPersistenceManager.getProperty(serviceName, "room.canChangeNickname", "true");
+            registrationEnabled = MUCPersistenceManager.getProperty(serviceName, "room.registrationEnabled", "true");
         }
         else {
             naturalName = room.getNaturalLanguageName();
@@ -420,7 +429,9 @@
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
 
-            <% if (errors.get("roomconfig_roomname") != null) { %>
+            <% if (errors.get("csrf") != null) { %>
+                <fmt:message key="global.csrf.failed" />
+            <% } if (errors.get("roomconfig_roomname") != null) { %>
                 <fmt:message key="muc.room.edit.form.valid_hint_name" />
             <% } if (errors.get("roomconfig_roomdesc") != null) { %>
                 <fmt:message key="muc.room.edit.form.valid_hint_description" />

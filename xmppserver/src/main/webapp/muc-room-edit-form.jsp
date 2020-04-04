@@ -22,8 +22,7 @@
                  java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
-                 org.jivesoftware.openfire.forms.spi.*,
-                 org.jivesoftware.openfire.forms.*,
+                 org.xmpp.forms.*,
                  org.dom4j.Element,
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
@@ -217,107 +216,44 @@
 
         if (errors.size() == 0) {
             // Set the new configuration sending an IQ packet with an dataform
-            FormField field;
-            XDataFormImpl dataForm = new XDataFormImpl(DataForm.TYPE_SUBMIT);
+            final DataForm dataForm = new DataForm(DataForm.Type.submit);
+            dataForm.addField(null, null, FormField.Type.hidden).addValue("http://jabber.org/protocol/muc#roomconfig");
+            dataForm.addField("muc#roomconfig_roomname", null, null).addValue(naturalName);
+            dataForm.addField("muc#roomconfig_roomdesc", null, null).addValue(description);
+            dataForm.addField("muc#roomconfig_changesubject", null, null).addValue((changeSubject == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_maxusers", null, null).addValue(maxUsers);
 
-            field = new XFormFieldImpl("FORM_TYPE");
-            field.setType(FormField.TYPE_HIDDEN);
-            field.addValue("http://jabber.org/protocol/muc#roomconfig");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_roomname");
-            field.addValue(naturalName);
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_roomdesc");
-            field.addValue(description);
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_changesubject");
-            field.addValue((changeSubject == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_maxusers");
-            field.addValue(maxUsers);
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_presencebroadcast");
+            final FormField broadcastField = dataForm.addField("muc#roomconfig_presencebroadcast", null, null);
             if (broadcastModerator != null) {
-                field.addValue("moderator");
+                broadcastField.addValue("moderator");
             }
             if (broadcastParticipant != null) {
-                field.addValue("participant");
+                broadcastField.addValue("participant");
             }
             if (broadcastVisitor != null) {
-                field.addValue("visitor");
+                broadcastField.addValue("visitor");
             }
-            dataForm.addField(field);
 
-            field = new XFormFieldImpl("muc#roomconfig_publicroom");
-            field.addValue((publicRoom == null) ? "0": "1");
-            dataForm.addField(field);
+            dataForm.addField("muc#roomconfig_publicroom", null, null).addValue((publicRoom == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_persistentroom", null, null).addValue((persistentRoom == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_moderatedroom", null, null).addValue((moderatedRoom == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_membersonly", null, null).addValue((membersOnly == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_allowinvites", null, null).addValue((allowInvites == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_passwordprotectedroom", null, null).addValue((password == null) ? "0": "1");
+            dataForm.addField("muc#roomconfig_roomsecret", null, null).addValue(password);
+            dataForm.addField("muc#roomconfig_whois", null, null).addValue(whois);
+            dataForm.addField("muc#roomconfig_allowpm", null, null).addValue(allowpm);
+            dataForm.addField("muc#roomconfig_enablelogging", null, null).addValue((enableLog == null) ? "0": "1");
+            dataForm.addField("x-muc#roomconfig_reservednick", null, null).addValue((reservedNick == null) ? "0": "1");
+            dataForm.addField("x-muc#roomconfig_canchangenick", null, null).addValue((canChangeNick == null) ? "0": "1");
+            dataForm.addField("x-muc#roomconfig_registration", null, null).addValue((registrationEnabled == null) ? "0": "1");
 
-            field = new XFormFieldImpl("muc#roomconfig_persistentroom");
-            field.addValue((persistentRoom == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_moderatedroom");
-            field.addValue((moderatedRoom == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_membersonly");
-            field.addValue((membersOnly == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_allowinvites");
-            field.addValue((allowInvites == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_passwordprotectedroom");
-            field.addValue((password == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_roomsecret");
-            field.addValue(password);
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_whois");
-            field.addValue(whois);
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_allowpm");
-            field.addValue( allowpm );
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("muc#roomconfig_enablelogging");
-            field.addValue((enableLog == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("x-muc#roomconfig_reservednick");
-            field.addValue((reservedNick == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("x-muc#roomconfig_canchangenick");
-            field.addValue((canChangeNick == null) ? "0": "1");
-            dataForm.addField(field);
-
-            field = new XFormFieldImpl("x-muc#roomconfig_registration");
-            field.addValue((registrationEnabled == null) ? "0": "1");
-            dataForm.addField(field);
-
-            // Keep the existing list of admins
-            field = new XFormFieldImpl("muc#roomconfig_roomadmins");
-            for (JID jid : room.getAdmins()) {
-                field.addValue(jid.toString());
-            }
-            dataForm.addField(field);
+            final FormField roomAdminsField = dataForm.addField("muc#roomconfig_roomadmins", null, null);
+            room.getAdmins().forEach( admin -> roomAdminsField.addValue( admin.toString() ));
 
             // Keep the existing list of owners
-            field = new XFormFieldImpl("muc#roomconfig_roomowners");
-            for (JID jid : room.getOwners()) {
-                field.addValue(jid.toString());
-            }
-            dataForm.addField(field);
+            final FormField roomOwnersField = dataForm.addField("muc#roomconfig_roomowners", null, null);
+            room.getOwners().forEach( owner -> roomOwnersField.addValue( owner.toString() ));
 
             // update subject before sending IQ (to include subject with cluster update)
             if (roomSubject != null) {
@@ -333,7 +269,7 @@
             // Create an IQ packet and set the dataform as the main fragment
             IQ iq = new IQ(IQ.Type.set);
             Element element = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
-            element.add(dataForm.asXMLElement());
+            element.add(dataForm.getElement());
             // Send the IQ packet that will modify the room's configuration
             room.getIQOwnerHandler().handleIQ(iq, room.getRole());
 

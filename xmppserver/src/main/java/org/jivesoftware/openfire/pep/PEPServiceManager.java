@@ -118,13 +118,16 @@ public class PEPServiceManager {
                             + owner);
         }
 
-        PEPService pepService;
+        PEPService pepService = null;
         final String bareJID = owner.toBareJID();
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
 
-            pepService = pepServices.get(bareJID).get();
+            if (pepServices.get(bareJID) != null) {
+                pepService = pepServices.get(bareJID).get();
+            }
+
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
                 pepServices.put(bareJID, CacheableOptional.of(pepService));

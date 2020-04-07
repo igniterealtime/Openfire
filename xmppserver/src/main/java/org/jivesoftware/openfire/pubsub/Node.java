@@ -1197,14 +1197,14 @@ public abstract class Node implements Cacheable, Externalizable {
      *
      * @return the pubsub service.
      */
-    public PubSubService getService() {
-
-        if (getUniqueIdentifier().getServiceId().equals( XMPPServer.getInstance().getPubSubModule().getUniqueIdentifier().getServiceId() ) ) {
+    public PubSubService getService()
+    {
+        if (getUniqueIdentifier().getServiceIdentifier().equals( XMPPServer.getInstance().getPubSubModule().getUniqueIdentifier() ) ) {
             return XMPPServer.getInstance().getPubSubModule();
         }
 
         final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-        return serviceMgr.getPEPService( getUniqueIdentifier(), false );
+        return serviceMgr.getPEPService( getUniqueIdentifier().getServiceIdentifier(), false );
     }
 
     /**
@@ -2352,16 +2352,26 @@ public abstract class Node implements Cacheable, Externalizable {
      *
      * The properties that uniquely identify a node are its service, and its nodeId.
      */
-    public static class UniqueIdentifier extends PubSubService.UniqueIdentifier implements Serializable
+    public final static class UniqueIdentifier implements Serializable
     {
+        private final String serviceId;
         private final String nodeId;
 
-        public UniqueIdentifier( final String serviceId, final String nodeId ) {
-            super( serviceId );
+        public UniqueIdentifier( final String serviceId, final String nodeId )
+        {
+            if ( serviceId == null ) {
+                throw new IllegalArgumentException( "Argument 'serviceId' cannot be null." );
+            }
             if ( nodeId == null ) {
                 throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
             }
+            this.serviceId = serviceId;
             this.nodeId = nodeId;
+        }
+
+        public PubSubService.UniqueIdentifier getServiceIdentifier()
+        {
+            return new PubSubService.UniqueIdentifier( serviceId );
         }
 
         public String getNodeId()
@@ -2369,29 +2379,34 @@ public abstract class Node implements Cacheable, Externalizable {
             return nodeId;
         }
 
+        public boolean owns( PublishedItem.UniqueIdentifier itemIdentifier )
+        {
+            return this.equals( itemIdentifier.getNodeIdentifier() );
+        }
+
         @Override
         public boolean equals( final Object o )
         {
             if ( this == o ) { return true; }
             if ( o == null || getClass() != o.getClass() ) { return false; }
-            if ( !super.equals( o ) ) { return false; }
             final UniqueIdentifier that = (UniqueIdentifier) o;
-            return nodeId.equals( that.nodeId );
+            return serviceId.equals(that.serviceId) &&
+                nodeId.equals(that.nodeId);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash( super.hashCode(), nodeId );
+            return Objects.hash(serviceId, nodeId);
         }
 
         @Override
         public String toString()
         {
-            return "Node.UniqueIdentifier{" +
-                    "serviceId='" + getServiceId() + '\'' +
-                    ", nodeId='" + nodeId + '\'' +
-                    '}';
+            return "UniqueIdentifier{" +
+                "serviceId='" + serviceId + '\'' +
+                ", nodeId='" + nodeId + '\'' +
+                '}';
         }
     }
 

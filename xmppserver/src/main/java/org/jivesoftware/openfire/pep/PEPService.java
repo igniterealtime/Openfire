@@ -177,7 +177,7 @@ public class PEPService implements PubSubService, Cacheable {
             // Create root collection node
             JID creatorJID = new JID(bareJID);
 
-            rootCollectionNode = new CollectionNode(this, null, bareJID, creatorJID, collectionDefaultConfiguration);
+            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, bareJID, creatorJID, collectionDefaultConfiguration);
             // Add the creator as the node owner
             rootCollectionNode.addOwner(creatorJID);
             // Save new root node

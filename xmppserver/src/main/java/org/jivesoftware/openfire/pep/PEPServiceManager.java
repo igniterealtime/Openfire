@@ -16,10 +16,7 @@
 package org.jivesoftware.openfire.pep;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.PubSubEngine;
-import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
+import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.cache.Cache;
@@ -55,23 +52,99 @@ public class PEPServiceManager {
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
      *
-     * @param jid
-     *            the JID of the user that owns the PEP service.
-     * @return the requested PEP service if found or null if not found.
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param uniqueIdentifier
+     *            the unique identifier of the PEP service.
+     * @return the requested PEP service.
      */
-    public PEPService getPEPService(JID jid) {
-        return getPEPService( jid.toBareJID() );
+    public PEPService getPEPService( PubSubService.UniqueIdentifier uniqueIdentifier )
+    {
+        return getPEPService( uniqueIdentifier, true );
     }
 
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
      *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param uniqueIdentifier
+     *            the unique identifier of the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
      * @return the requested PEP service if found or null if not found.
      */
-    public PEPService getPEPService(String jid) {
+    public PEPService getPEPService( PubSubService.UniqueIdentifier uniqueIdentifier, boolean autoCreate )
+    {
+        // PEP Services use the JID as their service identifier.
+        final JID needle;
+        try {
+            needle = new JID(uniqueIdentifier.getServiceId());
+        } catch (IllegalArgumentException ex) {
+            Log.warn( "Unable to get PEP service. Provided unique identifier does not contain a valid JID: " + uniqueIdentifier, ex );
+            return null;
+        }
+        return getPEPService( needle, autoCreate );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the JID of the user that owns the PEP service.
+     * @return the requested PEP service.
+     */
+    public PEPService getPEPService( JID jid ) {
+        return getPEPService( jid, true );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the JID of the user that owns the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
+     * @return the requested PEP service if found or null if not found.
+     */
+    public PEPService getPEPService( JID jid, boolean autoCreate ) {
+        return getPEPService( jid.toBareJID(), autoCreate );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @return the requested PEP service.
+     */
+    public PEPService getPEPService( String jid ) {
+        return getPEPService( jid, true );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
+     * @return the requested PEP service if found or null if not found.
+     */
+    public PEPService getPEPService( String jid, boolean autoCreate ) {
         PEPService pepService;
 
         final Lock lock = CacheFactory.getLock(jid, pepServices);
@@ -79,28 +152,33 @@ public class PEPServiceManager {
             lock.lock();
             if (pepServices.containsKey(jid)) {
                 // lookup in cache
-                pepService = pepServices.get(jid).get();
+                if ( pepServices.get(jid).isAbsent() && autoCreate ) {
+                    // needs auto-create despite negative cache.
+                    pepService = null;
+                } else {
+                    return pepServices.get(jid).get();
+                }
             } else {
                 // lookup in database.
                 pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
-
-                if ( pepService != null ) {
-                    Log.debug("PEP: Restored service for {} from the database.", jid);
-                    pubSubEngine.start(pepService);
-                } else {
-                    Log.debug("PEP: Auto-created service for {}.", jid);
-                    pepService = this.create(new JID( jid ));
-
-                    // Probe presences
-                    pubSubEngine.start(pepService);
-
-                    // Those who already have presence subscriptions to jidFrom
-                    // will now automatically be subscribed to this new
-                    // PEPService.
-                    XMPPServer.getInstance().getIQPEPHandler().addSubscriptionForRosterItems( pepService );
-                }
-                pepServices.put(jid, CacheableOptional.of(pepService));
             }
+
+            if ( pepService != null ) {
+                Log.debug("PEP: Restored service for {} from the database.", jid);
+                pubSubEngine.start(pepService);
+            } else if (autoCreate) {
+                Log.debug("PEP: Auto-created service for {}.", jid);
+                pepService = this.create(new JID( jid ));
+
+                // Probe presences
+                pubSubEngine.start(pepService);
+
+                // Those who already have presence subscriptions to jidFrom
+                // will now automatically be subscribed to this new
+                // PEPService.
+                XMPPServer.getInstance().getIQPEPHandler().addSubscriptionForRosterItems( pepService );
+            }
+            pepServices.put(jid, CacheableOptional.of(pepService));
         } finally {
             lock.unlock();
         }

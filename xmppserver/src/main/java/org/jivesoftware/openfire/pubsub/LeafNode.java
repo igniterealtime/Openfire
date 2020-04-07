@@ -79,17 +79,17 @@ public class LeafNode extends Node {
 
     // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
-    public LeafNode( PubSubService service, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, boolean persistPublishedItems, int maxPublishedItems, int maxPayloadSize, boolean sendItemSubscribe)
+    public LeafNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, boolean persistPublishedItems, int maxPublishedItems, int maxPayloadSize, boolean sendItemSubscribe)
     {
-        super(service, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
         this.persistPublishedItems = persistPublishedItems;
         this.maxPublishedItems = maxPublishedItems;
         this.maxPayloadSize = maxPayloadSize;
         this.sendItemSubscribe = sendItemSubscribe;
     }
 
-    public LeafNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration) {
-        super(service, parentNode, nodeID, creator, defaultConfiguration);
+    public LeafNode(PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration) {
+        super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
         this.persistPublishedItems = defaultConfiguration.isPersistPublishedItems();
         this.maxPublishedItems = defaultConfiguration.getMaxPublishedItems();
         this.maxPayloadSize = defaultConfiguration.getMaxPayloadSize();
@@ -345,7 +345,7 @@ public class LeafNode extends Node {
             }
         }
         // Send the result
-        service.send(result);
+        getService().send(result);
     }
 
     @Override

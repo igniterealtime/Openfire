@@ -544,7 +544,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
-                loadNode(service, nodes, parentMappings, rs);
+                loadNode(service.getUniqueIdentifier(), nodes, parentMappings, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -645,7 +645,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Rebuild loaded non-leaf nodes
 			if (rs.next())
 			{
-				loadNode(service, nodes, parentMapping, rs);
+				loadNode(service.getUniqueIdentifier(), nodes, parentMapping, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 			String parentId = parentMapping.get(nodeId);
@@ -731,7 +731,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 	}
 
-    private void loadNode(PubSubService service, Map<String, Node> loadedNodes, Map<String, String> parentMappings, ResultSet rs) {
+    private void loadNode(PubSubService.UniqueIdentifier serviceId, Map<String, Node> loadedNodes, Map<String, String> parentMappings, ResultSet rs) {
         Node node;
         try {
             String nodeID = decodeNodeID(rs.getString(1));
@@ -765,13 +765,13 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 final int maxPublishedItems = rs.getInt(9);
                 final int maxPayloadSize = rs.getInt(7);
                 final boolean sendItemSubscribe = rs.getInt(14) == 1;
-                node = new LeafNode(service, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
+                node = new LeafNode(serviceId, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
             }
             else {
                 // Retrieving a collection node
                 final CollectionNode.LeafNodeAssociationPolicy associationPolicy = CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27));
                 final int maxLeafNodes = rs.getInt(28);
-                node = new CollectionNode(service, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
+                node = new CollectionNode(serviceId, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));
@@ -786,7 +786,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             loadedNodes.put(node.getNodeID(), node);
         }
         catch (SQLException sqle) {
-            log.error("An exception occurred while loading a node for a service ({}) from the database.", service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading a node for a service ({}) from the database.", serviceId, sqle);
         }
     }
 

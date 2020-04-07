@@ -37,7 +37,7 @@ public class ExternalizableUtil {
 
     private static ExternalizableUtil instance = new ExternalizableUtil();
 
-    private ExternalizableUtilStrategy strategy = new DummyExternalizableUtil();
+    private ExternalizableUtilStrategy strategy = new DefaultExternalizableUtil();
 
     static {
         instance = new ExternalizableUtil();

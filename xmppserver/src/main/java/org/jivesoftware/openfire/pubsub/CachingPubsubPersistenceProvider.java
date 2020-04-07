@@ -136,15 +136,15 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private void flushPendingNodes( String serviceId )
+    private void flushPendingNodes( PubSubService.UniqueIdentifier serviceIdentifier )
     {
-        log.trace( "Flushing pending nodes for service: {}", serviceId );
+        log.trace( "Flushing pending nodes for service: {}", serviceIdentifier );
 
         // TODO verify that this is thread-safe (hint: it's not!)
         final Iterator<Map.Entry<Node.UniqueIdentifier, List<NodeOperation>>> iterator = nodesToProcess.entrySet().iterator();
         while (iterator.hasNext()) {
             final Map.Entry<Node.UniqueIdentifier,List<NodeOperation>> entry = iterator.next();
-            if ( serviceId.equals( entry.getKey().getServiceIdentifier().getServiceId() ) )
+            if ( serviceIdentifier.owns( entry.getKey() ) )
             {
                 entry.getValue().forEach( this::process );
                 iterator.remove();
@@ -210,32 +210,31 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void loadNodes(PubSubService service)
     {
-        log.debug( "Loading nodes for service: {}", service.getServiceID() );
+        log.debug( "Loading nodes for service: {}", service.getUniqueIdentifier() );
 
         // Make sure that all changes to nodes have been written to the database
         // before the nodes are retrieved.
-        flushPendingNodes( service.getServiceID() );
+        flushPendingNodes( service.getUniqueIdentifier() );
 
         delegate.loadNodes( service );
     }
 
     @Override
-    public void loadNode(PubSubService service, String nodeId)
+    public void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier)
     {
-        final Node.UniqueIdentifier uniqueIdentifier = new Node.UniqueIdentifier( service.getServiceID(), nodeId );
-        log.debug( "Loading node: {}", uniqueIdentifier );
+        log.debug( "Loading node: {}", nodeIdentifier );
 
         // Make sure that all changes to nodes have been written to the database
         // before the nodes are retrieved.
-        flushPendingNode( uniqueIdentifier );
+        flushPendingNode( nodeIdentifier );
 
-        delegate.loadNode( service, nodeId );
+        delegate.loadNode( service, nodeIdentifier );
     }
 
     @Override
     public void loadSubscription(PubSubService service, Node node, String subId)
     {
-        flushPendingNode( new Node.UniqueIdentifier( service.getServiceID(), node.getNodeID() ) );
+        flushPendingNode( node.getUniqueIdentifier() );
 
         delegate.loadSubscription(service, node, subId);
     }
@@ -610,25 +609,23 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public PublishedItem getPublishedItem( final LeafNode node, final String itemID )
+    public PublishedItem getPublishedItem( final LeafNode node, final PublishedItem.UniqueIdentifier itemIdentifier )
     {
         flushPendingItems( node.getUniqueIdentifier() );
 
-        PublishedItem.UniqueIdentifier itemKey = PublishedItem.getUniqueIdentifier( node, itemID);
-
         // try to fetch from cache first without locking
-        PublishedItem result = itemCache.get(itemKey);
+        PublishedItem result = itemCache.get(itemIdentifier);
         if (result == null) {
             Lock itemLock = CacheFactory.getLock( ITEM_CACHE, itemCache);
             try {
                 // Acquire lock, then re-check cache before reading from DB;
                 // allows clustered item cache to be primed by first request
                 itemLock.lock();
-                result = itemCache.get(itemKey);
+                result = itemCache.get(itemIdentifier);
                 if (result == null) {
                     log.debug("No cached item found. Obtaining it from delegate.");
-                    result = delegate.getPublishedItem( node, itemID );
-                    itemCache.put(itemKey, result);
+                    result = delegate.getPublishedItem( node, itemIdentifier );
+                    itemCache.put(itemIdentifier, result);
                 } else {
                     log.debug("Found cached item on second attempt (after acquiring lock)");
                 }

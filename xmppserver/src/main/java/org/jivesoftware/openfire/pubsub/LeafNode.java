@@ -353,12 +353,14 @@ public class LeafNode extends Node {
         if (!isItemRequired()) {
             return null;
         }
+
+        final PublishedItem.UniqueIdentifier itemIdentifier = new PublishedItem.UniqueIdentifier( getUniqueIdentifier(), itemID );
         synchronized (this) {
-            if (lastPublished != null && lastPublished.getID().equals(itemID)) {
+            if (lastPublished != null && lastPublished.getUniqueIdentifier().equals( itemIdentifier )) {
                 return lastPublished;
             }
         }
-        return PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItem(this, itemID);
+        return PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItem(this, itemIdentifier);
     }
 
     @Override

@@ -52,8 +52,7 @@ public class FlushTask implements ClusterTask<Void>
 		ExternalizableUtil.getInstance().writeBoolean( out, uniqueIdentifier != null);
 		if ( uniqueIdentifier != null )
 		{
-			ExternalizableUtil.getInstance().writeSafeUTF( out, uniqueIdentifier.getServiceId() );
-			ExternalizableUtil.getInstance().writeSafeUTF( out, uniqueIdentifier.getNodeId() );
+			ExternalizableUtil.getInstance().writeSerializable( out, uniqueIdentifier );
 		}
     }
 
@@ -61,9 +60,7 @@ public class FlushTask implements ClusterTask<Void>
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
     {
 		if ( ExternalizableUtil.getInstance().readBoolean( in ) ) {
-			String serviceId = ExternalizableUtil.getInstance().readSafeUTF( in );
-			String nodeId = ExternalizableUtil.getInstance().readSafeUTF( in );
-			uniqueIdentifier = new Node.UniqueIdentifier( serviceId, nodeId );
+		    uniqueIdentifier = (Node.UniqueIdentifier) ExternalizableUtil.getInstance().readSerializable( in );
 		} else {
 			this.uniqueIdentifier = null;
         }

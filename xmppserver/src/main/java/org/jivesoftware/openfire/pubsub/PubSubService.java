@@ -254,7 +254,7 @@ public interface PubSubService {
      *
      * The property that uniquely identifies a service within the system is its serviceId.
      */
-    class UniqueIdentifier implements Serializable
+    final class UniqueIdentifier implements Serializable
     {
         private final String serviceId;
 
@@ -266,6 +266,16 @@ public interface PubSubService {
         }
 
         public String getServiceId() { return serviceId; }
+
+        public boolean owns( Node.UniqueIdentifier nodeIdentifier )
+        {
+            return this.equals( nodeIdentifier.getServiceIdentifier() );
+        }
+
+        public boolean owns( PublishedItem.UniqueIdentifier itemIdentifier )
+        {
+            return this.equals( itemIdentifier.getServiceIdentifier() );
+        }
 
         @Override
         public boolean equals( final Object o )

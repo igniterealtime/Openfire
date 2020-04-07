@@ -360,16 +360,35 @@ public class PublishedItem implements Serializable {
      *
      * The properties that uniquely identify an item are its node, and its itemId.
      */
-    public static class UniqueIdentifier extends Node.UniqueIdentifier implements Serializable
+    public final static class UniqueIdentifier implements Serializable
     {
+        private final String serviceId;
+        private final String nodeId;
         private final String itemId;
 
         public UniqueIdentifier( final String serviceId, final String nodeId, final String itemId ) {
-            super( serviceId, nodeId );
+            if ( serviceId == null ) {
+                throw new IllegalArgumentException( "Argument 'serviceId' cannot be null." );
+            }
+            if ( nodeId == null ) {
+                throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
+            }
             if ( itemId == null ) {
                 throw new IllegalArgumentException( "Argument 'itemId' cannot be null." );
             }
+            this.serviceId = serviceId;
+            this.nodeId = nodeId;
             this.itemId = itemId;
+        }
+
+        public PubSubService.UniqueIdentifier getServiceIdentifier()
+        {
+            return new PubSubService.UniqueIdentifier( serviceId );
+        }
+
+        public Node.UniqueIdentifier getNodeIdentifier()
+        {
+            return new Node.UniqueIdentifier( serviceId, nodeId );
         }
 
         public String getItemId() { return itemId; };
@@ -379,25 +398,26 @@ public class PublishedItem implements Serializable {
         {
             if ( this == o ) { return true; }
             if ( o == null || getClass() != o.getClass() ) { return false; }
-            if ( !super.equals( o ) ) { return false; }
             final UniqueIdentifier that = (UniqueIdentifier) o;
-            return itemId.equals( that.itemId );
+            return serviceId.equals(that.serviceId) &&
+                nodeId.equals(that.nodeId) &&
+                itemId.equals(that.itemId);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash( super.hashCode(), itemId );
+            return Objects.hash(serviceId, nodeId, itemId);
         }
 
         @Override
         public String toString()
         {
-            return "PublishedItem.UniqueIdentifier{" +
-                    "serviceId='" + getServiceId() + '\'' +
-                    ", nodeId='" + getNodeId() + '\'' +
-                    ", itemId='" + itemId + '\'' +
-                    '}';
+            return "UniqueIdentifier{" +
+                "serviceId='" + serviceId + '\'' +
+                ", nodeId='" + nodeId + '\'' +
+                ", itemId='" + itemId + '\'' +
+                '}';
         }
     }
 }

@@ -144,7 +144,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         final Iterator<Map.Entry<Node.UniqueIdentifier, List<NodeOperation>>> iterator = nodesToProcess.entrySet().iterator();
         while (iterator.hasNext()) {
             final Map.Entry<Node.UniqueIdentifier,List<NodeOperation>> entry = iterator.next();
-            if ( serviceId.equals( entry.getKey().getServiceId() ) )
+            if ( serviceId.equals( entry.getKey().getServiceIdentifier().getServiceId() ) )
             {
                 entry.getValue().forEach( this::process );
                 iterator.remove();
@@ -154,7 +154,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     private void flushPendingNode( Node.UniqueIdentifier uniqueIdentifier )
     {
-        log.trace( "Flushing pending node: {} for service: {}", uniqueIdentifier.getNodeId(), uniqueIdentifier.getServiceId() );
+        log.trace( "Flushing pending node: {} for service: {}", uniqueIdentifier.getNodeId(), uniqueIdentifier.getServiceIdentifier().getServiceId() );
 
         // TODO verify if this is having the desired effect. - nodes could be in a hierarchy, which could warrant for flushing the entire tree.
         // TODO verify that this is thread-safe.

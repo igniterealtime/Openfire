@@ -8,7 +8,7 @@ CURL_ARGS="--location --silent"
 DEBUG=false
 LOCAL_RUN=false
 
-HOST='noresolve.example.org'
+HOST='example.local'
 IPADDRESS='127.0.0.1'
 ADMINUSER='admin'
 ADMINPASS='admin'
@@ -18,10 +18,10 @@ usage()
 	echo "Usage: $0 [-d] [-l] [-g] [-i IPADDRESS] [-s GITREF] [-h HOST] [-u USERNAME] [-p PASSWORD]"
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
 	echo "    -l: Launch a local Openfire. (default: off)"
-	echo "    -i: Set a hosts file for the given IP and host (or for noresolve.example.com if running locally). Reverted at exit."
+	echo "    -i: Set a hosts file for the given IP and host (or for example.local if running locally). Reverted at exit."
 	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
 	echo "    -s: Set Smack to the given version (default: 4.4.0-alpha3-SNAPSHOT)"
-	echo "    -h: The hostname for the Openfire under test (default: noresolve.example.org)"
+	echo "    -h: The hostname for the Openfire under test (default: example.local)"
 	echo "    -u: Admin username for Openfire (default: admin)"
 	echo "    -p: Admin password for Openfire (default: admin)"
 	exit 2
@@ -60,7 +60,7 @@ while getopts dlgs:h:i:u:p: OPTION "$@"; do
 	esac
 done
 
-if [[ $LOCAL_RUN == true ]] && [[ $HOST != "noresolve.example.org" ]]; then
+if [[ $LOCAL_RUN == true ]] && [[ $HOST != "example.local" ]]; then
 	echo "Host is fixed if launching a local instance. If you have an already-running instance to test against, omit the -l flag (and provide -i 127.0.0.1 if necessary)."
 	exit 1
 fi

@@ -9,6 +9,7 @@ DEBUG=false
 LOCAL_RUN=false
 
 HOST='example.org'
+IPADDRESS='127.0.0.1'
 ADMINUSER='admin'
 ADMINPASS='admin'
 

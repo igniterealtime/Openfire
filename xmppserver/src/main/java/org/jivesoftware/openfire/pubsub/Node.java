@@ -25,6 +25,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.pep.PEPService;
+import org.jivesoftware.openfire.pep.PEPServiceManager;
 import org.jivesoftware.openfire.pubsub.cluster.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
@@ -55,9 +57,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class Node implements Cacheable, Externalizable {
 
     /**
-     * Reference to the publish and subscribe service.
+     * Unique reference to the publish and subscribe service.
      */
-    protected PubSubService service;
+    protected PubSubService.UniqueIdentifier serviceId;
     /**
      * Keeps the Node that is containing this node.
      */
@@ -190,12 +192,12 @@ public abstract class Node implements Cacheable, Externalizable {
 
     Node() {} // to be used only for serialization;
 
-    Node(PubSubService service, CollectionNode parent, String nodeID, JID creator, DefaultNodeConfiguration configuration ) {
-        this(service, parent, nodeID, creator, configuration.isSubscriptionEnabled(), configuration.isDeliverPayloads(), configuration.isNotifyConfigChanges(), configuration.isNotifyDelete(), configuration.isNotifyRetract(), configuration.isPresenceBasedDelivery(), configuration.getAccessModel(), configuration.getPublisherModel(), configuration.getLanguage(), configuration.getReplyPolicy() );
+    Node(PubSubService.UniqueIdentifier serviceId, CollectionNode parent, String nodeID, JID creator, DefaultNodeConfiguration configuration ) {
+        this(serviceId, parent, nodeID, creator, configuration.isSubscriptionEnabled(), configuration.isDeliverPayloads(), configuration.isNotifyConfigChanges(), configuration.isNotifyDelete(), configuration.isNotifyRetract(), configuration.isPresenceBasedDelivery(), configuration.getAccessModel(), configuration.getPublisherModel(), configuration.getLanguage(), configuration.getReplyPolicy() );
     }
 
-    Node(PubSubService service, CollectionNode parent, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy) {
-        this.service = service;
+    Node(PubSubService.UniqueIdentifier serviceId, CollectionNode parent, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy) {
+        this.serviceId = serviceId;
         this.parent = parent;
         this.nodeID = nodeID;
         this.creator = creator;
@@ -220,7 +222,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return A unique identifier for this node.
      */
     public UniqueIdentifier getUniqueIdentifier() {
-        return new UniqueIdentifier( this.service.getServiceID(), this.nodeID );
+        return new UniqueIdentifier( this.serviceId.getServiceId(), this.nodeID );
     }
 
     /**
@@ -651,7 +653,7 @@ public abstract class Node implements Cacheable, Externalizable {
                     // Set the parent collection node
                     values = field.getValues();
                     String newParent = values.size() > 0 ? values.get(0) : " ";
-                    Node newParentNode = service.getNode(newParent);
+                    Node newParentNode = getService().getNode(newParent);
 
                     if (!(newParentNode instanceof CollectionNode))
                     {
@@ -1121,7 +1123,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return true if this node is the root node of the pubsub service.
      */
     public boolean isRootCollectionNode() {
-        return service.getRootCollectionNode() == this;
+        return getService().getRootCollectionNode() == this;
     }
 
     /**
@@ -1133,7 +1135,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return true if a user may have more than one subscription with the node.
      */
     public boolean isMultipleSubscriptionsEnabled() {
-        return service.isMultipleSubscriptionsEnabled();
+        return getService().isMultipleSubscriptionsEnabled();
     }
 
     /**
@@ -1179,7 +1181,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return true if the specified user is allowed to administer the node.
      */
     public boolean isAdmin(JID user) {
-        if (getOwners().contains(user) || service.isServiceAdmin(user)) {
+        if (getOwners().contains(user) || getService().isServiceAdmin(user)) {
             return true;
         }
         // Check if we should try again but using the bare JID
@@ -1196,7 +1198,13 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return the pubsub service.
      */
     public PubSubService getService() {
-        return service;
+
+        if (getUniqueIdentifier().getServiceId().equals( XMPPServer.getInstance().getPubSubModule().getUniqueIdentifier().getServiceId() ) ) {
+            return XMPPServer.getInstance().getPubSubModule();
+        }
+
+        final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+        return serviceMgr.getPEPService( getUniqueIdentifier(), false );
     }
 
     /**
@@ -1776,7 +1784,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 PubSubPersistenceProviderManager.getInstance().getProvider().createSubscription(this, subscription);
             }
             // Add the new node to the list of available nodes
-            service.addNode(this);
+            getService().addNode(this);
             // Notify the parent (if any) that a new node has been added
             if (parent != null) {
                 parent.childNodeAdded(this);
@@ -1864,7 +1872,7 @@ public abstract class Node implements Cacheable, Externalizable {
         // Remove presence subscription when node was deleted.
         cancelPresenceSubscriptions();
         // Remove the node from memory
-        service.removeNode(getNodeID());
+        getService().removeNode(getNodeID());
         CacheFactory.doClusterTask(new RemoveNodeTask(this));
         // Clear collections in memory (clear them after broadcast was sent)
         affiliates.clear();
@@ -1917,7 +1925,7 @@ public abstract class Node implements Cacheable, Externalizable {
         for (NodeAffiliate affiliate : affiliates) {
             if (affiliate.getAffiliation() != NodeAffiliate.Affiliation.outcast &&
                     (isPresenceBasedDelivery() || (!affiliate.getSubscriptions().isEmpty()))) {
-                service.presenceSubscriptionRequired(this, affiliate.getJID());
+                getService().presenceSubscriptionRequired(this, affiliate.getJID());
             }
         }
     }
@@ -1930,7 +1938,7 @@ public abstract class Node implements Cacheable, Externalizable {
     private void cancelPresenceSubscriptions() {
         for (NodeSubscription subscription : getSubscriptions()) {
             if (isPresenceBasedDelivery() || !subscription.getPresenceStates().isEmpty()) {
-                service.presenceSubscriptionNotRequired(this, subscription.getOwner());
+                getService().presenceSubscriptionNotRequired(this, subscription.getOwner());
             }
         }
     }
@@ -1956,7 +1964,7 @@ public abstract class Node implements Cacheable, Externalizable {
             entity.addAttribute("affiliation", affiliate.getAffiliation().name());
         }
         // Send reply
-        service.send(reply);
+        getService().send(reply);
     }
 
     /**
@@ -1986,7 +1994,7 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
         // Send reply
-        service.send(reply);
+        getService().send(reply);
     }
 
     /**
@@ -2004,7 +2012,7 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
         // Broadcast packet to subscribers
-        service.broadcast(this, message, jids);
+        getService().broadcast(this, message, jids);
     }
 
     /**
@@ -2045,7 +2053,7 @@ public abstract class Node implements Cacheable, Externalizable {
         //
         if (subscriberJID.getResource() == null ||
             SessionManager.getInstance().getSession(subscriberJID) != null) {
-            service.sendNotification(this, notification, subscriberJID);
+            getService().sendNotification(this, notification, subscriberJID);
         }
 
         if (headers != null) {
@@ -2151,7 +2159,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 // Subscribe to the owner's presence since the node is only sending events to
                 // online subscribers and this is the first subscription of the user and the
                 // subscription is not filtering notifications based on presence show values.
-                service.presenceSubscriptionRequired(this, owner);
+                getService().presenceSubscriptionRequired(this, owner);
             }
         }
     }
@@ -2185,7 +2193,7 @@ public abstract class Node implements Cacheable, Externalizable {
 
         // Check if we need to unsubscribe from the presence of the owner
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {
-            service.presenceSubscriptionNotRequired(this, subscription.getOwner());
+            getService().presenceSubscriptionNotRequired(this, subscription.getOwner());
         }
     }
 
@@ -2307,7 +2315,7 @@ public abstract class Node implements Cacheable, Externalizable {
         final int prime = 31;
         int result = 1;
         result = prime * result + nodeID.hashCode();
-        result = prime * result + service.getServiceID().hashCode();
+        result = prime * result + serviceId.getServiceId().hashCode();
         return result;
     }
 
@@ -2321,7 +2329,7 @@ public abstract class Node implements Cacheable, Externalizable {
 
         Node compareNode = (Node) obj;
 
-        return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
+        return getUniqueIdentifier().equals(compareNode.getUniqueIdentifier());
     }
 
     /**
@@ -2472,7 +2480,7 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeSerializableCollection( out, replyTo );
         util.writeSerializableCollection( out, rosterGroupsAllowed );
         util.writeBoolean( out, savedToDB );
-        util.writeSerializable( out, service.getAddress() );
+        util.writeSerializable( out, serviceId );
         util.writeBoolean( out, subscriptionConfigurationRequired );
         util.writeBoolean( out, subscriptionEnabled );
 
@@ -2544,7 +2552,7 @@ public abstract class Node implements Cacheable, Externalizable {
         util.readSerializableCollection( in, replyTo, getClass().getClassLoader() );
         util.readSerializableCollection( in, rosterGroupsAllowed, getClass().getClassLoader() );
         savedToDB = util.readBoolean( in );
-        final JID serviceAddress = (JID) util.readSerializable( in );
+        serviceId = (PubSubService.UniqueIdentifier) util.readSerializable( in );
         subscriptionConfigurationRequired = util.readBoolean( in );
         subscriptionEnabled = util.readBoolean( in );
 
@@ -2562,20 +2570,9 @@ public abstract class Node implements Cacheable, Externalizable {
             subscriptionsByJID.put( subscription.getJID().toString(), subscription );
         }
 
-        final PubSubModule pubSubModule = XMPPServer.getInstance().getPubSubModule();
-        if ( pubSubModule.getAddress().equals( serviceAddress) ) {
-            service = pubSubModule;
-        } else {
-            service = XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( serviceAddress.toBareJID() );
-        }
-        if ( service == null ) {
-            // The service is neither a pubsubmodule, nor PEP service. Is there a new
-            // implementation of PubSubService that needs to be added to this code?
-            throw new IllegalStateException();
-        }
-
         if (parentId != null)
         {
+            PubSubService service = getService();
             if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getNodeID().equals( parentId ) )
             {
                 parent = service.getRootCollectionNode();

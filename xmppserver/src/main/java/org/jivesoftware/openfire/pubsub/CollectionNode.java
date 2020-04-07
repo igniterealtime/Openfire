@@ -68,16 +68,16 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    public CollectionNode( PubSubService service, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, LeafNodeAssociationPolicy associationPolicy, int maxLeafNodes)
+    public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, LeafNodeAssociationPolicy associationPolicy, int maxLeafNodes)
     {
-        super(service, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
         this.associationPolicy = associationPolicy;
         this.maxLeafNodes = maxLeafNodes;
     }
 
-    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration)
+    public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration)
     {
-        super(service, parentNode, nodeID, creator, defaultConfiguration);
+        super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
         this.associationPolicy = defaultConfiguration.getAssociationPolicy();
         this.maxLeafNodes = defaultConfiguration.getMaxLeafNodes();
     }
@@ -121,7 +121,7 @@ public class CollectionNode extends Node {
             // Check all nodes for their existence
             for (String nodeId : values)
             {
-                Node childNode = service.getNode(nodeId);
+                Node childNode = getService().getNode(nodeId);
 
                 if (childNode == null)
                 {
@@ -320,7 +320,7 @@ public class CollectionNode extends Node {
         }
         // TODO Possibly use a thread pool for sending packets (based on the jids size)
         for (NodeSubscription subscription : subscriptions) {
-            service.sendNotification(subscription.getNode(), notification, subscription.getJID());
+            getService().sendNotification(subscription.getNode(), notification, subscription.getJID());
         }
     }
 

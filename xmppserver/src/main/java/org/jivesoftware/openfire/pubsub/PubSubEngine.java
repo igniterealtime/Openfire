@@ -1412,10 +1412,10 @@ public class PubSubEngine {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
                     if (collectionType) {
-                        newNode = new CollectionNode(service, parentNode, newNodeID, requester, defaultConfiguration);
+                        newNode = new CollectionNode(service.getUniqueIdentifier(), parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     else {
-                        newNode = new LeafNode(service, parentNode, newNodeID, requester, defaultConfiguration);
+                        newNode = new LeafNode(service.getUniqueIdentifier(), parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     // Add the creator as the node owner
                     newNode.addOwner(owner);

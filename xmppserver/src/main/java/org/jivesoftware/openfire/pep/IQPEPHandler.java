@@ -344,7 +344,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                         // Create the node
                         final JID creator = new JID(jidFrom);
                         final DefaultNodeConfiguration defaultConfiguration = pepService.getDefaultNodeConfiguration(true);
-                        final LeafNode newNode = new LeafNode(pepService, pepService.getRootCollectionNode(), nodeID, creator, defaultConfiguration);
+                        final LeafNode newNode = new LeafNode(pepService.getUniqueIdentifier(), pepService.getRootCollectionNode(), nodeID, creator, defaultConfiguration);
                         final DataForm publishOptions = PubSubEngine.getPublishOptions( packet );
                         if ( publishOptions != null )
                         {

@@ -25,7 +25,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pep.PEPServiceManager;
 import org.jivesoftware.openfire.pubsub.cluster.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
@@ -43,9 +42,6 @@ import org.xmpp.packet.PacketError;
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
 import java.io.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A virtual location to which information can be published and from which event
@@ -59,7 +55,7 @@ public abstract class Node implements Cacheable, Externalizable {
     /**
      * Unique reference to the publish and subscribe service.
      */
-    protected PubSubService.UniqueIdentifier serviceId;
+    protected PubSubService.UniqueIdentifier serviceIdentifier;
     /**
      * Keeps the Node that is containing this node.
      */
@@ -197,7 +193,7 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     Node(PubSubService.UniqueIdentifier serviceId, CollectionNode parent, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy) {
-        this.serviceId = serviceId;
+        this.serviceIdentifier = serviceId;
         this.parent = parent;
         this.nodeID = nodeID;
         this.creator = creator;
@@ -222,7 +218,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return A unique identifier for this node.
      */
     public UniqueIdentifier getUniqueIdentifier() {
-        return new UniqueIdentifier( this.serviceId.getServiceId(), this.nodeID );
+        return new UniqueIdentifier( this.serviceIdentifier, this.nodeID );
     }
 
     /**
@@ -2315,7 +2311,7 @@ public abstract class Node implements Cacheable, Externalizable {
         final int prime = 31;
         int result = 1;
         result = prime * result + nodeID.hashCode();
-        result = prime * result + serviceId.getServiceId().hashCode();
+        result = prime * result + serviceIdentifier.getServiceId().hashCode();
         return result;
     }
 
@@ -2366,6 +2362,17 @@ public abstract class Node implements Cacheable, Externalizable {
                 throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
             }
             this.serviceId = serviceId;
+            this.nodeId = nodeId;
+        }
+
+        public UniqueIdentifier( final PubSubService.UniqueIdentifier serviceIdentifier, final String nodeId ) {
+            if ( serviceIdentifier == null ) {
+                throw new IllegalArgumentException( "Argument 'serviceIdentifier' cannot be null." );
+            }
+            if ( nodeId == null ) {
+                throw new IllegalArgumentException( "Argument 'nodeId' cannot be null." );
+            }
+            this.serviceId = serviceIdentifier.getServiceId();
             this.nodeId = nodeId;
         }
 
@@ -2481,7 +2488,7 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeBoolean( out, notifyRetract );
         util.writeBoolean( out, parent != null );
         if (parent != null) {
-            util.writeSafeUTF( out, parent.getNodeID() );
+            util.writeSerializable( out, parent.getUniqueIdentifier() );
         }
         util.writeSafeUTF( out, payloadType );
         util.writeBoolean( out, presenceBasedDelivery );
@@ -2495,7 +2502,7 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeSerializableCollection( out, replyTo );
         util.writeSerializableCollection( out, rosterGroupsAllowed );
         util.writeBoolean( out, savedToDB );
-        util.writeSerializable( out, serviceId );
+        util.writeSerializable(out, serviceIdentifier);
         util.writeBoolean( out, subscriptionConfigurationRequired );
         util.writeBoolean( out, subscriptionEnabled );
 
@@ -2546,10 +2553,10 @@ public abstract class Node implements Cacheable, Externalizable {
         notifyConfigChanges = util.readBoolean( in );
         notifyDelete = util.readBoolean( in );
         notifyRetract = util.readBoolean( in );
-        final String parentId;
+        final UniqueIdentifier parentId;
         if ( util.readBoolean( in ) )
         {
-            parentId = util.readSafeUTF( in );
+            parentId = (UniqueIdentifier) util.readSerializable(in );
         }
         else
         {
@@ -2567,7 +2574,7 @@ public abstract class Node implements Cacheable, Externalizable {
         util.readSerializableCollection( in, replyTo, getClass().getClassLoader() );
         util.readSerializableCollection( in, rosterGroupsAllowed, getClass().getClassLoader() );
         savedToDB = util.readBoolean( in );
-        serviceId = (PubSubService.UniqueIdentifier) util.readSerializable( in );
+        serviceIdentifier = (PubSubService.UniqueIdentifier) util.readSerializable(in);
         subscriptionConfigurationRequired = util.readBoolean( in );
         subscriptionEnabled = util.readBoolean( in );
 
@@ -2588,13 +2595,13 @@ public abstract class Node implements Cacheable, Externalizable {
         if (parentId != null)
         {
             PubSubService service = getService();
-            if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getNodeID().equals( parentId ) )
+            if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getUniqueIdentifier().equals( parentId ) )
             {
                 parent = service.getRootCollectionNode();
             }
             else
             {
-                parent = (CollectionNode) service.getNode( parentId );
+                parent = (CollectionNode) service.getNode( parentId.getNodeId() );
             }
         }
     }

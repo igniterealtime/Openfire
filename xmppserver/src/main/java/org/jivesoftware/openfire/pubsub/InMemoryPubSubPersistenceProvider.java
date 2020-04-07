@@ -136,15 +136,14 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     }
 
     @Override
-    public void loadNode( PubSubService service, String nodeId )
+    public void loadNode( PubSubService service, Node.UniqueIdentifier nodeIdentifier )
     {
-        final Node.UniqueIdentifier uniqueIdentifier = new Node.UniqueIdentifier( service.getServiceID(), nodeId );
-        log.debug( "Loading node: {}", uniqueIdentifier );
+        log.debug( "Loading node: {}", nodeIdentifier );
 
         final List<Node> nodes = serviceIdToNodesCache.get( service.getUniqueIdentifier() );
         if ( nodes != null )
         {
-            final Optional<Node> optionalNode = nodes.stream().filter( node -> node.getUniqueIdentifier().equals( uniqueIdentifier ) ).findAny();
+            final Optional<Node> optionalNode = nodes.stream().filter( node -> node.getUniqueIdentifier().equals( nodeIdentifier ) ).findAny();
             optionalNode.ifPresent( service::addNode );
         }
     }
@@ -284,20 +283,20 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     }
 
     @Override
-    public PublishedItem getPublishedItem( LeafNode node, String itemID )
+    public PublishedItem getPublishedItem( LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier )
     {
-        log.debug( "Getting published item {} for node {}", itemID, node.getUniqueIdentifier() );
+        log.debug( "Getting published item {} for node {}", itemIdentifier.getItemId(), node.getUniqueIdentifier() );
 
         PublishedItem lastPublishedItem = null;
         final List<PublishedItem> publishedItems = getPublishedItems( node );
         if ( publishedItems != null )
         {
-            final List<PublishedItem> collect = publishedItems.stream().filter( publishedItem -> publishedItem.getID().equals( itemID ) ).collect( Collectors.toList() );
+            final List<PublishedItem> collect = publishedItems.stream().filter( publishedItem -> publishedItem.getID().equals( itemIdentifier.getItemId() ) ).collect( Collectors.toList() );
             if ( !collect.isEmpty() )
             {
                 if ( collect.size() > 1 )
                 {
-                    log.warn( "Detected duplicate item key " + itemID + " usage for node " + node.getUniqueIdentifier().toString() );
+                    log.warn( "Detected duplicate item key " + itemIdentifier.getItemId() + " usage for node " + node.getUniqueIdentifier().toString() );
                 }
                 lastPublishedItem = collect.get( collect.size() - 1 );
             }

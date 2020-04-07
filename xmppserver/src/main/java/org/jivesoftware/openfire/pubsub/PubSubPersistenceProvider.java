@@ -63,8 +63,10 @@ public interface PubSubPersistenceProvider
      *
      * @param service
      *            the pubsub service that is hosting the nodes.
+     * @param nodeIdentifier
+     *            the identifier of the node to load.
      */
-    void loadNode(PubSubService service, String nodeId);
+    void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier);
 
     void loadSubscription(PubSubService service, Node node, String subId);
 
@@ -183,7 +185,7 @@ public interface PubSubPersistenceProvider
      */
     PublishedItem getLastPublishedItem(LeafNode node);
 
-    PublishedItem getPublishedItem(LeafNode node, String itemID);
+    PublishedItem getPublishedItem(LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier);
 
     void purgeNode(LeafNode leafNode);
 
@@ -194,7 +196,7 @@ public interface PubSubPersistenceProvider
      *            the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.
      */
-    PEPService loadPEPServiceFromDB( String jid);
+    PEPService loadPEPServiceFromDB(String jid);
 
     /**
      * Writes large changesets, using batches and transactions when available.

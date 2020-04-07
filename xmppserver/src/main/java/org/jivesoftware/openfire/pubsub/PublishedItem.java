@@ -381,6 +381,18 @@ public class PublishedItem implements Serializable {
             this.itemId = itemId;
         }
 
+        public UniqueIdentifier( final Node.UniqueIdentifier nodeIdentifier, final String itemId ) {
+            if ( nodeIdentifier == null ) {
+                throw new IllegalArgumentException( "Argument 'nodeIdentifier' cannot be null." );
+            }
+            if ( itemId == null ) {
+                throw new IllegalArgumentException( "Argument 'itemId' cannot be null." );
+            }
+            this.serviceId = nodeIdentifier.getServiceIdentifier().getServiceId();
+            this.nodeId = nodeIdentifier.getNodeId();
+            this.itemId = itemId;
+        }
+
         public PubSubService.UniqueIdentifier getServiceIdentifier()
         {
             return new PubSubService.UniqueIdentifier( serviceId );

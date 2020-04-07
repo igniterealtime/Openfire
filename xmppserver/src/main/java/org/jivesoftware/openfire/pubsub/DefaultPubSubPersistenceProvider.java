@@ -622,10 +622,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-	public void loadNode(PubSubService service, String nodeId)
+	public void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier)
 	{
-	    final Node.UniqueIdentifier uniqueIdentifier = new Node.UniqueIdentifier( service.getServiceID(), nodeId );
-        log.debug( "Loading node: {}", uniqueIdentifier );
+        log.debug( "Loading node: {}", nodeIdentifier );
 
         Connection con = null;
 		PreparedStatement pstmt = null;
@@ -638,7 +637,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// their children)
 			pstmt = con.prepareStatement(LOAD_NODE);
 			pstmt.setString(1, service.getServiceID());
-			pstmt.setString(2, nodeId);
+			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			Map<String, String> parentMapping = new HashMap<>();
 			
@@ -648,23 +647,23 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 				loadNode(service.getUniqueIdentifier(), nodes, parentMapping, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
-			String parentId = parentMapping.get(nodeId);
+			String parentId = parentMapping.get(nodeIdentifier.getNodeId());
 			
 			if (parentId != null) {
 				CollectionNode parent = (CollectionNode) service.getNode(parentId);
 				
 				if (parent == null) {
-            		log.error("Could not find parent node " + parentId + " for node " + uniqueIdentifier);
+            		log.error("Could not find parent node " + parentId + " for node " + nodeIdentifier);
 				}
 				else {
-					nodes.get(nodeId).changeParent(parent);
+					nodes.get(nodeIdentifier.getNodeId()).changeParent(parent);
 				}
 			}
 				
 			// Get JIDs associated with all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_JIDS);
 			pstmt.setString(1, service.getServiceID());
-			pstmt.setString(2, nodeId);
+			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the associated JIDs
 			while (rs.next())
@@ -676,7 +675,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Get roster groups associated with all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_GROUPS);
 			pstmt.setString(1, service.getServiceID());
-			pstmt.setString(2, nodeId);
+			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the associated Groups
 			while (rs.next())
@@ -688,7 +687,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Get affiliations of all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
 			pstmt.setString(1, service.getServiceID());
-			pstmt.setString(2, nodeId);
+			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the corresponding affiliates
 			while (rs.next())
@@ -700,7 +699,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Get subscriptions to all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_SUBSCRIPTIONS);
 			pstmt.setString(1, service.getServiceID());
-			pstmt.setString(2, nodeId);
+			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the corresponding subscriptions
 			while (rs.next())
@@ -711,7 +710,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 		catch (SQLException sqle)
 		{
-            log.error("An exception occurred while loading a node ({}) for a service ({}) from the database.", nodeId, service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading a node ({}) for a service ({}) from the database.", nodeIdentifier.getNodeId(), service.getUniqueIdentifier(), sqle);
 		}
 		finally
 		{
@@ -1620,7 +1619,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public PublishedItem getPublishedItem(LeafNode node, String itemID)
+    public PublishedItem getPublishedItem(LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier)
     {
         // fetch item from DB
         Connection con = null;
@@ -1631,7 +1630,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt = con.prepareStatement(LOAD_ITEM);
             pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, node.getNodeID());
-            pstmt.setString(3, itemID);
+            pstmt.setString(3, itemIdentifier.getItemId());
             rs = pstmt.executeQuery();
 
             // Add to each node the corresponding subscriptions
@@ -1639,7 +1638,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 JID publisher = new JID(rs.getString(1));
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
                 // Create the item
-                final PublishedItem result = new PublishedItem(node, publisher, itemID, creationDate);
+                final PublishedItem result = new PublishedItem(node, publisher, itemIdentifier.getItemId(), creationDate);
                 // Add the extra fields to the published item
                 if (rs.getString(3) != null) {
                     result.setPayloadXML(rs.getString(3));
@@ -1648,7 +1647,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 return result;
             }
         } catch (Exception exc) {
-            log.error("An exception occurred while trying to obtain item {} from node {}", itemID, node.getUniqueIdentifier(), exc);
+            log.error("An exception occurred while trying to obtain item {} from node {}", itemIdentifier.getItemId(), node.getUniqueIdentifier(), exc);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }

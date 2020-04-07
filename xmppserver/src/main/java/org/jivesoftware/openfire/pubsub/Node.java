@@ -2455,11 +2455,18 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeBoolean( out, notifyConfigChanges );
         util.writeBoolean( out, notifyDelete );
         util.writeBoolean( out, notifyRetract );
-        util.writeSafeUTF( out, parent.getNodeID() );
+        util.writeBoolean( out, parent != null );
+        if (parent != null) {
+            util.writeSafeUTF( out, parent.getNodeID() );
+        }
         util.writeSafeUTF( out, payloadType );
         util.writeBoolean( out, presenceBasedDelivery );
         util.writeSafeUTF( out, publisherModel.getName() );
-        util.writeSafeUTF( out, replyPolicy.name() );
+        util.writeBoolean( out, replyPolicy != null );
+        if ( replyPolicy != null)
+        {
+            util.writeSafeUTF( out, replyPolicy.name() );
+        }
         util.writeSerializableCollection( out, replyRooms );
         util.writeSerializableCollection( out, replyTo );
         util.writeSerializableCollection( out, rosterGroupsAllowed );
@@ -2489,10 +2496,12 @@ public abstract class Node implements Cacheable, Externalizable {
 
         final long affiliatesSize = util.readLong( in );
         final List<NodeAffiliate> tmpAffiliates = new ArrayList<>();
-        for ( int i = 0; i<affiliatesSize; i++ ) {
+        for ( int i = 0; i < affiliatesSize; i++ )
+        {
             final JID affiliateJID = (JID) util.readSerializable( in );
             final NodeAffiliate affiliate = new NodeAffiliate( this, affiliateJID );
-            if ( util.readBoolean( in ) ) {
+            if ( util.readBoolean( in ) )
+            {
                 affiliate.setAffiliation( NodeAffiliate.Affiliation.valueOf( util.readSafeUTF( in ) ) );
             }
             tmpAffiliates.add( affiliate );
@@ -2513,11 +2522,23 @@ public abstract class Node implements Cacheable, Externalizable {
         notifyConfigChanges = util.readBoolean( in );
         notifyDelete = util.readBoolean( in );
         notifyRetract = util.readBoolean( in );
-        final String parentId = util.readSafeUTF( in );
+        final String parentId;
+        if ( util.readBoolean( in ) )
+        {
+            parentId = util.readSafeUTF( in );
+        }
+        else
+        {
+            parentId = null;
+        }
         payloadType = util.readSafeUTF( in );
         presenceBasedDelivery = util.readBoolean( in );
         publisherModel = PublisherModel.valueOf( util.readSafeUTF( in ) );
-        replyPolicy = ItemReplyPolicy.valueOf( util.readSafeUTF( in ) );
+        if ( util.readBoolean( in ) ) {
+            replyPolicy = ItemReplyPolicy.valueOf( util.readSafeUTF( in ) );
+        } else {
+            replyPolicy = null;
+        }
         util.readSerializableCollection( in, replyRooms, getClass().getClassLoader() );
         util.readSerializableCollection( in, replyTo, getClass().getClassLoader() );
         util.readSerializableCollection( in, rosterGroupsAllowed, getClass().getClassLoader() );
@@ -2552,13 +2573,16 @@ public abstract class Node implements Cacheable, Externalizable {
             throw new IllegalStateException();
         }
 
-        if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getNodeID().equals( parentId ) ) {
-            parent = service.getRootCollectionNode();
-        } else {
-            parent = (CollectionNode) service.getNode( parentId );
-        }
-        if ( parent == null ) {
-            throw new IllegalStateException();
+        if (parentId != null)
+        {
+            if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getNodeID().equals( parentId ) )
+            {
+                parent = service.getRootCollectionNode();
+            }
+            else
+            {
+                parent = (CollectionNode) service.getNode( parentId );
+            }
         }
     }
 }

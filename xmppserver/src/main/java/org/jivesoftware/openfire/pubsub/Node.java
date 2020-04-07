@@ -190,7 +190,11 @@ public abstract class Node implements Cacheable, Externalizable {
 
     Node() {} // to be used only for serialization;
 
-    Node(PubSubService service, CollectionNode parent, String nodeID, JID creator) {
+    Node(PubSubService service, CollectionNode parent, String nodeID, JID creator, DefaultNodeConfiguration configuration ) {
+        this(service, parent, nodeID, creator, configuration.isSubscriptionEnabled(), configuration.isDeliverPayloads(), configuration.isNotifyConfigChanges(), configuration.isNotifyDelete(), configuration.isNotifyRetract(), configuration.isPresenceBasedDelivery(), configuration.getAccessModel(), configuration.getPublisherModel(), configuration.getLanguage(), configuration.getReplyPolicy() );
+    }
+
+    Node(PubSubService service, CollectionNode parent, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy) {
         this.service = service;
         this.parent = parent;
         this.nodeID = nodeID;
@@ -198,19 +202,16 @@ public abstract class Node implements Cacheable, Externalizable {
         long startTime = System.currentTimeMillis();
         this.creationDate = new Date(startTime);
         this.modificationDate = new Date(startTime);
-        // Configure node with default values (get them from the pubsub service)
-        DefaultNodeConfiguration defaultConfiguration =
-                service.getDefaultNodeConfiguration(!isCollectionNode());
-        this.subscriptionEnabled = defaultConfiguration.isSubscriptionEnabled();
-        this.deliverPayloads = defaultConfiguration.isDeliverPayloads();
-        this.notifyConfigChanges = defaultConfiguration.isNotifyConfigChanges();
-        this.notifyDelete = defaultConfiguration.isNotifyDelete();
-        this.notifyRetract = defaultConfiguration.isNotifyRetract();
-        this.presenceBasedDelivery = defaultConfiguration.isPresenceBasedDelivery();
-        this.accessModel = defaultConfiguration.getAccessModel();
-        this.publisherModel = defaultConfiguration.getPublisherModel();
-        this.language = defaultConfiguration.getLanguage();
-        this.replyPolicy = defaultConfiguration.getReplyPolicy();
+        this.subscriptionEnabled = subscriptionEnabled;
+        this.deliverPayloads = deliverPayloads;
+        this.notifyConfigChanges = notifyConfigChanges;
+        this.notifyDelete = notifyDelete;
+        this.notifyRetract = notifyRetract;
+        this.presenceBasedDelivery = presenceBasedDelivery;
+        this.accessModel = accessModel;
+        this.publisherModel = publisherModel;
+        this.language = language;
+        this.replyPolicy = replyPolicy;
     }
 
     /**

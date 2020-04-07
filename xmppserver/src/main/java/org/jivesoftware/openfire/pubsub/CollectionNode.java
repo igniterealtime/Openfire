@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
@@ -66,10 +68,16 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
-        super(service, parentNode, nodeID, creator);
-        // Configure node with default values (get them from the pubsub service)
-        DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(false);
+    public CollectionNode( PubSubService service, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, LeafNodeAssociationPolicy associationPolicy, int maxLeafNodes)
+    {
+        super(service, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        this.associationPolicy = associationPolicy;
+        this.maxLeafNodes = maxLeafNodes;
+    }
+
+    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration)
+    {
+        super(service, parentNode, nodeID, creator, defaultConfiguration);
         this.associationPolicy = defaultConfiguration.getAssociationPolicy();
         this.maxLeafNodes = defaultConfiguration.getMaxLeafNodes();
     }

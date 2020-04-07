@@ -483,7 +483,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");
 //            JID creatorJID = creator != null ? new JID(creator) : server.getAdmins().iterator().next();
             JID creatorJID = creator != null ? new JID(creator) : new JID(server.getServerInfo().getXMPPDomain());
-            rootCollectionNode = new CollectionNode(this, null, rootNodeID, creatorJID);
+            rootCollectionNode = new CollectionNode(this, null, rootNodeID, creatorJID, collectionDefaultConfiguration);
             // Add the creator as the node owner
             rootCollectionNode.addOwner(creatorJID);
             // Save new root node

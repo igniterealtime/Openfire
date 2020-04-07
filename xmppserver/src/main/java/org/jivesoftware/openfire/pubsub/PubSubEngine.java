@@ -1407,14 +1407,15 @@ public class PubSubEngine {
         try {
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
             JID owner = requester.asBareJID();
+            final DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration( !collectionType );
             synchronized ( (newNodeID + MUTEX_SUFFIX_NODE).intern()) {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
                     if (collectionType) {
-                        newNode = new CollectionNode(service, parentNode, newNodeID, requester);
+                        newNode = new CollectionNode(service, parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     else {
-                        newNode = new LeafNode(service, parentNode, newNodeID, requester);
+                        newNode = new LeafNode(service, parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     // Add the creator as the node owner
                     newNode.addOwner(owner);

@@ -743,45 +743,44 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             	parentMappings.put(nodeID, parent);
             }
 
+            final boolean subscriptionEnabled = rs.getInt(16) == 1;
+            final boolean deliverPayloads = rs.getInt(6) == 1;
+            final boolean notifyConfigChanges = rs.getInt(10) == 1;
+            final boolean notifyDelete = rs.getInt(11) == 1;
+            final boolean notifyRetract = rs.getInt(12) == 1;
+            final boolean presenceBasedDelivery = rs.getInt(13) == 1;
+            final AccessModel accessModel = AccessModel.valueOf(rs.getString(18));
+            final PublisherModel publisherModel = PublisherModel.valueOf(rs.getString(15));
+            final String language = rs.getString(24);
+            final Node.ItemReplyPolicy replyPolicy;
+            if (rs.getString(26) != null) {
+                replyPolicy = Node.ItemReplyPolicy.valueOf(rs.getString(26));
+            } else {
+                replyPolicy = null;
+            }
+
             if (leaf) {
                 // Retrieving a leaf node
-                node = new LeafNode(service, null, nodeID, creator);
+                final boolean persistPublishedItems = rs.getInt(8) == 1;
+                final int maxPublishedItems = rs.getInt(9);
+                final int maxPayloadSize = rs.getInt(7);
+                final boolean sendItemSubscribe = rs.getInt(14) == 1;
+                node = new LeafNode(service, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
             }
             else {
                 // Retrieving a collection node
-                node = new CollectionNode(service, null, nodeID, creator);
+                final CollectionNode.LeafNodeAssociationPolicy associationPolicy = CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27));
+                final int maxLeafNodes = rs.getInt(28);
+                node = new CollectionNode(service, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));
-            node.setPayloadDelivered(rs.getInt(6) == 1);
-            if (leaf) {
-                ((LeafNode) node).setMaxPayloadSize(rs.getInt(7));
-                ((LeafNode) node).setPersistPublishedItems(rs.getInt(8) == 1);
-                ((LeafNode) node).setMaxPublishedItems(rs.getInt(9));
-                ((LeafNode) node).setSendItemSubscribe(rs.getInt(14) == 1);
-            }
-            node.setNotifiedOfConfigChanges(rs.getInt(10) == 1);
-            node.setNotifiedOfDelete(rs.getInt(11) == 1);
-            node.setNotifiedOfRetract(rs.getInt(12) == 1);
-            node.setPresenceBasedDelivery(rs.getInt(13) == 1);
-            node.setPublisherModel(PublisherModel.valueOf(rs.getString(15)));
-            node.setSubscriptionEnabled(rs.getInt(16) == 1);
             node.setSubscriptionConfigurationRequired(rs.getInt(17) == 1);
-            node.setAccessModel(AccessModel.valueOf(rs.getString(18)));
             node.setPayloadType(rs.getString(19));
             node.setBodyXSLT(rs.getString(20));
             node.setDataformXSLT(rs.getString(21));
             node.setDescription(rs.getString(23));
-            node.setLanguage(rs.getString(24));
             node.setName(rs.getString(25));
-            if (rs.getString(26) != null) {
-                node.setReplyPolicy(Node.ItemReplyPolicy.valueOf(rs.getString(26)));
-            }
-            if (!leaf) {
-                ((CollectionNode) node).setAssociationPolicy(
-                        CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27)));
-                ((CollectionNode) node).setMaxLeafNodes(rs.getInt(28));
-            }
 
             // Add the load to the list of loaded nodes
             loadedNodes.put(node.getNodeID(), node);

@@ -18,7 +18,8 @@ before_script:
 - gem install travis
 script:
   - mvn verify -P ci
-  - TERM="dumb" ./runIntegrationTests -gl
+# Disabled Smack Integration Tests until we can get them to run reliably again.
+# - TERM="dumb" ./runIntegrationTests -gl
 install: true
 deploy:
   provider: script

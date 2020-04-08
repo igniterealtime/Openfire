@@ -126,7 +126,7 @@ public interface PubSubService {
     Node getNode(String nodeID);
 
     /**
-     * Retuns the collection of nodes hosted by the pubsub service. The collection does
+     * Returns the collection of nodes hosted by the pubsub service. The collection does
      * not support modifications.
      *
      * @return the collection of nodes hosted by the pubsub service.

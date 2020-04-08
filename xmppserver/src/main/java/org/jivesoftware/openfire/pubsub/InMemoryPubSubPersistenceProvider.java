@@ -87,7 +87,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public void createNode( Node node )
     {
         log.debug( "Creating node: {}", node.getUniqueIdentifier() );
-        CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, node.getService().getUniqueIdentifier(), node, ArrayList::new );
+        CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, node.getUniqueIdentifier().getServiceIdentifier(), node, ArrayList::new );
     }
 
     @Override

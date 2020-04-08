@@ -111,11 +111,19 @@ if [ ! -x "$JAVACMD" ] ; then
   	exit 1
 fi
 
+# Note: you can combine options, eg: -devboot -debug
 for arguments in "$@"
 do
 case $arguments in
     -debug)
     JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    ;;
+    -demoboot)
+    cp $OPENFIRE_HOME/conf/openfire-demoboot.xml $OPENFIRE_HOME/conf/openfire.xml
+    ;;
+    -devboot)
+    HOSTNAME=$(hostname)
+    sed "s/example.org/$HOSTNAME/g" $OPENFIRE_HOME/conf/openfire-demoboot.xml > $OPENFIRE_HOME/conf/openfire.xml
     ;;
     *)
 	# unknown option

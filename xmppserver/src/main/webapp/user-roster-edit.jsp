@@ -41,6 +41,7 @@
     String nickname = ParamUtils.getParameter(request, "nickname");
     String groups = ParamUtils.getParameter(request, "groups");
     Integer sub = ParamUtils.getIntParameter(request, "sub", 0);
+    Integer ask = ParamUtils.getIntParameter(request, "ask", 0);
     boolean save = ParamUtils.getBooleanParameter(request, "save");
 
     // Handle a cancel
@@ -66,7 +67,7 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
-    // Handle a roster item delete:
+    // Handle a roster item update:
     if (save) {
         List<String> groupList = new ArrayList<String>();
         if (groups != null) {
@@ -77,7 +78,8 @@
         item.setNickname(nickname);
         item.setGroups(groupList);
         item.setSubStatus(RosterItem.SubType.getTypeFromInt(sub));
-        // Delete the roster item
+        item.setAskStatus(RosterItem.AskType.getTypeFromInt(ask));
+        // update the roster item
         roster.updateRosterItem(item);
         // Log the event
         webManager.logEvent("updated roster item for "+username, "roster item:\njid = "+jid+"\nnickname = "+nickname+"\ngroupList = "+groupList);
@@ -123,19 +125,19 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.roster.nickname" />:
+                <label for="nickname"><fmt:message key="user.roster.nickname" />:</label>
             </td>
             <td>
-                <input type="text" size="30" maxlength="150" name="nickname"
+                <input type="text" size="30" maxlength="150" name="nickname" id="nickname"
                  value="<%= item.getNickname() == null || item.getNickname().isEmpty() ? "" : StringUtils.escapeForXML(item.getNickname()) %>">
             </td>
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.roster.groups" />:
+                <label for="groups"><fmt:message key="user.roster.groups" />:</label>
             </td>
             <td>
-                <input type="text" size="30" maxlength="255" name="groups"
+                <input type="text" size="30" maxlength="255" name="groups" id="groups"
                  value="<%
                 List<String> groupList = item.getGroups();
                 if (!groupList.isEmpty()) {
@@ -178,15 +180,27 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.roster.subscription" />:
+                <label for="sub"><fmt:message key="user.roster.subscription" />:</label>
             </td>
             <td>
-                <select name="sub">
+                <select name="sub" id="sub">
                     <option value="<%= RosterItem.SUB_REMOVE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_REMOVE ? " SELECTED" : "" %>>Remove</option>
                     <option value="<%= RosterItem.SUB_NONE.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_NONE  ? " SELECTED" : "" %>>None</option>
                     <option value="<%= RosterItem.SUB_TO.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_TO  ? " SELECTED" : "" %>>To</option>
                     <option value="<%= RosterItem.SUB_FROM.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_FROM  ? " SELECTED" : "" %>>From</option>
                     <option value="<%= RosterItem.SUB_BOTH.getValue() %>"<%= item.getSubStatus() == RosterItem.SUB_BOTH  ? " SELECTED" : "" %>>Both</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <label for="ask"><fmt:message key="user.roster.ask" />:</label>
+            </td>
+            <td>
+                <select name="ask" id="ask">
+                    <option value="<%= RosterItem.ASK_NONE.getValue() %>"<%= item.getAskStatus() == RosterItem.ASK_NONE ? " SELECTED" : "" %>>None</option>
+                    <option value="<%= RosterItem.ASK_SUBSCRIBE.getValue() %>"<%= item.getAskStatus() == RosterItem.ASK_SUBSCRIBE  ? " SELECTED" : "" %>>Subscribe</option>
+                    <option value="<%= RosterItem.ASK_UNSUBSCRIBE.getValue() %>"<%= item.getAskStatus() == RosterItem.ASK_UNSUBSCRIBE  ? " SELECTED" : "" %>>Unsubscribe</option>
                 </select>
             </td>
         </tr>

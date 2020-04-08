@@ -163,9 +163,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
         }
-
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            return false;
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

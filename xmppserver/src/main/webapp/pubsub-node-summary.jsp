@@ -47,7 +47,7 @@
     {
         pubSubServiceInfo = webManager.getPubSubInfo();
     }
-    else if ( new PEPServiceManager().getPEPService( owner.toBareJID() ) != null )
+    else if ( new PEPServiceManager().getPEPService( owner.toBareJID(), true ) != null )
     {
         PEPMode = true;
         pubSubServiceInfo = new PEPServiceInfo( owner );

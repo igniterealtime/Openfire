@@ -15,8 +15,7 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,13 @@ import org.slf4j.LoggerFactory;
  */
 public class PubSubPersistenceProviderManager
 {
+    public static final SystemProperty<Class> PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.pubsub-persistence.className")
+        .setBaseClass(PubSubPersistenceProvider.class)
+        .setDefaultValue(CachingPubsubPersistenceProvider.class)
+        .setDynamic(false)
+        .build();
+
     private static final Logger Log = LoggerFactory.getLogger( PubSubPersistenceProviderManager.class );
 
     private static PubSubPersistenceProviderManager instance;
@@ -52,22 +58,20 @@ public class PubSubPersistenceProviderManager
 
     private void initProvider()
     {
-        String className = JiveGlobals.getProperty( "provider.pubsub-persistence.className", CachingPubsubPersistenceProvider.class.getName() );
-
+        final Class clazz = PROVIDER.getValue();
         // Check if we need to reset the provider class
-        if (provider == null || !className.equals(provider.getClass().getName())) {
+        if (provider == null || !clazz.equals(provider.getClass()) ) {
             if ( provider != null ) {
                 provider.shutdown();
                 provider = null;
             }
             try {
-                Log.info("Loading PubSub persistence provider: {}.", className);
-                Class c = ClassUtils.forName( className );
-                provider = (PubSubPersistenceProvider) c.newInstance();
+                Log.info("Loading PubSub persistence provider: {}.", clazz);
+                provider = (PubSubPersistenceProvider) clazz.newInstance();
                 provider.initialize();
             }
             catch (Exception e) {
-                Log.error("Error loading PubSub persistence provider: {}. Using default provider instead.", className, e);
+                Log.error("Error loading PubSub persistence provider: {}. Using default provider instead.", clazz, e);
                 provider = new CachingPubsubPersistenceProvider();
                 provider.initialize();
             }

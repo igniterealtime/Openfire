@@ -1775,6 +1775,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		boolean abortTransaction = false;
         Connection con = null;
 		PreparedStatement nodeConfig = null;
+		PreparedStatement purgeNode = null;
         ResultSet rs = null;
 
         try
@@ -1782,8 +1783,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getTransactionConnection();
 			nodeConfig = con.prepareStatement(PERSISTENT_NODES);
             rs = nodeConfig.executeQuery();
-			PreparedStatement purgeNode = con
-					.prepareStatement(getPurgeStatement(DbConnectionManager.getDatabaseType()));
+            purgeNode = con.prepareStatement(getPurgeStatement(DbConnectionManager.getDatabaseType()));
 
             boolean hasBatchItems = false;
             while (rs.next())
@@ -1806,8 +1806,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 		finally
 		{
-			DbConnectionManager.closeResultSet(rs);
-			DbConnectionManager.closeStatement(rs, nodeConfig);
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeStatement(nodeConfig);
+            DbConnectionManager.closeStatement(purgeNode);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
 		}
     }

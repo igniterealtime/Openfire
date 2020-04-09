@@ -180,7 +180,9 @@ function runTestsInGradle {
 	SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
 	
 	#SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
-	$GRADLE --stacktrace run \
+	$GRADLE --console=plain \
+			--stacktrace \
+			run \
 			-b test.gradle \
 			-PsmackVersion="${SMACK_VERSION}" \
 			-Dsinttest.service="${HOST}" \

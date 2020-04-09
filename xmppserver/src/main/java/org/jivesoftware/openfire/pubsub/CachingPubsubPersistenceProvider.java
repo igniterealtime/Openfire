@@ -5,6 +5,7 @@ import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -21,6 +22,13 @@ import java.util.stream.Collectors;
 public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvider
 {
     private static final Logger log = LoggerFactory.getLogger(CachingPubsubPersistenceProvider.class);
+
+    public static final SystemProperty<Class> DELEGATE = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.pubsub-persistence.caching.delegate-className")
+        .setBaseClass(PubSubPersistenceProvider.class)
+        .setDefaultValue(DefaultPubSubPersistenceProvider.class)
+        .setDynamic(false)
+        .build();
 
     private PubSubPersistenceProvider delegate;
 
@@ -94,22 +102,20 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     private void initDelegate()
     {
-        String className = JiveGlobals.getProperty( "provider.pubsub-persistence.caching.delegate-className", DefaultPubSubPersistenceProvider.class.getName() );
-
         // Check if we need to reset the provider class
-        if (delegate == null || !className.equals(delegate.getClass().getName())) {
+        final Class clazz = DELEGATE.getValue();
+        if (delegate == null || !clazz.equals(delegate.getClass())) {
             if ( delegate != null ) {
                 delegate.shutdown();
                 delegate = null;
             }
             try {
-                log.info("Loading PubSub persistence provider to delegate to: {}.", className);
-                Class c = ClassUtils.forName( className );
-                delegate = (PubSubPersistenceProvider) c.newInstance();
+                log.info("Loading PubSub persistence provider to delegate to: {}.", clazz);
+                delegate = (PubSubPersistenceProvider) clazz.newInstance();
                 delegate.initialize();
             }
             catch (Exception e) {
-                log.error("Error loading PubSub persistence provider to delegate to: {}. Using default provider instead.", className, e);
+                log.error("Error loading PubSub persistence provider to delegate to: {}. Using default provider instead.", clazz, e);
                 delegate = new DefaultPubSubPersistenceProvider();
                 delegate.initialize();
             }

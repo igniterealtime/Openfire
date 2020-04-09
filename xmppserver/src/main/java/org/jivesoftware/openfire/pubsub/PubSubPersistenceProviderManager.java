@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,6 @@ public class PubSubPersistenceProviderManager
     public static final SystemProperty<Class> PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.pubsub-persistence.className")
         .setBaseClass(PubSubPersistenceProvider.class)
-        .setDefaultValue(CachingPubsubPersistenceProvider.class)
         .setDynamic(false)
         .build();
 
@@ -58,7 +58,16 @@ public class PubSubPersistenceProviderManager
 
     private void initProvider()
     {
-        final Class clazz = PROVIDER.getValue();
+        Class clazz = PROVIDER.getValue();
+        if ( clazz == null ) {
+            if ( ClusterManager.isClusteringEnabled() ) {
+                Log.debug("Clustering is enabled. Falling back to non-cached provider");
+                clazz = DefaultPubSubPersistenceProvider.class;
+            } else {
+                clazz = CachingPubsubPersistenceProvider.class;
+            }
+        }
+
         // Check if we need to reset the provider class
         if (provider == null || !clazz.equals(provider.getClass()) ) {
             if ( provider != null ) {
@@ -72,7 +81,7 @@ public class PubSubPersistenceProviderManager
             }
             catch (Exception e) {
                 Log.error("Error loading PubSub persistence provider: {}. Using default provider instead.", clazz, e);
-                provider = new CachingPubsubPersistenceProvider();
+                provider = new DefaultPubSubPersistenceProvider();
                 provider.initialize();
             }
         }

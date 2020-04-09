@@ -80,6 +80,7 @@ function setUpAioxmppEnvironment {
     AIOXMPPCONFIG="${AIOXMPPDIR}/openfire-config.ini"
     git clone https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     pushd "${AIOXMPPDIR}"
+    which pip3
     sudo pip3 install -e .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]
@@ -117,7 +118,8 @@ function launchOpenfire {
 function runTests {
 	echo "Starting Integration Tests (using aioxmpp)…"
     pushd "${AIOXMPPDIR}"
-    python3 -m aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" test
+    which python3.6
+    python3.6 -m aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" test
     popd
 }
 

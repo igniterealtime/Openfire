@@ -305,7 +305,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             return reply;
         }
 
-        if (packet.getTo() == null)
+        if (packet.getTo() == null || packet.getTo().equals( new JID(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) )
         {
             // packet addressed to service itself (not to a node/user)
             switch ( packet.getType() )

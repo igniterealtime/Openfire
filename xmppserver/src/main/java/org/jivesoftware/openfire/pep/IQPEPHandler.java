@@ -296,7 +296,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * org.jivesoftware.openfire.handler.IQHandler#handleIQ(org.xmpp.packet.IQ)
      */
     @Override
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) {
         // Do nothing if server is not enabled
         if (!isEnabled()) {
             IQ reply = IQ.createResultIQ(packet);
@@ -305,83 +305,123 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             return reply;
         }
 
-        final JID senderJID = packet.getFrom();
-        if (packet.getTo() == null) {
+        if (packet.getTo() == null)
+        {
             // packet addressed to service itself (not to a node/user)
-            final String jidFrom = senderJID.toBareJID();
-            packet = packet.createCopy();
-            packet.setTo(jidFrom);
-
-            if (packet.getType() == IQ.Type.set) {
-
-                // Only service local, registered users.
-                if (!XMPPServer.getInstance().isLocal(senderJID) || !UserManager.getInstance().isRegisteredUser( senderJID.getNode()))
-                {
-                        final IQ reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.not_allowed);
-                        return reply;
-                    }
-
-                PEPService pepService = pepServiceManager.getPEPService(jidFrom);
-
-                // If publishing a node, and the node doesn't exist, create it.
-                final Element childElement = packet.getChildElement();
-                final Element publishElement = childElement.element("publish");
-                if (publishElement != null) {
-                    final String nodeID = publishElement.attributeValue("node");
-
-                    // Do not allow User Avatar nodes to be created.
-                    // TODO: Implement XEP-0084
-                    if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
-                        IQ reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.feature_not_implemented);
-                        return reply;
-                    }
-
-                    if (pepService.getNode(nodeID) == null) {
-                        // Create the node
-                        final JID creator = new JID(jidFrom);
-                        final DefaultNodeConfiguration defaultConfiguration = pepService.getDefaultNodeConfiguration(true);
-                        final LeafNode newNode = new LeafNode(pepService.getUniqueIdentifier(), pepService.getRootCollectionNode(), nodeID, creator, defaultConfiguration);
-                        final DataForm publishOptions = PubSubEngine.getPublishOptions( packet );
-                        if ( publishOptions != null )
-                        {
-                            try
-                            {
-                                newNode.configure( publishOptions );
-                            }
-                            catch ( NotAcceptableException e )
-                            {
-                                Log.warn( "Unable to apply publish-options when creating a new PEP node {} for {}", nodeID, creator, e );
-                            }
-                        }
-                        newNode.addOwner(creator);
-                        newNode.saveToDB();
-                    }
-                }
-
-                // Process with PubSub as usual.
-                pepServiceManager.process(pepService, packet);
-            } else if (packet.getType() == IQ.Type.get) {
-                final PEPService pepService = pepServiceManager.getPEPService(jidFrom);
-                pepServiceManager.process(pepService, packet);
+            switch ( packet.getType() )
+            {
+                case set:
+                    return handleIQSetToService(packet );
+                case get:
+                    return handleIQGetToService(packet );
+                default:
+                    return null; // Ignore 'error' and 'result' stanzas.
             }
         }
-        else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
+        else
+        {
             // packet was addressed to a node.
+            if ( packet.isRequest() ) {
+                return handleIQRequestToUser( packet );
+            } else {
+                return null; // Ignore IQ packets of type 'error' or 'result'.
+            }
+        }
+    }
 
-            final String jidTo = packet.getTo().toBareJID();
+    /**
+     * Process an IQ get stanza that was addressed to the service (rather than to a node/user).
+     *
+     * @param packet The stanza to process.
+     * @return A response (can be null).
+     */
+    private IQ handleIQGetToService( IQ packet) {
+        final JID senderJID = packet.getFrom();
+        final String jidFrom = senderJID.toBareJID();
+        packet = packet.createCopy();
+        packet.setTo(jidFrom);
 
-            final PEPService pepService = pepServiceManager.getPEPService(jidTo);
-            pepServiceManager.process(pepService, packet);
-        } else {
-            // Ignore IQ packets of type 'error' or 'result'.
-            return null;
+        final PEPService pepService = pepServiceManager.getPEPService(jidFrom);
+        pepServiceManager.process(pepService, packet);
+        return null;
+    }
+
+    /**
+     * Process an IQ set stanza that was addressed to the service (rather than to a node/user).
+     *
+     * @param packet The stanza to process.
+     * @return A response (can be null).
+     */
+    private IQ handleIQSetToService( IQ packet) {
+        final JID senderJID = packet.getFrom();
+        final String jidFrom = senderJID.toBareJID();
+        packet = packet.createCopy();
+        packet.setTo(jidFrom);
+
+        // Only service local, registered users.
+        if (!XMPPServer.getInstance().isLocal(senderJID) || !UserManager.getInstance().isRegisteredUser( senderJID.getNode()))
+        {
+            final IQ reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.not_allowed);
+            return reply;
         }
 
-        // Other error flows were handled in pubSubEngine.process(...)
+        PEPService pepService = pepServiceManager.getPEPService(jidFrom);
+
+        // If publishing a node, and the node doesn't exist, create it.
+        final Element childElement = packet.getChildElement();
+        final Element publishElement = childElement.element("publish");
+        if (publishElement != null) {
+            final String nodeID = publishElement.attributeValue("node");
+
+            // Do not allow User Avatar nodes to be created.
+            // TODO: Implement XEP-0084
+            if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.feature_not_implemented);
+                return reply;
+            }
+
+            if (pepService.getNode(nodeID) == null) {
+                // Create the node
+                final JID creator = new JID(jidFrom);
+                final DefaultNodeConfiguration defaultConfiguration = pepService.getDefaultNodeConfiguration(true);
+                final LeafNode newNode = new LeafNode(pepService.getUniqueIdentifier(), pepService.getRootCollectionNode(), nodeID, creator, defaultConfiguration);
+                final DataForm publishOptions = PubSubEngine.getPublishOptions( packet );
+                if ( publishOptions != null )
+                {
+                    try
+                    {
+                        newNode.configure( publishOptions );
+                    }
+                    catch ( NotAcceptableException e )
+                    {
+                        Log.warn( "Unable to apply publish-options when creating a new PEP node {} for {}", nodeID, creator, e );
+                    }
+                }
+                newNode.addOwner(creator);
+                newNode.saveToDB();
+            }
+        }
+
+        // Process with PubSub as usual.
+        pepServiceManager.process(pepService, packet);
+        return null;
+    }
+
+    /**
+     * Process an IQ set stanza that was addressed to the a node/user.
+     *
+     * @param packet The stanza to process.
+     * @return A response (can be null).
+     */
+    private IQ handleIQRequestToUser(IQ packet)
+    {
+        final String jidTo = packet.getTo().toBareJID();
+        final PEPService pepService = pepServiceManager.getPEPService(jidTo);
+        pepServiceManager.process(pepService, packet);
         return null;
     }
 

@@ -11,6 +11,9 @@
       <run>true</run>
       <locale>en</locale>
       <xmpp>
+          <auth>
+              <anonymous>true</anonymous>
+          </auth>
           <domain>example.org</domain>
           <fqdn>example.org</fqdn>
       </xmpp>

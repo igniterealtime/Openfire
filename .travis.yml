@@ -2,6 +2,10 @@ dist: trusty
 sudo: false
 language: java
 addons:
+  apt:
+    packages:
+      - "python3"
+      - "python3-pip"
   hostname: example.org
   hosts:
     - example.org
@@ -20,6 +24,7 @@ script:
   - mvn verify -P ci
 # Disabled Smack Integration Tests until we can get them to run reliably again.
 # - TERM="dumb" ./runIntegrationTests -gl
+  - TERM="dumb" ./runAioxmppIntegrationTests -l
 install: true
 deploy:
   provider: script

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-alpha2" # master 22 Nov 2019
+SMACK_VERSION="4.4.0-alpha3-20200409.143827-1"
 GRADLE_VERSION="6.0.1"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
@@ -188,6 +188,7 @@ function runTestsInGradle {
 			-Dsinttest.replyTimeout=60000 \
 			-Dsinttest.adminAccountUsername="${ADMINUSER}" \
 			-Dsinttest.adminAccountPassword="${ADMINPASS}" \
+			-Dsinttest.dnsResolver=javax \
 			${SINTTEST_DISABLED_TESTS_ARGUMENT}
 }
 

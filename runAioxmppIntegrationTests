@@ -81,6 +81,7 @@ function setUpAioxmppEnvironment {
     git clone https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     pushd "${AIOXMPPDIR}"
     which pip3
+    sudo pip3 install nose
     sudo pip3 install -e .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]

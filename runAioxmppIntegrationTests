@@ -80,7 +80,6 @@ function setUpAioxmppEnvironment {
     AIOXMPPCONFIG="${AIOXMPPDIR}/openfire-config.ini"
     git clone https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     pushd "${AIOXMPPDIR}"
-    python3 -m pip install -U setuptools
     python3 -m pip install -e .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]

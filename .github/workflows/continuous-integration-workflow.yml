@@ -84,6 +84,7 @@ jobs:
             EOL
       - name: Run aioxmpp tests
         run: |
+            echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
             pushd aioxmpp
             python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests
             popd

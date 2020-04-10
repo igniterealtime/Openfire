@@ -105,3 +105,84 @@ jobs:
         run: |
           pkill -f openfire.lib
 
+  smack:
+
+    name: Execute Smack-based CI tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v1
+        with:
+          name: distribution
+      - name: Setup environment for Openfire
+        shell: bash
+        run: |
+          echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
+      - name: Start Openfire
+        shell: bash
+        run: |
+          sh ./distribution/bin/openfire.sh -demoboot &
+      - name: Wait until Openfire is available
+        shell: bash
+        run: |
+          until printf "" 2>>/dev/null >>/dev/tcp/localhost/7070; do sleep 0.3; done
+      - name: Print success (replace this with running a test)
+        shell: bash
+        run: |
+          echo "Successfully started Openfire"
+
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+            java-version: 11
+      - name: Run smack tests
+        shell: bash
+        run: |
+          DISABLED_INTEGRATION_TESTS=()
+
+          #Fails only in Java8, only on Travis
+          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+          #DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
+          #DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
+          # Flaps sometimes (possibly a Openfire issue)
+          #DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
+          # Does sometimes not succeed in Travis (stress test is too much?)
+          DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
+          # EntityCapsTest#testEntityCaps fails regularly. Reason unknown.
+          #DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+          #FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
+          DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
+          #OX tests use a removed dependency, and so don't compile on 4.4.0a2
+          DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+
+          SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
+          for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
+            SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
+          done
+
+          # Remove last ',' from the argument. Can't use ${SINTTEST_DISABLED_TESTS_ARGUMENT::-1} because bash on MacOS is infuriatingly incompatible.
+          SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
+
+          #SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
+          gradle --console=plain \
+            --stacktrace \
+            run \
+            -b test.gradle \
+            -PsmackVersion="4.4.0-alpha3-20200409.143827-1" \
+            -Dsinttest.service="example.org" \
+            -Dsinttest.securityMode=disabled \
+            -Dsinttest.replyTimeout=60000 \
+            -Dsinttest.adminAccountUsername="admin" \
+            -Dsinttest.adminAccountPassword="admin" \
+            -Dsinttest.enabledConnections=tcp \
+            -Dsinttest.dnsResolver=javax \
+            ${SINTTEST_DISABLED_TESTS_ARGUMENT}
+
+      - name: Stop Openfire
+        shell: bash
+        run: |
+          pkill -f openfire.lib

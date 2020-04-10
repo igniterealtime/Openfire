@@ -23,8 +23,8 @@ before_script:
 - gem install travis
 script:
   - mvn verify -P ci
-# Disabled Smack Integration Tests until we can get them to run reliably again.
-# - TERM="dumb" ./runIntegrationTests -gl
+  - JAVAC_MAJOR_VERSION=$(javac -version | sed -E 's/javac ([[:digit:]]+).*/\1/')
+  - if [[ ${JAVAC_MAJOR_VERSION} -gt 8 ]]; then ./runIntegrationTests -gl; fi
   - TERM="dumb" ./runAioxmppIntegrationTests -l
 install: true
 deploy:

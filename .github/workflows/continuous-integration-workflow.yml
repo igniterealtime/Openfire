@@ -44,6 +44,10 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: distribution
+      - name: Setup environment for Openfire
+        shell: bash
+        run: |
+          echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
       - name: Start Openfire
         shell: bash
         run: |
@@ -86,7 +90,6 @@ jobs:
       - name: Run aioxmpp tests
         continue-on-error: true
         run: |
-            echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
             pushd aioxmpp
             mkdir output
             python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > output/aioxmpp-test-output.txt 2>&1

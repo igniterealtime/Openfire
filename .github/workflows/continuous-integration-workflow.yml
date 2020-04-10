@@ -9,6 +9,7 @@ on:
 jobs:
   build:
 
+    name: Build Openfire from source
     runs-on: ubuntu-latest
 
     steps:
@@ -19,3 +20,37 @@ jobs:
         java-version: 1.8
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+    - name: Upload distribution
+      uses: actions/upload-artifact@v1
+      with:
+        name: distribution
+        path: distribution/target/distribution-base
+
+  aioxmpp:
+
+    name: Execute aioxmpp-based CI tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v1
+        with:
+          name: distribution
+      - name: Start Openfire
+        shell: bash
+        run: |
+          sh ./distribution/bin/openfire.sh -demoboot &
+      - name: Wait until Openfire is available
+        shell: bash
+        run: |
+          until printf "" 2>>/dev/null >>/dev/tcp/localhost/7070; do sleep 0.3; done
+      - name: Print success (replace this with running a test)
+        shell: bash
+        run: |
+          echo "Successfully started Openfire"
+      - name: Stop Openfire
+        shell: bash
+        run: |
+          pkill -f openfire.lib
+

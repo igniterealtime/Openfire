@@ -20,6 +20,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jivesoftware.admin.AdminConsole;
@@ -644,7 +646,14 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     // Answer features of the server itself.
-                    return new HashSet<>(serverFeatures.keySet()).iterator();
+                    final Set<String> result = new HashSet<>(serverFeatures.keySet());
+
+                    if ( !XMPPServer.getInstance().isLocal( senderJID ) || !UserManager.getInstance().isRegisteredUser( senderJID ) ) {
+                        // Remove features not available to users from other servers or anonymous users.
+                        // TODO this should be determined dynamically.
+                        result.remove(IQPrivateHandler.NAMESPACE);
+                    }
+                    return result.iterator();
                 }
                 else if (node != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getFeatures(name, node, senderJID);

@@ -1,5 +1,8 @@
 name: Openfire CI
 
+env:
+  CI: true
+
 on:
   push:
     branches: [ master ]

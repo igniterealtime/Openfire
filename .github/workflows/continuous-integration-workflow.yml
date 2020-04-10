@@ -80,6 +80,7 @@ jobs:
             [aioxmpp.e2etest.provision.AnonymousProvisioner]
             domain=example.org
             host=localhost
+            port=5222
             no_verify=true
             EOL
       - name: Run aioxmpp tests

@@ -94,6 +94,7 @@ jobs:
           host=localhost
           port=5222
           no_verify=true
+          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping"]
           EOL
       - name: Run aioxmpp tests
         continue-on-error: true

@@ -69,8 +69,8 @@ jobs:
       - name: Install aioxmpp dependencies
         run: |
             python -m pip install --upgrade pip
-            pip install nose
-            pip install -e aioxmpp
+            python -m pip install nose
+            python -m pip install -e aioxmpp
       - name: Generate Openfire test config
         run: |
             cat >"aioxmpp/openfire-config.ini" <<EOL
@@ -78,8 +78,8 @@ jobs:
             provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
 
             [aioxmpp.e2etest.provision.AnonymousProvisioner]
-            domain=$DOMAIN
-            host=$HOST
+            domain=example.org
+            host=localhost
             no_verify=true
             EOL
       - name: Run aioxmpp tests

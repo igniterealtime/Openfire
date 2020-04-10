@@ -13,28 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Cache Maven repository
-      uses: actions/cache@v1
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-    - name: Upload distribution
-      uses: actions/upload-artifact@v1
-      with:
-        name: distribution
-        path: distribution/target/distribution-base
-    - name: Upload test.gradle (for Smack integration tests)
-      uses: actions/upload-artifact@v1
-      with:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Cache Maven repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+      - name: Upload distribution
+        uses: actions/upload-artifact@v1
+        with:
+          name: distribution
+          path: distribution/target/distribution-base
+      - name: Upload test.gradle (for Smack integration tests)
+        uses: actions/upload-artifact@v1
+        with:
           name: test.gradle
           path: test.gradle
 
@@ -74,36 +74,36 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
-            python-version: 3.6
+          python-version: 3.6
       - name: Install aioxmpp dependencies
         run: |
-            python -m pip install --upgrade pip
-            python -m pip install nose
-            python -m pip install -e aioxmpp
+          python -m pip install --upgrade pip
+          python -m pip install nose
+          python -m pip install -e aioxmpp
       - name: Generate Openfire test config
         run: |
-            cat >"aioxmpp/openfire-config.ini" <<EOL
-            [global]
-            provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
+          cat >"aioxmpp/openfire-config.ini" <<EOL
+          [global]
+          provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
 
-            [aioxmpp.e2etest.provision.AnonymousProvisioner]
-            domain=example.org
-            host=localhost
-            port=5222
-            no_verify=true
-            EOL
+          [aioxmpp.e2etest.provision.AnonymousProvisioner]
+          domain=example.org
+          host=localhost
+          port=5222
+          no_verify=true
+          EOL
       - name: Run aioxmpp tests
         continue-on-error: true
         run: |
-            pushd aioxmpp
-            mkdir output
-            python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > output/aioxmpp-test-output.txt 2>&1
-            popd
+          pushd aioxmpp
+          mkdir output
+          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > output/aioxmpp-test-output.txt 2>&1
+          popd
       - name: Expose test output
         uses: actions/upload-artifact@v1
         with:
-            name: aioxmpp test output
-            path: aioxmpp/output
+          name: aioxmpp test output
+          path: aioxmpp/output
 
       - name: Stop Openfire
         shell: bash
@@ -145,7 +145,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
-            java-version: 11
+          java-version: 11
       - name: Run smack tests
         shell: bash
         run: |

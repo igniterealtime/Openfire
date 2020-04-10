@@ -12,6 +12,11 @@ cache:
   directories:
   - $HOME/.m2/repository/
 before_install:
+# Need newer python than provided by trusty
+- sudo add-apt-repository -y ppa:deadsnakes/ppa
+- sudo apt-get update
+- sudo apt install python3.6
+- curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
 - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
 - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
 before_script:
@@ -20,6 +25,7 @@ script:
   - mvn verify -P ci
   - JAVAC_MAJOR_VERSION=$(javac -version | sed -E 's/javac ([[:digit:]]+).*/\1/')
   - if [[ ${JAVAC_MAJOR_VERSION} -gt 8 ]]; then ./runIntegrationTests -gl; fi
+  - TERM="dumb" ./runAioxmppIntegrationTests -l
 install: true
 deploy:
   provider: script

@@ -32,6 +32,11 @@ jobs:
       with:
         name: distribution
         path: distribution/target/distribution-base
+    - name: Upload test.gradle (for Smack integration tests)
+      uses: actions/upload-artifact@v1
+      with:
+          name: test.gradle
+          path: test.gradle
 
   aioxmpp:
 
@@ -133,6 +138,10 @@ jobs:
         run: |
           echo "Successfully started Openfire"
 
+      - name: Download test.gradle artifact from build job.
+        uses: actions/download-artifact@v1
+        with:
+          name: test.gradle
       - name: Set up Java
         uses: actions/setup-java@v1
         with:

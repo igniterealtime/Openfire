@@ -32,11 +32,6 @@ jobs:
         with:
           name: distribution
           path: distribution/target/distribution-base
-      - name: Upload test.gradle (for Smack integration tests)
-        uses: actions/upload-artifact@v1
-        with:
-          name: test.gradle
-          path: test.gradle
 
   aioxmpp:
 
@@ -138,10 +133,6 @@ jobs:
         run: |
           echo "Successfully started Openfire"
 
-      - name: Download test.gradle artifact from build job.
-        uses: actions/download-artifact@v1
-        with:
-          name: test.gradle
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
@@ -149,6 +140,32 @@ jobs:
       - name: Run smack tests
         shell: bash
         run: |
+          cat >"test.gradle" <<EOL
+          apply plugin: 'application'
+
+          mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
+          applicationDefaultJvmArgs = ["-enableassertions"]
+
+          repositories {
+            mavenCentral()
+            maven {
+                url 'https://oss.sonatype.org/content/repositories/snapshots'
+            }
+            maven {
+                url 'https://www.igniterealtime.org/archiva/repository/maven/'
+            }
+          }
+
+          dependencies {
+              compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
+          }
+
+          run {
+            // Pass all system properties down to the "application" run
+            systemProperties System.getProperties()
+          }
+          EOL
+
           DISABLED_INTEGRATION_TESTS=()
 
           #Fails only in Java8, only on Travis

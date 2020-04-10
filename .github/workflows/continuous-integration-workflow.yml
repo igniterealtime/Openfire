@@ -84,6 +84,7 @@ jobs:
             no_verify=true
             EOL
       - name: Run aioxmpp tests
+        continue-on-error: true
         run: |
             echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
             pushd aioxmpp

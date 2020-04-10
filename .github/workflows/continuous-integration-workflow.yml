@@ -56,6 +56,38 @@ jobs:
         shell: bash
         run: |
           echo "Successfully started Openfire"
+
+      - name: Checkout aioxmpp
+        uses: actions/checkout@v2
+        with:
+          repository: horazont/aioxmpp
+          path: aioxmpp
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+            python-version: 3.6
+      - name: Install aioxmpp dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install nose
+            pip install -e aioxmpp
+      - name: Generate Openfire test config
+        run: |
+            cat >"aioxmpp/openfire-config.ini" <<EOL
+            [global]
+            provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
+
+            [aioxmpp.e2etest.provision.AnonymousProvisioner]
+            domain=$DOMAIN
+            host=$HOST
+            no_verify=true
+            EOL
+      - name: Run aioxmpp tests
+        run: |
+            pushd aioxmpp
+            python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests
+            popd
+
       - name: Stop Openfire
         shell: bash
         run: |

@@ -87,8 +87,13 @@ jobs:
         run: |
             echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
             pushd aioxmpp
-            python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests
+            python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > aioxmpp-test-output.txt
             popd
+      - name: Expose test output
+        uses: actions/upload-artifact@v1
+        with:
+            name: aioxmpp test output
+            path: aioxmpp/aioxmpp-test-output.txt
 
       - name: Stop Openfire
         shell: bash

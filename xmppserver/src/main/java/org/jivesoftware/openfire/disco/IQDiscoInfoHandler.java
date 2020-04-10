@@ -689,22 +689,23 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Unknown node
                     return false;
                 }
+
+                // True if it is an info request of the server, a registered user or an
+                // anonymous user. We now support disco of user's bare JIDs
+                if (name == null) {
+                    return true;
+                }
+                if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                    return true;
+                }
                 try {
-                    // True if it is an info request of the server, a registered user or an
-                    // anonymous user. We now support disco of user's bare JIDs
-                    if (name == null) return true;
-                    if (UserManager.getInstance().getUser(name) != null ||
-                            SessionManager.getInstance().isAnonymousRoute(name)) {
-                        if (node == null) {
-                            return true;
-                        }
-                        return XMPPServer.getInstance().getIQPEPHandler().hasInfo(name, node, senderJID);
+                    if ( UserManager.getInstance().getUser(name) != null ) {
+                        return true;
                     }
+                } catch (UserNotFoundException e) {
                     return false;
                 }
-                catch (UserNotFoundException e) {
-                    return false;
-                }
+                return false;
             }
 
             @Override

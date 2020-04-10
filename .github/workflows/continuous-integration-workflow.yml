@@ -26,12 +26,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B package -Pcoverage --file pom.xml
       - name: Upload distribution
         uses: actions/upload-artifact@v1
         with:
           name: distribution
           path: distribution/target/distribution-base
+      - name: Upload coverage report for 'xmppserver' module
+        uses: actions/upload-artifact@v1
+        with:
+          name: Coverage Report for 'xmppserver' module
+          path: xmppserver/target/site/jacoco/
 
   aioxmpp:
 

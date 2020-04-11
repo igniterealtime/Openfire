@@ -24,6 +24,8 @@ import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -43,7 +45,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
 
-    private static final String MUTEX_SUFFIX = " dvcp";
+    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
     
     private static final String LOAD_PROPERTIES =
         "SELECT vcard FROM ofVCard WHERE username=?";
@@ -73,7 +75,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
     @Override
     public Element loadVCard(String username) {
-        synchronized ((username + MUTEX_SUFFIX).intern()) {
+        synchronized (userBaseMutex.intern(username)) {
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;

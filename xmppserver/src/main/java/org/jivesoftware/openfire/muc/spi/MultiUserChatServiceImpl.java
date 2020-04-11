@@ -1256,7 +1256,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (value != null) {
             try {
             	if (Integer.parseInt(value)>0)
-            		emptyLimit = Integer.parseInt(value) * 24;
+            		emptyLimit = Integer.parseInt(value) * (long)24;
             	else
             		emptyLimit = -1;
             }

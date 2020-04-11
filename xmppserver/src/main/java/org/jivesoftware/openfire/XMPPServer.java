@@ -1232,30 +1232,25 @@ public class XMPPServer {
                 .setNameFormat( "shutdown-thread-%d" )
                 .build() ) );
 
-        modules.values().stream()
-            // OF-1609: Ensure that the first module to be shut down is the ConnectionManager.
-            .sorted( ( o1, o2 ) -> {
-                if ( o1 == o2 ) return 0;
-                final boolean isCM1 = o1 instanceof ConnectionManager;
-                final boolean isCM2 = o2 instanceof ConnectionManager;
-                if ( isCM1 && isCM2 ) return 0;
-                if ( isCM1 ) return -1;
-                if ( isCM2 ) return 1;
-                return 0;
-            } )
+        // OF-1996" Get all modules and stop and destroy them. Do this in the reverse order in which the were created.
+        // This ensures that the 'most important' / core modules are shut down last, giving other modules the
+        // opportunity to make use of their functionality during their shutdown (eg: MUC wants to send messages during
+        // shutdown).
+        final List<Class> reverseInsertionOrder = new ArrayList<>( modules.keySet() );
+        Collections.reverse( reverseInsertionOrder );
 
-            // Get all modules and stop and destroy them.
-            .forEachOrdered( module -> {
-                try {
-                    // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
-                    timeLimiter.runWithTimeout( () -> {
-                        stopAndDestroyModule( module );
-                    }, JiveGlobals.getLongProperty( "shutdown.modules.timeout-millis", Long.MAX_VALUE ), TimeUnit.MILLISECONDS );
-                } catch ( Exception e ) {
-                    logger.warn( "An exception occurred while stopping / destroying module '{}'.", module.getName(), e );
-                    System.err.println( e );
-                }
-            } );
+        for( final Class moduleClass : reverseInsertionOrder ) {
+            final Module module = modules.get( moduleClass );
+            try {
+                // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
+                timeLimiter.runWithTimeout(() -> {
+                    stopAndDestroyModule(module);
+                }, JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
+            } catch ( Exception e ) {
+                logger.warn("An exception occurred while stopping / destroying module '{}'.", module.getName(), e);
+                System.err.println(e);
+            }
+        }
 
         // Stop all plugins
         logger.info("Shutting down plugins ...");

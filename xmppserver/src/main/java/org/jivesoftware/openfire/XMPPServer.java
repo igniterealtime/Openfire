@@ -1224,6 +1224,17 @@ public class XMPPServer {
         if (modules.isEmpty()) {
             return;
         }
+
+        // Stop all plugins
+        logger.info("Shutting down plugins ...");
+        if (pluginManager != null) {
+            try {
+                pluginManager.shutdown();
+            } catch (Exception ex) {
+                logger.error("Exception during plugin shutdown", ex);
+            }
+        }
+
         logger.info("Shutting down " + modules.size() + " modules ...");
 
         final SimpleTimeLimiter timeLimiter = SimpleTimeLimiter.create( Executors.newSingleThreadExecutor(
@@ -1252,15 +1263,6 @@ public class XMPPServer {
             }
         }
 
-        // Stop all plugins
-        logger.info("Shutting down plugins ...");
-        if (pluginManager != null) {
-            try {
-                pluginManager.shutdown();
-            } catch (Exception ex) {
-                logger.error("Exception during plugin shutdown", ex);
-            }
-        }
         modules.clear();
         // Stop the Db connection manager.
         try {	

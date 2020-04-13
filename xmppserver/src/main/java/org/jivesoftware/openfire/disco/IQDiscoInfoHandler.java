@@ -20,6 +20,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQPrivateHandler;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.slf4j.Logger;
@@ -652,6 +653,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         // Remove features not available to users from other servers or anonymous users.
                         // TODO this should be determined dynamically.
                         result.remove(IQPrivateHandler.NAMESPACE);
+                        result.remove(IQBlockingHandler.NAMESPACE);
                     }
                     return result.iterator();
                 }

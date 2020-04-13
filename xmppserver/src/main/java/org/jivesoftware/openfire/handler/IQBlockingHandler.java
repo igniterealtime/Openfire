@@ -52,6 +52,8 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
 {
     private static final Logger Log = LoggerFactory.getLogger( IQBlockingHandler.class );
 
+    public static final String NAMESPACE = "urn:xmpp:blocking";
+
     public IQBlockingHandler()
     {
         super( "XEP-0191 Blocking Command handler" );
@@ -60,14 +62,14 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
     @Override
     public IQHandlerInfo getInfo()
     {
-        return new IQHandlerInfo( "blocklist", "urn:xmpp:blocking" );
+        return new IQHandlerInfo( "blocklist", NAMESPACE );
     }
 
 
     @Override
     public Iterator<String> getFeatures()
     {
-        return Collections.singletonList( "urn:xmpp:blocking" ).iterator();
+        return Collections.singletonList( NAMESPACE ).iterator();
     }
 
     @Override
@@ -305,7 +307,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
             {
                 final IQ iq = new IQ( IQ.Type.set );
                 iq.setTo( session.getAddress() );
-                final Element block = iq.setChildElement( "block", "urn:xmpp:blocking" );
+                final Element block = iq.setChildElement( "block", NAMESPACE );
                 for ( final JID newBlock : newBlocks )
                 {
                     block.addElement( "item" ).addAttribute( "jid", newBlock.toString() );
@@ -437,7 +439,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
             {
                 final IQ iq = new IQ( IQ.Type.set );
                 iq.setTo( session.getAddress() );
-                final Element block = iq.setChildElement( "unblock", "urn:xmpp:blocking" );
+                final Element block = iq.setChildElement( "unblock", NAMESPACE );
                 for ( final JID newBlock : newBlocks )
                 {
                     block.addElement( "item" ).addAttribute( "jid", newBlock.toString() );

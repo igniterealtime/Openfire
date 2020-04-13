@@ -73,6 +73,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: horazont/aioxmpp
+          ref: feature/e2etest-improvements
           path: aioxmpp
       - name: Set up Python
         uses: actions/setup-python@v1
@@ -94,14 +95,14 @@ jobs:
           host=localhost
           port=5222
           no_verify=true
-          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping"]
+          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049"]
           EOL
       - name: Run aioxmpp tests
         continue-on-error: true
         run: |
           pushd aioxmpp
           mkdir output
-          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > output/aioxmpp-test-output.txt 2>&1
+          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only tests > output/aioxmpp-test-output.txt 2>&1
           popd
       - name: Expose test output
         uses: actions/upload-artifact@v1

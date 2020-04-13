@@ -74,6 +74,7 @@ jobs:
         with:
           repository: horazont/aioxmpp
           path: aioxmpp
+          ref: feature/e2etest-improvements
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
@@ -101,7 +102,7 @@ jobs:
         run: |
           pushd aioxmpp
           mkdir output
-          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" tests > output/aioxmpp-test-output.txt 2>&1
+          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only tests 2>&1 | tee output/aioxmpp.test.output.txt
           popd
       - name: Expose test output
         uses: actions/upload-artifact@v1

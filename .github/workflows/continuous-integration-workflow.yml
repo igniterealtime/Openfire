@@ -98,7 +98,6 @@ jobs:
           quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
           EOL
       - name: Run aioxmpp tests
-        continue-on-error: true
         run: |
           pushd aioxmpp
           mkdir output

@@ -120,7 +120,7 @@ function runTests {
 	echo "Starting Integration Tests (using aioxmpp)…"
     pushd "${AIOXMPPDIR}"
     which python3.6
-    python3.6 -m aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" tests
+    python3.6 -m aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" --e2etest-only -e 'test_set_topic' tests 2>&1 | tee output/aioxmpp.test.output.txt
     popd
 }
 

@@ -77,7 +77,7 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
                 }
                 catch ( Exception e )
                 {
-                    Log.warn( "An unexpected exception occurred while trying to broadcast a presence update from {} in the room {}", presence.getFrom(), getRoom().getJID() );
+                    Log.warn( "An unexpected exception occurred while trying to broadcast a presence update from {} in the room {}", presence.getFrom(), getRoom().getJID(), e );
                 }
             }
         });

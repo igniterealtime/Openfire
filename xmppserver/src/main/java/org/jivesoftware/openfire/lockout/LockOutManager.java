@@ -16,6 +16,9 @@
 package org.jivesoftware.openfire.lockout;
 
 import java.util.Date;
+
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -36,6 +39,8 @@ import org.slf4j.LoggerFactory;
  * @author Daniel Henninger
  */
 public class LockOutManager {
+
+    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
 
     public static final SystemProperty<Class> LOCKOUT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.lockout.className")
@@ -214,7 +219,7 @@ public class LockOutManager {
         LockOutFlag flag = lockOutCache.get(username);
         // If ID wan't found in cache, load it up and put it there.
         if (flag == null) {
-            synchronized ((username+ MUTEX_SUFFIX).intern()) {
+            synchronized (userBaseMutex.intern(username)) {
                 flag = lockOutCache.get(username);
                 // If group wan't found in cache, load it up and put it there.
                 if (flag == null) {

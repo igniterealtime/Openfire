@@ -855,7 +855,7 @@ public class LdapManager {
                     Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                     ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userRDN ));
+                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute(baseDN, userRDN).toString());
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
@@ -898,7 +898,7 @@ public class LdapManager {
                      * the secure connection has been established. */
                     if (!(startTlsEnabled && !sslEnabled)) {
                         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
+                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute(alternateBaseDN, userRDN).toString());
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
 
@@ -939,7 +939,7 @@ public class LdapManager {
                             Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                             ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
+                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute(alternateBaseDN, userRDN).toString());
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {

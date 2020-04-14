@@ -75,6 +75,7 @@ public class IQBindHandler extends IQHandler {
         }
 
         IQ reply = IQ.createResultIQ(packet);
+        reply.setFrom((String)null); // OF-2001: IQ bind requests are made from entities that have no resource yet. Responding with a 'from' value confuses many clients.
         Element child = reply.setChildElement("bind", "urn:ietf:params:xml:ns:xmpp-bind");
         // Check if the client specified a desired resource
         String resource = packet.getChildElement().elementTextTrim("resource");

@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.PrivateStorage;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -58,23 +59,32 @@ import java.util.Iterator;
  */
 public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvider {
 
+    public static final String NAMESPACE = "jabber:iq:private";
+
     private IQHandlerInfo info;
     private PrivateStorage privateStorage = null;
 
     public IQPrivateHandler() {
         super("XMPP Private Storage Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:private");
+        info = new IQHandlerInfo("query", NAMESPACE);
     }
 
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
-        IQ replyPacket;
+        IQ replyPacket = IQ.createResultIQ(packet);
+
         Element child = packet.getChildElement();
-        Element dataElement = (Element) child.elementIterator().next();
+        Element dataElement = child.elementIterator().next();
+
+        if ( !XMPPServer.getInstance().isLocal( packet.getFrom()) || !UserManager.getInstance().isRegisteredUser( packet.getFrom()) ) {
+            replyPacket.setChildElement(packet.getChildElement().createCopy());
+            replyPacket.setError(PacketError.Condition.service_unavailable);
+            replyPacket.getError().setText( "Service available only to locally registered users." );
+            return replyPacket;
+        }
 
         if (dataElement != null) {
             if (IQ.Type.get.equals(packet.getType())) {
-                replyPacket = IQ.createResultIQ(packet);
                 Element dataStored = privateStorage.get(packet.getFrom().getNode(), dataElement);
                 dataStored.setParent(null);
 
@@ -84,8 +94,6 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 child.add(dataStored);
             }
             else {
-                replyPacket = IQ.createResultIQ(packet);
-                
                 if (privateStorage.isEnabled()) {
                     privateStorage.add(packet.getFrom().getNode(), dataElement);
                 } else {
@@ -95,7 +103,6 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
             }
         }
         else {
-            replyPacket = IQ.createResultIQ(packet);
             replyPacket.setChildElement("query", "jabber:iq:private");
         }
         return replyPacket;

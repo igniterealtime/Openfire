@@ -5,18 +5,15 @@ applicationDefaultJvmArgs = ["-enableassertions"]
 
 repositories {
 	mavenCentral()
-    maven {
-        url 'https://oss.sonatype.org/content/repositories/snapshots'
-    }
+	maven {
+		url 'https://oss.sonatype.org/content/repositories/snapshots'
+	}
+	maven {
+		url 'https://www.igniterealtime.org/archiva/repository/maven/'
+	}
 }
 
 dependencies {
-	compile group: 'org.igniterealtime.smack', name: 'smack-java7', version: smackVersion
-	compile group: 'org.igniterealtime.smack', name: 'smack-legacy', version: smackVersion
-	if (smackVersion.matches("(5|4.[45]).*")) {
-		compile group: 'org.igniterealtime.smack', name: 'smack-xmlparser-xpp3', version: smackVersion
-		compile group: 'org.igniterealtime.smack', name: 'smack-xmlparser-stax', version: smackVersion
-	}
 	compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
 }
 

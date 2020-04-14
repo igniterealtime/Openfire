@@ -19,6 +19,10 @@ package org.jivesoftware.openfire.pubsub;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
@@ -29,7 +33,7 @@ import org.xmpp.forms.FormField;
  *
  * @author Matt Tucker
  */
-public class DefaultNodeConfiguration {
+public class DefaultNodeConfiguration implements Cacheable {
 
     /**
      * Flag indicating whether this default configutation belongs to a leaf node or not.
@@ -556,5 +560,23 @@ public class DefaultNodeConfiguration {
         }
 
         return form;
+    }
+
+    /**
+     * Returns the approximate size of the Object in bytes. The size should be
+     * considered to be a best estimate of how much memory the Object occupies
+     * and may be based on empirical trials or dynamic calculations.<p>
+     *
+     * @return the size of the Object in bytes.
+     */
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = CacheSizes.sizeOfObject(); // overhead of the class itself.
+        size += (9 * CacheSizes.sizeOfBoolean()); // nine boolean properties.
+        size += (3 * CacheSizes.sizeOfInt()); // three int properties.
+        size += (4 * CacheSizes.sizeOfObject()); // 4 references to other classes / enums
+        size += CacheSizes.sizeOfString( language );
+        return size;
     }
 }

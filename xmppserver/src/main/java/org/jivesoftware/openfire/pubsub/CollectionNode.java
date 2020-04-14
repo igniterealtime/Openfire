@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +27,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -60,14 +68,23 @@ public class CollectionNode extends Node {
      */
     private int maxLeafNodes = -1;
 
-    public CollectionNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
-        super(service, parentNode, nodeID, creator);
-        // Configure node with default values (get them from the pubsub service)
-        DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(false);
+    public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, LeafNodeAssociationPolicy associationPolicy, int maxLeafNodes)
+    {
+        super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        this.associationPolicy = associationPolicy;
+        this.maxLeafNodes = maxLeafNodes;
+    }
+
+    public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration)
+    {
+        super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
         this.associationPolicy = defaultConfiguration.getAssociationPolicy();
         this.maxLeafNodes = defaultConfiguration.getMaxLeafNodes();
     }
 
+    public CollectionNode() { // to be used only for serialization;
+        super();
+    }
 
     @Override
     protected void configure(FormField field) throws NotAcceptableException {
@@ -100,12 +117,12 @@ public class CollectionNode extends Node {
         else if ("pubsub#children".endsWith(field.getVariable())) {
             values = field.getValues();
             ArrayList<Node> childrenNodes = new ArrayList<>(values.size());
-            
-            // Check all nodes for their existence 
+
+            // Check all nodes for their existence
             for (String nodeId : values)
             {
-                Node childNode = service.getNode(nodeId);
-                
+                Node childNode = getService().getNode(nodeId);
+
                 if (childNode == null)
                 {
                     throw new NotAcceptableException("Child node does not exist");
@@ -115,12 +132,12 @@ public class CollectionNode extends Node {
             // Remove any children not in the new list.
             ArrayList<Node> toRemove = new ArrayList<>(nodes.values());
             toRemove.removeAll(childrenNodes);
-            
+
             for (Node node : toRemove)
             {
                 removeChildNode(node);
             }
-            
+
             // Set the parent on the children.
             for (Node node : childrenNodes)
             {
@@ -247,7 +264,7 @@ public class CollectionNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
-        items.addAttribute("node", getNodeID()); 
+        items.addAttribute("node", getNodeID());
         Element item = items.addElement("item");
         item.addAttribute("id", child.getNodeID());
         if (deliverPayloads) {
@@ -255,6 +272,19 @@ public class CollectionNode extends Node {
         }
         // Broadcast event notification to subscribers
         broadcastCollectionNodeEvent(child, message);
+    }
+
+    /**
+     * Notification that a child node configuration was modified. Trigger notifications
+     * to node subscribers whose subscription type is {@link NodeSubscription.Type#nodes} and
+     * have the proper depth.
+     *
+     * @param child the deleted node that was removed from this node.
+     * @param notification message which will be sent to subscribers.
+     */
+    void childNodeModified(Node child, Message notification){
+        // Broadcast event notification to subscribers
+        broadcastCollectionNodeEvent(child, notification);
     }
 
     /**
@@ -290,7 +320,7 @@ public class CollectionNode extends Node {
         }
         // TODO Possibly use a thread pool for sending packets (based on the jids size)
         for (NodeSubscription subscription : subscriptions) {
-            service.sendNotification(subscription.getNode(), notification, subscription.getJID());
+            getService().sendNotification(subscription.getNode(), notification, subscription.getJID());
         }
     }
 
@@ -492,5 +522,40 @@ public class CollectionNode extends Node {
          * Only those on a whitelist may associate leaf nodes with the collection.
          */
         whitelist
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = super.getCachedSize(); // parent.
+        size += CacheSizes.sizeOfMap( nodes );
+        size += CacheSizes.sizeOfInt(); // associationPolicy
+        size += CacheSizes.sizeOfCollection( associationTrusted );
+        size += CacheSizes.sizeOfInt(); // maxLeafNodes
+        return size;
+    }
+
+    @Override
+    public void writeExternal( ObjectOutput out ) throws IOException
+    {
+        super.writeExternal( out );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.writeExternalizableMap( out, nodes );
+        util.writeSafeUTF( out, associationPolicy.name() );
+        util.writeSerializableCollection( out, associationTrusted );
+        util.writeInt( out, maxLeafNodes );
+    }
+
+    @Override
+    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
+    {
+        super.readExternal( in );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.readExternalizableMap( in, nodes, getClass().getClassLoader() );
+        associationPolicy = LeafNodeAssociationPolicy.valueOf( util.readSafeUTF( in ) );
+        util.readSerializableCollection( in, associationTrusted, getClass().getClassLoader() );
+        maxLeafNodes = util.readInt( in );
     }
 }

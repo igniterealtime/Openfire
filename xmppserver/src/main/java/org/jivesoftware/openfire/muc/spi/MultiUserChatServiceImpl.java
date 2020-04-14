@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
@@ -29,6 +31,7 @@ import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQvCardHandler;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
@@ -76,8 +79,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener
 {
-
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
+
+    private static final Interner<String> roomBaseMutex = Interners.newWeakInterner();
+    private static final Interner<JID> jidBaseMutex = Interners.newWeakInterner();
 
     /**
      * The time to elapse between clearing of idle chat users.
@@ -153,6 +158,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * The handler of search requests ('https://xmlns.zombofant.net/muclumbus/search/1.0' namespace).
      */
     private IQMuclumbusSearchHandler muclumbusSearchHandler = null;
+
+    /**
+     * The handler of VCard requests.
+     */
+    private IQMUCvCardHandler mucVCardHandler = null;
 
     /**
      * Plugin (etc) provided IQ Handlers for MUC:
@@ -401,6 +411,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if (IQMuclumbusSearchHandler.NAMESPACE.equals(namespace)) {
             final IQ reply = muclumbusSearchHandler.handleIQ(iq);
+            router.route(reply);
+        }
+        else if (IQMUCvCardHandler.NAMESPACE.equals(namespace)) {
+            final IQ reply = mucVCardHandler.handleIQ(iq);
             router.route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
@@ -683,7 +697,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         LocalMUCRoom room;
         boolean loaded = false;
         boolean created = false;
-        synchronized (roomName.intern()) {
+        synchronized (roomBaseMutex.intern(roomName)) {
             room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
                 room = new LocalMUCRoom(this, roomName, router);
@@ -746,7 +760,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
             // Check if the room exists in the databclase and was not present in memory
-            synchronized (roomName.intern()) {
+            synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
                     room = new LocalMUCRoom(this, roomName, router);
@@ -880,7 +894,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             throw new IllegalStateException("Not initialized");
         }
         LocalMUCUser user;
-        synchronized (userjid.toString().intern()) {
+        synchronized (jidBaseMutex.intern(userjid)) {
             user = users.get(userjid);
             if (user == null) {
                 if (roomName != null) {
@@ -1151,6 +1165,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Configure the handlers of search requests
         searchHandler = new IQMUCSearchHandler(this);
         muclumbusSearchHandler = new IQMuclumbusSearchHandler(this);
+        mucVCardHandler = new IQMUCvCardHandler(this);
     }
 
     public void initializeSettings() {
@@ -1256,7 +1271,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (value != null) {
             try {
             	if (Integer.parseInt(value)>0)
-            		emptyLimit = Integer.parseInt(value) * 24;
+            		emptyLimit = Integer.parseInt(value) * (long)24;
             	else
             		emptyLimit = -1;
             }
@@ -1612,6 +1627,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if ( JiveGlobals.getBooleanProperty( "xmpp.muc.self-ping.enabled", true ) ) {
                     features.add( "http://jabber.org/protocol/muc#self-ping-optimization" );
                 }
+                if ( IQMUCvCardHandler.PROPERTY_ENABLED.getValue() ) {
+                    features.add( IQMUCvCardHandler.NAMESPACE );
+                }
                 features.add( "urn:xmpp:sid:0" );
             }
         }
@@ -1786,7 +1804,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return answer.iterator();
     }
 
-    private boolean canDiscoverRoom(final MUCRoom room, final JID senderJID) {
+    @Override
+    public boolean canDiscoverRoom(final MUCRoom room, final JID entity) {
         // Check if locked rooms may be discovered
         if (!allowToDiscoverLockedRooms && room.isLocked()) {
             return false;
@@ -1795,7 +1814,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (!allowToDiscoverMembersOnlyRooms && room.isMembersOnly()) {
                 return false;
             }
-            final MUCRole.Affiliation affiliation = room.getAffiliation(senderJID.asBareJID());
+            final MUCRole.Affiliation affiliation = room.getAffiliation(entity.asBareJID());
             return affiliation == MUCRole.Affiliation.owner
                 || affiliation == MUCRole.Affiliation.admin
                 || affiliation == MUCRole.Affiliation.member;

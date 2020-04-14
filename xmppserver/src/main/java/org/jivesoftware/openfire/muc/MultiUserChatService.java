@@ -275,6 +275,15 @@ public interface MultiUserChatService extends Component {
     HistoryStrategy getHistoryStrategy();
 
     /**
+     * Checks if the a particular entity is allowed to discover the room's existence.
+     *
+     * @param room The room to be discovered (cannot be null).
+     * @param entity The JID of the entity (cannot be null).
+     * @return true if the entity can discover the room, otherwise false.
+     */
+    boolean canDiscoverRoom(final MUCRoom room, final JID entity);
+
+    /**
      * Obtains a chatroom by name. A chatroom is created for that name if none exists and the user
      * has permission. The user that asked for the chatroom will be the room's owner if the chatroom
      * was created.

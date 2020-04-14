@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.group;
 import java.io.Serializable;
 import java.util.*;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -56,10 +58,10 @@ public class GroupManager {
         private static final GroupManager instance = new GroupManager();
     }
 
-    private static final String MUTEX_SUFFIX_GROUP = " grp";
-    private static final String MUTEX_SUFFIX_USER = " grpu";
-    private static final String MUTEX_SUFFIX_KEY = " grpk";
-    
+    private static final Interner<String> groupBasedMutex = Interners.newWeakInterner();
+    private static final Interner<String> userBasedMutex = Interners.newWeakInterner();
+    private static final Interner<String> keyBasedMutex = Interners.newWeakInterner();
+
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
     private static final String GROUP_NAMES_KEY = "GROUP_NAMES";
@@ -287,7 +289,7 @@ public class GroupManager {
      * @throws GroupAlreadyExistsException if the group name already exists in the system.
      */
     public Group createGroup(String name) throws GroupAlreadyExistsException {
-        synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
+        synchronized (groupBasedMutex.intern(name)) {
             Group newGroup;
             try {
                 getGroup(name);
@@ -355,7 +357,7 @@ public class GroupManager {
             return toGroup(name, firstCachedGroup);
         }
 
-        synchronized ((name + MUTEX_SUFFIX_GROUP).intern()) {
+        synchronized (groupBasedMutex.intern(name)) {
             final CacheableOptional<Group> secondCachedGroup = groupCache.get(name);
             if (secondCachedGroup != null) {
                 return toGroup(name, secondCachedGroup);
@@ -498,7 +500,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         HashSet<String> groupNames = getSharedGroupsForUserFromCache(userName);
         if (groupNames == null) {
-            synchronized((userName + MUTEX_SUFFIX_USER).intern()) {
+            synchronized (userBasedMutex.intern(userName)) {
                 groupNames = getSharedGroupsForUserFromCache(userName);
                 if (groupNames == null) {
                     // assume this is a local user
@@ -580,7 +582,7 @@ public class GroupManager {
     public Collection<Group> getGroups(int startIndex, int numResults) {
         HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
         if (groupNames == null) {
-            synchronized((getPagedGroupNameKey(startIndex, numResults) + MUTEX_SUFFIX_KEY).intern()) {
+            synchronized (keyBasedMutex.intern(getPagedGroupNameKey(startIndex, numResults))) {
                 groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames(startIndex, numResults));
@@ -610,7 +612,7 @@ public class GroupManager {
     public Collection<Group> getGroups(JID user) {
         HashSet<String> groupNames = getUserGroupsFromCache(user);
         if (groupNames == null) {
-            synchronized((user.getNode() + MUTEX_SUFFIX_USER).intern()) {
+            synchronized (userBasedMutex.intern(user.getNode())) {
                 groupNames = getUserGroupsFromCache(user);
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames(user));

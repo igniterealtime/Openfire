@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
 import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
 import org.jivesoftware.openfire.commands.event.*;
+import org.jivesoftware.openfire.commands.generic.Ping;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.xmpp.forms.DataForm;
@@ -235,6 +236,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new VCardDeleting());
         addCommand(new VCardModified());
         addCommand(new GetAdminConsoleInfo());
+        addCommand(new Ping());
     }
 
     private void startCommand(AdHocCommand command) {

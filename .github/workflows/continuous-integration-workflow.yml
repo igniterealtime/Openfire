@@ -74,7 +74,7 @@ jobs:
         with:
           repository: horazont/aioxmpp
           path: aioxmpp
-          ref: feature/e2etest-improvements
+          ref: devel
       - name: Set up Python
         uses: actions/setup-python@v1
         with:

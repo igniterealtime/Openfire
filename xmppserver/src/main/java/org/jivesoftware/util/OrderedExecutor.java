@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -79,6 +80,8 @@ public class OrderedExecutor {
      *         completed.
      */
     public Future<?> submit(OrderedRunnable item) {
+        Objects.requireNonNull(item, "The task cannot be null");
+        Objects.requireNonNull(item.getOrderingKey(), "The ordering key for the task cannot be null");
         OrderedFutureRunnable future = new OrderedFutureRunnable(item);
         synchronized (lock) {
             Object orderingKey = item.getOrderingKey();

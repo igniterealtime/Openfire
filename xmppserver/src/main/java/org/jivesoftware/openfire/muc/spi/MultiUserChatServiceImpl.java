@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
@@ -77,8 +79,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener
 {
-
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
+
+    private static final Interner<String> roomBaseMutex = Interners.newWeakInterner();
+    private static final Interner<JID> jidBaseMutex = Interners.newWeakInterner();
 
     /**
      * The time to elapse between clearing of idle chat users.
@@ -693,7 +697,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         LocalMUCRoom room;
         boolean loaded = false;
         boolean created = false;
-        synchronized (roomName.intern()) {
+        synchronized (roomBaseMutex.intern(roomName)) {
             room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
                 room = new LocalMUCRoom(this, roomName, router);
@@ -756,7 +760,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
             // Check if the room exists in the databclase and was not present in memory
-            synchronized (roomName.intern()) {
+            synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
                     room = new LocalMUCRoom(this, roomName, router);
@@ -890,7 +894,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             throw new IllegalStateException("Not initialized");
         }
         LocalMUCUser user;
-        synchronized (userjid.toString().intern()) {
+        synchronized (jidBaseMutex.intern(userjid)) {
             user = users.get(userjid);
             if (user == null) {
                 if (roomName != null) {

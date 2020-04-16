@@ -178,6 +178,20 @@ does exist called <tt>&lt;autosetup&gt;</tt> with a <tt>&lt;run&gt;true&lt;/run&
         &lt;authprovider&gt;
             &lt;mode&gt;default&lt;/mode&gt;
         &lt;/authprovider>
+        &lt;users&gt;
+            &lt;user1&gt; &lt;!-- Use incremental numbers for more users, eg: user2, user3 --&gt;
+                &lt;username&gt;jane&lt;/username&gt; &lt;!-- Required --&gt;
+                &lt;password&gt;secret&lt;/password&gt; &lt;!-- Required --&gt;
+                &lt;name&gt;Jane Doe&lt;/name&gt;
+                &lt;email&gt;user1@example.org&lt;/email&gt;
+                &lt;roster&gt;
+                    &lt;item1&gt; &lt;!-- Use incremental numbers for more items, eg: item2, item3 --&gt;
+                        &lt;jid&gt;john@example.com&lt;/jid&gt;
+                        &lt;nickname&gt;John&lt;/nickname&gt;
+                    &lt;/item1&gt;
+                &lt;/roster&gt;
+            &lt;/user1&gt;
+        &lt;/users&gt;
     &lt;/autosetup&gt;
 </pre></tt>
 <p>Then setup will be run on first launch, and the <tt>&lt;autosetup/&gt;</tt> section will be deleted from <tt>openfire.xml</tt></p>

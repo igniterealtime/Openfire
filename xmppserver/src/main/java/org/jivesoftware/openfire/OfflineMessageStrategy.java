@@ -116,9 +116,9 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
                 // 8.5.3.  localpart@domainpart/resourcepart
                 // 8.5.3.2.1.  Message
 
-                // For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza
+                // For a message stanza of type "groupchat", or "headline", the server MUST either (a) silently ignore the stanza
                 // or (b) return an error stanza to the sender, which SHOULD be <service-unavailable/>.
-                if (message.getType() == Message.Type.normal || message.getType() == Message.Type.groupchat || message.getType() == Message.Type.headline) {
+                if (message.getType() == Message.Type.groupchat || message.getType() == Message.Type.headline) {
                     // Depending on the OfflineMessageStragey, we may silently ignore or bounce
                     if (type == Type.bounce) {
                         bounce(message);

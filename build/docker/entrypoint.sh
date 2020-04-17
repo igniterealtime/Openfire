@@ -48,7 +48,9 @@ fill_config() {
   rm ${OPENFIRE_DIR}/conf_org/security.xml
   cp template_openfire.xml ${OPENFIRE_DIR}/conf_org/openfire.xml
   cp template_security.xml ${OPENFIRE_DIR}/conf_org/security.xml
+  cp template_hazelcast.xml ${OPENFIRE_DIR}/conf_org/hazelcast-local-config.xml
   sh inject_db_settings.sh ${OPENFIRE_DIR}/conf_org/openfire.xml
+  sh inject_hazelcast_settings.sh ${OPENFIRE_DIR}/conf_org/hazelcast-local-config.xml
 }
 
 # allow arguments to be passed to openfire launch

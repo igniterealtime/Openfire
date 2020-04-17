@@ -19,8 +19,11 @@ COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/o
 COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 
 COPY build/docker/inject_db_settings.sh /usr/local/openfire/inject_db_settings.sh
+COPY build/docker/inject_hazelcast_settings.sh /usr/local/openfire/inject_hazelcast_settings.sh
 COPY build/docker/template_openfire.xml /usr/local/openfire/template_openfire.xml
+COPY build/docker/template_hazelcast.xml /usr/local/openfire/template_hazelcast.xml
 COPY build/docker/template_security.xml /usr/local/openfire/template_security.xml
+COPY build/docker/apns_key.p8 /usr/local/openfire/authKey.p8
 
 WORKDIR /usr/local/openfire
 
@@ -41,6 +44,6 @@ RUN apt-get update -qq \
 
 LABEL maintainer="florian.kinder@fankserver.com"
 
-EXPOSE 3478/tcp 3479/tcp 5222/tcp 5223/tcp 5229/tcp 5275/tcp 5276/tcp 5262/tcp 5263/tcp 7070/tcp 7443/tcp 7777/tcp 9090/tcp 9091/tcp
+EXPOSE 3478/tcp 3479/tcp 5222/tcp 5223/tcp 5229/tcp 5275/tcp 5276/tcp 5262/tcp 5263/tcp 5701/tcp 7070/tcp 7443/tcp 7777/tcp 9090/tcp 9091/tcp
 VOLUME ["${OPENFIRE_DATA_DIR}"]
 CMD ["/sbin/entrypoint.sh"]

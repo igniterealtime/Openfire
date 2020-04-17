@@ -24,5 +24,31 @@
           <email>admin@example.com</email>
           <password>admin</password>
       </admin>
+      <users>
+          <user1>
+              <username>john</username>
+              <password>secret</password>
+              <name>John Doe</name>
+              <email>john.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item1>
+              </roster>
+          </user1>
+          <user2>
+              <username>jane</username>
+              <password>secret</password>
+              <name>Jane Doe</name>
+              <email>jane.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+              </roster>
+          </user2>
+      </users>
   </autosetup>
 </jive>

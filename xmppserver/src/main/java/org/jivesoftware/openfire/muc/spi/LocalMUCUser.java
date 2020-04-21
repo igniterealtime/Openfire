@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Representation of users interacting with the chat service. A user
- * may join serveral rooms hosted by the chat service. That means that
+ * may join several rooms hosted by the chat service. That means that
  * we are going to have an instance of this class for the user and several
  * MUCRoles for each joined room.<p>
  *

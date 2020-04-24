@@ -85,6 +85,9 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Implementation of a chatroom that is being hosted by this JVM. A LocalMUCRoom could represent
  * a persistent room which means that its configuration will be maintained in synch with its
@@ -115,17 +118,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     /**
      * The occupants of the room accessible by the occupants nickname.
      */
-    private Map<String, List<MUCRole>> occupantsByNickname = new ConcurrentHashMap<>();
+    private final Map<String, List<MUCRole>> occupantsByNickname = new ConcurrentHashMap<>();
 
     /**
      * The occupants of the room accessible by the occupants bare JID.
      */
-    private Map<JID, List<MUCRole>> occupantsByBareJID = new ConcurrentHashMap<>();
+    private final Map<JID, List<MUCRole>> occupantsByBareJID = new ConcurrentHashMap<>();
 
     /**
      * The occupants of the room accessible by the occupants full JID.
      */
-    private Map<JID, MUCRole> occupantsByFullJID = new ConcurrentHashMap<>();
+    private final Map<JID, MUCRole> occupantsByFullJID = new ConcurrentHashMap<>();
 
     /**
      * The name of the room.
@@ -140,7 +143,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     /**
      * The role of the room itself.
      */
-    private MUCRole role = new RoomRole(this);
+    private final MUCRole role = new RoomRole(this);
 
     /**
      * The router used to send packets for the room.
@@ -352,7 +355,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param roomname the name of the room.
      * @param packetRouter the router for sending packets from the room.
      */
-    LocalMUCRoom(MultiUserChatService chatservice, String roomname, PacketRouter packetRouter) {
+    LocalMUCRoom( @Nonnull MultiUserChatService chatservice, @Nonnull String roomname, @Nonnull PacketRouter packetRouter) {
         this.mucService = chatservice;
         this.name = roomname;
         this.naturalLanguageName = roomname;
@@ -402,7 +405,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public void setMUCService(MultiUserChatService service) {
+    public void setMUCService( MultiUserChatService service) {
         this.mucService = service;
     }
 
@@ -528,7 +531,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public MUCRole.Affiliation getAffiliation(JID jid) {
+    public MUCRole.Affiliation getAffiliation(@Nonnull JID jid) {
         final JID bareJID = jid.asBareJID();
 
         if (owners.includes(bareJID)) {
@@ -537,139 +540,89 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         else if (admins.includes(bareJID)) {
             return MUCRole.Affiliation.admin;
         }
-        else if (members.includesKey(bareJID)) {
-            return MUCRole.Affiliation.member;
-        }
+        // explicit outcast status has higher precedence than member status
         else if (outcasts.includes(bareJID)) {
             return MUCRole.Affiliation.outcast;
+        }
+        else if (members.includesKey(bareJID)) {
+            return MUCRole.Affiliation.member;
         }
         return MUCRole.Affiliation.none;
     }
 
-    @Override
-    public MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest,
-            LocalMUCUser user, Presence presence) throws UnauthorizedException,
-            UserAlreadyExistsException, RoomLockedException, ForbiddenException,
-            RegistrationRequiredException, ConflictException, ServiceUnavailableException,
-            NotAcceptableException {
-        if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
-            if (!((MultiUserChatServiceImpl)mucService).getMUCDelegate().joiningRoom(this, user.getAddress())) {
-                // Delegate said no, reject join.
-                throw new UnauthorizedException();
-            }
-        }
-        MUCRole joinRole;
-        lock.writeLock().lock();
-        boolean clientOnlyJoin = false;
-        // A "client only join" here is one where the client is already joined, but has re-joined.
-        try {
-            // If the room has a limit of max user then check if the limit has been reached
-            if (!canJoinRoom(user)) {
-                throw new ServiceUnavailableException();
-            }
-            final JID bareJID = user.getAddress().asBareJID();
-            boolean isOwner = owners.includes(bareJID);
-            // If the room is locked and this user is not an owner raise a RoomLocked exception
-            if (isLocked()) {
-                if (!isOwner) {
-                    throw new RoomLockedException();
-                }
-            }
-            // Check if the nickname is already used in the room
-            if (occupantsByNickname.containsKey(nickname.toLowerCase())) {
-                List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
-                MUCRole occupant = occupants.size() > 0 ? occupants.get(0) : null;
-                if (occupant != null && !occupant.getUserAddress().toBareJID().equals(bareJID.toBareJID())) {
-                    // Nickname is already used, and not by the same JID
-                    throw new UserAlreadyExistsException();
-                }
-                // Is this client already joined with this nickname?
-                for (MUCRole mucRole : occupants) {
-                    if (mucRole.getUserAddress().equals(user.getAddress())) {
-                        clientOnlyJoin = true;
-                        break;
-                    }
-                }
-            }
-            // If the room is password protected and the provided password is incorrect raise a
-            // Unauthorized exception - unless the JID that is joining is a system admin.
-            if (isPasswordProtected()) {
-                final boolean isCorrectPassword = (password != null && password.equals(getPassword()));
-                final boolean isSysadmin = mucService.isSysadmin(bareJID);
-                final boolean requirePassword = !isSysadmin || mucService.isPasswordRequiredForSysadminsToJoinRoom();
-                if (!isCorrectPassword && requirePassword ) {
-                    throw new UnauthorizedException();
-                }
-            }
-            // If another user attempts to join the room with a nickname reserved by the first user
-            // raise a ConflictException
-            if (members.containsValue(nickname.toLowerCase())) {
-                if (!nickname.toLowerCase().equals(members.get(bareJID))) {
-                    throw new ConflictException();
-                }
-            }
-            if (isLoginRestrictedToNickname()) {
-                String reservedNickname = members.get(bareJID);
-                if (reservedNickname != null && !nickname.toLowerCase().equals(reservedNickname)) {
-                    throw new NotAcceptableException();
-                }
-            }
+    public MUCRole.Role getRole(@Nonnull JID jid)
+    {
+        final JID bareJID = jid.asBareJID();
 
-            // Set the corresponding role based on the user's affiliation
-            MUCRole.Role role;
-            MUCRole.Affiliation affiliation;
-            if (isOwner) {
-                // The user is an owner. Set the role and affiliation accordingly.
+        if (owners.includes(bareJID)) {
+            return MUCRole.Role.moderator;
+        }
+        else if (admins.includes(bareJID)) {
+            return MUCRole.Role.moderator;
+        }
+        // explicit outcast status has higher precedence than member status
+        else if (outcasts.contains(bareJID)) {
+            return null; // Outcasts have no role, as they're not allowed in the room.
+        }
+        else if (members.includesKey(bareJID)) {
+            // The user is a member. Set the role and affiliation accordingly.
+            return MUCRole.Role.participant;
+        }
+        else {
+            return isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
+        }
+    }
+
+    @Override
+    public MUCRole joinRoom( @Nonnull String nickname,
+                             @Nullable String password,
+                             @Nullable HistoryRequest historyRequest,
+                             @Nonnull LocalMUCUser user,
+                             @Nonnull Presence presence )
+        throws UnauthorizedException, UserAlreadyExistsException, RoomLockedException, ForbiddenException,
+            RegistrationRequiredException, ConflictException, ServiceUnavailableException, NotAcceptableException
+    {
+        Log.debug( "User '{}' attempts to join room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
+        MUCRole joinRole;
+        boolean clientOnlyJoin; // A "client only join" here is one where the client is already joined, but has re-joined.
+
+        lock.writeLock().lock();
+        try {
+            // Determine the corresponding role based on the user's affiliation
+            final JID bareJID = user.getAddress().asBareJID();
+            MUCRole.Role role = getRole( bareJID );
+            MUCRole.Affiliation affiliation = getAffiliation( bareJID );
+            if (affiliation != MUCRole.Affiliation.owner && mucService.isSysadmin(bareJID)) {
+                // The user is a system administrator of the MUC service. Treat him as an owner although he won't appear in the list of owners
+                Log.debug( "User '{}' is a sysadmin. Treat as owner.", user.getAddress());
                 role = MUCRole.Role.moderator;
                 affiliation = MUCRole.Affiliation.owner;
             }
-            else if (mucService.isSysadmin(bareJID)) {
-                // The user is a system administrator of the MUC service. Treat him as an owner
-                // although he won't appear in the list of owners
-                role = MUCRole.Role.moderator;
-                affiliation = MUCRole.Affiliation.owner;
-            }
-            else if (admins.includes(bareJID)) {
-                // The user is an admin. Set the role and affiliation accordingly.
-                role = MUCRole.Role.moderator;
-                affiliation = MUCRole.Affiliation.admin;
-            }
-            // explicit outcast status has higher precedence than member status
-            else if (outcasts.contains(bareJID)) {
-                // The user is an outcast. Raise a "Forbidden" exception.
-                throw new ForbiddenException();
-            }
-            else if (members.includesKey(bareJID)) {
-                // The user is a member. Set the role and affiliation accordingly.
-                role = MUCRole.Role.participant;
-                affiliation = MUCRole.Affiliation.member;
-            }
-            // this checks if the user is an outcast implicitly (via a group)
-            else if (outcasts.includes(bareJID)) {
-                // The user is an outcast. Raise a "Forbidden" exception.
-                throw new ForbiddenException();
-            }
-            else {
-                // The user has no affiliation (i.e. NONE). Set the role accordingly.
-                if (isMembersOnly()) {
-                    // The room is members-only and the user is not a member. Raise a
-                    // "Registration Required" exception.
-                    throw new RegistrationRequiredException();
-                }
-                role = (isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant);
-                affiliation = MUCRole.Affiliation.none;
-            }
-            if (!clientOnlyJoin) {
-                // Create a new role for this user in this room
-                joinRole = new LocalMUCRole(mucService, this, nickname, role,
-                        affiliation, user, presence, router);
-                // Add the new user as an occupant of this room
+            Log.debug( "User '{}' role and affiliation in room '{} are determined to be: {}, {}", user.getAddress(), this.getJID(), role, affiliation );
+
+            // Verify that the attempt meets all preconditions for joining the room.
+            checkJoinRoomPreconditions( user, nickname, affiliation, password );
+
+            // Is this client already joined with this nickname?
+            clientOnlyJoin = alreadyJoinedWithThisNick( user, nickname );
+
+            // TODO up to this point, room state has not been modified, even though a write-lock has been acquired. Can we optimize concurrency by locking with only a read-lock up until here?
+
+            if (!clientOnlyJoin)
+            {
+                Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
+
+                // Create a new role for this user in this room.
+                joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
+
+                // Add the new user as an occupant of this room.
                 occupantsByNickname.compute(nickname.toLowerCase(), (nick, occupants) -> {
                     List<MUCRole> ret=occupants !=null ? occupants : new CopyOnWriteArrayList<>();
                     ret.add(joinRole);
                     return ret;
                 });
-                // Update the tables of occupants based on the bare and full JID
+
+                // Update the tables of occupants based on the bare and full JID.
                 occupantsByBareJID.compute(bareJID, (jid, occupants) -> {
                     List<MUCRole> ret=occupants !=null ? occupants : new CopyOnWriteArrayList<>();
                     ret.add(joinRole);
@@ -678,50 +631,69 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 occupantsByFullJID.put(user.getAddress(), joinRole);
             } else {
                 // Grab the existing one.
+                Log.debug( "Skip adding user '{}' as an occupant of  room '{}' using nickname '{}', as it already is. Updating occupancy with its latest presence information.", user.getAddress(), this.getJID(), nickname );
                 joinRole = occupantsByFullJID.get(user.getAddress());
                 joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
-           }
+            }
         }
         finally {
             lock.writeLock().unlock();
         }
-        // Notify other cluster nodes that a new occupant joined the room
+
+        Log.trace( "Notify other cluster nodes that a new occupant ('{}') joined room '{}'", joinRole.getUserAddress(), joinRole.getChatRoom() );
         CacheFactory.doClusterTask(new OccupantAddedEvent(this, joinRole));
 
-        // Send presence of existing occupants to new occupant
-        sendInitialPresences(joinRole);
-        // It is assumed that the room is new based on the fact that it's locked and
-        // that it was locked when it was created.
-        boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
-        try {
-            // Send the presence of this new occupant to existing occupants
-            if (JOIN_PRESENCE_ENABLE.getValue()) {
-                Presence joinPresence = joinRole.getPresence().createCopy();
-                broadcastPresence(joinPresence, true);
-            }
-        }
-        catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-        }
-        // If the room has just been created send the "room locked until configuration is
-        // confirmed" message
+        // Exchange initial presence information between occupants of the room.
+        exchangeInitialPresences(joinRole);
+
+        // If the room has just been created send the "room locked until configuration is confirmed" message.
+        // It is assumed that the room is new based on the fact that it's locked and that it was locked when it was created.
+        final boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
         if (!isRoomNew && isLocked()) {
+            // TODO Verify if it's right that this check occurs only _after_ a join was deemed 'successful' and initial presences have been exchanged.
             // http://xmpp.org/extensions/xep-0045.html#enter-locked
-            Presence presenceItemNotFound = new Presence(Presence.Type.error);
+            Log.debug( "User '{}' attempts to join room '{}' that is locked (pending configuration confirmation). Sending an error.", user.getAddress(), this.getJID() );
+            final Presence presenceItemNotFound = new Presence(Presence.Type.error);
             presenceItemNotFound.setError(PacketError.Condition.item_not_found);
             presenceItemNotFound.setFrom(role.getRoleAddress());
             joinRole.send(presenceItemNotFound);
-
         }
+
+        sendRoomHistoryAfterJoin( user, joinRole, historyRequest );
+        sendRoomSubjectAfterJoin( user, joinRole );
+
+        if (!clientOnlyJoin) {
+            // Update the date when the last occupant left the room
+            setEmptyDate(null);
+            // Fire event that occupant joined the room
+            MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(), user.getAddress(), joinRole.getNickname());
+        }
+        return joinRole;
+    }
+
+    /**
+     * Sends the room history to a user that just joined the room.
+     */
+    private void sendRoomHistoryAfterJoin( @Nonnull final LocalMUCUser user, @Nonnull MUCRole joinRole, @Nullable HistoryRequest historyRequest )
+    {
         if (historyRequest == null) {
-            Iterator<Message> history = roomHistory.getMessageHistory();
+            Log.trace( "Sending default room history to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
+            final Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {
                 joinRole.send(history.next());
             }
-        }
-        else {
+        } else {
+            Log.trace( "Sending user-requested room history to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
             historyRequest.sendHistory(joinRole, roomHistory);
         }
+    }
+
+    /**
+     * Sends the room subject to a user that just joined the room.
+     */
+    private void sendRoomSubjectAfterJoin( @Nonnull final LocalMUCUser user, @Nonnull MUCRole joinRole )
+    {
+        Log.trace( "Sending room subject to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
         Message roomSubject = roomHistory.getChangedSubject();
 
         // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
@@ -733,15 +705,243 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             roomSubject.getElement().addElement( "subject" );
         }
         joinRole.send(roomSubject);
+    }
 
-        if (!clientOnlyJoin) {
-            // Update the date when the last occupant left the room
-            setEmptyDate(null);
-            // Fire event that occupant joined the room
-            MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(),
-                    user.getAddress(), joinRole.getNickname());
-       }
-        return joinRole;
+    private boolean alreadyJoinedWithThisNick( @Nonnull LocalMUCUser user, @Nonnull String nickname )
+    {
+        if (occupantsByNickname.containsKey(nickname.toLowerCase())) {
+            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
+            // Is this client already joined with this nickname?
+            for (MUCRole mucRole : occupants) {
+                if (mucRole.getUserAddress().equals(user.getAddress())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks all preconditions for joining a room. If one of them fails, an Exception is thrown.
+     */
+    private void checkJoinRoomPreconditions(
+            @Nonnull final LocalMUCUser user,
+            @Nonnull final String nickname,
+            @Nonnull final MUCRole.Affiliation affiliation,
+            @Nullable final String password )
+        throws ServiceUnavailableException, RoomLockedException, UserAlreadyExistsException, UnauthorizedException, ConflictException, NotAcceptableException, ForbiddenException, RegistrationRequiredException
+    {
+        Log.debug( "Checking all preconditions for user '{}' to join room '{}'.", user.getAddress(), this.getJID() );
+
+        checkJoinRoomPreconditionDelegate( user );
+
+        // If the room has a limit of max user then check if the limit has been reached
+        checkJoinRoomPreconditionMaxOccupants( user );
+
+        // If the room is locked and this user is not an owner raise a RoomLocked exception
+        checkJoinRoomPreconditionLocked( user );
+
+        // Check if the nickname is already used in the room
+        checkJoinRoomPreconditionNicknameInUse( user, nickname );
+
+        // If the room is password protected and the provided password is incorrect raise a
+        // Unauthorized exception - unless the JID that is joining is a system admin.
+        checkJoinRoomPreconditionPasswordProtection( user, password );
+
+        // If another user attempts to join the room with a nickname reserved by the first user
+        // raise a ConflictException
+        checkJoinRoomPreconditionNicknameReserved( user, nickname );
+
+        checkJoinRoomPreconditionRestrictedToNickname( user, nickname );
+
+        // Check if the user can join the room.
+        checkJoinRoomPreconditionIsOutcast( user, affiliation );
+
+        // If the room is members-only and the user is not a member. Raise a "Registration Required" exception.
+        checkJoinRoomPreconditionMemberOnly( user, affiliation );
+
+        Log.debug( "All preconditions for user '{}' to join room '{}' have been met. User can join the room.", user.getAddress(), this.getJID() );
+    }
+
+    private void checkJoinRoomPreconditionDelegate( @Nonnull final LocalMUCUser user ) throws UnauthorizedException
+    {
+        boolean canJoin = true;
+        if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
+            if (!((MultiUserChatServiceImpl)mucService).getMUCDelegate().joiningRoom(this, user.getAddress())) {
+                // Delegate said no, reject join.
+                canJoin = false;
+            }
+        }
+        Log.trace( "{} Room join precondition 'delegate': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new UnauthorizedException();
+        }
+    }
+
+    /**
+     * Checks if the room has a limit of max user, then check if the limit has been reached
+     *
+     * @param user The user that attempts to join.
+     * @throws ServiceUnavailableException when joining is prevented by virtue of the room having reached maximum capacity.
+     */
+    private void checkJoinRoomPreconditionMaxOccupants( @Nonnull final LocalMUCUser user ) throws ServiceUnavailableException
+    {
+        final boolean canJoin = canJoinRoom(user);
+        Log.trace( "{} Room join precondition 'max occupants': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoinRoom(user)) {
+            throw new ServiceUnavailableException( "This room has reached its maximum number of occupants." );
+        }
+    }
+
+    /**
+     * Checks if the room is locked and this user is not an owner
+     *
+     * @param user The user that attempts to join.
+     * @throws RoomLockedException when joining is prevented by virtue of the room being locked.
+     */
+    private void checkJoinRoomPreconditionLocked( @Nonnull final LocalMUCUser user ) throws RoomLockedException
+    {
+        boolean canJoin = true;
+        final JID bareJID = user.getAddress().asBareJID();
+        boolean isOwner = owners.includes(bareJID);
+        if (isLocked()) {
+            if (!isOwner) {
+                canJoin = false;
+            }
+        }
+        Log.trace( "{} Room join precondition 'room locked': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new RoomLockedException( "This room is locked (and you are not an owner)." );
+        }
+    }
+
+    /**
+     * Checks if the nickname that the user attempts to use is already used by someone else in the room.
+     *
+     * @param user The user that attempts to join.
+     * @param nickname The nickname that the user is attempting to use
+     * @throws UserAlreadyExistsException when joining is prevented by virtue of someone else in the room using the nickname.
+     */
+    private void checkJoinRoomPreconditionNicknameInUse( @Nonnull final LocalMUCUser user, @Nonnull String nickname ) throws UserAlreadyExistsException
+    {
+        boolean canJoin = true;
+        final JID bareJID = user.getAddress().asBareJID();
+        if (occupantsByNickname.containsKey(nickname.toLowerCase())) {
+            List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
+            MUCRole occupant = occupants.size() > 0 ? occupants.get(0) : null;
+            if (occupant != null && !occupant.getUserAddress().toBareJID().equals(bareJID.toBareJID())) {
+                // Nickname is already used, and not by the same JID
+                canJoin = false;
+            }
+        }
+        Log.trace( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new UserAlreadyExistsException( "Someone else in the room uses the nickname that you want to use." );
+        }
+    }
+
+    /**
+     * Checks if the user provided the correct password, if applicable.
+     *
+     * @param user The user that attempts to join.
+     * @throws UnauthorizedException when joining is prevented by virtue of password protection.
+     */
+    private void checkJoinRoomPreconditionPasswordProtection( @Nonnull final LocalMUCUser user, @Nullable String providedPassword ) throws UnauthorizedException
+    {
+        boolean canJoin = true;
+        final JID bareJID = user.getAddress().asBareJID();
+        if (isPasswordProtected()) {
+            final boolean isCorrectPassword = (providedPassword != null && providedPassword.equals(getPassword()));
+            final boolean isSysadmin = mucService.isSysadmin(bareJID);
+            final boolean requirePassword = !isSysadmin || mucService.isPasswordRequiredForSysadminsToJoinRoom();
+            if (!isCorrectPassword && requirePassword ) {
+                canJoin = false;
+            }
+        }
+        Log.trace( "{} Room join precondition 'password protection': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new UnauthorizedException( "You did not supply the correct password needed to join this room." );
+        }
+    }
+
+    /**
+     * Checks if the nickname that the user attempts to use has been reserved by a(nother) member of the room.
+     *
+     * @param user The user that attempts to join.
+     * @param nickname The nickname that the user is attempting to use
+     * @throws ConflictException when joining is prevented by virtue of someone else in the room having reserved the nickname.
+     */
+    private void checkJoinRoomPreconditionNicknameReserved( @Nonnull final LocalMUCUser user, @Nonnull final String nickname ) throws ConflictException
+    {
+        boolean canJoin = true;
+        final JID bareJID = user.getAddress().asBareJID();
+        if (members.containsValue(nickname.toLowerCase())) {
+            if (!nickname.toLowerCase().equals(members.get(bareJID))) {
+                canJoin = false;
+            }
+        }
+        Log.trace( "{} Room join precondition 'nickname reserved': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new ConflictException( "Someone else in the room has reserved the nickname that you want to use." );
+        }
+    }
+
+    /**
+     * Checks, when joins are restricted to reserved nicknames, if the nickname that the user attempts to use is the
+     * nickname that has been reserved by that room.
+     *
+     * @param user The user that attempts to join.
+     * @param nickname The nickname that the user is attempting to use
+     * @throws NotAcceptableException when joining is prevented by virtue of using an incorrect nickname.
+     */
+    private void checkJoinRoomPreconditionRestrictedToNickname( @Nonnull final LocalMUCUser user, @Nonnull final String nickname ) throws NotAcceptableException
+    {
+        boolean canJoin = true;
+        String reservedNickname = null;
+        final JID bareJID = user.getAddress().asBareJID();
+        if (isLoginRestrictedToNickname()) {
+            reservedNickname = members.get(bareJID);
+            if (reservedNickname != null && !nickname.toLowerCase().equals(reservedNickname)) {
+                canJoin = false;
+            }
+        }
+
+        Log.trace( "{} Room join precondition 'restricted to nickname': User '{}' {} join room {}. Reserved nickname: '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID(), reservedNickname );
+        if (!canJoin) {
+            throw new NotAcceptableException( "This room is configured to restrict joins to reserved nicknames. The nickname that you supplied was not the nickname that you reserved for this room, which is: " + reservedNickname );
+        }
+    }
+
+    /**
+     * Checks if the person that attempts to join has been banned from the room.
+     *
+     * @param user The user that attempts to join.
+     * @throws ForbiddenException when joining is prevented by virtue of the user being banned.
+     */
+    private void checkJoinRoomPreconditionIsOutcast( @Nonnull final LocalMUCUser user, @Nonnull final MUCRole.Affiliation affiliation ) throws ForbiddenException
+    {
+        boolean canJoin = affiliation != MUCRole.Affiliation.outcast;
+
+        Log.trace( "{} Room join precondition 'is outcast': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new ForbiddenException( "You have been banned (marked as 'outcast') from this room." );
+        }
+    }
+
+    /**
+     * Checks if the person that attempts to join is a member of a member-only room.
+     *
+     * @param user The user that attempts to join.
+     * @throws RegistrationRequiredException when joining is prevented by virtue of the user joining a member-only room without being a member.
+     */
+    private void checkJoinRoomPreconditionMemberOnly( @Nonnull final LocalMUCUser user, @Nonnull final MUCRole.Affiliation affiliation ) throws RegistrationRequiredException
+    {
+        boolean canJoin = !isMembersOnly() || Arrays.asList( MUCRole.Affiliation.admin, MUCRole.Affiliation.owner, MUCRole.Affiliation.member ).contains( affiliation );
+
+        Log.trace( "{} Room join precondition 'member-only': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new RegistrationRequiredException( "This room is member-only, but you are not a member." );
+        }
     }
 
     /**
@@ -766,38 +966,50 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
-     * Sends presence of existing occupants to new occupant.
+     * Sends presence of existing occupants to new occupant, and vice versa.
      *
      * @param joinRole the role of the new occupant in the room.
      */
-    private void sendInitialPresences(MUCRole joinRole) {
+    private void exchangeInitialPresences(MUCRole joinRole) {
         if (!JOIN_PRESENCE_ENABLE.getValue()) {
+            Log.debug( "Skip exchanging presence between existing occupants of room '{}' and new occupant '{}' as it is disabled by configuration.", joinRole.getChatRoom().getJID(), joinRole.getUserAddress() );
             return;
         }
 
-        for (MUCRole occupant : occupantsByFullJID.values()) {
+        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", joinRole.getChatRoom().getJID(), joinRole.getUserAddress() );
+        for ( final MUCRole occupant : occupantsByFullJID.values() ) {
             if (occupant == joinRole) {
                 continue;
             }
-            Presence occupantPresence = occupant.getPresence();
+
             // Skip to the next occupant if we cannot send presence of this occupant
             if (hasToCheckRoleToBroadcastPresence()) {
-                Element frag = occupantPresence.getChildElement("x",
-                        "http://jabber.org/protocol/muc#user");
+                Element frag = occupant.getPresence().getChildElement("x", "http://jabber.org/protocol/muc#user");
                 // Check if we can broadcast the presence for this role
                 if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
                     continue;
                 }
             }
-            // Don't include the occupant's JID if the room is semi-anon and the new occupant
-            // is not a moderator
+
+            final Presence occupantPresence;
             if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
-                occupantPresence = occupantPresence.createCopy();
-                Element frag = occupantPresence.getChildElement("x",
-                        "http://jabber.org/protocol/muc#user");
+                // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
+                occupantPresence = occupant.getPresence().createCopy(); // defensive copy to prevent modifying the original.
+                final Element frag = occupantPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);
+            } else {
+                occupantPresence = occupant.getPresence();
             }
             joinRole.send(occupantPresence);
+        }
+
+        // Send the presence of this new occupant to existing occupants
+        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), joinRole.getChatRoom().getJID() );
+        try {
+            final Presence joinPresence = joinRole.getPresence().createCopy();
+            broadcastPresence(joinPresence, true);
+        } catch (Exception e) {
+            Log.error( "An exception occurred while sending initial presence of new occupant '"+joinRole.getUserAddress()+"' to the existing occupants of room: '"+joinRole.getChatRoom().getJID()+"'.", e);
         }
     }
 
@@ -1051,7 +1263,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public Presence createPresence(Presence.Type presenceType) throws UnauthorizedException {
+    public Presence createPresence(Presence.Type presenceType) {
         Presence presence = new Presence();
         presence.setType(presenceType);
         presence.setFrom(role.getRoleAddress());
@@ -1300,7 +1512,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      */
     private class RoomRole implements MUCRole {
 
-        private MUCRoom room;
+        private final MUCRoom room;
 
         private RoomRole(MUCRoom room) {
             this.room = room;

@@ -32,6 +32,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.Result;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.util.Collection;
 import java.util.Date;
@@ -246,8 +248,12 @@ public interface MUCRoom extends Externalizable, Result {
      * @throws NotAcceptableException       If the registered user is trying to join with a
      *                                      nickname different than the reserved nickname.
      */
-    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
-            Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
+    MUCRole joinRoom( @Nonnull String nickname,
+                      @Nullable String password,
+                      @Nullable HistoryRequest historyRequest,
+                      @Nonnull LocalMUCUser user,
+                      @Nonnull Presence presence)
+        throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
             ConflictException, ServiceUnavailableException, NotAcceptableException;
 

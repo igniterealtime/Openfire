@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-alpha3-20200409.143827-1"
-GRADLE_VERSION="6.0.1"
+SMACK_VERSION="4.4.0-alpha3-20200416.010506-6"
+GRADLE_VERSION="6.3"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
 DEBUG=false
@@ -14,12 +14,12 @@ ADMINPASS='admin'
 
 usage()
 {
-	echo "Usage: $0 [-d] [-l] [-g] [-i IPADDRESS] [-s GITREF] [-h HOST] [-u USERNAME] [-p PASSWORD]"
+	echo "Usage: $0 [-d] [-l] [-g] [-i IPADDRESS] [-s SMACK_VERSION] [-h HOST] [-u USERNAME] [-p PASSWORD]"
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
 	echo "    -l: Launch a local Openfire. (default: off)"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
 	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
-	echo "    -s: Set Smack to the given version (default: 4.4.0-alpha2)"
+	echo "    -s: Set Smack to the given version (default: ${SMACK_VERSION})"
 	echo "    -h: The hostname for the Openfire under test (default: example.org)"
 	echo "    -u: Admin username for Openfire (default: admin)"
 	echo "    -p: Admin password for Openfire (default: admin)"
@@ -171,6 +171,9 @@ function runTestsInGradle {
 	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
 	DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
+	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
 
 	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
 	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
@@ -180,6 +183,10 @@ function runTestsInGradle {
 	SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
 	
 	#SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
+	$GRADLE --console=plain \
+			--build-file test.gradle \
+			-PsmackVersion="${SMACK_VERSION}" \
+			-q dependencies
 	$GRADLE --console=plain \
 			--stacktrace \
 			run \

@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -41,21 +42,7 @@ import org.jivesoftware.openfire.group.GroupAwareMap;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.HistoryRequest;
-import org.jivesoftware.openfire.muc.HistoryStrategy;
-import org.jivesoftware.openfire.muc.MUCEventDispatcher;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MUCRoomHistory;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAcceptableException;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.RegistrationRequiredException;
-import org.jivesoftware.openfire.muc.RoomLockedException;
-import org.jivesoftware.openfire.muc.ServiceUnavailableException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.AddAffiliation;
 import org.jivesoftware.openfire.muc.cluster.AddMember;
 import org.jivesoftware.openfire.muc.cluster.BroadcastMessageRequest;
@@ -342,6 +329,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private boolean savedToDB = false;
 
     /**
+     * Indicates if FMUC functionality is available for this room.
+     */
+    private boolean fmucEnabled;
+
+    /**
      * Do not use this constructor. It was added to implement the Externalizable
      * interface required to work inside of a cluster.
      */
@@ -377,6 +369,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         this.loginRestrictedToNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.loginRestrictedToNickname", false);
         this.canChangeNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canChangeNickname", true);
         this.registrationEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.registrationEnabled", true);
+        this.fmucEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.fmucEnabled", false);
         // TODO Allow to set the history strategy from the configuration form?
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
         this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
@@ -580,7 +573,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                              @Nonnull LocalMUCUser user,
                              @Nonnull Presence presence )
         throws UnauthorizedException, UserAlreadyExistsException, RoomLockedException, ForbiddenException,
-            RegistrationRequiredException, ConflictException, ServiceUnavailableException, NotAcceptableException
+            RegistrationRequiredException, ConflictException, ServiceUnavailableException, NotAcceptableException,
+            FMUCException
     {
         Log.debug( "User '{}' attempts to join room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
         MUCRole joinRole;
@@ -601,16 +595,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             Log.debug( "User '{}' role and affiliation in room '{} are determined to be: {}, {}", user.getAddress(), this.getJID(), role, affiliation );
 
             // Verify that the attempt meets all preconditions for joining the room.
-            checkJoinRoomPreconditions( user, nickname, affiliation, password );
+            checkJoinRoomPreconditions( user, nickname, affiliation, password, presence );
 
             // Is this client already joined with this nickname?
             clientOnlyJoin = alreadyJoinedWithThisNick( user, nickname );
 
             // TODO up to this point, room state has not been modified, even though a write-lock has been acquired. Can we optimize concurrency by locking with only a read-lock up until here?
-
             if (!clientOnlyJoin)
             {
                 Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
+
+                // Is the entity performing the join a remote, joining FMUC node?
 
                 // Create a new role for this user in this room.
                 joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
@@ -722,14 +717,30 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
+     * Checks if the presence stanza that is sent by the remote entity indicates that the remote entity is a MUC room
+     * that attempts to join this MUC using the FMUC protocol.
+     *
+     * @param user The remote entity.
+     * @param presence The stanza sent by the remote entity, indicating a desire to join this room.
+     * @return true if the FMUC protocol is used, otherwise false.
+     */
+    private boolean isJoiningFMUCNode( @Nonnull LocalMUCUser user, @Nonnull Presence presence )
+    {
+        final boolean result = presence.getElement().element(QName.get("fmuc", "http://isode.com/protocol/fmuc")) != null;
+        Log.debug( "Determined user '{}' to {} a joining FMUC node.", user.getAddress(), result ? "be" : "not be");
+        return result;
+    }
+
+    /**
      * Checks all preconditions for joining a room. If one of them fails, an Exception is thrown.
      */
     private void checkJoinRoomPreconditions(
             @Nonnull final LocalMUCUser user,
             @Nonnull final String nickname,
             @Nonnull final MUCRole.Affiliation affiliation,
-            @Nullable final String password )
-        throws ServiceUnavailableException, RoomLockedException, UserAlreadyExistsException, UnauthorizedException, ConflictException, NotAcceptableException, ForbiddenException, RegistrationRequiredException
+            @Nullable final String password,
+            @Nonnull final Presence presence)
+        throws ServiceUnavailableException, RoomLockedException, UserAlreadyExistsException, UnauthorizedException, ConflictException, NotAcceptableException, ForbiddenException, RegistrationRequiredException, FMUCException
     {
         Log.debug( "Checking all preconditions for user '{}' to join room '{}'.", user.getAddress(), this.getJID() );
 
@@ -759,6 +770,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
         // If the room is members-only and the user is not a member. Raise a "Registration Required" exception.
         checkJoinRoomPreconditionMemberOnly( user, affiliation );
+
+        // If we are being joined by an FMUC joining node, but we're not allowing FMUC, raise a FMUC Exception.
+        if ( isJoiningFMUCNode( user, presence )) {
+            checkAcceptFMUCJoiningNodes(user);
+        }
 
         Log.debug( "All preconditions for user '{}' to join room '{}' have been met. User can join the room.", user.getAddress(), this.getJID() );
     }
@@ -941,6 +957,23 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         Log.trace( "{} Room join precondition 'member-only': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new RegistrationRequiredException( "This room is member-only, but you are not a member." );
+        }
+    }
+
+    /**
+     * Checks if the entity that attempts to join, which is assumed to represent a user in a room on the joining FMUC node.
+     *
+     * @param user the user that attempts to join from a joining FMUC node.
+     * @throws FMUCException when jioning is prevented by virtue of the FMUC not being available.
+     */
+    private void checkAcceptFMUCJoiningNodes( @Nonnull final LocalMUCUser user ) throws FMUCException
+    {
+        // TODO replace this with a per-room configurable options (similar to other options that are configurable).
+        boolean canJoin = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.fmucEnabled", fmucEnabled);
+
+        Log.trace( "{} Room join precondition 'FMUC join': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
+        if (!canJoin) {
+            throw new FMUCException("Cross-domain federation of chatroom (FMUC) is not available");
         }
     }
 
@@ -2726,6 +2759,16 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
+    public void setFmucEnabled(boolean fmucEnabled) {
+        this.fmucEnabled = fmucEnabled;
+    }
+
+    @Override
+    public boolean isFmucEnabled() {
+        return fmucEnabled;
+    }
+
+    @Override
     public int getMaxUsers() {
         return maxUsers;
     }
@@ -2970,6 +3013,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeBoolean(out, loginRestrictedToNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, canChangeNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, registrationEnabled);
+        ExternalizableUtil.getInstance().writeBoolean(out, fmucEnabled);
         ExternalizableUtil.getInstance().writeSafeUTF(out, subject);
         ExternalizableUtil.getInstance().writeLong(out, roomID);
         ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
@@ -3010,6 +3054,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         loginRestrictedToNickname = ExternalizableUtil.getInstance().readBoolean(in);
         canChangeNickname = ExternalizableUtil.getInstance().readBoolean(in);
         registrationEnabled = ExternalizableUtil.getInstance().readBoolean(in);
+        fmucEnabled = ExternalizableUtil.getInstance().readBoolean(in);
         subject = ExternalizableUtil.getInstance().readSafeUTF(in);
         roomID = ExternalizableUtil.getInstance().readLong(in);
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
@@ -3055,6 +3100,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         loginRestrictedToNickname = otherRoom.loginRestrictedToNickname;
         canChangeNickname = otherRoom.canChangeNickname;
         registrationEnabled = otherRoom.registrationEnabled;
+        fmucEnabled = otherRoom.fmucEnabled;
         subject = otherRoom.subject;
         roomID = otherRoom.roomID;
         creationDate = otherRoom.creationDate;

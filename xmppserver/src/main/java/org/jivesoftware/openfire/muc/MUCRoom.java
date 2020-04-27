@@ -255,7 +255,8 @@ public interface MUCRoom extends Externalizable, Result {
                       @Nonnull Presence presence)
         throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
-            ConflictException, ServiceUnavailableException, NotAcceptableException;
+            ConflictException, ServiceUnavailableException, NotAcceptableException,
+            FMUCException;
 
     /**
      * Remove a member from the chat room.
@@ -804,6 +805,18 @@ public interface MUCRoom extends Externalizable, Result {
      * @param registrationEnabled if users are allowed to register with the room.
      */
     void setRegistrationEnabled( boolean registrationEnabled );
+
+    /**
+     * Returns true if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attemping a join, a rejection will be returned when this feature is disabled.
+     */
+    boolean isFmucEnabled();
+
+    /**
+     * Sets if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attemping a join, a rejection will be returned when this feature is disabled.
+     */
+    void setFmucEnabled( boolean fmucEnabled );
 
     /**
      * Returns the maximum number of occupants that can be simultaneously in the room. If the number

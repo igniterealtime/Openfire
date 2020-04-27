@@ -181,6 +181,27 @@ public class LocalMUCUser implements MUCUser
     }
 
     /**
+     * Generate and send an error packet to indicate that something went wrong when processing an FMUC join request.
+     *
+     * @param packet  the packet to be responded to with an error.
+     * @param message an optional human-readable reject message.
+     */
+    private void sendFMUCJoinReject( Presence packet, String message )
+    {
+        final Presence reply = new Presence();
+
+        // XEP-0289: "(..) To do this it sends a 'presence' reply from its bare JID to the bare JID of the joining node (..)"
+        reply.setTo( packet.getFrom().asBareJID() );
+        reply.setFrom( this.getAddress().asBareJID() );
+
+        final Element reject = reply.addChildElement("fmuc", "http://isode.com/protocol/fmuc").addElement("reject");
+        if ( message != null && !message.trim().isEmpty() ) {
+            reject.addText( message );
+        }
+        router.route(reply);
+    }
+
+    /**
      * Obtain the address of the user. The address is used by services like the core server packet router to determine
      * if a packet should be sent to the handler. Handlers that are working on behalf of the server should use the
      * generic server hostname address (e.g. server.com).
@@ -792,6 +813,7 @@ public class LocalMUCUser implements MUCUser
             // User must support MUC in order to create a room
             HistoryRequest historyRequest = null;
             String password = null;
+
             // Check for password & requested history if client supports MUC
             final Element mucInfo = packet.getChildElement("x", "http://jabber.org/protocol/muc");
             if ( mucInfo != null )
@@ -852,6 +874,11 @@ public class LocalMUCUser implements MUCUser
         {
             Log.debug("Request from '{}' to join room '{}' rejected: user attempts to use nickname '{}' which is different from the reserved nickname.", packet.getFrom(), roomName, nickname, e);
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You're trying to join with a nickname different than the reserved nickname.");
+        }
+        catch ( FMUCException e )
+        {
+            Log.debug("Request from '{}' to join room '{}' rejected: user attempts to join using FMUC, which is unavailable.", packet.getFrom(), roomName, e);
+            sendFMUCJoinReject( packet, e.getMessage() );
         }
     }
 

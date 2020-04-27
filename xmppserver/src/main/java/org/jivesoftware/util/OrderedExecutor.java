@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
@@ -13,6 +14,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * 
@@ -28,6 +30,10 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:renjithalexander@gmail.com">Renjith Alexander</a>
  */
 public class OrderedExecutor {
+    /**
+     * The instances of OrderedExecutor that are created.
+     */
+    private static final List<OrderedExecutor> instances = new LinkedList<>();
 
     /**
      * Lock to guard the ordering logic.
@@ -63,6 +69,25 @@ public class OrderedExecutor {
                 Thread.currentThread().getThreadGroup(), 0L);
         executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
                 threadFactory);
+        instanceCreated(this);
+    }
+
+    /**
+     * Adds the OrderedExecutor instance passed into the list of instances of
+     * OrderedExecutor. It is used to shutdown the executors later.
+     * 
+     * @param exe the executor instance created.
+     */
+    private static synchronized void instanceCreated(OrderedExecutor exe) {
+        instances.add(exe);
+    }
+
+    /**
+     * Shuts down the executors created for all instances of OrderedExecutor.
+     */
+    public static synchronized void shutdownInstances() {
+        instances.forEach(exe -> exe.shutDown());
+        instances.clear();
     }
 
     /**

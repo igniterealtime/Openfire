@@ -138,7 +138,7 @@ public class OrderedExecutorTest {
             }
         } finally {
 
-            stats.executor.shutDown();
+            OrderedExecutor.shutdownInstances();
             stats.regularExecutor.shutdown();
         }
 

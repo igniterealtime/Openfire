@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.TimeoutException;
 
 /**
  * 
@@ -103,12 +105,16 @@ public class OrderedExecutor {
      * @param item the task to be executed.
      * @return a Future that can be used for knowing when the task is gets
      *         completed.
+     * @throws RejectedExecutionException if the executor has been shut down.
      */
     public Future<?> submit(OrderedRunnable item) {
         Objects.requireNonNull(item, "The task cannot be null");
         Objects.requireNonNull(item.getOrderingKey(), "The ordering key for the task cannot be null");
         OrderedFutureRunnable future = new OrderedFutureRunnable(item);
         synchronized (lock) {
+            if (checkShutdown()) {
+                throw new RejectedExecutionException("Executor has been shut down");
+            }
             Object orderingKey = item.getOrderingKey();
             // If another task with the same key is being executed,
             // queue this item and return.
@@ -134,6 +140,11 @@ public class OrderedExecutor {
         OrderedFutureRunnable nextItemToSubmit = null;
         synchronized (lock) {
             executingItemKeys.remove(finishedItemOrderingKey);
+            // If executor is shut down, set a future which throws
+            // an exception on get() calls, for all pending tasks, and leave.
+            if (checkShutdown()) {
+                return;
+            }
             // Only if this task caused another task to get queued, try
             // fetching the next task to execute. Otherwise, all threads will be
             // trying to identify and submit the next task, wasting CPU cycles.
@@ -156,7 +167,11 @@ public class OrderedExecutor {
             }
         }
         if (nextItemToSubmit != null) {
-            nextItemToSubmit.setFuture(executor.submit(new ExecutorRunnable(nextItemToSubmit)));
+            try {
+                nextItemToSubmit.setFuture(executor.submit(new ExecutorRunnable(nextItemToSubmit)));
+            } catch (RejectedExecutionException ree) {
+                nextItemToSubmit.setFuture(executionRejectionFuture);
+            }
         }
     }
 
@@ -178,6 +193,24 @@ public class OrderedExecutor {
      */
     public int getPoolSize() {
         return executor.getPoolSize();
+    }
+
+    /**
+     * If executor is shutdown, this will set the rejection future (so that the
+     * actual OrderedFutureRunnable.get() will not get blocked) to the waiting
+     * tasks, and clear the queue.
+     * 
+     * @return true if executor is shut down, false otherwise.
+     */
+    private synchronized boolean checkShutdown() {
+        if (executor.isShutdown()) {
+            localQueue.forEach(oe -> {
+                oe.setFuture(executionRejectionFuture);
+            });
+            localQueue.clear();
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -216,5 +249,38 @@ public class OrderedExecutor {
         }
 
     }
+
+    /**
+     * The fake Future instance that represents the rejection of queued tasks, if
+     * the executor got shut down before the task got submitted.
+     */
+    private Future<?> executionRejectionFuture = new Future<Void>() {
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public boolean isDone() {
+            return true;
+        }
+
+        @Override
+        public Void get() throws InterruptedException, ExecutionException {
+            throw new ExecutionException("Executor has been shut down", new RejectedExecutionException());
+        }
+
+        @Override
+        public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            throw new ExecutionException("Executor has been shut down", new RejectedExecutionException());
+        }
+
+    };
 
 }

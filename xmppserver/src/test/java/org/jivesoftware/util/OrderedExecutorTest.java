@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -29,7 +29,11 @@ public class OrderedExecutorTest {
 
         private long startTime = System.currentTimeMillis(), endTime;
 
-        private AtomicInteger count = new AtomicInteger();
+        private AtomicInteger submittedCount = new AtomicInteger();
+
+        private AtomicInteger executedCount = new AtomicInteger();
+
+        private AtomicInteger rejectedCount = new AtomicInteger();
 
         private boolean orderedExecutorTest = true;
 
@@ -51,7 +55,12 @@ public class OrderedExecutorTest {
         void exe(final DelayedOrderedRunnable[] dors) {
             Thread t = new Thread(() -> {
                 for (DelayedOrderedRunnable dor : dors) {
-                    futures.add(orderedExecutorTest ? executor.submit(dor) : regularExecutor.submit(dor));
+                    try {
+                        futures.add(orderedExecutorTest ? executor.submit(dor) : regularExecutor.submit(dor));
+                    } catch (RejectedExecutionException ree) {
+                        rejectedCount.incrementAndGet();
+                    }
+                    submittedCount.incrementAndGet();
                 }
             });
             t.start();
@@ -59,17 +68,53 @@ public class OrderedExecutorTest {
 
         }
 
-        void waitForDone() {
+        void waitForAllDone() {
+            waitForSubmission();
+            waitForExecutionCompletion();
+        }
+
+        void waitForSubmission() {
             try {
                 for (Thread t : threads) {
                     t.join();
                 }
-                for (Future<?> f : futures) {
-                    f.get();
-                }
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException e) {
                 Assert.fail();
             }
+        }
+
+        void waitForExecutionCompletion() {
+            for (Future<?> f : futures) {
+                try {
+                    f.get();
+                } catch (ExecutionException e) {
+                    if (e.getCause() instanceof RejectedExecutionException) {
+                        rejectedCount.incrementAndGet();
+                    }
+                } catch (InterruptedException ie) {
+
+                }
+            }
+        }
+
+        void verifyCount(boolean noRejection) {
+            if (noRejection && rejectedCount.get() > 0) {
+                Assert.fail("There are rejections which are not expected");
+            }
+            Assert.assertEquals(submittedCount.get(), executedCount.get() + rejectedCount.get());
+        }
+
+        void print(String testName) {
+            StringBuilder sb = new StringBuilder();
+            sb.append('[').append(testName).append(']').append('{')
+                    .append(" Total time taken = " + (endTime - startTime)).append(", ")
+                    .append(" Number of tasks submitted = " + submittedCount.get()).append(", ")
+                    .append(" Number of tasks executed = " + executedCount.get()).append(", ")
+                    .append(" Number of tasks rejected = " + rejectedCount.get()).append(", ")
+                    .append(" Number of Threads = "
+                            + (orderedExecutorTest ? executor.getPoolSize() : regularExecutor.getPoolSize()))
+                    .append("}");
+            System.out.println(Thread.currentThread() + " - " + sb.toString());
         }
 
     }
@@ -93,7 +138,7 @@ public class OrderedExecutorTest {
             // print("Going to execute " + name);
             sleep(delay);
             // print("Finished executing " + name);
-            stats.count.incrementAndGet();
+            stats.executedCount.incrementAndGet();
             stats.endTime = System.currentTimeMillis();
             stats.results.add(this);
 
@@ -113,25 +158,19 @@ public class OrderedExecutorTest {
         Stats stats = new Stats();
         try {
             stats.orderedExecutorTest = true;
-            DelayedOrderedRunnable tests[] = {
-                    new DelayedOrderedRunnable(stats, "1", 0, "a"),
-                    new DelayedOrderedRunnable(stats, "2", 0, "a"),
-                    new DelayedOrderedRunnable(stats, "3", 0, "b"),
-                    new DelayedOrderedRunnable(stats, "4", 0, "c"),
-                    new DelayedOrderedRunnable(stats, "5", 0, "b"),
-                    new DelayedOrderedRunnable(stats, "6", 0, "b"),
-                    new DelayedOrderedRunnable(stats, "7", 0, "c"),
-                    new DelayedOrderedRunnable(stats, "8", 0, "c"),
-                    new DelayedOrderedRunnable(stats, "9", 0, "d") };
+            DelayedOrderedRunnable tests[] = { new DelayedOrderedRunnable(stats, "1", 0, "a"),
+                    new DelayedOrderedRunnable(stats, "2", 0, "a"), new DelayedOrderedRunnable(stats, "3", 0, "b"),
+                    new DelayedOrderedRunnable(stats, "4", 0, "c"), new DelayedOrderedRunnable(stats, "5", 0, "b"),
+                    new DelayedOrderedRunnable(stats, "6", 0, "b"), new DelayedOrderedRunnable(stats, "7", 0, "c"),
+                    new DelayedOrderedRunnable(stats, "8", 0, "c"), new DelayedOrderedRunnable(stats, "9", 0, "d") };
 
-            String[][] expectedOrderSequences = { 
-                    { "1", "2" }, // ordering key "a"
+            String[][] expectedOrderSequences = { { "1", "2" }, // ordering key "a"
                     { "3", "5", "6" }, // ordering key "b"
                     { "4", "7", "8" } }; // ordering key "c"
 
             stats.start();
             stats.exe(tests);
-            stats.waitForDone();
+            stats.waitForAllDone();
 
             for (String[] expectedOrder : expectedOrderSequences) {
                 verifyOrder(stats, expectedOrder);
@@ -140,6 +179,7 @@ public class OrderedExecutorTest {
 
             OrderedExecutor.shutdownInstances();
             stats.regularExecutor.shutdown();
+            stats.verifyCount(true);
         }
 
     }
@@ -154,11 +194,39 @@ public class OrderedExecutorTest {
 
     /**
      * 100 threads submitting 100 tasks, in an ordered executor. Tasks submitted by
-     * a single thread has the same key, which forces them to run sequentially.<b>
+     * a single thread has the same key, which forces them to run sequentially.<br>
+     * Executor is shut down after all tasks are submitted. Verifies that the
+     * submitted count = executed count + rejected count.<br>
+     * Also verifies that there are no lock up on the Future.get() of queued tasks,
+     * that were not yet submitted to the original executer.
+     */
+    @Test
+    public void testShutdown() {
+        Stats stats = new Stats();
+        stats.orderedExecutorTest = true;
+        try {
+            stats.start();
+            for (int i = 0; i < 100; ++i) {
+                runInSingleThread(stats, 100,
+                        new StringBuilder().append((char) (65 + i)).append('-').append(i).toString(), 0, true);
+            }
+            stats.waitForSubmission();
+            stats.executor.shutDown();
+            stats.waitForExecutionCompletion();
+        } finally {
+            stats.print("testShutdown");
+            stats.executor.shutDown();
+            stats.regularExecutor.shutdown();
+            stats.verifyCount(false);
+        }
+    }
+
+    /**
+     * 100 threads submitting 100 tasks, in an ordered executor. Tasks submitted by
+     * a single thread has the same key, which forces them to run sequentially.<br>
      * Test is just to profile the time taken and count of threads created.
      */
     @Test
-    @Ignore
     public void testOrderedExecutorCommonKeysProfile() {
         Stats stats = new Stats();
         stats.orderedExecutorTest = true;
@@ -169,20 +237,20 @@ public class OrderedExecutorTest {
                         new StringBuilder().append((char) (65 + i)).append('-').append(i).toString(), 0, true);
             }
         } finally {
-            stats.waitForDone();
-            printStats(stats, "testOrderedExecutorCommonKeysProfile");
+            stats.waitForAllDone();
+            stats.print("testOrderedExecutorCommonKeysProfile");
             stats.executor.shutDown();
             stats.regularExecutor.shutdown();
+            stats.verifyCount(true);
         }
     }
 
     /**
      * 100 threads submitting 100 tasks each with different keys for each task, in
-     * an ordered executor. Total parallel execution.<b>
+     * an ordered executor. Total parallel execution.<br>
      * Test is just to profile the time taken and count of threads created.
      */
     @Test
-    @Ignore
     public void testOrderedExecutorUniqueKeysProfile() {
         Stats stats = new Stats();
         stats.orderedExecutorTest = true;
@@ -193,20 +261,20 @@ public class OrderedExecutorTest {
                         new StringBuilder().append((char) (65 + i)).append('-').append(i).toString(), 0, false);
             }
         } finally {
-            stats.waitForDone();
-            printStats(stats, "testOrderedExecutorUniqueKeysProfile");
+            stats.waitForAllDone();
+            stats.print("testOrderedExecutorUniqueKeysProfile");
             stats.executor.shutDown();
             stats.regularExecutor.shutdown();
+            stats.verifyCount(true);
         }
     }
 
     /**
      * 100 threads submitting 100 tasks each with different keys for each task, in a
-     * regular thread pool executor. Total parallel execution.<b>
+     * regular thread pool executor. Total parallel execution.<br>
      * Test is just to profile the time taken and count of threads created.
      */
     @Test
-    @Ignore
     public void testRegularExecutorProfile() {
         Stats stats = new Stats();
         stats.orderedExecutorTest = false;
@@ -217,10 +285,11 @@ public class OrderedExecutorTest {
                         new StringBuilder().append((char) (65 + i)).append('-').append(i).toString(), 0, true);
             }
         } finally {
-            stats.waitForDone();
-            printStats(stats, "testRegularExecutorProfile");
+            stats.waitForAllDone();
+            stats.print("testRegularExecutorProfile");
             stats.executor.shutDown();
             stats.regularExecutor.shutdown();
+            stats.verifyCount(true);
         }
     }
 
@@ -234,27 +303,12 @@ public class OrderedExecutorTest {
 
     }
 
-    private void printStats(Stats stats, String testName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('[').append(testName).append(']').append('{')
-                .append(" Total time taken = " + (stats.endTime - stats.startTime)).append(", ")
-                .append(" Number of tasks executed = " + stats.count.get()).append(", ")
-                .append(" Number of Threads = " + (stats.orderedExecutorTest ? stats.executor.getPoolSize()
-                        : stats.regularExecutor.getPoolSize()))
-                .append("}");
-        print(sb.toString());
-    }
-
     public static void sleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void print(String s) {
-        System.out.println(Thread.currentThread() + " - " + s);
     }
 
 }

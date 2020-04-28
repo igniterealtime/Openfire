@@ -605,8 +605,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             {
                 Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
 
-                // Is the entity performing the join a remote, joining FMUC node?
-
                 // Create a new role for this user in this room.
                 joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
 
@@ -1619,6 +1617,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
         @Override
         public JID getUserAddress() {
+            return null;
+        }
+
+        @Override
+        public JID getReportedFmucAddress() {
             return null;
         }
 

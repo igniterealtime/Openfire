@@ -95,6 +95,16 @@ public class LocalMUCRole implements MUCRole {
     private Element extendedInformation;
 
     /**
+     * A fragment containing the FMUC extension as reported by the joining FMUC node, if any.
+     */
+    private Element reportedFmucInformation;
+
+    /**
+     * The address of the person on the joining FMUC node, if the person joined through FMUC (otherwise null).
+     */
+    private transient JID reportedFmucJID; // transient: can be deduced from reportedFmucInformation.
+
+    /**
      * Create a new role.
      * 
      * @param chatserver the server hosting the role.
@@ -123,12 +133,17 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceDomain(), nick);
         setPresence(presence);
+
         // Check if new occupant wants to be a deaf occupant
         Element element = presence.getElement()
                 .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
         if (element != null) {
             voiceOnly = element.element("deaf-occupant") != null;
         }
+
+        // Set FMUC information, when provided.
+        setFmucInfo( presence );
+
         // Add the new role to the list of roles
         user.addRole(room.getName(), this);
     }
@@ -146,6 +161,13 @@ public class LocalMUCRole implements MUCRole {
         if (element != null) {
             newPresence.getElement().remove(element);
         }
+
+        // When joined through FMUC, inbound presence is expected to always have an FMUC element.
+        if ( isRemoteFmuc() ) {
+            // TODO what should happen when there's no FMUC element, or if it contains conflicting/updated data?
+            setFmucInfo( presence );
+        }
+
         this.presence = newPresence;
         this.presence.setFrom(getRoleAddress());
         updatePresence();
@@ -230,6 +252,11 @@ public class LocalMUCRole implements MUCRole {
     }
 
     @Override
+    public JID getReportedFmucAddress() {
+        return reportedFmucJID;
+    }
+
+    @Override
     public boolean isLocal() {
         return true;
     }
@@ -257,6 +284,9 @@ public class LocalMUCRole implements MUCRole {
         }
         packet.setTo(user.getAddress());
 
+        // Check if stanza needs to be enriched with FMUC metadata.
+        augmentOutboundStanzaWithFMUCData(packet);
+
         router.route(packet);
     }
 
@@ -269,6 +299,14 @@ public class LocalMUCRole implements MUCRole {
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
         updatePresence();
+    }
+
+    private void setFmucInfo( final Presence presence ) {
+        reportedFmucInformation = presence.getElement().element(QName.get("fmuc", "http://isode.com/protocol/fmuc"));
+        if ( reportedFmucInformation != null) {
+            // the 'from' attribute seems to be required in the XEP. Throwing an exception on a missing of malformed value is OK.
+            reportedFmucJID = new JID(reportedFmucInformation.attributeValue("from"));
+        }
     }
 
     private void updatePresence() {

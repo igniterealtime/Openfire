@@ -84,6 +84,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     @Override
     public Group getGroup(String groupName) throws GroupNotFoundException {
         try {
+            groupName = JID.unescapeNode(groupName);
             LdapName groupDN = manager.findGroupAbsoluteDN(groupName);
             return getGroupByDN(groupDN, new HashSet<>(Collections.singleton(groupDN.toString())));
         }

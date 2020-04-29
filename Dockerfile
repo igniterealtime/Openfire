@@ -1,4 +1,4 @@
-FROM maven:3.6.2-jdk-8 as packager
+FROM maven:3.6.2-jdk-11 as packager
 WORKDIR /usr/src
 
 COPY ./pom.xml .
@@ -14,7 +14,7 @@ RUN mvn dependency:go-offline
 COPY . .
 RUN mvn package
 
-FROM openjdk:8-jre
+FROM openjdk:11-jre-slim
 COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/openfire
 COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 

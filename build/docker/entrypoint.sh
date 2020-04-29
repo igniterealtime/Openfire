@@ -68,9 +68,7 @@ JAVACMD=`which java 2> /dev/null `
 # default behaviour is to launch openfire
 if [[ -z ${1} ]]; then
   exec start-stop-daemon --start --chuid ${OPENFIRE_USER}:${OPENFIRE_USER} --exec $JAVACMD -- \
-    -XX:+UnlockExperimentalVMOptions \
-    -XX:+UseCGroupMemoryLimitForHeap \
-    -XX:MaxRAMFraction=2 \
+    -XX:MaxRAMPercentage=75 \
     -server \
     -DopenfireHome="${OPENFIRE_DIR}" \
     -Dopenfire.lib.dir=${OPENFIRE_DIR}/lib \

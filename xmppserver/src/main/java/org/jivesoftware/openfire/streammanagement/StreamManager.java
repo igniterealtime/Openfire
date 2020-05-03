@@ -329,13 +329,9 @@ public class StreamManager {
             oldConnection.close();
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
-        // If we're all happy, disconnect this session.
-        Connection conn = session.getConnection();
-        session.setDetached();
-        // Connect new session.
-        otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession.getStreamID(), fullJid, session.getStreamID() );
-        session.close();
+        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
+        otherSession.reattach(session, h);
+        Log.debug("Perform resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
     }
 
     /**

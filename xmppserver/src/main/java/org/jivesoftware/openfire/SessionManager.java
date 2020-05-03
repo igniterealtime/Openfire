@@ -205,6 +205,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Checks if a session is currently in the detached state (ie, has no connection,
+     * but has not been formally closed yet either).
+     *
+     * @param localSession A session
+     * @return true if the session is currently in 'detached' state, otherwise 'false'.
+     */
+    public boolean isDetached(LocalSession localSession) {
+        return this.detachedSessions.containsKey(localSession.getStreamID());
+    }
+
+    /**
      * Remove a session as being detached. This is idempotent.
      * This should be called by the LocalSession itself either when resumed or when
      * closed.

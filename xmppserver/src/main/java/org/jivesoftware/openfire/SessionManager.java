@@ -1305,13 +1305,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             try {
                 LocalClientSession session = (LocalClientSession) handback;
                 if (session.isDetached()) {
-                    Log.debug("Closing session is detached already.");
+                    Log.debug("Closing session with address {} and streamID {} is detached already.", session.getAddress(), session.getStreamID());
                     return;
                 }
                 if (session.getStreamManager().getResume()) {
-                    Log.debug("Closing session has SM enabled; detaching.");
+                    Log.debug("Closing session with address {} and streamID {} has SM enabled; detaching.", session.getAddress(), session.getStreamID());
                     session.setDetached();
                     return;
+                } else {
+                    Log.debug("Closing session with address {} and streamID {} does not have SM enabled.", session.getAddress(), session.getStreamID());
                 }
                 try {
                     if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&

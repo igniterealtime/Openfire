@@ -741,7 +741,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         if (session.getAddress() != null && routingTable != null &&
                 session.getAddress().toBareJID().trim().length() != 0) {
             // Update route to unavailable session (anonymous or not)
-            routingTable.addClientRoute(session.getAddress(), session);
+            routingTable.removeClientRoute(session.getAddress());
         }
     }
 

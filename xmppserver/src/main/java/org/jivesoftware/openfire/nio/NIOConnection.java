@@ -28,10 +28,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -274,6 +271,16 @@ public class NIOConnection implements Connection {
         session = owner;
         StanzaHandler stanzaHandler = getStanzaHandler();
         stanzaHandler.setSession(owner);
+
+        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
+        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
+        // during the callback. OF-2014
+        for ( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
+        {
+            if ( entry.getValue() instanceof LocalSession ) {
+                entry.setValue( owner );
+            }
+        }
     }
 
     protected StanzaHandler getStanzaHandler() {

@@ -48,39 +48,38 @@
             <h3>Create install.sh</h3>
             <p>You need to create install.sh file, from this file you will install firebase in docker container.</p>
             <tt>
-            #!/bin/bash
-            set -e
-            #installing openfire
-            wget -O openfire.rpm https://www.igniterealtime.org/downloadServlet?filename=openfire/openfire-4.5.1-1.noarch.rpm
-            rpm -ivh  openfire.rpm
-            chmod 777 openfire.rpm
-            rm openfire.rpm
-            #to clear some data before saving this layer ...a docker image
+            #!/bin/bash<br/>
+            set -e<br/>
+            #installing openfire<br/>
+            wget -O openfire.rpm https://www.igniterealtime.org/downloadServlet?filename=openfire/openfire-4.5.1-1.noarch.rpm<br/>
+            rpm -ivh  openfire.rpm<br/>
+            chmod 777 openfire.rpm<br/>
+            rm openfire.rpm<br/>
+            #to clear some data before saving this layer ...a docker image<br/>
             yum clean all
             </tt>    
             <h3>Create Dockerfile</h3>
             <p>You also need to create a Dockerfile to build the docker image, Create a file with name <b>Dockerfile</b>.</p>
             <tt>
-            #name of container: docker-centos-openfire
-            #versison of container: 0.1
-            FROM centos:7
-            MAINTAINER Shanshan Li  "lishan@oregonstate.edu"
-            #update container and install jdk
-            RUN yum update -y && \
-            yum install -y wget && \
-            yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel && \
-            yum clean all
-            ##run script to install openfire on docker
-            COPY install.sh /sbin/install.sh
-            RUN chmod +x /sbin/install.sh; sync \
-            && /bin/bash -c /sbin/install.sh \
-            && rm /sbin/install.sh
-            RUN /etc/init.d/openfire start
-            RUN /sbin/chkconfig openfire on
-            # to allow access from outside of the container  to the container service
-            # at that ports need to allow access from firewall if need to access it outside of the server. 
-            EXPOSE 5222 9090 9091 5269 7443
-            # Use baseimage-docker's init system.
+            #name of container: docker-centos-openfire<br/>
+            #versison of container: 0.1<br/>
+            FROM centos:7<br/>
+            MAINTAINER Shanshan Li  "lishan@oregonstate.edu"<br/>
+            #update container and install jdk<br/>
+            RUN yum update -y && \<br/>
+            yum install -y wget && \<br/>
+            yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel && \<br/>
+            yum clean all<br/>
+            ##run script to install openfire on docker<br/>
+            COPY install.sh /sbin/install.sh<br/>
+            RUN chmod +x /sbin/install.sh; sync \<br/>
+            && /bin/bash -c /sbin/install.sh \<br/>
+            && rm /sbin/install.sh<br/>
+            RUN /etc/init.d/openfire start<br/>
+            RUN /sbin/chkconfig openfire on<br/>
+            # expose all pords that will be used in the application<br/>
+            EXPOSE 5222 9090 9091 5269 7443<br/>
+            # Use baseimage-docker's init system.<br/>
             CMD ["/bin/bash"]
             </tt>
             <h3>Build Docker Image</h3>
@@ -100,19 +99,19 @@
             </p>
             <h3>Select a Language</h3>
             <p>You can pick the language you want from this page:
-               <img src="./images/1-language.jpeg" width=700/>
+              <p> <img src="./images/1-language.png" width=700/></p>
             </p>
             <h3>Server Setting</h3>
             <p>You can setup the XMPP domain name and server host name as well as the webUI port from this page:
-               <img src="./images/2-server-setting.jpeg" width=700/>
+               <p><img src="./images/2-server-setting.png" width=700/></p>
             </p>
             <h3>Select a Database</h3>
             <p>We choose Standard Database Connection from this page:
-               <img src="./images/3-db-setting.jpeg" width=700/>
+               <p><img src="./images/3-db-setting.png" width=700/></p>
             </p>
             <h3>Setup Mysql Connection</h3>
             <p>Use the following mysql information, you will connect to the Mysql docker container we created at previous step:
-               <img src="./images/4-db-setting.jpeg" width=700/>
+               <p><img src="./images/4-db-setting.png" width=700/></p>
             </p>
             <p>We finished almost all the setup, click continue and simply follow and finish the wizard.
          </div>

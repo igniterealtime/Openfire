@@ -264,7 +264,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(ADD_NODE);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));

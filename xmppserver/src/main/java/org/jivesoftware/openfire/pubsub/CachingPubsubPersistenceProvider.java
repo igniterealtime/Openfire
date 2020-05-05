@@ -179,6 +179,12 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         // a node to be recreated, which could mean that there's a DELETE. When there are other operations, the pre-'nodesToProcess'
         // behavior will kick in (which would presumably lead to database constraint-related exceptions).
         operations.add( NodeOperation.create( node ) );
+
+        // If the node that's created is the root node of a service, persist it immediately. Without this, the pubsub (pep) service
+        // that is defined by this root node doesn't exist, which causes issues when attempting to create the service. OF-2016
+        if ( node instanceof CollectionNode && node.getParent() == null) {
+            flushPendingNode( node.getUniqueIdentifier() );
+        }
     }
 
     @Override

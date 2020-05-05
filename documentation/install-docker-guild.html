@@ -1,80 +1,121 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-
 <html>
-<head>
-<title>Openfire: Installation with Docker Guide</title>
-<link href="style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
-
-<div id="pageContainer">
-
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
-        <h1>Installation Guide</h1>
-    </div>
-    <div class="navigation">
-        <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
-    
-    <div id="pageBody">
-
-<p>Openfire is a powerful instant messaging (IM) and chat
-server that implements the XMPP protocol. This document will guide 
-you through installing Openfire with Docker container. For a full list of features and more information, please
-visit the Openfire website: <a href="http://www.igniterealtime.org/projects/openfire/"
- target="_top">http://www.igniterealtime.org/projects/openfire/</a></p>
-
-<h2>Install Dependency</h2>
-<ul>
-<h3>Docker</h3>
-<p>You can check this link to <a href="https://docs.docker.com/get-docker/">install Docker</a></p>
-<h2>Setup Overview</h2>
-<p>To complete the installation of Openfire with Docker, you'll need to
-perform each of the following steps to start different Docker containers: </p>
-<ol>
-  <li><a href="#database">Database Container</a> - you will start a Docker container for Mysql. </li>
-  <li><a href="#openfire">Openfire Container</a> - Config and start a Docker contianer with Openfire application.</li>
-</ol>
-
-<p>This document also includes information on:</p>
-
-<ul>
-    <li><a href="#setupWizard">Access setup server wizard</a>
-    <li><a href="#adminConsole">Access admin console</a>
-</ul>
-
-<h2><a name="database">Setup the Database Container</a></h2>
-<p>In this part, you will start a Docker container with Mysql and config as Openfire database.</p>
-<p>Run the following script in console:</p>
-<p>
-<tt>
-docker run --name openfire-mysql -e MYSQL_DATABASE=openfire -e MYSQL_USER=openfire_user -e MYSQL_PASSWORD=mysqlpassword -e MYSQL_ROOT_PASSWORD=secretRootPassword -d mysql
-</tt>
-</p>
-
-<h2><a name="openfire"></a>Setup the Openfire Container</h2>
-<p>In this part, you will start a Docker container with Centos and config as Openfire application server.</p>
-<h3>Create Dockerfile</h3>
-
-<h2><a name="setupWizard">Access setup server wizard</a></h2>
-<p>
-</p>
-
-<hr>
-
-<h2><a name="adminConsole">Access admin console</a></h2>
-
-<p> 
-</p>
-
-
-
-    </div>
-
-</div>
-
-</body>
+   <head>
+      <title>Openfire: Installation with Docker Guide</title>
+      <link href="style.css" rel="stylesheet" type="text/css">
+   </head>
+   <body>
+      <div id="pageContainer">
+         <a name="top"></a>
+         <div id="pageHeader">
+            <div id="logo"></div>
+            <h1>Installation with Docker</h1>
+         </div>
+         <div class="navigation">
+            <a href="index.html">&laquo; Back to documentation index</a>
+         </div>
+         <div id="pageBody">
+            <p>Openfire is a powerful instant messaging (IM) and chat
+               server that implements the XMPP protocol. This document will guide 
+               you through installing Openfire with Docker container. For a full list of features and more information, please
+               visit the Openfire website: <a href="http://www.igniterealtime.org/projects/openfire/"
+                  target="_top">http://www.igniterealtime.org/projects/openfire/</a>
+            </p>
+            <h2>Install Dependency</h2>
+            <ul>
+               <h3>Docker</h3>
+               <p>You can check this link to <a href="https://docs.docker.com/get-docker/">install Docker</a></p>
+            </ul>
+            <h2>Setup Overview</h2>
+            <p>To complete the installation of Openfire with Docker, you'll need to
+               perform each of the following steps to start different Docker containers: 
+            </p>
+            <ol>
+               <li><a href="#database">Database Container</a> - you will start a Docker container for Mysql. </li>
+               <li><a href="#openfire">Openfire Container</a> - Config and start a Docker contianer with Openfire application.</li>
+               <li><a href="#setupWizard">Access setup server wizard</a> - Config Openfire application from webUI.</li>
+            </ol>
+            <h2><a name="database">Setup the Database Container</a></h2>
+            <p>In this part, you will start a Docker container with Mysql and config as Openfire database.</p>
+            <p>Run the following script in console:</p>
+            <p>
+               <tt>
+               docker run --name openfire-mysql -e MYSQL_DATABASE=openfire -e MYSQL_USER=openfire_user -e MYSQL_PASSWORD=mysqlpassword -e MYSQL_ROOT_PASSWORD=secretRootPassword -d mysql
+               </tt>
+            </p>
+            <h2><a name="openfire"></a>Setup the Openfire Container</h2>
+            <p>In this part, you will start a Docker container with Centos and config as Openfire application server.</p>
+            <h3>Create install.sh</h3>
+            <p>You need to create install.sh file, from this file you will install firebase in docker container.</p>
+            <tt>
+            #!/bin/bash
+            set -e
+            #installing openfire
+            wget -O openfire.rpm https://www.igniterealtime.org/downloadServlet?filename=openfire/openfire-4.5.1-1.noarch.rpm
+            rpm -ivh  openfire.rpm
+            chmod 777 openfire.rpm
+            rm openfire.rpm
+            #to clear some data before saving this layer ...a docker image
+            yum clean all
+            </tt>    
+            <h3>Create Dockerfile</h3>
+            <p>You also need to create a Dockerfile to build the docker image, Create a file with name <b>Dockerfile</b>.</p>
+            <tt>
+            #name of container: docker-centos-openfire
+            #versison of container: 0.1
+            FROM centos:7
+            MAINTAINER Shanshan Li  "lishan@oregonstate.edu"
+            #update container and install jdk
+            RUN yum update -y && \
+            yum install -y wget && \
+            yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel && \
+            yum clean all
+            ##run script to install openfire on docker
+            COPY install.sh /sbin/install.sh
+            RUN chmod +x /sbin/install.sh; sync \
+            && /bin/bash -c /sbin/install.sh \
+            && rm /sbin/install.sh
+            RUN /etc/init.d/openfire start
+            RUN /sbin/chkconfig openfire on
+            # to allow access from outside of the container  to the container service
+            # at that ports need to allow access from firewall if need to access it outside of the server. 
+            EXPOSE 5222 9090 9091 5269 7443
+            # Use baseimage-docker's init system.
+            CMD ["/bin/bash"]
+            </tt>
+            <h3>Build Docker Image</h3>
+            <p>Put <b>install.sh</b> and <b>Dockerfile</b> in same folder and run the following command to build the Docker image:</p>
+            <tt>
+            docker build --tag openfire:1.0
+            </tt>
+            <h3>Start Docker Container</h3>
+            <p>Run the following command to start the Docker container:</p>
+            <tt>
+            docker run -d -p 9090:9090 -p 5222:5222 -p 5269:5269 -p 9091:9091 -p 7443:7443 --link openfire-mysql:db --name openfire openfire:1.0
+            </tt>
+            <p>Now, you finished all Docker setup, the next setup will be in webUI</p>
+            <h2><a name="setupWizard">Access setup server wizard</a></h2>
+            <p>
+               From web browser, open <tt>http://127.0.0.1:9090</tt> to open the setup server wizard.
+            </p>
+            <h3>Select a Language</h3>
+            <p>You can pick the language you want from this page:
+               <img src="./images/1-language.jpeg" width=700/>
+            </p>
+            <h3>Server Setting</h3>
+            <p>You can setup the XMPP domain name and server host name as well as the webUI port from this page:
+               <img src="./images/2-server-setting.jpeg" width=700/>
+            </p>
+            <h3>Select a Database</h3>
+            <p>We choose Standard Database Connection from this page:
+               <img src="./images/3-db-setting.jpeg" width=700/>
+            </p>
+            <h3>Setup Mysql Connection</h3>
+            <p>Use the following mysql information, you will connect to the Mysql docker container we created at previous step:
+               <img src="./images/4-db-setting.jpeg" width=700/>
+            </p>
+            <p>We finished almost all the setup, click continue and simply follow and finish the wizard.
+         </div>
+      </div>
+   </body>
 </html>

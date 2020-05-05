@@ -276,7 +276,7 @@ public class EncryptionArtifactFactory
         Log.info( "Creating new SslContextFactory instance" );
         try
         {
-            sslContextFactory = new SslContextFactory();
+            sslContextFactory = new SslContextFactory.Server();
 
             sslContextFactory.setTrustStore( configuration.getTrustStore().getStore() );
             sslContextFactory.setTrustStorePassword( new String( configuration.getTrustStore().getConfiguration().getPassword() ) );

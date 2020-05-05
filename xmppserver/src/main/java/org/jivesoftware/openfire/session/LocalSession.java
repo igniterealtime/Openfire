@@ -137,12 +137,12 @@ public abstract class LocalSession implements Session {
 
     /**
      * Returns true if the session is detached (that is, if the underlying connection
-     * has been closed.
+     * has been closed while the session instance itself has not been closed).
      *
      * @return true if session detached
      */
     public boolean isDetached() {
-        return this.conn == null;
+        return this.sessionManager.isDetached(this);
     }
 
     /**
@@ -160,29 +160,45 @@ public abstract class LocalSession implements Session {
         }
     }
 
-    /**
-     * Reattach the session to a new connection. The connection must already be
-     * initialized as a running XML Stream, normally by having run through XEP-0198
-     * resumption.
-     * @param connection The connection to attach the session to
-     * @param h the sequence number of the last handled stanza sent over the former stream
-     */
-    public void reattach(Connection connection, long h) {
+    Connection releaseConnection()
+    {
         lock.lock();
         try {
-            Log.debug("Reattaching session with address {} and streamID {}.", this.address, this.streamID);
+            Log.debug("Releasing connection from session with address {} and streamID {}.", this.address, this.streamID );
+            final Connection result = conn;
+            this.conn = null;
+            this.close();
+            return result;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Reattach the (existing) session to the connection provided by a new session (a session that will be replaced
+     * by the older, pre-existing session). The connection must already be initialized as a running XML Stream, normally
+     * by having run through XEP-0198 resumption.
+     *
+     * @param connectionProvider Session from which to obtain the connection from.
+     * @param h the sequence number of the last handled stanza sent over the former stream
+     */
+    public void reattach(LocalSession connectionProvider, long h) {
+        lock.lock();
+        try {
+            Log.debug("Reattaching session with address {} and streamID {} using connection from session with address {} and streamID {}.", this.address, this.streamID, connectionProvider.getAddress(), connectionProvider.getStreamID());
             if (this.conn != null && !this.conn.isClosed())
             {
                 this.conn.close();
             }
-            this.conn = connection;
-            connection.reinit(this);
+            this.conn = connectionProvider.releaseConnection();
+            this.conn.reinit(this);
         }finally {
             lock.unlock();
         }
         this.status = STATUS_AUTHENTICATED;
         this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
+        this.sessionManager.removeSession((LocalClientSession)connectionProvider);
     }
 
     /**

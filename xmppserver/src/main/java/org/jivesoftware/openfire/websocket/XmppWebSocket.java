@@ -162,9 +162,13 @@ public class XmppWebSocket {
             closeStream(null);
         }
         if (xmppSession != null) {
-            Log.debug( "Closing session {}", xmppSession );
-            xmppSession.close();
-            SessionManager.getInstance().removeSession(xmppSession);
+            xmppSession.getStreamManager().formalClose();
+
+            if (!xmppSession.getStreamManager().getResume()) {
+                Log.debug( "Closing session {}", xmppSession );
+                xmppSession.close();
+                SessionManager.getInstance().removeSession(xmppSession);
+            }
             xmppSession = null;
         }
     }

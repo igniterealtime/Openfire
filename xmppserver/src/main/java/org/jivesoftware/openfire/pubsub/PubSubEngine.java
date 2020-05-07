@@ -63,7 +63,7 @@ public class PubSubEngine {
      * the same order as they were submitted. The messages to separate nodes are
      * published in parallel.
      */
-    private static final OrderedExecutor publishToNodePool = new OrderedExecutor();
+    private static final OrderedExecutor publishToNodePool = new OrderedExecutor("PubSub");
     /**
      * Used to generate ordering key for publish to node, if node id is null.
      */

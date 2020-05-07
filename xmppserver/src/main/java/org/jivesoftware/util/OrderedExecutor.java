@@ -62,12 +62,17 @@ public class OrderedExecutor {
      * The actual ThreadPoolExecutor.
      */
     private final ThreadPoolExecutor executor;
+    /**
+     * Name of this instance.
+     */
+    private final String name;
 
     /**
      * Constructor.
      */
-    public OrderedExecutor() {
-        final ThreadFactory threadFactory = new NamedThreadFactory("OrderedExecutor-pool-", true, Thread.NORM_PRIORITY,
+    public OrderedExecutor(String name) {
+        this.name = name + "OrderedExecutor";
+        final ThreadFactory threadFactory = new NamedThreadFactory(this.name + "-pool-", true, Thread.NORM_PRIORITY,
                 Thread.currentThread().getThreadGroup(), 0L);
         executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
                 threadFactory);
@@ -185,6 +190,26 @@ public class OrderedExecutor {
             queuedItemKeys.remove(orderingKey);
         }
     }
+
+    /**
+     * Returns the count of tasks queued, due to tasks with the same ordering keys
+     * being executed.
+     * 
+     * @return the count of queued tasks.
+     */
+    public int getQueuedTaskCount() {
+        return localQueue.size();
+    }
+
+    /**
+     * Returns the count of tasks being executed at the moment.
+     * 
+     * @return the count of tasks being executed.
+     */
+    public int getExecutingTaskCount() {
+        return executingItemKeys.size();
+    }
+
 
     /**
      * Returns the pool size.

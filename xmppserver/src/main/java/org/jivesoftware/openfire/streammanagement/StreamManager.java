@@ -62,13 +62,13 @@ public class StreamManager {
         public final long x;
         public final Date timestamp = new Date();
         public final Packet packet;
-        
+
         public UnackedPacket(long x, Packet p) {
             this.x = x;
             packet = p;
         }
     }
-    
+
     public static boolean isStreamManagementActive() {
         return ACTIVE.getValue();
     }
@@ -178,6 +178,11 @@ public class StreamManager {
         boolean allow = false;
         // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
+            Object ws = session.getSessionData("ws");
+            if (ws != null && (Boolean) ws) {
+                Log.debug( "Websockets resume is not yet implemented: {}", session );
+                return false;
+            }
             AuthToken authToken = ((LocalClientSession)session).getAuthToken();
             if (authToken != null) {
                 if (!authToken.isAnonymous()) {

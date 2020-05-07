@@ -162,8 +162,6 @@ public class XmppWebSocket {
             closeStream(null);
         }
         if (xmppSession != null) {
-            xmppSession.getStreamManager().formalClose();
-
             if (!xmppSession.getStreamManager().getResume()) {
                 Log.debug( "Closing session {}", xmppSession );
                 xmppSession.close();

@@ -37,7 +37,7 @@ public class OrderedExecutorTest {
 
         private boolean orderedExecutorTest = true;
 
-        private OrderedExecutor executor = new OrderedExecutor();
+        private OrderedExecutor executor = new OrderedExecutor("Test");
 
         private ThreadPoolExecutor regularExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>());

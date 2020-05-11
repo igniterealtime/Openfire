@@ -615,9 +615,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     private static class ConversationLogEntryArchiver extends Archiver<ConversationLogEntry>
     {
-        ConversationLogEntryArchiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod )
+        ConversationLogEntryArchiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod, boolean delayedStart )
         {
-            super( id, maxWorkQueueSize, maxPurgeInterval, gracePeriod );
+            super( id, maxWorkQueueSize, maxPurgeInterval, gracePeriod, delayedStart );
         }
 
         @Override
@@ -1333,7 +1333,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
 
         // Archive conversations in a separate process.
-        archiver = new ConversationLogEntryArchiver( "MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod );
+        final boolean logEnabledByDefault = MUCPersistenceManager.getBooleanProperty(getServiceName(), "room.logEnabled", true); // When logging is disabled by default, there's no need to aggressively poll the Archiver work-queue (OF-2019).
+        archiver = new ConversationLogEntryArchiver( "MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod, !logEnabledByDefault );
         XMPPServer.getInstance().getArchiveManager().add( archiver );
 
         // Remove unused rooms from memory

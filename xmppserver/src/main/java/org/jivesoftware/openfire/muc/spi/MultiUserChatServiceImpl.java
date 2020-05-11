@@ -1328,26 +1328,24 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void start() {
         XMPPServer.getInstance().addServerListener( this );
 
-        // Run through the users every 5 minutes after a 5 minutes server startup delay (default
-        // values)
+        // Run through the users every 5 minutes after a 5 minutes server startup delay (default values)
         userTimeoutTask = new UserTimeoutTask();
         TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
+
+        // Archive conversations in a separate process.
         archiver = new ConversationLogEntryArchiver( "MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod );
         XMPPServer.getInstance().getArchiveManager().add( archiver );
 
         // Remove unused rooms from memory
-        long cleanupFreq = JiveGlobals.getLongProperty(
-            "xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
+        long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
         TaskEngine.getInstance().schedule(new CleanupTask(), cleanupFreq, cleanupFreq);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().setServerNodeInfoProvider(this.getServiceDomain(), this);
 
-        final ArrayList<String> params = new ArrayList<>();
-        params.clear();
-        params.add(getServiceDomain());
-        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
+        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", Collections.singletonList(getServiceDomain())));
+
         // Load all the persistent rooms to memory
         for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
@@ -1483,7 +1481,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void logConversation(final MUCRoom room, final Message message, final JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
-            archiver.archive( new ConversationLogEntry( new Date() ,room, message, sender) );
+            archiver.archive( new ConversationLogEntry( new Date(), room, message, sender) );
         }
     }
 

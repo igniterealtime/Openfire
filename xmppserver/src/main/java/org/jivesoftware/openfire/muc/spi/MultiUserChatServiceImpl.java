@@ -1366,7 +1366,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return logBatchGracePeriod;
     }
 
-    private Archiver getOrCreateConversationArchiver() {
+    @Override
+    public Archiver getArchiver() {
         if (archiver == null) {
             archiver = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxBatchSize, logMaxBatchInterval, logBatchGracePeriod);
             XMPPServer.getInstance().getArchiveManager().add(archiver);
@@ -1530,7 +1531,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void logConversation(final MUCRoom room, final Message message, final JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
-            getOrCreateConversationArchiver().archive( new ConversationLogEntry( new Date(), room, message, sender) );
+            getArchiver().archive( new ConversationLogEntry( new Date(), room, message, sender) );
         }
     }
 

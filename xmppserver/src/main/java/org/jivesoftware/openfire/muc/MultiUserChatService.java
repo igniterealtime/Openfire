@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.database.JiveID;
+import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
@@ -287,6 +288,8 @@ public interface MultiUserChatService extends Component {
      * @return the maximum time to wait for a new log entry before declaring the batch complete.
      */
     Duration getLogBatchGracePeriod();
+
+    Archiver<?> getArchiver();
 
     /**
      * Obtain the server-wide default message history settings.

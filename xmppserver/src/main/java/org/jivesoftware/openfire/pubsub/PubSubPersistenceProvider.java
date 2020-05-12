@@ -118,14 +118,10 @@ public interface PubSubPersistenceProvider
     void removeSubscription(NodeSubscription subscription);
 
     /**
-     * Creates and stores the published item in the database. Note that the
-     * item will be cached temporarily before being flushed asynchronously
-     * to the database. The write cache can be tuned using the following
-     * two properties:
-     * <pre>
-     *   "xmpp.pubsub.flush.max" - maximum items in the cache (-1 to disable cache)
-     *   "xmpp.pubsub.flush.timer" - number of seconds between cache flushes
-     * </pre>
+     * Creates and stores the published item in the database.
+     *
+     * When an item with the same ID was previously saved, this item will be replaced by the new item.
+     *
      * @param item The published item to save.
      */
     void savePublishedItem(PublishedItem item);

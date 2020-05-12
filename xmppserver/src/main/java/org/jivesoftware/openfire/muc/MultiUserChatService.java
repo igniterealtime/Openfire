@@ -17,8 +17,6 @@
 package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.openfire.archive.ArchiveManager;
-import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
@@ -27,6 +25,7 @@ import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
@@ -226,10 +225,10 @@ public interface MultiUserChatService extends Component {
      * Sets the time to elapse between logging the room conversations. A <code>TimerTask</code> will
      * be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
      * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #setLogConversationBatchSize(int)}.
+     * save on each run can be configured. See {@link #setLogMaxBatchSize(int)} (int)}.
      *
      * @param timeout the time to elapse between logging the room conversations.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link org.jivesoftware.openfire.archive.ArchiveManager}).
      */
     @Deprecated
     default void setLogConversationsTimeout(int timeout) {}
@@ -238,10 +237,10 @@ public interface MultiUserChatService extends Component {
      * Returns the time to elapse between logging the room conversations. A <code>TimerTask</code>
      * will be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
      * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #getLogConversationBatchSize()}.
+     * save on each run can be configured. See {@link #getLogMaxBatchSize()} ()}.
      *
      * @return the time to elapse between logging the room conversations.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
+     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link org.jivesoftware.openfire.archive.ArchiveManager}).
      */
     default int getLogConversationsTimeout() { return 300000; }
 
@@ -251,21 +250,43 @@ public interface MultiUserChatService extends Component {
      * recommended specifying a big number.
      *
      * @param size the number of messages to save to the database on each run of the logging process.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    @Deprecated
-    default void setLogConversationBatchSize(int size) {};
+    void setLogMaxBatchSize(int size);
 
     /**
      * Returns the number of messages to save to the database on each run of the logging process.
      *
      * @return the number of messages to save to the database on each run of the logging process.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
-    @Deprecated
-    default int getLogConversationBatchSize() { return 50; };
+    int getLogMaxBatchSize();
 
-    Archiver<?> getArchiver();
+    /**
+     * Sets the maximum time between database writes of log batches.
+     *
+     * @param interval the maximum time between database writes of log batches.
+     */
+    void setLogMaxBatchInterval(Duration interval);
+
+    /**
+     * Returns the maximum time between database writes of log batches.
+     *
+     * @return the maximum time between database writes of log batches.
+     */
+    Duration getLogMaxBatchInterval();
+
+    /**
+     * Sets the maximum time to wait for a new log entry before declaring the batch complete.
+     *
+     * @param period the maximum time to wait for a new log entry before declaring the batch complete.
+     */
+    void setLogBatchGracePeriod(Duration period);
+
+    /**
+     * Returns the maximum time to wait for a new log entry before declaring the batch complete.
+     *
+     * @return the maximum time to wait for a new log entry before declaring the batch complete.
+     */
+    Duration getLogBatchGracePeriod();
 
     /**
      * Obtain the server-wide default message history settings.

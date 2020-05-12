@@ -24,22 +24,38 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.disco.*;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.handler.IQvCardHandler;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCUser;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.archive.Archiver;
+import org.jivesoftware.util.AutoCloseableReentrantLock;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +64,26 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.DataForm.Type;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,7 +131,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The maximum amount of logs to be written to the database in one iteration.
      */
-    private int logMaxConversationBatchSize;
+    private int logMaxBatchSize;
 
     /**
      * The maximum time between database writes of log batches.
@@ -604,20 +635,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    @Override
-    public Archiver<ConversationLogEntry> getArchiver()
-    {
-        return archiver;
-    }
-
     /**
      * Stores Conversations in the database.
      */
     private static class ConversationLogEntryArchiver extends Archiver<ConversationLogEntry>
     {
-        ConversationLogEntryArchiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod, boolean delayedStart )
+        ConversationLogEntryArchiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod )
         {
-            super( id, maxWorkQueueSize, maxPurgeInterval, gracePeriod, delayedStart );
+            super( id, maxWorkQueueSize, maxPurgeInterval, gracePeriod );
         }
 
         @Override
@@ -1237,10 +1262,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
-        logMaxConversationBatchSize = 500;
+        logMaxBatchSize = 500;
         if (value != null) {
             try {
-                logMaxConversationBatchSize = Integer.parseInt(value);
+                logMaxBatchSize = Integer.parseInt(value);
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.log.maxbatchsize for service "+chatServiceName, e);
@@ -1281,22 +1306,27 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    public void setLogMaxConversationBatchSize( int size )
+    @Override
+    public void setLogMaxBatchSize( int size )
     {
-        if ( this.logMaxConversationBatchSize == size ) {
+        if ( this.logMaxBatchSize == size ) {
             return;
         }
-        this.logMaxConversationBatchSize = size;
+        this.logMaxBatchSize = size;
 
-        archiver.setMaxWorkQueueSize( size );
+        if (archiver != null) {
+            archiver.setMaxWorkQueueSize(size);
+        }
         MUCPersistenceManager.setProperty( chatServiceName, "tasks.log.maxbatchsize", Integer.toString( size));
     }
 
-    public int getLogMaxConversationBatchSize()
+    @Override
+    public int getLogMaxBatchSize()
     {
-        return logMaxConversationBatchSize;
+        return logMaxBatchSize;
     }
 
+    @Override
     public void setLogMaxBatchInterval( Duration interval )
     {
         if ( this.logMaxBatchInterval.equals( interval ) ) {
@@ -1304,15 +1334,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         this.logMaxBatchInterval = interval;
 
-        archiver.setMaxPurgeInterval( interval );
+        if (archiver != null) {
+            archiver.setMaxPurgeInterval(interval);
+        }
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.maxbatchinterval", Long.toString( interval.toMillis() ) );
     }
 
+    @Override
     public Duration getLogMaxBatchInterval()
     {
         return logMaxBatchInterval;
     }
 
+    @Override
     public void setLogBatchGracePeriod( Duration period )
     {
         if ( this.logBatchGracePeriod.equals( period ) ) {
@@ -1320,8 +1354,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         this.logBatchGracePeriod = period;
-        archiver.setGracePeriod( period );
+        if (archiver != null) {
+            archiver.setGracePeriod(period);
+        }
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchgrace", Long.toString( period.toMillis() ) );
+    }
+
+    @Override
+    public Duration getLogBatchGracePeriod()
+    {
+        return logBatchGracePeriod;
+    }
+
+    private Archiver getOrCreateConversationArchiver() {
+        if (archiver == null) {
+            archiver = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxBatchSize, logMaxBatchInterval, logBatchGracePeriod);
+            XMPPServer.getInstance().getArchiveManager().add(archiver);
+        }
+
+        return archiver;
     }
 
     @Override
@@ -1331,11 +1382,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default values)
         userTimeoutTask = new UserTimeoutTask();
         TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
-
-        // Archive conversations in a separate process.
-        final boolean logEnabledByDefault = MUCPersistenceManager.getBooleanProperty(getServiceName(), "room.logEnabled", true); // When logging is disabled by default, there's no need to aggressively poll the Archiver work-queue (OF-2019).
-        archiver = new ConversationLogEntryArchiver( "MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod, !logEnabledByDefault );
-        XMPPServer.getInstance().getArchiveManager().add( archiver );
 
         // Remove unused rooms from memory
         long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
@@ -1360,7 +1406,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         routingTable.removeComponentRoute(getAddress());
         broadcastShutdown();
         XMPPServer.getInstance().removeServerListener( this );
-        XMPPServer.getInstance().getArchiveManager().remove( archiver );
+        if (archiver != null) {
+            XMPPServer.getInstance().getArchiveManager().remove(archiver);
+        }
     }
 
     @Override
@@ -1482,7 +1530,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void logConversation(final MUCRoom room, final Message message, final JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
-            archiver.archive( new ConversationLogEntry( new Date(), room, message, sender) );
+            getOrCreateConversationArchiver().archive( new ConversationLogEntry( new Date(), room, message, sender) );
         }
     }
 

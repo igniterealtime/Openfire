@@ -228,28 +228,37 @@ public class PEPServiceManager {
      *            The JID of the owner of the service to be deleted.
      */
     public void remove(JID owner) {
-        PEPService service;
 
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
-            service = pepServices.remove(owner.toBareJID()).get();
+
+            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
+            // after all nodes are deleted.
+            final CacheableOptional<PEPService> optional = pepServices.get(owner.toBareJID());
+            if ( optional == null ) {
+                return;
+            }
+
+            if ( optional.isPresent() )
+            {
+                // Delete the user's PEP nodes from memory and the database.
+                CollectionNode rootNode = optional.get().getRootCollectionNode();
+                for ( final Node node : optional.get().getNodes() )
+                {
+                    if ( rootNode.isChildNode(node) )
+                    {
+                        node.delete();
+                    }
+                }
+                rootNode.delete();
+            }
+
+            // All nodes are now deleted. The service itself can now be deleted.
+            pepServices.remove(owner.toBareJID()).get();
         } finally {
             lock.unlock();
         }
-
-        if (service == null) {
-            return;
-        }
-
-        // Delete the user's PEP nodes from memory and the database.
-        CollectionNode rootNode = service.getRootCollectionNode();
-        for (final Node node : service.getNodes()) {
-            if (rootNode.isChildNode(node)) {
-                node.delete();
-            }
-        }
-        rootNode.delete();
     }
 
     public void start(PEPService pepService) {

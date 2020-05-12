@@ -60,5 +60,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/i4jruntime.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-cloudwatch2</artifactId>
+            <version>1.5.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

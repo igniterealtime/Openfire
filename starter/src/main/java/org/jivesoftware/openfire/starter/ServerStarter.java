@@ -18,9 +18,22 @@
 package org.jivesoftware.openfire.starter;
 
 import java.io.File;
+import java.time.Duration;
+import java.util.Map;
 
+import io.micrometer.cloudwatch2.CloudWatchConfig;
+import io.micrometer.cloudwatch2.CloudWatchMeterRegistry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
+import software.amazon.awssdk.utils.ImmutableMap;
 
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
@@ -94,6 +107,30 @@ public class ServerStarter {
         catch (Exception e) {
             e.printStackTrace();
         }
+        // Metrics
+        CloudWatchConfig config = new CloudWatchConfig() {
+
+            private String NAMESPACE_ENV_NAME = "METRICS_NAMESPACE";
+            private String metricNamespace = System.getenv(NAMESPACE_ENV_NAME);
+            private Map<String, String> configuration =
+                ImmutableMap.of("cloudwatch.namespace", metricNamespace != null ? metricNamespace : "chat-local",
+                "cloudwatch.step", Duration.ofMinutes(1).toString());
+
+            @Override
+            public String get(String s) {
+                return configuration.get(s);
+            }
+        };
+
+        CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config,
+            Clock.SYSTEM,
+            CloudWatchAsyncClient.create());
+        Metrics.addRegistry(registry);
+        new JvmMemoryMetrics().bindTo(registry);
+        new JvmGcMetrics().bindTo(registry);
+        new ProcessorMetrics().bindTo(registry);
+        new JvmThreadMetrics().bindTo(registry);
+
     }
 
     /**

@@ -21,8 +21,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -62,9 +65,6 @@ public abstract class Archiver<E> implements Runnable
 
     final List<ArchiveCandidate<E>> workQueue = Collections.synchronizedList(new ArrayList<>());
 
-    // Used to delay polling of work queue until after work has been produced (OF-2019)
-    final CountDownLatch delayedStart;
-
     /**
      * Instantiates a new archiver.
      *
@@ -74,20 +74,6 @@ public abstract class Archiver<E> implements Runnable
      * @param gracePeriod Maximum amount of milliseconds to wait for 'more' work to arrive, before committing the batch.
      */
     protected Archiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod )
-    {
-        this( id, maxWorkQueueSize, maxPurgeInterval, gracePeriod, false );
-    }
-
-    /**
-     * Instantiates a new archiver.
-     *
-     * @param id A unique identifier for this archiver.
-     * @param maxWorkQueueSize Do not add more than this amount of queries in a batch.
-     * @param maxPurgeInterval Do not delay longer than this amount before storing data in the database.
-     * @param gracePeriod Maximum amount of milliseconds to wait for 'more' work to arrive, before committing the batch.
-     * @param delayedStart true if consuming needs to start only after the first data has arrived.
-     */
-    protected Archiver( String id, int maxWorkQueueSize, Duration maxPurgeInterval, Duration gracePeriod, boolean delayedStart )
     {
         if ( maxWorkQueueSize < 1 )
         {
@@ -103,12 +89,10 @@ public abstract class Archiver<E> implements Runnable
         this.maxWorkQueueSize = maxWorkQueueSize;
         this.maxPurgeInterval = maxPurgeInterval;
         this.gracePeriod = gracePeriod;
-        this.delayedStart = new CountDownLatch( delayedStart ? 1 : 0 );
     }
 
     public void archive( final E data )
     {
-        delayedStart.countDown();
         queue.add( new ArchiveCandidate<>( data ) );
     }
 
@@ -130,9 +114,6 @@ public abstract class Archiver<E> implements Runnable
 
             try
             {
-                // OF-2019: Blocks until the first bit of data was provided in #archive().
-                delayedStart.await();
-
                 // Blocks until work is produced.
                 ArchiveCandidate<E> work;
 
@@ -172,7 +153,6 @@ public abstract class Archiver<E> implements Runnable
     public void stop()
     {
         running = false;
-        delayedStart.countDown();
     }
 
     /**

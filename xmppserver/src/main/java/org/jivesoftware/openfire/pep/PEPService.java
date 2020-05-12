@@ -169,15 +169,17 @@ public class PEPService implements PubSubService, Cacheable {
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
             PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
         }
+    }
 
+    public void initialize() {
         // Load nodes to memory
         PubSubPersistenceProviderManager.getInstance().getProvider().loadNodes(this);
         // Ensure that we have a root collection node
         if (nodes.isEmpty()) {
             // Create root collection node
-            JID creatorJID = new JID(bareJID);
+            JID creatorJID = new JID(this.serviceOwnerJID);
 
-            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, bareJID, creatorJID, collectionDefaultConfiguration);
+            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwnerJID, creatorJID, collectionDefaultConfiguration);
 
             // Save new root node
             rootCollectionNode.saveToDB();
@@ -186,7 +188,7 @@ public class PEPService implements PubSubService, Cacheable {
             rootCollectionNode.addOwner(creatorJID);
         }
         else {
-            rootCollectionNode = (CollectionNode) getNode(bareJID);
+            rootCollectionNode = (CollectionNode) getNode(this.serviceOwnerJID);
         }
     }
 

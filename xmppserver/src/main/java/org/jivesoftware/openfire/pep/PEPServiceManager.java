@@ -209,6 +209,7 @@ public class PEPServiceManager {
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
                 pepServices.put(bareJID, CacheableOptional.of(pepService));
+                pepService.initialize();
 
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEPService created for : " + bareJID);

@@ -371,6 +371,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             lock.lock();
             if ( serviceIdToNodesCache.containsKey( id ) ) {
                 final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
+                pepService.initialize();
 
                 // The JDBC variant stores subscriptions in the database. The in-memory variant cannot rely on this.
                 // Subscriptions have to be repopulated from the roster instead.

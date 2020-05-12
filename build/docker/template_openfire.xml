@@ -57,8 +57,8 @@
             <minIdleTime>900000</minIdleTime>
             <maxWaitTime>500</maxWaitTime>
             <minConnections>5</minConnections>
-            <maxConnections>25</maxConnections>
-            <connectionTimeout>1.0</connectionTimeout>
+            <maxConnections>40</maxConnections>
+            <connectionTimeout>2.0</connectionTimeout>
         </defaultProvider>
         <mysql>
             <useUnicode>true</useUnicode>

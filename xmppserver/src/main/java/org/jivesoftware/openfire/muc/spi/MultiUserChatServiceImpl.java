@@ -1307,7 +1307,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setLogMaxBatchSize( int size )
+    public void setLogConversationBatchSize(int size )
     {
         if ( this.logMaxBatchSize == size ) {
             return;
@@ -1321,7 +1321,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public int getLogMaxBatchSize()
+    public int getLogConversationBatchSize()
     {
         return logMaxBatchSize;
     }

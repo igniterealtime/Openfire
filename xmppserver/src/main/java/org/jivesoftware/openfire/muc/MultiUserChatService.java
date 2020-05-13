@@ -226,7 +226,7 @@ public interface MultiUserChatService extends Component {
      * Sets the time to elapse between logging the room conversations. A <code>TimerTask</code> will
      * be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
      * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #setLogMaxBatchSize(int)} (int)}.
+     * save on each run can be configured. See {@link #setLogConversationBatchSize(int)} (int)}.
      *
      * @param timeout the time to elapse between logging the room conversations.
      * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link org.jivesoftware.openfire.archive.ArchiveManager}).
@@ -238,7 +238,7 @@ public interface MultiUserChatService extends Component {
      * Returns the time to elapse between logging the room conversations. A <code>TimerTask</code>
      * will be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
      * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #getLogMaxBatchSize()} ()}.
+     * save on each run can be configured. See {@link #getLogConversationBatchSize()} ()}.
      *
      * @return the time to elapse between logging the room conversations.
      * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link org.jivesoftware.openfire.archive.ArchiveManager}).
@@ -252,14 +252,14 @@ public interface MultiUserChatService extends Component {
      *
      * @param size the number of messages to save to the database on each run of the logging process.
      */
-    void setLogMaxBatchSize(int size);
+    void setLogConversationBatchSize(int size);
 
     /**
      * Returns the number of messages to save to the database on each run of the logging process.
      *
      * @return the number of messages to save to the database on each run of the logging process.
      */
-    int getLogMaxBatchSize();
+    int getLogConversationBatchSize();
 
     /**
      * Sets the maximum time between database writes of log batches.

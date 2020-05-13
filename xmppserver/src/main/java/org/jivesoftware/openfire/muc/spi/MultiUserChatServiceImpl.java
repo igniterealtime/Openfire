@@ -131,7 +131,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The maximum amount of logs to be written to the database in one iteration.
      */
-    private int logMaxBatchSize;
+    private int logConversationBatchSize;
 
     /**
      * The maximum time between database writes of log batches.
@@ -1262,10 +1262,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
-        logMaxBatchSize = 500;
+        logConversationBatchSize = 500;
         if (value != null) {
             try {
-                logMaxBatchSize = Integer.parseInt(value);
+                logConversationBatchSize = Integer.parseInt(value);
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.log.maxbatchsize for service "+chatServiceName, e);
@@ -1306,13 +1306,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    /**
+     * Sets the number of messages to save to the database on each run of the logging process.
+     * Even though the saving of queued conversations takes place in another thread it is not
+     * recommended specifying a big number.
+     *
+     * @param size the number of messages to save to the database on each run of the logging process.
+     */
     @Override
-    public void setLogConversationBatchSize(int size )
+    public void setLogConversationBatchSize(int size)
     {
-        if ( this.logMaxBatchSize == size ) {
+        if ( this.logConversationBatchSize == size ) {
             return;
         }
-        this.logMaxBatchSize = size;
+        this.logConversationBatchSize = size;
 
         if (archiver != null) {
             archiver.setMaxWorkQueueSize(size);
@@ -1320,10 +1327,35 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty( chatServiceName, "tasks.log.maxbatchsize", Integer.toString( size));
     }
 
+    /**
+     * Returns the number of messages to save to the database on each run of the logging process.
+     *
+     * @return the number of messages to save to the database on each run of the logging process.
+     */
     @Override
     public int getLogConversationBatchSize()
     {
-        return logMaxBatchSize;
+        return logConversationBatchSize;
+    }
+
+    /**
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #setLogConversationBatchSize(int)} - so please use that instead.
+     * @param size the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #setLogConversationBatchSize(int)} instead.
+     */
+    public void setLogMaxConversationBatchSize(int size) {
+        setLogConversationBatchSize(size);
+    }
+
+    /**
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #getLogConversationBatchSize()} - so please use that instead.
+     * @return the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #getLogConversationBatchSize()} instead.
+     */
+    public int getLogMaxConversationBatchSize() {
+        return getLogConversationBatchSize();
     }
 
     @Override
@@ -1377,7 +1409,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             synchronized (this) {
                 result = this.archiver;
                 if (result == null) {
-                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxBatchSize, logMaxBatchInterval, logBatchGracePeriod);
+                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod);
                     XMPPServer.getInstance().getArchiveManager().add(result);
                     this.archiver = result;
                 }

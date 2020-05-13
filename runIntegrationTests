@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-alpha3-20200416.010506-6"
+SMACK_VERSION="4.4.0-alpha3-20200513.010448-11"
 GRADLE_VERSION="6.3"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"

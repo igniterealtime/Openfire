@@ -208,7 +208,7 @@ jobs:
             --stacktrace \
             run \
             -b test.gradle \
-            -PsmackVersion="4.4.0-alpha3-20200409.143827-1" \
+            -PsmackVersion="4.4.0-alpha3-20200513.010448-11" \
             -Dsinttest.service="example.org" \
             -Dsinttest.securityMode=disabled \
             -Dsinttest.replyTimeout=60000 \

@@ -178,8 +178,6 @@ jobs:
 
           DISABLED_INTEGRATION_TESTS=()
 
-          #Fails only in Java8, only on Travis
-          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
           #DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
           DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
           #DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)

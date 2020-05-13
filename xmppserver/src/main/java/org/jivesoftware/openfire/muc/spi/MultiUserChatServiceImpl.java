@@ -247,7 +247,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Archiver<ConversationLogEntry> archiver;
+    private volatile Archiver<ConversationLogEntry> archiver;
 
     /**
      * Max number of hours that a persistent room may be empty before the service removes the
@@ -1366,14 +1366,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return logBatchGracePeriod;
     }
 
+    /**
+     * Accessor uses the "double-check idiom" for proper lazy instantiation.
+     * @return
+     */
     @Override
     public Archiver getArchiver() {
-        if (archiver == null) {
-            archiver = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxBatchSize, logMaxBatchInterval, logBatchGracePeriod);
-            XMPPServer.getInstance().getArchiveManager().add(archiver);
+        Archiver result = this.archiver;
+        if (result == null) {
+            synchronized (this) {
+                result = this.archiver;
+                if (result == null) {
+                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxBatchSize, logMaxBatchInterval, logBatchGracePeriod);
+                    XMPPServer.getInstance().getArchiveManager().add(result);
+                    this.archiver = result;
+                }
+            }
         }
 
-        return archiver;
+        return result;
     }
 
     @Override
